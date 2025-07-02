@@ -1,0 +1,31 @@
+openapi: 3.0.3
+info:
+  title: BasaltPass API
+  version: 0.1.0
+servers:
+  - url: http://localhost:8080
+paths:
+  /api/v1/auth/register:
+    post:
+      summary: Register new user
+      responses:
+        '501':
+          description: Not implemented
+  /api/v1/auth/login:
+    post:
+      summary: User login
+      responses:
+        '501':
+          description: Not implemented
+  /api/v1/user/profile:
+    get:
+      summary: Get user profile
+      responses:
+        '501':
+          description: Not implemented
+  /api/v1/wallet/balance:
+    get:
+      summary: Get wallet balance
+      responses:
+        '501':
+          description: Not implemented 
