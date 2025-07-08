@@ -17,12 +17,25 @@ paths:
       responses:
         '501':
           description: Not implemented
+  /api/v1/auth/refresh:
+    post:
+      summary: Refresh access token
+      responses:
+        '401':
+          description: Unauthorized
+        '200':
+          description: New access token
   /api/v1/user/profile:
     get:
       summary: Get user profile
       responses:
-        '501':
-          description: Not implemented
+        '200':
+          description: User profile
+    put:
+      summary: Update user profile
+      responses:
+        '204':
+          description: Updated
   /api/v1/wallet/balance:
     get:
       summary: Get wallet balance
