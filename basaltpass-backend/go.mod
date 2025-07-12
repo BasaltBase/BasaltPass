@@ -8,6 +8,10 @@ require (
 	golang.org/x/crypto v0.18.0
 	gorm.io/driver/sqlite v1.5.4
 	gorm.io/gorm v1.25.5
+    golang.org/x/oauth2 v0.17.0
+    golang.org/x/oauth2/google v0.17.0
+    github.com/pquerna/otp v1.1.0
+    github.com/pquerna/otp/totp v1.1.0
 )
 
 require (

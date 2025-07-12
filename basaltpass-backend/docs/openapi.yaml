@@ -42,3 +42,15 @@ paths:
       responses:
         '501':
           description: Not implemented 
+  /api/v1/security/2fa/setup:
+    post:
+      summary: Setup TOTP secret
+      responses:
+        '200':
+          description: Secret created
+  /api/v1/security/2fa/verify:
+    post:
+      summary: Verify TOTP code
+      responses:
+        '204':
+          description: Verified 

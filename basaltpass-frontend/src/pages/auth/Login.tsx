@@ -11,10 +11,11 @@ function Login() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      await client.post('/api/v1/auth/login', {
+      const res = await client.post('/api/v1/auth/login', {
         identifier,
         password,
       })
+      setAccessToken(res.data.access_token)
       navigate('/profile')
     } catch (err: any) {
       setError(err.response?.data?.error || 'Login failed')
@@ -43,6 +44,13 @@ function Login() {
           Login
         </button>
       </form>
+      <button
+        className="bg-red-500 text-white py-2 mt-2"
+        type="button"
+        onClick={() => (window.location.href = `${import.meta.env.VITE_API_BASE || 'http://localhost:8080'}/api/v1/auth/oauth/google/login`)}
+      >
+        Login with Google
+      </button>
     </div>
   )
 }

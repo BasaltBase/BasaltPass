@@ -10,4 +10,6 @@ type User struct {
 	PasswordHash string `gorm:"size:255"`
 	Nickname     string `gorm:"size:64"`
 	AvatarURL    string `gorm:"size:255"`
+	TOTPSecret   string `gorm:"size:64"`
+	TwoFAEnabled bool
 }

@@ -15,6 +15,7 @@ func RunMigrations() {
 		&model.Wallet{},
 		&model.WalletTx{},
 		&model.AuditLog{},
+		&model.OAuthAccount{},
 	)
 	if err != nil {
 		log.Fatalf("auto migration failed: %v", err)
