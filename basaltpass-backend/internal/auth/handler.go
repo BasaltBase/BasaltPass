@@ -60,3 +60,34 @@ func RefreshHandler(c *fiber.Ctx) error {
 	})
 	return c.JSON(fiber.Map{"access_token": tokens.AccessToken})
 }
+
+// RequestResetHandler handles password reset code request
+func RequestResetHandler(c *fiber.Ctx) error {
+	var body struct {
+		Identifier string `json:"identifier"`
+	}
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+	code, err := RequestPasswordReset(body.Identifier)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"code": code}) // mock returns code directly
+}
+
+// ResetPasswordHandler handles actual password reset
+func ResetPasswordHandler(c *fiber.Ctx) error {
+	var body struct {
+		Identifier string `json:"identifier"`
+		Code       string `json:"code"`
+		Password   string `json:"password"`
+	}
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+	if err := ResetPassword(body.Identifier, body.Code, body.Password); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.SendStatus(fiber.StatusNoContent)
+}

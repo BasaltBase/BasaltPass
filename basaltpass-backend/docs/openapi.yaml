@@ -54,3 +54,38 @@ paths:
       responses:
         '204':
           description: Verified 
+  /api/v1/auth/password/reset-request:
+    post:
+      summary: Request password reset code
+      responses:
+        '200':
+          description: Code generated
+  /api/v1/auth/password/reset:
+    post:
+      summary: Reset password with code
+      responses:
+        '204':
+          description: Password updated 
+  /api/v1/admin/roles:
+    get:
+      summary: List roles
+      responses:
+        '200':
+          description: Role list
+    post:
+      summary: Create role
+      responses:
+        '201':
+          description: Role created
+  /api/v1/admin/user/{id}/role:
+    post:
+      summary: Assign role to user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Assigned 

@@ -4,6 +4,7 @@ import (
 	"basaltpass-backend/internal/auth"
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/oauth"
+	"basaltpass-backend/internal/rbac"
 	"basaltpass-backend/internal/security"
 	"basaltpass-backend/internal/user"
 
@@ -18,6 +19,8 @@ func RegisterRoutes(app *fiber.App) {
 	authGroup.Post("/register", auth.RegisterHandler)
 	authGroup.Post("/login", auth.LoginHandler)
 	authGroup.Post("/refresh", auth.RefreshHandler)
+	authGroup.Post("/password/reset-request", auth.RequestResetHandler)
+	authGroup.Post("/password/reset", auth.ResetPasswordHandler)
 
 	oauthGroup := v1.Group("/auth/oauth")
 	oauthGroup.Get(":provider/login", oauth.LoginHandler)
@@ -35,6 +38,11 @@ func RegisterRoutes(app *fiber.App) {
 	securityGroup := v1.Group("/security", common.JWTMiddleware())
 	securityGroup.Post("/2fa/setup", security.SetupHandler)
 	securityGroup.Post("/2fa/verify", security.VerifyHandler)
+
+	admin := v1.Group("/admin", common.JWTMiddleware(), common.AdminMiddleware())
+	admin.Get("/roles", rbac.ListRolesHandler)
+	admin.Post("/roles", rbac.CreateRoleHandler)
+	admin.Post("/user/:id/role", rbac.AssignRoleHandler)
 
 	// Add more route groups as needed...
 }
