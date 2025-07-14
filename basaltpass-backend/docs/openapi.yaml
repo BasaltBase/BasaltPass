@@ -40,8 +40,26 @@ paths:
     get:
       summary: Get wallet balance
       responses:
-        '501':
-          description: Not implemented 
+        '200':
+          description: Balance
+  /api/v1/wallet/recharge:
+    post:
+      summary: Recharge wallet (mock)
+      responses:
+        '204':
+          description: Recharged
+  /api/v1/wallet/withdraw:
+    post:
+      summary: Withdraw funds (mock)
+      responses:
+        '204':
+          description: Withdrawn
+  /api/v1/wallet/history:
+    get:
+      summary: Transaction history
+      responses:
+        '200':
+          description: List
   /api/v1/security/2fa/setup:
     post:
       summary: Setup TOTP secret

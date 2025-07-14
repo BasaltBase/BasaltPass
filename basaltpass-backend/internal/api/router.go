@@ -7,6 +7,7 @@ import (
 	"basaltpass-backend/internal/rbac"
 	"basaltpass-backend/internal/security"
 	"basaltpass-backend/internal/user"
+	"basaltpass-backend/internal/wallet"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -30,10 +31,11 @@ func RegisterRoutes(app *fiber.App) {
 	userGroup.Get("/profile", user.GetProfileHandler)
 	userGroup.Put("/profile", user.UpdateProfileHandler)
 
-	wallet := v1.Group("/wallet")
-	wallet.Get("/balance", notImplemented)
-	wallet.Post("/recharge", notImplemented)
-	wallet.Post("/withdraw", notImplemented)
+	walletGroup := v1.Group("/wallet", common.JWTMiddleware())
+	walletGroup.Get("/balance", wallet.BalanceHandler)
+	walletGroup.Post("/recharge", wallet.RechargeHandler)
+	walletGroup.Post("/withdraw", wallet.WithdrawHandler)
+	walletGroup.Get("/history", wallet.HistoryHandler)
 
 	securityGroup := v1.Group("/security", common.JWTMiddleware())
 	securityGroup.Post("/2fa/setup", security.SetupHandler)
