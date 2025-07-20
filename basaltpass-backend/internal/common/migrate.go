@@ -18,7 +18,7 @@ func RunMigrations() {
 		&model.OAuthAccount{},
 		&model.PasswordReset{},
 		&model.Permission{},
-		&model.RolePermission{},
+		&model.Passkey{},
 	)
 	if err != nil {
 		log.Fatalf("auto migration failed: %v", err)

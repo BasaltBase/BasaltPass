@@ -12,7 +12,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-var svc = Service{}
+// OAuth service placeholder - can be extended later
 
 // LoginHandler redirects user to provider auth URL.
 func LoginHandler(c *fiber.Ctx) error {

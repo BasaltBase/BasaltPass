@@ -8,54 +8,83 @@ BasaltPass
 
 # 二. 敏捷开发一周提纲
 
-## **【Day 1：基础架构与环境搭建】**
+## **【Day 1：基础架构与环境搭建】** ✅ 已完成
 
-* 初始化go fiber（最新版本） +sqlite 项目，ORM选型（如gorm或ent）
-* 完成数据库表结构设计（用户、角色、认证、钱包、操作日志等）
-* 配置Go Fiber的基础中间件（日志、CORS、安全头）
-* React + Tailwind + Vite 前端脚手架初始化（最新版本）
-* 设计项目目录结构，接口风格（RESTful/OpenAPI）
+* ✅ 初始化go fiber（最新版本） +sqlite 项目，ORM选型（GORM）
+* ✅ 完成数据库表结构设计（用户、角色、认证、钱包、操作日志等）
+* ✅ 配置Go Fiber的基础中间件（日志、CORS、安全头）
+* ✅ React + Tailwind + Vite 前端脚手架初始化（最新版本）
+* ✅ 设计项目目录结构，接口风格（RESTful/OpenAPI）
 
-## **【Day 2：用户注册、登录、JWT认证】**
+### 已完成的具体内容：
+- **后端架构**：Go Fiber v2.52.0 + GORM + SQLite
+- **前端架构**：React + Vite + Tailwind CSS + TypeScript
+- **数据库模型**：用户、角色、权限、钱包、审计日志、OAuth账户等
+- **项目结构**：按领域分层的模块化设计
+- **依赖管理**：修复了oauth2依赖问题，添加了必要的Go模块
 
-* 实现邮箱/手机号注册、登录、验证码（mock）
-* JWT生成与校验中间件，refresh token机制
-* 实现用户基础资料（头像、昵称、邮箱、手机号）
-* 开发前端登录注册页面、基础Profile页
+## **【Day 2：用户注册、登录、JWT认证】** ✅ 已完成
 
-## **【Day 3：OAuth2/三方登录支持】**
+* ✅ 实现邮箱/手机号注册、登录、验证码（mock）
+* ✅ JWT生成与校验中间件，refresh token机制
+* ✅ 实现用户基础资料（头像、昵称、邮箱、手机号）
+* ✅ 开发前端登录注册页面、基础Profile页
 
-* 对接Google、Meta、Microsoft OAuth2，抽象Provider结构
-* OAuth2登录、绑定/解绑流程（新老账户合并）
-* UI实现三方登录按钮及回调处理
+### 已完成的具体内容：
+- **认证系统**：JWT token生成与验证中间件
+- **用户模型**：完整的用户信息管理
+- **前端页面**：登录、注册、个人资料页面
+- **API接口**：用户认证相关的RESTful接口
 
-## **【Day 4：用户安全与账户管理】**
+## **【Day 3：OAuth2/三方登录支持】** ✅ 已完成
 
-* 密码重置、二次验证（TOTP、短信/邮箱二步验证）
-* 密保问题、手机号更换、注销、风控审计表
-* 用户角色和权限（RBAC模型，基础角色维护页面）
-* 前端控制台完善（账号安全设置、二次验证管理）
+* ✅ 对接Google、Meta、Microsoft OAuth2，抽象Provider结构
+* ✅ OAuth2登录、绑定/解绑流程（新老账户合并）
+* ✅ UI实现三方登录按钮及回调处理
 
-## **【Day 5：多币种钱包系统】**
+### 已完成的具体内容：
+- **OAuth Provider抽象**：支持Google、Meta、Microsoft
+- **OAuth处理流程**：登录、绑定、解绑
+- **前端集成**：OAuth登录按钮和回调处理
+- **依赖修复**：解决了golang.org/x/oauth2导入问题
 
-* 钱包账户模型（支持多币种：USD, CNY, BTC, ETH等， 用户可以添加自定义币种，方便未来扩展）
-* 钱包充值、提现、余额查询（mock接口或对接测试网）
-* 交易记录、充值/提现审批流
-* 钱包UI组件开发（余额、充值、提现、历史）
+## **【Day 4：用户安全与账户管理】** 🔄 进行中
 
-## **【Day 6：管理后台、系统UI完善】**
+* 🔄 密码重置、二次验证（TOTP、短信/邮箱二步验证）
+* 🔄 密保问题、手机号更换、注销、风控审计表
+* 🔄 用户角色和权限（RBAC模型，基础角色维护页面）
+* 🔄 前端控制台完善（账号安全设置、二次验证管理）
 
-* 用户列表、搜索、权限分配
-* 钱包流水、交易管理
-* 日志审计页面、异常处理、全局通知
-* 响应式UI自适应优化、深色模式
+### 当前进度：
+- **安全模块**：基础结构已搭建
+- **RBAC系统**：角色和权限模型已定义
+- **审计日志**：操作日志记录功能已实现
 
-## **【Day 7：测试、优化与部署】**
+## **【Day 5：多币种钱包系统】** 🔄 进行中
 
-* 集成测试、e2e测试（重点是身份验证和钱包安全）
-* docker化部署（前后端一体或分开）
-* 文档输出（接口文档、部署文档、运维手册）
-* 演示及初步评估，收集反馈（复盘&规划下一步）
+* 🔄 钱包账户模型（支持多币种：USD, CNY, BTC, ETH等， 用户可以添加自定义币种，方便未来扩展）
+* 🔄 钱包充值、提现、余额查询（mock接口或对接测试网）
+* 🔄 交易记录、充值/提现审批流
+* 🔄 钱包UI组件开发（余额、充值、提现、历史）
+
+### 当前进度：
+- **钱包模型**：多币种钱包数据结构已定义
+- **钱包服务**：基础的钱包操作逻辑已实现
+- **前端页面**：钱包相关页面框架已搭建
+
+## **【Day 6：管理后台、系统UI完善】** 📋 待开始
+
+* 📋 用户列表、搜索、权限分配
+* 📋 钱包流水、交易管理
+* 📋 日志审计页面、异常处理、全局通知
+* 📋 响应式UI自适应优化、深色模式
+
+## **【Day 7：测试、优化与部署】** 📋 待开始
+
+* 📋 集成测试、e2e测试（重点是身份验证和钱包安全）
+* 📋 docker化部署（前后端一体或分开）
+* 📋 文档输出（接口文档、部署文档、运维手册）
+* 📋 演示及初步评估，收集反馈（复盘&规划下一步）
 
 ---
 
@@ -75,384 +104,372 @@ BasaltPass
 * 钱包上链/数字资产管理
 * 多语言支持
 
-# 3. 架构设计
+# 三. 架构设计
 
 ## 3.1. 数据库设计
 
-当然可以，Henry。以下为你定制一套**详细的系统架构方案和实施细则**，涵盖技术选型、系统模块、数据流、接口约定、安全策略以及落地分阶段计划，确保方案既能高效落地，也易于长期演进。
+### 已实现的数据库模型：
 
----
+```sql
+-- 用户表
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    phone VARCHAR(20),
+    password_hash VARCHAR(255) NOT NULL,
+    avatar_url VARCHAR(255),
+    nickname VARCHAR(50),
+    status INTEGER DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
 
-# 一、系统整体架构设计
+-- 角色表
+CREATE TABLE roles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name VARCHAR(50) UNIQUE NOT NULL,
+    description TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
 
-## 1. 架构图（简述）
+-- 用户角色关联表
+CREATE TABLE user_roles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    role_id INTEGER NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (role_id) REFERENCES roles(id)
+);
 
-``` go
-      ┌────────────┐         ┌─────────────┐        ┌──────────┐
-      │ 前端客户端 │  <---->  │ API 网关层  │ <----> │  后端服务│
-      └────────────┘         └─────────────┘        └──────────┘
-            │                      │                     │
-            │                      │                ┌─────────┐
-            │                      │                │  数据库  │
-            │                      │                └─────────┘
-            │                      │
-            │                  ┌─────────┐
-            │                  │三方OAuth│
-            │                  └─────────┘
+-- 钱包表
+CREATE TABLE wallets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    currency VARCHAR(10) NOT NULL,
+    balance DECIMAL(20,8) DEFAULT 0,
+    frozen_balance DECIMAL(20,8) DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- 钱包交易记录表
+CREATE TABLE wallet_transactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    wallet_id INTEGER NOT NULL,
+    type VARCHAR(20) NOT NULL,
+    amount DECIMAL(20,8) NOT NULL,
+    balance_before DECIMAL(20,8) NOT NULL,
+    balance_after DECIMAL(20,8) NOT NULL,
+    status VARCHAR(20) DEFAULT 'pending',
+    description TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (wallet_id) REFERENCES wallets(id)
+);
+
+-- OAuth账户表
+CREATE TABLE oauth_accounts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    provider VARCHAR(20) NOT NULL,
+    provider_user_id VARCHAR(100) NOT NULL,
+    access_token TEXT,
+    refresh_token TEXT,
+    expires_at DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- 审计日志表
+CREATE TABLE audit_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    action VARCHAR(100) NOT NULL,
+    resource_type VARCHAR(50),
+    resource_id VARCHAR(50),
+    details TEXT,
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- 密码重置表
+CREATE TABLE password_resets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    token VARCHAR(255) UNIQUE NOT NULL,
+    expires_at DATETIME NOT NULL,
+    used BOOLEAN DEFAULT FALSE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
 ```
 
-* **前端**：React + Tailwind，区分用户端（PC/Mobile）与管理控制台（Admin）
-* **API网关层**：Fiber实现，统一鉴权、路由转发、流控
-* **后端服务**：分领域分包管理（User、Auth、Wallet、OAuth、Security等）
-* **数据库**：SQLite（兼容MySQL迁移，使用ORM抽象）
-* **第三方OAuth服务**：Google、Meta、Microsoft
+## 3.2. 技术栈确认
 
-## 2. 系统模块分层
+### 后端技术栈：
+- **框架**：Go Fiber v2.52.0
+- **ORM**：GORM v1.25.5
+- **数据库**：SQLite（开发环境）
+- **认证**：JWT (golang-jwt/jwt/v5)
+- **OAuth2**：golang.org/x/oauth2 v0.17.0
+- **加密**：golang.org/x/crypto v0.18.0
+- **2FA**：github.com/pquerna/otp v1.4.0
 
-### (1) 前端层
+### 前端技术栈：
+- **框架**：React 18 + TypeScript
+- **构建工具**：Vite
+- **样式**：Tailwind CSS
+- **路由**：React Router
+- **状态管理**：React Hooks
+- **HTTP客户端**：Axios
 
-* 登录注册页面（支持邮箱、手机号、三方）
-* 个人中心（资料、头像、安全设置、2FA、绑定管理）
-* 钱包中心（多币种余额、充值/提现、流水、资产明细）
-* 管理后台（用户列表、角色、权限、钱包操作审计、风控管理）
+## 3.3. 项目结构（实际实现）
 
-### (2) 网关与接口层
-
-* JWT/OAuth2认证过滤、Rate limit、CORS、API日志
-* RESTful接口风格（支持OpenAPI/Swagger文档）
-
-### (3) 业务服务层
-
-* **User服务**：注册、登录、资料、头像上传、账号安全
-* **Auth服务**：密码管理、二次验证、密保、注销、手机号邮箱更换等
-* **OAuth服务**：三方账号接入/绑定
-* **Wallet服务**：多币种账户、余额变动、充值提现、流水审计
-* **RBAC服务**：角色、权限、资源管理
-* **通知与日志服务**：账户操作日志、消息提醒、异常审计
-
-### (4) 数据层
-
-* SQLite表结构，领域分表（user, wallet, wallet\_tx, role, user\_role, oauth, audit\_log等）
-
----
-
-# 二、详细技术方案
-
-## 1. 技术栈
-
-* **后端**：Go + Fiber + GORM（ORM，便于MySQL/SQLite自由切换）+ jwt-go + go-oauth2
-* **前端**：React (Vite) + Tailwind CSS + Ant Design（管理台） + SWR/Axios
-* **数据库**：SQLite（默认），可一键切换MySQL
-* **部署**：Docker、CI/CD（GitHub Actions），开发与生产分离
-
-## 2. 关键功能设计
-
-### (1) 用户身份认证（支持多种方式）
-
-* 传统：用户名+密码，邮箱验证码，手机号验证码
-* OAuth2：Google、Meta、Microsoft，一键登录和绑定
-* JWT：标准Access/Refresh机制，HTTP-only cookie安全方案
-* 二步验证（2FA）：支持TOTP（兼容Google Authenticator）
-
-### (2) 钱包系统
-
-* 多币种账户：资产结构（user\_id, currency, balance, freeze, created\_at）
-* 钱包操作：充值、提现、余额查询、流水记录
-* 充值/提现风控：白名单、额度、操作日志、审批（可选后续版本扩展）
-* 交易模型：状态（pending、success、fail）、事务隔离
-
-### (3) 账户安全
-
-* 密保问题、找回流程
-* 修改绑定手机号、邮箱、注销账号
-* 操作审计日志（敏感操作记录、异常报警）
-
-### (4) 角色与权限（RBAC）
-
-* 支持多角色：普通用户、VIP、管理员、风控、财务等
-* 资源/接口权限粒度控制
-* 后台动态分配角色/权限
-
-### (5) 管理后台
-
-* 用户列表、筛选、封禁
-* 钱包流水和账户统计
-* 操作日志与风险审计
-
----
-
-# 三、数据库结构（ER简图）
-
-```
-[User]----< [Wallet] ----< [WalletTx]
-  │            │
-  │        [AuditLog]
-  │
-[OAuth]
-  │
-[Role]----< [UserRole]
-```
-
-* User：基本信息
-* OAuth：第三方绑定
-* Wallet：多币种
-* WalletTx：资金流水
-* Role/UserRole：多角色
-* AuditLog：敏感操作
-
----
-
-# 四、接口约定示例
-
-### 用户注册/登录
-
-* POST /api/v1/auth/register
-* POST /api/v1/auth/login
-* POST /api/v1/auth/oauth/{provider}/login
-* POST /api/v1/auth/oauth/{provider}/bind
-
-### 个人资料
-
-* GET /api/v1/user/profile
-* PUT /api/v1/user/profile
-* POST /api/v1/user/avatar
-
-### 钱包
-
-* GET /api/v1/wallet/balance
-* POST /api/v1/wallet/recharge
-* POST /api/v1/wallet/withdraw
-* GET /api/v1/wallet/history
-* POST /api/v1/wallet/transfer
-
-### 安全操作
-
-* POST /api/v1/security/2fa/setup
-* POST /api/v1/security/2fa/verify
-* PUT /api/v1/security/password
-* PUT /api/v1/security/email
-* PUT /api/v1/security/phone
-* DELETE /api/v1/account
-
-### 管理后台
-
-* GET /api/v1/admin/users
-* POST /api/v1/admin/user/{id}/ban
-* GET /api/v1/admin/wallets
-* GET /api/v1/admin/logs
-
----
-
-# 五、安全策略与最佳实践
-
-* 所有敏感API强制登录态（JWT），重要操作需二次认证
-* 前端CSRF防护，后端Rate limit防爆破
-* 用户密码加密存储（bcrypt/scrypt），token存储加密
-* 操作日志与异常自动通知
-* 头像、资料文件存储分离，限制上传类型和大小
-* 支持日志审计、异常报警
-
----
-
-# 六、实施落地（建议分阶段敏捷迭代）
-
-| 阶段 | 目标             | 核心任务                   |
-| -- | -------------- | ---------------------- |
-| 1  | MVP原型（基础账户+钱包） | 账户注册、JWT登录、资料、基本钱包、UI  |
-| 2  | Oauth与安全       | 三方登录、2FA、密保、注销、安全UI    |
-| 3  | 钱包拓展与审计        | 多币种钱包、充值提现、审计、风控       |
-| 4  | 管理后台与RBAC      | 后台管理、角色、权限、用户风控        |
-| 5  | 优化与迁移          | 性能优化、数据库迁移、测试、文档、CI/CD |
-
----
-
-# 七、文件结构
-
-
-## 2.3 项目目录建议（详细版）
-
-### **一、后端目录结构（Go + Fiber）**
-
+### 后端目录结构：
 ```
 /basaltpass-backend
-├── cmd/                   # 启动命令入口
-│   └── basaltpass/           # 可包含main.go（支持多入口或多进程）
-│       └── main.go
-│
-├── configs/               # 配置文件（如config.yaml、env、密钥等）
-│
-├── internal/              # 核心业务逻辑（按领域分层）
-│   ├── auth/              # 认证相关（注册、登录、jwt、2FA）
+├── cmd/basaltpass/main.go          # 应用入口
+├── internal/
+│   ├── api/router.go               # 路由配置
+│   ├── auth/                       # 认证模块
 │   │   ├── handler.go
 │   │   ├── service.go
-│   │   ├── middleware.go
-│   │   ├── model.go
-│   │   └── util.go
-│   │
-│   ├── user/              # 用户管理（资料、头像、绑定等）
-│   │   ├── handler.go
-│   │   ├── service.go
-│   │   ├── model.go
+│   │   ├── jwt.go
+│   │   ├── password_reset.go
 │   │   └── dto.go
-│   │
-│   ├── wallet/            # 钱包与资金流
+│   ├── user/                       # 用户模块
 │   │   ├── handler.go
 │   │   ├── service.go
-│   │   ├── model.go
-│   │   ├── tx.go          # 钱包流水、交易相关
-│   │   └── currency.go
-│   │
-│   ├── oauth/             # OAuth2/第三方登录
+│   │   └── dto.go
+│   ├── wallet/                     # 钱包模块
+│   │   ├── handler.go
+│   │   └── service.go
+│   ├── oauth/                      # OAuth模块
 │   │   ├── handler.go
 │   │   ├── provider.go
-│   │   ├── model.go
-│   │   └── util.go
-│   │
-│   ├── security/          # 账户安全（2FA、密保、风控）
-│   │   ├── handler.go
-│   │   ├── service.go
-│   │   ├── model.go
-│   │   └── audit.go       # 审计日志
-│   │
-│   ├── rbac/              # 角色与权限（如有）
-│   │   ├── handler.go
-│   │   ├── model.go
-│   │   └── service.go
-│   │
-│   ├── admin/             # 后台管理（可选分开）
+│   │   └── google.go
+│   ├── security/                   # 安全模块
+│   │   └── handler.go
+│   ├── rbac/                       # 权限模块
 │   │   ├── handler.go
 │   │   └── service.go
-│   │
-│   └── common/            # 公共方法、通用中间件、响应、错误码
-│       ├── response.go
-│       ├── error.go
+│   ├── admin/                      # 管理模块
+│   │   ├── handler.go
+│   │   ├── audit_handler.go
+│   │   └── wallet_handler.go
+│   ├── model/                      # 数据模型
+│   │   ├── user.go
+│   │   ├── role.go
+│   │   ├── wallet.go
+│   │   ├── oauth_account.go
+│   │   ├── audit_log.go
+│   │   └── password_reset.go
+│   └── common/                     # 公共模块
+│       ├── database.go
 │       ├── middleware.go
-│       └── utils.go
-│
-├── migrations/            # 数据库迁移脚本（sql/gorm/ent等）
-│   └── 2023xxxx_init.sql
-│
-├── scripts/               # 启动、构建、测试脚本
-│
-├── tests/                 # 单元测试与集成测试
-│
-├── docs/                  # 接口文档（openapi/spec）、部署文档、设计文档
-│
-├── go.mod / go.sum
-└── README.md
+│       ├── jwt_middleware.go
+│       ├── admin_middleware.go
+│       └── migrate.go
+├── docs/openapi.yaml              # API文档
+├── go.mod                         # Go模块文件
+└── basaltpass.db                 # SQLite数据库
 ```
 
-#### 说明
-
-* **internal**：每个子模块下分handler（控制器）、service（业务）、model（结构体）、dto（参数）、util（工具）。
-* **common**：抽象响应格式、错误处理、中间件复用。
-* **configs**：支持多环境配置。
-* **migrations**：数据库变更版本化。
-* **docs**：专门存放OpenAPI接口、数据库ER图、部署说明、业务规范。
-
----
-
-### **二、前端目录结构（React + Tailwind）**
-
+### 前端目录结构：
 ```
 /basaltpass-frontend
-├── public/                    # 静态资源、favicon、manifest
-│
 ├── src/
-│   ├── pages/                 # 路由页面（每个大模块一级目录）
-│   │   ├── auth/              # 登录、注册、找回密码、三方登录
+│   ├── pages/                     # 页面组件
+│   │   ├── auth/
 │   │   │   ├── Login.tsx
 │   │   │   ├── Register.tsx
-│   │   │   ├── OauthCallback.tsx
-│   │   │   └── ResetPassword.tsx
-│   │   │
-│   │   ├── profile/           # 用户中心（个人资料、绑定、2FA等）
-│   │   │   ├── Index.tsx
-│   │   │   ├── EditProfile.tsx
-│   │   │   ├── Avatar.tsx
-│   │   │   └── Security.tsx
-│   │   │
-│   │   ├── wallet/            # 钱包（多币种、明细、充值提现）
+│   │   │   └── OauthSuccess.tsx
+│   │   ├── profile/
+│   │   │   └── Index.tsx
+│   │   ├── wallet/
 │   │   │   ├── Index.tsx
 │   │   │   ├── Recharge.tsx
 │   │   │   ├── Withdraw.tsx
 │   │   │   └── History.tsx
-│   │   │
-│   │   ├── admin/             # 管理后台（用户/钱包/权限管理）
-│   │   │   ├── Dashboard.tsx
-│   │   │   ├── Users.tsx
-│   │   │   ├── Wallets.tsx
-│   │   │   ├── Logs.tsx
-│   │   │   └── Roles.tsx
-│   │   │
-│   │   └── NotFound.tsx
-│   │
-│   ├── components/            # 复用组件库（表单、弹窗、导航、按钮等）
-│   │   ├── Layout/
-│   │   ├── Navbar.tsx
-│   │   ├── Sidebar.tsx
-│   │   ├── UserAvatar.tsx
-│   │   ├── CurrencySelect.tsx
-│   │   └── ...
-│   │
-│   ├── api/                   # 所有前端接口请求封装
-│   │   ├── index.ts
-│   │   ├── auth.ts
-│   │   ├── user.ts
-│   │   ├── wallet.ts
+│   │   ├── security/
+│   │   │   └── TwoFA.tsx
+│   │   └── admin/
+│   │       ├── Users.tsx
+│   │       ├── Wallets.tsx
+│   │       ├── Roles.tsx
+│   │       └── Logs.tsx
+│   ├── api/                       # API接口
+│   │   ├── client.ts
 │   │   ├── admin.ts
-│   │   └── ...
-│   │
-│   ├── hooks/                 # 自定义Hooks
-│   │   ├── useAuth.ts
-│   │   ├── useWallet.ts
-│   │   └── ...
-│   │
-│   ├── utils/                 # 通用工具方法
-│   │   ├── request.ts
-│   │   ├── storage.ts
-│   │   └── ...
-│   │
-│   ├── assets/                # 图片、icon、字体
-│   │   ├── logo.svg
-│   │   └── ...
-│   │
-│   ├── styles/                # Tailwind config与自定义样式
-│   │   └── index.css
-│   │
-│   ├── routes/                # 路由配置与守卫
-│   │   └── index.tsx
-│   │
+│   │   ├── security.ts
+│   │   └── wallet.ts
+│   ├── utils/
+│   │   └── auth.ts
 │   ├── App.tsx
 │   ├── main.tsx
-│   └── index.tsx
-│
-├── tests/                     # 单元测试和UI测试
-│   └── pages/
-│   └── components/
-│
-├── .env
-├── tailwind.config.js
-├── vite.config.ts
-└── README.md
+│   └── router.tsx
+├── package.json
+└── vite.config.ts
 ```
 
-#### 说明
+## 3.4. API接口设计（已实现）
 
-* **pages**：页面级路由，业务主分区
-* **components**：高度复用的UI零件，区分布局、表单、业务
-* **api**：接口封装，统一异常处理
-* **hooks/utils**：提升开发效率
-* **assets/styles**：资源管理和样式隔离
-* **tests**：支持单元和UI自动化
+### 认证接口：
+- `POST /api/v1/auth/register` - 用户注册
+- `POST /api/v1/auth/login` - 用户登录
+- `POST /api/v1/auth/logout` - 用户登出
+- `POST /api/v1/auth/refresh` - 刷新Token
+- `POST /api/v1/auth/oauth/{provider}/login` - OAuth登录
+- `POST /api/v1/auth/oauth/{provider}/bind` - OAuth绑定
+
+### 用户接口：
+- `GET /api/v1/user/profile` - 获取用户资料
+- `PUT /api/v1/user/profile` - 更新用户资料
+- `POST /api/v1/user/avatar` - 上传头像
+
+### 钱包接口：
+- `GET /api/v1/wallet/balance` - 获取钱包余额
+- `POST /api/v1/wallet/recharge` - 钱包充值
+- `POST /api/v1/wallet/withdraw` - 钱包提现
+- `GET /api/v1/wallet/history` - 交易历史
+
+### 安全接口：
+- `POST /api/v1/security/2fa/setup` - 设置2FA
+- `POST /api/v1/security/2fa/verify` - 验证2FA
+- `POST /api/v1/security/password/reset` - 重置密码
+
+### 管理接口：
+- `GET /api/v1/admin/users` - 用户列表
+- `GET /api/v1/admin/wallets` - 钱包管理
+- `GET /api/v1/admin/logs` - 审计日志
+- `GET /api/v1/admin/roles` - 角色管理
+
+## 3.5. 安全策略实现
+
+### 已实现的安全措施：
+1. **JWT认证**：Access Token + Refresh Token机制
+2. **密码安全**：bcrypt加密存储
+3. **OAuth2集成**：支持Google、Meta、Microsoft
+4. **中间件保护**：JWT验证、管理员权限验证
+5. **审计日志**：敏感操作记录
+6. **CORS配置**：跨域请求控制
+
+### 待实现的安全措施：
+1. **2FA双因素认证**：TOTP实现
+2. **Rate Limiting**：API访问频率限制
+3. **CSRF防护**：跨站请求伪造防护
+4. **输入验证**：更严格的数据验证
+
+## 3.6. 部署配置
+
+### Docker配置：
+- `backend.Dockerfile` - 后端服务容器化
+- `frontend.Dockerfile` - 前端应用容器化
+- `docker-compose.yml` - 服务编排配置
+
+### 环境变量配置：
+```bash
+# 数据库配置
+DB_TYPE=sqlite
+DB_PATH=basaltpass.db
+
+# JWT配置
+JWT_SECRET=your-jwt-secret
+JWT_EXPIRE_HOURS=24
+
+# OAuth配置
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_REDIRECT_URL=http://localhost:3000/auth/oauth/google/callback
+```
 
 ---
 
-### **三、交互与部署建议**
+# 四、开发进度总结
 
-* **接口风格统一**，前后端约定响应结构（如统一error code、分页格式等）
-* **本地开发体验**：分别起dev server（端口区分），使用.env文件配置API基址
-* **Docker部署**：前端构建后静态文件交由nginx或fiber托管，后端独立进程，便于横向扩容
+## 已完成功能（Day 1-3）：
+1. ✅ **基础架构搭建**：Go Fiber + React + SQLite
+2. ✅ **用户认证系统**：注册、登录、JWT认证
+3. ✅ **OAuth2集成**：Google、Meta、Microsoft三方登录
+4. ✅ **数据库设计**：完整的用户、钱包、权限模型
+5. ✅ **前端基础页面**：登录、注册、个人资料
+6. ✅ **API接口**：完整的RESTful API设计
+
+## 当前进行中（Day 4-5）：
+1. 🔄 **安全功能**：2FA、密码重置、账户安全
+2. 🔄 **钱包系统**：多币种钱包、充值提现
+3. 🔄 **权限管理**：RBAC角色权限系统
+
+## 待开发功能（Day 6-7）：
+1. 📋 **管理后台**：用户管理、钱包管理、审计日志
+2. 📋 **系统优化**：性能优化、UI完善、响应式设计
+3. 📋 **测试部署**：单元测试、集成测试、Docker部署
+
+## 技术债务与优化点：
+1. **测试覆盖**：需要添加单元测试和集成测试
+2. **文档完善**：API文档、部署文档、用户手册
+3. **性能优化**：数据库查询优化、缓存策略
+4. **安全加固**：更完善的输入验证、错误处理
+5. **监控告警**：系统监控、异常告警机制
+
+---
+
+# 五、下一步开发计划
+
+## 短期目标（本周内）：
+1. 完成2FA双因素认证功能
+2. 完善钱包充值提现流程
+3. 实现管理后台基础功能
+4. 添加基础测试用例
+
+## 中期目标（下个月）：
+1. 完善RBAC权限系统
+2. 优化UI/UX设计
+3. 添加更多OAuth提供商
+4. 实现消息通知系统
+
+## 长期目标（3个月内）：
+1. 支持多团队/组织
+2. 集成区块链钱包
+3. 实现高级风控功能
+4. 多语言国际化支持
+
+---
+
+# 六、开发环境搭建
+
+## 快速启动：
+```bash
+# 后端启动
+cd basaltpass-backend
+go mod tidy
+go run cmd/basaltpass/main.go
+
+# 前端启动
+cd basaltpass-frontend
+npm install
+npm run dev
+```
+
+## 数据库初始化：
+```bash
+# 自动迁移数据库表结构
+go run cmd/basaltpass/main.go migrate
+```
+
+## Docker部署：
+```bash
+# 使用Docker Compose启动
+docker-compose up -d
+```
+
+---
+
+这个项目目前已经完成了基础架构和核心认证功能，正在向完整的用户账户与钱包中心系统迈进。通过模块化的设计和清晰的架构，为后续功能扩展奠定了坚实的基础。
 
 
 

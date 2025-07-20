@@ -5,6 +5,7 @@ import (
 	"basaltpass-backend/internal/auth"
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/oauth"
+	"basaltpass-backend/internal/passkey"
 	"basaltpass-backend/internal/rbac"
 	"basaltpass-backend/internal/security"
 	"basaltpass-backend/internal/user"
@@ -23,10 +24,20 @@ func RegisterRoutes(app *fiber.App) {
 	authGroup.Post("/refresh", auth.RefreshHandler)
 	authGroup.Post("/password/reset-request", auth.RequestResetHandler)
 	authGroup.Post("/password/reset", auth.ResetPasswordHandler)
+	authGroup.Post("/verify-2fa", auth.Verify2FAHandler)
 
 	oauthGroup := v1.Group("/auth/oauth")
 	oauthGroup.Get(":provider/login", oauth.LoginHandler)
 	oauthGroup.Get(":provider/callback", oauth.CallbackHandler)
+
+	// Passkey authentication routes
+	passkeyGroup := v1.Group("/passkey")
+	passkeyGroup.Post("/register/begin", common.JWTMiddleware(), passkey.BeginRegistrationHandler)
+	passkeyGroup.Post("/register/finish", common.JWTMiddleware(), passkey.FinishRegistrationHandler)
+	passkeyGroup.Post("/login/begin", passkey.BeginLoginHandler)
+	passkeyGroup.Post("/login/finish", passkey.FinishLoginHandler)
+	passkeyGroup.Get("/list", common.JWTMiddleware(), passkey.ListPasskeysHandler)
+	passkeyGroup.Delete("/:id", common.JWTMiddleware(), passkey.DeletePasskeyHandler)
 
 	userGroup := v1.Group("/user", common.JWTMiddleware())
 	userGroup.Get("/profile", user.GetProfileHandler)
@@ -39,8 +50,27 @@ func RegisterRoutes(app *fiber.App) {
 	walletGroup.Get("/history", wallet.HistoryHandler)
 
 	securityGroup := v1.Group("/security", common.JWTMiddleware())
+	// 安全状态
+	securityGroup.Get("/status", security.GetSecurityStatusHandler)
+
+	// 密码管理
+	securityGroup.Post("/password/change", security.ChangePasswordHandler)
+
+	// 联系方式管理
+	securityGroup.Put("/contact", security.UpdateContactHandler)
+
+	// 2FA管理
 	securityGroup.Post("/2fa/setup", security.SetupHandler)
 	securityGroup.Post("/2fa/verify", security.VerifyHandler)
+	securityGroup.Post("/2fa/disable", security.Disable2FAHandler)
+
+	// 邮箱验证
+	securityGroup.Post("/email/verify", security.VerifyEmailHandler)
+	securityGroup.Post("/email/resend", security.SendEmailVerificationHandler)
+
+	// 手机验证
+	securityGroup.Post("/phone/verify", security.VerifyPhoneHandler)
+	securityGroup.Post("/phone/resend", security.SendPhoneVerificationHandler)
 
 	adminGroup := v1.Group("/admin", common.JWTMiddleware(), common.AdminMiddleware())
 	adminGroup.Get("/roles", rbac.ListRolesHandler)
