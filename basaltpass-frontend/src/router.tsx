@@ -8,6 +8,8 @@ import WalletIndex from './pages/wallet/Index'
 import Recharge from './pages/wallet/Recharge'
 import Withdraw from './pages/wallet/Withdraw'
 import History from './pages/wallet/History'
+import WalletsAdmin from './pages/admin/Wallets'
+import Logs from './pages/admin/Logs'
 
 export default function AppRouter() {
   return (
@@ -22,6 +24,8 @@ export default function AppRouter() {
         <Route path="/wallet/recharge" element={<Recharge />} />
         <Route path="/wallet/withdraw" element={<Withdraw />} />
         <Route path="/wallet/history" element={<History />} />
+        <Route path="/admin/wallets" element={<WalletsAdmin />} />
+        <Route path="/admin/logs" element={<Logs />} />
         <Route path="*" element={<Login />} />
       </Routes>
     </BrowserRouter>
