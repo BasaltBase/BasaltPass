@@ -107,3 +107,45 @@ paths:
       responses:
         '204':
           description: Assigned 
+  /api/v1/admin/users:
+    get:
+      summary: List users
+      responses:
+        '200':
+          description: Users
+  /api/v1/admin/user/{id}/ban:
+    post:
+      summary: Ban or unban user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Updated 
+  /api/v1/admin/wallets:
+    get:
+      summary: List wallet transactions
+      responses:
+        '200':
+          description: List
+  /api/v1/admin/tx/{id}/approve:
+    post:
+      summary: Approve or reject transaction
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Updated 
+  /api/v1/admin/logs:
+    get:
+      summary: List audit logs
+      responses:
+        '200':
+          description: Logs 

@@ -12,4 +12,5 @@ type User struct {
 	AvatarURL    string `gorm:"size:255"`
 	TOTPSecret   string `gorm:"size:64"`
 	TwoFAEnabled bool
+	Banned       bool
 }
