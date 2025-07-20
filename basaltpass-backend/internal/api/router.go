@@ -1,6 +1,7 @@
 package api
 
 import (
+	"basaltpass-backend/internal/admin"
 	"basaltpass-backend/internal/auth"
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/oauth"
@@ -8,7 +9,6 @@ import (
 	"basaltpass-backend/internal/security"
 	"basaltpass-backend/internal/user"
 	"basaltpass-backend/internal/wallet"
-	"basaltpass-backend/internal/admin"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -42,15 +42,15 @@ func RegisterRoutes(app *fiber.App) {
 	securityGroup.Post("/2fa/setup", security.SetupHandler)
 	securityGroup.Post("/2fa/verify", security.VerifyHandler)
 
-	admin := v1.Group("/admin", common.JWTMiddleware(), common.AdminMiddleware())
-	admin.Get("/roles", rbac.ListRolesHandler)
-	admin.Post("/roles", rbac.CreateRoleHandler)
-	admin.Post("/user/:id/role", rbac.AssignRoleHandler)
-	admin.Get("/users", admin.ListUsersHandler)
-	admin.Post("/user/:id/ban", admin.BanUserHandler)
-	admin.Get("/wallets", admin.ListWalletTxHandler)
-	admin.Post("/tx/:id/approve", admin.ApproveTxHandler)
-	admin.Get("/logs", admin.ListAuditHandler)
+	adminGroup := v1.Group("/admin", common.JWTMiddleware(), common.AdminMiddleware())
+	adminGroup.Get("/roles", rbac.ListRolesHandler)
+	adminGroup.Post("/roles", rbac.CreateRoleHandler)
+	adminGroup.Post("/user/:id/role", rbac.AssignRoleHandler)
+	adminGroup.Get("/users", admin.ListUsersHandler)
+	adminGroup.Post("/user/:id/ban", admin.BanUserHandler)
+	adminGroup.Get("/wallets", admin.ListWalletTxHandler)
+	adminGroup.Post("/tx/:id/approve", admin.ApproveTxHandler)
+	adminGroup.Get("/logs", admin.ListAuditHandler)
 
 	// Add more route groups as needed...
 }

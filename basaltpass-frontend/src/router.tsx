@@ -10,6 +10,7 @@ import Withdraw from './pages/wallet/Withdraw'
 import History from './pages/wallet/History'
 import WalletsAdmin from './pages/admin/Wallets'
 import Logs from './pages/admin/Logs'
+import TwoFA from './pages/security/TwoFA'
 
 export default function AppRouter() {
   return (
@@ -26,6 +27,7 @@ export default function AppRouter() {
         <Route path="/wallet/history" element={<History />} />
         <Route path="/admin/wallets" element={<WalletsAdmin />} />
         <Route path="/admin/logs" element={<Logs />} />
+        <Route path="/security/2fa" element={<TwoFA />} />
         <Route path="*" element={<Login />} />
       </Routes>
     </BrowserRouter>
