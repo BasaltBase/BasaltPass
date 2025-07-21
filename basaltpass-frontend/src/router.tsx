@@ -27,6 +27,7 @@ import AdminNotifications from './pages/admin/Notifications'
 import InviteTeam from './pages/team/Invite'
 import InvitationInbox from './pages/invitations/Inbox'
 import NotFound from './pages/NotFound'
+import LoginHistory from './pages/security/LoginHistory'
 
 export default function AppRouter() {
   return (
@@ -63,6 +64,7 @@ export default function AppRouter() {
         <Route path="/security" element={<SecuritySettings />} />
         <Route path="/security/2fa" element={<TwoFA />} />
         <Route path="/security/passkey" element={<PasskeyManagement />} />
+        <Route path="/security/login-history" element={<LoginHistory />} />
         
         {/* 管理员页面 - 需要添加Layout */}
         <Route path="/admin/users" element={<Users />} />

@@ -243,42 +243,6 @@ function Profile() {
                 )}
               </div>
             </div>
-
-            {/* 安全设置 */}
-            <div className="mt-6 bg-white shadow rounded-lg">
-              <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">安全设置</h3>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">两步验证</p>
-                      <p className="text-sm text-gray-500">增强账户安全性</p>
-                    </div>
-                    <button className="text-sm font-medium text-blue-600 hover:text-blue-500">
-                      管理
-                    </button>
-                  </div>
-                  <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">登录历史</p>
-                      <p className="text-sm text-gray-500">查看最近的登录活动</p>
-                    </div>
-                    <button className="text-sm font-medium text-blue-600 hover:text-blue-500">
-                      查看
-                    </button>
-                  </div>
-                  <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">密码设置</p>
-                      <p className="text-sm text-gray-500">更改账户密码</p>
-                    </div>
-                    <button className="text-sm font-medium text-blue-600 hover:text-blue-500">
-                      更改
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
