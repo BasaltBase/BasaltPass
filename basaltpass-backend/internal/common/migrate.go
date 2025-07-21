@@ -25,6 +25,9 @@ func RunMigrations() {
 		&model.SystemApp{},
 		&model.Notification{},
 		&model.Invitation{},
+		&model.OAuthClient{},
+		&model.OAuthAuthorizationCode{},
+		&model.OAuthAccessToken{},
 	)
 	if err != nil {
 		log.Fatalf("[Error][RunMigrations] auto migration failed: %v", err)

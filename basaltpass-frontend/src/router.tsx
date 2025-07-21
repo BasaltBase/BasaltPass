@@ -28,6 +28,8 @@ import InviteTeam from './pages/team/Invite'
 import InvitationInbox from './pages/invitations/Inbox'
 import NotFound from './pages/NotFound'
 import LoginHistory from './pages/security/LoginHistory'
+import OAuthClients from './pages/admin/OAuthClients'
+import OAuthConsent from './pages/auth/OAuthConsent'
 
 export default function AppRouter() {
   return (
@@ -37,6 +39,7 @@ export default function AppRouter() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/oauth-success" element={<OauthSuccess />} />
+        <Route path="/oauth-consent" element={<OAuthConsent />} />
         
         {/* 主应用页面 - 内部已使用Layout */}
         <Route path="/dashboard" element={<Dashboard />} />
@@ -72,6 +75,7 @@ export default function AppRouter() {
         <Route path="/admin/wallets" element={<WalletsAdmin />} />
         <Route path="/admin/logs" element={<Logs />} />
         <Route path="/admin/notifications" element={<AdminNotifications />} />
+        <Route path="/admin/oauth-clients" element={<OAuthClients />} />
         
         {/* 默认重定向 */}
         <Route path="/" element={<Dashboard />} />

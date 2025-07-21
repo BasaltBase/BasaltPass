@@ -33,6 +33,15 @@ func RegisterRoutes(app *fiber.App) {
 	oauthGroup.Get(":provider/login", oauth.LoginHandler)
 	oauthGroup.Get(":provider/callback", oauth.CallbackHandler)
 
+	// OAuth2授权服务器端点
+	oauthServerGroup := app.Group("/oauth")
+	oauthServerGroup.Get("/authorize", oauth.AuthorizeHandler)
+	oauthServerGroup.Post("/consent", common.JWTMiddleware(), oauth.ConsentHandler)
+	oauthServerGroup.Post("/token", oauth.TokenHandler)
+	oauthServerGroup.Get("/userinfo", oauth.UserInfoHandler)
+	oauthServerGroup.Post("/introspect", oauth.IntrospectHandler)
+	oauthServerGroup.Post("/revoke", oauth.RevokeHandler)
+
 	// Passkey authentication routes
 	passkeyGroup := v1.Group("/passkey")
 	passkeyGroup.Post("/register/begin", common.JWTMiddleware(), passkey.BeginRegistrationHandler)
@@ -125,6 +134,18 @@ func RegisterRoutes(app *fiber.App) {
 	adminNotif.Post("/", notification.AdminCreateHandler)
 	adminNotif.Get("/", notification.AdminListHandler)
 	adminNotif.Delete("/:id", notification.AdminDeleteHandler)
+
+	// OAuth2客户端管理路由
+	oauthClientGroup := adminGroup.Group("/oauth/clients")
+	oauthClientGroup.Post("/", oauth.CreateClientHandler)
+	oauthClientGroup.Get("/", oauth.ListClientsHandler)
+	oauthClientGroup.Get("/:client_id", oauth.GetClientHandler)
+	oauthClientGroup.Put("/:client_id", oauth.UpdateClientHandler)
+	oauthClientGroup.Delete("/:client_id", oauth.DeleteClientHandler)
+	oauthClientGroup.Post("/:client_id/regenerate-secret", oauth.RegenerateSecretHandler)
+	oauthClientGroup.Get("/:client_id/stats", oauth.GetClientStatsHandler)
+	oauthClientGroup.Get("/:client_id/tokens", oauth.GetTokensHandler)
+	oauthClientGroup.Post("/:client_id/revoke-tokens", oauth.RevokeClientTokensHandler)
 
 	// Add more route groups as needed...
 }
