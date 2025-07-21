@@ -3,6 +3,7 @@ package security
 import (
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
+	"basaltpass-backend/internal/notification"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/pquerna/otp/totp"
@@ -102,6 +103,17 @@ func ChangePasswordHandler(c *fiber.Ctx) error {
 
 	// Log audit
 	common.LogAudit(uid, "修改密码", "", "", c.IP(), c.Get("User-Agent"))
+
+	// 发送通知
+	go notification.Send(
+		"安全中心",
+		"密码已更改",
+		"您的账户密码已于最近成功更改。如果不是您本人操作，请立即联系我们。",
+		"warning",
+		nil,
+		"系统",
+		[]uint{uid},
+	)
 
 	return c.JSON(fiber.Map{"message": "密码修改成功"})
 }

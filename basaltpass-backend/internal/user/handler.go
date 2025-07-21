@@ -1,6 +1,9 @@
 package user
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"strconv"
+	"github.com/gofiber/fiber/v2"
+)
 
 var svc = Service{}
 
@@ -25,4 +28,25 @@ func UpdateProfileHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.SendStatus(fiber.StatusNoContent)
+}
+
+// SearchHandler handles GET /users/search
+func SearchHandler(c *fiber.Ctx) error {
+	query := c.Query("q")
+	if query == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "search query is required"})
+	}
+	
+	limitStr := c.Query("limit", "10")
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil {
+		limit = 10
+	}
+	
+	results, err := svc.SearchUsers(query, limit)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	
+	return c.JSON(results)
 }

@@ -2,15 +2,19 @@ package model
 
 import "gorm.io/gorm"
 
-// Wallet represents a multi-currency account for a user.
+// Wallet represents a multi-currency account for a user or team.
 type Wallet struct {
 	gorm.Model
-	UserID   uint   `gorm:"index"`
+	UserID   *uint  `gorm:"index"` // 用户钱包
+	TeamID   *uint  `gorm:"index"` // 团队钱包
 	Currency string `gorm:"size:16;index"`
 	Balance  int64  // in smallest unit (e.g. cents, satoshi)
 	Freeze   int64  // frozen amount
-	User     User   `gorm:"foreignKey:UserID"`
-	Txns     []WalletTx
+
+	// 关联
+	User *User `gorm:"foreignKey:UserID"`
+	Team *Team `gorm:"foreignKey:TeamID"`
+	Txns []WalletTx
 }
 
 // WalletTx represents a transaction on a wallet.

@@ -10,9 +10,12 @@ import {
   ArrowRightOnRectangleIcon,
   Bars3Icon,
   XMarkIcon,
-  QuestionMarkCircleIcon
+  QuestionMarkCircleIcon,
+  UserGroupIcon,
+  InboxIcon
 } from '@heroicons/react/24/outline'
 import { clearAccessToken } from '../utils/auth'
+import EnhancedNotificationIcon from './EnhancedNotificationIcon'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -20,7 +23,10 @@ interface LayoutProps {
 
 const navigation = [
   { name: '仪表板', href: '/dashboard', icon: HomeIcon },
+  { name: '团队', href: '/teams', icon: UserGroupIcon },
   { name: '钱包', href: '/wallet', icon: WalletIcon },
+  { name: '通知中心', href: '/notifications', icon: ChartBarIcon },
+  { name: '邀请函', href: '/invitations/inbox', icon: InboxIcon },
   { name: '个人资料', href: '/profile', icon: UserIcon },
   { name: '安全设置', href: '/security', icon: ShieldCheckIcon },
   { name: '系统设置', href: '/settings', icon: Cog6ToothIcon },
@@ -32,6 +38,7 @@ const adminNavigation = [
   { name: '角色管理', href: '/admin/roles', icon: ShieldCheckIcon },
   { name: '钱包管理', href: '/admin/wallets', icon: WalletIcon },
   { name: '审计日志', href: '/admin/logs', icon: ChartBarIcon },
+  { name: '通知管理', href: '/admin/notifications', icon: ChartBarIcon },
 ]
 
 export default function Layout({ children }: LayoutProps) {
@@ -61,7 +68,9 @@ export default function Layout({ children }: LayoutProps) {
           </div>
           <nav className="flex-1 space-y-1 px-2 py-4">
             {currentNav.map((item) => {
-              const isActive = location.pathname === item.href
+              const isActive = location.pathname === item.href || 
+                             (item.href === '/teams' && location.pathname.startsWith('/teams')) ||
+                             (isAdmin && location.pathname.startsWith(item.href))
               return (
                 <Link
                   key={item.name}
@@ -90,7 +99,9 @@ export default function Layout({ children }: LayoutProps) {
           </div>
           <nav className="flex-1 space-y-1 px-2 py-4">
             {currentNav.map((item) => {
-              const isActive = location.pathname === item.href
+              const isActive = location.pathname === item.href || 
+                             (item.href === '/teams' && location.pathname.startsWith('/teams')) ||
+                             (isAdmin && location.pathname.startsWith(item.href))
               return (
                 <Link
                   key={item.name}
@@ -136,6 +147,7 @@ export default function Layout({ children }: LayoutProps) {
             <div className="flex items-center gap-x-4 lg:gap-x-6">
               <div className="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-200" />
               <div className="flex items-center gap-x-4">
+                <EnhancedNotificationIcon />
                 <span className="text-sm text-gray-700">欢迎使用 BasaltPass</span>
               </div>
             </div>

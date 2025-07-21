@@ -48,43 +48,52 @@ BasaltPass
 - **前端集成**：OAuth登录按钮和回调处理
 - **依赖修复**：解决了golang.org/x/oauth2导入问题
 
-## **【Day 4：用户安全与账户管理】** 🔄 进行中
+## **【Day 4：用户安全与账户管理】** ✅ 已完成
 
-* 🔄 密码重置、二次验证（TOTP、短信/邮箱二步验证）
-* 🔄 密保问题、手机号更换、注销、风控审计表
-* 🔄 用户角色和权限（RBAC模型，基础角色维护页面）
-* 🔄 前端控制台完善（账号安全设置、二次验证管理）
+* ✅ 密码重置、二次验证（TOTP、短信/邮箱二步验证）
+* ✅ 密保问题、手机号更换、注销、风控审计表
+* ✅ 用户角色和权限（RBAC模型，基础角色维护页面）
+* ✅ 前端控制台完善（账号安全设置、二次验证管理）
 
-### 当前进度：
-- **安全模块**：基础结构已搭建
-- **RBAC系统**：角色和权限模型已定义
+### 已完成的具体内容：
+- **安全模块**：2FA双因素认证、密码重置
+- **RBAC系统**：角色和权限模型已实现
 - **审计日志**：操作日志记录功能已实现
+- **前端页面**：安全设置、2FA管理页面
 
-## **【Day 5：多币种钱包系统】** 🔄 进行中
+## **【Day 5：多币种钱包系统】** ✅ 已完成
 
-* 🔄 钱包账户模型（支持多币种：USD, CNY, BTC, ETH等， 用户可以添加自定义币种，方便未来扩展）
-* 🔄 钱包充值、提现、余额查询（mock接口或对接测试网）
-* 🔄 交易记录、充值/提现审批流
-* 🔄 钱包UI组件开发（余额、充值、提现、历史）
+* ✅ 钱包账户模型（支持多币种：USD, CNY, BTC, ETH等， 用户可以添加自定义币种，方便未来扩展）
+* ✅ 钱包充值、提现、余额查询（mock接口或对接测试网）
+* ✅ 交易记录、充值/提现审批流
+* ✅ 钱包UI组件开发（余额、充值、提现、历史）
 
-### 当前进度：
-- **钱包模型**：多币种钱包数据结构已定义
-- **钱包服务**：基础的钱包操作逻辑已实现
-- **前端页面**：钱包相关页面框架已搭建
+### 已完成的具体内容：
+- **钱包模型**：多币种钱包数据结构已实现
+- **钱包服务**：完整的钱包操作逻辑
+- **前端页面**：钱包管理、充值提现、交易历史页面
+- **管理功能**：钱包审批流程
 
-## **【Day 6：管理后台、系统UI完善】** 📋 待开始
+## **【Day 6：团队功能系统】** ✅ 已完成
+
+* ✅ 团队模型设计（Team、TeamMember）
+* ✅ 团队角色权限（所有者、管理员、普通成员）
+* ✅ 团队管理功能（创建、编辑、删除、成员管理）
+* ✅ 前端团队管理页面（团队列表、详情、成员管理）
+
+### 已完成的具体内容：
+- **团队模型**：Team、TeamMember、TeamRole
+- **权限系统**：基于角色的团队权限控制
+- **API接口**：完整的团队管理RESTful API
+- **前端页面**：团队列表、创建、详情、成员管理页面
+- **数据库设计**：支持团队钱包扩展
+
+## **【Day 7：管理后台、系统UI完善】** 📋 待开始
 
 * 📋 用户列表、搜索、权限分配
 * 📋 钱包流水、交易管理
 * 📋 日志审计页面、异常处理、全局通知
 * 📋 响应式UI自适应优化、深色模式
-
-## **【Day 7：测试、优化与部署】** 📋 待开始
-
-* 📋 集成测试、e2e测试（重点是身份验证和钱包安全）
-* 📋 docker化部署（前后端一体或分开）
-* 📋 文档输出（接口文档、部署文档、运维手册）
-* 📋 演示及初步评估，收集反馈（复盘&规划下一步）
 
 ---
 
@@ -143,29 +152,55 @@ CREATE TABLE user_roles (
     FOREIGN KEY (role_id) REFERENCES roles(id)
 );
 
--- 钱包表
-CREATE TABLE wallets (
+-- 团队表
+CREATE TABLE teams (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name VARCHAR(100) NOT NULL,
+    description VARCHAR(500),
+    avatar_url VARCHAR(255),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 团队成员表
+CREATE TABLE team_members (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    team_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
-    currency VARCHAR(10) NOT NULL,
-    balance DECIMAL(20,8) DEFAULT 0,
-    frozen_balance DECIMAL(20,8) DEFAULT 0,
+    role VARCHAR(20) NOT NULL DEFAULT 'member',
+    status VARCHAR(20) NOT NULL DEFAULT 'active',
+    joined_at BIGINT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (team_id) REFERENCES teams(id),
     FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- 钱包表（支持用户和团队钱包）
+CREATE TABLE wallets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    team_id INTEGER,
+    currency VARCHAR(16) NOT NULL,
+    balance BIGINT DEFAULT 0,
+    freeze BIGINT DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (team_id) REFERENCES teams(id)
 );
 
 -- 钱包交易记录表
 CREATE TABLE wallet_transactions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     wallet_id INTEGER NOT NULL,
-    type VARCHAR(20) NOT NULL,
-    amount DECIMAL(20,8) NOT NULL,
-    balance_before DECIMAL(20,8) NOT NULL,
-    balance_after DECIMAL(20,8) NOT NULL,
-    status VARCHAR(20) DEFAULT 'pending',
-    description TEXT,
+    type VARCHAR(32) NOT NULL,
+    amount BIGINT NOT NULL,
+    status VARCHAR(32) DEFAULT 'pending',
+    reference VARCHAR(128),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (wallet_id) REFERENCES wallets(id)
 );
 
@@ -245,6 +280,10 @@ CREATE TABLE password_resets (
 │   │   ├── handler.go
 │   │   ├── service.go
 │   │   └── dto.go
+│   ├── team/                       # 团队模块
+│   │   ├── handler.go
+│   │   ├── service.go
+│   │   └── dto.go
 │   ├── wallet/                     # 钱包模块
 │   │   ├── handler.go
 │   │   └── service.go
@@ -264,6 +303,7 @@ CREATE TABLE password_resets (
 │   ├── model/                      # 数据模型
 │   │   ├── user.go
 │   │   ├── role.go
+│   │   ├── team.go
 │   │   ├── wallet.go
 │   │   ├── oauth_account.go
 │   │   ├── audit_log.go
@@ -290,6 +330,10 @@ CREATE TABLE password_resets (
 │   │   │   └── OauthSuccess.tsx
 │   │   ├── profile/
 │   │   │   └── Index.tsx
+│   │   ├── team/                  # 团队页面
+│   │   │   ├── Index.tsx
+│   │   │   ├── Create.tsx
+│   │   │   └── Detail.tsx
 │   │   ├── wallet/
 │   │   │   ├── Index.tsx
 │   │   │   ├── Recharge.tsx
@@ -305,6 +349,7 @@ CREATE TABLE password_resets (
 │   ├── api/                       # API接口
 │   │   ├── client.ts
 │   │   ├── admin.ts
+│   │   ├── team.ts
 │   │   ├── security.ts
 │   │   └── wallet.ts
 │   ├── utils/
@@ -331,6 +376,18 @@ CREATE TABLE password_resets (
 - `PUT /api/v1/user/profile` - 更新用户资料
 - `POST /api/v1/user/avatar` - 上传头像
 
+### 团队接口：
+- `POST /api/v1/teams` - 创建团队
+- `GET /api/v1/teams` - 获取用户的所有团队
+- `GET /api/v1/teams/{id}` - 获取团队详情
+- `PUT /api/v1/teams/{id}` - 更新团队信息
+- `DELETE /api/v1/teams/{id}` - 删除团队
+- `GET /api/v1/teams/{id}/members` - 获取团队成员列表
+- `POST /api/v1/teams/{id}/members` - 添加团队成员
+- `PUT /api/v1/teams/{id}/members/{member_id}` - 更新成员角色
+- `DELETE /api/v1/teams/{id}/members/{member_id}` - 移除团队成员
+- `POST /api/v1/teams/{id}/leave` - 离开团队
+
 ### 钱包接口：
 - `GET /api/v1/wallet/balance` - 获取钱包余额
 - `POST /api/v1/wallet/recharge` - 钱包充值
@@ -348,7 +405,35 @@ CREATE TABLE password_resets (
 - `GET /api/v1/admin/logs` - 审计日志
 - `GET /api/v1/admin/roles` - 角色管理
 
-## 3.5. 安全策略实现
+## 3.5. 团队功能设计
+
+### 团队角色权限：
+1. **所有者 (Owner)**：
+   - 可以修改团队信息
+   - 可以管理所有成员
+   - 可以删除团队
+   - 不能离开团队（必须先转让所有权）
+
+2. **管理员 (Admin)**：
+   - 可以修改团队信息
+   - 可以管理成员（添加、移除、修改角色）
+   - 不能删除团队
+   - 可以离开团队
+
+3. **普通成员 (Member)**：
+   - 可以查看团队信息
+   - 可以查看成员列表
+   - 不能管理团队
+   - 可以离开团队
+
+### 团队功能特性：
+- **多对多关系**：一个用户可以加入多个团队，一个团队可以有多个用户
+- **角色继承**：管理员继承普通成员的所有权限
+- **权限验证**：所有操作都会验证用户在该团队中的角色权限
+- **团队钱包**：支持为团队创建独立的钱包账户
+- **审计日志**：记录所有团队相关的操作
+
+## 3.6. 安全策略实现
 
 ### 已实现的安全措施：
 1. **JWT认证**：Access Token + Refresh Token机制
@@ -357,14 +442,14 @@ CREATE TABLE password_resets (
 4. **中间件保护**：JWT验证、管理员权限验证
 5. **审计日志**：敏感操作记录
 6. **CORS配置**：跨域请求控制
+7. **团队权限**：基于角色的团队权限控制
 
 ### 待实现的安全措施：
-1. **2FA双因素认证**：TOTP实现
-2. **Rate Limiting**：API访问频率限制
-3. **CSRF防护**：跨站请求伪造防护
-4. **输入验证**：更严格的数据验证
+1. **Rate Limiting**：API访问频率限制
+2. **CSRF防护**：跨站请求伪造防护
+3. **输入验证**：更严格的数据验证
 
-## 3.6. 部署配置
+## 3.7. 部署配置
 
 ### Docker配置：
 - `backend.Dockerfile` - 后端服务容器化
@@ -389,25 +474,43 @@ GOOGLE_REDIRECT_URL=http://localhost:3000/auth/oauth/google/callback
 
 ---
 
-# 四、开发进度总结
+## 四、开发进度总结
 
-## 已完成功能（Day 1-3）：
+### 已完成功能（Day 1-6）：
 1. ✅ **基础架构搭建**：Go Fiber + React + SQLite
-2. ✅ **用户认证系统**：注册、登录、JWT认证
+2. ✅ **用户认证系统**：注册、登录、JWT认证、2FA、密码重置、WebAuthn/Passkey
 3. ✅ **OAuth2集成**：Google、Meta、Microsoft三方登录
-4. ✅ **数据库设计**：完整的用户、钱包、权限模型
-5. ✅ **前端基础页面**：登录、注册、个人资料
-6. ✅ **API接口**：完整的RESTful API设计
+4. ✅ **数据库设计**：完整的用户、团队、钱包、权限、通知、邀请、审计日志等模型
+5. ✅ **前端基础页面**：登录、注册、个人资料、团队管理、钱包、通知中心、安全设置
+6. ✅ **API接口**：用户、团队、钱包、通知、邀请、用户搜索等RESTful API
+7. ✅ **团队功能**：完整的团队管理系统（创建、编辑、成员管理、邀请、角色权限）
+8. ✅ **钱包系统**：多币种钱包、充值提现、交易历史、审批流
+9. ✅ **安全功能**：2FA、密码重置、账户安全、WebAuthn/Passkey
+10. ✅ **通知系统**：
+    - 用户可接收系统通知、团队相关通知、邀请通知，支持全员广播和定向推送
+    - 前端实现通知中心页面，支持已读/未读、批量标记、删除等操作
+    - 管理员可通过后台发送系统通知，管理所有通知
+11. ✅ **邀请系统**：
+    - 支持团队成员邀请、接受/拒绝/撤回邀请，自动推送相关通知
+    - 前端实现邀请收件箱页面，支持分页、操作反馈
+12. ✅ **用户搜索**：
+    - 支持昵称/邮箱模糊搜索，接口支持分页，前端集成搜索框
+13. ✅ **管理后台（部分）**：
+    - 用户管理：用户列表、搜索、禁用/解禁
+    - 钱包管理：用户钱包列表、余额查看
+    - 通知管理：系统通知的创建、删除、列表
+    - 角色分配：基础角色分配接口
+    - 审计日志：操作日志查询接口
 
-## 当前进行中（Day 4-5）：
-1. 🔄 **安全功能**：2FA、密码重置、账户安全
-2. 🔄 **钱包系统**：多币种钱包、充值提现
-3. 🔄 **权限管理**：RBAC角色权限系统
+### 当前进行中（Day 7）：
+1. 🔄 **管理后台**：用户管理、钱包管理、通知管理、角色分配、审计日志页面（部分已实现，部分功能完善中）
+2. 🔄 **系统优化**：性能优化、UI完善、响应式设计、深色模式
 
-## 待开发功能（Day 6-7）：
-1. 📋 **管理后台**：用户管理、钱包管理、审计日志
-2. 📋 **系统优化**：性能优化、UI完善、响应式设计
-3. 📋 **测试部署**：单元测试、集成测试、Docker部署
+### 待开发功能：
+1. 📋 **测试部署**：单元测试、集成测试、Docker部署
+2. 📋 **文档完善**：API文档、部署文档、用户手册
+3. 📋 **安全加固**：更完善的输入验证、错误处理、Rate Limiting、CSRF防护
+4. 📋 **系统监控与告警**：监控、异常告警机制
 
 ## 技术债务与优化点：
 1. **测试覆盖**：需要添加单元测试和集成测试
@@ -421,16 +524,15 @@ GOOGLE_REDIRECT_URL=http://localhost:3000/auth/oauth/google/callback
 # 五、下一步开发计划
 
 ## 短期目标（本周内）：
-1. 完成2FA双因素认证功能
-2. 完善钱包充值提现流程
-3. 实现管理后台基础功能
-4. 添加基础测试用例
+1. 完成管理后台基础功能
+2. 添加基础测试用例
+3. 完善API文档
 
 ## 中期目标（下个月）：
-1. 完善RBAC权限系统
-2. 优化UI/UX设计
-3. 添加更多OAuth提供商
-4. 实现消息通知系统
+1. 优化UI/UX设计
+2. 添加更多OAuth提供商
+3. 实现消息通知系统
+4. 完善团队钱包功能
 
 ## 长期目标（3个月内）：
 1. 支持多团队/组织
@@ -467,9 +569,15 @@ go run cmd/basaltpass/main.go migrate
 docker-compose up -d
 ```
 
+## 团队功能测试：
+```bash
+# 运行团队API测试脚本
+./test_team_api.ps1
+```
+
 ---
 
-这个项目目前已经完成了基础架构和核心认证功能，正在向完整的用户账户与钱包中心系统迈进。通过模块化的设计和清晰的架构，为后续功能扩展奠定了坚实的基础。
+这个项目目前已经完成了基础架构、核心认证功能、团队管理系统和多币种钱包系统，正在向完整的用户账户与钱包中心系统迈进。通过模块化的设计和清晰的架构，为后续功能扩展奠定了坚实的基础。
 
 
 

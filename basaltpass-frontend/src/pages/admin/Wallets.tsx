@@ -1,70 +1,69 @@
 import { useEffect, useState } from 'react'
-import { listWallets, approveTx } from '../../api/admin'
-import { Link } from 'react-router-dom'
+import Layout from '../../components/Layout'
+import client from '../../api/client'
 
-interface Tx {
-  id: number
-  wallet_id: number
-  type: string
-  amount: number
-  status: string
-  created_at: string
+interface WalletTx {
+  ID: number
+  WalletID: number
+  Type: string
+  Amount: number
+  Status: string
+  CreatedAt: string
+  Wallet: {
+    ID: number
+    UserID?: number
+    TeamID?: number
+    Currency: string
+    Balance: number
+  }
 }
 
 export default function Wallets() {
-  const [txs, setTxs] = useState<Tx[]>([])
+  const [txs, setTxs] = useState<WalletTx[]>([])
 
   const load = () => {
-    listWallets().then((r) => setTxs(r.data))
+    client.get<WalletTx[]>('/api/v1/admin/wallets').then((r) => setTxs(r.data))
   }
   useEffect(load, [])
 
-  const approve = async (t: Tx, status: 'success' | 'fail') => {
-    await approveTx(t.id, status)
-    load()
-  }
-
   return (
-    <div className="p-8 overflow-x-auto">
-      <h2 className="text-2xl mb-4">Wallet Transactions</h2>
-      <Link to="/admin" className="text-blue-600">
-        ← Back
-      </Link>
-      <table className="min-w-full border mt-4">
-        <thead>
-          <tr>
-            <th className="border px-2">ID</th>
-            <th className="border px-2">Type</th>
-            <th className="border px-2">Amount</th>
-            <th className="border px-2">Status</th>
-            <th className="border px-2">Time</th>
-            <th className="border px-2">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {txs.map((t) => (
-            <tr key={t.id}>
-              <td className="border px-2">{t.id}</td>
-              <td className="border px-2">{t.type}</td>
-              <td className="border px-2">{t.amount / 100}</td>
-              <td className="border px-2">{t.status}</td>
-              <td className="border px-2">{new Date(t.created_at).toLocaleString()}</td>
-              <td className="border px-2 space-x-2">
-                {t.status === 'pending' && (
-                  <>
-                    <button className="bg-green-600 text-white px-2" onClick={() => approve(t, 'success')}>
-                      ✔
-                    </button>
-                    <button className="bg-red-600 text-white px-2" onClick={() => approve(t, 'fail')}>
-                      ✖
-                    </button>
-                  </>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <Layout>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">钱包管理</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            查看和管理用户钱包信息
+          </p>
+        </div>
+
+        <div className="bg-white shadow rounded-lg">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-medium text-gray-900">钱包列表</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户ID</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">余额</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">货币</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {txs.map((t) => (
+                  <tr key={t.ID} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{t.ID}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{t.Wallet?.UserID ?? '-'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{(t.Amount / 100).toFixed(2)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{t.Wallet?.Currency || '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </Layout>
   )
 } 

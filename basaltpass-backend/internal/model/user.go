@@ -18,8 +18,8 @@ type User struct {
 	AvatarURL     string `gorm:"size:255"`
 	TOTPSecret    string `gorm:"size:64"`
 	TwoFAEnabled  bool
-	EmailVerified bool   `gorm:"default:false"`
-	PhoneVerified bool   `gorm:"default:false"`
+	EmailVerified bool `gorm:"default:false"`
+	PhoneVerified bool `gorm:"default:false"`
 	Banned        bool
 
 	// WebAuthn相关字段
@@ -27,6 +27,9 @@ type User struct {
 
 	// 关联的Passkeys
 	Passkeys []Passkey `gorm:"foreignKey:UserID"`
+
+	// 团队关联
+	TeamMemberships []TeamMember `gorm:"foreignKey:UserID"`
 }
 
 // WebAuthnID 返回用户的WebAuthn ID

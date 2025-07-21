@@ -112,7 +112,7 @@ export default function Help() {
               {faqs.map((faq, index) => (
                 <div key={index} className="border border-gray-200 rounded-lg">
                   <button
-                    className="w-full px-4 py-3 text-left flex justify-between items-center hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    className="w-full px-4 py-3 text-left flex justify-between items-center hover:bg-gray-50 "
                     onClick={() => toggleFaq(index)}
                   >
                     <span className="text-sm font-medium text-gray-900">

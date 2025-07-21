@@ -4,6 +4,7 @@ import Register from './pages/auth/Register'
 import Profile from './pages/profile/Index'
 import OauthSuccess from './pages/auth/OauthSuccess'
 import Roles from './pages/admin/Roles'
+import Users from './pages/admin/Users'
 import WalletIndex from './pages/wallet/Index'
 import Recharge from './pages/wallet/Recharge'
 import Withdraw from './pages/wallet/Withdraw'
@@ -16,41 +17,63 @@ import PasskeyManagement from './pages/security/PasskeyManagement'
 import Dashboard from './pages/Dashboard'
 import Settings from './pages/Settings'
 import Help from './pages/Help'
+import TeamIndex from './pages/team/Index'
+import CreateTeam from './pages/team/Create'
+import TeamDetail from './pages/team/Detail'
+import TeamMembers from './pages/team/Members'
+import EditTeam from './pages/team/Edit'
+import Notifications from './pages/Notifications'
+import AdminNotifications from './pages/admin/Notifications'
+import InviteTeam from './pages/team/Invite'
+import InvitationInbox from './pages/invitations/Inbox'
+import NotFound from './pages/NotFound'
 
 export default function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* 认证页面 */}
+        {/* 认证页面 - 不需要Layout */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/oauth-success" element={<OauthSuccess />} />
         
-        {/* 主应用页面 */}
+        {/* 主应用页面 - 内部已使用Layout */}
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/help" element={<Help />} />
+        <Route path="/notifications" element={<Notifications />} />
         
-        {/* 钱包相关页面 */}
+        {/* 团队相关页面 - 需要添加Layout */}
+        <Route path="/teams" element={<TeamIndex />} />
+        <Route path="/teams/create" element={<CreateTeam />} />
+        <Route path="/teams/:id" element={<TeamDetail />} />
+        <Route path="/teams/:id/members" element={<TeamMembers />} />
+        <Route path="/teams/:id/edit" element={<EditTeam />} />
+        <Route path="/teams/invite/:id" element={<InviteTeam />} />
+        <Route path="/invitations/inbox" element={<InvitationInbox />} />
+        
+        {/* 钱包相关页面 - 内部已使用Layout */}
         <Route path="/wallet" element={<WalletIndex />} />
         <Route path="/wallet/recharge" element={<Recharge />} />
         <Route path="/wallet/withdraw" element={<Withdraw />} />
         <Route path="/wallet/history" element={<History />} />
         
-        {/* 安全设置 */}
+        {/* 安全设置 - 内部已使用Layout */}
         <Route path="/security" element={<SecuritySettings />} />
         <Route path="/security/2fa" element={<TwoFA />} />
         <Route path="/security/passkey" element={<PasskeyManagement />} />
         
-        {/* 管理员页面 */}
+        {/* 管理员页面 - 需要添加Layout */}
+        <Route path="/admin/users" element={<Users />} />
         <Route path="/admin/roles" element={<Roles />} />
         <Route path="/admin/wallets" element={<WalletsAdmin />} />
         <Route path="/admin/logs" element={<Logs />} />
+        <Route path="/admin/notifications" element={<AdminNotifications />} />
         
         {/* 默认重定向 */}
         <Route path="/" element={<Dashboard />} />
-        <Route path="*" element={<Login />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   )

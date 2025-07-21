@@ -45,3 +45,33 @@ func (s Service) UpdateProfile(userID uint, req UpdateProfileRequest) error {
 	}
 	return common.DB().Model(&model.User{}).Where("id = ?", userID).Updates(updates).Error
 }
+
+// SearchUsers searches users by nickname or email
+func (s Service) SearchUsers(query string, limit int) ([]UserSearchResult, error) {
+	var users []model.User
+
+	if limit <= 0 || limit > 50 {
+		limit = 10 // 默认限制10个，最多50个
+	}
+
+	err := common.DB().
+		Where("nickname LIKE ? OR email LIKE ?", "%"+query+"%", "%"+query+"%").
+		Limit(limit).
+		Find(&users).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	var results []UserSearchResult
+	for _, user := range users {
+		results = append(results, UserSearchResult{
+			ID:       user.ID,
+			Nickname: user.Nickname,
+			Email:    user.Email,
+			Avatar:   user.AvatarURL,
+		})
+	}
+
+	return results, nil
+}

@@ -16,3 +16,11 @@ type UpdateProfileRequest struct {
 	Phone     *string `json:"phone,omitempty"`
 	AvatarURL *string `json:"avatar_url,omitempty"`
 }
+
+// UserSearchResult represents user search result
+type UserSearchResult struct {
+	ID       uint   `json:"id"`
+	Nickname string `json:"nickname"`
+	Email    string `json:"email"`
+	Avatar   string `json:"avatar,omitempty"`
+}

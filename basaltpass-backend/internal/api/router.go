@@ -4,10 +4,13 @@ import (
 	"basaltpass-backend/internal/admin"
 	"basaltpass-backend/internal/auth"
 	"basaltpass-backend/internal/common"
+	"basaltpass-backend/internal/invitation"
+	"basaltpass-backend/internal/notification"
 	"basaltpass-backend/internal/oauth"
 	"basaltpass-backend/internal/passkey"
 	"basaltpass-backend/internal/rbac"
 	"basaltpass-backend/internal/security"
+	"basaltpass-backend/internal/team"
 	"basaltpass-backend/internal/user"
 	"basaltpass-backend/internal/wallet"
 
@@ -42,6 +45,33 @@ func RegisterRoutes(app *fiber.App) {
 	userGroup := v1.Group("/user", common.JWTMiddleware())
 	userGroup.Get("/profile", user.GetProfileHandler)
 	userGroup.Put("/profile", user.UpdateProfileHandler)
+
+	// 用户搜索路由 (需要JWT认证)
+	usersGroup := v1.Group("/users", common.JWTMiddleware())
+	usersGroup.Get("/search", user.SearchHandler)
+
+	// 团队相关路由
+	teamGroup := v1.Group("/teams", common.JWTMiddleware())
+	teamGroup.Post("/", team.CreateTeamHandler)
+	teamGroup.Get("/", team.GetUserTeamsHandler)
+	teamGroup.Get("/:id", team.GetTeamHandler)
+	teamGroup.Put("/:id", team.UpdateTeamHandler)
+	teamGroup.Delete("/:id", team.DeleteTeamHandler)
+	teamGroup.Get("/:id/members", team.GetTeamMembersHandler)
+	teamGroup.Post("/:id/members", team.AddMemberHandler)
+	teamGroup.Put("/:id/members/:member_id", team.UpdateMemberRoleHandler)
+	teamGroup.Delete("/:id/members/:member_id", team.RemoveMemberHandler)
+	teamGroup.Post("/:id/leave", team.LeaveTeamHandler)
+
+	// Invitation routes
+	inv := v1.Group("/invitations", common.JWTMiddleware())
+	inv.Get("/", invitation.ListIncomingHandler)
+	inv.Put("/:id/accept", invitation.AcceptHandler)
+	inv.Put("/:id/reject", invitation.RejectHandler)
+
+	teamGroup.Post("/:id/invitations", invitation.CreateHandler)
+	teamGroup.Get("/:id/invitations", invitation.ListOutgoingHandler)
+	teamGroup.Delete("/:id/invitations/:inv_id", invitation.RevokeHandler)
 
 	walletGroup := v1.Group("/wallet", common.JWTMiddleware())
 	walletGroup.Get("/balance", wallet.BalanceHandler)
@@ -81,6 +111,20 @@ func RegisterRoutes(app *fiber.App) {
 	adminGroup.Get("/wallets", admin.ListWalletTxHandler)
 	adminGroup.Post("/tx/:id/approve", admin.ApproveTxHandler)
 	adminGroup.Get("/logs", admin.ListAuditHandler)
+
+	// 通知路由
+	notifGroup := v1.Group("/notifications", common.JWTMiddleware())
+	notifGroup.Get("/", notification.ListHandler)
+	notifGroup.Get("/unread-count", notification.UnreadCountHandler)
+	notifGroup.Put("/:id/read", notification.MarkAsReadHandler)
+	notifGroup.Put("/mark-all-read", notification.MarkAllAsReadHandler)
+	notifGroup.Delete("/:id", notification.DeleteHandler)
+
+	// 管理员通知路由
+	adminNotif := adminGroup.Group("/notifications")
+	adminNotif.Post("/", notification.AdminCreateHandler)
+	adminNotif.Get("/", notification.AdminListHandler)
+	adminNotif.Delete("/:id", notification.AdminDeleteHandler)
 
 	// Add more route groups as needed...
 }
