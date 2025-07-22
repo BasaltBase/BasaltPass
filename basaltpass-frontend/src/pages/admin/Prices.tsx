@@ -33,7 +33,7 @@ export default function AdminPrices() {
       ])
       
       // 处理定价数据
-      const pricesRaw = pricesRes.data
+      const pricesRaw = pricesRes.data.Data
       let pricesList: any = []
       if (Array.isArray(pricesRaw)) pricesList = pricesRaw
       else if (Array.isArray(pricesRaw.data)) pricesList = pricesRaw.data
@@ -41,7 +41,7 @@ export default function AdminPrices() {
       setPrices(pricesList)
 
       // 处理套餐数据
-      const plansRaw = plansRes.data
+      const plansRaw = plansRes.data.Data
       let plansList: any = []
       if (Array.isArray(plansRaw)) plansList = plansRaw
       else if (Array.isArray(plansRaw.data)) plansList = plansRaw.data

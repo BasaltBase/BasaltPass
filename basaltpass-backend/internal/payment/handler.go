@@ -1,6 +1,7 @@
 package payment
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -76,7 +77,7 @@ func GetPaymentIntentHandler(c *fiber.Ctx) error {
 	paymentIntent, err := GetPaymentIntent(userID, uint(paymentIntentID))
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "Payment intent not found",
+			"error": "[GetPaymentIntentHandler] Payment intent not found",
 		})
 	}
 
@@ -150,6 +151,14 @@ func SimulatePaymentHandler(c *fiber.Ctx) error {
 // PaymentCheckoutHandler GET /payment/checkout/:session_id - 支付页面
 func PaymentCheckoutHandler(c *fiber.Ctx) error {
 	sessionID := c.Params("session_id")
+
+	// 获取session信息以获取success_url
+	session, err := GetPaymentSessionByStripeID(sessionID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Payment session not found",
+		})
+	}
 
 	// 这里可以返回一个简单的HTML页面用于演示
 	// 在实际应用中，这里会重定向到Stripe的支付页面
@@ -227,6 +236,7 @@ func PaymentCheckoutHandler(c *fiber.Ctx) error {
         <h1 class="title">BasaltPass 支付模拟器</h1>
         <div class="session-info">
             <p><strong>会话ID:</strong> ` + sessionID + `</p>
+            <p><strong>金额:</strong> ¥` + fmt.Sprintf("%.2f", float64(session.Amount)/100) + ` ` + session.Currency + `</p>
             <p><strong>状态:</strong> 等待支付</p>
             <p><strong>说明:</strong> 这是一个模拟的Stripe支付页面。在实际环境中，这里会显示真实的Stripe支付表单。</p>
         </div>
@@ -244,13 +254,16 @@ func PaymentCheckoutHandler(c *fiber.Ctx) error {
     </div>
 
     <script>
+        // 嵌入的success_url
+        const successUrl = '` + session.SuccessURL + `';
+
+        console.log(localStorage.getItem('token'));
         async function simulatePayment(success) {
             try {
-                const response = await fetch('/api/v1/payment/simulate/` + sessionID + `', {
+                const response = await fetch('/payment/simulate/` + sessionID + `', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ success: success })
                 });
@@ -263,8 +276,8 @@ func PaymentCheckoutHandler(c *fiber.Ctx) error {
                 if (success && data.stripe_mock_response) {
                     setTimeout(() => {
                         alert('支付成功！正在跳转...');
-                        // 在实际应用中，这里会跳转到成功页面
-                        window.location.href = '/wallet';
+                        // 跳转到成功页面
+                        window.location.href = successUrl || 'http://localhost:5173/dashboard';
                     }, 2000);
                 }
                 

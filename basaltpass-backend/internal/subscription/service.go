@@ -56,12 +56,14 @@ func (s *Service) ListProducts(req *ListProductsRequest) ([]*model.Product, int6
 	var products []*model.Product
 	var total int64
 
-	query := s.db.Model(&model.Product{}).Preload("Plans")
+	query := s.db.Model(&model.Product{}).Preload("Plans").Preload("Plans.Features").Preload("Plans.Prices")
 
+	// 根据code过滤
 	if req.Code != nil && *req.Code != "" {
 		query = query.Where("code LIKE ?", "%"+*req.Code+"%")
 	}
 
+	// 根据is_active过滤
 	if req.IsActive != nil {
 		query = query.Where("is_active = ?", *req.IsActive)
 	}

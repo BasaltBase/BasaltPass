@@ -25,7 +25,7 @@ export default function AdminProducts() {
     try {
       setLoading(true)
       const res = await adminListProducts()
-      const raw = res.data
+      const raw = res.data.Data
       let list: any = []
       if (Array.isArray(raw)) list = raw
       else if (Array.isArray(raw.data)) list = raw.data

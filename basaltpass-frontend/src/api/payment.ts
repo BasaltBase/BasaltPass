@@ -3,44 +3,46 @@ import client from './client';
 const API_BASE_URL = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
 
 export interface PaymentIntent {
-  id: number;
-  stripe_payment_intent_id: string;
-  user_id: number;
-  amount: number;
-  currency: string;
-  status: string;
-  description: string;
-  metadata: string;
-  payment_method_types: string;
-  client_secret: string;
-  confirmation_method: string;
-  capture_method: string;
-  setup_future_usage: string;
-  last_payment_error: string;
-  next_action: string;
-  processed_at: string | null;
-  created_at: string;
-  updated_at: string;
+  ID: number;
+  CreatedAt: string;
+  UpdatedAt: string;
+  DeletedAt: string | null;
+  StripePaymentIntentID: string;
+  UserID: number;
+  Amount: number;
+  Currency: string;
+  Status: string;
+  Description: string;
+  Metadata: string;
+  PaymentMethodTypes: string;
+  ClientSecret: string;
+  ConfirmationMethod: string;
+  CaptureMethod: string;
+  SetupFutureUsage: string;
+  LastPaymentError: string;
+  NextAction: string;
+  ProcessedAt: string | null;
 }
 
 export interface PaymentSession {
-  id: number;
-  stripe_session_id: string;
-  payment_intent_id: number;
-  user_id: number;
-  status: string;
-  currency: string;
-  amount: number;
-  success_url: string;
-  cancel_url: string;
-  payment_url: string;
-  customer_email: string;
-  expires_at: string;
-  completed_at: string | null;
-  metadata: string;
-  created_at: string;
-  updated_at: string;
-  payment_intent?: PaymentIntent;
+  ID: number;
+  CreatedAt: string;
+  UpdatedAt: string;
+  DeletedAt: string | null;
+  StripeSessionID: string;
+  PaymentIntentID: number;
+  UserID: number;
+  Status: string;
+  Currency: string;
+  Amount: number;
+  SuccessURL: string;
+  CancelURL: string;
+  PaymentURL: string;
+  CustomerEmail: string;
+  ExpiresAt: string;
+  CompletedAt: string | null;
+  Metadata: string;
+  PaymentIntent?: PaymentIntent;
 }
 
 export interface CreatePaymentIntentRequest {

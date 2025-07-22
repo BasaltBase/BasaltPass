@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react'
 import Layout from '../../components/Layout'
 import { listProducts } from '../../api/subscription'
-import { Product } from '../../types/subscription'
-import { Link } from 'react-router-dom'
+import { createOrder, CreateOrderRequest } from '../../api/order'
+import { Product, Price } from '../../types/subscription'
+import { Link, useNavigate } from 'react-router-dom'
+import client from '../../api/client'
 import { ChevronRightIcon, CreditCardIcon } from '@heroicons/react/24/outline'
-import { CubeIcon, WalletIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline'
+import { CubeIcon, WalletIcon, QuestionMarkCircleIcon, SparklesIcon, ArrowRightIcon } from '@heroicons/react/24/outline'
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  const [subscribingPrice, setSubscribingPrice] = useState<number | null>(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
     fetchProducts()
@@ -19,16 +23,90 @@ export default function ProductsPage() {
       setLoading(true)
       const res = await listProducts()
       const raw = res.data
+      console.log('获取产品列表:', raw)
       let list: any = []
       if (Array.isArray(raw)) list = raw
       else if (Array.isArray(raw.data)) list = raw.data
       else if (Array.isArray(raw.data?.Data)) list = raw.data.Data
+      console.log('获取产品列表:', list)
       setProducts(list)
     } catch (error) {
       console.error('获取产品列表失败:', error)
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleSubscribe = async (price: Price) => {
+    try {
+      setSubscribingPrice(price.ID)
+      console.log('开始创建订单，价格:', price)
+      
+      // 检查是否有token
+      const token = localStorage.getItem('access_token')
+      if (!token) {
+        console.log('用户未登录，跳转到登录页面')
+        navigate('/auth/login')
+        return
+      }
+      
+      // 通过API获取当前用户信息
+      console.log('获取用户信息...')
+      const userResponse = await client.get('/api/v1/user/profile')
+      const user = userResponse.data
+      console.log('用户数据:', user)
+      
+      // 创建订单
+      const orderData: CreateOrderRequest = {
+        user_id: user.id,
+        price_id: price.ID,
+        quantity: 1
+      }
+      
+      console.log('订单数据:', orderData)
+      const order = await createOrder(orderData)
+      console.log('创建订单成功:', order)
+      
+      // 跳转到订单确认页面
+      const confirmUrl = `/orders/${order.id}/confirm`
+      console.log('跳转到:', confirmUrl)
+      navigate(confirmUrl)
+      
+    } catch (error: any) {
+      console.error('创建订单失败:', error)
+      console.error('错误详情:', error.response)
+      
+      // 如果是401错误，说明token无效，跳转到登录页面
+      if (error.response?.status === 401) {
+        console.log('Token无效，跳转到登录页面')
+        navigate('/auth/login')
+        return
+      }
+      
+      alert(error.response?.data?.error || error.message || '创建订单失败，请重试')
+    } finally {
+      setSubscribingPrice(null)
+    }
+  }
+
+  const formatPrice = (price: Price) => {
+    const amount = (price.AmountCents / 100).toFixed(2)
+    const period = price.BillingPeriod === 'month' ? '月' : 
+                   price.BillingPeriod === 'year' ? '年' : 
+                   price.BillingPeriod === 'week' ? '周' : 
+                   price.BillingPeriod === 'day' ? '日' : price.BillingPeriod
+    const interval = price.BillingInterval > 1 ? `${price.BillingInterval}` : ''
+    return `¥${amount}/${interval}${period}`
+  }
+
+  const getPriceColor = (index: number) => {
+    const colors = [
+      'text-blue-600 bg-blue-50 border-blue-200',
+      'text-emerald-600 bg-emerald-50 border-emerald-200',
+      'text-purple-600 bg-purple-50 border-purple-200',
+      'text-orange-600 bg-orange-50 border-orange-200'
+    ]
+    return colors[index % colors.length]
   }
 
   if (loading) {
@@ -77,40 +155,85 @@ export default function ProductsPage() {
           </Link>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
           {products && products.length > 0 ? (
             products.map((product) => (
-              <div key={product.ID} className="bg-white overflow-hidden shadow rounded-lg">
-                <div className="px-4 py-5 sm:p-6">
-                  <div className="flex items-center">
+              <div key={product.ID} className="bg-white overflow-hidden shadow-lg rounded-xl border border-gray-200">
+                <div className="px-6 py-6">
+                  <div className="flex items-center mb-4">
                     <div className="flex-shrink-0">
-                      <CubeIcon className="h-8 w-8 text-indigo-600" />
+                      <CubeIcon className="h-10 w-10 text-indigo-600" />
                     </div>
                     <div className="ml-4 flex-1">
-                      <h3 className="text-lg font-medium text-gray-900">{product.Name}</h3>
-                      <p className="text-sm text-gray-500">代码: {product.Code}</p>
+                      <h3 className="text-xl font-semibold text-gray-900">{product.Name}</h3>
+                      <p className="text-sm text-gray-500">产品代码: {product.Code}</p>
                     </div>
                   </div>
+                  
                   {product.Description && (
-                    <p className="mt-3 text-sm text-gray-600">{product.Description}</p>
+                    <p className="text-gray-600 mb-4">{product.Description}</p>
                   )}
                   
                   {product.Plans && product.Plans.length > 0 && (
-                    <div className="mt-4">
-                      <h4 className="text-sm font-medium text-gray-900 mb-2">可用套餐:</h4>
-                      <div className="space-y-2">
+                    <div className="space-y-4">
                         {product.Plans.map((plan) => (
-                          <div key={plan.ID} className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                        <div key={plan.ID} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                          <div className="flex items-center justify-between mb-3">
                             <div>
-                              <p className="text-sm font-medium text-gray-900">{plan.DisplayName}</p>
-                              <p className="text-xs text-gray-500">版本 v{plan.PlanVersion}</p>
+                              <h4 className="text-lg font-medium text-gray-900">{plan.DisplayName}</h4>
+                              <p className="text-sm text-gray-500">版本 v{plan.PlanVersion}</p>
                             </div>
-                            <button className="text-sm text-indigo-600 hover:text-indigo-900 font-medium">
-                              订阅
+                            <SparklesIcon className="h-5 w-5 text-indigo-600" />
+                          </div>
+                          
+                          {plan.Prices && plan.Prices.length > 0 ? (
+                            <div className="space-y-2">
+                              <h5 className="text-sm font-medium text-gray-700 mb-2">可选价格:</h5>
+                              <div className="grid gap-2">
+                                {plan.Prices.map((price, priceIndex) => (
+                                  <div key={price.ID} className={`flex items-center justify-between p-3 rounded-md border ${getPriceColor(priceIndex)}`}>
+                                    <div className="flex-1">
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-lg font-semibold">{formatPrice(price)}</span>
+                                        {price.TrialDays && price.TrialDays > 0 && (
+                                          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                                            {price.TrialDays}天免费试用
+                                          </span>
+                                        )}
+                                      </div>
+                                      <p className="text-xs mt-1 opacity-75">
+                                        {price.UsageType === 'license' ? '许可证' : 
+                                         price.UsageType === 'metered' ? '按量计费' : '分层计费'}
+                                      </p>
+                                    </div>
+                                    <button
+                                      onClick={() => handleSubscribe(price)}
+                                      disabled={subscribingPrice === price.ID}
+                                      className="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                      {subscribingPrice === price.ID ? (
+                                        <div className="flex items-center">
+                                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                          处理中...
+                                        </div>
+                                      ) : (
+                                        <div className="flex items-center">
+                                          立即订阅
+                                          <ArrowRightIcon className="h-4 w-4 ml-1" />
+                                        </div>
+                                      )}
                             </button>
                           </div>
                         ))}
                       </div>
+                            </div>
+                          ) : (
+                            <div className="text-center py-4 text-gray-500">
+                              <p className="text-sm">暂无可用价格</p>
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>

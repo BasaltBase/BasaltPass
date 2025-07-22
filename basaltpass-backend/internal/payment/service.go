@@ -11,6 +11,8 @@ import (
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
 	"basaltpass-backend/internal/wallet"
+
+	"gorm.io/gorm"
 )
 
 // CreatePaymentIntentRequest 创建支付意图请求
@@ -133,8 +135,9 @@ func CreatePaymentSession(userID uint, req CreatePaymentSessionRequest) (*model.
 
 	// 验证支付意图是否存在且属于该用户
 	var paymentIntent model.PaymentIntent
+	// 检查支付意图是否存在且属于该用户
 	if err := db.Where("id = ? AND user_id = ?", req.PaymentIntentID, userID).First(&paymentIntent).Error; err != nil {
-		return nil, nil, errors.New("payment intent not found")
+		return nil, nil, errors.New("[CreatePaymentSession] payment intent not found. userID: " + fmt.Sprintf("%d", userID) + " paymentIntentID: " + fmt.Sprintf("%d", req.PaymentIntentID))
 	}
 
 	// 生成Stripe风格的会话ID
@@ -191,6 +194,23 @@ func CreatePaymentSession(userID uint, req CreatePaymentSessionRequest) (*model.
 
 // SimulatePayment 模拟支付处理
 func SimulatePayment(sessionID string, success bool) (*MockStripeResponse, error) {
+	// 首先检查是否是订阅相关的支付
+	if subscription, err := checkIfSubscriptionPayment(sessionID); err == nil && subscription != nil {
+		// 处理订阅支付webhook
+		if err := processSubscriptionPaymentWebhook(sessionID, success); err != nil {
+			return nil, fmt.Errorf("处理订阅支付webhook失败: %w", err)
+		}
+	}
+
+	// 检查是否是订单相关的支付
+	if order, err := checkIfOrderPayment(sessionID); err == nil && order != nil {
+		// 处理订单支付webhook
+		if err := processOrderPaymentWebhook(sessionID, success); err != nil {
+			return nil, fmt.Errorf("处理订单支付webhook失败: %w", err)
+		}
+	}
+
+	// 原有的支付处理逻辑
 	db := common.DB()
 
 	// 查找支付会话
@@ -285,6 +305,237 @@ func SimulatePayment(sessionID string, success bool) (*MockStripeResponse, error
 	return mockResponse, nil
 }
 
+// checkIfSubscriptionPayment 检查是否为订阅支付
+func checkIfSubscriptionPayment(sessionID string) (*bool, error) {
+	db := common.DB()
+
+	var paymentSession model.PaymentSession
+	if err := db.Preload("PaymentIntent").Where("stripe_session_id = ?", sessionID).First(&paymentSession).Error; err != nil {
+		return nil, err
+	}
+
+	// 解析payment intent的metadata查看是否包含subscription_id
+	var metadata map[string]interface{}
+	if err := json.Unmarshal([]byte(paymentSession.PaymentIntent.Metadata), &metadata); err != nil {
+		return nil, err
+	}
+
+	if _, hasSubscription := metadata["subscription_id"]; hasSubscription {
+		result := true
+		return &result, nil
+	}
+
+	result := false
+	return &result, nil
+}
+
+// processSubscriptionPaymentWebhook 处理订阅支付webhook
+func processSubscriptionPaymentWebhook(sessionID string, success bool) error {
+	// 导入subscription包会造成循环依赖，所以这里使用反射或接口
+	// 为了简单起见，我们直接在这里实现简单的webhook处理
+	db := common.DB()
+
+	return db.Transaction(func(tx *gorm.DB) error {
+		// 查找支付会话和相关数据
+		var paymentSession model.PaymentSession
+		if err := tx.Preload("PaymentIntent").Where("stripe_session_id = ?", sessionID).First(&paymentSession).Error; err != nil {
+			return err
+		}
+
+		// 解析metadata获取subscription_id
+		var metadata map[string]interface{}
+		if err := json.Unmarshal([]byte(paymentSession.PaymentIntent.Metadata), &metadata); err != nil {
+			return err
+		}
+
+		subscriptionIDFloat, ok := metadata["subscription_id"].(float64)
+		if !ok {
+			return nil // 不是订阅支付，忽略
+		}
+
+		subscriptionID := uint(subscriptionIDFloat)
+		now := time.Now()
+
+		if success {
+			// 支付成功：激活订阅
+			if err := tx.Model(&model.Subscription{}).Where("id = ?", subscriptionID).Updates(map[string]interface{}{
+				"status":     model.SubscriptionStatusActive,
+				"updated_at": now,
+			}).Error; err != nil {
+				return err
+			}
+
+			// 更新invoice状态为已支付
+			if invoiceIDFloat, ok := metadata["invoice_id"].(float64); ok {
+				invoiceID := uint(invoiceIDFloat)
+				if err := tx.Model(&model.Invoice{}).Where("id = ?", invoiceID).Updates(map[string]interface{}{
+					"status":     model.InvoiceStatusPaid,
+					"paid_at":    &now,
+					"updated_at": now,
+				}).Error; err != nil {
+					return err
+				}
+			}
+
+			// 创建订阅激活事件
+			event := &model.SubscriptionEvent{
+				SubscriptionID: subscriptionID,
+				EventType:      "subscription.activated",
+				Data: model.JSONB{
+					"activated_at": now,
+					"session_id":   sessionID,
+					"source":       "payment_simulation",
+				},
+			}
+			if err := tx.Create(event).Error; err != nil {
+				return err
+			}
+
+		} else {
+			// 支付失败：设置订阅为overdue
+			if err := tx.Model(&model.Subscription{}).Where("id = ?", subscriptionID).Updates(map[string]interface{}{
+				"status":     model.SubscriptionStatusOverdue,
+				"updated_at": now,
+			}).Error; err != nil {
+				return err
+			}
+
+			// 创建支付失败事件
+			event := &model.SubscriptionEvent{
+				SubscriptionID: subscriptionID,
+				EventType:      "subscription.payment_failed",
+				Data: model.JSONB{
+					"failed_at":  now,
+					"session_id": sessionID,
+					"source":     "payment_simulation",
+				},
+			}
+			if err := tx.Create(event).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}
+
+// checkIfOrderPayment 检查是否为订单支付
+func checkIfOrderPayment(sessionID string) (*bool, error) {
+	db := common.DB()
+
+	var paymentSession model.PaymentSession
+	if err := db.Preload("PaymentIntent").Where("stripe_session_id = ?", sessionID).First(&paymentSession).Error; err != nil {
+		return nil, err
+	}
+
+	// 解析payment intent的metadata查看是否包含order_id
+	var metadata map[string]interface{}
+	if err := json.Unmarshal([]byte(paymentSession.PaymentIntent.Metadata), &metadata); err != nil {
+		return nil, err
+	}
+
+	if _, hasOrder := metadata["order_id"]; hasOrder {
+		result := true
+		return &result, nil
+	}
+
+	result := false
+	return &result, nil
+}
+
+// processOrderPaymentWebhook 处理订单支付webhook
+func processOrderPaymentWebhook(sessionID string, success bool) error {
+	db := common.DB()
+
+	return db.Transaction(func(tx *gorm.DB) error {
+		// 查找支付会话和相关数据
+		var paymentSession model.PaymentSession
+		if err := tx.Preload("PaymentIntent").Where("stripe_session_id = ?", sessionID).First(&paymentSession).Error; err != nil {
+			return err
+		}
+
+		// 解析metadata获取order_id
+		var metadata map[string]interface{}
+		if err := json.Unmarshal([]byte(paymentSession.PaymentIntent.Metadata), &metadata); err != nil {
+			return err
+		}
+
+		orderIDFloat, ok := metadata["order_id"].(float64)
+		if !ok {
+			return nil // 不是订单支付，忽略
+		}
+
+		orderID := uint(orderIDFloat)
+		now := time.Now()
+
+		if success {
+			// 支付成功：更新订单状态并创建订阅
+			if err := tx.Model(&model.Order{}).Where("id = ?", orderID).Updates(map[string]interface{}{
+				"status":             model.OrderStatusPaid,
+				"paid_at":            &now,
+				"payment_session_id": &paymentSession.ID,
+				"updated_at":         now,
+			}).Error; err != nil {
+				return err
+			}
+
+			// 获取订单详情以创建订阅
+			var order model.Order
+			if err := tx.Preload("Price.Plan").First(&order, orderID).Error; err != nil {
+				return err
+			}
+
+			// 为订单创建订阅
+			subscription := &model.Subscription{
+				CustomerID:         order.UserID,
+				Status:             model.SubscriptionStatusActive,
+				CurrentPriceID:     order.PriceID,
+				CouponID:           order.CouponID,
+				StartAt:            now,
+				CurrentPeriodStart: now,
+				CurrentPeriodEnd:   calculatePeriodEnd(now, &order.Price),
+				Metadata:           model.JSONB{"source": "order_payment", "order_id": orderID},
+			}
+
+			if err := tx.Create(subscription).Error; err != nil {
+				return err
+			}
+
+			// 更新订单关联的订阅ID
+			if err := tx.Model(&order).Update("subscription_id", subscription.ID).Error; err != nil {
+				return err
+			}
+
+		} else {
+			// 支付失败：更新订单状态
+			if err := tx.Model(&model.Order{}).Where("id = ?", orderID).Updates(map[string]interface{}{
+				"status":     model.OrderStatusCancelled,
+				"updated_at": now,
+			}).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}
+
+// calculatePeriodEnd 计算订阅期间结束时间
+func calculatePeriodEnd(start time.Time, price *model.Price) time.Time {
+	switch price.BillingPeriod {
+	case "day":
+		return start.AddDate(0, 0, price.BillingInterval)
+	case "week":
+		return start.AddDate(0, 0, 7*price.BillingInterval)
+	case "month":
+		return start.AddDate(0, price.BillingInterval, 0)
+	case "year":
+		return start.AddDate(price.BillingInterval, 0, 0)
+	default:
+		return start.AddDate(0, 1, 0) // 默认一个月
+	}
+}
+
 // GetPaymentIntent 获取支付意图
 func GetPaymentIntent(userID uint, paymentIntentID uint) (*model.PaymentIntent, error) {
 	db := common.DB()
@@ -303,6 +554,18 @@ func GetPaymentSession(userID uint, sessionID string) (*model.PaymentSession, er
 	var session model.PaymentSession
 
 	if err := db.Preload("PaymentIntent").Where("stripe_session_id = ? AND user_id = ?", sessionID, userID).First(&session).Error; err != nil {
+		return nil, err
+	}
+
+	return &session, nil
+}
+
+// GetPaymentSessionByStripeID 通过Stripe Session ID获取支付会话（无需用户验证，用于支付页面）
+func GetPaymentSessionByStripeID(sessionID string) (*model.PaymentSession, error) {
+	db := common.DB()
+	var session model.PaymentSession
+
+	if err := db.Preload("PaymentIntent").Where("stripe_session_id = ?", sessionID).First(&session).Error; err != nil {
 		return nil, err
 	}
 

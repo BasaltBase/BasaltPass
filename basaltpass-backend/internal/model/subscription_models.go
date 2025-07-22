@@ -171,6 +171,7 @@ type Coupon struct {
 type SubscriptionStatus string
 
 const (
+	SubscriptionStatusPending  SubscriptionStatus = "pending"
 	SubscriptionStatusTrialing SubscriptionStatus = "trialing"
 	SubscriptionStatusActive   SubscriptionStatus = "active"
 	SubscriptionStatusPaused   SubscriptionStatus = "paused"

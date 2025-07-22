@@ -33,7 +33,7 @@ export default function AdminPlans() {
       ])
       
       // 处理套餐数据
-      const plansRaw = plansRes.data
+      const plansRaw = plansRes.data.Data
       let plansList: any = []
       if (Array.isArray(plansRaw)) plansList = plansRaw
       else if (Array.isArray(plansRaw.data)) plansList = plansRaw.data
@@ -41,11 +41,12 @@ export default function AdminPlans() {
       setPlans(plansList)
 
       // 处理产品数据
-      const productsRaw = productsRes.data
+      const productsRaw = productsRes.data.Data
       let productsList: any = []
       if (Array.isArray(productsRaw)) productsList = productsRaw
       else if (Array.isArray(productsRaw.data)) productsList = productsRaw.data
       else if (Array.isArray(productsRaw.data?.Data)) productsList = productsRaw.data.Data
+      console.log('获取产品列表:', productsList)
       setProducts(productsList)
     } catch (error) {
       console.error('获取数据失败:', error)

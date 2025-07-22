@@ -47,6 +47,9 @@ func RunMigrations() {
 		&model.PaymentIntent{},
 		&model.PaymentSession{},
 		&model.PaymentWebhookEvent{},
+
+		// 订单系统模型
+		&model.Order{},
 	)
 	if err != nil {
 		log.Fatalf("[Error][RunMigrations] auto migration failed: %v", err)

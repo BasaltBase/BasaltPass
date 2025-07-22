@@ -38,6 +38,9 @@ import AdminPlans from './pages/admin/Plans'
 import AdminPrices from './pages/admin/Prices'
 import AdminCoupons from './pages/admin/Coupons'
 import Payment from './pages/payment/Payment'
+import SubscriptionCheckout from './pages/subscription/Checkout'
+import OrderConfirm from './pages/order/OrderConfirm'
+import OrderSuccess from './pages/order/OrderSuccess'
 
 export default function AppRouter() {
   return (
@@ -58,6 +61,11 @@ export default function AppRouter() {
         {/* 订阅系统 */}
         <Route path="/products" element={<ProductsPage />} />
         <Route path="/subscriptions" element={<SubscriptionIndex />} />
+        <Route path="/subscriptions/checkout" element={<SubscriptionCheckout />} />
+        
+        {/* 订单系统 */}
+        <Route path="/orders/:orderId/confirm" element={<OrderConfirm />} />
+        <Route path="/orders/:orderId/success" element={<OrderSuccess />} />
         
         {/* 团队相关页面 - 需要添加Layout */}
         <Route path="/teams" element={<TeamIndex />} />

@@ -11,8 +11,10 @@ export default function AdminCoupons() {
   const [formData, setFormData] = useState({
     code: '',
     name: '',
-    discount_type: 'percentage',
+    discount_type: 'percent',
     discount_value: '',
+    duration: 'once',
+    duration_in_cycles: '',
     max_redemptions: '',
     expires_at: '',
     is_active: true
@@ -26,11 +28,23 @@ export default function AdminCoupons() {
     try {
       setLoading(true)
       const res = await adminListCoupons()
+      console.log('API响应:', res) // 调试信息
+      
       const raw = res.data
       let list: any = []
-      if (Array.isArray(raw)) list = raw
-      else if (Array.isArray(raw.data)) list = raw.data
-      else if (Array.isArray(raw.data?.Data)) list = raw.data.Data
+      
+      // 根据你提供的API响应结构进行解析
+      if (Array.isArray(raw)) {
+        list = raw
+      } else if (raw && Array.isArray(raw.data)) {
+        list = raw.data
+      } else if (raw && raw.data && Array.isArray(raw.data.Data)) {
+        list = raw.data.Data
+      } else if (raw && Array.isArray(raw.Data)) {
+        list = raw.Data
+      }
+      
+      console.log('解析后的优惠券列表:', list) // 调试信息
       setCoupons(list)
     } catch (error) {
       console.error('获取优惠券列表失败:', error)
@@ -45,6 +59,7 @@ export default function AdminCoupons() {
       const submitData = {
         ...formData,
         discount_value: parseInt(formData.discount_value),
+        duration_in_cycles: formData.duration_in_cycles ? parseInt(formData.duration_in_cycles) : null,
         max_redemptions: formData.max_redemptions ? parseInt(formData.max_redemptions) : null,
         expires_at: formData.expires_at || null
       }
@@ -59,8 +74,10 @@ export default function AdminCoupons() {
       setFormData({
         code: '',
         name: '',
-        discount_type: 'percentage',
+        discount_type: 'percent',
         discount_value: '',
+        duration: 'once',
+        duration_in_cycles: '',
         max_redemptions: '',
         expires_at: '',
         is_active: true
@@ -78,6 +95,8 @@ export default function AdminCoupons() {
       name: coupon.Name,
       discount_type: coupon.DiscountType,
       discount_value: coupon.DiscountValue.toString(),
+      duration: coupon.Duration,
+      duration_in_cycles: coupon.DurationInCycles?.toString() || '',
       max_redemptions: coupon.MaxRedemptions?.toString() || '',
       expires_at: coupon.ExpiresAt || '',
       is_active: coupon.IsActive
@@ -97,7 +116,7 @@ export default function AdminCoupons() {
   }
 
   const formatDiscount = (type: string, value: number) => {
-    if (type === 'percentage') {
+    if (type === 'percent') {
       return `${value}%`
     } else {
       return `${(value / 100).toFixed(2)} 元`
@@ -133,6 +152,10 @@ export default function AdminCoupons() {
         </div>
 
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
+          {/* 调试信息 */}
+          <div className="p-4 bg-gray-100 text-sm">
+            <p>优惠券数量: {coupons.length}</p>
+          </div>
           <ul className="divide-y divide-gray-200">
             {coupons && coupons.length > 0 ? (
               coupons.map((coupon) => (
@@ -161,6 +184,7 @@ export default function AdminCoupons() {
                           </p>
                           <p className="mt-1 text-sm text-gray-500">
                             折扣: {formatDiscount(coupon.DiscountType, coupon.DiscountValue)} |
+                            持续时间: {coupon.Duration === 'once' ? '一次性' : coupon.Duration === 'repeating' ? `重复${coupon.DurationInCycles}次` : '永久'} |
                             已使用: {coupon.RedeemedCount}
                             {coupon.MaxRedemptions && ` / ${coupon.MaxRedemptions}`} |
                             {coupon.ExpiresAt ? `过期时间: ${new Date(coupon.ExpiresAt).toLocaleDateString('zh-CN')}` : '永久有效'}
@@ -231,10 +255,35 @@ export default function AdminCoupons() {
                       onChange={(e) => setFormData({ ...formData, discount_type: e.target.value })}
                       className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
                     >
-                      <option value="percentage">百分比折扣</option>
+                      <option value="percent">百分比折扣</option>
                       <option value="fixed_amount">固定金额</option>
                     </select>
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">持续时间</label>
+                    <select
+                      value={formData.duration}
+                      onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                    >
+                      <option value="once">一次性</option>
+                      <option value="repeating">重复</option>
+                      <option value="forever">永久</option>
+                    </select>
+                  </div>
+                  {formData.duration === 'repeating' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">重复周期数</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={formData.duration_in_cycles}
+                        onChange={(e) => setFormData({ ...formData, duration_in_cycles: e.target.value })}
+                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                        placeholder="例如: 3"
+                      />
+                    </div>
+                  )}
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
                       折扣值 {formData.discount_type === 'percentage' ? '(%)' : '(分)'}
@@ -290,8 +339,10 @@ export default function AdminCoupons() {
                         setFormData({
                           code: '',
                           name: '',
-                          discount_type: 'percentage',
+                          discount_type: 'percent',
                           discount_value: '',
+                          duration: 'once',
+                          duration_in_cycles: '',
                           max_redemptions: '',
                           expires_at: '',
                           is_active: true

@@ -19,7 +19,8 @@ import {
   CreditCardIcon,
   CubeIcon,
   TagIcon,
-  CurrencyDollarIcon
+  CurrencyDollarIcon,
+  GiftIcon
 } from '@heroicons/react/24/outline'
 import { clearAccessToken } from '../utils/auth'
 import EnhancedNotificationIcon from './EnhancedNotificationIcon'
@@ -42,7 +43,7 @@ const adminNavigation = [
   { name: '钱包管理', href: '/admin/wallets', icon: WalletIcon },
   { name: '订阅管理', href: '/admin/subscriptions', icon: CreditCardIcon },
   { name: '产品管理', href: '/admin/products', icon: CubeIcon },
-  { name: '套餐管理', href: '/admin/plans', icon: TagIcon },
+  { name: '套餐管理', href: '/admin/plans', icon: GiftIcon },
   { name: '定价管理', href: '/admin/prices', icon: CurrencyDollarIcon },
   { name: '优惠券管理', href: '/admin/coupons', icon: TagIcon },
   { name: '审计日志', href: '/admin/logs', icon: DocumentTextIcon },

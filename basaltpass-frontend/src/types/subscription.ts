@@ -60,11 +60,15 @@ export interface Coupon {
   Name: string
   DiscountType: string
   DiscountValue: number
+  Duration: string
+  DurationInCycles?: number
   MaxRedemptions?: number
   RedeemedCount: number
   ExpiresAt?: string
   IsActive: boolean
   Metadata?: Record<string, any>
-  CreatedAt?: string
-  UpdatedAt?: string
+  CreatedAt: string
+  UpdatedAt: string
+  DeletedAt?: string | null
+  Subscriptions?: any
 } 

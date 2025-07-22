@@ -7,6 +7,7 @@ import (
 	"basaltpass-backend/internal/invitation"
 	"basaltpass-backend/internal/notification"
 	"basaltpass-backend/internal/oauth"
+	"basaltpass-backend/internal/order"
 	"basaltpass-backend/internal/passkey"
 	"basaltpass-backend/internal/payment"
 	"basaltpass-backend/internal/rbac"
@@ -90,17 +91,24 @@ func RegisterRoutes(app *fiber.App) {
 	walletGroup.Post("/withdraw", wallet.WithdrawHandler)
 	walletGroup.Get("/history", wallet.HistoryHandler)
 
-	// 支付系统路由
+	// 支付系统路由（需要认证）
 	paymentGroup := v1.Group("/payment", common.JWTMiddleware())
 	paymentGroup.Post("/intents", payment.CreatePaymentIntentHandler)
 	paymentGroup.Get("/intents", payment.ListPaymentIntentsHandler)
 	paymentGroup.Get("/intents/:id", payment.GetPaymentIntentHandler)
 	paymentGroup.Post("/sessions", payment.CreatePaymentSessionHandler)
 	paymentGroup.Get("/sessions/:session_id", payment.GetPaymentSessionHandler)
-	paymentGroup.Post("/simulate/:session_id", payment.SimulatePaymentHandler)
 
-	// 支付页面路由（无需认证）
+	// 支付页面和模拟支付路由（无需认证，模拟真实Stripe行为）
 	app.Get("/payment/checkout/:session_id", payment.PaymentCheckoutHandler)
+	app.Post("/payment/simulate/:session_id", payment.SimulatePaymentHandler)
+
+	// 订单系统路由
+	orderGroup := v1.Group("/orders", common.JWTMiddleware())
+	orderGroup.Post("/", order.CreateOrderHandler)
+	orderGroup.Get("/", order.ListOrdersHandler)
+	orderGroup.Get("/:id", order.GetOrderHandler)
+	orderGroup.Get("/number/:number", order.GetOrderByNumberHandler)
 
 	// ========== 订阅系统路由 ==========
 	// 产品和套餐路由（公开，无需认证）
@@ -125,6 +133,10 @@ func RegisterRoutes(app *fiber.App) {
 	subscriptionsGroup.Get("/", subscription.ListSubscriptionsHandler)
 	subscriptionsGroup.Get("/:id", subscription.GetSubscriptionHandler)
 	subscriptionsGroup.Put("/:id/cancel", subscription.CancelSubscriptionHandler)
+
+	// 订阅结账路由
+	subscriptionsGroup.Post("/checkout", subscription.CheckoutHandler)
+	subscriptionsGroup.Post("/quick-checkout", subscription.QuickCheckoutHandler)
 
 	// 使用记录路由（需要认证）
 	usageGroup := v1.Group("/usage", common.JWTMiddleware())

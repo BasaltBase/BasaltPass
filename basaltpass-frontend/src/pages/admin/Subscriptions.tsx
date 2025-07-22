@@ -1,24 +1,29 @@
 import React, { useState, useEffect } from 'react'
 import Layout from '../../components/Layout'
-import { adminListSubscriptions, adminCancelSubscription, getSubscription } from '../../api/subscription'
+import { adminListSubscriptions, adminCancelSubscription, adminGetSubscription } from '../../api/subscription'
 
 interface Subscription {
-  id: number
-  customer_id: number
-  status: string
-  current_period_end: string
-  current_price?: {
-    id: number
-    amount_cents: number
-    currency: string
-    plan?: {
-      display_name: string
-      product?: {
-        name: string
+  ID: number
+  CustomerID: number
+  Status: string
+  CurrentPeriodEnd: string
+  CreatedAt: string
+  CurrentPrice?: {
+    ID: number
+    AmountCents: number
+    Currency: string
+    Plan?: {
+      DisplayName: string
+      Product?: {
+        Name: string
       }
     }
   }
-  created_at?: string
+  Customer?: {
+    ID: number
+    Email: string
+    Nickname: string
+  }
 }
 
 export default function AdminSubscriptions() {
@@ -33,15 +38,25 @@ export default function AdminSubscriptions() {
     fetchSubscriptions()
   }, [])
 
+  // 调试模态框状态
+  useEffect(() => {
+    console.log('模态框状态变化 - showDetailModal:', showDetailModal, 'selectedSubscription:', selectedSubscription)
+  }, [showDetailModal, selectedSubscription])
+
   const fetchSubscriptions = async () => {
     try {
       setLoading(true)
       const res = await adminListSubscriptions()
-      const raw = res.data
-      let list: any = []
-      if (Array.isArray(raw)) list = raw
-      else if (Array.isArray(raw.data)) list = raw.data
-      else if (Array.isArray(raw.data?.Data)) list = raw.data.Data
+      console.log('API Response:', res)
+      
+      // 根据实际API响应结构调整数据提取
+      let list: Subscription[] = []
+      if (res.data && res.data.data && Array.isArray(res.data.data)) {
+        list = res.data.data
+      } else if (Array.isArray(res.data)) {
+        list = res.data
+      }
+      
       setSubscriptions(list)
     } catch (error) {
       console.error('获取订阅列表失败:', error)
@@ -62,15 +77,23 @@ export default function AdminSubscriptions() {
   }
 
   const handleViewDetail = async (subscription: Subscription) => {
+    console.log('点击详情按钮，订阅ID:', subscription.ID)
     try {
-      const res = await getSubscription(subscription.id)
-      setSelectedSubscription(res.data.data)
+      console.log('开始获取订阅详情...')
+      const res = await adminGetSubscription(subscription.ID)
+      console.log('获取订阅详情成功:', res)
+      console.log('详情数据:', res.data)
+      // 修复：API返回格式是 {data: subscription}，所以直接使用 res.data
+      setSelectedSubscription(res.data)
       setShowDetailModal(true)
+      console.log('模态框状态已设置为显示')
     } catch (error) {
       console.error('获取订阅详情失败:', error)
       // 如果获取详情失败，就用列表中的数据
+      console.log('使用列表中的数据作为详情')
       setSelectedSubscription(subscription)
       setShowDetailModal(true)
+      console.log('模态框状态已设置为显示（使用列表数据）')
     }
   }
 
@@ -96,14 +119,26 @@ export default function AdminSubscriptions() {
     )
   }
 
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString)
+      if (isNaN(date.getTime())) {
+        return '无效日期'
+      }
+      return date.toLocaleDateString('zh-CN')
+    } catch (error) {
+      return '无效日期'
+    }
+  }
+
   const filteredSubscriptions = subscriptions.filter(sub => {
     const matchesSearch = searchTerm === '' || 
-      sub.id.toString().includes(searchTerm) ||
-      sub.customer_id.toString().includes(searchTerm) ||
-      sub.current_price?.plan?.display_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sub.current_price?.plan?.product?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+      sub.ID.toString().includes(searchTerm) ||
+      sub.CustomerID.toString().includes(searchTerm) ||
+      sub.CurrentPrice?.Plan?.DisplayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      sub.CurrentPrice?.Plan?.Product?.Name?.toLowerCase().includes(searchTerm.toLowerCase())
     
-    const matchesStatus = statusFilter === '' || sub.status === statusFilter
+    const matchesStatus = statusFilter === '' || sub.Status === statusFilter
     
     return matchesSearch && matchesStatus
   })
@@ -124,6 +159,7 @@ export default function AdminSubscriptions() {
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-semibold text-gray-900">订阅管理</h1>
           <div className="flex space-x-4">
+            
             <input
               type="text"
               placeholder="搜索订阅ID、用户ID、产品名称..."
@@ -156,31 +192,36 @@ export default function AdminSubscriptions() {
           <ul className="divide-y divide-gray-200">
             {filteredSubscriptions && filteredSubscriptions.length > 0 ? (
               filteredSubscriptions.map((subscription) => (
-                <li key={subscription.id}>
+                <li key={subscription.ID}>
                   <div className="px-4 py-4 flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center">
                         <div className="flex-1">
                           <div className="flex items-center space-x-2">
                             <p className="text-sm font-medium text-indigo-600">
-                              订阅 #{subscription.id}
+                              订阅 #{subscription.ID}
                             </p>
-                            {getStatusBadge(subscription.status)}
+                            {getStatusBadge(subscription.Status)}
                           </div>
                           <p className="mt-1 text-sm text-gray-900">
-                            用户ID: {subscription.customer_id}
-                          </p>
-                          <p className="mt-1 text-sm text-gray-500">
-                            {subscription.current_price?.plan?.product?.name} - 
-                            {subscription.current_price?.plan?.display_name}
-                            {subscription.current_price && (
-                              <span className="ml-2">
-                                {formatPrice(subscription.current_price.amount_cents, subscription.current_price.currency)}
+                            用户ID: {subscription.CustomerID}
+                            {subscription.Customer?.Email && (
+                              <span className="ml-2 text-gray-500">
+                                ({subscription.Customer.Email})
                               </span>
                             )}
                           </p>
                           <p className="mt-1 text-sm text-gray-500">
-                            周期结束: {new Date(subscription.current_period_end).toLocaleDateString('zh-CN')}
+                            {subscription.CurrentPrice?.Plan?.Product?.Name || '未知产品'} - 
+                            {subscription.CurrentPrice?.Plan?.DisplayName || '未知套餐'}
+                            {subscription.CurrentPrice && (
+                              <span className="ml-2">
+                                {formatPrice(subscription.CurrentPrice.AmountCents, subscription.CurrentPrice.Currency)}
+                              </span>
+                            )}
+                          </p>
+                          <p className="mt-1 text-sm text-gray-500">
+                            周期结束: {formatDate(subscription.CurrentPeriodEnd)}
                           </p>
                         </div>
                       </div>
@@ -192,9 +233,9 @@ export default function AdminSubscriptions() {
                       >
                         详情
                       </button>
-                      {(subscription.status === 'trialing' || subscription.status === 'active') && (
+                      {(subscription.Status === 'trialing' || subscription.Status === 'active') && (
                         <button
-                          onClick={() => handleCancel(subscription.id)}
+                          onClick={() => handleCancel(subscription.ID)}
                           className="text-red-600 hover:text-red-900 text-sm"
                         >
                           取消
@@ -219,7 +260,7 @@ export default function AdminSubscriptions() {
               <div className="mt-3">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-medium text-gray-900">
-                    订阅详情 #{selectedSubscription.id}
+                    订阅详情 #{selectedSubscription.ID}
                   </h3>
                   <button
                     onClick={() => setShowDetailModal(false)}
@@ -234,25 +275,32 @@ export default function AdminSubscriptions() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700">订阅状态</label>
                       <div className="mt-1">
-                        {getStatusBadge(selectedSubscription.status)}
+                        {getStatusBadge(selectedSubscription.Status)}
                       </div>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">用户ID</label>
-                      <p className="mt-1 text-sm text-gray-900">{selectedSubscription.customer_id}</p>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedSubscription.CustomerID}
+                        {selectedSubscription.Customer?.Email && (
+                          <span className="ml-2 text-gray-500">
+                            ({selectedSubscription.Customer.Email})
+                          </span>
+                        )}
+                      </p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">产品信息</label>
                       <p className="mt-1 text-sm text-gray-900">
-                        {selectedSubscription.current_price?.plan?.product?.name} - 
-                        {selectedSubscription.current_price?.plan?.display_name}
+                        {selectedSubscription.CurrentPrice?.Plan?.Product?.Name || '未知产品'} - 
+                        {selectedSubscription.CurrentPrice?.Plan?.DisplayName || '未知套餐'}
                       </p>
                     </div>
-                    {selectedSubscription.current_price && (
+                    {selectedSubscription.CurrentPrice && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700">价格</label>
                         <p className="mt-1 text-sm text-gray-900">
-                          {formatPrice(selectedSubscription.current_price.amount_cents, selectedSubscription.current_price.currency)}
+                          {formatPrice(selectedSubscription.CurrentPrice.AmountCents, selectedSubscription.CurrentPrice.Currency)}
                         </p>
                       </div>
                     )}
@@ -262,14 +310,14 @@ export default function AdminSubscriptions() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700">当前周期结束</label>
                       <p className="mt-1 text-sm text-gray-900">
-                        {new Date(selectedSubscription.current_period_end).toLocaleDateString('zh-CN')}
+                        {formatDate(selectedSubscription.CurrentPeriodEnd)}
                       </p>
                     </div>
-                    {selectedSubscription.created_at && (
+                    {selectedSubscription.CreatedAt && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700">创建时间</label>
                         <p className="mt-1 text-sm text-gray-900">
-                          {new Date(selectedSubscription.created_at).toLocaleDateString('zh-CN')}
+                          {formatDate(selectedSubscription.CreatedAt)}
                         </p>
                       </div>
                     )}
@@ -277,10 +325,10 @@ export default function AdminSubscriptions() {
                 </div>
 
                 <div className="flex justify-end space-x-3 pt-6 mt-6 border-t">
-                  {(selectedSubscription.status === 'trialing' || selectedSubscription.status === 'active') && (
+                  {(selectedSubscription.Status === 'trialing' || selectedSubscription.Status === 'active') && (
                     <button
                       onClick={() => {
-                        handleCancel(selectedSubscription.id)
+                        handleCancel(selectedSubscription.ID)
                         setShowDetailModal(false)
                       }}
                       className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700"
