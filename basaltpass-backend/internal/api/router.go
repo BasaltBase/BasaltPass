@@ -8,6 +8,7 @@ import (
 	"basaltpass-backend/internal/notification"
 	"basaltpass-backend/internal/oauth"
 	"basaltpass-backend/internal/passkey"
+	"basaltpass-backend/internal/payment"
 	"basaltpass-backend/internal/rbac"
 	"basaltpass-backend/internal/security"
 	"basaltpass-backend/internal/subscription"
@@ -88,6 +89,18 @@ func RegisterRoutes(app *fiber.App) {
 	walletGroup.Post("/recharge", wallet.RechargeHandler)
 	walletGroup.Post("/withdraw", wallet.WithdrawHandler)
 	walletGroup.Get("/history", wallet.HistoryHandler)
+
+	// 支付系统路由
+	paymentGroup := v1.Group("/payment", common.JWTMiddleware())
+	paymentGroup.Post("/intents", payment.CreatePaymentIntentHandler)
+	paymentGroup.Get("/intents", payment.ListPaymentIntentsHandler)
+	paymentGroup.Get("/intents/:id", payment.GetPaymentIntentHandler)
+	paymentGroup.Post("/sessions", payment.CreatePaymentSessionHandler)
+	paymentGroup.Get("/sessions/:session_id", payment.GetPaymentSessionHandler)
+	paymentGroup.Post("/simulate/:session_id", payment.SimulatePaymentHandler)
+
+	// 支付页面路由（无需认证）
+	app.Get("/payment/checkout/:session_id", payment.PaymentCheckoutHandler)
 
 	// ========== 订阅系统路由 ==========
 	// 产品和套餐路由（公开，无需认证）

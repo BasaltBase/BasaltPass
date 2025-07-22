@@ -37,6 +37,7 @@ import AdminProducts from './pages/admin/Products'
 import AdminPlans from './pages/admin/Plans'
 import AdminPrices from './pages/admin/Prices'
 import AdminCoupons from './pages/admin/Coupons'
+import Payment from './pages/payment/Payment'
 
 export default function AppRouter() {
   return (
@@ -72,6 +73,7 @@ export default function AppRouter() {
         <Route path="/wallet/recharge" element={<Recharge />} />
         <Route path="/wallet/withdraw" element={<Withdraw />} />
         <Route path="/wallet/history" element={<History />} />
+        <Route path="/payment" element={<Payment />} />
         
         {/* 安全设置 - 内部已使用Layout */}
         <Route path="/security" element={<SecuritySettings />} />

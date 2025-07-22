@@ -339,6 +339,14 @@ CREATE TABLE password_resets (
 │   │   ├── handler.go
 │   │   ├── audit_handler.go
 │   │   └── wallet_handler.go
+│   ├── notification/               # 通知模块
+│   │   ├── handler.go
+│   │   ├── service.go
+│   │   └── dto.go
+│   ├── subscription/               # 订阅模块
+│   │   ├── handler.go
+│   │   ├── service.go
+│   │   └── dto.go
 │   ├── model/                      # 数据模型
 │   │   ├── user.go
 │   │   ├── role.go

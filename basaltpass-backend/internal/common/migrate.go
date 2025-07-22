@@ -42,6 +42,11 @@ func RunMigrations() {
 		&model.Invoice{},
 		&model.InvoiceItem{},
 		&model.Payment{},
+
+		// 支付系统模型
+		&model.PaymentIntent{},
+		&model.PaymentSession{},
+		&model.PaymentWebhookEvent{},
 	)
 	if err != nil {
 		log.Fatalf("[Error][RunMigrations] auto migration failed: %v", err)
