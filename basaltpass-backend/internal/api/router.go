@@ -10,6 +10,7 @@ import (
 	"basaltpass-backend/internal/passkey"
 	"basaltpass-backend/internal/rbac"
 	"basaltpass-backend/internal/security"
+	"basaltpass-backend/internal/subscription"
 	"basaltpass-backend/internal/team"
 	"basaltpass-backend/internal/user"
 	"basaltpass-backend/internal/wallet"
@@ -88,6 +89,34 @@ func RegisterRoutes(app *fiber.App) {
 	walletGroup.Post("/withdraw", wallet.WithdrawHandler)
 	walletGroup.Get("/history", wallet.HistoryHandler)
 
+	// ========== 订阅系统路由 ==========
+	// 产品和套餐路由（公开，无需认证）
+	productsGroup := v1.Group("/products")
+	productsGroup.Get("/", subscription.ListProductsHandler)
+	productsGroup.Get("/:id", subscription.GetProductHandler)
+
+	plansGroup := v1.Group("/plans")
+	plansGroup.Get("/", subscription.ListPlansHandler)
+	plansGroup.Get("/:id", subscription.GetPlanHandler)
+
+	pricesGroup := v1.Group("/prices")
+	pricesGroup.Get("/:id", subscription.GetPriceHandler)
+
+	// 优惠券验证（无需认证）
+	couponsGroup := v1.Group("/coupons")
+	couponsGroup.Get("/:code/validate", subscription.ValidateCouponHandler)
+
+	// 用户订阅相关路由（需要认证）
+	subscriptionsGroup := v1.Group("/subscriptions", common.JWTMiddleware())
+	subscriptionsGroup.Post("/", subscription.CreateSubscriptionHandler)
+	subscriptionsGroup.Get("/", subscription.ListSubscriptionsHandler)
+	subscriptionsGroup.Get("/:id", subscription.GetSubscriptionHandler)
+	subscriptionsGroup.Put("/:id/cancel", subscription.CancelSubscriptionHandler)
+
+	// 使用记录路由（需要认证）
+	usageGroup := v1.Group("/usage", common.JWTMiddleware())
+	usageGroup.Post("/records", subscription.CreateUsageRecordHandler)
+
 	securityGroup := v1.Group("/security", common.JWTMiddleware())
 	// 安全状态
 	securityGroup.Get("/status", security.GetSecurityStatusHandler)
@@ -120,6 +149,46 @@ func RegisterRoutes(app *fiber.App) {
 	adminGroup.Get("/wallets", admin.ListWalletTxHandler)
 	adminGroup.Post("/tx/:id/approve", admin.ApproveTxHandler)
 	adminGroup.Get("/logs", admin.ListAuditHandler)
+
+	// ========== 管理员订阅系统路由 ==========
+	// 产品管理
+	adminProductsGroup := adminGroup.Group("/products")
+	adminProductsGroup.Get("/", subscription.AdminListProductsHandler)
+	adminProductsGroup.Get("/:id", subscription.AdminGetProductHandler)
+	adminProductsGroup.Post("/", subscription.CreateProductHandler)
+	adminProductsGroup.Put("/:id", subscription.UpdateProductHandler)
+	adminProductsGroup.Delete("/:id", subscription.DeleteProductHandler)
+
+	// 套餐管理
+	adminPlansGroup := adminGroup.Group("/plans")
+	adminPlansGroup.Get("/", subscription.AdminListPlansHandler)
+	adminPlansGroup.Get("/:id", subscription.AdminGetPlanHandler)
+	adminPlansGroup.Post("/", subscription.CreatePlanHandler)
+	adminPlansGroup.Put("/:id", subscription.UpdatePlanHandler)
+	adminPlansGroup.Delete("/:id", subscription.DeletePlanHandler)
+	adminPlansGroup.Post("/features", subscription.CreatePlanFeatureHandler)
+
+	// 定价管理
+	adminPricesGroup := adminGroup.Group("/prices")
+	adminPricesGroup.Get("/", subscription.AdminListPricesHandler)
+	adminPricesGroup.Get("/:id", subscription.AdminGetPriceHandler)
+	adminPricesGroup.Post("/", subscription.CreatePriceHandler)
+	adminPricesGroup.Put("/:id", subscription.UpdatePriceHandler)
+	adminPricesGroup.Delete("/:id", subscription.DeletePriceHandler)
+
+	// 优惠券管理
+	adminCouponsGroup := adminGroup.Group("/coupons")
+	adminCouponsGroup.Get("/", subscription.AdminListCouponsHandler)
+	adminCouponsGroup.Get("/:code", subscription.AdminGetCouponHandler)
+	adminCouponsGroup.Post("/", subscription.CreateCouponHandler)
+	adminCouponsGroup.Put("/:code", subscription.UpdateCouponHandler)
+	adminCouponsGroup.Delete("/:code", subscription.DeleteCouponHandler)
+
+	// 订阅管理
+	adminSubscriptionsGroup := adminGroup.Group("/subscriptions")
+	adminSubscriptionsGroup.Get("/", subscription.AdminListSubscriptionsHandler)
+	adminSubscriptionsGroup.Get("/:id", subscription.AdminGetSubscriptionHandler)
+	adminSubscriptionsGroup.Put("/:id/cancel", subscription.AdminCancelSubscriptionHandler)
 
 	// 通知路由
 	notifGroup := v1.Group("/notifications", common.JWTMiddleware())

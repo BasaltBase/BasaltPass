@@ -30,6 +30,13 @@ import NotFound from './pages/NotFound'
 import LoginHistory from './pages/security/LoginHistory'
 import OAuthClients from './pages/admin/OAuthClients'
 import OAuthConsent from './pages/auth/OAuthConsent'
+import SubscriptionIndex from './pages/subscription/Index'
+import ProductsPage from './pages/subscription/Products'
+import AdminSubscriptions from './pages/admin/Subscriptions'
+import AdminProducts from './pages/admin/Products'
+import AdminPlans from './pages/admin/Plans'
+import AdminPrices from './pages/admin/Prices'
+import AdminCoupons from './pages/admin/Coupons'
 
 export default function AppRouter() {
   return (
@@ -47,6 +54,9 @@ export default function AppRouter() {
         <Route path="/settings" element={<Settings />} />
         <Route path="/help" element={<Help />} />
         <Route path="/notifications" element={<Notifications />} />
+        {/* 订阅系统 */}
+        <Route path="/products" element={<ProductsPage />} />
+        <Route path="/subscriptions" element={<SubscriptionIndex />} />
         
         {/* 团队相关页面 - 需要添加Layout */}
         <Route path="/teams" element={<TeamIndex />} />
@@ -69,11 +79,16 @@ export default function AppRouter() {
         <Route path="/security/passkey" element={<PasskeyManagement />} />
         <Route path="/security/login-history" element={<LoginHistory />} />
         
-        {/* 管理员页面 - 需要添加Layout */}
+        {/* 管理员页面 */}
         <Route path="/admin/users" element={<Users />} />
         <Route path="/admin/roles" element={<Roles />} />
         <Route path="/admin/wallets" element={<WalletsAdmin />} />
         <Route path="/admin/logs" element={<Logs />} />
+        <Route path="/admin/subscriptions" element={<AdminSubscriptions />} />
+        <Route path="/admin/products" element={<AdminProducts />} />
+        <Route path="/admin/plans" element={<AdminPlans />} />
+        <Route path="/admin/prices" element={<AdminPrices />} />
+        <Route path="/admin/coupons" element={<AdminCoupons />} />
         <Route path="/admin/notifications" element={<AdminNotifications />} />
         <Route path="/admin/oauth-clients" element={<OAuthClients />} />
         

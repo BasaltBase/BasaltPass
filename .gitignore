@@ -10,3 +10,4 @@ basaltpass-frontend/node_modules/
 .env.development.local
 .env.test.local
 basaltpass-backend/basaltpass.db
+basaltpass-backend/basaltpass.db

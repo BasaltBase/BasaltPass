@@ -5,6 +5,7 @@ import (
 
 	"basaltpass-backend/internal/api"
 	"basaltpass-backend/internal/common"
+	"basaltpass-backend/internal/subscription"
 	"basaltpass-backend/internal/team"
 
 	"github.com/gofiber/fiber/v2"
@@ -21,6 +22,9 @@ func main() {
 
 	// 初始化团队处理器
 	team.InitHandler(common.DB())
+
+	// 初始化订阅处理器
+	subscription.InitHandler(common.DB())
 
 	// Register API routes
 	api.RegisterRoutes(app)

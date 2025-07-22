@@ -15,7 +15,11 @@ import {
   ChartBarIcon,
   DocumentTextIcon,
   KeyIcon,
-  ArrowRightOnRectangleIcon
+  ArrowRightOnRectangleIcon,
+  CreditCardIcon,
+  CubeIcon,
+  TagIcon,
+  CurrencyDollarIcon
 } from '@heroicons/react/24/outline'
 import { clearAccessToken } from '../utils/auth'
 import EnhancedNotificationIcon from './EnhancedNotificationIcon'
@@ -25,6 +29,8 @@ const navigation = [
   { name: '个人资料', href: '/profile', icon: UserIcon },
   { name: '团队', href: '/teams', icon: UserGroupIcon },
   { name: '钱包', href: '/wallet', icon: WalletIcon },
+  { name: '我的订阅', href: '/subscriptions', icon: CreditCardIcon },
+  { name: '产品与套餐', href: '/products', icon: CubeIcon },
   { name: '安全', href: '/security', icon: ShieldCheckIcon },
   { name: '设置', href: '/settings', icon: CogIcon },
   { name: '帮助', href: '/help', icon: QuestionMarkCircleIcon },
@@ -34,6 +40,11 @@ const adminNavigation = [
   { name: '用户管理', href: '/admin/users', icon: UsersIcon },
   { name: '角色管理', href: '/admin/roles', icon: KeyIcon },
   { name: '钱包管理', href: '/admin/wallets', icon: WalletIcon },
+  { name: '订阅管理', href: '/admin/subscriptions', icon: CreditCardIcon },
+  { name: '产品管理', href: '/admin/products', icon: CubeIcon },
+  { name: '套餐管理', href: '/admin/plans', icon: TagIcon },
+  { name: '定价管理', href: '/admin/prices', icon: CurrencyDollarIcon },
+  { name: '优惠券管理', href: '/admin/coupons', icon: TagIcon },
   { name: '审计日志', href: '/admin/logs', icon: DocumentTextIcon },
   { name: '通知管理', href: '/admin/notifications', icon: BellIcon },
   { name: 'OAuth2客户端', href: '/admin/oauth-clients', icon: CogIcon },
