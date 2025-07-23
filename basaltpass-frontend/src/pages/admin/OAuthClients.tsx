@@ -9,8 +9,10 @@ import {
   ChartBarIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline'
+import { ChevronRightIcon } from '@heroicons/react/24/outline'
 import Layout from '../../components/Layout'
 import { oauthApi, type OAuthClient, type CreateClientRequest } from '../../api/oauth'
+import { Link } from 'react-router-dom'
 
 interface CreateClientModalProps {
   isOpen: boolean
@@ -105,36 +107,44 @@ function CreateClientModal({ isOpen, onClose, onSuccess }: CreateClientModalProp
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-screen overflow-y-auto">
-        <h2 className="text-xl font-bold mb-4">创建OAuth2客户端</h2>
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10">
+      <div className="w-3/4 max-w-4xl p-6 border shadow-lg rounded-md bg-white">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-semibold text-gray-900">创建OAuth2客户端</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl font-bold">
+            ✕
+          </button>
+        </div>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">应用名称 *</label>
-            <input
-              type="text"
-              required
-              value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="输入应用名称"
-            />
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* 第一行：应用名称和应用描述 */}
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">应用名称 *</label>
+              <input
+                type="text"
+                required
+                value={formData.name}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="输入应用名称"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">应用描述</label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="输入应用描述"
+                rows={3}
+              />
+            </div>
           </div>
 
+          {/* 第二行：重定向URI（全宽） */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">应用描述</label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="输入应用描述"
-              rows={3}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">重定向URI *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">重定向URI *</label>
             {formData.redirect_uris.map((uri, index) => (
               <div key={index} className="flex gap-2 mb-2">
                 <input
@@ -142,14 +152,14 @@ function CreateClientModal({ isOpen, onClose, onSuccess }: CreateClientModalProp
                   required
                   value={uri}
                   onChange={(e) => updateRedirectURI(index, e.target.value)}
-                  className="flex-1 border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
                   placeholder="https://yourapp.com/callback"
                 />
                 {formData.redirect_uris.length > 1 && (
                   <button
                     type="button"
                     onClick={() => removeRedirectURI(index)}
-                    className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-md"
+                    className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                   >
                     删除
                   </button>
@@ -159,15 +169,16 @@ function CreateClientModal({ isOpen, onClose, onSuccess }: CreateClientModalProp
             <button
               type="button"
               onClick={addRedirectURI}
-              className="text-blue-600 hover:text-blue-800 text-sm"
+              className="text-blue-600 hover:text-blue-800 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               + 添加重定向URI
             </button>
           </div>
 
+          {/* 第三行：权限范围（全宽） */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">权限范围</label>
-            <div className="grid grid-cols-3 gap-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">权限范围</label>
+            <div className="grid grid-cols-3 gap-3">
               {['openid', 'profile', 'email', 'phone', 'address'].map((scope) => (
                 <label key={scope} className="flex items-center">
                   <input
@@ -186,29 +197,30 @@ function CreateClientModal({ isOpen, onClose, onSuccess }: CreateClientModalProp
                         }))
                       }
                     }}
-                    className="mr-2"
+                    className="mr-2 h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                   />
-                  {scope}
+                  <span className="text-sm text-gray-700">{scope}</span>
                 </label>
               ))}
             </div>
           </div>
 
+          {/* 第四行：允许的CORS源（全宽） */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">允许的CORS源</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">允许的CORS源</label>
             {formData.allowed_origins?.map((origin, index) => (
               <div key={index} className="flex gap-2 mb-2">
                 <input
                   type="url"
                   value={origin}
                   onChange={(e) => updateAllowedOrigin(index, e.target.value)}
-                  className="flex-1 border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
                   placeholder="https://yourapp.com"
                 />
                 <button
                   type="button"
                   onClick={() => removeAllowedOrigin(index)}
-                  className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-md"
+                  className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                 >
                   删除
                 </button>
@@ -217,28 +229,29 @@ function CreateClientModal({ isOpen, onClose, onSuccess }: CreateClientModalProp
             <button
               type="button"
               onClick={addAllowedOrigin}
-              className="text-blue-600 hover:text-blue-800 text-sm"
+              className="text-blue-600 hover:text-blue-800 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               + 添加CORS源
             </button>
           </div>
 
           {error && (
-            <div className="text-red-600 text-sm">{error}</div>
+            <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md">{error}</div>
           )}
 
-          <div className="flex justify-end gap-2 pt-4">
+          {/* 按钮区域 */}
+          <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md"
+              className="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
             >
               取消
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="px-6 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
             >
               {isLoading ? '创建中...' : '创建'}
             </button>
@@ -280,65 +293,97 @@ function ClientDetailModal({ client, isOpen, onClose, onUpdate }: ClientDetailMo
   if (!isOpen || !client) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-screen overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">客户端详情</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10">
+      <div className="w-3/4 max-w-4xl p-6 border shadow-lg rounded-md bg-white">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-semibold text-gray-900">客户端详情</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl font-bold">
             ✕
           </button>
         </div>
 
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">应用名称</label>
-            <p className="mt-1 text-sm text-gray-900">{client.name}</p>
+        <div className="grid grid-cols-2 gap-8">
+          {/* 左侧信息 */}
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">应用名称</label>
+              <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-md">{client.name}</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">应用描述</label>
+              <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-md">{client.description || '-'}</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">客户端ID</label>
+              <p className="text-sm text-gray-900 font-mono bg-gray-100 p-3 rounded-md">
+                {client.client_id}
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">状态</label>
+              <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
+                client.is_active 
+                  ? 'bg-green-100 text-green-800' 
+                  : 'bg-red-100 text-red-800'
+              }`}>
+                {client.is_active ? '激活' : '停用'}
+              </span>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">应用描述</label>
-            <p className="mt-1 text-sm text-gray-900">{client.description || '-'}</p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">客户端ID</label>
-            <p className="mt-1 text-sm text-gray-900 font-mono bg-gray-100 p-2 rounded">
-              {client.client_id}
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">客户端密钥</label>
-            <div className="mt-1 flex items-center gap-2">
-              {newSecret ? (
-                <p className="text-sm text-gray-900 font-mono bg-yellow-100 p-2 rounded flex-1">
-                  {newSecret}
-                </p>
-              ) : (
-                <p className="text-sm text-gray-900 font-mono bg-gray-100 p-2 rounded flex-1">
-                  ••••••••••••••••
+          {/* 右侧信息 */}
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">客户端密钥</label>
+              <div className="flex items-center gap-2">
+                {newSecret ? (
+                  <p className="text-sm text-gray-900 font-mono bg-yellow-100 p-3 rounded-md flex-1">
+                    {newSecret}
+                  </p>
+                ) : (
+                  <p className="text-sm text-gray-900 font-mono bg-gray-100 p-3 rounded-md flex-1">
+                    ••••••••••••••••
+                  </p>
+                )}
+                <button
+                  onClick={handleRegenerateSecret}
+                  disabled={isRegenerating}
+                  className="px-4 py-2 bg-yellow-600 text-white rounded-md text-sm hover:bg-yellow-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+                >
+                  {isRegenerating ? '生成中...' : '重新生成'}
+                </button>
+              </div>
+              {newSecret && (
+                <p className="text-sm text-yellow-600 mt-2 bg-yellow-50 p-2 rounded-md">
+                  ⚠️ 请妥善保存新密钥，关闭后将无法再次查看
                 </p>
               )}
-              <button
-                onClick={handleRegenerateSecret}
-                disabled={isRegenerating}
-                className="px-3 py-1 bg-yellow-600 text-white rounded text-sm hover:bg-yellow-700 disabled:opacity-50"
-              >
-                {isRegenerating ? '生成中...' : '重新生成'}
-              </button>
             </div>
-            {newSecret && (
-              <p className="text-sm text-yellow-600 mt-1">
-                ⚠️ 请妥善保存新密钥，关闭后将无法再次查看
-              </p>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">创建时间</label>
+              <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-md">{client.created_at}</p>
+            </div>
+
+            {client.last_used_at && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">最后使用</label>
+                <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-md">{client.last_used_at}</p>
+              </div>
             )}
           </div>
+        </div>
 
+        {/* 全宽信息 */}
+        <div className="mt-8 space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700">重定向URI</label>
-            <div className="mt-1 space-y-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">重定向URI</label>
+            <div className="space-y-2">
               {client.redirect_uris.map((uri, index) => (
-                <p key={index} className="text-sm text-gray-900 font-mono bg-gray-100 p-1 rounded">
+                <p key={index} className="text-sm text-gray-900 font-mono bg-gray-100 p-3 rounded-md">
                   {uri}
                 </p>
               ))}
@@ -346,44 +391,22 @@ function ClientDetailModal({ client, isOpen, onClose, onUpdate }: ClientDetailMo
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">权限范围</label>
-            <div className="mt-1 flex flex-wrap gap-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">权限范围</label>
+            <div className="flex flex-wrap gap-2">
               {client.scopes.map((scope) => (
-                <span key={scope} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+                <span key={scope} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
                   {scope}
                 </span>
               ))}
             </div>
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">状态</label>
-            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-              client.is_active 
-                ? 'bg-green-100 text-green-800' 
-                : 'bg-red-100 text-red-800'
-            }`}>
-              {client.is_active ? '激活' : '停用'}
-            </span>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">创建时间</label>
-            <p className="mt-1 text-sm text-gray-900">{client.created_at}</p>
-          </div>
-
-          {client.last_used_at && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700">最后使用</label>
-              <p className="mt-1 text-sm text-gray-900">{client.last_used_at}</p>
-            </div>
-          )}
         </div>
 
-        <div className="flex justify-end pt-4">
+        {/* 按钮区域 */}
+        <div className="flex justify-end pt-6 mt-6 border-t border-gray-200">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+            className="px-6 py-2 text-sm font-medium text-white bg-gray-600 border border-transparent rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
           >
             关闭
           </button>
@@ -450,6 +473,23 @@ export default function OAuthClients() {
   return (
     <Layout>
       <div className="space-y-6">
+        {/* 面包屑导航 */}
+        <nav className="flex" aria-label="Breadcrumb">
+          <ol className="flex items-center space-x-4">
+            <li>
+              <Link to="/dashboard" className="text-gray-400 hover:text-gray-500">
+                仪表板
+              </Link>
+            </li>
+            <li>
+              <div className="flex items-center">
+                <ChevronRightIcon className="flex-shrink-0 h-5 w-5 text-gray-400" />
+                <span className="ml-4 text-sm font-medium text-gray-500">OAuth2客户端管理</span>
+              </div>
+            </li>
+          </ol>
+        </nav>
+
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">OAuth2客户端管理</h1>
@@ -459,7 +499,7 @@ export default function OAuthClients() {
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-blue-700"
           >
             <PlusIcon className="h-4 w-4 mr-2" />
             创建客户端
@@ -483,7 +523,7 @@ export default function OAuthClients() {
             </div>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-blue-700"
             >
               搜索
             </button>
@@ -503,7 +543,7 @@ export default function OAuthClients() {
               <p className="mt-2 text-red-600">{error}</p>
               <button
                 onClick={loadClients}
-                className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                className="mt-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-blue-700"
               >
                 重新加载
               </button>
@@ -513,7 +553,7 @@ export default function OAuthClients() {
               <p className="text-gray-500">暂无OAuth2客户端</p>
               <button
                 onClick={() => setShowCreateModal(true)}
-                className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                className="mt-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-blue-700"
               >
                 创建第一个客户端
               </button>

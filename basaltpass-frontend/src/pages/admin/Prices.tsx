@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import Layout from '../../components/Layout'
 import { adminListPrices, adminCreatePrice, adminUpdatePrice, adminDeletePrice, adminListPlans } from '../../api/subscription'
 import { Price, Plan } from '../../types/subscription'
+import { Link } from 'react-router-dom'
+import { ChevronRightIcon } from '@heroicons/react/24/outline'
 
 export default function AdminPrices() {
   const [prices, setPrices] = useState<Price[]>([])
@@ -145,11 +147,36 @@ export default function AdminPrices() {
   return (
     <Layout>
       <div className="space-y-6">
+        {/* 面包屑导航 */}
+        <nav className="flex" aria-label="Breadcrumb">
+          <ol className="flex items-center space-x-4">
+            <li>
+              <Link to="/dashboard" className="text-gray-400 hover:text-gray-500">
+                仪表板
+              </Link>
+            </li>
+            <li>
+              <div className="flex items-center">
+                <ChevronRightIcon className="flex-shrink-0 h-5 w-5 text-gray-400" />
+                <Link to="/admin/subscriptions" className="ml-4 text-gray-400 hover:text-gray-500">
+                  订阅管理
+                </Link>
+              </div>
+            </li>
+            <li>
+              <div className="flex items-center">
+                <ChevronRightIcon className="flex-shrink-0 h-5 w-5 text-gray-400" />
+                <span className="ml-4 text-sm font-medium text-gray-500">定价管理</span>
+              </div>
+            </li>
+          </ol>
+        </nav>
+
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-semibold text-gray-900">定价管理</h1>
           <button
             onClick={() => setShowModal(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
           >
             新建定价
           </button>
@@ -204,22 +231,25 @@ export default function AdminPrices() {
             )}
           </ul>
         </div>
+      </div>
 
-        {showModal && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-              <div className="mt-3">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
-                  {editingPrice ? '编辑定价' : '新建定价'}
-                </h3>
-                <form onSubmit={handleSubmit} className="space-y-4">
+      {showModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10">
+          <div className="w-3/4 max-w-4xl p-5 border shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 mb-6">
+                {editingPrice ? '编辑定价' : '新建定价'}
+              </h3>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* 第一行：所属套餐和价格 */}
+                <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">所属套餐</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">所属套餐</label>
                     <select
                       required
                       value={formData.plan_id}
                       onChange={(e) => setFormData({ ...formData, plan_id: e.target.value })}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                      className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
                     >
                       <option value="">请选择套餐</option>
                       {plans.map((plan) => (
@@ -230,23 +260,27 @@ export default function AdminPrices() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">价格 (分)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">价格 (分)</label>
                     <input
                       type="number"
                       required
                       min="0"
                       value={formData.amount_cents}
                       onChange={(e) => setFormData({ ...formData, amount_cents: e.target.value })}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                      className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
                       placeholder="例如: 1000 表示 10.00 元"
                     />
                   </div>
+                </div>
+
+                {/* 第二行：币种和计费周期 */}
+                <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">币种</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">币种</label>
                     <select
                       value={formData.currency}
                       onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                      className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
                     >
                       <option value="CNY">CNY</option>
                       <option value="USD">USD</option>
@@ -254,11 +288,11 @@ export default function AdminPrices() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">计费周期</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">计费周期</label>
                     <select
                       value={formData.billing_period}
                       onChange={(e) => setFormData({ ...formData, billing_period: e.target.value })}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                      className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
                     >
                       <option value="day">天</option>
                       <option value="week">周</option>
@@ -266,36 +300,46 @@ export default function AdminPrices() {
                       <option value="year">年</option>
                     </select>
                   </div>
+                </div>
+
+                {/* 第三行：计费间隔和使用类型 */}
+                <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">计费间隔</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">计费间隔</label>
                     <input
                       type="number"
                       required
                       min="1"
                       value={formData.billing_interval}
                       onChange={(e) => setFormData({ ...formData, billing_interval: parseInt(e.target.value) })}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                      className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="请输入计费间隔"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">使用类型</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">使用类型</label>
                     <select
                       value={formData.usage_type}
                       onChange={(e) => setFormData({ ...formData, usage_type: e.target.value })}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                      className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
                     >
                       <option value="licensed">按许可证</option>
                       <option value="metered">按使用量</option>
                     </select>
                   </div>
+                </div>
+
+                {/* 第四行：试用天数和激活状态 */}
+                <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">试用天数（可选）</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">试用天数（可选）</label>
                     <input
                       type="number"
                       min="0"
                       value={formData.trial_days}
                       onChange={(e) => setFormData({ ...formData, trial_days: e.target.value })}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                      className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="请输入试用天数"
                     />
                   </div>
                   <div className="flex items-center">
@@ -309,40 +353,42 @@ export default function AdminPrices() {
                       激活状态
                     </label>
                   </div>
-                  <div className="flex justify-end space-x-3 pt-4">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowModal(false)
-                        setEditingPrice(null)
-                        setFormData({
-                          plan_id: '',
-                          amount_cents: '',
-                          currency: 'CNY',
-                          billing_period: 'month',
-                          billing_interval: 1,
-                          usage_type: 'licensed',
-                          trial_days: '',
-                          is_active: true
-                        })
-                      }}
-                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200"
-                    >
-                      取消
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
-                    >
-                      {editingPrice ? '更新' : '创建'}
-                    </button>
-                  </div>
-                </form>
-              </div>
+                </div>
+
+                {/* 按钮区域 */}
+                <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowModal(false)
+                      setEditingPrice(null)
+                      setFormData({
+                        plan_id: '',
+                        amount_cents: '',
+                        currency: 'CNY',
+                        billing_period: 'month',
+                        billing_interval: 1,
+                        usage_type: 'licensed',
+                        trial_days: '',
+                        is_active: true
+                      })
+                    }}
+                    className="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                  >
+                    取消
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-6 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    {editingPrice ? '更新' : '创建'}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </Layout>
   )
 } 

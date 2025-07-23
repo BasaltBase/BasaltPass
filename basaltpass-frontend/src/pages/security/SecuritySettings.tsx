@@ -354,7 +354,7 @@ export default function SecuritySettings() {
                     <div className="flex space-x-3">
                       <button
                         type="submit"
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                       >
                         确认修改
                       </button>
@@ -546,7 +546,7 @@ export default function SecuritySettings() {
                   <div className="flex space-x-3">
                     <button
                       type="submit"
-                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                     >
                       保存修改
                     </button>
@@ -597,7 +597,7 @@ export default function SecuritySettings() {
           </div>
 
           <div className="mt-8">
-            <Link to="/security/login-history" className="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+            <Link to="/security/login-history" className="inline-block px-4 py-2 bg-indigo-600 text-white rounded hover:bg-blue-700 transition">
               查看登录历史
             </Link>
           </div>

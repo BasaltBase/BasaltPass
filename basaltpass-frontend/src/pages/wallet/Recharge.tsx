@@ -214,7 +214,7 @@ export default function Recharge() {
                             <p className="text-sm text-gray-500">{method.description}</p>
                           </div>
                           {selectedMethod === method.id && (
-                            <div className="h-5 w-5 bg-blue-600 rounded-full flex items-center justify-center">
+                            <div className="h-5 w-5 bg-indigo-600 rounded-full flex items-center justify-center">
                               <CheckCircleIcon className="h-4 w-4 text-white" />
                             </div>
                           )}

@@ -229,7 +229,7 @@ export default function ProductsPage() {
                             </div>
                           ) : (
                             <div className="text-center py-4 text-gray-500">
-                              <p className="text-sm">暂无可用价格</p>
+                              <p className="text-sm">暂无可用价格选项</p>
                             </div>
                           )}
                         </div>

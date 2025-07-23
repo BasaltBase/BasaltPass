@@ -221,7 +221,7 @@ const TeamDetail: React.FC = () => {
             <div className="flex flex-wrap gap-3">
               <Link
                 to={`/teams/${team.id}/members`}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-blue-700"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
@@ -378,7 +378,7 @@ const TeamDetail: React.FC = () => {
                     className={`px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white ${
                       team.user_role === 'owner' 
                         ? 'bg-red-600 hover:bg-red-700' 
-                        : 'bg-blue-600 hover:bg-blue-700'
+                        : 'bg-indigo-600 hover:bg-blue-700'
                     }`}
                   >
                     {team.user_role === 'owner' ? '确认删除' : '确认离开'}

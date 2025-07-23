@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import Layout from '../../components/Layout'
 import { adminListSubscriptions, adminCancelSubscription, adminGetSubscription } from '../../api/subscription'
+import { Link } from 'react-router-dom'
+import { ChevronRightIcon } from '@heroicons/react/24/outline'
 
 interface Subscription {
   ID: number
@@ -156,6 +158,23 @@ export default function AdminSubscriptions() {
   return (
     <Layout>
       <div className="space-y-6">
+        {/* 面包屑导航 */}
+        <nav className="flex" aria-label="Breadcrumb">
+          <ol className="flex items-center space-x-4">
+            <li>
+              <Link to="/dashboard" className="text-gray-400 hover:text-gray-500">
+                仪表板
+              </Link>
+            </li>
+            <li>
+              <div className="flex items-center">
+                <ChevronRightIcon className="flex-shrink-0 h-5 w-5 text-gray-400" />
+                <span className="ml-4 text-sm font-medium text-gray-500">订阅管理</span>
+              </div>
+            </li>
+          </ol>
+        </nav>
+
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-semibold text-gray-900">订阅管理</h1>
           <div className="flex space-x-4">
@@ -252,102 +271,114 @@ export default function AdminSubscriptions() {
             )}
           </ul>
         </div>
+      </div>
 
-        {/* 详情模态框 */}
-        {showDetailModal && selectedSubscription && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-2/3 max-w-4xl shadow-lg rounded-md bg-white">
-              <div className="mt-3">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-medium text-gray-900">
-                    订阅详情 #{selectedSubscription.ID}
-                  </h3>
-                  <button
-                    onClick={() => setShowDetailModal(false)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    ✕
-                  </button>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">订阅状态</label>
-                      <div className="mt-1">
-                        {getStatusBadge(selectedSubscription.Status)}
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">用户ID</label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {selectedSubscription.CustomerID}
-                        {selectedSubscription.Customer?.Email && (
-                          <span className="ml-2 text-gray-500">
-                            ({selectedSubscription.Customer.Email})
-                          </span>
-                        )}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">产品信息</label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {selectedSubscription.CurrentPrice?.Plan?.Product?.Name || '未知产品'} - 
-                        {selectedSubscription.CurrentPrice?.Plan?.DisplayName || '未知套餐'}
-                      </p>
-                    </div>
-                    {selectedSubscription.CurrentPrice && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">价格</label>
-                        <p className="mt-1 text-sm text-gray-900">
-                          {formatPrice(selectedSubscription.CurrentPrice.AmountCents, selectedSubscription.CurrentPrice.Currency)}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">当前周期结束</label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {formatDate(selectedSubscription.CurrentPeriodEnd)}
-                      </p>
-                    </div>
-                    {selectedSubscription.CreatedAt && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">创建时间</label>
-                        <p className="mt-1 text-sm text-gray-900">
-                          {formatDate(selectedSubscription.CreatedAt)}
-                        </p>
-                      </div>
-                    )}
+      {/* 详情模态框 */}
+      {showDetailModal && selectedSubscription && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10">
+          <div className="w-3/4 max-w-4xl p-6 border shadow-lg rounded-md bg-white">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-semibold text-gray-900">
+                订阅详情 #{selectedSubscription.ID}
+              </h3>
+              <button
+                onClick={() => setShowDetailModal(false)}
+                className="text-gray-400 hover:text-gray-600 text-xl font-bold"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">订阅状态</label>
+                  <div>
+                    {getStatusBadge(selectedSubscription.Status)}
                   </div>
                 </div>
-
-                <div className="flex justify-end space-x-3 pt-6 mt-6 border-t">
-                  {(selectedSubscription.Status === 'trialing' || selectedSubscription.Status === 'active') && (
-                    <button
-                      onClick={() => {
-                        handleCancel(selectedSubscription.ID)
-                        setShowDetailModal(false)
-                      }}
-                      className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700"
-                    >
-                      取消订阅
-                    </button>
-                  )}
-                  <button
-                    onClick={() => setShowDetailModal(false)}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200"
-                  >
-                    关闭
-                  </button>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">用户ID</label>
+                  <p className="text-sm text-gray-900">
+                    {selectedSubscription.CustomerID}
+                    {selectedSubscription.Customer?.Email && (
+                      <span className="ml-2 text-gray-500">
+                        ({selectedSubscription.Customer.Email})
+                      </span>
+                    )}
+                  </p>
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">产品信息</label>
+                  <p className="text-sm text-gray-900">
+                    {selectedSubscription.CurrentPrice?.Plan?.Product?.Name || '未知产品'} - 
+                    {selectedSubscription.CurrentPrice?.Plan?.DisplayName || '未知套餐'}
+                  </p>
+                </div>
+                {selectedSubscription.CurrentPrice && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">价格</label>
+                    <p className="text-sm text-gray-900">
+                      {formatPrice(selectedSubscription.CurrentPrice.AmountCents, selectedSubscription.CurrentPrice.Currency)}
+                    </p>
+                  </div>
+                )}
+              </div>
+              
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">当前周期结束</label>
+                  <p className="text-sm text-gray-900">
+                    {formatDate(selectedSubscription.CurrentPeriodEnd)}
+                  </p>
+                </div>
+                {selectedSubscription.CreatedAt && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">创建时间</label>
+                    <p className="text-sm text-gray-900">
+                      {formatDate(selectedSubscription.CreatedAt)}
+                    </p>
+                  </div>
+                )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">订阅ID</label>
+                  <p className="text-sm text-gray-900">
+                    #{selectedSubscription.ID}
+                  </p>
+                </div>
+                {selectedSubscription.Customer?.Nickname && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">用户昵称</label>
+                    <p className="text-sm text-gray-900">
+                      {selectedSubscription.Customer.Nickname}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
+
+            <div className="flex justify-end space-x-3 pt-6 mt-6 border-t border-gray-200">
+              {(selectedSubscription.Status === 'trialing' || selectedSubscription.Status === 'active') && (
+                <button
+                  onClick={() => {
+                    handleCancel(selectedSubscription.ID)
+                    setShowDetailModal(false)
+                  }}
+                  className="px-6 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                >
+                  取消订阅
+                </button>
+              )}
+              <button
+                onClick={() => setShowDetailModal(false)}
+                className="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+              >
+                关闭
+              </button>
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </Layout>
   )
 } 

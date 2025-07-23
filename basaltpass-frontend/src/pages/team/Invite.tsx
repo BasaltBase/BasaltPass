@@ -218,7 +218,7 @@ const Invite: React.FC = () => {
             className={`px-6 py-3 rounded-lg font-medium ${
               loading || selectedUsers.length === 0
                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
+                : 'bg-indigo-600 text-white hover:bg-blue-700'
             }`}
           >
             {loading ? '发送中...' : `发送邀请 (${selectedUsers.length})`}

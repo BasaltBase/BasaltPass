@@ -231,7 +231,7 @@ const Inbox: React.FC = () => {
                       onClick={() => load(page)}
                       className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
                         page === currentPage
-                          ? 'z-10 bg-blue-600 text-white focus:z-20 focus:outline-none'
+                          ? 'z-10 bg-indigo-600 text-white focus:z-20 focus:outline-none'
                           : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-none'
                       }`}
                     >

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import Layout from '../../components/Layout'
 import { adminListCoupons, adminCreateCoupon, adminUpdateCoupon, adminDeleteCoupon } from '../../api/subscription'
 import { Coupon } from '../../types/subscription'
+import { Link } from 'react-router-dom'
+import { ChevronRightIcon } from '@heroicons/react/24/outline'
 
 export default function AdminCoupons() {
   const [coupons, setCoupons] = useState<Coupon[]>([])
@@ -141,11 +143,36 @@ export default function AdminCoupons() {
   return (
     <Layout>
       <div className="space-y-6">
+        {/* 面包屑导航 */}
+        <nav className="flex" aria-label="Breadcrumb">
+          <ol className="flex items-center space-x-4">
+            <li>
+              <Link to="/dashboard" className="text-gray-400 hover:text-gray-500">
+                仪表板
+              </Link>
+            </li>
+            <li>
+              <div className="flex items-center">
+                <ChevronRightIcon className="flex-shrink-0 h-5 w-5 text-gray-400" />
+                <Link to="/admin/subscriptions" className="ml-4 text-gray-400 hover:text-gray-500">
+                  订阅管理
+                </Link>
+              </div>
+            </li>
+            <li>
+              <div className="flex items-center">
+                <ChevronRightIcon className="flex-shrink-0 h-5 w-5 text-gray-400" />
+                <span className="ml-4 text-sm font-medium text-gray-500">优惠券管理</span>
+              </div>
+            </li>
+          </ol>
+        </nav>
+
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-semibold text-gray-900">优惠券管理</h1>
           <button
             onClick={() => setShowModal(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
           >
             新建优惠券
           </button>
@@ -216,155 +243,174 @@ export default function AdminCoupons() {
             )}
           </ul>
         </div>
+      </div>
 
-        {showModal && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-              <div className="mt-3">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
-                  {editingCoupon ? '编辑优惠券' : '新建优惠券'}
-                </h3>
-                <form onSubmit={handleSubmit} className="space-y-4">
+      {showModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10">
+          <div className="w-3/4 max-w-4xl p-5 border shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 mb-6">
+                {editingCoupon ? '编辑优惠券' : '新建优惠券'}
+              </h3>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* 第一行：优惠券代码和优惠券名称 */}
+                <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">优惠券代码</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">优惠券代码</label>
                     <input
                       type="text"
                       required
                       disabled={!!editingCoupon}
                       value={formData.code}
                       onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                      className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:text-gray-500"
                       placeholder="例如: SAVE20"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">优惠券名称</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">优惠券名称</label>
                     <input
                       type="text"
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                      className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
                       placeholder="例如: 新用户专享优惠"
                     />
                   </div>
+                </div>
+
+                {/* 第二行：折扣类型和持续时间 */}
+                <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">折扣类型</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">折扣类型</label>
                     <select
                       value={formData.discount_type}
                       onChange={(e) => setFormData({ ...formData, discount_type: e.target.value })}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                      className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
                     >
                       <option value="percent">百分比折扣</option>
                       <option value="fixed_amount">固定金额</option>
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">持续时间</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">持续时间</label>
                     <select
                       value={formData.duration}
                       onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                      className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
                     >
                       <option value="once">一次性</option>
                       <option value="repeating">重复</option>
                       <option value="forever">永久</option>
                     </select>
                   </div>
-                  {formData.duration === 'repeating' && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">重复周期数</label>
-                      <input
-                        type="number"
-                        min="1"
-                        value={formData.duration_in_cycles}
-                        onChange={(e) => setFormData({ ...formData, duration_in_cycles: e.target.value })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-                        placeholder="例如: 3"
-                      />
-                    </div>
-                  )}
+                </div>
+
+                {/* 第三行：折扣值和重复周期数 */}
+                <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      折扣值 {formData.discount_type === 'percentage' ? '(%)' : '(分)'}
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      折扣值 {formData.discount_type === 'percent' ? '(%)' : '(分)'}
                     </label>
                     <input
                       type="number"
                       required
                       min="1"
-                      max={formData.discount_type === 'percentage' ? '100' : undefined}
+                      max={formData.discount_type === 'percent' ? '100' : undefined}
                       value={formData.discount_value}
                       onChange={(e) => setFormData({ ...formData, discount_value: e.target.value })}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-                      placeholder={formData.discount_type === 'percentage' ? '例如: 20' : '例如: 1000 (10元)'}
+                      className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder={formData.discount_type === 'percent' ? '例如: 20' : '例如: 1000 (10元)'}
                     />
                   </div>
+                  {formData.duration === 'repeating' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">重复周期数</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={formData.duration_in_cycles}
+                        onChange={(e) => setFormData({ ...formData, duration_in_cycles: e.target.value })}
+                        className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="例如: 3"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* 第四行：最大使用次数和过期时间 */}
+                <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">最大使用次数（可选）</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">最大使用次数（可选）</label>
                     <input
                       type="number"
                       min="1"
                       value={formData.max_redemptions}
                       onChange={(e) => setFormData({ ...formData, max_redemptions: e.target.value })}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                      className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
                       placeholder="留空表示无限制"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">过期时间（可选）</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">过期时间（可选）</label>
                     <input
                       type="date"
                       value={formData.expires_at}
                       onChange={(e) => setFormData({ ...formData, expires_at: e.target.value })}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                      className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
                     />
                   </div>
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.is_active}
-                      onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                    />
-                    <label className="ml-2 block text-sm text-gray-900">
-                      激活状态
-                    </label>
-                  </div>
-                  <div className="flex justify-end space-x-3 pt-4">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowModal(false)
-                        setEditingCoupon(null)
-                        setFormData({
-                          code: '',
-                          name: '',
-                          discount_type: 'percent',
-                          discount_value: '',
-                          duration: 'once',
-                          duration_in_cycles: '',
-                          max_redemptions: '',
-                          expires_at: '',
-                          is_active: true
-                        })
-                      }}
-                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200"
-                    >
-                      取消
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
-                    >
-                      {editingCoupon ? '更新' : '创建'}
-                    </button>
-                  </div>
-                </form>
-              </div>
+                </div>
+
+                {/* 第五行：激活状态 */}
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={formData.is_active}
+                    onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  />
+                  <label className="ml-2 block text-sm text-gray-900">
+                    激活状态
+                  </label>
+                </div>
+
+                {/* 按钮区域 */}
+                <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowModal(false)
+                      setEditingCoupon(null)
+                      setFormData({
+                        code: '',
+                        name: '',
+                        discount_type: 'percent',
+                        discount_value: '',
+                        duration: 'once',
+                        duration_in_cycles: '',
+                        max_redemptions: '',
+                        expires_at: '',
+                        is_active: true
+                      })
+                    }}
+                    className="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                  >
+                    取消
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-6 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    {editingCoupon ? '更新' : '创建'}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </Layout>
   )
 } 

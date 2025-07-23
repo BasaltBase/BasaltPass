@@ -119,7 +119,7 @@ export default function AdminProducts() {
           <h1 className="text-2xl font-semibold text-gray-900">产品管理</h1>
           <button
             onClick={() => setShowModal(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
           >
             新建产品
           </button>
@@ -172,81 +172,93 @@ export default function AdminProducts() {
             )}
           </ul>
         </div>
+      </div>
 
-        {showModal && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-              <div className="mt-3">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
-                  {editingProduct ? '编辑产品' : '新建产品'}
-                </h3>
-                <form onSubmit={handleSubmit} className="space-y-4">
+      {showModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10">
+          <div className="w-3/4 max-w-4xl p-5 border shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 mb-6">
+                {editingProduct ? '编辑产品' : '新建产品'}
+              </h3>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* 第一行：产品代码和产品名称 */}
+                <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">产品代码</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">产品代码</label>
                     <input
                       type="text"
                       required
                       disabled={!!editingProduct}
                       value={formData.code}
                       onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                      className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:text-gray-500"
+                      placeholder="请输入产品代码"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">产品名称</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">产品名称</label>
                     <input
                       type="text"
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                      className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="请输入产品名称"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">产品描述</label>
-                    <textarea
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-                      rows={3}
-                    />
-                  </div>
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.is_active}
-                      onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                    />
-                    <label className="ml-2 block text-sm text-gray-900">
-                      激活状态
-                    </label>
-                  </div>
-                  <div className="flex justify-end space-x-3 pt-4">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowModal(false)
-                        setEditingProduct(null)
-                        setFormData({ code: '', name: '', description: '', is_active: true })
-                      }}
-                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200"
-                    >
-                      取消
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
-                    >
-                      {editingProduct ? '更新' : '创建'}
-                    </button>
-                  </div>
-                </form>
-              </div>
+                </div>
+
+                {/* 第二行：产品描述（全宽） */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">产品描述</label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    rows={4}
+                    placeholder="请输入产品描述"
+                  />
+                </div>
+
+                {/* 第三行：激活状态 */}
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={formData.is_active}
+                    onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  />
+                  <label className="ml-2 block text-sm text-gray-900">
+                    激活状态
+                  </label>
+                </div>
+
+                {/* 按钮区域 */}
+                <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowModal(false)
+                      setEditingProduct(null)
+                      setFormData({ code: '', name: '', description: '', is_active: true })
+                    }}
+                    className="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                  >
+                    取消
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-6 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    {editingProduct ? '更新' : '创建'}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </Layout>
   )
 } 

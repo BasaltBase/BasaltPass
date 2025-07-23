@@ -107,7 +107,7 @@ export default function Settings() {
                   <button
                     type="button"
                     className={`${
-                      notifications.email ? 'bg-blue-600' : 'bg-gray-200'
+                      notifications.email ? 'bg-indigo-600' : 'bg-gray-200'
                     } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
                     onClick={() => handleNotificationChange('email')}
                   >
@@ -127,7 +127,7 @@ export default function Settings() {
                   <button
                     type="button"
                     className={`${
-                      notifications.sms ? 'bg-blue-600' : 'bg-gray-200'
+                      notifications.sms ? 'bg-indigo-600' : 'bg-gray-200'
                     } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
                     onClick={() => handleNotificationChange('sms')}
                   >
@@ -147,7 +147,7 @@ export default function Settings() {
                   <button
                     type="button"
                     className={`${
-                      notifications.push ? 'bg-blue-600' : 'bg-gray-200'
+                      notifications.push ? 'bg-indigo-600' : 'bg-gray-200'
                     } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
                     onClick={() => handleNotificationChange('push')}
                   >
@@ -167,7 +167,7 @@ export default function Settings() {
                   <button
                     type="button"
                     className={`${
-                      notifications.security ? 'bg-blue-600' : 'bg-gray-200'
+                      notifications.security ? 'bg-indigo-600' : 'bg-gray-200'
                     } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
                     onClick={() => handleNotificationChange('security')}
                   >
@@ -187,7 +187,7 @@ export default function Settings() {
         <div className="flex justify-end">
           <button
             type="button"
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
             保存设置
           </button>

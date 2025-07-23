@@ -194,7 +194,7 @@ export default function OAuthConsent() {
                   {scopes.map((scope) => (
                     <div key={scope} className="flex items-start">
                       <div className="flex-shrink-0">
-                        <div className="h-2 w-2 bg-blue-600 rounded-full mt-2"></div>
+                        <div className="h-2 w-2 bg-indigo-600 rounded-full mt-2"></div>
                       </div>
                       <div className="ml-3">
                         <p className="text-sm font-medium text-gray-900">
@@ -234,7 +234,7 @@ export default function OAuthConsent() {
                 <button
                   onClick={handleAllow}
                   disabled={loading}
-                  className="flex-1 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                  className="flex-1 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
                 >
                   {loading ? '处理中...' : '授权'}
                 </button>

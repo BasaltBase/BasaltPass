@@ -162,7 +162,7 @@ const Payment: React.FC = () => {
           <button
             type="submit"
             disabled={loading || !amount}
-            className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+            className="w-full bg-indigo-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? '创建中...' : '创建支付意图'}
           </button>

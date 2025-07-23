@@ -155,7 +155,7 @@ function Login() {
                     </span>
                     {isSelected && (
                       <div className="ml-auto">
-                        <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                        <div className="w-2 h-2 bg-indigo-600 rounded-full"></div>
                       </div>
                     )}
                   </button>
