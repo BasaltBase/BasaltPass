@@ -2,13 +2,14 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import client from '../../api/client'
 import { useNavigate } from 'react-router-dom'
-import { setAccessToken } from '../../utils/auth'
+import { useAuth } from '../../contexts/AuthContext'
 import { loginWithPasskeyFlow } from '../../api/passkey'
 import { isPasskeySupported } from '../../utils/webauthn'
 import { EyeIcon, EyeSlashIcon, ShieldCheckIcon, EnvelopeIcon, KeyIcon } from '@heroicons/react/24/outline'
 
 function Login() {
   const navigate = useNavigate()
+  const { login } = useAuth()
   // step: 1-用户名密码，2-二次验证
   const [step, setStep] = useState(1)
   const [identifier, setIdentifier] = useState('')
@@ -41,7 +42,7 @@ function Login() {
         console.log('Selected 2FA Type:', res.data['2fa_type']) // 调试信息
         setStep(2)
       } else if (res.data.access_token) {
-        setAccessToken(res.data.access_token)
+        login(res.data.access_token)
         navigate('/dashboard')
       } else {
         setError('未知的登录响应')
@@ -99,7 +100,7 @@ function Login() {
         // 进行真正的Passkey验证
         try {
           const passkeyResult = await loginWithPasskeyFlow(identifier)
-          setAccessToken(passkeyResult.access_token)
+          login(passkeyResult.access_token)
           navigate('/dashboard')
           return // 直接返回，不需要调用verify-2fa API
         } catch (err: any) {
@@ -109,7 +110,7 @@ function Login() {
         }
       }
       const res = await client.post('/api/v1/auth/verify-2fa', payload)
-      setAccessToken(res.data.access_token)
+      login(res.data.access_token)
       navigate('/dashboard')
     } catch (err: any) {
       setError(err.response?.data?.error || '二次验证失败')

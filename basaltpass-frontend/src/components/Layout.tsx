@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { 
   Bars3Icon, 
   XMarkIcon,
@@ -22,7 +22,7 @@ import {
   CurrencyDollarIcon,
   GiftIcon
 } from '@heroicons/react/24/outline'
-import { clearAccessToken } from '../utils/auth'
+import { useAuth } from '../contexts/AuthContext'
 import EnhancedNotificationIcon from './EnhancedNotificationIcon'
 
 const navigation = [
@@ -58,11 +58,10 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const location = useLocation()
-  const navigate = useNavigate()
+  const { logout } = useAuth()
 
   const handleLogout = () => {
-    clearAccessToken()
-    navigate('/login')
+    logout()
   }
 
   const isActive = (href: string) => location.pathname === href
