@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getAccessToken, clearAccessToken } from '../utils/auth'
 import { debugAuth } from '../utils/debug'
@@ -33,7 +33,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [hasChecked, setHasChecked] = useState(false)
   const navigate = useNavigate()
 
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     debugAuth.log('Starting auth check')
     const token = getAccessToken()
     
@@ -56,15 +56,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
         debugAuth.log('Clearing invalid token')
         clearAccessToken()
         setUser(null)
+      } else {
+        // 对于其他错误（如网络错误、服务器错误等），保持当前状态
+        // 不要立即设置为未认证，因为这可能是临时错误
+        debugAuth.log('Other error, keeping current state')
+        // 对于非401错误，我们暂时保持用户状态，不立即清除
+        // 这样可以避免因为临时网络问题导致的认证失效
       }
     } finally {
       setIsLoading(false)
       setHasChecked(true)
       debugAuth.log('Auth check completed')
     }
-  }
+  }, [])
 
-  const login = (token: string) => {
+  const login = useCallback((token: string) => {
     debugAuth.log('Login called with token', token.substring(0, 20) + '...')
     localStorage.setItem('access_token', token)
     // 登录后立即设置用户状态，避免重复API调用
@@ -72,22 +78,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setIsLoading(false)
     setHasChecked(true)
     debugAuth.log('Login completed, user set')
-  }
+  }, [])
 
-  const logout = () => {
+  const logout = useCallback(() => {
     debugAuth.log('Logout called')
     clearAccessToken()
     setUser(null)
     setIsLoading(false)
     setHasChecked(true)
     navigate('/login', { replace: true })
-  }
+  }, [navigate])
 
   useEffect(() => {
     if (!hasChecked) {
       checkAuth()
     }
-  }, [hasChecked])
+  }, [hasChecked]) // 移除 checkAuth 依赖项，避免无限循环
 
   // 调试：输出当前状态
   useEffect(() => {

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import Layout from '../../components/Layout'
 import { adminListSubscriptions, adminCancelSubscription, adminGetSubscription } from '../../api/subscription'
 import { Link } from 'react-router-dom'
-import { ChevronRightIcon } from '@heroicons/react/24/outline'
+import { ChevronRightIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 
 interface Subscription {
   ID: number
@@ -33,6 +33,9 @@ export default function AdminSubscriptions() {
   const [loading, setLoading] = useState(true)
   const [selectedSubscription, setSelectedSubscription] = useState<Subscription | null>(null)
   const [showDetailModal, setShowDetailModal] = useState(false)
+  const [showCancelModal, setShowCancelModal] = useState(false)
+  const [cancelTarget, setCancelTarget] = useState<Subscription | null>(null)
+  const [canceling, setCanceling] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
 
@@ -42,14 +45,14 @@ export default function AdminSubscriptions() {
 
   // 调试模态框状态
   useEffect(() => {
-    console.log('模态框状态变化 - showDetailModal:', showDetailModal, 'selectedSubscription:', selectedSubscription)
+
   }, [showDetailModal, selectedSubscription])
 
   const fetchSubscriptions = async () => {
     try {
       setLoading(true)
       const res = await adminListSubscriptions()
-      console.log('API Response:', res)
+      
       
       // 根据实际API响应结构调整数据提取
       let list: Subscription[] = []
@@ -67,35 +70,49 @@ export default function AdminSubscriptions() {
     }
   }
 
-  const handleCancel = async (id: number) => {
-    if (confirm('确定要取消这个订阅吗？')) {
-      try {
-        await adminCancelSubscription(id)
-        fetchSubscriptions()
-      } catch (error) {
-        console.error('取消订阅失败:', error)
-      }
+  const handleCancelClick = (subscription: Subscription) => {
+    setCancelTarget(subscription)
+    setShowCancelModal(true)
+  }
+
+  const handleCancelConfirm = async () => {
+    if (!cancelTarget) return
+    
+    try {
+      setCanceling(true)
+      await adminCancelSubscription(cancelTarget.ID)
+      await fetchSubscriptions()
+      setShowCancelModal(false)
+      setCancelTarget(null)
+    } catch (error) {
+      console.error('取消订阅失败:', error)
+    } finally {
+      setCanceling(false)
     }
   }
 
+  const handleCancelCancel = () => {
+    setShowCancelModal(false)
+    setCancelTarget(null)
+  }
+
   const handleViewDetail = async (subscription: Subscription) => {
-    console.log('点击详情按钮，订阅ID:', subscription.ID)
+    
     try {
-      console.log('开始获取订阅详情...')
+      
       const res = await adminGetSubscription(subscription.ID)
-      console.log('获取订阅详情成功:', res)
-      console.log('详情数据:', res.data)
+      
       // 修复：API返回格式是 {data: subscription}，所以直接使用 res.data
       setSelectedSubscription(res.data)
       setShowDetailModal(true)
-      console.log('模态框状态已设置为显示')
+      
     } catch (error) {
       console.error('获取订阅详情失败:', error)
       // 如果获取详情失败，就用列表中的数据
-      console.log('使用列表中的数据作为详情')
+      
       setSelectedSubscription(subscription)
       setShowDetailModal(true)
-      console.log('模态框状态已设置为显示（使用列表数据）')
+      
     }
   }
 
@@ -254,7 +271,7 @@ export default function AdminSubscriptions() {
                       </button>
                       {(subscription.Status === 'trialing' || subscription.Status === 'active') && (
                         <button
-                          onClick={() => handleCancel(subscription.ID)}
+                          onClick={() => handleCancelClick(subscription)}
                           className="text-red-600 hover:text-red-900 text-sm"
                         >
                           取消
@@ -361,7 +378,7 @@ export default function AdminSubscriptions() {
               {(selectedSubscription.Status === 'trialing' || selectedSubscription.Status === 'active') && (
                 <button
                   onClick={() => {
-                    handleCancel(selectedSubscription.ID)
+                    handleCancelClick(selectedSubscription)
                     setShowDetailModal(false)
                   }}
                   className="px-6 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
@@ -375,6 +392,64 @@ export default function AdminSubscriptions() {
               >
                 关闭
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 取消订阅确认模态框 */}
+      {showCancelModal && cancelTarget && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mt-4">
+                确认取消订阅
+              </h3>
+              <div className="mt-2 px-7 py-3">
+                <p className="text-sm text-gray-500">
+                  您确定要取消以下订阅吗？
+                </p>
+                <div className="mt-3 p-3 bg-gray-50 rounded-md">
+                  <p className="text-sm font-medium text-gray-900">
+                    订阅 #{cancelTarget.ID}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    用户ID: {cancelTarget.CustomerID}
+                    {cancelTarget.Customer?.Email && (
+                      <span className="ml-1">({cancelTarget.Customer.Email})</span>
+                    )}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {cancelTarget.CurrentPrice?.Plan?.Product?.Name || '未知产品'} - 
+                    {cancelTarget.CurrentPrice?.Plan?.DisplayName || '未知套餐'}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    当前状态: {cancelTarget.Status === 'trialing' ? '试用中' : '进行中'}
+                  </p>
+                </div>
+                <p className="text-sm text-gray-500 mt-3">
+                  取消后，用户将无法继续使用相关服务，直到重新订阅。
+                </p>
+              </div>
+              <div className="flex justify-center space-x-3 mt-4">
+                <button
+                  onClick={handleCancelCancel}
+                  disabled={canceling}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 text-base font-medium rounded-md shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-50"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleCancelConfirm}
+                  disabled={canceling}
+                  className="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50"
+                >
+                  {canceling ? '处理中...' : '确认取消'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

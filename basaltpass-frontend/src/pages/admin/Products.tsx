@@ -3,12 +3,15 @@ import Layout from '../../components/Layout'
 import { adminListProducts, adminCreateProduct, adminUpdateProduct, adminDeleteProduct } from '../../api/subscription'
 import { Product } from '../../types/subscription'
 import { Link } from 'react-router-dom'
-import { ChevronRightIcon } from '@heroicons/react/24/outline'
+import { ChevronRightIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 
 export default function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<Product | null>(null)
+  const [deleting, setDeleting] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [formData, setFormData] = useState({
     code: '',
@@ -66,15 +69,30 @@ export default function AdminProducts() {
     setShowModal(true)
   }
 
-  const handleDelete = async (id: number) => {
-    if (confirm('确定要删除这个产品吗？')) {
-      try {
-        await adminDeleteProduct(id)
-        fetchProducts()
-      } catch (error) {
-        console.error('删除失败:', error)
-      }
+  const handleDeleteClick = (product: Product) => {
+    setDeleteTarget(product)
+    setShowDeleteModal(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return
+    
+    try {
+      setDeleting(true)
+      await adminDeleteProduct(deleteTarget.ID)
+      await fetchProducts()
+      setShowDeleteModal(false)
+      setDeleteTarget(null)
+    } catch (error) {
+      console.error('删除失败:', error)
+    } finally {
+      setDeleting(false)
     }
+  }
+
+  const handleDeleteCancel = () => {
+    setShowDeleteModal(false)
+    setDeleteTarget(null)
   }
 
   if (loading) {
@@ -156,7 +174,7 @@ export default function AdminProducts() {
                         编辑
                       </button>
                       <button
-                        onClick={() => handleDelete(product.ID)}
+                        onClick={() => handleDeleteClick(product)}
                         className="text-red-600 hover:text-red-900 text-sm"
                       >
                         删除
@@ -255,6 +273,59 @@ export default function AdminProducts() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 删除产品确认模态框 */}
+      {showDeleteModal && deleteTarget && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mt-4">
+                确认删除产品
+              </h3>
+              <div className="mt-2 px-7 py-3">
+                <p className="text-sm text-gray-500">
+                  您确定要删除以下产品吗？
+                </p>
+                <div className="mt-3 p-3 bg-gray-50 rounded-md">
+                  <p className="text-sm font-medium text-gray-900">
+                    {deleteTarget.Name}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    代码: {deleteTarget.Code}
+                  </p>
+                  {deleteTarget.Description && (
+                    <p className="text-sm text-gray-500 mt-1">
+                      {deleteTarget.Description}
+                    </p>
+                  )}
+                </div>
+                <p className="text-sm text-gray-500 mt-3">
+                  删除后，该产品及其相关的套餐和价格将无法恢复。
+                </p>
+              </div>
+              <div className="flex justify-center space-x-3 mt-4">
+                <button
+                  onClick={handleDeleteCancel}
+                  disabled={deleting}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 text-base font-medium rounded-md shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-50"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleDeleteConfirm}
+                  disabled={deleting}
+                  className="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50"
+                >
+                  {deleting ? '删除中...' : '确认删除'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

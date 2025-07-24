@@ -3,12 +3,15 @@ import Layout from '../../components/Layout'
 import { adminListCoupons, adminCreateCoupon, adminUpdateCoupon, adminDeleteCoupon } from '../../api/subscription'
 import { Coupon } from '../../types/subscription'
 import { Link } from 'react-router-dom'
-import { ChevronRightIcon } from '@heroicons/react/24/outline'
+import { ChevronRightIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 
 export default function AdminCoupons() {
   const [coupons, setCoupons] = useState<Coupon[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<Coupon | null>(null)
+  const [deleting, setDeleting] = useState(false)
   const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null)
   const [formData, setFormData] = useState({
     code: '',
@@ -30,7 +33,7 @@ export default function AdminCoupons() {
     try {
       setLoading(true)
       const res = await adminListCoupons()
-      console.log('API响应:', res) // 调试信息
+      
       
       const raw = res.data
       let list: any = []
@@ -46,7 +49,7 @@ export default function AdminCoupons() {
         list = raw.Data
       }
       
-      console.log('解析后的优惠券列表:', list) // 调试信息
+      
       setCoupons(list)
     } catch (error) {
       console.error('获取优惠券列表失败:', error)
@@ -106,15 +109,30 @@ export default function AdminCoupons() {
     setShowModal(true)
   }
 
-  const handleDelete = async (code: string) => {
-    if (confirm('确定要删除这个优惠券吗？')) {
-      try {
-        await adminDeleteCoupon(code)
-        fetchCoupons()
-      } catch (error) {
-        console.error('删除失败:', error)
-      }
+  const handleDeleteClick = (coupon: Coupon) => {
+    setDeleteTarget(coupon)
+    setShowDeleteModal(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return
+    
+    try {
+      setDeleting(true)
+      await adminDeleteCoupon(deleteTarget.Code)
+      await fetchCoupons()
+      setShowDeleteModal(false)
+      setDeleteTarget(null)
+    } catch (error) {
+      console.error('删除失败:', error)
+    } finally {
+      setDeleting(false)
     }
+  }
+
+  const handleDeleteCancel = () => {
+    setShowDeleteModal(false)
+    setDeleteTarget(null)
   }
 
   const formatDiscount = (type: string, value: number) => {
@@ -227,7 +245,7 @@ export default function AdminCoupons() {
                         编辑
                       </button>
                       <button
-                        onClick={() => handleDelete(coupon.Code)}
+                        onClick={() => handleDeleteClick(coupon)}
                         className="text-red-600 hover:text-red-900 text-sm"
                       >
                         删除
@@ -407,6 +425,81 @@ export default function AdminCoupons() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 删除优惠券确认模态框 */}
+      {showDeleteModal && deleteTarget && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mt-4">
+                确认删除优惠券
+              </h3>
+              <div className="mt-2 px-7 py-3">
+                <p className="text-sm text-gray-500">
+                  您确定要删除以下优惠券吗？
+                </p>
+                <div className="mt-3 p-3 bg-gray-50 rounded-md">
+                  <p className="text-sm font-medium text-gray-900">
+                    {deleteTarget.Code}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {deleteTarget.Name}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    折扣: {formatDiscount(deleteTarget.DiscountType, deleteTarget.DiscountValue)}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    持续时间: {deleteTarget.Duration === 'once' ? '一次性' : deleteTarget.Duration === 'repeating' ? `重复${deleteTarget.DurationInCycles}次` : '永久'}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    已使用: {deleteTarget.RedeemedCount}
+                    {deleteTarget.MaxRedemptions && ` / ${deleteTarget.MaxRedemptions}`}
+                  </p>
+                  {deleteTarget.ExpiresAt && (
+                    <p className="text-sm text-gray-500 mt-1">
+                      过期时间: {new Date(deleteTarget.ExpiresAt).toLocaleDateString('zh-CN')}
+                    </p>
+                  )}
+                  <div className="mt-2 flex space-x-2">
+                    {!deleteTarget.IsActive && (
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        已禁用
+                      </span>
+                    )}
+                    {isExpired(deleteTarget.ExpiresAt) && (
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                        已过期
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <p className="text-sm text-gray-500 mt-3">
+                  删除后，该优惠券将无法恢复，可能影响现有的订阅。
+                </p>
+              </div>
+              <div className="flex justify-center space-x-3 mt-4">
+                <button
+                  onClick={handleDeleteCancel}
+                  disabled={deleting}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 text-base font-medium rounded-md shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-50"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleDeleteConfirm}
+                  disabled={deleting}
+                  className="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50"
+                >
+                  {deleting ? '删除中...' : '确认删除'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

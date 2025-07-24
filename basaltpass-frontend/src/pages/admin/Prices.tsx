@@ -3,13 +3,16 @@ import Layout from '../../components/Layout'
 import { adminListPrices, adminCreatePrice, adminUpdatePrice, adminDeletePrice, adminListPlans } from '../../api/subscription'
 import { Price, Plan } from '../../types/subscription'
 import { Link } from 'react-router-dom'
-import { ChevronRightIcon } from '@heroicons/react/24/outline'
+import { ChevronRightIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 
 export default function AdminPrices() {
   const [prices, setPrices] = useState<Price[]>([])
   const [plans, setPlans] = useState<Plan[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<Price | null>(null)
+  const [deleting, setDeleting] = useState(false)
   const [editingPrice, setEditingPrice] = useState<Price | null>(null)
   const [formData, setFormData] = useState({
     plan_id: '',
@@ -104,15 +107,30 @@ export default function AdminPrices() {
     setShowModal(true)
   }
 
-  const handleDelete = async (id: number) => {
-    if (confirm('确定要删除这个定价吗？')) {
-      try {
-        await adminDeletePrice(id)
-        fetchData()
-      } catch (error) {
-        console.error('删除失败:', error)
-      }
+  const handleDeleteClick = (price: Price) => {
+    setDeleteTarget(price)
+    setShowDeleteModal(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return
+    
+    try {
+      setDeleting(true)
+      await adminDeletePrice(deleteTarget.ID)
+      await fetchData()
+      setShowDeleteModal(false)
+      setDeleteTarget(null)
+    } catch (error) {
+      console.error('删除失败:', error)
+    } finally {
+      setDeleting(false)
     }
+  }
+
+  const handleDeleteCancel = () => {
+    setShowDeleteModal(false)
+    setDeleteTarget(null)
   }
 
   const formatPrice = (amountCents: number, currency: string) => {
@@ -215,7 +233,7 @@ export default function AdminPrices() {
                         编辑
                       </button>
                       <button
-                        onClick={() => handleDelete(price.ID)}
+                        onClick={() => handleDeleteClick(price)}
                         className="text-red-600 hover:text-red-900 text-sm"
                       >
                         删除
@@ -385,6 +403,65 @@ export default function AdminPrices() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 删除定价确认模态框 */}
+      {showDeleteModal && deleteTarget && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mt-4">
+                确认删除定价
+              </h3>
+              <div className="mt-2 px-7 py-3">
+                <p className="text-sm text-gray-500">
+                  您确定要删除以下定价吗？
+                </p>
+                <div className="mt-3 p-3 bg-gray-50 rounded-md">
+                  <p className="text-sm font-medium text-gray-900">
+                    {formatPrice(deleteTarget.AmountCents, deleteTarget.Currency)}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    套餐: {getPlanName(deleteTarget.PlanID || 0)}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    周期: {getBillingPeriodText(deleteTarget.BillingPeriod, deleteTarget.BillingInterval)}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    类型: {deleteTarget.UsageType}
+                  </p>
+                  {deleteTarget.TrialDays && (
+                    <p className="text-sm text-gray-500 mt-1">
+                      试用期: {deleteTarget.TrialDays} 天
+                    </p>
+                  )}
+                </div>
+                <p className="text-sm text-gray-500 mt-3">
+                  删除后，该定价将无法恢复，可能影响现有的订阅。
+                </p>
+              </div>
+              <div className="flex justify-center space-x-3 mt-4">
+                <button
+                  onClick={handleDeleteCancel}
+                  disabled={deleting}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 text-base font-medium rounded-md shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-50"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleDeleteConfirm}
+                  disabled={deleting}
+                  className="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50"
+                >
+                  {deleting ? '删除中...' : '确认删除'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -3,11 +3,14 @@ import Layout from '../../components/Layout'
 import { listSubscriptions, cancelSubscription } from '../../api/subscription'
 import { SubscriptionResponse } from '../../types/subscription'
 import { Link } from 'react-router-dom'
-import { ChevronRightIcon, CubeIcon, WalletIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline'
+import { ChevronRightIcon, CubeIcon, WalletIcon, QuestionMarkCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 
 export default function SubscriptionIndex() {
   const [subscriptions, setSubscriptions] = useState<SubscriptionResponse[]>([])
   const [loading, setLoading] = useState(true)
+  const [showCancelModal, setShowCancelModal] = useState(false)
+  const [cancelTarget, setCancelTarget] = useState<SubscriptionResponse | null>(null)
+  const [canceling, setCanceling] = useState(false)
 
   useEffect(() => {
     fetchSubscriptions()
@@ -30,15 +33,30 @@ export default function SubscriptionIndex() {
     }
   }
 
-  const handleCancel = async (id: number) => {
-    if (confirm('确定要取消这个订阅吗？')) {
-      try {
-        await cancelSubscription(id)
-        fetchSubscriptions()
-      } catch (error) {
-        console.error('取消订阅失败:', error)
-      }
+  const handleCancelClick = (subscription: SubscriptionResponse) => {
+    setCancelTarget(subscription)
+    setShowCancelModal(true)
+  }
+
+  const handleCancelConfirm = async () => {
+    if (!cancelTarget) return
+    
+    try {
+      setCanceling(true)
+      await cancelSubscription(cancelTarget.ID)
+      await fetchSubscriptions()
+      setShowCancelModal(false)
+      setCancelTarget(null)
+    } catch (error) {
+      console.error('取消订阅失败:', error)
+    } finally {
+      setCanceling(false)
     }
+  }
+
+  const handleCancelCancel = () => {
+    setShowCancelModal(false)
+    setCancelTarget(null)
   }
 
   function statusBadge(status: string) {
@@ -78,15 +96,67 @@ export default function SubscriptionIndex() {
     }
   }
 
-  if (loading) {
+    if (loading) {
     return (
       <Layout>
         <div className="flex justify-center items-center h-64">
           <div className="text-lg">加载中...</div>
         </div>
-      </Layout>
-    )
-  }
+
+      {/* 取消订阅确认模态框 */}
+      {showCancelModal && cancelTarget && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mt-4">
+                确认取消订阅
+              </h3>
+              <div className="mt-2 px-7 py-3">
+                <p className="text-sm text-gray-500">
+                  您确定要取消以下订阅吗？
+                </p>
+                <div className="mt-3 p-3 bg-gray-50 rounded-md">
+                  <p className="text-sm font-medium text-gray-900">
+                    订阅 #{cancelTarget.ID}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {cancelTarget.CurrentPrice?.Plan?.Product?.Name || '未知产品'} - 
+                    {cancelTarget.CurrentPrice?.Plan?.DisplayName || '未知套餐'}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    当前状态: {cancelTarget.Status === 'trialing' ? '试用中' : '进行中'}
+                  </p>
+                </div>
+                <p className="text-sm text-gray-500 mt-3">
+                  取消后，您将无法继续使用相关服务，直到重新订阅。
+                </p>
+              </div>
+              <div className="flex justify-center space-x-3 mt-4">
+                <button
+                  onClick={handleCancelCancel}
+                  disabled={canceling}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 text-base font-medium rounded-md shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-50"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleCancelConfirm}
+                  disabled={canceling}
+                  className="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50"
+                >
+                  {canceling ? '处理中...' : '确认取消'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </Layout>
+  )
+}
 
   return (
     <Layout>
@@ -125,19 +195,18 @@ export default function SubscriptionIndex() {
         </div>
 
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
-          <ul className="divide-y divide-gray-200">
+          <div className="divide-y divide-gray-200">
             {subscriptions && subscriptions.length > 0 ? (
               subscriptions.map((sub) => (
-                <li key={sub.ID} className="px-4 py-4">
+                <div key={sub.ID} className="px-4 py-4">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between mb-2">
                         <p className="text-sm font-medium text-indigo-600 truncate">
                           订阅 #{sub.ID}
                         </p>
-                        {statusBadge(sub.Status)}
                       </div>
-                      <p className="mt-1 text-sm text-gray-500">
+                      <p className="text-sm text-gray-500">
                         产品: {sub.CurrentPrice?.Plan?.Product?.Name || '未知产品'} - 
                         {sub.CurrentPrice?.Plan?.DisplayName || '未知套餐'}
                       </p>
@@ -145,25 +214,29 @@ export default function SubscriptionIndex() {
                         周期结束: {new Date(sub.CurrentPeriodEnd).toLocaleDateString('zh-CN')}
                       </p>
                     </div>
-                    <div className="flex space-x-2">
-                      {(sub.Status === 'trialing' || sub.Status === 'active') && (
-                        <button
-                          onClick={() => handleCancel(sub.ID)}
-                          className="text-red-600 hover:text-red-900 text-sm"
-                        >
-                          取消订阅
-                        </button>
-                      )}
-                    </div>
+                    <div className="flex items-center space-x-3">
+                          <div className="flex items-center">
+                            {statusBadge(sub.Status)}
+                          </div>
+                          {(sub.Status === 'trialing' || sub.Status === 'active') && (
+                            <button
+                              onClick={() => handleCancelClick(sub)}
+                              className="text-red-600 hover:text-red-900 text-sm font-medium flex items-center cursor-pointer px-2 py-1 rounded hover:bg-red-50"
+                            >
+                              取消订阅
+                            </button>
+                          )}
+                        </div>
                   </div>
-                </li>
+                </div>
+                
               ))
             ) : (
-              <li className="px-4 py-8 text-center text-gray-500">
+              <div className="px-4 py-8 text-center text-gray-500">
                 暂无订阅记录
-              </li>
+              </div>
             )}
-          </ul>
+                      </div>
         </div>
 
         {/* 相关链接 */}
@@ -203,6 +276,58 @@ export default function SubscriptionIndex() {
           </div>
         </div>
       </div>
+
+      {/* 取消订阅确认模态框 */}
+      {showCancelModal && cancelTarget && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mt-4">
+                确认取消订阅
+              </h3>
+              <div className="mt-2 px-7 py-3">
+                <p className="text-sm text-gray-500">
+                  您确定要取消以下订阅吗？
+                </p>
+                <div className="mt-3 p-3 bg-gray-50 rounded-md">
+                  <p className="text-sm font-medium text-gray-900">
+                    订阅 #{cancelTarget.ID}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {cancelTarget.CurrentPrice?.Plan?.Product?.Name || '未知产品'} - 
+                    {cancelTarget.CurrentPrice?.Plan?.DisplayName || '未知套餐'}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    当前状态: {cancelTarget.Status === 'trialing' ? '试用中' : '进行中'}
+                  </p>
+                </div>
+                <p className="text-sm text-gray-500 mt-3">
+                  取消后，您将无法继续使用相关服务，直到重新订阅。
+                </p>
+              </div>
+              <div className="flex justify-center space-x-3 mt-4">
+                <button
+                  onClick={handleCancelCancel}
+                  disabled={canceling}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 text-base font-medium rounded-md shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-50"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleCancelConfirm}
+                  disabled={canceling}
+                  className="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50"
+                >
+                  {canceling ? '处理中...' : '确认取消'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   )
 } 

@@ -92,18 +92,18 @@ function Profile() {
           </div>
           <button
             onClick={() => setIsEditing(!isEditing)}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="inline-flex items-center px-6 py-3 border border-gray-200 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
           >
-            <PencilIcon className="h-4 w-4 mr-2" />
+            <PencilIcon className="h-5 w-5 mr-2" />
             {isEditing ? '取消编辑' : '编辑资料'}
           </button>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           {/* 头像和基本信息 */}
           <div className="lg:col-span-1">
-            <div className="bg-white shadow rounded-lg">
-              <div className="px-4 py-5 sm:p-6">
+            <div className="bg-white shadow-lg rounded-xl border border-gray-100">
+              <div className="px-6 py-8">
                 <div className="flex flex-col items-center">
                   <div className="relative">
                     <div className="h-24 w-24 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
@@ -130,8 +130,8 @@ function Profile() {
             </div>
 
             {/* 账户统计 */}
-            <div className="mt-6 bg-white shadow rounded-lg">
-              <div className="px-4 py-5 sm:p-6">
+            <div className="mt-6 bg-white shadow-lg rounded-xl border border-gray-100">
+              <div className="px-6 py-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">账户统计</h3>
                 <div className="space-y-4">
                   <div className="flex justify-between">
@@ -157,87 +157,108 @@ function Profile() {
 
           {/* 详细信息 */}
           <div className="lg:col-span-2">
-            <div className="bg-white shadow rounded-lg">
-              <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-6">基本信息</h3>
+            <div className="bg-white shadow-lg rounded-xl border border-gray-100">
+              <div className="px-8 py-8">
+                <h3 className="text-xl font-semibold text-gray-900 mb-8">基本信息</h3>
                 
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <div className="flex items-center">
-                        <IdentificationIcon className="h-4 w-4 mr-2 text-gray-400" />
-                        用户昵称
-                      </div>
+                <div className="space-y-8">
+                  <div className="space-y-2">
+                    <label className="flex items-center text-sm font-semibold text-gray-700">
+                      <IdentificationIcon className="h-5 w-5 mr-2 text-indigo-500" />
+                      用户昵称
                     </label>
                     {isEditing ? (
-                      <input
-                        type="text"
-                        value={editForm.nickname}
-                        onChange={(e) => setEditForm(prev => ({ ...prev, nickname: e.target.value }))}
-                        className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        placeholder="请输入昵称"
-                      />
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={editForm.nickname}
+                          onChange={(e) => setEditForm(prev => ({ ...prev, nickname: e.target.value }))}
+                          className="block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300"
+                          placeholder="请输入昵称"
+                        />
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                          <div className="h-5 w-5 text-gray-400">
+                            <IdentificationIcon className="h-5 w-5" />
+                          </div>
+                        </div>
+                      </div>
                     ) : (
-                      <p className="text-sm text-gray-900">
-                        {profile.nickname || '未设置昵称'}
-                      </p>
+                      <div className="px-4 py-3 bg-gray-50 rounded-lg border border-gray-100">
+                        <p className="text-sm text-gray-900">
+                          {profile.nickname || '未设置昵称'}
+                        </p>
+                      </div>
                     )}
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <div className="flex items-center">
-                        <EnvelopeIcon className="h-4 w-4 mr-2 text-gray-400" />
-                        邮箱地址
-                      </div>
+                  <div className="space-y-2">
+                    <label className="flex items-center text-sm font-semibold text-gray-700">
+                      <EnvelopeIcon className="h-5 w-5 mr-2 text-indigo-500" />
+                      邮箱地址
                     </label>
                     {isEditing ? (
-                      <input
-                        type="email"
-                        value={editForm.email}
-                        onChange={(e) => setEditForm(prev => ({ ...prev, email: e.target.value }))}
-                        className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        placeholder="请输入邮箱地址"
-                      />
+                      <div className="relative">
+                        <input
+                          type="email"
+                          value={editForm.email}
+                          onChange={(e) => setEditForm(prev => ({ ...prev, email: e.target.value }))}
+                          className="block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300"
+                          placeholder="请输入邮箱地址"
+                        />
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                          <div className="h-5 w-5 text-gray-400">
+                            <EnvelopeIcon className="h-5 w-5" />
+                          </div>
+                        </div>
+                      </div>
                     ) : (
-                      <p className="text-sm text-gray-900">{profile.email}</p>
+                      <div className="px-4 py-3 bg-gray-50 rounded-lg border border-gray-100">
+                        <p className="text-sm text-gray-900">{profile.email}</p>
+                      </div>
                     )}
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <div className="flex items-center">
-                        <PhoneIcon className="h-4 w-4 mr-2 text-gray-400" />
-                        手机号码
-                      </div>
+                  <div className="space-y-2">
+                    <label className="flex items-center text-sm font-semibold text-gray-700">
+                      <PhoneIcon className="h-5 w-5 mr-2 text-indigo-500" />
+                      手机号码
                     </label>
                     {isEditing ? (
-                      <input
-                        type="tel"
-                        value={editForm.phone}
-                        onChange={(e) => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
-                        className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        placeholder="请输入手机号码"
-                      />
+                      <div className="relative">
+                        <input
+                          type="tel"
+                          value={editForm.phone}
+                          onChange={(e) => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
+                          className="block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300"
+                          placeholder="请输入手机号码"
+                        />
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                          <div className="h-5 w-5 text-gray-400">
+                            <PhoneIcon className="h-5 w-5" />
+                          </div>
+                        </div>
+                      </div>
                     ) : (
-                      <p className="text-sm text-gray-900">{profile.phone}</p>
+                      <div className="px-4 py-3 bg-gray-50 rounded-lg border border-gray-100">
+                        <p className="text-sm text-gray-900">{profile.phone}</p>
+                      </div>
                     )}
                   </div>
                 </div>
 
                 {isEditing && (
-                  <div className="mt-6 flex space-x-3">
-                    <button
-                      onClick={handleSave}
-                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    >
-                      保存更改
-                    </button>
+                  <div className="mt-8 flex justify-end space-x-4 pt-8 border-t border-gray-100">
                     <button
                       onClick={handleCancel}
-                      className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      className="px-6 py-3 border border-gray-200 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
                     >
                       取消
+                    </button>
+                    <button
+                      onClick={handleSave}
+                      className="inline-flex items-center px-6 py-3 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+                    >
+                      保存更改
                     </button>
                   </div>
                 )}

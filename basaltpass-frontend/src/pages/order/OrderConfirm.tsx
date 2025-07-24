@@ -75,9 +75,9 @@ export default function OrderConfirmPage() {
         }
       }
 
-      console.log('创建支付意图，数据:', paymentData)
+
       const paymentIntentResponse = await paymentAPI.createPaymentIntent(paymentData)
-      console.log('支付意图创建成功:', paymentIntentResponse)
+      
       
       const sessionData = {
         payment_intent_id: paymentIntentResponse.payment_intent.ID,
@@ -85,13 +85,13 @@ export default function OrderConfirmPage() {
         cancel_url: `${window.location.origin}/orders/${order.id}/confirm`
       }
 
-      console.log('创建支付会话，数据:', sessionData)
+      
       const sessionResponse = await paymentAPI.createPaymentSession(sessionData)
-      console.log('支付会话创建成功:', sessionResponse)
+      
       
       // 跳转到支付页面（后端提供的支付模拟页面）
       const checkoutUrl = `http://localhost:8080/payment/checkout/${sessionResponse.session.StripeSessionID}`
-      console.log('跳转到支付页面:', checkoutUrl)
+      
       window.location.href = checkoutUrl 
 
     } catch (error: any) {

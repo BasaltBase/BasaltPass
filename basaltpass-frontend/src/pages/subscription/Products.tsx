@@ -23,12 +23,12 @@ export default function ProductsPage() {
       setLoading(true)
       const res = await listProducts()
       const raw = res.data
-      console.log('获取产品列表:', raw)
+
       let list: any = []
       if (Array.isArray(raw)) list = raw
       else if (Array.isArray(raw.data)) list = raw.data
       else if (Array.isArray(raw.data?.Data)) list = raw.data.Data
-      console.log('获取产品列表:', list)
+
       setProducts(list)
     } catch (error) {
       console.error('获取产品列表失败:', error)
@@ -40,21 +40,21 @@ export default function ProductsPage() {
   const handleSubscribe = async (price: Price) => {
     try {
       setSubscribingPrice(price.ID)
-      console.log('开始创建订单，价格:', price)
+  
       
       // 检查是否有token
       const token = localStorage.getItem('access_token')
       if (!token) {
-        console.log('用户未登录，跳转到登录页面')
+
         navigate('/auth/login')
         return
       }
       
       // 通过API获取当前用户信息
-      console.log('获取用户信息...')
+      
       const userResponse = await client.get('/api/v1/user/profile')
       const user = userResponse.data
-      console.log('用户数据:', user)
+      
       
       // 创建订单
       const orderData: CreateOrderRequest = {
@@ -63,13 +63,13 @@ export default function ProductsPage() {
         quantity: 1
       }
       
-      console.log('订单数据:', orderData)
+      
       const order = await createOrder(orderData)
-      console.log('创建订单成功:', order)
+      
       
       // 跳转到订单确认页面
       const confirmUrl = `/orders/${order.id}/confirm`
-      console.log('跳转到:', confirmUrl)
+      
       navigate(confirmUrl)
       
     } catch (error: any) {
@@ -78,7 +78,7 @@ export default function ProductsPage() {
       
       // 如果是401错误，说明token无效，跳转到登录页面
       if (error.response?.status === 401) {
-        console.log('Token无效，跳转到登录页面')
+
         navigate('/auth/login')
         return
       }

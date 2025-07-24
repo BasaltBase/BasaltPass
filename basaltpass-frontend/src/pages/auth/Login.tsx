@@ -38,8 +38,7 @@ function Login() {
         setUserId(res.data.user_id)
         setTwoFAType(res.data['2fa_type'])
         setAvailable2FAMethods(res.data.available_2fa_methods || [])
-        console.log('2FA Methods:', res.data.available_2fa_methods) // 调试信息
-        console.log('Selected 2FA Type:', res.data['2fa_type']) // 调试信息
+
         setStep(2)
       } else if (res.data.access_token) {
         login(res.data.access_token)
@@ -121,8 +120,7 @@ function Login() {
 
   // 渲染二次验证表单
   const render2FAForm = () => {
-    console.log('Rendering 2FA form, available methods:', available2FAMethods) // 调试信息
-    console.log('Current 2FA type:', twoFAType) // 调试信息
+    
     
     // 如果有多种2FA方式，显示选择界面
     if (available2FAMethods.length > 1) {

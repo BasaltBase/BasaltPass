@@ -13,14 +13,16 @@ export const debugAuth = {
         isAuthenticated: state.isAuthenticated,
         isLoading: state.isLoading,
         hasToken: !!localStorage.getItem('access_token'),
-        currentPath: window.location.pathname
+        tokenLength: localStorage.getItem('access_token')?.length || 0,
+        currentPath: window.location.pathname,
+        timestamp: new Date().toISOString()
       })
     }
   },
   
   logRedirect: (from: string, to: string, reason: string) => {
     if (import.meta.env.DEV) {
-      console.log(`[Auth Debug] Redirect: ${from} → ${to} (${reason})`)
+      console.log(`[Auth Debug] Redirect: ${from} → ${to} (${reason}) at ${new Date().toISOString()}`)
     }
   }
 } 

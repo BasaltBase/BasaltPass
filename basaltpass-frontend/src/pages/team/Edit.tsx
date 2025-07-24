@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../../components/Layout';
 import { teamApi, TeamResponse, CreateTeamRequest } from '../../api/team';
+import { UserGroupIcon, DocumentTextIcon, PhotoIcon } from '@heroicons/react/24/outline';
 
 const EditTeam: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -114,8 +115,8 @@ const EditTeam: React.FC = () => {
           </p>
         </div>
 
-        <div className="bg-white shadow rounded-lg">
-          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <div className="bg-white shadow-lg rounded-xl border border-gray-100">
+          <form onSubmit={handleSubmit} className="p-8 space-y-8">
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-md p-4">
                 <div className="flex">
@@ -132,64 +133,96 @@ const EditTeam: React.FC = () => {
               </div>
             )}
 
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                团队名称 <span className="text-red-500">*</span>
+            <div className="space-y-2">
+              <label htmlFor="name" className="flex items-center text-sm font-semibold text-gray-700">
+                <UserGroupIcon className="h-5 w-5 mr-2 text-indigo-500" />
+                团队名称 <span className="text-red-500 ml-1">*</span>
               </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                placeholder="输入团队名称"
-                required
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  className="block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300"
+                  placeholder="输入团队名称"
+                  required
+                />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                  <div className="h-5 w-5 text-gray-400">
+                    <UserGroupIcon className="h-5 w-5" />
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+            <div className="space-y-2">
+              <label htmlFor="description" className="flex items-center text-sm font-semibold text-gray-700">
+                <DocumentTextIcon className="h-5 w-5 mr-2 text-indigo-500" />
                 团队描述
               </label>
-              <textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                rows={4}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                placeholder="描述团队的目的和职责"
-              />
+              <div className="relative">
+                <textarea
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  rows={4}
+                  className="block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300 resize-none"
+                  placeholder="描述团队的目的和职责..."
+                />
+                <div className="absolute top-3 right-3">
+                  <div className="h-5 w-5 text-gray-400">
+                    <DocumentTextIcon className="h-5 w-5" />
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div>
-              <label htmlFor="avatar_url" className="block text-sm font-medium text-gray-700">
+            <div className="space-y-2">
+              <label htmlFor="avatar_url" className="flex items-center text-sm font-semibold text-gray-700">
+                <PhotoIcon className="h-5 w-5 mr-2 text-indigo-500" />
                 团队头像URL
               </label>
-              <input
-                type="url"
-                id="avatar_url"
-                name="avatar_url"
-                value={formData.avatar_url}
-                onChange={handleInputChange}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                placeholder="https://example.com/avatar.png"
-              />
+              <div className="relative">
+                <input
+                  type="url"
+                  id="avatar_url"
+                  name="avatar_url"
+                  value={formData.avatar_url}
+                  onChange={handleInputChange}
+                  className="block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300"
+                  placeholder="https://example.com/avatar.png"
+                />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                  <div className="h-5 w-5 text-gray-400">
+                    <PhotoIcon className="h-5 w-5" />
+                  </div>
+                </div>
+              </div>
+              {formData.avatar_url && (
+                <div className="mt-2 flex items-center space-x-2">
+                  <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                    <PhotoIcon className="h-4 w-4 text-gray-400" />
+                  </div>
+                  <span className="text-xs text-gray-500">头像预览已启用</span>
+                </div>
+              )}
             </div>
 
-            <div className="flex justify-end space-x-3 pt-6">
+            <div className="flex justify-end space-x-4 pt-8 border-t border-gray-100">
               <button
                 type="button"
                 onClick={() => navigate(`/teams/${id}`)}
-                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="px-6 py-3 border border-gray-200 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
               >
                 取消
               </button>
               <button
                 type="submit"
                 disabled={saving}
-                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex justify-center py-3 px-6 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
               >
                 {saving ? (
                   <>

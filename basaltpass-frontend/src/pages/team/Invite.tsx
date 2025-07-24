@@ -3,7 +3,7 @@ import Layout from '../../components/Layout'
 import { invitationApi } from '../../api/invitation'
 import { userApi, UserSearchResult } from '../../api/user'
 import { useNavigate, useParams } from 'react-router-dom'
-import { XMarkIcon, UserIcon } from '@heroicons/react/24/outline'
+import { XMarkIcon, UserIcon, MagnifyingGlassIcon, DocumentTextIcon } from '@heroicons/react/24/outline'
 
 const Invite: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -101,50 +101,66 @@ const Invite: React.FC = () => {
 
   return (
     <Layout>
-      <div className="space-y-6 max-w-2xl">
+      <div className="space-y-8 max-w-3xl">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">邀请成员</h1>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">邀请成员</h1>
+            <p className="mt-1 text-sm text-gray-500">
+              搜索并邀请用户加入您的团队
+            </p>
+          </div>
           <button
             onClick={() => navigate(`/teams/${teamId}`)}
-            className="text-gray-500 hover:text-gray-700"
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all duration-200"
           >
             返回团队
           </button>
         </div>
 
         {/* 用户搜索 */}
-        <div className="relative">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            搜索用户
-          </label>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={handleSearchChange}
-            onFocus={() => searchQuery && setShowDropdown(true)}
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="输入用户名或邮箱搜索..."
-          />
+        <div className="bg-white shadow-lg rounded-xl border border-gray-100 p-8">
+          <div className="space-y-2">
+            <label className="flex items-center text-sm font-semibold text-gray-700">
+              <MagnifyingGlassIcon className="h-5 w-5 mr-2 text-indigo-500" />
+              搜索用户
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={handleSearchChange}
+                onFocus={() => searchQuery && setShowDropdown(true)}
+                className="block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300"
+                placeholder="输入用户名或邮箱搜索..."
+              />
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                <div className="h-5 w-5 text-gray-400">
+                  <MagnifyingGlassIcon className="h-5 w-5" />
+                </div>
+              </div>
+            </div>
+          </div>
           
           {/* 搜索结果下拉列表 */}
           {showDropdown && (
-            <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto">
+            <div className="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-xl mt-2 max-h-60 overflow-y-auto">
               {searchLoading ? (
-                <div className="px-4 py-3 text-center text-gray-500">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mx-auto"></div>
+                <div className="px-4 py-4 text-center text-gray-500">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600 mx-auto"></div>
+                  <p className="mt-2 text-sm">搜索中...</p>
                 </div>
               ) : searchResults.length > 0 ? (
                 searchResults.map(user => (
                   <button
                     key={user.id}
                     onClick={() => selectUser(user)}
-                    className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 flex items-center space-x-3"
+                    className="w-full px-4 py-3 text-left hover:bg-indigo-50 border-b border-gray-100 last:border-b-0 flex items-center space-x-3 transition-colors duration-150"
                   >
                     {user.avatar ? (
-                      <img src={user.avatar} alt="" className="w-8 h-8 rounded-full" />
+                      <img src={user.avatar} alt="" className="w-10 h-10 rounded-full" />
                     ) : (
-                      <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                        <UserIcon className="w-4 h-4 text-gray-500" />
+                      <div className="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+                        <UserIcon className="w-5 h-5 text-white" />
                       </div>
                     )}
                     <div>
@@ -154,8 +170,9 @@ const Invite: React.FC = () => {
                   </button>
                 ))
               ) : searchQuery.trim() ? (
-                <div className="px-4 py-3 text-center text-gray-500">
-                  未找到匹配的用户
+                <div className="px-4 py-6 text-center text-gray-500">
+                  <UserIcon className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                  <p className="text-sm">未找到匹配的用户</p>
                 </div>
               ) : null}
             </div>
@@ -164,70 +181,95 @@ const Invite: React.FC = () => {
 
         {/* 已选择的用户 */}
         {selectedUsers.length > 0 && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              已选择的用户 ({selectedUsers.length})
-            </label>
-            <div className="space-y-2">
-              {selectedUsers.map(user => (
-                <div key={user.id} className="flex items-center justify-between bg-blue-50 rounded-lg px-4 py-3">
-                  <div className="flex items-center space-x-3">
-                    {user.avatar ? (
-                      <img src={user.avatar} alt="" className="w-8 h-8 rounded-full" />
-                    ) : (
-                      <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                        <UserIcon className="w-4 h-4 text-gray-500" />
+          <div className="bg-white shadow-lg rounded-xl border border-gray-100 p-8">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <label className="flex items-center text-sm font-semibold text-gray-700">
+                  <UserIcon className="h-5 w-5 mr-2 text-indigo-500" />
+                  已选择的用户
+                </label>
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                  {selectedUsers.length} 人
+                </span>
+              </div>
+              <div className="space-y-3">
+                {selectedUsers.map(user => (
+                  <div key={user.id} className="flex items-center justify-between bg-indigo-50 rounded-lg px-4 py-3 border border-indigo-100">
+                    <div className="flex items-center space-x-3">
+                      {user.avatar ? (
+                        <img src={user.avatar} alt="" className="w-10 h-10 rounded-full" />
+                      ) : (
+                        <div className="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+                          <UserIcon className="w-5 h-5 text-white" />
+                        </div>
+                      )}
+                      <div>
+                        <div className="font-medium text-gray-900">{user.nickname}</div>
+                        <div className="text-sm text-gray-500">{user.email}</div>
                       </div>
-                    )}
-                    <div>
-                      <div className="font-medium text-gray-900">{user.nickname}</div>
-                      <div className="text-sm text-gray-500">{user.email}</div>
                     </div>
+                    <button
+                      onClick={() => removeUser(user.id)}
+                      className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors duration-150"
+                    >
+                      <XMarkIcon className="w-5 h-5" />
+                    </button>
                   </div>
-                  <button
-                    onClick={() => removeUser(user.id)}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    <XMarkIcon className="w-5 h-5" />
-                  </button>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         )}
 
         {/* 备注 */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            邀请备注 (可选)
-          </label>
-          <textarea
-            value={remark}
-            onChange={e => setRemark(e.target.value)}
-            rows={3}
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="可以在这里添加邀请说明..."
-          />
+        <div className="bg-white shadow-lg rounded-xl border border-gray-100 p-8">
+          <div className="space-y-2">
+            <label className="flex items-center text-sm font-semibold text-gray-700">
+              <DocumentTextIcon className="h-5 w-5 mr-2 text-indigo-500" />
+              邀请备注 (可选)
+            </label>
+            <div className="relative">
+              <textarea
+                value={remark}
+                onChange={e => setRemark(e.target.value)}
+                rows={3}
+                className="block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300 resize-none"
+                placeholder="可以在这里添加邀请说明..."
+              />
+              <div className="absolute top-3 right-3">
+                <div className="h-5 w-5 text-gray-400">
+                  <DocumentTextIcon className="h-5 w-5" />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* 操作按钮 */}
-        <div className="flex space-x-4">
+        <div className="flex justify-end space-x-4 pt-8 border-t border-gray-100">
+          <button
+            onClick={() => navigate(`/teams/${teamId}`)}
+            className="px-6 py-3 border border-gray-200 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+          >
+            取消
+          </button>
           <button
             disabled={loading || selectedUsers.length === 0}
             onClick={submit}
-            className={`px-6 py-3 rounded-lg font-medium ${
+            className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
               loading || selectedUsers.length === 0
                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-indigo-600 text-white hover:bg-blue-700'
+                : 'bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
             }`}
           >
-            {loading ? '发送中...' : `发送邀请 (${selectedUsers.length})`}
-          </button>
-          <button
-            onClick={() => navigate(`/teams/${teamId}`)}
-            className="px-6 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50"
-          >
-            取消
+            {loading ? (
+              <div className="flex items-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                发送中...
+              </div>
+            ) : (
+              `发送邀请 (${selectedUsers.length})`
+            )}
           </button>
         </div>
       </div>
