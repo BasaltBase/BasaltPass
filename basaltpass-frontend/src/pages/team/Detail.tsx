@@ -344,51 +344,51 @@ const TeamDetail: React.FC = () => {
             </div>
           </div>
         )}
+      </div>
 
-        {/* 删除确认对话框 */}
-        {showDeleteConfirm && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-              <div className="mt-3 text-center">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
-                  {team.user_role === 'owner' ? '确认删除团队' : '确认离开团队'}
-                </h3>
-                <p className="text-sm text-gray-500 mb-6">
-                  {team.user_role === 'owner' 
-                    ? '删除团队后，所有成员将被移除，此操作不可撤销。'
-                    : '离开团队后，您将失去对该团队的访问权限。'
-                  }
-                </p>
-                <div className="flex justify-center space-x-3">
-                  <button
-                    onClick={() => setShowDeleteConfirm(false)}
-                    className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                  >
-                    取消
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowDeleteConfirm(false);
-                      if (team.user_role === 'owner') {
-                        handleDeleteTeam();
-                      } else {
-                        handleLeaveTeam();
-                      }
-                    }}
-                    className={`px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white ${
-                      team.user_role === 'owner' 
-                        ? 'bg-red-600 hover:bg-red-700' 
-                        : 'bg-indigo-600 hover:bg-blue-700'
-                    }`}
-                  >
-                    {team.user_role === 'owner' ? '确认删除' : '确认离开'}
-                  </button>
-                </div>
+      {/* 删除确认对话框 - 移到 space-y-6 容器外 */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+          <div className="relative mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                {team.user_role === 'owner' ? '确认删除团队' : '确认离开团队'}
+              </h3>
+              <p className="text-sm text-gray-500 mb-6">
+                {team.user_role === 'owner' 
+                  ? '删除团队后，所有成员将被移除，此操作不可撤销。'
+                  : '离开团队后，您将失去对该团队的访问权限。'
+                }
+              </p>
+              <div className="flex justify-center space-x-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    if (team.user_role === 'owner') {
+                      handleDeleteTeam();
+                    } else {
+                      handleLeaveTeam();
+                    }
+                  }}
+                  className={`px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white ${
+                    team.user_role === 'owner' 
+                      ? 'bg-red-600 hover:bg-red-700' 
+                      : 'bg-indigo-600 hover:bg-blue-700'
+                  }`}
+                >
+                  {team.user_role === 'owner' ? '确认删除' : '确认离开'}
+                </button>
               </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </Layout>
   );
 };

@@ -20,7 +20,8 @@ import {
   CubeIcon,
   TagIcon,
   CurrencyDollarIcon,
-  GiftIcon
+  GiftIcon,
+  InformationCircleIcon
 } from '@heroicons/react/24/outline'
 import { useAuth } from '../contexts/AuthContext'
 import EnhancedNotificationIcon from './EnhancedNotificationIcon'
@@ -35,6 +36,7 @@ const navigation = [
   { name: '安全', href: '/security', icon: ShieldCheckIcon },
   { name: '设置', href: '/settings', icon: CogIcon },
   { name: '帮助', href: '/help', icon: QuestionMarkCircleIcon },
+  { name: '关于', href: '/about', icon: InformationCircleIcon },
 ]
 
 const adminNavigation = [
@@ -57,11 +59,16 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const location = useLocation()
   const { logout } = useAuth()
 
   const handleLogout = () => {
     logout()
+  }
+
+  const handleLogoutClick = () => {
+    setShowLogoutConfirm(true)
   }
 
   const isActive = (href: string) => location.pathname === href
@@ -200,7 +207,7 @@ export default function Layout({ children }: LayoutProps) {
               <EnhancedNotificationIcon />
             </Link>
             <button
-              onClick={handleLogout}
+              onClick={handleLogoutClick}
               className="text-gray-500 hover:text-gray-900 flex items-center"
               title="退出登录"
             >
@@ -218,6 +225,39 @@ export default function Layout({ children }: LayoutProps) {
           </div>
         </main>
       </div>
+
+      {/* 退出登录确认对话框 */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+          <div className="relative mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                确认退出登录
+              </h3>
+              <p className="text-sm text-gray-500 mb-6">
+                您确定要退出登录吗？退出后需要重新登录才能访问系统。
+              </p>
+              <div className="flex justify-center space-x-3">
+                <button
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={() => {
+                    setShowLogoutConfirm(false);
+                    handleLogout();
+                  }}
+                  className="px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700"
+                >
+                  确认退出
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 } 

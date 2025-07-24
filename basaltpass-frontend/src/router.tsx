@@ -43,6 +43,7 @@ import Payment from './pages/payment/Payment'
 import SubscriptionCheckout from './pages/subscription/Checkout'
 import OrderConfirm from './pages/order/OrderConfirm'
 import OrderSuccess from './pages/order/OrderSuccess'
+import About from './pages/About'
 
 export default function AppRouter() {
   return (
@@ -80,6 +81,11 @@ export default function AppRouter() {
       <Route path="/help" element={
         <ProtectedRoute>
           <Help />
+        </ProtectedRoute>
+      } />
+      <Route path="/about" element={
+        <ProtectedRoute>
+          <About />
         </ProtectedRoute>
       } />
       <Route path="/notifications" element={
