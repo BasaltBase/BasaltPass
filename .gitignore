@@ -1,5 +1,6 @@
-# fronted
+# frontend
 basaltpass-frontend/node_modules/
+basaltpass-frontend/dist/
 
 # backend
 .env
