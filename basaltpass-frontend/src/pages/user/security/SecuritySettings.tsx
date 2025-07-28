@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import Layout from '../../components/Layout'
+import Layout from '../../../components/Layout'
 import { 
   getSecurityStatus, 
   SecurityStatus, 
@@ -9,9 +9,9 @@ import {
   disable2FA,
   resendEmailVerification,
   resendPhoneVerification
-} from '../../api/security'
-import { listPasskeys, PasskeyInfo } from '../../api/passkey'
-import { isPasskeySupported } from '../../utils/webauthn'
+} from '../../../api/security'
+import { listPasskeys, PasskeyInfo } from '../../../api/passkey'
+import { isPasskeySupported } from '../../../utils/webauthn'
 import { 
   ShieldCheckIcon,
   KeyIcon,

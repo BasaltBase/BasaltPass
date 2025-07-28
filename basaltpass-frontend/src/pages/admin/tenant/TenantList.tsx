@@ -9,8 +9,8 @@ import {
   UsersIcon,
   CogIcon
 } from '@heroicons/react/24/outline'
-import AdminLayout from '../../components/AdminLayout'
-import { platformApi, Tenant } from '../../api/tenant'
+import AdminLayout from '@components/AdminLayout'
+import { platformApi, Tenant } from '@api/tenant'
 
 export default function TenantList() {
   const [tenants, setTenants] = useState<Tenant[]>([])

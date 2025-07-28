@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { setup2FA, verify2FA } from '../../api/security'
+import { setup2FA, verify2FA } from '../../../api/security'
 import { Link } from 'react-router-dom'
-import Layout from '../../components/Layout'
+import Layout from '../../../components/Layout'
 import { 
   ShieldCheckIcon,
   QrCodeIcon,

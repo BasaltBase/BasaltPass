@@ -10,8 +10,8 @@ import {
   ChartBarIcon,
   Cog6ToothIcon
 } from '@heroicons/react/24/outline'
-import { appApi, App } from '../../api/app'
-import TenantLayout from '../../components/TenantLayout'
+import { appApi, App } from '../../../api/app'
+import TenantLayout from '../../../components/TenantLayout'
 
 export default function AppList() {
   const [apps, setApps] = useState<App[]>([])

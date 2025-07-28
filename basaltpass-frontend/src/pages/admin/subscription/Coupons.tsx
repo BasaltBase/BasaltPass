@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { adminListCoupons, adminCreateCoupon, adminUpdateCoupon, adminDeleteCoupon } from '../../api/subscription'
-import { Coupon } from '../../types/subscription'
+import { adminListCoupons, adminCreateCoupon, adminUpdateCoupon, adminDeleteCoupon } from '../../../api/subscription'
+import { Coupon } from '../../../types/subscription'
 import { Link } from 'react-router-dom'
 import { ChevronRightIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
-import AdminLayout from '../../components/AdminLayout'
+import AdminLayout from '../../../components/AdminLayout'
 
 export default function AdminCoupons() {
   const [coupons, setCoupons] = useState<Coupon[]>([])

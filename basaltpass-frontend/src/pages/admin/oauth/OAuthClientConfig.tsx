@@ -10,8 +10,8 @@ import {
   TrashIcon,
   PlusIcon
 } from '@heroicons/react/24/outline'
-import { appApi, OAuthClientInfo, CreateOAuthClientRequest, UpdateOAuthClientRequest } from '../../api/app'
-import AdminLayout from '../../components/AdminLayout'
+import { appApi, OAuthClientInfo, CreateOAuthClientRequest, UpdateOAuthClientRequest } from '@api/app'
+import AdminLayout from '@components/AdminLayout'
 
 export default function OAuthClientConfig() {
   const { appId } = useParams<{ appId: string }>()

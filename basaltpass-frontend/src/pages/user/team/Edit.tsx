@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Layout from '../../components/Layout';
-import { teamApi, TeamResponse, CreateTeamRequest } from '../../api/team';
+import Layout from '../../../components/Layout';
+import { teamApi, TeamResponse, CreateTeamRequest } from '../../../api/team';
 import { UserGroupIcon, DocumentTextIcon, PhotoIcon } from '@heroicons/react/24/outline';
 
 const EditTeam: React.FC = () => {

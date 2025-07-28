@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { recharge } from '../../api/wallet'
+import { recharge } from '../../../api/wallet'
 import { useNavigate } from 'react-router-dom'
-import Layout from '../../components/Layout'
+import Layout from '../../../components/Layout'
 import { 
   ArrowUpIcon,
   CreditCardIcon,

@@ -9,8 +9,8 @@ import {
   ExclamationTriangleIcon,
   CheckCircleIcon
 } from '@heroicons/react/24/outline'
-import AdminLayout from '../../components/AdminLayout'
-import { platformApi, CreateTenantRequest } from '../../api/tenant'
+import AdminLayout from '@components/AdminLayout'
+import { platformApi, CreateTenantRequest } from '@api/tenant'
 
 const CreateTenant: React.FC = () => {
   const navigate = useNavigate()

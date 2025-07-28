@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import Layout from '../../components/Layout'
-import { getOrder } from '../../api/order'
-import { OrderResponse } from '../../api/order'
+import Layout from '../../../components/Layout'
+import { getOrder } from '../../../api/order'
+import { OrderResponse } from '../../../api/order'
 import { CheckCircleIcon, SparklesIcon } from '@heroicons/react/24/solid'
 import { CreditCardIcon, DocumentTextIcon, HomeIcon } from '@heroicons/react/24/outline'
 

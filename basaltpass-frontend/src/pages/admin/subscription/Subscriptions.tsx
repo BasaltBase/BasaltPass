@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { adminListSubscriptions, adminCancelSubscription, adminGetSubscription } from '../../api/subscription'
+import { adminListSubscriptions, adminCancelSubscription, adminGetSubscription } from '../../../api/subscription'
 import { Link } from 'react-router-dom'
 import { ChevronRightIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
-import AdminLayout from '../../components/AdminLayout'
+import AdminLayout from '../../../components/AdminLayout'
 
 interface Subscription {
   ID: number

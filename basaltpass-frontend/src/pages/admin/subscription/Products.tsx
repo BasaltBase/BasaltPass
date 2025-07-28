@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { adminListProducts, adminCreateProduct, adminUpdateProduct, adminDeleteProduct } from '../../api/subscription'
-import { Product } from '../../types/subscription'
+import { adminListProducts, adminCreateProduct, adminUpdateProduct, adminDeleteProduct } from '../../../api/subscription'
+import { Product } from '../../../types/subscription'
 import { Link } from 'react-router-dom'
 import { ChevronRightIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
-import AdminLayout from '../../components/AdminLayout'
+import AdminLayout from '../../../components/AdminLayout'
 
 export default function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([])

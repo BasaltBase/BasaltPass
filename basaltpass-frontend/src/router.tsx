@@ -3,53 +3,55 @@ import ProtectedRoute from './components/ProtectedRoute'
 import PublicRoute from './components/PublicRoute'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
-import Profile from './pages/profile/Index'
+import Profile from './pages/user/profile/Index'
 import OauthSuccess from './pages/auth/OauthSuccess'
-import Roles from './pages/admin/Roles'
-import Users from './pages/admin/Users'
-import WalletIndex from './pages/wallet/Index'
-import Recharge from './pages/wallet/Recharge'
-import Withdraw from './pages/wallet/Withdraw'
-import History from './pages/wallet/History'
-import WalletsAdmin from './pages/admin/Wallets'
+import Roles from './pages/admin/user/Roles'
+import Users from './pages/admin/user/Users'
+import WalletIndex from './pages/user/wallet/Index'
+import Recharge from './pages/user/wallet/Recharge'
+import Withdraw from './pages/user/wallet/Withdraw'
+import History from './pages/user/wallet/History'
+import WalletsAdmin from '@pages/admin/user/Wallets'
 import Logs from './pages/admin/Logs'
-import SecuritySettings from './pages/security/SecuritySettings'
-import TwoFA from './pages/security/TwoFA'
-import PasskeyManagement from './pages/security/PasskeyManagement'
-import Dashboard from './pages/Dashboard'
-import Settings from './pages/Settings'
-import Help from './pages/Help'
-import TeamIndex from './pages/team/Index'
-import CreateTeam from './pages/team/Create'
-import TeamDetail from './pages/team/Detail'
-import TeamMembers from './pages/team/Members'
-import EditTeam from './pages/team/Edit'
-import Notifications from './pages/Notifications'
+import SecuritySettings from './pages/user/security/SecuritySettings'
+import TwoFA from './pages/user/security/TwoFA'
+import PasskeyManagement from './pages/user/security/PasskeyManagement'
+import Dashboard from './pages/user/Dashboard'
+import Settings from './pages/user/Settings'
+import Help from './pages/user/Help'
+import TeamIndex from './pages/user/team/Index'
+import CreateTeam from './pages/user/team/Create'
+import TeamDetail from './pages/user/team/Detail'
+import TeamMembers from './pages/user/team/Members'
+import EditTeam from './pages/user/team/Edit'
+import Notifications from './pages/user/Notifications'
 import AdminNotifications from './pages/admin/Notifications'
-import InviteTeam from './pages/team/Invite'
-import InvitationInbox from './pages/invitations/Inbox'
+import InviteTeam from './pages/user/team/Invite'
+import InvitationInbox from './pages/user/invitations/Inbox'
 import NotFound from './pages/NotFound'
-import LoginHistory from './pages/security/LoginHistory'
-import OAuthClients from './pages/admin/OAuthClients'
+import LoginHistory from './pages/user/security/LoginHistory'
+import OAuthClients from '@pages/admin/oauth/OAuthClients'
 import OAuthConsent from './pages/auth/OAuthConsent'
-import SubscriptionIndex from './pages/subscription/Index'
-import ProductsPage from './pages/subscription/Products'
-import AdminSubscriptions from './pages/admin/Subscriptions'
-import AdminProducts from './pages/admin/Products'
-import AdminPlans from './pages/admin/Plans'
-import AdminPrices from './pages/admin/Prices'
-import AdminCoupons from './pages/admin/Coupons'
-import Payment from './pages/payment/Payment'
-import SubscriptionCheckout from './pages/subscription/Checkout'
-import OrderConfirm from './pages/order/OrderConfirm'
-import OrderSuccess from './pages/order/OrderSuccess'
-import About from './pages/About'
-import TenantList from './pages/admin/TenantList'
-import CreateTenant from './pages/admin/CreateTenant'
-import AppList from './pages/admin/AppList'
-import CreateApp from './pages/admin/CreateApp'
+import SubscriptionIndex from './pages/user/subscription/Index'
+import ProductsPage from './pages/user/subscription/Products'
+import AdminSubscriptions from './pages/admin/subscription/Subscriptions'
+import AdminProducts from './pages/admin/subscription/Products'
+import AdminPlans from './pages/admin/subscription/Plans'
+import AdminPrices from './pages/admin/subscription/Prices'
+import AdminCoupons from './pages/admin/subscription/Coupons'
+import Payment from './pages/user/payment/Payment'
+import SubscriptionCheckout from './pages/user/subscription/Checkout'
+import OrderConfirm from './pages/user/order/OrderConfirm'
+import OrderSuccess from './pages/user/order/OrderSuccess'
+import About from './pages/user/About'
+import TenantList from '@pages/admin/tenant/TenantList'
+import CreateTenant from '@pages/admin/tenant/CreateTenant'
+import AppList from './pages/admin/app/AppList'
+import CreateApp from './pages/admin/app/CreateApp'
 import AdminDashboard from './pages/admin/Dashboard'
-import OAuthClientConfig from './pages/admin/OAuthClientConfig'
+import OAuthClientConfig from '@pages/admin/oauth/OAuthClientConfig'
+import TenantDashboard from './pages/tenant/Dashboard'
+import TenantApps from './pages/tenant/Apps'
 
 export default function AppRouter() {
   return (
@@ -304,6 +306,23 @@ export default function AppRouter() {
       <Route path="/admin/settings" element={
         <ProtectedRoute>
           <AdminDashboard />
+        </ProtectedRoute>
+      } />
+      
+      {/* 租户管理页面 - 需要认证保护 */}
+      <Route path="/tenant/dashboard" element={
+        <ProtectedRoute>
+          <TenantDashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/tenant/apps" element={
+        <ProtectedRoute>
+          <TenantApps />
+        </ProtectedRoute>
+      } />
+      <Route path="/tenant/apps/new" element={
+        <ProtectedRoute>
+          <CreateApp />
         </ProtectedRoute>
       } />
       

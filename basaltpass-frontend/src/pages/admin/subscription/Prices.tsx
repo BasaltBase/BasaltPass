@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { adminListPrices, adminCreatePrice, adminUpdatePrice, adminDeletePrice, adminListPlans } from '../../api/subscription'
-import { Price, Plan } from '../../types/subscription'
+import { adminListPrices, adminCreatePrice, adminUpdatePrice, adminDeletePrice, adminListPlans } from '../../../api/subscription'
+import { Price, Plan } from '../../../types/subscription'
 import { Link } from 'react-router-dom'
 import { ChevronRightIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
-import AdminLayout from '../../components/AdminLayout'
+import AdminLayout from '../../../components/AdminLayout'
 
 export default function AdminPrices() {
   const [prices, setPrices] = useState<Price[]>([])

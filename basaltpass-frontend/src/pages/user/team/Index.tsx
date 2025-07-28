@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import Layout from '../../components/Layout';
-import { teamApi, UserTeamResponse } from '../../api/team';
+import Layout from '../../../components/Layout';
+import { teamApi, UserTeamResponse } from '../../../api/team';
 
 const TeamIndex: React.FC = () => {
   const [teams, setTeams] = useState<UserTeamResponse[]>([]);

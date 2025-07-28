@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { listUsers, banUser } from '../../api/admin'
+import { listUsers, banUser } from '../../../api/admin'
 import { Link } from 'react-router-dom'
 import { ChevronRightIcon } from '@heroicons/react/24/outline'
-import AdminLayout from '../../components/AdminLayout'
+import AdminLayout from '../../../components/AdminLayout'
 
 interface User {
   ID: number

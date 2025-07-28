@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import Layout from '../components/Layout'
-import { useNotifications } from '../contexts/NotificationContext'
-import { notificationApi, Notification } from '../api/notification'
+import Layout from '../../components/Layout'
+import { useNotifications } from '../../contexts/NotificationContext'
+import { notificationApi, Notification } from '../../api/notification'
 import { 
   BellIcon, 
   CheckIcon, 

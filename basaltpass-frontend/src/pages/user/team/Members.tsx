@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import Layout from '../../components/Layout';
-import { teamApi } from '../../api/team';
+import Layout from '../../../components/Layout';
+import { teamApi } from '../../../api/team';
 
 interface TeamMember {
   id: number;

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import client from '../../api/client'
+import client from '../../../api/client'
 import { useNavigate } from 'react-router-dom'
-import Layout from '../../components/Layout'
+import Layout from '../../../components/Layout'
 import { 
   UserIcon, 
   EnvelopeIcon, 

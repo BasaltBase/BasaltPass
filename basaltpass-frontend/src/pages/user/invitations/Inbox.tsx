@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import Layout from '../../components/Layout'
-import { invitationApi, Invitation } from '../../api/invitation'
+import Layout from '../../../components/Layout'
+import { invitationApi, Invitation } from '../../../api/invitation'
 import { CheckIcon, XMarkIcon, ClockIcon, UserGroupIcon, EnvelopeIcon, CalendarIcon, UserIcon, ArrowLeftIcon } from '@heroicons/react/24/outline'
-import { useAuth } from '../../contexts/AuthContext'
+import { useAuth } from '../../../contexts/AuthContext'
 
 const Inbox: React.FC = () => {
   const { isAuthenticated, isLoading, user } = useAuth()

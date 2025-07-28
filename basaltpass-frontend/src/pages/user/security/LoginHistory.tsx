@@ -1,4 +1,4 @@
-import Layout from '../../components/Layout'
+import Layout from '../../../components/Layout'
 import { Link } from 'react-router-dom'
 import { ArrowLeftIcon } from '@heroicons/react/24/outline'
 

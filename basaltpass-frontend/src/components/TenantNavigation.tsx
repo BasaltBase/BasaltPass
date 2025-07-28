@@ -1,17 +1,13 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { 
-  BuildingOfficeIcon,
+  ChartBarIcon,
   CubeIcon,
   UsersIcon,
-  Cog6ToothIcon,
   ChevronDownIcon,
   ChevronRightIcon,
-  WalletIcon,
   CreditCardIcon,
   GiftIcon,
-  CurrencyDollarIcon,
-  TagIcon,
   DocumentTextIcon,
   BellIcon,
   KeyIcon,
@@ -29,49 +25,47 @@ interface NavigationItem {
 const navigation: NavigationItem[] = [
   {
     name: '仪表板',
-    href: '/admin/dashboard',
-    icon: BuildingOfficeIcon,
+    href: '/tenant/dashboard',
+    icon: ChartBarIcon,
   },
   {
-    name: '平台管理',
-    icon: Cog6ToothIcon,
+    name: '应用管理',
+    icon: CubeIcon,
     children: [
-      { name: '租户管理', href: '/admin/tenants', icon: BuildingOfficeIcon },
-      { name: 'OAuth客户端', href: '/admin/oauth-clients', icon: KeyIcon },
-      { name: '系统设置', href: '/admin/settings', icon: Cog6ToothIcon },
+      { name: '我的应用', href: '/tenant/apps', icon: CubeIcon },
     ]
   },
   {
-    name: '订阅与支付',
+    name: '用户管理',
+    icon: UsersIcon,
+    children: [
+      { name: '用户列表', href: '/tenant/users', icon: UsersIcon },
+      { name: '角色权限', href: '/tenant/roles', icon: KeyIcon },
+    ]
+  },
+  {
+    name: '通知管理',
+    icon: BellIcon,
+    children: [
+      { name: '通知设置', href: '/tenant/notifications', icon: BellIcon },
+      { name: '消息中心', href: '/tenant/messages', icon: DocumentTextIcon },
+    ]
+  },
+  {
+    name: '商品订阅',
     icon: CreditCardIcon,
     children: [
-      { name: '订阅管理', href: '/admin/subscriptions', icon: CreditCardIcon },
-      { name: '产品管理', href: '/admin/products', icon: ShoppingCartIcon },
-      { name: '套餐管理', href: '/admin/plans', icon: GiftIcon },
-      { name: '定价管理', href: '/admin/prices', icon: CurrencyDollarIcon },
-      { name: '优惠券管理', href: '/admin/coupons', icon: TagIcon },
-    ]
-  },
-  {
-    name: '钱包管理',
-    icon: WalletIcon,
-    children: [
-      { name: '钱包总览', href: '/admin/wallets', icon: WalletIcon },
-    ]
-  },
-  {
-    name: '系统管理',
-    icon: Cog6ToothIcon,
-    children: [
-      { name: '通知管理', href: '/admin/notifications', icon: BellIcon },
-      { name: '审计日志', href: '/admin/logs', icon: DocumentTextIcon },
+      { name: '我的订阅', href: '/tenant/subscriptions', icon: CreditCardIcon },
+      { name: '商品目录', href: '/tenant/products', icon: ShoppingCartIcon },
+      { name: '套餐升级', href: '/tenant/plans', icon: GiftIcon },
+      { name: '账单历史', href: '/tenant/billing', icon: DocumentTextIcon },
     ]
   },
 ]
 
-export default function AdminNavigation() {
+export default function TenantNavigation() {
   const location = useLocation()
-  const [expandedSections, setExpandedSections] = useState<string[]>(['订阅与支付'])
+  const [expandedSections, setExpandedSections] = useState<string[]>(['应用管理', '商品订阅'])
 
   const toggleSection = (sectionName: string) => {
     setExpandedSections(prev => 
@@ -97,7 +91,7 @@ export default function AdminNavigation() {
             onClick={() => toggleSection(item.name)}
             className={`w-full flex items-center justify-between px-3 py-2 text-left text-sm font-medium rounded-md transition-colors ${
               hasCurrentChild || isCurrent
-                ? 'bg-indigo-100 text-indigo-900'
+                ? 'bg-blue-100 text-blue-900'
                 : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
             }`}
             style={{ paddingLeft: `${0.75 + depth * 1}rem` }}
@@ -127,7 +121,7 @@ export default function AdminNavigation() {
         to={item.href!}
         className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
           isCurrent
-            ? 'bg-indigo-100 text-indigo-900'
+            ? 'bg-blue-100 text-blue-900'
             : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
         }`}
         style={{ paddingLeft: `${0.75 + depth * 1}rem` }}

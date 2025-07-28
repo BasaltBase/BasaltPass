@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { paymentAPI, CreatePaymentIntentRequest, PaymentIntent, MockStripeResponse } from '../../api/payment';
-import { getBalance } from '../../api/wallet';
+import { paymentAPI, CreatePaymentIntentRequest, PaymentIntent, MockStripeResponse } from '@api/payment';
+import { getBalance } from '@api/wallet';
 
 const Payment: React.FC = () => {
   const [loading, setLoading] = useState(false);
