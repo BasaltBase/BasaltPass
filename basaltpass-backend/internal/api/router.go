@@ -2,6 +2,8 @@ package api
 
 import (
 	"basaltpass-backend/internal/admin"
+	appHandler "basaltpass-backend/internal/app"
+	"basaltpass-backend/internal/app_user"
 	"basaltpass-backend/internal/auth"
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/invitation"
@@ -14,6 +16,7 @@ import (
 	"basaltpass-backend/internal/security"
 	"basaltpass-backend/internal/subscription"
 	"basaltpass-backend/internal/team"
+	"basaltpass-backend/internal/tenant"
 	"basaltpass-backend/internal/user"
 	"basaltpass-backend/internal/wallet"
 
@@ -22,19 +25,8 @@ import (
 
 // RegisterRoutes attaches all versioned API routes to the Fiber app.
 func RegisterRoutes(app *fiber.App) {
-	v1 := app.Group("/api/v1")
-
-	authGroup := v1.Group("/auth")
-	authGroup.Post("/register", auth.RegisterHandler)
-	authGroup.Post("/login", auth.LoginHandler)
-	authGroup.Post("/refresh", auth.RefreshHandler)
-	authGroup.Post("/password/reset-request", auth.RequestResetHandler)
-	authGroup.Post("/password/reset", auth.ResetPasswordHandler)
-	authGroup.Post("/verify-2fa", auth.Verify2FAHandler)
-
-	oauthGroup := v1.Group("/auth/oauth")
-	oauthGroup.Get(":provider/login", oauth.LoginHandler)
-	oauthGroup.Get(":provider/callback", oauth.CallbackHandler)
+	// OIDC Discovery端点
+	app.Get("/.well-known/openid-configuration", oauth.DiscoveryHandler)
 
 	// OAuth2授权服务器端点
 	oauthServerGroup := app.Group("/oauth")
@@ -44,6 +36,108 @@ func RegisterRoutes(app *fiber.App) {
 	oauthServerGroup.Get("/userinfo", oauth.UserInfoHandler)
 	oauthServerGroup.Post("/introspect", oauth.IntrospectHandler)
 	oauthServerGroup.Post("/revoke", oauth.RevokeHandler)
+	oauthServerGroup.Get("/jwks", oauth.JWKSHandler)
+
+	// TODO ⬇️ One-Tap Auth和Silent Auth端点
+	oauthServerGroup.Post("/one-tap/login", oauth.OneTapLoginHandler)
+	oauthServerGroup.Get("/silent-auth", oauth.SilentAuthHandler)
+	oauthServerGroup.Get("/check-session", oauth.CheckSessionHandler)
+
+	// OIDC Discovery和会话管理端点
+	app.Get("/check_session_iframe", oauth.CheckSessionIframeHandler)
+	app.Get("/end_session", oauth.EndSessionHandler)
+
+	// 平台级管理API（超级管理员）
+	platformGroup := app.Group("/_admin", common.JWTMiddleware(), common.SuperAdminMiddleware())
+
+	// 租户管理
+	platformTenantGroup := platformGroup.Group("/tenants")
+	platformTenantGroup.Post("/", tenant.CreateTenantHandler)
+	platformTenantGroup.Get("/", tenant.ListTenantsHandler)
+	platformTenantGroup.Get("/:id", tenant.GetTenantHandler)
+	platformTenantGroup.Put("/:id", tenant.UpdateTenantHandler)
+	platformTenantGroup.Delete("/:id", tenant.DeleteTenantHandler)
+
+	// API v1 路由
+	v1 := app.Group("/api/v1")
+
+	// 用户租户管理
+	userGroup := v1.Group("/user", common.JWTMiddleware())
+	userGroup.Get("/tenants", tenant.GetUserTenantsHandler)
+	userGroup.Get("/profile", user.GetProfileHandler)
+	userGroup.Put("/profile", user.UpdateProfileHandler)
+
+	// 用户应用授权管理
+	userGroup.Get("/apps", app_user.GetUserAppsHandler)
+	userGroup.Delete("/apps/:app_id", app_user.RevokeUserAppHandler)
+
+	// 认证相关路由
+	authGroup := v1.Group("/auth")
+	authGroup.Post("/register", auth.RegisterHandler)
+	authGroup.Post("/login", auth.LoginHandler)
+	authGroup.Post("/refresh", auth.RefreshHandler)
+	authGroup.Post("/password/reset-request", auth.RequestResetHandler)
+	authGroup.Post("/password/reset", auth.ResetPasswordHandler)
+	authGroup.Post("/verify-2fa", auth.Verify2FAHandler)
+	authGroup.Get("/debug/cookies", auth.DebugCookiesHandler) // 调试端点
+
+	oauthGroup := v1.Group("/auth/oauth")
+	oauthGroup.Get(":provider/login", oauth.LoginHandler)
+	oauthGroup.Get(":provider/callback", oauth.CallbackHandler)
+
+	// 租户级管理API（需要租户上下文）
+	tenantAdminGroup := v1.Group("/admin", common.JWTMiddleware(), common.TenantMiddleware(), common.TenantAdminMiddleware())
+
+	// 租户信息管理
+	tenantAdminGroup.Get("/tenant", tenant.GetTenantHandler)
+	tenantAdminGroup.Put("/tenant", tenant.UpdateTenantHandler)
+	tenantAdminGroup.Post("/tenant/users/invite", tenant.InviteUserHandler)
+
+	// 应用管理
+	appGroup := tenantAdminGroup.Group("/apps")
+	appGroup.Post("/", appHandler.CreateAppHandler)
+	appGroup.Get("/", appHandler.ListAppsHandler)
+	appGroup.Get("/:id", appHandler.GetAppHandler)
+	appGroup.Put("/:id", appHandler.UpdateAppHandler)
+	appGroup.Delete("/:id", appHandler.DeleteAppHandler)
+
+	// 应用用户管理路由（租户级）
+	appGroup.Get("/:app_id/users", app_user.GetAppUsersHandler)
+	appGroup.Get("/:app_id/users/stats", app_user.GetAppUserStatsHandler)
+	appGroup.Delete("/:app_id/users/:user_id", app_user.AdminRevokeUserAppHandler)
+
+	// OAuth2客户端管理路由（租户级）
+	oauthClientGroup := tenantAdminGroup.Group("/oauth/clients")
+	oauthClientGroup.Post("/", oauth.CreateClientHandler)
+	oauthClientGroup.Get("/", oauth.ListClientsHandler)
+	oauthClientGroup.Get("/:client_id", oauth.GetClientHandler)
+	oauthClientGroup.Put("/:client_id", oauth.UpdateClientHandler)
+	oauthClientGroup.Delete("/:client_id", oauth.DeleteClientHandler)
+	oauthClientGroup.Post("/:client_id/regenerate-secret", oauth.RegenerateSecretHandler)
+	oauthClientGroup.Get("/:client_id/stats", oauth.GetClientStatsHandler)
+	oauthClientGroup.Get("/:client_id/tokens", oauth.GetTokensHandler)
+	oauthClientGroup.Post("/:client_id/revoke-tokens", oauth.RevokeClientTokensHandler)
+
+	// 原有的系统级管理员路由（保持向后兼容）
+	adminGroup := v1.Group("/admin", common.JWTMiddleware(), common.AdminMiddleware())
+	adminGroup.Get("/dashboard/stats", admin.DashboardStatsHandler)
+	adminGroup.Get("/dashboard/activities", admin.RecentActivitiesHandler)
+	adminGroup.Get("/roles", rbac.ListRolesHandler)
+	adminGroup.Post("/roles", rbac.CreateRoleHandler)
+	adminGroup.Post("/user/:id/role", rbac.AssignRoleHandler)
+	adminGroup.Get("/users", admin.ListUsersHandler)
+	adminGroup.Post("/user/:id/ban", admin.BanUserHandler)
+	adminGroup.Get("/wallets", admin.ListWalletTxHandler)
+	adminGroup.Post("/tx/:id/approve", admin.ApproveTxHandler)
+	adminGroup.Get("/logs", admin.ListAuditHandler)
+
+	// 系统级应用管理（不需要租户上下文）
+	adminAppGroup := adminGroup.Group("/apps")
+	adminAppGroup.Post("/", appHandler.AdminCreateAppHandler)
+	adminAppGroup.Get("/", appHandler.AdminListAppsHandler)
+	adminAppGroup.Get("/:id", appHandler.AdminGetAppHandler)
+	adminAppGroup.Put("/:id", appHandler.AdminUpdateAppHandler)
+	adminAppGroup.Delete("/:id", appHandler.AdminDeleteAppHandler)
 
 	// Passkey authentication routes
 	passkeyGroup := v1.Group("/passkey")
@@ -53,10 +147,6 @@ func RegisterRoutes(app *fiber.App) {
 	passkeyGroup.Post("/login/finish", passkey.FinishLoginHandler)
 	passkeyGroup.Get("/list", common.JWTMiddleware(), passkey.ListPasskeysHandler)
 	passkeyGroup.Delete("/:id", common.JWTMiddleware(), passkey.DeletePasskeyHandler)
-
-	userGroup := v1.Group("/user", common.JWTMiddleware())
-	userGroup.Get("/profile", user.GetProfileHandler)
-	userGroup.Put("/profile", user.UpdateProfileHandler)
 
 	// 用户搜索路由 (需要JWT认证)
 	usersGroup := v1.Group("/users", common.JWTMiddleware())
@@ -110,6 +200,33 @@ func RegisterRoutes(app *fiber.App) {
 	orderGroup.Get("/:id", order.GetOrderHandler)
 	orderGroup.Get("/number/:number", order.GetOrderByNumberHandler)
 
+	// 安全设置路由
+	securityGroup := v1.Group("/security", common.JWTMiddleware())
+	securityGroup.Get("/status", security.GetSecurityStatusHandler)
+	securityGroup.Post("/password/change", security.ChangePasswordHandler)
+	securityGroup.Put("/contact", security.UpdateContactHandler)
+	securityGroup.Post("/2fa/setup", security.SetupHandler)
+	securityGroup.Post("/2fa/verify", security.VerifyHandler)
+	securityGroup.Post("/2fa/disable", security.Disable2FAHandler)
+	securityGroup.Post("/email/verify", security.VerifyEmailHandler)
+	securityGroup.Post("/email/resend", security.SendEmailVerificationHandler)
+	securityGroup.Post("/phone/verify", security.VerifyPhoneHandler)
+	securityGroup.Post("/phone/resend", security.SendPhoneVerificationHandler)
+
+	// 通知路由
+	notifGroup := v1.Group("/notifications", common.JWTMiddleware())
+	notifGroup.Get("/", notification.ListHandler)
+	notifGroup.Get("/unread-count", notification.UnreadCountHandler)
+	notifGroup.Put("/:id/read", notification.MarkAsReadHandler)
+	notifGroup.Put("/mark-all-read", notification.MarkAllAsReadHandler)
+	notifGroup.Delete("/:id", notification.DeleteHandler)
+
+	// 管理员通知路由
+	adminNotif := adminGroup.Group("/notifications")
+	adminNotif.Post("/", notification.AdminCreateHandler)
+	adminNotif.Get("/", notification.AdminListHandler)
+	adminNotif.Delete("/:id", notification.AdminDeleteHandler)
+
 	// ========== 订阅系统路由 ==========
 	// 产品和套餐路由（公开，无需认证）
 	productsGroup := v1.Group("/products")
@@ -141,39 +258,6 @@ func RegisterRoutes(app *fiber.App) {
 	// 使用记录路由（需要认证）
 	usageGroup := v1.Group("/usage", common.JWTMiddleware())
 	usageGroup.Post("/records", subscription.CreateUsageRecordHandler)
-
-	securityGroup := v1.Group("/security", common.JWTMiddleware())
-	// 安全状态
-	securityGroup.Get("/status", security.GetSecurityStatusHandler)
-
-	// 密码管理
-	securityGroup.Post("/password/change", security.ChangePasswordHandler)
-
-	// 联系方式管理
-	securityGroup.Put("/contact", security.UpdateContactHandler)
-
-	// 2FA管理
-	securityGroup.Post("/2fa/setup", security.SetupHandler)
-	securityGroup.Post("/2fa/verify", security.VerifyHandler)
-	securityGroup.Post("/2fa/disable", security.Disable2FAHandler)
-
-	// 邮箱验证
-	securityGroup.Post("/email/verify", security.VerifyEmailHandler)
-	securityGroup.Post("/email/resend", security.SendEmailVerificationHandler)
-
-	// 手机验证
-	securityGroup.Post("/phone/verify", security.VerifyPhoneHandler)
-	securityGroup.Post("/phone/resend", security.SendPhoneVerificationHandler)
-
-	adminGroup := v1.Group("/admin", common.JWTMiddleware(), common.AdminMiddleware())
-	adminGroup.Get("/roles", rbac.ListRolesHandler)
-	adminGroup.Post("/roles", rbac.CreateRoleHandler)
-	adminGroup.Post("/user/:id/role", rbac.AssignRoleHandler)
-	adminGroup.Get("/users", admin.ListUsersHandler)
-	adminGroup.Post("/user/:id/ban", admin.BanUserHandler)
-	adminGroup.Get("/wallets", admin.ListWalletTxHandler)
-	adminGroup.Post("/tx/:id/approve", admin.ApproveTxHandler)
-	adminGroup.Get("/logs", admin.ListAuditHandler)
 
 	// ========== 管理员订阅系统路由 ==========
 	// 产品管理
@@ -214,32 +298,6 @@ func RegisterRoutes(app *fiber.App) {
 	adminSubscriptionsGroup.Get("/", subscription.AdminListSubscriptionsHandler)
 	adminSubscriptionsGroup.Get("/:id", subscription.AdminGetSubscriptionHandler)
 	adminSubscriptionsGroup.Put("/:id/cancel", subscription.AdminCancelSubscriptionHandler)
-
-	// 通知路由
-	notifGroup := v1.Group("/notifications", common.JWTMiddleware())
-	notifGroup.Get("/", notification.ListHandler)
-	notifGroup.Get("/unread-count", notification.UnreadCountHandler)
-	notifGroup.Put("/:id/read", notification.MarkAsReadHandler)
-	notifGroup.Put("/mark-all-read", notification.MarkAllAsReadHandler)
-	notifGroup.Delete("/:id", notification.DeleteHandler)
-
-	// 管理员通知路由
-	adminNotif := adminGroup.Group("/notifications")
-	adminNotif.Post("/", notification.AdminCreateHandler)
-	adminNotif.Get("/", notification.AdminListHandler)
-	adminNotif.Delete("/:id", notification.AdminDeleteHandler)
-
-	// OAuth2客户端管理路由
-	oauthClientGroup := adminGroup.Group("/oauth/clients")
-	oauthClientGroup.Post("/", oauth.CreateClientHandler)
-	oauthClientGroup.Get("/", oauth.ListClientsHandler)
-	oauthClientGroup.Get("/:client_id", oauth.GetClientHandler)
-	oauthClientGroup.Put("/:client_id", oauth.UpdateClientHandler)
-	oauthClientGroup.Delete("/:client_id", oauth.DeleteClientHandler)
-	oauthClientGroup.Post("/:client_id/regenerate-secret", oauth.RegenerateSecretHandler)
-	oauthClientGroup.Get("/:client_id/stats", oauth.GetClientStatsHandler)
-	oauthClientGroup.Get("/:client_id/tokens", oauth.GetTokensHandler)
-	oauthClientGroup.Post("/:client_id/revoke-tokens", oauth.RevokeClientTokensHandler)
 
 	// Add more route groups as needed...
 }

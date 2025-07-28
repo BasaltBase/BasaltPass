@@ -13,8 +13,7 @@ import (
 // OAuthClient 表示一个OAuth2客户端（业务应用）
 type OAuthClient struct {
 	gorm.Model
-	Name         string `gorm:"size:100;not null" json:"name"`                                           // 应用名称
-	Description  string `gorm:"size:500" json:"description"`                                             // 应用描述
+	AppID        uint   `gorm:"not null;index" json:"app_id"`                                            // 关联的应用ID
 	ClientID     string `gorm:"size:64;uniqueIndex;not null" json:"client_id"`                           // 客户端ID
 	ClientSecret string `gorm:"size:128;not null" json:"-"`                                              // 客户端密钥（不返回给前端）
 	RedirectURIs string `gorm:"type:text;not null" json:"redirect_uris"`                                 // 允许的重定向URI列表（用逗号分隔）
@@ -28,8 +27,10 @@ type OAuthClient struct {
 	// 统计信息
 	LastUsedAt *time.Time `json:"last_used_at"`               // 最后使用时间
 	CreatedBy  uint       `gorm:"not null" json:"created_by"` // 创建者用户ID
+	RotatesAt  *time.Time `json:"rotates_at"`                 // 密钥轮换时间
 
 	// 关联
+	App     App  `gorm:"foreignKey:AppID" json:"app,omitempty"`
 	Creator User `gorm:"foreignKey:CreatedBy" json:"creator,omitempty"`
 }
 
@@ -78,6 +79,19 @@ func (c *OAuthClient) SetScopeList(scopes []string) {
 	c.Scopes = strings.Join(scopes, ",")
 }
 
+// GetAllowedOriginList 获取允许的CORS源列表
+func (c *OAuthClient) GetAllowedOriginList() []string {
+	if c.AllowedOrigins == "" {
+		return []string{}
+	}
+	return strings.Split(c.AllowedOrigins, ",")
+}
+
+// SetAllowedOriginList 设置允许的CORS源列表
+func (c *OAuthClient) SetAllowedOriginList(origins []string) {
+	c.AllowedOrigins = strings.Join(origins, ",")
+}
+
 // GetGrantTypeList 获取授权类型列表
 func (c *OAuthClient) GetGrantTypeList() []string {
 	if c.GrantTypes == "" {
@@ -110,55 +124,4 @@ func (c *OAuthClient) VerifyClientSecret(secret string) bool {
 	hash := sha256.Sum256([]byte(secret))
 	hashedSecret := hex.EncodeToString(hash[:])
 	return c.ClientSecret == hashedSecret
-}
-
-// OAuthAuthorizationCode 表示OAuth2授权码
-type OAuthAuthorizationCode struct {
-	gorm.Model
-	Code                string    `gorm:"size:128;uniqueIndex;not null" json:"code"`
-	ClientID            string    `gorm:"size:64;not null;index" json:"client_id"`
-	UserID              uint      `gorm:"not null;index" json:"user_id"`
-	RedirectURI         string    `gorm:"size:500;not null" json:"redirect_uri"`
-	Scopes              string    `gorm:"type:text" json:"scopes"`
-	CodeChallenge       string    `gorm:"size:128" json:"code_challenge"` // PKCE支持
-	CodeChallengeMethod string    `gorm:"size:16" json:"code_challenge_method"`
-	ExpiresAt           time.Time `gorm:"not null" json:"expires_at"`
-	Used                bool      `gorm:"default:false" json:"used"`
-
-	// 关联
-	Client OAuthClient `gorm:"foreignKey:ClientID;references:ClientID" json:"client,omitempty"`
-	User   User        `gorm:"foreignKey:UserID" json:"user,omitempty"`
-}
-
-// IsExpired 检查授权码是否过期
-func (c *OAuthAuthorizationCode) IsExpired() bool {
-	return time.Now().After(c.ExpiresAt)
-}
-
-// OAuthAccessToken 表示OAuth2访问令牌
-type OAuthAccessToken struct {
-	gorm.Model
-	Token        string    `gorm:"size:128;uniqueIndex;not null" json:"token"`
-	ClientID     string    `gorm:"size:64;not null;index" json:"client_id"`
-	UserID       uint      `gorm:"not null;index" json:"user_id"`
-	Scopes       string    `gorm:"type:text" json:"scopes"`
-	ExpiresAt    time.Time `gorm:"not null" json:"expires_at"`
-	RefreshToken string    `gorm:"size:128;index" json:"refresh_token"`
-
-	// 关联
-	Client OAuthClient `gorm:"foreignKey:ClientID;references:ClientID" json:"client,omitempty"`
-	User   User        `gorm:"foreignKey:UserID" json:"user,omitempty"`
-}
-
-// IsExpired 检查访问令牌是否过期
-func (t *OAuthAccessToken) IsExpired() bool {
-	return time.Now().After(t.ExpiresAt)
-}
-
-// GetScopeList 获取权限范围列表
-func (t *OAuthAccessToken) GetScopeList() []string {
-	if t.Scopes == "" {
-		return []string{}
-	}
-	return strings.Split(t.Scopes, ",")
 }

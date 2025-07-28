@@ -40,8 +40,11 @@ func LoginHandler(c *fiber.Ctx) error {
 		Name:     "refresh_token",
 		Value:    result.TokenPair.RefreshToken,
 		HTTPOnly: true,
+		Secure:   false, // 在开发环境中设置为false，生产环境应该为true
+		SameSite: "Lax",
 		Path:     "/",
-		MaxAge:   7 * 24 * 60 * 60,
+		MaxAge:   7 * 24 * 60 * 60, // 7天
+		Domain:   "", // 空字符串表示当前域
 	})
 	return c.JSON(fiber.Map{"access_token": result.TokenPair.AccessToken})
 }
@@ -61,8 +64,11 @@ func RefreshHandler(c *fiber.Ctx) error {
 		Name:     "refresh_token",
 		Value:    tokens.RefreshToken,
 		HTTPOnly: true,
+		Secure:   false, // 在开发环境中设置为false，生产环境应该为true
+		SameSite: "Lax",
 		Path:     "/",
-		MaxAge:   7 * 24 * 60 * 60,
+		MaxAge:   7 * 24 * 60 * 60, // 7天
+		Domain:   "", // 空字符串表示当前域
 	})
 	return c.JSON(fiber.Map{"access_token": tokens.AccessToken})
 }
@@ -116,4 +122,21 @@ func Verify2FAHandler(c *fiber.Ctx) error {
 		MaxAge:   7 * 24 * 60 * 60,
 	})
 	return c.JSON(fiber.Map{"access_token": tokens.AccessToken})
+}
+
+// DebugCookiesHandler for testing cookie state
+func DebugCookiesHandler(c *fiber.Ctx) error {
+	cookies := c.Request().Header.Cookie("refresh_token")
+	allCookies := make(map[string]string)
+	
+	c.Request().Header.VisitAllCookie(func(key, value []byte) {
+		allCookies[string(key)] = string(value)
+	})
+	
+	return c.JSON(fiber.Map{
+		"refresh_token": string(cookies),
+		"all_cookies": allCookies,
+		"has_refresh_token": len(cookies) > 0,
+		"headers": string(c.Request().Header.Header()),
+	})
 }

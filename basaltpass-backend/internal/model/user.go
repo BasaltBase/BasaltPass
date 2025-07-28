@@ -21,6 +21,7 @@ type User struct {
 	EmailVerified bool `gorm:"default:false"`
 	PhoneVerified bool `gorm:"default:false"`
 	Banned        bool
+	IsSuperAdmin  bool `gorm:"default:false"` // 超级管理员标志
 
 	// WebAuthn相关字段
 	WebAuthnUserID []byte `gorm:"size:64;column:web_authn_id"` // WebAuthn用户ID (固定长度的随机字节)
@@ -30,6 +31,12 @@ type User struct {
 
 	// 团队关联
 	TeamMemberships []TeamMember `gorm:"foreignKey:UserID"`
+
+	// 租户关联
+	TenantMemberships []TenantAdmin `gorm:"foreignKey:UserID"`
+
+	// 应用授权关联
+	AppAuthorizations []AppUser `gorm:"foreignKey:UserID"`
 }
 
 // WebAuthnID 返回用户的WebAuthn ID

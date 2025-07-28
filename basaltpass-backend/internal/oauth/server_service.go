@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"basaltpass-backend/internal/app_user"
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
 
@@ -214,21 +215,48 @@ func (s *OAuthServerService) ExchangeCodeForToken(req *TokenRequest, clientSecre
 
 	// 10. 保存访问令牌
 	oauthToken := &model.OAuthAccessToken{
-		Token:        accessToken,
-		ClientID:     authCode.ClientID,
-		UserID:       authCode.UserID,
-		Scopes:       authCode.Scopes,
-		ExpiresAt:    time.Now().Add(1 * time.Hour), // 访问令牌1小时有效期
-		RefreshToken: refreshToken,
+		Token:     accessToken,
+		ClientID:  authCode.ClientID,
+		UserID:    authCode.UserID,
+		TenantID:  authCode.TenantID,
+		AppID:     authCode.AppID,
+		Scopes:    authCode.Scopes,
+		ExpiresAt: time.Now().Add(1 * time.Hour), // 访问令牌1小时有效期
 	}
 
 	if err := s.db.Create(oauthToken).Error; err != nil {
 		return nil, err
 	}
 
+	// 10.1 保存刷新令牌
+	refreshTokenModel := &model.OAuthRefreshToken{
+		Token:         refreshToken,
+		ClientID:      authCode.ClientID,
+		UserID:        authCode.UserID,
+		TenantID:      authCode.TenantID,
+		AppID:         authCode.AppID,
+		Scopes:        authCode.Scopes,
+		ExpiresAt:     time.Now().Add(7 * 24 * time.Hour), // 刷新令牌7天有效期
+		AccessTokenID: &oauthToken.ID,
+	}
+
+	if err := s.db.Create(refreshTokenModel).Error; err != nil {
+		return nil, err
+	}
+
 	// 11. 标记授权码为已使用
 	if err := s.db.Model(&authCode).Update("used", true).Error; err != nil {
 		return nil, err
+	}
+
+	// 12. 记录用户对应用的授权关系
+	if authCode.AppID > 0 {
+		appUserService := app_user.NewAppUserService(s.db)
+		if err := appUserService.RecordUserAppAuthorization(authCode.AppID, authCode.UserID, authCode.Scopes); err != nil {
+			// 记录日志但不失败，因为这不是关键功能
+			// TODO: 可以考虑添加日志记录
+			_ = err
+		}
 	}
 
 	// 12. 更新客户端最后使用时间
@@ -246,13 +274,18 @@ func (s *OAuthServerService) ExchangeCodeForToken(req *TokenRequest, clientSecre
 
 // RefreshAccessToken 刷新访问令牌
 func (s *OAuthServerService) RefreshAccessToken(refreshToken string, clientID string, clientSecret string) (*TokenResponse, error) {
-	// 1. 查找访问令牌
-	var token model.OAuthAccessToken
-	if err := s.db.Where("refresh_token = ? AND client_id = ?", refreshToken, clientID).First(&token).Error; err != nil {
+	// 1. 查找刷新令牌
+	var refreshTokenModel model.OAuthRefreshToken
+	if err := s.db.Where("token = ? AND client_id = ?", refreshToken, clientID).First(&refreshTokenModel).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("invalid_grant")
 		}
 		return nil, err
+	}
+
+	// 1.1 检查刷新令牌是否过期
+	if refreshTokenModel.ExpiresAt.Before(time.Now()) {
+		return nil, errors.New("expired_token")
 	}
 
 	// 2. 验证客户端
@@ -277,14 +310,43 @@ func (s *OAuthServerService) RefreshAccessToken(refreshToken string, clientID st
 	if _, err := rand.Read(refreshTokenBytes); err != nil {
 		return nil, err
 	}
-	newRefreshToken := hex.EncodeToString(refreshTokenBytes)
+	newRefreshTokenStr := hex.EncodeToString(refreshTokenBytes)
 
-	// 5. 更新令牌
-	token.Token = newAccessToken
-	token.RefreshToken = newRefreshToken
-	token.ExpiresAt = time.Now().Add(1 * time.Hour)
+	// 5. 删除关联的访问令牌（如果存在）
+	s.db.Where("user_id = ? AND client_id = ?", refreshTokenModel.UserID, clientID).Delete(&model.OAuthAccessToken{})
 
-	if err := s.db.Save(&token).Error; err != nil {
+	// 6. 创建新的访问令牌
+	newToken := model.OAuthAccessToken{
+		Token:     newAccessToken,
+		ClientID:  clientID,
+		UserID:    refreshTokenModel.UserID,
+		TenantID:  refreshTokenModel.TenantID,
+		AppID:     refreshTokenModel.AppID,
+		Scopes:    refreshTokenModel.Scopes,
+		ExpiresAt: time.Now().Add(time.Hour),
+	}
+
+	if err := s.db.Create(&newToken).Error; err != nil {
+		return nil, err
+	}
+
+	// 7. 删除旧的刷新令牌
+	if err := s.db.Delete(&refreshTokenModel).Error; err != nil {
+		return nil, err
+	}
+
+	// 8. 创建新的刷新令牌
+	newRefreshTokenModel := model.OAuthRefreshToken{
+		Token:     newRefreshTokenStr,
+		ClientID:  clientID,
+		UserID:    refreshTokenModel.UserID,
+		TenantID:  refreshTokenModel.TenantID,
+		AppID:     refreshTokenModel.AppID,
+		Scopes:    refreshTokenModel.Scopes,
+		ExpiresAt: time.Now().Add(time.Hour * 24 * 30), // 30天
+	}
+
+	if err := s.db.Create(&newRefreshTokenModel).Error; err != nil {
 		return nil, err
 	}
 
@@ -292,8 +354,8 @@ func (s *OAuthServerService) RefreshAccessToken(refreshToken string, clientID st
 		AccessToken:  newAccessToken,
 		TokenType:    "Bearer",
 		ExpiresIn:    3600,
-		RefreshToken: newRefreshToken,
-		Scope:        token.Scopes,
+		RefreshToken: newRefreshTokenStr,
+		Scope:        refreshTokenModel.Scopes,
 	}, nil
 }
 
@@ -333,6 +395,15 @@ func (s *OAuthServerService) GetUserInfo(token string) (*UserInfoResponse, error
 
 	if !hasProfileScope {
 		return nil, errors.New("insufficient_scope")
+	}
+
+	// 更新用户在应用中的最后活跃时间
+	if oauthToken.AppID > 0 {
+		appUserService := app_user.NewAppUserService(s.db)
+		if err := appUserService.UpdateUserLastActivity(oauthToken.AppID, oauthToken.UserID); err != nil {
+			// 记录日志但不失败
+			_ = err
+		}
 	}
 
 	user := oauthToken.User
@@ -390,5 +461,16 @@ func (s *OAuthServerService) BuildAuthorizeURL(baseURL string, req *AuthorizeReq
 
 // RevokeToken 撤销令牌
 func (s *OAuthServerService) RevokeToken(token string) error {
-	return s.db.Where("token = ? OR refresh_token = ?", token, token).Delete(&model.OAuthAccessToken{}).Error
+	// 删除访问令牌
+	accessTokenErr := s.db.Where("token = ?", token).Delete(&model.OAuthAccessToken{}).Error
+
+	// 删除刷新令牌
+	refreshTokenErr := s.db.Where("token = ?", token).Delete(&model.OAuthRefreshToken{}).Error
+
+	// 只要有一个删除成功就认为操作成功
+	if accessTokenErr != nil && refreshTokenErr != nil {
+		return accessTokenErr
+	}
+
+	return nil
 }

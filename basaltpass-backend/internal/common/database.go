@@ -2,6 +2,7 @@ package common
 
 import (
 	"log"
+	"path/filepath"
 	"sync"
 
 	"gorm.io/driver/sqlite"
@@ -17,7 +18,9 @@ var (
 func DB() *gorm.DB {
 	once.Do(func() {
 		var err error
-		db, err = gorm.Open(sqlite.Open("basaltpass.db"), &gorm.Config{})
+		// 使用绝对路径确保数据库文件总是在项目根目录
+		dbPath := filepath.Join("..", "..", "basaltpass.db")
+		db, err = gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
 		if err != nil {
 			log.Fatalf("failed to connect database: %v", err)
 		}

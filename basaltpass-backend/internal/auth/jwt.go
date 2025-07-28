@@ -4,6 +4,9 @@ import (
 	"os"
 	"time"
 
+	"basaltpass-backend/internal/common"
+	"basaltpass-backend/internal/model"
+
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -24,8 +27,19 @@ type TokenPair struct {
 
 // GenerateTokenPair creates JWT access and refresh tokens for a user id.
 func GenerateTokenPair(userID uint) (TokenPair, error) {
+	return GenerateTokenPairWithTenant(userID, 0)
+}
+
+// GenerateTokenPairWithTenant creates JWT tokens with tenant context
+func GenerateTokenPairWithTenant(userID uint, tenantID uint) (TokenPair, error) {
+	// 如果没有指定租户ID，尝试获取用户的默认租户
+	if tenantID == 0 {
+		tenantID = getUserDefaultTenant(userID)
+	}
+
 	accessClaims := jwt.MapClaims{
 		"sub": userID,
+		"tid": tenantID, // 租户ID
 		"exp": time.Now().Add(15 * time.Minute).Unix(),
 	}
 	accessToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims).SignedString(jwtSecret)
@@ -35,6 +49,7 @@ func GenerateTokenPair(userID uint) (TokenPair, error) {
 
 	refreshClaims := jwt.MapClaims{
 		"sub": userID,
+		"tid": tenantID,
 		"exp": time.Now().Add(7 * 24 * time.Hour).Unix(),
 		"typ": "refresh",
 	}
@@ -44,6 +59,20 @@ func GenerateTokenPair(userID uint) (TokenPair, error) {
 	}
 
 	return TokenPair{AccessToken: accessToken, RefreshToken: refreshToken}, nil
+}
+
+// getUserDefaultTenant 获取用户的默认租户ID
+func getUserDefaultTenant(userID uint) uint {
+	var tenantAdmin model.TenantAdmin
+	if err := common.DB().Where("user_id = ?", userID).Order("created_at ASC").First(&tenantAdmin).Error; err != nil {
+		// 如果没有找到用户租户关联，返回默认租户ID
+		var defaultTenant model.Tenant
+		if err := common.DB().Where("code = ?", "default").First(&defaultTenant).Error; err == nil {
+			return defaultTenant.ID
+		}
+		return 1 // 最后的兜底值
+	}
+	return tenantAdmin.TenantID
 }
 
 // ParseToken validates a JWT and returns claims.

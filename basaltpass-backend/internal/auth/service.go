@@ -9,6 +9,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 // Service encapsulates auth related operations.
@@ -22,10 +23,26 @@ func (s Service) Register(req RegisterRequest) (*model.User, error) {
 	if req.Password == "" {
 		return nil, errors.New("password required")
 	}
+
 	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
 	}
+
+	// 检查是否是第一个用户
+	var userCount int64
+	if err := common.DB().Model(&model.User{}).Count(&userCount).Error; err != nil {
+		return nil, err
+	}
+	isFirstUser := userCount == 0
+
+	// 开始事务
+	tx := common.DB().Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
 
 	user := &model.User{
 		Email:        req.Email,
@@ -33,9 +50,24 @@ func (s Service) Register(req RegisterRequest) (*model.User, error) {
 		PasswordHash: string(hash),
 		Nickname:     "New User",
 	}
-	if err := common.DB().Create(user).Error; err != nil {
+
+	if err := tx.Create(user).Error; err != nil {
+		tx.Rollback()
 		return nil, err
 	}
+
+	// 如果是第一个用户，设置为全局管理员
+	if isFirstUser {
+		if err := s.setupFirstUserAsGlobalAdmin(tx, user); err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return nil, err
+	}
+
 	return user, nil
 }
 
@@ -120,7 +152,17 @@ func (s Service) Refresh(refreshToken string) (TokenPair, error) {
 	if !ok {
 		return TokenPair{}, errors.New("invalid subject")
 	}
-	return GenerateTokenPair(uint(userIDFloat))
+
+	// 获取租户信息（如果存在）
+	var tenantID uint = 0
+	if tid, exists := claims["tid"]; exists {
+		if tenantIDFloat, ok := tid.(float64); ok {
+			tenantID = uint(tenantIDFloat)
+		}
+	}
+
+	// 使用带租户信息的token生成方法
+	return GenerateTokenPairWithTenant(uint(userIDFloat), tenantID)
 }
 
 // Verify2FA 校验二次验证信息，成功返回token
@@ -154,4 +196,85 @@ func (s Service) Verify2FA(req Verify2FARequest) (TokenPair, error) {
 		return TokenPair{}, errors.New("unsupported 2FA type")
 	}
 	return GenerateTokenPair(user.ID)
+}
+
+// setupFirstUserAsGlobalAdmin 设置第一个用户为全局管理员
+func (s Service) setupFirstUserAsGlobalAdmin(tx *gorm.DB, user *model.User) error {
+	// 1. 获取或创建默认租户
+	var defaultTenant model.Tenant
+	if err := tx.Where("code = ?", "default").First(&defaultTenant).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// 创建默认租户
+			defaultTenant = model.Tenant{
+				Name:        "BasaltPass",
+				Code:        "default",
+				Description: "BasaltPass系统默认租户",
+				Status:      "active",
+				Plan:        "enterprise", // 给第一个用户企业版权限
+			}
+			if err := tx.Create(&defaultTenant).Error; err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	}
+
+	// 2. 创建租户管理员关联，设置为Owner
+	tenantAdmin := model.TenantAdmin{
+		UserID:   user.ID,
+		TenantID: defaultTenant.ID,
+		Role:     "owner", // 设置为租户Owner
+	}
+	if err := tx.Create(&tenantAdmin).Error; err != nil {
+		return err
+	}
+
+	// 3. 获取或创建全局管理员角色
+	var adminRole model.Role
+	if err := tx.Where("code = ? AND tenant_id = ?", "admin", defaultTenant.ID).First(&adminRole).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// 创建全局管理员角色
+			adminRole = model.Role{
+				TenantID:    defaultTenant.ID,
+				Code:        "admin",
+				Name:        "全局管理员",
+				Description: "系统全局管理员，拥有所有权限",
+				IsSystem:    true,
+			}
+			if err := tx.Create(&adminRole).Error; err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	}
+
+	// 4. 创建用户-角色关联
+	userRole := model.UserRole{
+		UserID: user.ID,
+		RoleID: adminRole.ID,
+	}
+	if err := tx.Create(&userRole).Error; err != nil {
+		return err
+	}
+
+	// 5. 更新用户昵称为更友好的名称
+	if err := tx.Model(user).Update("nickname", "系统管理员").Error; err != nil {
+		return err
+	}
+
+	// 6.将email验证状态设置为已验证
+	if err := tx.Model(user).Update("email_verified", true).Error; err != nil {
+		return err
+	}
+
+	// 7. 设置为超级管理员
+	if err := tx.Model(user).Update("is_super_admin", true).Error; err != nil {
+		return err
+	}
+
+	common.LogAudit(user.ID, "首位用户注册", "user", string(rune(user.ID)), "", "自动设置为全局管理员")
+
+	return nil
 }

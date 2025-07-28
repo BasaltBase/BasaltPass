@@ -75,10 +75,8 @@ func (s *ClientService) CreateClient(creatorID uint, req *CreateClientRequest) (
 
 	// 创建客户端
 	client := &model.OAuthClient{
-		Name:        req.Name,
-		Description: req.Description,
-		CreatedBy:   creatorID,
-		IsActive:    true,
+		CreatedBy: creatorID,
+		IsActive:  true,
 	}
 
 	// 生成客户端凭证
@@ -348,15 +346,15 @@ func isValidURL(urlStr string) bool {
 func (s *ClientService) clientToResponse(client *model.OAuthClient, plainSecret string) *ClientResponse {
 	resp := &ClientResponse{
 		ID:           client.ID,
-		Name:         client.Name,
-		Description:  client.Description,
+		Name:         "", // 这些信息应该从关联的App获取
+		Description:  "", // 这些信息应该从关联的App获取
 		ClientID:     client.ClientID,
 		RedirectURIs: client.GetRedirectURIList(),
 		Scopes:       client.GetScopeList(),
 		IsActive:     client.IsActive,
 		CreatedBy:    client.CreatedBy,
-		CreatedAt:    client.CreatedAt.Format("2006-01-02 15:04:05"),
-		UpdatedAt:    client.UpdatedAt.Format("2006-01-02 15:04:05"),
+		CreatedAt:    client.CreatedAt.Format("2006-07-05 15:04:05"),
+		UpdatedAt:    client.UpdatedAt.Format("2006-07-05 15:04:05"),
 	}
 
 	// 只在创建时返回明文密钥
@@ -373,7 +371,7 @@ func (s *ClientService) clientToResponse(client *model.OAuthClient, plainSecret 
 
 	// 处理最后使用时间
 	if client.LastUsedAt != nil {
-		lastUsed := client.LastUsedAt.Format("2006-01-02 15:04:05")
+		lastUsed := client.LastUsedAt.Format("2006-07-05 15:04:05")
 		resp.LastUsedAt = &lastUsed
 	}
 
