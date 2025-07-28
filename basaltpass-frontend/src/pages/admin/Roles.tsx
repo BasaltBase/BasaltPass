@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import Layout from '../../components/Layout'
 import client from '../../api/client'
 import { PlusIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 import { Link } from 'react-router-dom'
+import AdminLayout from '../../components/AdminLayout'
 
 interface Role {
   ID: number
@@ -51,7 +51,7 @@ export default function Roles() {
   }
 
   return (
-    <Layout>
+    <AdminLayout title="角色管理">
       <div className="space-y-6">
         {/* 面包屑导航 */}
         <nav className="flex" aria-label="Breadcrumb">
@@ -111,10 +111,9 @@ export default function Roles() {
             </table>
           </div>
         </div>
-      </div>
 
-      {/* 创建角色模态框 */}
-      {showCreateModal && (
+        {/* 创建角色模态框 */}
+        {showCreateModal && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10">
           <div className="w-3/4 max-w-4xl p-6 border shadow-lg rounded-md bg-white">
             <div className="flex justify-between items-center mb-6">
@@ -185,6 +184,7 @@ export default function Roles() {
           </div>
         </div>
       )}
-    </Layout>
+    </div>
+    </AdminLayout>
   )
 } 

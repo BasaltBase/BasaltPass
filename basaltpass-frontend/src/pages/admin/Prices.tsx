@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import Layout from '../../components/Layout'
 import { adminListPrices, adminCreatePrice, adminUpdatePrice, adminDeletePrice, adminListPlans } from '../../api/subscription'
 import { Price, Plan } from '../../types/subscription'
 import { Link } from 'react-router-dom'
 import { ChevronRightIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
+import AdminLayout from '../../components/AdminLayout'
 
 export default function AdminPrices() {
   const [prices, setPrices] = useState<Price[]>([])
@@ -154,16 +154,16 @@ export default function AdminPrices() {
 
   if (loading) {
     return (
-      <Layout>
+      <AdminLayout title="价格管理">
         <div className="flex justify-center items-center h-64">
           <div className="text-lg">加载中...</div>
         </div>
-      </Layout>
+      </AdminLayout>
     )
   }
 
   return (
-    <Layout>
+    <AdminLayout title="价格管理">
       <div className="space-y-6">
         {/* 面包屑导航 */}
         <nav className="flex" aria-label="Breadcrumb">
@@ -249,9 +249,8 @@ export default function AdminPrices() {
             )}
           </ul>
         </div>
-      </div>
 
-      {showModal && (
+        {showModal && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10">
           <div className="w-3/4 max-w-4xl p-5 border shadow-lg rounded-md bg-white">
             <div className="mt-3">
@@ -425,20 +424,20 @@ export default function AdminPrices() {
                 </p>
                 <div className="mt-3 p-3 bg-gray-50 rounded-md">
                   <p className="text-sm font-medium text-gray-900">
-                    {formatPrice(deleteTarget.AmountCents, deleteTarget.Currency)}
+                    {formatPrice(deleteTarget!.AmountCents, deleteTarget!.Currency)}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
-                    套餐: {getPlanName(deleteTarget.PlanID || 0)}
+                    套餐: {getPlanName(deleteTarget!.PlanID || 0)}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
-                    周期: {getBillingPeriodText(deleteTarget.BillingPeriod, deleteTarget.BillingInterval)}
+                    周期: {getBillingPeriodText(deleteTarget!.BillingPeriod, deleteTarget!.BillingInterval)}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
-                    类型: {deleteTarget.UsageType}
+                    类型: {deleteTarget!.UsageType}
                   </p>
-                  {deleteTarget.TrialDays && (
+                  {deleteTarget!.TrialDays && (
                     <p className="text-sm text-gray-500 mt-1">
-                      试用期: {deleteTarget.TrialDays} 天
+                      试用期: {deleteTarget!.TrialDays} 天
                     </p>
                   )}
                 </div>
@@ -466,6 +465,7 @@ export default function AdminPrices() {
           </div>
         </div>
       )}
-    </Layout>
+      </div>
+    </AdminLayout>
   )
 } 

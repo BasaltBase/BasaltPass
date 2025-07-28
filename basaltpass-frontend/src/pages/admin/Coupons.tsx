@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import Layout from '../../components/Layout'
 import { adminListCoupons, adminCreateCoupon, adminUpdateCoupon, adminDeleteCoupon } from '../../api/subscription'
 import { Coupon } from '../../types/subscription'
 import { Link } from 'react-router-dom'
 import { ChevronRightIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
+import AdminLayout from '../../components/AdminLayout'
 
 export default function AdminCoupons() {
   const [coupons, setCoupons] = useState<Coupon[]>([])
@@ -150,16 +150,16 @@ export default function AdminCoupons() {
 
   if (loading) {
     return (
-      <Layout>
+      <AdminLayout title="优惠券管理">
         <div className="flex justify-center items-center h-64">
           <div className="text-lg">加载中...</div>
         </div>
-      </Layout>
+      </AdminLayout>
     )
   }
 
   return (
-    <Layout>
+    <AdminLayout title="优惠券管理">
       <div className="space-y-6">
         {/* 面包屑导航 */}
         <nav className="flex" aria-label="Breadcrumb">
@@ -261,9 +261,8 @@ export default function AdminCoupons() {
             )}
           </ul>
         </div>
-      </div>
 
-      {showModal && (
+        {showModal && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10">
           <div className="w-3/4 max-w-4xl p-5 border shadow-lg rounded-md bg-white">
             <div className="mt-3">
@@ -447,33 +446,33 @@ export default function AdminCoupons() {
                 </p>
                 <div className="mt-3 p-3 bg-gray-50 rounded-md">
                   <p className="text-sm font-medium text-gray-900">
-                    {deleteTarget.Code}
+                    {deleteTarget!.Code}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
-                    {deleteTarget.Name}
+                    {deleteTarget!.Name}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
-                    折扣: {formatDiscount(deleteTarget.DiscountType, deleteTarget.DiscountValue)}
+                    折扣: {formatDiscount(deleteTarget!.DiscountType, deleteTarget!.DiscountValue)}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
-                    持续时间: {deleteTarget.Duration === 'once' ? '一次性' : deleteTarget.Duration === 'repeating' ? `重复${deleteTarget.DurationInCycles}次` : '永久'}
+                    持续时间: {deleteTarget!.Duration === 'once' ? '一次性' : deleteTarget!.Duration === 'repeating' ? `重复${deleteTarget!.DurationInCycles}次` : '永久'}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
-                    已使用: {deleteTarget.RedeemedCount}
-                    {deleteTarget.MaxRedemptions && ` / ${deleteTarget.MaxRedemptions}`}
+                    已使用: {deleteTarget!.RedeemedCount}
+                    {deleteTarget!.MaxRedemptions && ` / ${deleteTarget!.MaxRedemptions}`}
                   </p>
-                  {deleteTarget.ExpiresAt && (
+                  {deleteTarget!.ExpiresAt && (
                     <p className="text-sm text-gray-500 mt-1">
-                      过期时间: {new Date(deleteTarget.ExpiresAt).toLocaleDateString('zh-CN')}
+                      过期时间: {new Date(deleteTarget!.ExpiresAt!).toLocaleDateString('zh-CN')}
                     </p>
                   )}
                   <div className="mt-2 flex space-x-2">
-                    {!deleteTarget.IsActive && (
+                    {!deleteTarget!.IsActive && (
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                         已禁用
                       </span>
                     )}
-                    {isExpired(deleteTarget.ExpiresAt) && (
+                    {isExpired(deleteTarget!.ExpiresAt) && (
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
                         已过期
                       </span>
@@ -504,6 +503,7 @@ export default function AdminCoupons() {
           </div>
         </div>
       )}
-    </Layout>
+      </div>
+    </AdminLayout>
   )
 } 

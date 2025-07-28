@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import Layout from '../../components/Layout'
 import { adminListProducts, adminCreateProduct, adminUpdateProduct, adminDeleteProduct } from '../../api/subscription'
 import { Product } from '../../types/subscription'
 import { Link } from 'react-router-dom'
 import { ChevronRightIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
+import AdminLayout from '../../components/AdminLayout'
 
 export default function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([])
@@ -97,16 +97,16 @@ export default function AdminProducts() {
 
   if (loading) {
     return (
-      <Layout>
+      <AdminLayout title="产品管理">
         <div className="flex justify-center items-center h-64">
           <div className="text-lg">加载中...</div>
         </div>
-      </Layout>
+      </AdminLayout>
     )
   }
 
   return (
-    <Layout>
+    <AdminLayout title="产品管理">
       <div className="space-y-6">
         {/* 面包屑导航 */}
         <nav className="flex" aria-label="Breadcrumb">
@@ -190,7 +190,6 @@ export default function AdminProducts() {
             )}
           </ul>
         </div>
-      </div>
 
       {showModal && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10">
@@ -330,6 +329,7 @@ export default function AdminProducts() {
           </div>
         </div>
       )}
-    </Layout>
+      </div>
+    </AdminLayout>
   )
 } 

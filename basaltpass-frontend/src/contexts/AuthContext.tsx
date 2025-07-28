@@ -48,8 +48,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       debugAuth.log('Token found, checking validity')
       const response = await client.get('/api/v1/user/profile')
-      debugAuth.log('Token valid, setting user', response.data.data)
-      setUser(response.data.data)
+      debugAuth.log('API Response received:', response.data)
+      
+      // 检查响应结构
+      if (response.data && response.data.data) {
+        debugAuth.log('Token valid, setting user', response.data.data)
+        setUser(response.data.data)
+      } else if (response.data && !response.data.data) {
+        // 如果响应结构不同，直接使用response.data
+        debugAuth.log('Token valid, setting user (direct)', response.data)
+        setUser(response.data)
+      } else {
+        debugAuth.log('Invalid response structure', response)
+        throw new Error('Invalid response structure')
+      }
     } catch (error: any) {
       debugAuth.log('Token validation failed', error.response?.status)
       if (error.response?.status === 401) {

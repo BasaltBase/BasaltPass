@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import Layout from '../../components/Layout'
 import client from '../../api/client'
 import { Link } from 'react-router-dom'
 import { ChevronRightIcon } from '@heroicons/react/24/outline'
+import AdminLayout from '../../components/AdminLayout'
 
 interface WalletTx {
   ID: number
@@ -29,7 +29,7 @@ export default function Wallets() {
   useEffect(load, [])
 
   return (
-    <Layout>
+    <AdminLayout title="钱包管理">
       <div className="space-y-6">
         {/* 面包屑导航 */}
         <nav className="flex" aria-label="Breadcrumb">
@@ -91,6 +91,6 @@ export default function Wallets() {
           </div>
         </div>
       </div>
-    </Layout>
+    </AdminLayout>
   )
 } 

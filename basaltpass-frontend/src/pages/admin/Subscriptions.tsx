@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import Layout from '../../components/Layout'
 import { adminListSubscriptions, adminCancelSubscription, adminGetSubscription } from '../../api/subscription'
 import { Link } from 'react-router-dom'
 import { ChevronRightIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
+import AdminLayout from '../../components/AdminLayout'
 
 interface Subscription {
   ID: number
@@ -164,16 +164,16 @@ export default function AdminSubscriptions() {
 
   if (loading) {
     return (
-      <Layout>
+      <AdminLayout title="订阅管理">
         <div className="flex justify-center items-center h-64">
           <div className="text-lg">加载中...</div>
         </div>
-      </Layout>
+      </AdminLayout>
     )
   }
 
   return (
-    <Layout>
+    <AdminLayout title="订阅管理">
       <div className="space-y-6">
         {/* 面包屑导航 */}
         <nav className="flex" aria-label="Breadcrumb">
@@ -288,7 +288,6 @@ export default function AdminSubscriptions() {
             )}
           </ul>
         </div>
-      </div>
 
       {/* 详情模态框 */}
       {showDetailModal && selectedSubscription && (
@@ -454,6 +453,7 @@ export default function AdminSubscriptions() {
           </div>
         </div>
       )}
-    </Layout>
+      </div>
+    </AdminLayout>
   )
 } 

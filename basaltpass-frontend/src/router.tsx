@@ -44,6 +44,12 @@ import SubscriptionCheckout from './pages/subscription/Checkout'
 import OrderConfirm from './pages/order/OrderConfirm'
 import OrderSuccess from './pages/order/OrderSuccess'
 import About from './pages/About'
+import TenantList from './pages/admin/TenantList'
+import CreateTenant from './pages/admin/CreateTenant'
+import AppList from './pages/admin/AppList'
+import CreateApp from './pages/admin/CreateApp'
+import AdminDashboard from './pages/admin/Dashboard'
+import OAuthClientConfig from './pages/admin/OAuthClientConfig'
 
 export default function AppRouter() {
   return (
@@ -210,6 +216,21 @@ export default function AppRouter() {
       } />
       
       {/* 管理员页面 - 需要认证保护 */}
+      <Route path="/admin/dashboard" element={
+        <ProtectedRoute>
+          <AdminDashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/apps" element={
+        <ProtectedRoute>
+          <AppList />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/apps/new" element={
+        <ProtectedRoute>
+          <CreateApp />
+        </ProtectedRoute>
+      } />
       <Route path="/admin/users" element={
         <ProtectedRoute>
           <Users />
@@ -263,6 +284,26 @@ export default function AppRouter() {
       <Route path="/admin/oauth-clients" element={
         <ProtectedRoute>
           <OAuthClients />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/oauth-clients/:id/config" element={
+        <ProtectedRoute>
+          <OAuthClientConfig />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/tenants" element={
+        <ProtectedRoute>
+          <TenantList />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/tenants/new" element={
+        <ProtectedRoute>
+          <CreateTenant />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/settings" element={
+        <ProtectedRoute>
+          <AdminDashboard />
         </ProtectedRoute>
       } />
       

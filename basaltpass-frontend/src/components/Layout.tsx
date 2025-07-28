@@ -11,16 +11,9 @@ import {
   UserGroupIcon,
   WalletIcon,
   ShieldCheckIcon,
-  UsersIcon,
-  ChartBarIcon,
-  DocumentTextIcon,
-  KeyIcon,
-  ArrowRightOnRectangleIcon,
+  ArrowsRightLeftIcon,
   CreditCardIcon,
   CubeIcon,
-  TagIcon,
-  CurrencyDollarIcon,
-  GiftIcon,
   InformationCircleIcon
 } from '@heroicons/react/24/outline'
 import { useAuth } from '../contexts/AuthContext'
@@ -37,20 +30,6 @@ const navigation = [
   { name: '设置', href: '/settings', icon: CogIcon },
   { name: '帮助', href: '/help', icon: QuestionMarkCircleIcon },
   { name: '关于', href: '/about', icon: InformationCircleIcon },
-]
-
-const adminNavigation = [
-  { name: '用户管理', href: '/admin/users', icon: UsersIcon },
-  { name: '角色管理', href: '/admin/roles', icon: KeyIcon },
-  { name: '钱包管理', href: '/admin/wallets', icon: WalletIcon },
-  { name: '订阅管理', href: '/admin/subscriptions', icon: CreditCardIcon },
-  { name: '产品管理', href: '/admin/products', icon: CubeIcon },
-  { name: '套餐管理', href: '/admin/plans', icon: GiftIcon },
-  { name: '定价管理', href: '/admin/prices', icon: CurrencyDollarIcon },
-  { name: '优惠券管理', href: '/admin/coupons', icon: TagIcon },
-  { name: '审计日志', href: '/admin/logs', icon: DocumentTextIcon },
-  { name: '通知管理', href: '/admin/notifications', icon: BellIcon },
-  { name: 'OAuth2客户端', href: '/admin/oauth-clients', icon: CogIcon },
 ]
 
 interface LayoutProps {
@@ -107,29 +86,6 @@ export default function Layout({ children }: LayoutProps) {
                     {item.name}
                   </Link>
                 ))}
-                
-                {/* 管理员菜单 */}
-                <div className="pt-4">
-                  <h3 className="px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    管理员
-                  </h3>
-                  <div className="mt-2 space-y-1">
-                    {adminNavigation.map((item) => (
-                      <Link
-                        key={item.name}
-                        to={item.href}
-                        className={`${
-                          isActive(item.href)
-                            ? 'bg-gray-100 text-gray-900'
-                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                        } group flex items-center px-2 py-2 text-base font-medium rounded-md`}
-                      >
-                        <item.icon className="text-gray-400 mr-4 h-6 w-6" />
-                        {item.name}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
               </nav>
             </div>
           </div>
@@ -159,29 +115,6 @@ export default function Layout({ children }: LayoutProps) {
                     {item.name}
                   </Link>
                 ))}
-
-                {/* 管理员菜单 */}
-                <div className="pt-4">
-                  <h3 className="px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    管理员
-                  </h3>
-                  <div className="mt-2 space-y-1">
-                    {adminNavigation.map((item) => (
-                      <Link
-                        key={item.name}
-                        to={item.href}
-                        className={`${
-                          isActive(item.href)
-                            ? 'bg-gray-100 text-gray-900'
-                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                        } group flex items-center px-2 py-2 text-sm font-medium rounded-md`}
-                      >
-                        <item.icon className="text-gray-400 mr-3 h-6 w-6" />
-                        {item.name}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
               </nav>
             </div>
           </div>
@@ -203,6 +136,20 @@ export default function Layout({ children }: LayoutProps) {
         {/* 桌面端顶部栏 */}
         <div className="hidden md:flex md:items-center md:justify-end md:px-6 md:py-4 bg-white border-b border-gray-200">
           <div className="flex items-center space-x-4">
+            {/* 管理系统切换按钮 - 只在admin页面显示 */}
+
+              {/* 管理系统切换按钮 - 只在platform页面显示 */}
+                <Link
+                  to="/admin/dashboard"
+                  className="relative rounded-md bg-indigo-50 px-3 py-2 text-indigo-600 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200"
+                  title="切换到管理"
+                >
+                  <div className="flex items-center space-x-2">
+                    <ArrowsRightLeftIcon className="h-4 w-4" />
+                    <span className="text-sm font-medium">admin管理</span>
+                  </div>
+                </Link>
+              
             <Link to="/notifications">
               <EnhancedNotificationIcon />
             </Link>
@@ -211,7 +158,7 @@ export default function Layout({ children }: LayoutProps) {
               className="text-gray-500 hover:text-gray-900 flex items-center"
               title="退出登录"
             >
-              <ArrowRightOnRectangleIcon className="h-6 w-6" />
+              <ArrowsRightLeftIcon className="h-6 w-6" />
             </button>
           </div>
         </div>

@@ -1,0 +1,368 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { ArrowLeftIcon, RocketLaunchIcon, PlusIcon, TrashIcon, CubeIcon } from '@heroicons/react/24/outline'
+import { appApi, CreateAppRequest } from '../../api/app'
+import AdminLayout from '../../components/AdminLayout'
+
+export default function CreateApp() {
+  const navigate = useNavigate()
+  const [loading, setLoading] = useState(false)
+  const [formData, setFormData] = useState<CreateAppRequest>({
+    name: '',
+    description: '',
+    logo_url: '',
+    homepage_url: '',
+    callback_urls: [''],
+    privacy_policy_url: '',
+    terms_of_service_url: '',
+    settings: {}
+  })
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {}
+
+    if (!formData.name.trim()) {
+      newErrors.name = '应用名称不能为空'
+    }
+
+    if (!formData.description.trim()) {
+      newErrors.description = '应用描述不能为空'
+    }
+
+    // 验证回调地址
+    const validCallbackUrls = formData.callback_urls.filter(url => url.trim())
+    if (validCallbackUrls.length === 0) {
+      newErrors.callback_urls = '至少需要一个回调地址'
+    } else {
+      const invalidUrls = validCallbackUrls.filter(url => {
+        try {
+          new URL(url)
+          return false
+        } catch {
+          return true
+        }
+      })
+      if (invalidUrls.length > 0) {
+        newErrors.callback_urls = '请输入有效的URL格式'
+      }
+    }
+
+    // 验证其他URL字段
+    if (formData.homepage_url && formData.homepage_url.trim()) {
+      try {
+        new URL(formData.homepage_url)
+      } catch {
+        newErrors.homepage_url = '请输入有效的URL格式'
+      }
+    }
+
+    if (formData.logo_url && formData.logo_url.trim()) {
+      try {
+        new URL(formData.logo_url)
+      } catch {
+        newErrors.logo_url = '请输入有效的URL格式'
+      }
+    }
+
+    if (formData.privacy_policy_url && formData.privacy_policy_url.trim()) {
+      try {
+        new URL(formData.privacy_policy_url)
+      } catch {
+        newErrors.privacy_policy_url = '请输入有效的URL格式'
+      }
+    }
+
+    if (formData.terms_of_service_url && formData.terms_of_service_url.trim()) {
+      try {
+        new URL(formData.terms_of_service_url)
+      } catch {
+        newErrors.terms_of_service_url = '请输入有效的URL格式'
+      }
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!validateForm()) {
+      return
+    }
+
+    try {
+      setLoading(true)
+      
+      // 过滤空的回调地址
+      const cleanedData = {
+        ...formData,
+        callback_urls: formData.callback_urls.filter(url => url.trim()),
+        // 清空空字符串字段
+        logo_url: formData.logo_url?.trim() || undefined,
+        homepage_url: formData.homepage_url?.trim() || undefined,
+        privacy_policy_url: formData.privacy_policy_url?.trim() || undefined,
+        terms_of_service_url: formData.terms_of_service_url?.trim() || undefined
+      }
+
+      await appApi.createApp(cleanedData)
+      navigate('/admin/apps')
+    } catch (error) {
+      console.error('Failed to create app:', error)
+      alert('创建应用失败，请重试')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleInputChange = (field: keyof CreateAppRequest, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+    // 清除该字段的错误
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }))
+    }
+  }
+
+  const addCallbackUrl = () => {
+    setFormData(prev => ({
+      ...prev,
+      callback_urls: [...prev.callback_urls, '']
+    }))
+  }
+
+  const removeCallbackUrl = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      callback_urls: prev.callback_urls.filter((_, i) => i !== index)
+    }))
+  }
+
+  const updateCallbackUrl = (index: number, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      callback_urls: prev.callback_urls.map((url, i) => i === index ? value : url)
+    }))
+  }
+
+  return (
+    <AdminLayout title="创建应用">
+      <div className="space-y-6">
+      {/* 面包屑导航 */}
+      <button
+        onClick={() => navigate('/admin/apps')}
+        className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-700"
+      >
+        <ArrowLeftIcon className="h-4 w-4 mr-2" />
+        返回应用列表
+      </button>
+
+      {/* 页面头部 */}
+      <div className="flex items-center">
+          <CubeIcon className="h-8 w-8 mr-3 text-indigo-600" />
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">创建应用</h1>
+            <p className="mt-1 text-sm text-gray-500">
+              创建一个新的 OAuth2 应用
+            </p>
+          </div>
+        </div>
+
+        {/* 创建表单 */}
+        <div className="bg-white shadow rounded-lg">
+          <form onSubmit={handleSubmit} className="px-6 py-6 space-y-6">
+            {/* 基本信息 */}
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">基本信息</h3>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                    应用名称 <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    className={`mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
+                      errors.name ? 'border-red-300' : ''
+                    }`}
+                    placeholder="例如：我的网站"
+                  />
+                  {errors.name && (
+                    <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                  )}
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                    应用描述 <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    id="description"
+                    rows={3}
+                    value={formData.description}
+                    onChange={(e) => handleInputChange('description', e.target.value)}
+                    className={`mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
+                      errors.description ? 'border-red-300' : ''
+                    }`}
+                    placeholder="简要描述你的应用..."
+                  />
+                  {errors.description && (
+                    <p className="mt-1 text-sm text-red-600">{errors.description}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label htmlFor="logo_url" className="block text-sm font-medium text-gray-700">
+                    Logo URL
+                  </label>
+                  <input
+                    type="url"
+                    id="logo_url"
+                    value={formData.logo_url}
+                    onChange={(e) => handleInputChange('logo_url', e.target.value)}
+                    className={`mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
+                      errors.logo_url ? 'border-red-300' : ''
+                    }`}
+                    placeholder="https://example.com/logo.png"
+                  />
+                  {errors.logo_url && (
+                    <p className="mt-1 text-sm text-red-600">{errors.logo_url}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label htmlFor="homepage_url" className="block text-sm font-medium text-gray-700">
+                    主页 URL
+                  </label>
+                  <input
+                    type="url"
+                    id="homepage_url"
+                    value={formData.homepage_url}
+                    onChange={(e) => handleInputChange('homepage_url', e.target.value)}
+                    className={`mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
+                      errors.homepage_url ? 'border-red-300' : ''
+                    }`}
+                    placeholder="https://example.com"
+                  />
+                  {errors.homepage_url && (
+                    <p className="mt-1 text-sm text-red-600">{errors.homepage_url}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* OAuth 配置 */}
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">OAuth 配置</h3>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  授权回调地址 <span className="text-red-500">*</span>
+                </label>
+                <div className="space-y-2">
+                  {formData.callback_urls.map((url, index) => (
+                    <div key={index} className="flex items-center space-x-2">
+                      <input
+                        type="url"
+                        value={url}
+                        onChange={(e) => updateCallbackUrl(index, e.target.value)}
+                        className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        placeholder="https://example.com/auth/callback"
+                      />
+                      {formData.callback_urls.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeCallbackUrl(index)}
+                          className="inline-flex items-center p-2 border border-red-300 rounded-md text-red-700 hover:bg-red-50"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={addCallbackUrl}
+                    className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                  >
+                    <PlusIcon className="h-4 w-4 mr-2" />
+                    添加回调地址
+                  </button>
+                </div>
+                {errors.callback_urls && (
+                  <p className="mt-1 text-sm text-red-600">{errors.callback_urls}</p>
+                )}
+                <p className="mt-1 text-sm text-gray-500">
+                  用户授权后将重定向到这些地址
+                </p>
+              </div>
+            </div>
+
+            {/* 法律信息 */}
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">法律信息</h3>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="privacy_policy_url" className="block text-sm font-medium text-gray-700">
+                    隐私政策 URL
+                  </label>
+                  <input
+                    type="url"
+                    id="privacy_policy_url"
+                    value={formData.privacy_policy_url}
+                    onChange={(e) => handleInputChange('privacy_policy_url', e.target.value)}
+                    className={`mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
+                      errors.privacy_policy_url ? 'border-red-300' : ''
+                    }`}
+                    placeholder="https://example.com/privacy"
+                  />
+                  {errors.privacy_policy_url && (
+                    <p className="mt-1 text-sm text-red-600">{errors.privacy_policy_url}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label htmlFor="terms_of_service_url" className="block text-sm font-medium text-gray-700">
+                    服务条款 URL
+                  </label>
+                  <input
+                    type="url"
+                    id="terms_of_service_url"
+                    value={formData.terms_of_service_url}
+                    onChange={(e) => handleInputChange('terms_of_service_url', e.target.value)}
+                    className={`mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
+                      errors.terms_of_service_url ? 'border-red-300' : ''
+                    }`}
+                    placeholder="https://example.com/terms"
+                  />
+                  {errors.terms_of_service_url && (
+                    <p className="mt-1 text-sm text-red-600">{errors.terms_of_service_url}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* 提交按钮 */}
+            <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+              <button
+                type="button"
+                onClick={() => navigate('/admin/apps')}
+                className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                取消
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? '创建中...' : '创建应用'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </AdminLayout>
+  )
+}

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import Layout from '../../components/Layout'
 import { listUsers, banUser } from '../../api/admin'
 import { Link } from 'react-router-dom'
 import { ChevronRightIcon } from '@heroicons/react/24/outline'
+import AdminLayout from '../../components/AdminLayout'
 
 interface User {
   ID: number
@@ -26,7 +26,7 @@ export default function Users() {
   }
 
   return (
-    <Layout>
+    <AdminLayout title="用户管理">
       <div className="space-y-6">
         {/* 面包屑导航 */}
         <nav className="flex" aria-label="Breadcrumb">
@@ -111,6 +111,6 @@ export default function Users() {
           </div>
         </div>
       </div>
-    </Layout>
+    </AdminLayout>
   )
 } 

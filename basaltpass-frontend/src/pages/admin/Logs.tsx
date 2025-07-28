@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import Layout from '../../components/Layout'
 import client from '../../api/client'
 import { Link } from 'react-router-dom'
 import { ChevronRightIcon } from '@heroicons/react/24/outline'
+import AdminLayout from '../../components/AdminLayout'
 
 interface Log {
   ID: number
@@ -26,7 +26,7 @@ export default function Logs() {
   useEffect(load, [])
 
   return (
-    <Layout>
+    <AdminLayout title="操作日志">
       <div className="space-y-6">
         {/* 面包屑导航 */}
         <nav className="flex" aria-label="Breadcrumb">
@@ -94,6 +94,6 @@ export default function Logs() {
           </div>
         </div>
       </div>
-    </Layout>
+    </AdminLayout>
   )
 } 

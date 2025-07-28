@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import Layout from '../../components/Layout'
 import { adminListPlans, adminCreatePlan, adminUpdatePlan, adminDeletePlan, adminListProducts } from '../../api/subscription'
 import { Plan, Product } from '../../types/subscription'
 import { Link } from 'react-router-dom'
 import { ChevronRightIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
+import AdminLayout from '../../components/AdminLayout'
 
 export default function AdminPlans() {
   const [plans, setPlans] = useState<Plan[]>([])
@@ -133,16 +133,16 @@ export default function AdminPlans() {
 
   if (loading) {
     return (
-      <Layout>
+      <AdminLayout title="计划管理">
         <div className="flex justify-center items-center h-64">
           <div className="text-lg">加载中...</div>
         </div>
-      </Layout>
+      </AdminLayout>
     )
   }
 
   return (
-    <Layout>
+    <AdminLayout title="计划管理">
       <div className="space-y-6">
         {/* 面包屑导航 */}
         <nav className="flex" aria-label="Breadcrumb">
@@ -226,7 +226,6 @@ export default function AdminPlans() {
             )}
           </ul>
         </div>
-      </div>
 
       {showModal && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10">
@@ -407,6 +406,7 @@ export default function AdminPlans() {
           </div>
         </div>
       )}
-    </Layout>
+      </div>
+    </AdminLayout>
   )
-} 
+}

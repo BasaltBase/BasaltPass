@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { 
   PlusIcon, 
   MagnifyingGlassIcon,
@@ -10,9 +10,9 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline'
 import { ChevronRightIcon } from '@heroicons/react/24/outline'
-import Layout from '../../components/Layout'
 import { oauthApi, type OAuthClient, type CreateClientRequest } from '../../api/oauth'
 import { Link } from 'react-router-dom'
+import AdminLayout from '../../components/AdminLayout'
 
 interface CreateClientModalProps {
   isOpen: boolean
@@ -471,7 +471,7 @@ export default function OAuthClients() {
   const totalPages = Math.ceil(total / pageSize)
 
   return (
-    <Layout>
+    <AdminLayout title="OAuth客户端管理">
       <div className="space-y-6">
         {/* 面包屑导航 */}
         <nav className="flex" aria-label="Breadcrumb">
@@ -665,7 +665,6 @@ export default function OAuthClients() {
             </>
           )}
         </div>
-      </div>
 
       {/* 创建客户端模态框 */}
       <CreateClientModal
@@ -684,6 +683,7 @@ export default function OAuthClients() {
         }}
         onUpdate={loadClients}
       />
-    </Layout>
+      </div>
+    </AdminLayout>
   )
 } 
