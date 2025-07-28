@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeftIcon, RocketLaunchIcon, PlusIcon, TrashIcon, CubeIcon } from '@heroicons/react/24/outline'
 import { appApi, CreateAppRequest } from '../../api/app'
-import AdminLayout from '../../components/AdminLayout'
+import TenantLayout from '../../components/TenantLayout'
 
 export default function CreateApp() {
   const navigate = useNavigate()
@@ -107,7 +107,7 @@ export default function CreateApp() {
       }
 
       await appApi.createApp(cleanedData)
-      navigate('/admin/apps')
+      navigate('/tenant/apps')
     } catch (error) {
       console.error('Failed to create app:', error)
       alert('创建应用失败，请重试')
@@ -146,11 +146,11 @@ export default function CreateApp() {
   }
 
   return (
-    <AdminLayout title="创建应用">
+    <TenantLayout title="创建应用">
       <div className="space-y-6">
       {/* 面包屑导航 */}
       <button
-        onClick={() => navigate('/admin/apps')}
+        onClick={() => navigate('/tenant/apps')}
         className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-700"
       >
         <ArrowLeftIcon className="h-4 w-4 mr-2" />
@@ -159,7 +159,7 @@ export default function CreateApp() {
 
       {/* 页面头部 */}
       <div className="flex items-center">
-          <CubeIcon className="h-8 w-8 mr-3 text-indigo-600" />
+          <CubeIcon className="h-8 w-8 mr-3 text-blue-600" />
           <div>
             <h1 className="text-3xl font-bold text-gray-900">创建应用</h1>
             <p className="mt-1 text-sm text-gray-500">
@@ -347,15 +347,15 @@ export default function CreateApp() {
             <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
               <button
                 type="button"
-                onClick={() => navigate('/admin/apps')}
-                className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                onClick={() => navigate('/tenant/apps')}
+                className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 取消
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? '创建中...' : '创建应用'}
               </button>
@@ -363,6 +363,6 @@ export default function CreateApp() {
           </form>
         </div>
       </div>
-    </AdminLayout>
+    </TenantLayout>
   )
 }

@@ -11,7 +11,7 @@ import {
   Cog6ToothIcon
 } from '@heroicons/react/24/outline'
 import { appApi, App } from '../../api/app'
-import AdminLayout from '../../components/AdminLayout'
+import TenantLayout from '../../components/TenantLayout'
 
 export default function AppList() {
   const [apps, setApps] = useState<App[]>([])
@@ -90,13 +90,13 @@ export default function AppList() {
   }
 
   return (
-    <AdminLayout title="应用管理">
+    <TenantLayout title="应用管理">
       <div className="space-y-6">
       {/* 页面头部 */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-            <CubeIcon className="h-8 w-8 mr-3 text-indigo-600" />
+            <CubeIcon className="h-8 w-8 mr-3 text-blue-600" />
             应用管理
           </h1>
           <p className="mt-1 text-sm text-gray-500">
@@ -104,8 +104,8 @@ export default function AppList() {
           </p>
         </div>
         <Link
-          to="/admin/apps/new"
-          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          to="/tenant/apps/new"
+          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
           <PlusIcon className="h-4 w-4 mr-2" />
           创建应用
@@ -195,36 +195,36 @@ export default function AppList() {
                     </div>
                     <div className="flex items-center space-x-2">
                       <Link
-                        to={`/admin/apps/${app.id}`}
-                        className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        to={`/tenant/apps/${app.id}`}
+                        className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                         title="查看详情"
                       >
                         <EyeIcon className="h-4 w-4" />
                       </Link>
                       <Link
-                        to={`/admin/apps/${app.id}/edit`}
-                        className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        to={`/tenant/apps/${app.id}/edit`}
+                        className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                         title="编辑"
                       >
                         <PencilIcon className="h-4 w-4" />
                       </Link>
                       <Link
-                        to={`/admin/apps/${app.id}/oauth`}
-                        className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        to={`/tenant/apps/${app.id}/oauth`}
+                        className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                         title="OAuth配置"
                       >
                         <KeyIcon className="h-4 w-4" />
                       </Link>
                       <Link
-                        to={`/admin/apps/${app.id}/stats`}
-                        className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        to={`/tenant/apps/${app.id}/stats`}
+                        className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                         title="统计"
                       >
                         <ChartBarIcon className="h-4 w-4" />
                       </Link>
                       <Link
-                        to={`/admin/apps/${app.id}/settings`}
-                        className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        to={`/tenant/apps/${app.id}/settings`}
+                        className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                         title="设置"
                       >
                         <Cog6ToothIcon className="h-4 w-4" />
@@ -251,8 +251,8 @@ export default function AppList() {
               <p className="mt-1 text-sm text-gray-500">开始创建第一个应用</p>
               <div className="mt-6">
                 <Link
-                  to="/admin/apps/new"
-                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  to="/tenant/apps/new"
+                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
                   <PlusIcon className="h-4 w-4 mr-2" />
                   创建应用
@@ -287,6 +287,6 @@ export default function AppList() {
           </div>
         )}
       </div>
-    </AdminLayout>
+    </TenantLayout>
   )
 }
