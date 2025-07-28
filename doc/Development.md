@@ -361,23 +361,56 @@ CREATE TABLE password_resets (
 │   │   ├── handler.go
 │   │   ├── service.go
 │   │   └── dto.go
+│   ├── invitation/                 # 邀请模块
+│   │   └── handler.go
+│   ├── tenant/                     # 租户模块
+│   │   └── handler.go
+│   ├── app/                        # 应用模块
+│   │   └── handler.go
+│   ├── app_user/                   # 应用用户模块
+│   │   └── handler.go
+│   ├── order/                      # 订单模块
+│   │   └── handler.go
+│   ├── payment/                    # 支付模块
+│   │   └── handler.go
+│   ├── passkey/                    # 通行密钥模块
+│   │   └── handler.go
 │   ├── model/                      # 数据模型
 │   │   ├── user.go
+│   │   ├── user_role.go
 │   │   ├── role.go
+│   │   ├── permission.go
 │   │   ├── team.go
 │   │   ├── wallet.go
 │   │   ├── oauth_account.go
+│   │   ├── oauth_client.go
+│   │   ├── oauth_token.go
 │   │   ├── audit_log.go
-│   │   └── password_reset.go
+│   │   ├── password_reset.go
+│   │   ├── notification.go
+│   │   ├── invitation.go
+│   │   ├── subscription_models.go
+│   │   ├── tenant.go
+│   │   ├── system_app.go
+│   │   ├── order.go
+│   │   ├── payment.go
+│   │   └── passkey.go
 │   └── common/                     # 公共模块
 │       ├── database.go
 │       ├── middleware.go
 │       ├── jwt_middleware.go
 │       ├── admin_middleware.go
 │       └── migrate.go
-├── docs/openapi.yaml              # API文档
+├── utils/                          # 工具函数
+├── docs/                           # 文档目录
+│   └── openapi.yaml               # API文档
+├── .idea/                         # IDE配置
 ├── go.mod                         # Go模块文件
-└── basaltpass.db                 # SQLite数据库
+├── go.sum                         # Go依赖锁定
+├── basaltpass.exe                 # 可执行文件（Windows）
+├── main.exe                       # 主程序（Windows）
+├── basaltpass.db                  # SQLite数据库
+└── README.md                      # 项目说明
 ```
 
 ### 前端目录结构：
@@ -385,41 +418,107 @@ CREATE TABLE password_resets (
 /basaltpass-frontend
 ├── src/
 │   ├── pages/                     # 页面组件
-│   │   ├── auth/
+│   │   ├── auth/                  # 认证页面
 │   │   │   ├── Login.tsx
 │   │   │   ├── Register.tsx
+│   │   │   ├── OAuthConsent.tsx
 │   │   │   └── OauthSuccess.tsx
-│   │   ├── profile/
-│   │   │   └── Index.tsx
-│   │   ├── team/                  # 团队页面
-│   │   │   ├── Index.tsx
-│   │   │   ├── Create.tsx
-│   │   │   └── Detail.tsx
-│   │   ├── wallet/
-│   │   │   ├── Index.tsx
-│   │   │   ├── Recharge.tsx
-│   │   │   ├── Withdraw.tsx
-│   │   │   └── History.tsx
-│   │   ├── security/
-│   │   │   └── TwoFA.tsx
-│   │   └── admin/
-│   │       ├── Users.tsx
-│   │       ├── Wallets.tsx
-│   │       ├── Roles.tsx
-│   │       └── Logs.tsx
+│   │   ├── user/                  # 用户面板页面
+│   │   │   ├── Dashboard.tsx
+│   │   │   ├── About.tsx
+│   │   │   ├── Help.tsx
+│   │   │   ├── Settings.tsx
+│   │   │   ├── Notifications.tsx
+│   │   │   ├── profile/
+│   │   │   │   └── Index.tsx
+│   │   │   ├── team/              # 团队管理
+│   │   │   │   ├── Index.tsx
+│   │   │   │   ├── Create.tsx
+│   │   │   │   ├── Detail.tsx
+│   │   │   │   ├── Edit.tsx
+│   │   │   │   ├── Invite.tsx
+│   │   │   │   └── Members.tsx
+│   │   │   ├── wallet/            # 钱包管理
+│   │   │   │   ├── Index.tsx
+│   │   │   │   ├── Recharge.tsx
+│   │   │   │   ├── Withdraw.tsx
+│   │   │   │   └── History.tsx
+│   │   │   ├── security/          # 安全设置
+│   │   │   │   ├── SecuritySettings.tsx
+│   │   │   │   ├── TwoFA.tsx
+│   │   │   │   ├── LoginHistory.tsx
+│   │   │   │   └── PasskeyManagement.tsx
+│   │   │   ├── subscription/      # 订阅管理
+│   │   │   ├── order/             # 订单管理
+│   │   │   ├── payment/           # 支付管理
+│   │   │   └── invitations/       # 邀请管理
+│   │   ├── admin/                 # 管理员面板页面
+│   │   │   ├── Dashboard.tsx
+│   │   │   ├── Logs.tsx
+│   │   │   ├── Notifications.tsx
+│   │   │   ├── user/              # 用户管理
+│   │   │   │   ├── Users.tsx
+│   │   │   │   ├── Roles.tsx
+│   │   │   │   └── Wallets.tsx
+│   │   │   ├── tenant/            # 租户管理
+│   │   │   ├── subscription/      # 订阅管理
+│   │   │   ├── oauth/             # OAuth管理
+│   │   │   └── app/               # 应用管理
+│   │   ├── tenant/                # 租户面板页面
+│   │   │   ├── Dashboard.tsx
+│   │   │   └── Apps.tsx
+│   │   └── NotFound.tsx           # 404页面
+│   ├── components/                # 公共组件
+│   │   ├── Layout.tsx
+│   │   ├── AdminLayout.tsx
+│   │   ├── AdminNavigation.tsx
+│   │   ├── TenantLayout.tsx
+│   │   ├── TenantNavigation.tsx
+│   │   ├── ProtectedRoute.tsx
+│   │   ├── PublicRoute.tsx
+│   │   └── EnhancedNotificationIcon.tsx
+│   ├── contexts/                  # React上下文
+│   │   ├── AuthContext.tsx
+│   │   └── NotificationContext.tsx
 │   ├── api/                       # API接口
 │   │   ├── client.ts
 │   │   ├── admin.ts
-│   │   ├── team.ts
+│   │   ├── app.ts
+│   │   ├── invitation.ts
+│   │   ├── notification.ts
+│   │   ├── oauth.ts
+│   │   ├── order.ts
+│   │   ├── passkey.ts
+│   │   ├── payment.ts
 │   │   ├── security.ts
+│   │   ├── subscription.ts
+│   │   ├── team.ts
+│   │   ├── tenant.ts
+│   │   ├── user.ts
 │   │   └── wallet.ts
-│   ├── utils/
-│   │   └── auth.ts
+│   ├── types/                     # TypeScript类型定义
+│   │   └── subscription.ts
+│   ├── utils/                     # 工具函数
+│   │   ├── auth.ts
+│   │   ├── debug.ts
+│   │   └── webauthn.ts
 │   ├── App.tsx
 │   ├── main.tsx
-│   └── router.tsx
+│   ├── router.tsx
+│   ├── index.css
+│   ├── vite-env.d.ts
+│   └── test-account.md
+├── .idea/                         # IDE配置
+├── dist/                          # 构建输出
+├── node_modules/                  # 依赖包
+├── index.html
 ├── package.json
-└── vite.config.ts
+├── package-lock.json
+├── postcss.config.cjs
+├── tailwind.config.js
+├── tsconfig.json
+├── vite.config.ts
+└── AUTH_SYSTEM.md                 # 认证系统文档
 ```
 
 ## 四.4. API接口设计（已实现）
