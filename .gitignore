@@ -13,3 +13,12 @@ basaltpass-frontend/dist/
 *.db
 basaltpass-backend/basaltpass.db
 basaltpass-backend/main.exe
+
+# development tools
+.vscode/
+.vscode-test/
+.idea/
+basaltpass-frontend/.vscode/
+basaltpass-backend/.vscode/
+basaltpass-frontend/.idea/
+basaltpass-backend/.idea/
