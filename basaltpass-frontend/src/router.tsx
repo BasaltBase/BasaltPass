@@ -52,6 +52,10 @@ import AdminDashboard from './pages/admin/Dashboard'
 import OAuthClientConfig from '@pages/admin/oauth/OAuthClientConfig'
 import TenantDashboard from './pages/tenant/Dashboard'
 import TenantApps from './pages/tenant/Apps'
+import TenantInfo from './pages/tenant/TenantInfo'
+import AppDetail from './pages/tenant/AppDetail'
+import AppSettings from './pages/tenant/AppSettings'
+import AppStats from './pages/tenant/AppStats'
 
 export default function AppRouter() {
   return (
@@ -315,6 +319,11 @@ export default function AppRouter() {
           <TenantDashboard />
         </ProtectedRoute>
       } />
+      <Route path="/tenant/info" element={
+        <ProtectedRoute>
+          <TenantInfo />
+        </ProtectedRoute>
+      } />
       <Route path="/tenant/apps" element={
         <ProtectedRoute>
           <TenantApps />
@@ -323,6 +332,21 @@ export default function AppRouter() {
       <Route path="/tenant/apps/new" element={
         <ProtectedRoute>
           <CreateApp />
+        </ProtectedRoute>
+      } />
+      <Route path="/tenant/apps/:id" element={
+        <ProtectedRoute>
+          <AppDetail />
+        </ProtectedRoute>
+      } />
+      <Route path="/tenant/apps/:id/settings" element={
+        <ProtectedRoute>
+          <AppSettings />
+        </ProtectedRoute>
+      } />
+      <Route path="/tenant/apps/:id/stats" element={
+        <ProtectedRoute>
+          <AppStats />
         </ProtectedRoute>
       } />
       

@@ -5,14 +5,43 @@ import client from './client'
 export interface Tenant {
   id: number | string
   name: string
+  code?: string
+  description?: string
   domain?: string
-  plan: 'free' | 'basic' | 'premium' | 'enterprise'
+  plan: 'free' | 'pro' | 'enterprise'
   status?: 'active' | 'suspended' | 'deleted'
   owner_id?: string
   settings?: Record<string, any>
   created_at: string
   updated_at: string
   deleted_at?: string
+}
+
+export interface TenantInfo {
+  id: number
+  name: string
+  code: string
+  description: string
+  status: 'active' | 'suspended' | 'deleted'
+  plan: 'free' | 'pro' | 'enterprise'
+  created_at: string
+  updated_at: string
+  stats: TenantDetailStats
+  quota?: TenantQuotaInfo
+}
+
+export interface TenantDetailStats {
+  total_users: number
+  total_apps: number
+  active_apps: number
+  total_clients: number
+  active_tokens: number
+}
+
+export interface TenantQuotaInfo {
+  max_apps: number
+  max_users: number
+  max_tokens_per_hour: number
 }
 
 export interface CreateTenantRequest {
@@ -127,12 +156,24 @@ export const platformApi = {
 export const tenantApi = {
   // 获取当前租户信息
   async getCurrentTenant() {
-    const response = await client.get('/admin/tenant')
+    const response = await client.get('/api/v1/admin/tenant')
+    return response.data
+  },
+
+  // 获取当前租户详细信息（控制台专用）
+  async getTenantInfo(): Promise<{ data: TenantInfo }> {
+    const response = await client.get('/api/v1/admin/tenant/info')
+    return response.data
+  },
+
+  // 调试用户状态 - 临时调试方法
+  async debugUserStatus() {
+    const response = await client.get('/api/v1/user/debug')
     return response.data
   },
 
   async updateCurrentTenant(data: UpdateTenantRequest) {
-    const response = await client.put('/admin/tenant', data)
+    const response = await client.put('/api/v1/admin/tenant', data)
     return response.data
   },
 

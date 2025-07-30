@@ -10,27 +10,11 @@ import {
   ChartBarIcon,
   Cog6ToothIcon,
   PlayIcon,
-  StopIcon
+  StopIcon,
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline'
 import TenantLayout from '../../components/TenantLayout'
-
-interface TenantApp {
-  id: string
-  name: string
-  description: string
-  logo_url?: string
-  homepage_url?: string
-  callback_urls: string[]
-  status: 'active' | 'inactive' | 'pending'
-  created_at: string
-  last_accessed?: string
-  oauth_client?: boolean
-  stats: {
-    total_users: number
-    active_users: number
-    requests_today: number
-  }
-}
+import { tenantAppApi, TenantApp } from '../../api/tenantApp'
 
 export default function TenantAppList() {
   const [apps, setApps] = useState<TenantApp[]>([])
@@ -38,76 +22,21 @@ export default function TenantAppList() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    // 模拟获取租户应用数据
-    const fetchApps = async () => {
-      try {
-        // 模拟API调用延迟
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        
-        // 模拟数据
-        const mockApps: TenantApp[] = [
-          {
-            id: '1',
-            name: '用户管理系统',
-            description: '企业内部用户管理和权限控制系统',
-            logo_url: '',
-            homepage_url: 'https://user.example.com',
-            callback_urls: ['https://user.example.com/auth/callback'],
-            status: 'active',
-            created_at: '2024-01-15T10:00:00Z',
-            last_accessed: '2024-01-20T14:30:00Z',
-            oauth_client: true,
-            stats: {
-              total_users: 156,
-              active_users: 89,
-              requests_today: 1250
-            }
-          },
-          {
-            id: '2',
-            name: 'API网关',
-            description: '统一API接口管理和监控平台',
-            logo_url: '',
-            homepage_url: 'https://api.example.com',
-            callback_urls: ['https://api.example.com/auth/callback'],
-            status: 'active',
-            created_at: '2024-01-10T09:15:00Z',
-            last_accessed: '2024-01-20T16:45:00Z',
-            oauth_client: true,
-            stats: {
-              total_users: 45,
-              active_users: 32,
-              requests_today: 8900
-            }
-          },
-          {
-            id: '3',
-            name: '数据分析平台',
-            description: '业务数据统计分析和报表系统',
-            logo_url: '',
-            homepage_url: 'https://analytics.example.com',
-            callback_urls: ['https://analytics.example.com/auth/callback'],
-            status: 'inactive',
-            created_at: '2024-01-08T11:20:00Z',
-            oauth_client: false,
-            stats: {
-              total_users: 28,
-              active_users: 0,
-              requests_today: 0
-            }
-          }
-        ]
-
-        setApps(mockApps)
-      } catch (err) {
-        setError('加载应用数据失败')
-      } finally {
-        setLoading(false)
-      }
-    }
-
     fetchApps()
   }, [])
+
+  const fetchApps = async () => {
+    try {
+      setLoading(true)
+      const response = await tenantAppApi.listTenantApps()
+      setApps(response.data?.apps || [])
+    } catch (err: any) {
+      console.error('获取应用列表失败:', err)
+      setError(err.response?.data?.error || '获取应用列表失败')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
@@ -135,16 +64,28 @@ export default function TenantAppList() {
     }
   }
 
-  const handleToggleStatus = (appId: string, currentStatus: string) => {
-    const newStatus = currentStatus === 'active' ? 'inactive' : 'active'
-    setApps(prev => prev.map(app => 
-      app.id === appId ? { ...app, status: newStatus as any } : app
-    ))
+  const handleToggleStatus = async (appId: string, currentStatus: string) => {
+    try {
+      const newStatus = currentStatus === 'active' ? 'inactive' : 'active'
+      await tenantAppApi.toggleAppStatus(appId, newStatus)
+      // 重新获取应用列表
+      fetchApps()
+    } catch (err: any) {
+      console.error('切换应用状态失败:', err)
+      alert('切换应用状态失败，请重试')
+    }
   }
 
-  const handleDeleteApp = (appId: string) => {
+  const handleDeleteApp = async (appId: string) => {
     if (confirm('确定要删除这个应用吗？此操作不可恢复。')) {
-      setApps(prev => prev.filter(app => app.id !== appId))
+      try {
+        await tenantAppApi.deleteTenantApp(appId)
+        // 重新获取应用列表
+        fetchApps()
+      } catch (err: any) {
+        console.error('删除应用失败:', err)
+        alert('删除应用失败，请重试')
+      }
     }
   }
 
@@ -155,6 +96,27 @@ export default function TenantAppList() {
           <div className="text-center">
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
             <p className="mt-4 text-gray-600">加载中...</p>
+          </div>
+        </div>
+      </TenantLayout>
+    )
+  }
+
+  if (error) {
+    return (
+      <TenantLayout title="应用管理">
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-red-500" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900">{error}</h3>
+            <div className="mt-6">
+              <button
+                onClick={fetchApps}
+                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+              >
+                重试
+              </button>
+            </div>
           </div>
         </div>
       </TenantLayout>
@@ -215,9 +177,12 @@ export default function TenantAppList() {
                         </div>
                         <div className="ml-4 flex-1">
                           <div className="flex items-center">
-                            <h3 className="text-lg font-medium text-gray-900 truncate">
+                            <Link
+                              to={`/tenant/apps/${app.id}`}
+                              className="text-lg font-medium text-gray-900 hover:text-blue-600 truncate"
+                            >
                               {app.name}
-                            </h3>
+                            </Link>
                             <span className={`ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeColor(app.status)}`}>
                               {getStatusText(app.status)}
                             </span>
@@ -257,9 +222,9 @@ export default function TenantAppList() {
                           </div>
                           <div className="mt-2">
                             <div className="flex items-center space-x-4 text-sm text-gray-500">
-                              <span>总用户: <span className="font-medium text-gray-900">{app.stats.total_users}</span></span>
-                              <span>活跃用户: <span className="font-medium text-green-600">{app.stats.active_users}</span></span>
-                              <span>今日请求: <span className="font-medium text-blue-600">{app.stats.requests_today}</span></span>
+                              <span>总用户: <span className="font-medium text-gray-900">{app.stats?.total_users || 0}</span></span>
+                              <span>活跃用户: <span className="font-medium text-green-600">{app.stats?.active_users || 0}</span></span>
+                              <span>今日请求: <span className="font-medium text-blue-600">{app.stats?.requests_today || 0}</span></span>
                             </div>
                           </div>
                         </div>
@@ -287,13 +252,6 @@ export default function TenantAppList() {
                         title="查看详情"
                       >
                         <EyeIcon className="h-4 w-4" />
-                      </Link>
-                      <Link
-                        to={`/tenant/apps/${app.id}/edit`}
-                        className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                        title="编辑"
-                      >
-                        <PencilIcon className="h-4 w-4" />
                       </Link>
                       <Link
                         to={`/tenant/apps/${app.id}/stats`}

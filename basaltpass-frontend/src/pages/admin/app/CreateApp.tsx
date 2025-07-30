@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeftIcon, RocketLaunchIcon, PlusIcon, TrashIcon, CubeIcon } from '@heroicons/react/24/outline'
-import { appApi, CreateAppRequest } from '../../../api/app'
+import { tenantAppApi, CreateTenantAppRequest } from '../../../api/tenantApp'
 import TenantLayout from '../../../components/TenantLayout'
 
 export default function CreateApp() {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
-  const [formData, setFormData] = useState<CreateAppRequest>({
+  const [formData, setFormData] = useState<CreateTenantAppRequest>({
     name: '',
     description: '',
     logo_url: '',
@@ -106,7 +106,7 @@ export default function CreateApp() {
         terms_of_service_url: formData.terms_of_service_url?.trim() || undefined
       }
 
-      await appApi.createApp(cleanedData)
+      await tenantAppApi.createTenantApp(cleanedData)
       navigate('/tenant/apps')
     } catch (error) {
       console.error('Failed to create app:', error)
@@ -116,7 +116,7 @@ export default function CreateApp() {
     }
   }
 
-  const handleInputChange = (field: keyof CreateAppRequest, value: any) => {
+  const handleInputChange = (field: keyof CreateTenantAppRequest, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }))
     // 清除该字段的错误
     if (errors[field]) {

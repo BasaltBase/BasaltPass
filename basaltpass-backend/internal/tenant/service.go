@@ -56,6 +56,40 @@ type TenantStats struct {
 	ActiveApps int64 `json:"active_apps"`
 }
 
+// TenantInfo 租户基础信息（控制台专用）
+type TenantInfo struct {
+	ID          uint               `json:"id"`
+	Name        string             `json:"name"`
+	Code        string             `json:"code"`
+	Description string             `json:"description"`
+	Status      model.TenantStatus `json:"status"`
+	Plan        model.TenantPlan   `json:"plan"`
+	CreatedAt   string             `json:"created_at"`
+	UpdatedAt   string             `json:"updated_at"`
+
+	// 统计信息
+	Stats TenantDetailStats `json:"stats"`
+
+	// 配额信息
+	Quota *TenantQuotaInfo `json:"quota,omitempty"`
+}
+
+// TenantDetailStats 详细统计信息
+type TenantDetailStats struct {
+	TotalUsers   int64 `json:"total_users"`
+	TotalApps    int64 `json:"total_apps"`
+	ActiveApps   int64 `json:"active_apps"`
+	TotalClients int64 `json:"total_clients"` // OAuth客户端数量
+	ActiveTokens int64 `json:"active_tokens"` // 活跃token数量
+}
+
+// TenantQuotaInfo 配额信息
+type TenantQuotaInfo struct {
+	MaxApps          int `json:"max_apps"`
+	MaxUsers         int `json:"max_users"`
+	MaxTokensPerHour int `json:"max_tokens_per_hour"`
+}
+
 // CreateTenant 创建租户
 func (s *TenantService) CreateTenant(ownerUserID uint, req *CreateTenantRequest) (*TenantResponse, error) {
 	// 检查租户名称是否已存在
@@ -147,6 +181,38 @@ func (s *TenantService) GetTenant(tenantID uint, includeStats bool) (*TenantResp
 	}
 
 	return s.tenantToResponse(&tenant, stats), nil
+}
+
+// GetTenantInfo 获取租户基础信息（控制台专用）
+func (s *TenantService) GetTenantInfo(tenantID uint) (*TenantInfo, error) {
+	var tenant model.Tenant
+	if err := s.db.First(&tenant, tenantID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("租户不存在")
+		}
+		return nil, err
+	}
+
+	// 获取详细统计信息
+	stats := s.getTenantDetailStats(tenantID)
+
+	// 获取配额信息
+	quota := s.getTenantQuota(tenantID)
+
+	info := &TenantInfo{
+		ID:          tenant.ID,
+		Name:        tenant.Name,
+		Code:        tenant.Code,
+		Description: tenant.Description,
+		Status:      tenant.Status,
+		Plan:        tenant.Plan,
+		CreatedAt:   tenant.CreatedAt.Format("2006-01-02 15:04:05"),
+		UpdatedAt:   tenant.UpdatedAt.Format("2006-01-02 15:04:05"),
+		Stats:       *stats,
+		Quota:       quota,
+	}
+
+	return info, nil
 }
 
 // ListTenants 获取租户列表（超级管理员）
@@ -304,6 +370,52 @@ func (s *TenantService) getTenantStats(tenantID uint) *TenantStats {
 	s.db.Model(&model.App{}).Where("tenant_id = ? AND status = ?", tenantID, model.AppStatusActive).Count(&stats.ActiveApps)
 
 	return stats
+}
+
+// getTenantDetailStats 获取租户详细统计信息
+func (s *TenantService) getTenantDetailStats(tenantID uint) *TenantDetailStats {
+	stats := &TenantDetailStats{}
+
+	// 用户统计
+	s.db.Model(&model.TenantAdmin{}).Where("tenant_id = ?", tenantID).Count(&stats.TotalUsers)
+
+	// 应用统计
+	s.db.Model(&model.App{}).Where("tenant_id = ?", tenantID).Count(&stats.TotalApps)
+	s.db.Model(&model.App{}).Where("tenant_id = ? AND status = ?", tenantID, model.AppStatusActive).Count(&stats.ActiveApps)
+
+	// OAuth客户端统计
+	s.db.Model(&model.OAuthClient{}).
+		Joins("JOIN apps ON apps.id = oauth_clients.app_id").
+		Where("apps.tenant_id = ?", tenantID).
+		Count(&stats.TotalClients)
+
+	// 活跃token统计（最近24小时内有活动的token）
+	s.db.Model(&model.OAuthAccessToken{}).
+		Joins("JOIN oauth_clients ON oauth_clients.client_id = oauth_access_tokens.client_id").
+		Joins("JOIN apps ON apps.id = oauth_clients.app_id").
+		Where("apps.tenant_id = ? AND oauth_access_tokens.expires_at > NOW() AND oauth_access_tokens.created_at > NOW() - INTERVAL '24 hours'", tenantID).
+		Count(&stats.ActiveTokens)
+
+	return stats
+}
+
+// getTenantQuota 获取租户配额信息
+func (s *TenantService) getTenantQuota(tenantID uint) *TenantQuotaInfo {
+	var quota model.TenantQuota
+	if err := s.db.Where("tenant_id = ?", tenantID).First(&quota).Error; err != nil {
+		// 如果没有找到配额记录，返回默认值
+		return &TenantQuotaInfo{
+			MaxApps:          5,
+			MaxUsers:         100,
+			MaxTokensPerHour: 1000,
+		}
+	}
+
+	return &TenantQuotaInfo{
+		MaxApps:          quota.MaxApps,
+		MaxUsers:         quota.MaxUsers,
+		MaxTokensPerHour: quota.MaxTokensPerHour,
+	}
 }
 
 func (s *TenantService) createDefaultRoles(tx *gorm.DB, tenantID uint) error {

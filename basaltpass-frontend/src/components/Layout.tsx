@@ -140,13 +140,13 @@ export default function Layout({ children }: LayoutProps) {
 
               {/* 管理系统切换按钮 - 只在platform页面显示 */}
                 <Link
-                  to="/admin/dashboard"
+                  to="/tenant/dashboard"
                   className="relative rounded-md bg-indigo-50 px-3 py-2 text-indigo-600 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200"
-                  title="切换到管理"
+                  title="切换到租户管理"
                 >
                   <div className="flex items-center space-x-2">
                     <ArrowsRightLeftIcon className="h-4 w-4" />
-                    <span className="text-sm font-medium">admin管理</span>
+                    <span className="text-sm font-medium">租户管理</span>
                   </div>
                 </Link>
               

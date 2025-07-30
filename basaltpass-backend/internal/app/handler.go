@@ -172,21 +172,101 @@ func DeleteAppHandler(c *fiber.Ctx) error {
 	})
 }
 
-// 辅助函数：从上下文获取租户ID
-// TODO ⬇️ 实现JWT中租户信息的解析
-func getTenantIDFromContext(c *fiber.Ctx) uint {
-	// 临时实现：从Header获取租户ID
-	tenantID := c.Get("X-Tenant-ID")
-	if tenantID == "" {
-		return 0
+// ToggleAppStatusHandler 切换应用状态
+// PATCH /admin/apps/:id/status
+func ToggleAppStatusHandler(c *fiber.Ctx) error {
+	tenantID := getTenantIDFromContext(c)
+	if tenantID == 0 {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "无效的租户上下文",
+		})
 	}
 
-	id, err := strconv.ParseUint(tenantID, 10, 32)
+	appID, err := strconv.ParseUint(c.Params("id"), 10, 32)
 	if err != nil {
-		return 0
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "无效的应用ID",
+		})
 	}
 
-	return uint(id)
+	var req struct {
+		Status string `json:"status"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "请求参数错误",
+		})
+	}
+
+	// 验证状态值
+	if req.Status != "active" && req.Status != "inactive" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "无效的状态值",
+		})
+	}
+
+	app, err := appService.ToggleAppStatus(tenantID, uint(appID), req.Status)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"data":    app,
+		"message": "应用状态更新成功",
+	})
+}
+
+// GetAppStatsHandler 获取应用统计数据
+// GET /admin/apps/:id/stats
+func GetAppStatsHandler(c *fiber.Ctx) error {
+	tenantID := getTenantIDFromContext(c)
+	if tenantID == 0 {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "无效的租户上下文",
+		})
+	}
+
+	appID, err := strconv.ParseUint(c.Params("id"), 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "无效的应用ID",
+		})
+	}
+
+	period := c.Query("period", "30d")
+
+	stats, err := appService.GetAppStats(tenantID, uint(appID), period)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"data": stats,
+	})
+}
+
+// 辅助函数：从上下文获取租户ID
+func getTenantIDFromContext(c *fiber.Ctx) uint {
+	// 从JWT中间件设置的Locals获取租户ID
+	if tenantID := c.Locals("tenantID"); tenantID != nil {
+		if tid, ok := tenantID.(uint); ok {
+			return tid
+		}
+	}
+
+	// 兜底：从Header获取租户ID（用于系统管理员操作）
+	tenantIDStr := c.Get("X-Tenant-ID")
+	if tenantIDStr != "" {
+		if id, err := strconv.ParseUint(tenantIDStr, 10, 32); err == nil {
+			return uint(id)
+		}
+	}
+
+	return 0
 }
 
 // 系统级管理员处理程序（不需要租户上下文）

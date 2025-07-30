@@ -10,6 +10,43 @@ import (
 	"gorm.io/gorm"
 )
 
+// DetailedAppStats 详细应用统计信息
+type DetailedAppStats struct {
+	Period             string                 `json:"period"`
+	TotalUsers         int                    `json:"total_users"`
+	ActiveUsers        int                    `json:"active_users"`
+	NewUsers           int                    `json:"new_users"`
+	ReturningUsers     int                    `json:"returning_users"`
+	RequestsToday      int                    `json:"requests_today"`
+	RequestsThisWeek   int                    `json:"requests_this_week"`
+	RequestsThisMonth  int                    `json:"requests_this_month"`
+	ConversionRate     float64                `json:"conversion_rate"`
+	AvgSessionDuration int                    `json:"avg_session_duration"`
+	TopPages           []PageStats            `json:"top_pages"`
+	UserGrowth         []UserGrowthStats      `json:"user_growth"`
+	RequestTimeline    []RequestTimelineStats `json:"request_timeline"`
+}
+
+// PageStats 页面统计
+type PageStats struct {
+	Path           string `json:"path"`
+	Views          int    `json:"views"`
+	UniqueVisitors int    `json:"unique_visitors"`
+}
+
+// UserGrowthStats 用户增长统计
+type UserGrowthStats struct {
+	Date       string `json:"date"`
+	NewUsers   int    `json:"new_users"`
+	TotalUsers int    `json:"total_users"`
+}
+
+// RequestTimelineStats 请求时间线统计
+type RequestTimelineStats struct {
+	Date     string `json:"date"`
+	Requests int    `json:"requests"`
+}
+
 // AppService 应用管理服务
 type AppService struct {
 	db *gorm.DB
@@ -53,6 +90,16 @@ type AppResponse struct {
 
 	// OAuth客户端信息
 	OAuthClients []OAuthClientInfo `json:"oauth_clients,omitempty"`
+
+	// 应用统计信息
+	Stats *AppStats `json:"stats,omitempty"`
+}
+
+// AppStats 应用统计信息
+type AppStats struct {
+	TotalUsers    int64 `json:"total_users"`
+	ActiveUsers   int64 `json:"active_users"`
+	RequestsToday int64 `json:"requests_today"`
 }
 
 // OAuthClientInfo OAuth客户端信息
@@ -243,6 +290,134 @@ func (s *AppService) DeleteApp(tenantID, appID uint) error {
 	return nil
 }
 
+// ToggleAppStatus 切换应用状态
+func (s *AppService) ToggleAppStatus(tenantID, appID uint, status string) (*AppResponse, error) {
+	// 验证状态值
+	var appStatus model.AppStatus
+	switch status {
+	case "active":
+		appStatus = model.AppStatusActive
+	case "inactive":
+		appStatus = model.AppStatusSuspended
+	default:
+		return nil, errors.New("无效的状态值")
+	}
+
+	// 查找应用
+	var app model.App
+	if err := s.db.Where("id = ? AND tenant_id = ?", appID, tenantID).First(&app).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("应用不存在")
+		}
+		return nil, err
+	}
+
+	// 更新状态
+	if err := s.db.Model(&app).Update("status", appStatus).Error; err != nil {
+		return nil, err
+	}
+
+	// 更新应用对象状态
+	app.Status = appStatus
+
+	// 获取OAuth客户端信息
+	var oauthClients []model.OAuthClient
+	s.db.Where("app_id = ?", appID).Find(&oauthClients)
+
+	// 审计日志
+	common.LogAudit(tenantID, "切换应用状态", "app", string(rune(appID)), "", status)
+
+	return s.appToResponse(&app, oauthClients), nil
+}
+
+// GetAppStats 获取详细应用统计数据
+func (s *AppService) GetAppStats(tenantID, appID uint, period string) (*DetailedAppStats, error) {
+	// 验证应用是否存在且属于该租户
+	var app model.App
+	if err := s.db.Where("id = ? AND tenant_id = ?", appID, tenantID).First(&app).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("应用不存在")
+		}
+		return nil, err
+	}
+
+	stats := &DetailedAppStats{
+		Period: period,
+	}
+
+	// 模拟统计数据（实际项目中应该从真实数据计算）
+	switch period {
+	case "7d":
+		stats.TotalUsers = 1250
+		stats.ActiveUsers = 890
+		stats.NewUsers = 75
+		stats.ReturningUsers = 815
+		stats.RequestsToday = 2340
+		stats.RequestsThisWeek = 15680
+		stats.RequestsThisMonth = 15680
+	case "30d":
+		stats.TotalUsers = 3420
+		stats.ActiveUsers = 2180
+		stats.NewUsers = 320
+		stats.ReturningUsers = 1860
+		stats.RequestsToday = 2340
+		stats.RequestsThisWeek = 15680
+		stats.RequestsThisMonth = 67890
+	case "90d":
+		stats.TotalUsers = 8750
+		stats.ActiveUsers = 4230
+		stats.NewUsers = 890
+		stats.ReturningUsers = 3340
+		stats.RequestsToday = 2340
+		stats.RequestsThisWeek = 15680
+		stats.RequestsThisMonth = 67890
+	default:
+		stats.TotalUsers = 3420
+		stats.ActiveUsers = 2180
+		stats.NewUsers = 320
+		stats.ReturningUsers = 1860
+		stats.RequestsToday = 2340
+		stats.RequestsThisWeek = 15680
+		stats.RequestsThisMonth = 67890
+	}
+
+	stats.ConversionRate = 0.125
+	stats.AvgSessionDuration = 420 // 7分钟
+
+	// 模拟热门页面数据
+	stats.TopPages = []PageStats{
+		{Path: "/", Views: 12450, UniqueVisitors: 8920},
+		{Path: "/dashboard", Views: 8760, UniqueVisitors: 6540},
+		{Path: "/profile", Views: 5430, UniqueVisitors: 4230},
+		{Path: "/settings", Views: 3210, UniqueVisitors: 2890},
+		{Path: "/help", Views: 1890, UniqueVisitors: 1650},
+	}
+
+	// 模拟用户增长数据
+	stats.UserGrowth = []UserGrowthStats{
+		{Date: "2025-07-24", NewUsers: 45, TotalUsers: 3220},
+		{Date: "2025-07-25", NewUsers: 52, TotalUsers: 3272},
+		{Date: "2025-07-26", NewUsers: 38, TotalUsers: 3310},
+		{Date: "2025-07-27", NewUsers: 61, TotalUsers: 3371},
+		{Date: "2025-07-28", NewUsers: 33, TotalUsers: 3404},
+		{Date: "2025-07-29", NewUsers: 42, TotalUsers: 3446},
+		{Date: "2025-07-30", NewUsers: 28, TotalUsers: 3474},
+	}
+
+	// 模拟请求时间线数据
+	stats.RequestTimeline = []RequestTimelineStats{
+		{Date: "2025-07-24", Requests: 9840},
+		{Date: "2025-07-25", Requests: 10230},
+		{Date: "2025-07-26", Requests: 8750},
+		{Date: "2025-07-27", Requests: 11450},
+		{Date: "2025-07-28", Requests: 9200},
+		{Date: "2025-07-29", Requests: 10780},
+		{Date: "2025-07-30", Requests: 8920},
+	}
+
+	return stats, nil
+}
+
 // 辅助方法
 
 func (s *AppService) appToResponse(app *model.App, oauthClients []model.OAuthClient) *AppResponse {
@@ -253,8 +428,8 @@ func (s *AppService) appToResponse(app *model.App, oauthClients []model.OAuthCli
 		Description: app.Description,
 		IconURL:     app.IconURL,
 		Status:      app.Status,
-		CreatedAt:   app.CreatedAt.Format("2006-07-05 15:04:05"),
-		UpdatedAt:   app.UpdatedAt.Format("2006-07-05 15:04:05"),
+		CreatedAt:   app.CreatedAt.Format("2006-01-02 15:04:05"),
+		UpdatedAt:   app.UpdatedAt.Format("2006-01-02 15:04:05"),
 	}
 
 	// 处理OAuth客户端信息
@@ -267,12 +442,28 @@ func (s *AppService) appToResponse(app *model.App, oauthClients []model.OAuthCli
 				RedirectURIs: client.GetRedirectURIList(),
 				Scopes:       client.GetScopeList(),
 				IsActive:     client.IsActive,
-				CreatedAt:    client.CreatedAt.Format("2006-07-05 15:04:05"),
+				CreatedAt:    client.CreatedAt.Format("2006-01-02 15:04:05"),
 			}
 		}
 	}
 
+	// 添加应用统计信息
+	resp.Stats = s.getAppStats(app.ID)
+
 	return resp
+}
+
+// getAppStats 获取应用统计信息
+func (s *AppService) getAppStats(appID uint) *AppStats {
+	stats := &AppStats{}
+
+	// 获取总用户数（这里需要与app_user模块配合）
+	// 暂时返回模拟数据
+	stats.TotalUsers = 0
+	stats.ActiveUsers = 0
+	stats.RequestsToday = 0
+
+	return stats
 }
 
 // 系统级管理员方法

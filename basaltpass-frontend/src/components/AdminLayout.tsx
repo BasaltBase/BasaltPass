@@ -57,30 +57,30 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
             <div className="flex items-center space-x-4">
               {actions}
               
-              {/* 管理系统切换按钮 - 只在admin页面显示 */}
+              {/* 管理系统切换按钮 - 切换到管理员面板 */}
               {isAdminPath && (
                 <Link
-                  to="/admin/tenants"
-                  className="relative rounded-md bg-blue-50 px-3 py-2 text-blue-600 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
-                  title="切换到平台管理"
+                  to="/tenant/dashboard"
+                  className="relative rounded-md bg-indigo-50 px-3 py-2 text-indigo-600 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200"
+                  title="切换到租户面板"
                 >
                   <div className="flex items-center space-x-2">
                     <ArrowsRightLeftIcon className="h-4 w-4" />
-                    <span className="text-sm font-medium">平台管理</span>
+                    <span className="text-sm font-medium">租户面板</span>
                   </div>
                 </Link>
               )}
               
-              {/* 管理系统切换按钮 - 只在platform页面显示 */}
-              {isPlatformPath && (
+              {/* 管理系统切换按钮 - 切换到用户面板 */}
+              {isAdminPath && (
                 <Link
                   to="/dashboard"
-                  className="relative rounded-md bg-indigo-50 px-3 py-2 text-indigo-600 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200"
-                  title="切换到租户管理"
+                  className="relative rounded-md bg-green-50 px-3 py-2 text-green-600 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors duration-200"
+                  title="切换到用户面板"
                 >
                   <div className="flex items-center space-x-2">
                     <ArrowsRightLeftIcon className="h-4 w-4" />
-                    <span className="text-sm font-medium">租户管理</span>
+                    <span className="text-sm font-medium">用户面板</span>
                   </div>
                 </Link>
               )}

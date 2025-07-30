@@ -2,6 +2,7 @@ package common
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"strconv"
 
@@ -27,7 +28,13 @@ func TenantMiddleware() fiber.Handler {
 		if tenantID := c.Locals("tenantID"); tenantID != nil {
 			// 验证租户是否存在且有效
 			var tenant model.Tenant
-			if err := DB().First(&tenant, tenantID).Error; err == nil && tenant.Status == "active" {
+			if err := DB().First(&tenant, tenantID).Error; err != nil {
+				// 租户不存在，记录错误并继续尝试其他方式
+				fmt.Printf("[TenantMiddleware] Tenant %v not found: %v\n", tenantID, err)
+			} else if tenant.Status != "active" {
+				fmt.Printf("[TenantMiddleware] Tenant %v status is %s, not active\n", tenantID, tenant.Status)
+			} else {
+				// 租户存在且状态正常
 				return c.Next()
 			}
 		}
@@ -51,6 +58,8 @@ func TenantMiddleware() fiber.Handler {
 			if err := DB().Where("user_id = ?", userID).Order("created_at ASC").First(&tenantAdmin).Error; err == nil {
 				c.Locals("tenantID", tenantAdmin.TenantID)
 				return c.Next()
+			} else {
+				fmt.Printf("[TenantMiddleware] No tenant association found for user %v: %v\n", userID, err)
 			}
 		}
 
@@ -125,6 +134,7 @@ func TenantAdminMiddleware() fiber.Handler {
 		tenantID := c.Locals("tenantID")
 
 		if userID == nil || tenantID == nil {
+			fmt.Printf("[TenantAdminMiddleware] Missing context - userID: %v, tenantID: %v\n", userID, tenantID)
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error": "Missing user or tenant context",
 			})
@@ -133,17 +143,20 @@ func TenantAdminMiddleware() fiber.Handler {
 		// 检查用户在租户中的角色
 		var tenantAdmin model.TenantAdmin
 		if err := DB().Where("user_id = ? AND tenant_id = ?", userID, tenantID).First(&tenantAdmin).Error; err != nil {
+			fmt.Printf("[TenantAdminMiddleware] No tenant admin record found for user %v in tenant %v: %v\n", userID, tenantID, err)
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 				"error": "Access denied",
 			})
 		}
 
 		if tenantAdmin.Role != model.TenantRoleOwner && tenantAdmin.Role != model.TenantRoleAdmin {
+			fmt.Printf("[TenantAdminMiddleware] User %v has insufficient role %s in tenant %v\n", userID, tenantAdmin.Role, tenantID)
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 				"error": "Tenant admin access required",
 			})
 		}
 
+		fmt.Printf("[TenantAdminMiddleware] User %v authorized as %s in tenant %v\n", userID, tenantAdmin.Role, tenantID)
 		return c.Next()
 	}
 }

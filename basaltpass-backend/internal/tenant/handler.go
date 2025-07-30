@@ -68,11 +68,29 @@ func ListTenantsHandler(c *fiber.Ctx) error {
 	})
 }
 
+// GetTenantInfoHandler 获取租户基础信息（租户控制台专用）
+// GET /admin/tenant/info
+func GetTenantInfoHandler(c *fiber.Ctx) error {
+	tenantID := c.Locals("tenantID").(uint)
+
+	info, err := tenantService.GetTenantInfo(tenantID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"data":    info,
+		"message": "获取租户信息成功",
+	})
+}
+
 // GetTenantHandler 获取租户详情
 // GET /_admin/tenants/:id 或 GET /admin/tenant
 func GetTenantHandler(c *fiber.Ctx) error {
 	var tenantID uint
-	
+
 	// 如果是租户级API，从上下文获取租户ID
 	if paramID := c.Params("id"); paramID != "" {
 		// 超级管理员API
@@ -106,7 +124,7 @@ func GetTenantHandler(c *fiber.Ctx) error {
 // PUT /_admin/tenants/:id 或 PUT /admin/tenant
 func UpdateTenantHandler(c *fiber.Ctx) error {
 	var tenantID uint
-	
+
 	if paramID := c.Params("id"); paramID != "" {
 		// 超级管理员API
 		id, err := strconv.ParseUint(paramID, 10, 32)

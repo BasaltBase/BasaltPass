@@ -2,6 +2,7 @@ package common
 
 import (
 	"log"
+	"os"
 	"path/filepath"
 	"sync"
 
@@ -18,8 +19,16 @@ var (
 func DB() *gorm.DB {
 	once.Do(func() {
 		var err error
-		// 使用绝对路径确保数据库文件总是在项目根目录
-		dbPath := filepath.Join("..", "..", "basaltpass.db")
+		// 获取当前工作目录
+		wd, err := os.Getwd()
+		if err != nil {
+			log.Fatalf("failed to get working directory: %v", err)
+		}
+
+		// 确保数据库文件在 basaltpass-backend 目录下
+		dbPath := filepath.Join(wd, "basaltpass.db")
+		log.Printf("Database path: %s", dbPath)
+
 		db, err = gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
 		if err != nil {
 			log.Fatalf("failed to connect database: %v", err)

@@ -65,6 +65,7 @@ func RegisterRoutes(app *fiber.App) {
 	userGroup := v1.Group("/user", common.JWTMiddleware())
 	userGroup.Get("/tenants", tenant.GetUserTenantsHandler)
 	userGroup.Get("/profile", user.GetProfileHandler)
+	userGroup.Get("/debug", user.DebugUserHandler) // 临时调试端点
 	userGroup.Put("/profile", user.UpdateProfileHandler)
 
 	// 用户应用授权管理
@@ -90,6 +91,7 @@ func RegisterRoutes(app *fiber.App) {
 
 	// 租户信息管理
 	tenantAdminGroup.Get("/tenant", tenant.GetTenantHandler)
+	tenantAdminGroup.Get("/tenant/info", tenant.GetTenantInfoHandler)
 	tenantAdminGroup.Put("/tenant", tenant.UpdateTenantHandler)
 	tenantAdminGroup.Post("/tenant/users/invite", tenant.InviteUserHandler)
 
@@ -100,6 +102,8 @@ func RegisterRoutes(app *fiber.App) {
 	appGroup.Get("/:id", appHandler.GetAppHandler)
 	appGroup.Put("/:id", appHandler.UpdateAppHandler)
 	appGroup.Delete("/:id", appHandler.DeleteAppHandler)
+	appGroup.Patch("/:id/status", appHandler.ToggleAppStatusHandler)
+	appGroup.Get("/:id/stats", appHandler.GetAppStatsHandler)
 
 	// 应用用户管理路由（租户级）
 	appGroup.Get("/:app_id/users", app_user.GetAppUsersHandler)

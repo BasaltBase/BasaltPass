@@ -11,7 +11,8 @@ import {
   DocumentTextIcon,
   BellIcon,
   KeyIcon,
-  ShoppingCartIcon
+  ShoppingCartIcon,
+  InformationCircleIcon
 } from '@heroicons/react/24/outline'
 
 interface NavigationItem {
@@ -27,6 +28,11 @@ const navigation: NavigationItem[] = [
     name: '仪表板',
     href: '/tenant/dashboard',
     icon: ChartBarIcon,
+  },
+  {
+    name: '租户信息',
+    href: '/tenant/info',
+    icon: InformationCircleIcon,
   },
   {
     name: '应用管理',
