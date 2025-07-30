@@ -59,6 +59,8 @@ export default function TenantAppList() {
         return '已停止'
       case 'pending':
         return '待激活'
+      case 'deleted':
+        return '已删除'
       default:
         return '未知'
     }

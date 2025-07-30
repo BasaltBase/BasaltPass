@@ -102,6 +102,19 @@ type AppStats struct {
 	RequestsToday int64 `json:"requests_today"`
 }
 
+// AppWithOAuthClients 包含OAuth客户端信息的应用响应
+type AppWithOAuthClients struct {
+	ID           uint              `json:"id"`
+	TenantID     uint              `json:"tenant_id"`
+	Name         string            `json:"name"`
+	Description  string            `json:"description"`
+	IconURL      string            `json:"icon_url"`
+	Status       model.AppStatus   `json:"status"`
+	CreatedAt    string            `json:"created_at"`
+	UpdatedAt    string            `json:"updated_at"`
+	OAuthClients []OAuthClientInfo `json:"oauth_clients"`
+}
+
 // OAuthClientInfo OAuth客户端信息
 type OAuthClientInfo struct {
 	ID           uint     `json:"id"`
@@ -223,6 +236,57 @@ func (s *AppService) ListApps(tenantID uint, page, pageSize int, search string) 
 	}
 
 	return responses, total, nil
+}
+
+// GetTenantAppsWithOAuthClients 获取租户的应用和OAuth客户端信息
+func (s *AppService) GetTenantAppsWithOAuthClients(tenantID uint, page, pageSize int, search string) ([]*AppWithOAuthClients, int64, error) {
+	query := s.db.Where("tenant_id = ? AND status != ?", tenantID, model.AppStatusDeleted)
+
+	if search != "" {
+		query = query.Where("name ILIKE ?", "%"+search+"%")
+	}
+
+	var total int64
+	query.Model(&model.App{}).Count(&total)
+
+	var apps []model.App
+	offset := (page - 1) * pageSize
+	if err := query.Preload("OAuthClients").Offset(offset).Limit(pageSize).Find(&apps).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// 转换为响应格式
+	var result []*AppWithOAuthClients
+	for _, app := range apps {
+		appWithClients := &AppWithOAuthClients{
+			ID:           app.ID,
+			TenantID:     app.TenantID,
+			Name:         app.Name,
+			Description:  app.Description,
+			IconURL:      app.IconURL,
+			Status:       app.Status,
+			CreatedAt:    app.CreatedAt.Format(time.RFC3339),
+			UpdatedAt:    app.UpdatedAt.Format(time.RFC3339),
+			OAuthClients: []OAuthClientInfo{},
+		}
+
+		for _, client := range app.OAuthClients {
+			if client.IsActive {
+				appWithClients.OAuthClients = append(appWithClients.OAuthClients, OAuthClientInfo{
+					ID:           client.ID,
+					ClientID:     client.ClientID,
+					RedirectURIs: client.GetRedirectURIList(),
+					Scopes:       client.GetScopeList(),
+					IsActive:     client.IsActive,
+					CreatedAt:    client.CreatedAt.Format(time.RFC3339),
+				})
+			}
+		}
+
+		result = append(result, appWithClients)
+	}
+
+	return result, total, nil
 }
 
 // UpdateApp 更新应用

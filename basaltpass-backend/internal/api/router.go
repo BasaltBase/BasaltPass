@@ -110,6 +110,10 @@ func RegisterRoutes(app *fiber.App) {
 	appGroup.Get("/:app_id/users/stats", app_user.GetAppUserStatsHandler)
 	appGroup.Delete("/:app_id/users/:user_id", app_user.AdminRevokeUserAppHandler)
 
+	// 新增：应用用户状态管理
+	appGroup.Put("/:app_id/users/:user_id/status", app_user.UpdateAppUserStatusHandler)
+	appGroup.Get("/:app_id/users/by-status", app_user.GetAppUsersByStatusHandler)
+
 	// OAuth2客户端管理路由（租户级）
 	oauthClientGroup := tenantAdminGroup.Group("/oauth/clients")
 	oauthClientGroup.Post("/", oauth.CreateClientHandler)
@@ -121,6 +125,24 @@ func RegisterRoutes(app *fiber.App) {
 	oauthClientGroup.Get("/:client_id/stats", oauth.GetClientStatsHandler)
 	oauthClientGroup.Get("/:client_id/tokens", oauth.GetTokensHandler)
 	oauthClientGroup.Post("/:client_id/revoke-tokens", oauth.RevokeClientTokensHandler)
+
+	// 租户级别的路由（直接在v1下面）
+	tenantGroup := v1.Group("/tenant", common.JWTMiddleware(), common.TenantMiddleware())
+
+	// 租户OAuth客户端管理路由
+	tenantOAuthGroup := tenantGroup.Group("/oauth/clients")
+	tenantOAuthGroup.Get("/", oauth.TenantListOAuthClientsHandler)
+	tenantOAuthGroup.Post("/", oauth.TenantCreateOAuthClientHandler)
+	tenantOAuthGroup.Put("/:client_id", oauth.TenantUpdateOAuthClientHandler)
+	tenantOAuthGroup.Delete("/:client_id", oauth.TenantDeleteOAuthClientHandler)
+	tenantOAuthGroup.Post("/:client_id/regenerate-secret", oauth.TenantRegenerateClientSecretHandler)
+
+	// 租户应用用户管理路由
+	tenantAppGroup := tenantGroup.Group("/apps")
+	tenantAppGroup.Get("/:app_id/users", app_user.GetAppUsersByStatusHandler)
+	tenantAppGroup.Get("/:app_id/users/by-status", app_user.GetAppUsersByStatusHandler)
+	tenantAppGroup.Get("/:app_id/users/stats", app_user.GetAppUserStatsHandler)
+	tenantAppGroup.Put("/:app_id/users/:user_id/status", app_user.UpdateAppUserStatusHandler)
 
 	// 原有的系统级管理员路由（保持向后兼容）
 	adminGroup := v1.Group("/admin", common.JWTMiddleware(), common.AdminMiddleware())

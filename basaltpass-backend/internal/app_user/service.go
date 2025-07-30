@@ -84,10 +84,18 @@ func (s *AppUserService) GetAppUsers(appID uint, page, limit int) ([]*AppUserRes
 			UserID:            au.UserID,
 			UserEmail:         au.User.Email,
 			UserNickname:      au.User.Nickname,
+			UserAvatar:        au.User.AvatarURL,
 			FirstAuthorizedAt: au.FirstAuthorizedAt,
 			LastAuthorizedAt:  au.LastAuthorizedAt,
 			LastActiveAt:      au.LastActiveAt,
 			Scopes:            au.Scopes,
+			Status:            au.Status,
+			BanReason:         au.BanReason,
+			BannedAt:          au.BannedAt,
+			BannedByUserID:    au.BannedByUserID,
+			BannedUntil:       au.BannedUntil,
+			CreatedAt:         au.CreatedAt,
+			UpdatedAt:         au.UpdatedAt,
 		}
 	}
 
@@ -158,15 +166,23 @@ func (s *AppUserService) GetAppUserStats(appID uint) (*AppUserStats, error) {
 
 // AppUserResponse 应用用户响应结构
 type AppUserResponse struct {
-	ID                uint       `json:"id"`
-	AppID             uint       `json:"app_id"`
-	UserID            uint       `json:"user_id"`
-	UserEmail         string     `json:"user_email"`
-	UserNickname      string     `json:"user_nickname"`
-	FirstAuthorizedAt time.Time  `json:"first_authorized_at"`
-	LastAuthorizedAt  time.Time  `json:"last_authorized_at"`
-	LastActiveAt      *time.Time `json:"last_active_at"`
-	Scopes            string     `json:"scopes"`
+	ID                uint                `json:"id"`
+	AppID             uint                `json:"app_id"`
+	UserID            uint                `json:"user_id"`
+	UserEmail         string              `json:"user_email"`
+	UserNickname      string              `json:"user_nickname"`
+	UserAvatar        string              `json:"user_avatar,omitempty"`
+	FirstAuthorizedAt time.Time           `json:"first_authorized_at"`
+	LastAuthorizedAt  time.Time           `json:"last_authorized_at"`
+	LastActiveAt      *time.Time          `json:"last_active_at"`
+	Scopes            string              `json:"scopes"`
+	Status            model.AppUserStatus `json:"status"`
+	BanReason         string              `json:"ban_reason,omitempty"`
+	BannedAt          *time.Time          `json:"banned_at,omitempty"`
+	BannedByUserID    *uint               `json:"banned_by_user_id,omitempty"`
+	BannedUntil       *time.Time          `json:"banned_until,omitempty"`
+	CreatedAt         time.Time           `json:"created_at"`
+	UpdatedAt         time.Time           `json:"updated_at"`
 }
 
 // UserAppResponse 用户应用响应结构
@@ -187,4 +203,95 @@ type AppUserStats struct {
 	TotalUsers  int64 `json:"total_users"`
 	ActiveUsers int64 `json:"active_users"`
 	NewUsers    int64 `json:"new_users"`
+}
+
+// UpdateAppUserStatus 更新应用用户状态（封禁/解封/限制）
+func (s *AppUserService) UpdateAppUserStatus(appID, userID, adminUserID uint, status model.AppUserStatus, reason string, banUntil *time.Time) error {
+	var appUser model.AppUser
+	if err := s.db.Where("app_id = ? AND user_id = ?", appID, userID).First(&appUser).Error; err != nil {
+		return errors.New("用户未授权此应用")
+	}
+
+	updates := map[string]interface{}{
+		"status": status,
+	}
+
+	now := time.Now()
+
+	switch status {
+	case model.AppUserStatusBanned, model.AppUserStatusSuspended:
+		updates["ban_reason"] = reason
+		updates["banned_at"] = now
+		updates["banned_by_user_id"] = adminUserID
+		if banUntil != nil {
+			updates["banned_until"] = banUntil
+		}
+	case model.AppUserStatusRestricted:
+		updates["ban_reason"] = reason
+	case model.AppUserStatusActive:
+		// 解封时清除封禁相关字段
+		updates["ban_reason"] = ""
+		updates["banned_at"] = nil
+		updates["banned_by_user_id"] = nil
+		updates["banned_until"] = nil
+	}
+
+	return s.db.Model(&appUser).Updates(updates).Error
+}
+
+// GetAppUsersByStatus 根据状态获取应用用户列表
+func (s *AppUserService) GetAppUsersByStatus(appID uint, status *model.AppUserStatus, page, limit int) ([]*AppUserResponse, int64, error) {
+	query := s.db.Model(&model.AppUser{}).Where("app_id = ?", appID)
+
+	if status != nil {
+		query = query.Where("status = ?", *status)
+	}
+
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	var appUsers []model.AppUser
+	err := s.db.Preload("User").
+		Where("app_id = ?", appID).
+		Scopes(func(db *gorm.DB) *gorm.DB {
+			if status != nil {
+				return db.Where("status = ?", *status)
+			}
+			return db
+		}).
+		Order("created_at DESC").
+		Offset((page - 1) * limit).
+		Limit(limit).
+		Find(&appUsers).Error
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	responses := make([]*AppUserResponse, len(appUsers))
+	for i, au := range appUsers {
+		responses[i] = &AppUserResponse{
+			ID:                au.ID,
+			AppID:             au.AppID,
+			UserID:            au.UserID,
+			UserEmail:         au.User.Email,
+			UserNickname:      au.User.Nickname,
+			UserAvatar:        au.User.AvatarURL,
+			FirstAuthorizedAt: au.FirstAuthorizedAt,
+			LastAuthorizedAt:  au.LastAuthorizedAt,
+			LastActiveAt:      au.LastActiveAt,
+			Scopes:            au.Scopes,
+			Status:            au.Status,
+			BanReason:         au.BanReason,
+			BannedAt:          au.BannedAt,
+			BannedByUserID:    au.BannedByUserID,
+			BannedUntil:       au.BannedUntil,
+			CreatedAt:         au.CreatedAt,
+			UpdatedAt:         au.UpdatedAt,
+		}
+	}
+
+	return responses, total, nil
 }

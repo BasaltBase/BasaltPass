@@ -2,12 +2,21 @@ package app_user
 
 import (
 	"basaltpass-backend/internal/common"
+	"basaltpass-backend/internal/model"
 	"strconv"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 var appUserService *AppUserService
+
+// UpdateAppUserStatusRequest 更新应用用户状态请求
+type UpdateAppUserStatusRequest struct {
+	Status   model.AppUserStatus `json:"status"`
+	Reason   string              `json:"reason,omitempty"`
+	BanUntil *time.Time          `json:"ban_until,omitempty"`
+}
 
 func init() {
 	appUserService = NewAppUserService(common.DB())
@@ -147,5 +156,102 @@ func AdminRevokeUserAppHandler(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{
 		"message": "Authorization revoked successfully",
+	})
+}
+
+// UpdateAppUserStatusHandler 更新应用用户状态（封禁/解封/限制）
+func UpdateAppUserStatusHandler(c *fiber.Ctx) error {
+	adminUserID := c.Locals("userID").(uint)
+
+	appIDStr := c.Params("app_id")
+	appID, err := strconv.ParseUint(appIDStr, 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid app ID",
+		})
+	}
+
+	userIDStr := c.Params("user_id")
+	userID, err := strconv.ParseUint(userIDStr, 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid user ID",
+		})
+	}
+
+	var req UpdateAppUserStatusRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	// 验证状态值
+	switch req.Status {
+	case model.AppUserStatusActive, model.AppUserStatusBanned, model.AppUserStatusSuspended, model.AppUserStatusRestricted:
+		// 有效状态
+	default:
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid status value",
+		})
+	}
+
+	if err := appUserService.UpdateAppUserStatus(uint(appID), uint(userID), adminUserID, req.Status, req.Reason, req.BanUntil); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	// 记录审计日志
+	common.LogAudit(adminUserID, "更新应用用户状态", "app_user",
+		strconv.Itoa(int(appID))+"_"+strconv.Itoa(int(userID)), string(req.Status), "")
+
+	return c.JSON(fiber.Map{
+		"message": "User status updated successfully",
+	})
+}
+
+// GetAppUsersByStatusHandler 根据状态获取应用用户列表
+func GetAppUsersByStatusHandler(c *fiber.Ctx) error {
+	appIDStr := c.Params("app_id")
+	appID, err := strconv.ParseUint(appIDStr, 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid app ID",
+		})
+	}
+
+	// 分页参数
+	page, _ := strconv.Atoi(c.Query("page", "1"))
+	limit, _ := strconv.Atoi(c.Query("limit", "20"))
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit > 100 {
+		limit = 20
+	}
+
+	// 状态过滤参数
+	var status *model.AppUserStatus
+	statusStr := c.Query("status")
+	if statusStr != "" {
+		s := model.AppUserStatus(statusStr)
+		status = &s
+	}
+
+	users, total, err := appUserService.GetAppUsersByStatus(uint(appID), status, page, limit)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to get app users",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"users": users,
+		"pagination": fiber.Map{
+			"page":  page,
+			"limit": limit,
+			"total": total,
+		},
 	})
 }

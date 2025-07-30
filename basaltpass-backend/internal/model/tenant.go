@@ -86,6 +86,13 @@ type AppUser struct {
 	// 权限范围（可选）
 	Scopes string `gorm:"size:500" json:"scopes,omitempty"` // 授权的权限范围
 
+	// 用户状态控制（租户级别）
+	Status         AppUserStatus `gorm:"type:varchar(20);default:active" json:"status"` // 用户在该应用中的状态
+	BanReason      string        `gorm:"size:500" json:"ban_reason,omitempty"`          // 封禁原因
+	BannedAt       *time.Time    `json:"banned_at,omitempty"`                           // 封禁时间
+	BannedByUserID *uint         `json:"banned_by_user_id,omitempty"`                   // 执行封禁的管理员ID
+	BannedUntil    *time.Time    `json:"banned_until,omitempty"`                        // 封禁截止时间（可选，空表示永久）
+
 	// 元数据
 	Metadata JSONMap `gorm:"type:jsonb" json:"metadata,omitempty"`
 
@@ -93,8 +100,9 @@ type AppUser struct {
 	UpdatedAt time.Time `json:"updated_at"`
 
 	// 关联
-	App  App  `gorm:"foreignKey:AppID" json:"app,omitempty"`
-	User User `gorm:"foreignKey:UserID" json:"user,omitempty"`
+	App      App  `gorm:"foreignKey:AppID" json:"app,omitempty"`
+	User     User `gorm:"foreignKey:UserID" json:"user,omitempty"`
+	BannedBy User `gorm:"foreignKey:BannedByUserID" json:"banned_by,omitempty"`
 }
 
 // TableName 设置表名
@@ -126,6 +134,16 @@ const (
 	AppStatusActive    AppStatus = "active"
 	AppStatusSuspended AppStatus = "suspended"
 	AppStatusDeleted   AppStatus = "deleted"
+)
+
+// AppUserStatus 应用用户状态
+type AppUserStatus string
+
+const (
+	AppUserStatusActive     AppUserStatus = "active"     // 正常状态
+	AppUserStatusBanned     AppUserStatus = "banned"     // 永久封禁
+	AppUserStatusSuspended  AppUserStatus = "suspended"  // 临时封禁
+	AppUserStatusRestricted AppUserStatus = "restricted" // 受限制（功能受限但可以使用）
 )
 
 // JSONMap 自定义JSON字段类型

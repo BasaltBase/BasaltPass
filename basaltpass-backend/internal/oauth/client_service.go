@@ -3,6 +3,7 @@ package oauth
 import (
 	"errors"
 	"strings"
+	"time"
 
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
@@ -117,6 +118,59 @@ func (s *ClientService) CreateClient(creatorID uint, req *CreateClientRequest) (
 	return s.clientToResponse(client, plainSecret), nil
 }
 
+// CreateClientForApp 为指定应用创建OAuth客户端
+func (s *ClientService) CreateClientForApp(appID, creatorID uint, req *CreateClientRequest) (*ClientResponse, error) {
+	// 验证应用存在
+	var app model.App
+	if err := s.db.First(&app, appID).Error; err != nil {
+		return nil, errors.New("应用不存在")
+	}
+
+	// 验证请求
+	if err := s.validateCreateRequest(req); err != nil {
+		return nil, err
+	}
+
+	// 创建OAuth客户端
+	client := &model.OAuthClient{
+		AppID:     appID,
+		IsActive:  true,
+		CreatedBy: creatorID,
+	}
+
+	// 生成客户端凭证
+	if err := client.GenerateClientCredentials(); err != nil {
+		return nil, err
+	}
+
+	// 设置重定向URI和权限范围
+	client.SetRedirectURIList(req.RedirectURIs)
+	if len(req.Scopes) > 0 {
+		client.SetScopeList(req.Scopes)
+	} else {
+		client.SetScopeList([]string{"openid", "profile", "email"})
+	}
+
+	if len(req.AllowedOrigins) > 0 {
+		client.SetAllowedOriginList(req.AllowedOrigins)
+	}
+
+	// 哈希客户端密钥
+	plainSecret := client.ClientSecret
+	client.HashClientSecret()
+
+	// 保存到数据库
+	if err := s.db.Create(client).Error; err != nil {
+		return nil, err
+	}
+
+	// 记录审计日志
+	common.LogAudit(creatorID, "为应用创建OAuth2客户端", "oauth_client", client.ClientID, "", "")
+
+	// 返回响应（包含明文密钥）
+	return s.clientToResponse(client, plainSecret), nil
+}
+
 // GetClient 获取客户端详情
 func (s *ClientService) GetClient(clientID string) (*ClientResponse, error) {
 	var client model.OAuthClient
@@ -136,8 +190,7 @@ func (s *ClientService) ListClients(page, pageSize int, search string) ([]*Clien
 
 	// 搜索
 	if search != "" {
-		query = query.Where("name LIKE ? OR description LIKE ? OR client_id LIKE ?",
-			"%"+search+"%", "%"+search+"%", "%"+search+"%")
+		query = query.Where("client_id LIKE ?", "%"+search+"%")
 	}
 
 	// 获取总数
@@ -306,8 +359,34 @@ func (s *ClientService) GetClientStats(clientID string) (map[string]interface{},
 	return stats, nil
 }
 
-// 验证函数
+// RevokeClientTokens 撤销客户端的所有令牌
+func (s *ClientService) RevokeClientTokens(clientID string) error {
+	// 删除所有相关的访问令牌和刷新令牌
+	if err := s.db.Where("client_id = ?", clientID).Delete(&model.OAuthAccessToken{}).Error; err != nil {
+		return err
+	}
 
+	if err := s.db.Where("client_id = ?", clientID).Delete(&model.OAuthRefreshToken{}).Error; err != nil {
+		return err
+	}
+
+	// 记录审计日志
+	common.LogAudit(0, "撤销OAuth2客户端所有令牌", "oauth_client", clientID, "", "")
+
+	return nil
+}
+
+// ClientBelongsToTenant 检查客户端是否属于指定租户
+func (s *ClientService) ClientBelongsToTenant(clientID string, tenantID uint) bool {
+	var count int64
+	s.db.Table("o_auth_clients").
+		Joins("JOIN apps ON o_auth_clients.app_id = apps.id").
+		Where("o_auth_clients.client_id = ? AND apps.tenant_id = ?", clientID, tenantID).
+		Count(&count)
+	return count > 0
+}
+
+// 验证函数
 func (s *ClientService) validateCreateRequest(req *CreateClientRequest) error {
 	if req.Name == "" {
 		return errors.New("应用名称不能为空")
@@ -342,41 +421,31 @@ func isValidURL(urlStr string) bool {
 }
 
 // 转换函数
-
 func (s *ClientService) clientToResponse(client *model.OAuthClient, plainSecret string) *ClientResponse {
 	resp := &ClientResponse{
-		ID:           client.ID,
-		Name:         "", // 这些信息应该从关联的App获取
-		Description:  "", // 这些信息应该从关联的App获取
-		ClientID:     client.ClientID,
-		RedirectURIs: client.GetRedirectURIList(),
-		Scopes:       client.GetScopeList(),
-		IsActive:     client.IsActive,
-		CreatedBy:    client.CreatedBy,
-		CreatedAt:    client.CreatedAt.Format("2006-07-05 15:04:05"),
-		UpdatedAt:    client.UpdatedAt.Format("2006-07-05 15:04:05"),
+		ID:             client.ID,
+		Name:           "", // TODO: 从关联的App获取
+		Description:    "", // TODO: 从关联的App获取
+		ClientID:       client.ClientID,
+		RedirectURIs:   client.GetRedirectURIList(),
+		Scopes:         client.GetScopeList(),
+		AllowedOrigins: client.GetAllowedOriginList(),
+		IsActive:       client.IsActive,
+		CreatedBy:      client.CreatedBy,
+		CreatedAt:      client.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:      client.UpdatedAt.Format(time.RFC3339),
 	}
 
-	// 只在创建时返回明文密钥
 	if plainSecret != "" {
 		resp.ClientSecret = plainSecret
 	}
 
-	// 处理允许的源
-	if client.AllowedOrigins != "" {
-		resp.AllowedOrigins = strings.Split(client.AllowedOrigins, ",")
-	} else {
-		resp.AllowedOrigins = []string{}
-	}
-
-	// 处理最后使用时间
 	if client.LastUsedAt != nil {
-		lastUsed := client.LastUsedAt.Format("2006-07-05 15:04:05")
+		lastUsed := client.LastUsedAt.Format(time.RFC3339)
 		resp.LastUsedAt = &lastUsed
 	}
 
-	// 处理创建者信息
-	if client.Creator.ID != 0 {
+	if client.Creator.ID > 0 {
 		resp.Creator = &UserInfo{
 			ID:       client.Creator.ID,
 			Email:    client.Creator.Email,
@@ -385,9 +454,4 @@ func (s *ClientService) clientToResponse(client *model.OAuthClient, plainSecret 
 	}
 
 	return resp
-}
-
-// RevokeClientTokens 撤销客户端的所有令牌
-func (s *ClientService) RevokeClientTokens(clientID string) error {
-	return s.db.Where("client_id = ?", clientID).Delete(&model.OAuthAccessToken{}).Error
 }

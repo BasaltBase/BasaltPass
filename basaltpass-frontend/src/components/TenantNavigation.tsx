@@ -39,6 +39,7 @@ const navigation: NavigationItem[] = [
     icon: CubeIcon,
     children: [
       { name: '我的应用', href: '/tenant/apps', icon: CubeIcon },
+      { name: 'OAuth客户端', href: '/tenant/oauth/clients', icon: KeyIcon },
     ]
   },
   {
