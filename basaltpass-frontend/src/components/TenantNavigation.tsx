@@ -54,7 +54,7 @@ const navigation: NavigationItem[] = [
     name: '通知管理',
     icon: BellIcon,
     children: [
-      { name: '通知设置', href: '/tenant/notifications', icon: BellIcon },
+      { name: '发送通知', href: '/tenant/notifications', icon: BellIcon },
       { name: '消息中心', href: '/tenant/messages', icon: DocumentTextIcon },
     ]
   },

@@ -6,6 +6,7 @@ import (
 	"basaltpass-backend/internal/app_user"
 	"basaltpass-backend/internal/auth"
 	"basaltpass-backend/internal/common"
+	"basaltpass-backend/internal/debug"
 	"basaltpass-backend/internal/invitation"
 	"basaltpass-backend/internal/notification"
 	"basaltpass-backend/internal/oauth"
@@ -68,6 +69,10 @@ func RegisterRoutes(app *fiber.App) {
 	userGroup.Get("/debug", user.DebugUserHandler) // 临时调试端点
 	userGroup.Put("/profile", user.UpdateProfileHandler)
 
+	// 调试路由
+	debugGroup := v1.Group("/debug", common.JWTMiddleware())
+	debugGroup.Get("/user-tenant", debug.CheckUserTenantHandler)
+
 	// 用户应用授权管理
 	userGroup.Get("/apps", app_user.GetUserAppsHandler)
 	userGroup.Delete("/apps/:app_id", app_user.RevokeUserAppHandler)
@@ -94,6 +99,13 @@ func RegisterRoutes(app *fiber.App) {
 	tenantAdminGroup.Get("/tenant/info", tenant.GetTenantInfoHandler)
 	tenantAdminGroup.Put("/tenant", tenant.UpdateTenantHandler)
 	tenantAdminGroup.Post("/tenant/users/invite", tenant.InviteUserHandler)
+
+	// 租户通知管理
+	tenantNotificationGroup := tenantAdminGroup.Group("/notifications")
+	tenantNotificationGroup.Post("/", notification.TenantCreateHandler)
+	tenantNotificationGroup.Get("/", notification.TenantListHandler)
+	tenantNotificationGroup.Delete("/:id", notification.TenantDeleteHandler)
+	tenantNotificationGroup.Get("/users", notification.TenantGetUsersHandler)
 
 	// 应用管理
 	appGroup := tenantAdminGroup.Group("/apps")

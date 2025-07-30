@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { getAccessToken, clearAccessToken } from '../utils/auth'
+import { getTenantIdFromToken } from '../utils/jwt'
 
 const client = axios.create({
   baseURL: import.meta.env.VITE_API_BASE || 'http://localhost:8080',
@@ -33,6 +34,7 @@ client.interceptors.request.use((config) => {
     config.headers = config.headers || {}
     config.headers.Authorization = `Bearer ${token}`
   }
+  
   return config
 })
 

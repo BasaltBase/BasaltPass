@@ -59,6 +59,7 @@ import AppStats from './pages/tenant/AppStats'
 import TenantOAuthClients from './pages/tenant/OAuthClients'
 import TenantUserManagement from './pages/tenant/UserManagement'
 import AppUserManagement from './pages/tenant/app/AppUserManagement'
+import TenantNotifications from './pages/tenant/Notifications'
 
 export default function AppRouter() {
   return (
@@ -360,6 +361,11 @@ export default function AppRouter() {
       <Route path="/tenant/users" element={
         <ProtectedRoute>
           <TenantUserManagement />
+        </ProtectedRoute>
+      } />
+      <Route path="/tenant/notifications" element={
+        <ProtectedRoute>
+          <TenantNotifications />
         </ProtectedRoute>
       } />
       <Route path="/tenant/apps/:id/users" element={
