@@ -37,7 +37,7 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
   return (
     <div className="min-h-screen bg-gray-50">
       {/* 顶部导航栏 */}
-      <header className="bg-white shadow">
+      <header className="sticky top-0 bg-white shadow z-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 justify-between items-center">
             <div className="flex items-center">

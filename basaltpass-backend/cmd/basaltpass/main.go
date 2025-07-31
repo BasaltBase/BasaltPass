@@ -26,6 +26,9 @@ func main() {
 	// 初始化订阅处理器
 	subscription.InitHandler(common.DB())
 
+	// 初始化租户订阅处理器
+	subscription.InitTenantHandler(common.DB())
+
 	// Register API routes
 	api.RegisterRoutes(app)
 

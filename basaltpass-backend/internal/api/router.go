@@ -107,6 +107,63 @@ func RegisterRoutes(app *fiber.App) {
 	tenantNotificationGroup.Delete("/:id", notification.TenantDeleteHandler)
 	tenantNotificationGroup.Get("/users", notification.TenantGetUsersHandler)
 
+	// 租户角色管理
+	tenantRoleGroup := tenantAdminGroup.Group("/roles")
+	tenantRoleGroup.Post("/", tenant.CreateTenantRole)
+	tenantRoleGroup.Get("/", tenant.GetTenantRoles)
+	tenantRoleGroup.Put("/:id", tenant.UpdateTenantRole)
+	tenantRoleGroup.Delete("/:id", tenant.DeleteTenantRole)
+	tenantRoleGroup.Get("/users", tenant.GetTenantUsersForRole)
+	tenantRoleGroup.Post("/assign", tenant.AssignUserRoles)
+	tenantRoleGroup.Get("/users/:user_id", tenant.GetUserRoles)
+
+	// 租户订阅管理
+	tenantSubscriptionGroup := tenantAdminGroup.Group("/subscription")
+
+	// 产品管理
+	tenantProductGroup := tenantSubscriptionGroup.Group("/products")
+	tenantProductGroup.Post("/", subscription.CreateTenantProductHandler)
+	tenantProductGroup.Get("/", subscription.ListTenantProductsHandler)
+	tenantProductGroup.Get("/:id", subscription.GetTenantProductHandler)
+	tenantProductGroup.Put("/:id", subscription.UpdateTenantProductHandler)
+	tenantProductGroup.Delete("/:id", subscription.DeleteTenantProductHandler)
+
+	// 套餐管理
+	tenantPlanGroup := tenantSubscriptionGroup.Group("/plans")
+	tenantPlanGroup.Post("/", subscription.CreateTenantPlanHandler)
+	tenantPlanGroup.Get("/", subscription.ListTenantPlansHandler)
+	tenantPlanGroup.Get("/:id", subscription.GetTenantPlanHandler)
+	tenantPlanGroup.Put("/:id", subscription.UpdateTenantPlanHandler)
+	tenantPlanGroup.Delete("/:id", subscription.DeleteTenantPlanHandler)
+
+	// 定价管理
+	tenantPriceGroup := tenantSubscriptionGroup.Group("/prices")
+	tenantPriceGroup.Post("/", subscription.CreateTenantPriceHandler)
+	tenantPriceGroup.Get("/", subscription.ListTenantPricesHandler)
+	tenantPriceGroup.Get("/:id", subscription.GetTenantPriceHandler)
+	tenantPriceGroup.Put("/:id", subscription.UpdateTenantPriceHandler)
+	tenantPriceGroup.Delete("/:id", subscription.DeleteTenantPriceHandler)
+
+	// 订阅管理
+	tenantSubscriptionCRUDGroup := tenantSubscriptionGroup.Group("/subscriptions")
+	tenantSubscriptionCRUDGroup.Post("/", subscription.CreateTenantSubscriptionHandler)
+	tenantSubscriptionCRUDGroup.Get("/", subscription.ListTenantSubscriptionsHandler)
+	tenantSubscriptionCRUDGroup.Get("/:id", subscription.GetTenantSubscriptionHandler)
+	tenantSubscriptionCRUDGroup.Post("/:id/cancel", subscription.CancelTenantSubscriptionHandler)
+
+	// 优惠券管理
+	tenantCouponGroup := tenantSubscriptionGroup.Group("/coupons")
+	tenantCouponGroup.Post("/", subscription.CreateTenantCouponHandler)
+	tenantCouponGroup.Get("/:code", subscription.GetTenantCouponHandler)
+
+	// 账单管理
+	tenantInvoiceGroup := tenantSubscriptionGroup.Group("/invoices")
+	tenantInvoiceGroup.Post("/", subscription.CreateTenantInvoiceHandler)
+	tenantInvoiceGroup.Get("/", subscription.ListTenantInvoicesHandler)
+
+	// 统计信息
+	tenantSubscriptionGroup.Get("/stats", subscription.GetTenantSubscriptionStatsHandler)
+
 	// 应用管理
 	appGroup := tenantAdminGroup.Group("/apps")
 	appGroup.Post("/", appHandler.CreateAppHandler)

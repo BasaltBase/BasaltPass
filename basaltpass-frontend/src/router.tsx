@@ -1,65 +1,73 @@
 import { Routes, Route } from 'react-router-dom'
-import ProtectedRoute from './components/ProtectedRoute'
-import PublicRoute from './components/PublicRoute'
-import Login from './pages/auth/Login'
-import Register from './pages/auth/Register'
-import Profile from './pages/user/profile/Index'
-import OauthSuccess from './pages/auth/OauthSuccess'
-import Roles from './pages/admin/user/Roles'
-import Users from './pages/admin/user/Users'
-import WalletIndex from './pages/user/wallet/Index'
-import Recharge from './pages/user/wallet/Recharge'
-import Withdraw from './pages/user/wallet/Withdraw'
-import History from './pages/user/wallet/History'
+import ProtectedRoute from '@components/ProtectedRoute'
+import PublicRoute from '@components/PublicRoute'
+import Login from '@pages/auth/Login'
+import Register from '@pages/auth/Register'
+import Profile from '@pages/user/profile/Index'
+import OauthSuccess from '@pages/auth/OauthSuccess'
+import Roles from '@pages/admin/user/Roles'
+import Users from '@pages/admin/user/Users'
+import WalletIndex from '@pages/user/wallet/Index'
+import Recharge from '@pages/user/wallet/Recharge'
+import Withdraw from '@pages/user/wallet/Withdraw'
+import History from '@pages/user/wallet/History'
 import WalletsAdmin from '@pages/admin/user/Wallets'
-import Logs from './pages/admin/Logs'
-import SecuritySettings from './pages/user/security/SecuritySettings'
-import TwoFA from './pages/user/security/TwoFA'
-import PasskeyManagement from './pages/user/security/PasskeyManagement'
-import Dashboard from './pages/user/Dashboard'
-import Settings from './pages/user/Settings'
-import Help from './pages/user/Help'
-import TeamIndex from './pages/user/team/Index'
-import CreateTeam from './pages/user/team/Create'
-import TeamDetail from './pages/user/team/Detail'
-import TeamMembers from './pages/user/team/Members'
-import EditTeam from './pages/user/team/Edit'
-import Notifications from './pages/user/Notifications'
-import AdminNotifications from './pages/admin/Notifications'
-import InviteTeam from './pages/user/team/Invite'
-import InvitationInbox from './pages/user/invitations/Inbox'
-import NotFound from './pages/NotFound'
-import LoginHistory from './pages/user/security/LoginHistory'
+import Logs from '@pages/admin/Logs'
+import SecuritySettings from '@pages/user/security/SecuritySettings'
+import TwoFA from '@pages/user/security/TwoFA'
+import PasskeyManagement from '@pages/user/security/PasskeyManagement'
+import Dashboard from '@pages/user/Dashboard'
+import Settings from '@pages/user/Settings'
+import Help from '@pages/user/Help'
+import TeamIndex from '@pages/user/team/Index'
+import CreateTeam from '@pages/user/team/Create'
+import TeamDetail from '@pages/user/team/Detail'
+import TeamMembers from '@pages/user/team/Members'
+import EditTeam from '@pages/user/team/Edit'
+import Notifications from '@pages/user/Notifications'
+import TenantNotifications from '@pages/tenant/Notifications'
+import AdminNotifications from '@pages/admin/Notifications'
+import InviteTeam from '@pages/user/team/Invite'
+import InvitationInbox from '@pages/user/invitations/Inbox'
+import NotFound from '@pages/NotFound'
+import LoginHistory from '@pages/user/security/LoginHistory'
 import OAuthClients from '@pages/admin/oauth/OAuthClients'
-import OAuthConsent from './pages/auth/OAuthConsent'
-import SubscriptionIndex from './pages/user/subscription/Index'
-import ProductsPage from './pages/user/subscription/Products'
-import AdminSubscriptions from './pages/admin/subscription/Subscriptions'
-import AdminProducts from './pages/admin/subscription/Products'
-import AdminPlans from './pages/admin/subscription/Plans'
-import AdminPrices from './pages/admin/subscription/Prices'
-import AdminCoupons from './pages/admin/subscription/Coupons'
-import Payment from './pages/user/payment/Payment'
-import SubscriptionCheckout from './pages/user/subscription/Checkout'
-import OrderConfirm from './pages/user/order/OrderConfirm'
-import OrderSuccess from './pages/user/order/OrderSuccess'
-import About from './pages/user/About'
+import OAuthConsent from '@pages/auth/OAuthConsent'
+import SubscriptionIndex from '@pages/user/subscription/Index'
+import ProductsPage from '@pages/user/subscription/Products'
+import AdminSubscriptions from '@pages/admin/subscription/Subscriptions'
+import AdminProducts from '@pages/admin/subscription/Products'
+import AdminPlans from '@pages/admin/subscription/Plans'
+import AdminPrices from '@pages/admin/subscription/Prices'
+import AdminCoupons from '@pages/admin/subscription/Coupons'
+import Payment from '@pages/user/payment/Payment'
+import SubscriptionCheckout from '@pages/user/subscription/Checkout'
+import OrderConfirm from '@pages/user/order/OrderConfirm'
+import OrderSuccess from '@pages/user/order/OrderSuccess'
+import About from '@pages/user/About'
 import TenantList from '@pages/admin/tenant/TenantList'
 import CreateTenant from '@pages/admin/tenant/CreateTenant'
-import AppList from './pages/admin/app/AppList'
-import CreateApp from './pages/admin/app/CreateApp'
-import AdminDashboard from './pages/admin/Dashboard'
+import AppList from '@pages/admin/app/AppList'
+import CreateApp from '@pages/admin/app/CreateApp'
+import AdminDashboard from '@pages/admin/Dashboard'
 import OAuthClientConfig from '@pages/admin/oauth/OAuthClientConfig'
-import TenantDashboard from './pages/tenant/Dashboard'
-import TenantApps from './pages/tenant/Apps'
-import TenantInfo from './pages/tenant/TenantInfo'
-import AppDetail from './pages/tenant/AppDetail'
-import AppSettings from './pages/tenant/AppSettings'
-import AppStats from './pages/tenant/AppStats'
-import TenantOAuthClients from './pages/tenant/OAuthClients'
-import TenantUserManagement from './pages/tenant/UserManagement'
-import AppUserManagement from './pages/tenant/app/AppUserManagement'
-import TenantNotifications from './pages/tenant/Notifications'
+import TenantDashboard from '@pages/tenant/Dashboard'
+import TenantApps from '@pages/tenant/Apps'
+import TenantInfo from '@pages/tenant/TenantInfo'
+import AppDetail from '@pages/tenant/AppDetail'
+import AppSettings from '@pages/tenant/AppSettings'
+import AppStats from '@pages/tenant/AppStats'
+import TenantOAuthClients from '@pages/tenant/OAuthClients'
+import TenantUserManagement from '@pages/tenant/UserManagement'
+import AppUserManagement from '@pages/tenant/app/AppUserManagement'
+import TenantRoleManagement from '@pages/tenant/RoleManagement'
+import TenantSubscriptionDashboard from '@pages/tenant/subscription/Dashboard'
+import TenantProducts from '@pages/tenant/subscription/Products'
+import TenantSubscriptions from '@pages/tenant/subscription/Subscriptions'
+import SubscriptionStatusManagement from '@pages/tenant/SubscriptionStatusManagement'
+import CouponManagement from '@pages/tenant/CouponManagement'
+import PlanManagement from '@pages/tenant/PlanManagement'
+import PriceManagement from '@pages/tenant/PriceManagement'
 
 export default function AppRouter() {
   return (
@@ -368,6 +376,49 @@ export default function AppRouter() {
           <TenantNotifications />
         </ProtectedRoute>
       } />
+      <Route path="/tenant/roles" element={
+        <ProtectedRoute>
+          <TenantRoleManagement />
+        </ProtectedRoute>
+      } />
+      
+      {/* 租户订阅管理页面 */}
+      <Route path="/tenant/subscriptions" element={
+        <ProtectedRoute>
+          <TenantSubscriptionDashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/tenant/subscriptions/products" element={
+        <ProtectedRoute>
+          <TenantProducts />
+        </ProtectedRoute>
+      } />
+      <Route path="/tenant/subscriptions/plans" element={
+        <ProtectedRoute>
+          <TenantSubscriptions />
+        </ProtectedRoute>
+      } />
+      <Route path="/tenant/subscription-status" element={
+        <ProtectedRoute>
+          <SubscriptionStatusManagement />
+        </ProtectedRoute>
+      } />
+      <Route path="/tenant/coupons" element={
+        <ProtectedRoute>
+          <CouponManagement />
+        </ProtectedRoute>
+      } />
+      <Route path="/tenant/plans" element={
+        <ProtectedRoute>
+          <PlanManagement />
+        </ProtectedRoute>
+      } />
+      <Route path="/tenant/prices" element={
+        <ProtectedRoute>
+          <PriceManagement />
+        </ProtectedRoute>
+      } />
+      
       <Route path="/tenant/apps/:id/users" element={
         <ProtectedRoute>
           <AppUserManagement />

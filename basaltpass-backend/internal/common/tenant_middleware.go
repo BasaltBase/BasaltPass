@@ -256,3 +256,13 @@ func GetAppIDFromContext(c *fiber.Ctx) uint {
 	}
 	return 0
 }
+
+// GetUserIDFromContext 从上下文获取用户ID
+func GetUserIDFromContext(c *fiber.Ctx) *uint {
+	if userID := c.Locals("userID"); userID != nil {
+		if uid, ok := userID.(uint); ok {
+			return &uid
+		}
+	}
+	return nil
+}

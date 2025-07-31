@@ -12,7 +12,9 @@ import {
   BellIcon,
   KeyIcon,
   ShoppingCartIcon,
-  InformationCircleIcon
+  InformationCircleIcon,
+  RocketLaunchIcon,
+  CurrencyDollarIcon
 } from '@heroicons/react/24/outline'
 
 interface NavigationItem {
@@ -55,24 +57,26 @@ const navigation: NavigationItem[] = [
     icon: BellIcon,
     children: [
       { name: '发送通知', href: '/tenant/notifications', icon: BellIcon },
-      { name: '消息中心', href: '/tenant/messages', icon: DocumentTextIcon },
+      { name: '通知中心（用户）', href: '/notifications', icon: DocumentTextIcon },
     ]
   },
   {
-    name: '商品订阅',
+    name: '订阅管理',
     icon: CreditCardIcon,
     children: [
-      { name: '我的订阅', href: '/tenant/subscriptions', icon: CreditCardIcon },
-      { name: '商品目录', href: '/tenant/products', icon: ShoppingCartIcon },
-      { name: '套餐升级', href: '/tenant/plans', icon: GiftIcon },
-      { name: '账单历史', href: '/tenant/billing', icon: DocumentTextIcon },
+      { name: '订阅概览', href: '/tenant/subscriptions', icon: ChartBarIcon },
+      { name: '产品管理', href: '/tenant/subscriptions/products', icon: CubeIcon },
+      { name: '套餐管理', href: '/tenant/plans', icon: RocketLaunchIcon },
+      { name: '定价管理', href: '/tenant/prices', icon: CurrencyDollarIcon },
+      { name: '优惠券管理', href: '/tenant/coupons', icon: GiftIcon },
+      { name: '状态管理', href: '/tenant/subscription-status', icon: CreditCardIcon },
     ]
   },
 ]
 
 export default function TenantNavigation() {
   const location = useLocation()
-  const [expandedSections, setExpandedSections] = useState<string[]>(['应用管理', '商品订阅'])
+  const [expandedSections, setExpandedSections] = useState<string[]>(['应用管理', '订阅管理'])
 
   const toggleSection = (sectionName: string) => {
     setExpandedSections(prev => 
