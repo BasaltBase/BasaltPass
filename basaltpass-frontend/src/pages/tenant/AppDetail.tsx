@@ -11,7 +11,11 @@ import {
   ClipboardDocumentIcon,
   CheckIcon,
   EyeIcon,
-  EyeSlashIcon
+  EyeSlashIcon,
+  ShieldCheckIcon,
+  LockClosedIcon,
+  UserGroupIcon,
+  ArrowRightIcon
 } from '@heroicons/react/24/outline'
 import TenantLayout from '../../components/TenantLayout'
 import { tenantAppApi, TenantApp } from '../../api/tenantApp'
@@ -245,6 +249,138 @@ export default function AppDetail() {
                     <dt className="text-sm font-medium text-gray-500 truncate">今日请求</dt>
                     <dd className="text-lg font-medium text-gray-900">{app.stats?.requests_today || 0}</dd>
                   </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 权限控制中心 */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
+          <div className="px-6 py-4 border-b border-blue-200">
+            <h3 className="text-lg font-medium text-gray-900 flex items-center">
+              <ShieldCheckIcon className="h-5 w-5 mr-2 text-blue-600" />
+              权限控制中心
+            </h3>
+            <p className="mt-1 text-sm text-gray-600">
+              管理应用的用户权限、角色分配和访问控制
+            </p>
+          </div>
+          <div className="px-6 py-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* 用户管理 */}
+              <Link
+                to={`/tenant/apps/${app.id}/users`}
+                className="group relative bg-white rounded-lg p-6 border-2 border-gray-200 hover:border-blue-300 transition-all duration-200 hover:shadow-md"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <UserGroupIcon className="h-8 w-8 text-blue-600 group-hover:text-blue-700" />
+                    </div>
+                    <div className="ml-4">
+                      <h4 className="text-lg font-medium text-gray-900 group-hover:text-blue-900">
+                        用户管理
+                      </h4>
+                      <p className="text-sm text-gray-500">
+                        管理用户访问权限
+                      </p>
+                    </div>
+                  </div>
+                  <ArrowRightIcon className="h-5 w-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
+                </div>
+                <div className="mt-3 flex items-center text-sm text-gray-500">
+                  <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                    {app.stats?.total_users || 0} 用户
+                  </span>
+                </div>
+              </Link>
+
+              {/* 角色管理 */}
+              <Link
+                to={`/tenant/apps/${app.id}/roles`}
+                className="group relative bg-white rounded-lg p-6 border-2 border-gray-200 hover:border-green-300 transition-all duration-200 hover:shadow-md"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <ShieldCheckIcon className="h-8 w-8 text-green-600 group-hover:text-green-700" />
+                    </div>
+                    <div className="ml-4">
+                      <h4 className="text-lg font-medium text-gray-900 group-hover:text-green-900">
+                        角色管理
+                      </h4>
+                      <p className="text-sm text-gray-500">
+                        创建和配置用户角色
+                      </p>
+                    </div>
+                  </div>
+                  <ArrowRightIcon className="h-5 w-5 text-gray-400 group-hover:text-green-600 transition-colors" />
+                </div>
+                <div className="mt-3 flex items-center text-sm text-gray-500">
+                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                    角色与权限
+                  </span>
+                </div>
+              </Link>
+
+              {/* 权限管理 */}
+              <Link
+                to={`/tenant/apps/${app.id}/permissions`}
+                className="group relative bg-white rounded-lg p-6 border-2 border-gray-200 hover:border-purple-300 transition-all duration-200 hover:shadow-md"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <LockClosedIcon className="h-8 w-8 text-purple-600 group-hover:text-purple-700" />
+                    </div>
+                    <div className="ml-4">
+                      <h4 className="text-lg font-medium text-gray-900 group-hover:text-purple-900">
+                        权限管理
+                      </h4>
+                      <p className="text-sm text-gray-500">
+                        定义和分类权限
+                      </p>
+                    </div>
+                  </div>
+                  <ArrowRightIcon className="h-5 w-5 text-gray-400 group-hover:text-purple-600 transition-colors" />
+                </div>
+                <div className="mt-3 flex items-center text-sm text-gray-500">
+                  <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-medium">
+                    权限配置
+                  </span>
+                </div>
+              </Link>
+            </div>
+
+            {/* 快速操作 */}
+            <div className="mt-6 pt-4 border-t border-blue-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-900">快速开始</h4>
+                  <p className="text-xs text-gray-600 mt-1">
+                    为新应用快速设置权限体系
+                  </p>
+                </div>
+                <div className="flex space-x-3">
+                  <Link
+                    to={`/tenant/apps/${app.id}/permissions`}
+                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 transition-colors"
+                  >
+                    创建权限
+                  </Link>
+                  <Link
+                    to={`/tenant/apps/${app.id}/roles`}
+                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 transition-colors"
+                  >
+                    创建角色
+                  </Link>
+                  <Link
+                    to={`/tenant/apps/${app.id}/users`}
+                    className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                  >
+                    分配权限
+                  </Link>
                 </div>
               </div>
             </div>

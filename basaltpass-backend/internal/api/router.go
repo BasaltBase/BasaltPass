@@ -3,6 +3,7 @@ package api
 import (
 	"basaltpass-backend/internal/admin"
 	appHandler "basaltpass-backend/internal/app"
+	"basaltpass-backend/internal/app_permission"
 	"basaltpass-backend/internal/app_user"
 	"basaltpass-backend/internal/auth"
 	"basaltpass-backend/internal/common"
@@ -154,7 +155,11 @@ func RegisterRoutes(app *fiber.App) {
 	// 优惠券管理
 	tenantCouponGroup := tenantSubscriptionGroup.Group("/coupons")
 	tenantCouponGroup.Post("/", subscription.CreateTenantCouponHandler)
+	tenantCouponGroup.Get("/", subscription.ListTenantCouponsHandler)
 	tenantCouponGroup.Get("/:code", subscription.GetTenantCouponHandler)
+	tenantCouponGroup.Put("/:code", subscription.UpdateTenantCouponHandler)
+	tenantCouponGroup.Delete("/:code", subscription.DeleteTenantCouponHandler)
+	tenantCouponGroup.Get("/:code/validate", subscription.ValidateTenantCouponHandler)
 
 	// 账单管理
 	tenantInvoiceGroup := tenantSubscriptionGroup.Group("/invoices")
@@ -206,12 +211,33 @@ func RegisterRoutes(app *fiber.App) {
 	tenantOAuthGroup.Delete("/:client_id", oauth.TenantDeleteOAuthClientHandler)
 	tenantOAuthGroup.Post("/:client_id/regenerate-secret", oauth.TenantRegenerateClientSecretHandler)
 
-	// 租户应用用户管理路由
+	// 租户应用管理路由
 	tenantAppGroup := tenantGroup.Group("/apps")
-	tenantAppGroup.Get("/:app_id/users", app_user.GetAppUsersByStatusHandler)
+
+	// 应用权限管理路由
+	tenantAppGroup.Get("/:app_id/permissions", app_permission.GetAppPermissions)
+	tenantAppGroup.Post("/:app_id/permissions", app_permission.CreateAppPermission)
+	tenantAppGroup.Put("/:app_id/permissions/:permission_id", app_permission.UpdateAppPermission)
+	tenantAppGroup.Delete("/:app_id/permissions/:permission_id", app_permission.DeleteAppPermission)
+
+	// 应用角色管理路由
+	tenantAppGroup.Get("/:app_id/roles", app_permission.GetAppRoles)
+	tenantAppGroup.Post("/:app_id/roles", app_permission.CreateAppRole)
+	tenantAppGroup.Put("/:app_id/roles/:role_id", app_permission.UpdateAppRole)
+	tenantAppGroup.Delete("/:app_id/roles/:role_id", app_permission.DeleteAppRole)
+
+	// 应用用户管理路由（包含权限）
+	tenantAppGroup.Get("/:app_id/users", app_permission.GetAppUsers)
 	tenantAppGroup.Get("/:app_id/users/by-status", app_user.GetAppUsersByStatusHandler)
 	tenantAppGroup.Get("/:app_id/users/stats", app_user.GetAppUserStatsHandler)
 	tenantAppGroup.Put("/:app_id/users/:user_id/status", app_user.UpdateAppUserStatusHandler)
+
+	// 应用用户权限管理路由
+	tenantAppGroup.Get("/:app_id/users/:user_id/permissions", app_permission.GetUserPermissions)
+	tenantAppGroup.Post("/:app_id/users/:user_id/permissions", app_permission.GrantUserPermissions)
+	tenantAppGroup.Delete("/:app_id/users/:user_id/permissions/:permission_id", app_permission.RevokeUserPermission)
+	tenantAppGroup.Post("/:app_id/users/:user_id/roles", app_permission.AssignUserRoles)
+	tenantAppGroup.Delete("/:app_id/users/:user_id/roles/:role_id", app_permission.RevokeUserRole)
 
 	// 原有的系统级管理员路由（保持向后兼容）
 	adminGroup := v1.Group("/admin", common.JWTMiddleware(), common.AdminMiddleware())

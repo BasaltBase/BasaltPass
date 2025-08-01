@@ -43,42 +43,42 @@ export default function TenantSubscriptionDashboard() {
     {
       name: '产品管理',
       description: '管理产品目录和产品信息',
-      href: '/tenant/subscription/products',
+      href: '/tenant/subscriptions/products',
       icon: CubeIcon,
       color: 'bg-blue-500',
     },
     {
       name: '套餐管理',
       description: '配置产品套餐和功能特性',
-      href: '/tenant/subscription/plans',
+      href: '/tenant/plans',
       icon: ChartBarIcon,
       color: 'bg-green-500',
     },
     {
       name: '定价管理',
       description: '设置套餐价格和计费规则',
-      href: '/tenant/subscription/prices',
+      href: '/tenant/prices',
       icon: CurrencyDollarIcon,
       color: 'bg-yellow-500',
     },
     {
       name: '订阅管理',
       description: '查看和管理客户订阅',
-      href: '/tenant/subscription/subscriptions',
+      href: '/tenant/subscriptions/plans',
       icon: UserGroupIcon,
       color: 'bg-purple-500',
     },
     {
       name: '账单管理',
       description: '查看账单和支付记录',
-      href: '/tenant/subscription/invoices',
+      href: '/tenant/invoices',
       icon: DocumentTextIcon,
       color: 'bg-indigo-500',
     },
     {
       name: '优惠券管理',
       description: '创建和管理优惠券',
-      href: '/tenant/subscription/coupons',
+      href: '/tenant/coupons',
       icon: TicketIcon,
       color: 'bg-pink-500',
     },
@@ -245,28 +245,28 @@ export default function TenantSubscriptionDashboard() {
             <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">快速操作</h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <Link
-                to="/tenant/subscription/products?action=create"
+                to="/tenant/subscriptions/products?action=create"
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 <PlusIcon className="h-4 w-4 mr-2" />
                 创建产品
               </Link>
               <Link
-                to="/tenant/subscription/plans?action=create"
+                to="/tenant/plans?action=create"
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
               >
                 <PlusIcon className="h-4 w-4 mr-2" />
                 创建套餐
               </Link>
               <Link
-                to="/tenant/subscription/prices?action=create"
+                to="/tenant/prices?action=create"
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
               >
                 <PlusIcon className="h-4 w-4 mr-2" />
                 设置价格
               </Link>
               <Link
-                to="/tenant/subscription/coupons?action=create"
+                to="/tenant/coupons?action=create"
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-pink-600 hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500"
               >
                 <PlusIcon className="h-4 w-4 mr-2" />

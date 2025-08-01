@@ -47,65 +47,16 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
       setCoupons(response.data || []);
     } catch (error) {
       console.error('Failed to fetch coupons:', error);
-      // 如果API还未实现，暂时使用模拟数据
-      const mockCoupons: tenantSubscriptionAPI.TenantCoupon[] = [
-        {
-          ID: 1,
-          Code: 'WELCOME10',
-          Name: '新用户欢迎券',
-          DiscountType: 'percentage',
-          DiscountValue: 1000, // 10% (存储为基点，10% = 1000 基点)
-          Duration: 'once',
-          MaxRedemptions: 100,
-          RedeemedCount: 15,
-          ExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          IsActive: true,
-          Metadata: { description: '新用户专属优惠' },
-          CreatedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-          UpdatedAt: new Date().toISOString()
-        },
-        {
-          ID: 2,
-          Code: 'SAVE50',
-          Name: '固定金额折扣券',
-          DiscountType: 'fixed_amount',
-          DiscountValue: 5000, // ¥50 (存储为分)
-          Duration: 'repeating',
-          DurationInCycles: 3,
-          MaxRedemptions: 50,
-          RedeemedCount: 5,
-          IsActive: true,
-          Metadata: { description: '限时优惠活动' },
-          CreatedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-          UpdatedAt: new Date().toISOString()
-        },
-        {
-          ID: 3,
-          Code: 'EXPIRED20',
-          Name: '已过期优惠券',
-          DiscountType: 'percentage',
-          DiscountValue: 2000, // 20%
-          Duration: 'once',
-          MaxRedemptions: 25,
-          RedeemedCount: 12,
-          ExpiresAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-          IsActive: false,
-          Metadata: { description: '已过期的测试券' },
-          CreatedAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-          UpdatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
-        }
-      ];
-      
-      setCoupons(mockCoupons);
-      console.warn('使用模拟优惠券数据，API可能还未实现');
+      alert('获取优惠券列表失败，请检查网络连接或联系管理员');
+      setCoupons([]);
     } finally {
       setLoading(false);
     }
   };
 
   const filteredCoupons = coupons.filter(coupon => {
-    const matchesSearch = coupon.Code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         coupon.Name?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (coupon.Code || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (coupon.Name || '').toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = filterStatus === 'all' || 
                          (filterStatus === 'active' && coupon.IsActive && !isExpired(coupon)) ||
@@ -125,14 +76,14 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
     setShowCreateModal(true);
   };
 
-  const handleDeleteCoupon = async (couponId: number, couponCode: string) => {
+  const handleDeleteCoupon = async (couponCode: string) => {
     if (!confirm(`确定要删除优惠券"${couponCode}"吗？`)) {
       return;
     }
 
     try {
-      await deleteTenantCoupon(couponId);
-      setCoupons(prev => prev.filter(c => c.ID !== couponId));
+      await deleteTenantCoupon(couponCode);
+      setCoupons(prev => prev.filter(c => c.Code !== couponCode));
       alert('优惠券删除成功');
     } catch (error: any) {
       console.error('Failed to delete coupon:', error);
@@ -140,11 +91,11 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
     }
   };
 
-  const handleToggleStatus = async (couponId: number, currentStatus: boolean) => {
+  const handleToggleStatus = async (couponCode: string, currentStatus: boolean) => {
     try {
-      await updateTenantCoupon(couponId, { is_active: !currentStatus });
+      await updateTenantCoupon(couponCode, { is_active: !currentStatus });
       setCoupons(prev => prev.map(c => 
-        c.ID === couponId ? { ...c, IsActive: !currentStatus } : c
+        c.Code === couponCode ? { ...c, IsActive: !currentStatus } : c
       ));
       alert(`优惠券已${!currentStatus ? '启用' : '停用'}`);
     } catch (error: any) {
@@ -154,7 +105,7 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
   };
 
   const formatDiscountValue = (coupon: tenantSubscriptionAPI.TenantCoupon) => {
-    if (coupon.DiscountType === 'percentage') {
+    if (coupon.DiscountType === 'percent') {
       return `${(coupon.DiscountValue / 100).toFixed(1)}%`;
     } else {
       return `¥${(coupon.DiscountValue / 100).toFixed(2)}`;
@@ -285,7 +236,7 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
                   <dl>
                     <dt className="text-sm font-medium text-gray-500 truncate">总使用次数</dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {coupons.reduce((sum, c) => sum + c.RedeemedCount, 0)}
+                      {coupons.reduce((sum, c) => sum + (c.RedeemedCount || 0), 0)}
                     </dd>
                   </dl>
                 </div>
@@ -352,13 +303,13 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredCoupons.map((coupon) => {
+            {filteredCoupons.map((coupon, index) => {
               const status = getCouponStatus(coupon);
               const StatusIcon = status.icon;
               
               return (
                 <div
-                  key={coupon.ID}
+                  key={coupon.ID || coupon.Code || `coupon-${index}`}
                   className={`bg-white overflow-hidden shadow rounded-lg border-l-4 ${
                     status.color === 'green' ? 'border-green-400' :
                     status.color === 'red' ? 'border-red-400' :
@@ -370,7 +321,7 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
                         <div className="flex-shrink-0">
-                          {coupon.DiscountType === 'percentage' ? (
+                          {coupon.DiscountType === 'percent' ? (
                             <PercentBadgeIcon className="h-6 w-6 text-blue-600" />
                           ) : (
                             <GiftIcon className="h-6 w-6 text-green-600" />
@@ -447,7 +398,7 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
                         </span>
                         <div className="flex space-x-1">
                           <button
-                            onClick={() => handleToggleStatus(coupon.ID, coupon.IsActive)}
+                            onClick={() => handleToggleStatus(coupon.Code, coupon.IsActive)}
                             className={`inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded ${
                               coupon.IsActive 
                                 ? 'text-red-700 bg-red-100 hover:bg-red-200' 
@@ -469,7 +420,7 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
                         编辑
                       </button>
                       <button
-                        onClick={() => handleDeleteCoupon(coupon.ID, coupon.Code)}
+                        onClick={() => handleDeleteCoupon(coupon.Code)}
                         className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                       >
                         <TrashIcon className="h-4 w-4 mr-1" />
@@ -508,9 +459,9 @@ const CreateCouponModal: React.FC<{
   const [formData, setFormData] = useState({
     code: coupon?.Code || '',
     name: coupon?.Name || '',
-    discount_type: coupon?.DiscountType || 'percentage',
-    discount_value: coupon?.DiscountValue ? (coupon.DiscountValue / (coupon.DiscountType === 'percentage' ? 100 : 100)).toString() : '',
-    duration: coupon?.Duration || 'once',
+    discount_type: coupon?.DiscountType || 'percent' as 'percent' | 'fixed',
+    discount_value: coupon?.DiscountValue ? (coupon.DiscountValue / (coupon.DiscountType === 'percent' ? 100 : 100)).toString() : '',
+    duration: coupon?.Duration || 'once' as 'once' | 'repeating' | 'forever',
     duration_in_cycles: coupon?.DurationInCycles?.toString() || '',
     max_redemptions: coupon?.MaxRedemptions?.toString() || '',
     expires_at: coupon?.ExpiresAt ? new Date(coupon.ExpiresAt).toISOString().split('T')[0] : '',
@@ -529,11 +480,11 @@ const CreateCouponModal: React.FC<{
       const submitData: tenantSubscriptionAPI.CreateTenantCouponRequest = {
         code: formData.code,
         name: formData.name,
-        discount_type: formData.discount_type,
-        discount_value: formData.discount_type === 'percentage' 
+        discount_type: formData.discount_type as 'percent' | 'fixed',
+        discount_value: formData.discount_type === 'percent' 
           ? Math.round(parseFloat(formData.discount_value) * 100) // 转换为基点
           : Math.round(parseFloat(formData.discount_value) * 100), // 转换为分
-        duration: formData.duration,
+        duration: formData.duration as 'once' | 'repeating' | 'forever',
         duration_in_cycles: formData.duration_in_cycles ? parseInt(formData.duration_in_cycles) : undefined,
         max_redemptions: formData.max_redemptions ? parseInt(formData.max_redemptions) : undefined,
         expires_at: formData.expires_at || undefined,
@@ -544,7 +495,7 @@ const CreateCouponModal: React.FC<{
 
       if (coupon) {
         // 更新优惠券
-        await updateTenantCoupon(coupon.ID, submitData as tenantSubscriptionAPI.UpdateTenantCouponRequest);
+        await updateTenantCoupon(coupon.Code, submitData as tenantSubscriptionAPI.UpdateTenantCouponRequest);
         alert('优惠券更新成功');
       } else {
         // 创建优惠券
@@ -608,11 +559,11 @@ const CreateCouponModal: React.FC<{
                 <select
                   required
                   value={formData.discount_type}
-                  onChange={(e) => setFormData({ ...formData, discount_type: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, discount_type: e.target.value as 'percent' | 'fixed' })}
                   className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value="percentage">百分比折扣</option>
-                  <option value="fixed_amount">固定金额折扣</option>
+                  <option value="percent">百分比折扣</option>
+                  <option value="fixed">固定金额折扣</option>
                 </select>
               </div>
               
@@ -624,15 +575,15 @@ const CreateCouponModal: React.FC<{
                   type="number"
                   step="0.01"
                   min="0"
-                  max={formData.discount_type === 'percentage' ? '100' : undefined}
+                  max={formData.discount_type === 'percent' ? '100' : undefined}
                   required
                   value={formData.discount_value}
                   onChange={(e) => setFormData({ ...formData, discount_value: e.target.value })}
                   className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder={formData.discount_type === 'percentage' ? '输入百分比 (如: 10)' : '输入金额 (如: 50)'}
+                  placeholder={formData.discount_type === 'percent' ? '输入百分比 (如: 10)' : '输入金额 (如: 50)'}
                 />
                 <p className="mt-1 text-sm text-gray-500">
-                  {formData.discount_type === 'percentage' ? '输入1-100之间的数字' : '输入金额（元）'}
+                  {formData.discount_type === 'percent' ? '输入1-100之间的数字' : '输入金额（元）'}
                 </p>
               </div>
             </div>
@@ -645,7 +596,7 @@ const CreateCouponModal: React.FC<{
                 <select
                   required
                   value={formData.duration}
-                  onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, duration: e.target.value as 'once' | 'repeating' | 'forever' })}
                   className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="once">一次性</option>

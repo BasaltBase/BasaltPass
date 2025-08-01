@@ -635,16 +635,28 @@ func (s *TenantService) CancelSubscription(id uint, customerID *uint, req *Cance
 
 // CreateCoupon 创建优惠券
 func (s *TenantService) CreateCoupon(req *CreateCouponRequest) (*model.Coupon, error) {
+	// 设置默认值
+	duration := req.Duration
+	if duration == "" {
+		duration = model.CouponDurationOnce
+	}
+
+	isActive := true
+	if req.IsActive != nil {
+		isActive = *req.IsActive
+	}
+
 	coupon := &model.Coupon{
+		TenantID:         s.tenantID,
 		Code:             req.Code,
 		Name:             req.Name,
 		DiscountType:     req.DiscountType,
 		DiscountValue:    req.DiscountValue,
-		Duration:         req.Duration,
+		Duration:         duration,
 		DurationInCycles: req.DurationInCycles,
 		MaxRedemptions:   req.MaxRedemptions,
 		ExpiresAt:        req.ExpiresAt,
-		IsActive:         true,
+		IsActive:         isActive,
 		Metadata:         model.JSONB(req.Metadata),
 	}
 
@@ -675,6 +687,174 @@ func (s *TenantService) GetCoupon(code string) (*model.Coupon, error) {
 	}
 
 	return &coupon, nil
+}
+
+// ListCoupons 获取优惠券列表
+func (s *TenantService) ListCoupons(req *ListCouponsRequest) ([]*model.Coupon, int64, error) {
+	var coupons []*model.Coupon
+	var total int64
+
+	query := s.db.Model(&model.Coupon{})
+
+	// 添加租户过滤
+	if s.tenantID != nil {
+		query = query.Where("tenant_id = ?", *s.tenantID)
+	} else {
+		query = query.Where("tenant_id IS NULL")
+	}
+
+	// 添加过滤条件
+	if req.Code != nil && *req.Code != "" {
+		query = query.Where("code ILIKE ?", "%"+*req.Code+"%")
+	}
+
+	if req.DiscountType != nil && *req.DiscountType != "" {
+		query = query.Where("discount_type = ?", *req.DiscountType)
+	}
+
+	if req.IsActive != nil {
+		query = query.Where("is_active = ?", *req.IsActive)
+	}
+
+	// 获取总数
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, fmt.Errorf("获取优惠券总数失败: %w", err)
+	}
+
+	// 分页和排序
+	offset := (req.Page - 1) * req.PageSize
+	if err := query.Order("created_at DESC").
+		Offset(offset).
+		Limit(req.PageSize).
+		Find(&coupons).Error; err != nil {
+		return nil, 0, fmt.Errorf("获取优惠券列表失败: %w", err)
+	}
+
+	return coupons, total, nil
+}
+
+// UpdateCoupon 更新优惠券
+func (s *TenantService) UpdateCoupon(code string, req *UpdateCouponRequest) (*model.Coupon, error) {
+	var coupon model.Coupon
+	query := s.db.Where("code = ?", code)
+
+	// 添加租户过滤
+	if s.tenantID != nil {
+		query = query.Where("tenant_id = ?", *s.tenantID)
+	} else {
+		query = query.Where("tenant_id IS NULL")
+	}
+
+	if err := query.First(&coupon).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("优惠券不存在")
+		}
+		return nil, fmt.Errorf("获取优惠券失败: %w", err)
+	}
+
+	// 构建更新数据
+	updates := make(map[string]interface{})
+
+	if req.Name != nil {
+		updates["name"] = *req.Name
+	}
+
+	if req.DiscountValue != nil {
+		updates["discount_value"] = *req.DiscountValue
+	}
+
+	if req.MaxRedemptions != nil {
+		updates["max_redemptions"] = *req.MaxRedemptions
+	}
+
+	if req.ExpiresAt != nil {
+		updates["expires_at"] = *req.ExpiresAt
+	}
+
+	if req.IsActive != nil {
+		updates["is_active"] = *req.IsActive
+	}
+
+	if req.Metadata != nil {
+		updates["metadata"] = model.JSONB(*req.Metadata)
+	}
+
+	// 执行更新
+	if len(updates) > 0 {
+		if err := s.db.Model(&coupon).Updates(updates).Error; err != nil {
+			return nil, fmt.Errorf("更新优惠券失败: %w", err)
+		}
+	}
+
+	// 重新获取更新后的数据
+	if err := query.First(&coupon).Error; err != nil {
+		return nil, fmt.Errorf("获取更新后的优惠券失败: %w", err)
+	}
+
+	return &coupon, nil
+}
+
+// DeleteCoupon 删除优惠券
+func (s *TenantService) DeleteCoupon(code string) error {
+	query := s.db.Where("code = ?", code)
+
+	// 添加租户过滤
+	if s.tenantID != nil {
+		query = query.Where("tenant_id = ?", *s.tenantID)
+	} else {
+		query = query.Where("tenant_id IS NULL")
+	}
+
+	// 检查优惠券是否存在
+	var coupon model.Coupon
+	if err := query.First(&coupon).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return fmt.Errorf("优惠券不存在")
+		}
+		return fmt.Errorf("获取优惠券失败: %w", err)
+	}
+
+	// 检查是否有关联的订阅
+	var subscriptionCount int64
+	if err := s.db.Model(&model.Subscription{}).Where("coupon_id = ?", coupon.ID).Count(&subscriptionCount).Error; err != nil {
+		return fmt.Errorf("检查关联订阅失败: %w", err)
+	}
+
+	if subscriptionCount > 0 {
+		return fmt.Errorf("优惠券已被使用，无法删除")
+	}
+
+	// 执行删除
+	if err := s.db.Delete(&coupon).Error; err != nil {
+		return fmt.Errorf("删除优惠券失败: %w", err)
+	}
+
+	return nil
+}
+
+// ValidateCoupon 验证优惠券
+func (s *TenantService) ValidateCoupon(code string) (*model.Coupon, error) {
+	coupon, err := s.GetCoupon(code)
+	if err != nil {
+		return nil, err
+	}
+
+	// 检查优惠券是否激活
+	if !coupon.IsActive {
+		return nil, fmt.Errorf("优惠券已停用")
+	}
+
+	// 检查是否过期
+	if coupon.ExpiresAt != nil && coupon.ExpiresAt.Before(time.Now()) {
+		return nil, fmt.Errorf("优惠券已过期")
+	}
+
+	// 检查使用次数限制
+	if coupon.MaxRedemptions != nil && coupon.RedeemedCount >= *coupon.MaxRedemptions {
+		return nil, fmt.Errorf("优惠券已达到最大使用次数")
+	}
+
+	return coupon, nil
 }
 
 // ========== 账单管理 ==========

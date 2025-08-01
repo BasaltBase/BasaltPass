@@ -149,16 +149,17 @@ const (
 // Coupon 优惠券模型
 type Coupon struct {
 	gorm.Model
-	Code             string         `gorm:"uniqueIndex;size:64;not null"`
-	Name             string         `gorm:"size:255"` // 添加name字段
+	TenantID         *uint64        `gorm:"index"`
+	Code             string         `gorm:"size:64;not null"`
+	Name             string         `gorm:"size:255"`
 	DiscountType     DiscountType   `gorm:"size:20;not null"`
-	DiscountValue    int64          `gorm:"not null"` // 使用int64替代float64
-	Duration         CouponDuration `gorm:"size:20;not null"`
+	DiscountValue    int64          `gorm:"not null"`
+	Duration         CouponDuration `gorm:"size:20;not null;default:'once'"`
 	DurationInCycles *int
 	MaxRedemptions   *int
 	RedeemedCount    int `gorm:"not null;default:0"`
 	ExpiresAt        *time.Time
-	IsActive         bool  `gorm:"not null;default:true"` // 添加is_active字段
+	IsActive         bool  `gorm:"not null;default:true"`
 	Metadata         JSONB `gorm:"type:jsonb"`
 
 	// 关联

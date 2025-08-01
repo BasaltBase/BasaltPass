@@ -60,6 +60,8 @@ import AppStats from '@pages/tenant/AppStats'
 import TenantOAuthClients from '@pages/tenant/OAuthClients'
 import TenantUserManagement from '@pages/tenant/UserManagement'
 import AppUserManagement from '@pages/tenant/app/AppUserManagement'
+import AppRoleManagement from '@pages/tenant/app/AppRoleManagement'
+import AppPermissionManagement from '@pages/tenant/app/AppPermissionManagement'
 import TenantRoleManagement from '@pages/tenant/RoleManagement'
 import TenantSubscriptionDashboard from '@pages/tenant/subscription/Dashboard'
 import TenantProducts from '@pages/tenant/subscription/Products'
@@ -422,6 +424,16 @@ export default function AppRouter() {
       <Route path="/tenant/apps/:id/users" element={
         <ProtectedRoute>
           <AppUserManagement />
+        </ProtectedRoute>
+      } />
+      <Route path="/tenant/apps/:id/roles" element={
+        <ProtectedRoute>
+          <AppRoleManagement />
+        </ProtectedRoute>
+      } />
+      <Route path="/tenant/apps/:id/permissions" element={
+        <ProtectedRoute>
+          <AppPermissionManagement />
         </ProtectedRoute>
       } />
       

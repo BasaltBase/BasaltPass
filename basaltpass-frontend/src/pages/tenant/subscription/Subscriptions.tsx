@@ -57,7 +57,7 @@ export default function TenantSubscriptions() {
       if (cancelReason) {
         cancelData.reason = cancelReason
       }
-      await tenantSubscriptionAPI.cancelSubscription(cancelTarget.id, cancelData)
+      await tenantSubscriptionAPI.cancelSubscription(cancelTarget.ID, cancelData)
       await fetchData()
       setShowCancelModal(false)
       setCancelTarget(null)
@@ -73,10 +73,10 @@ export default function TenantSubscriptions() {
     if (!searchTerm) return true
     const searchLower = searchTerm.toLowerCase()
     return (
-      subscription.id.toString().includes(searchLower) ||
-      subscription.customer_id.toString().includes(searchLower) ||
-      subscription.current_price?.plan?.product?.name?.toLowerCase().includes(searchLower) ||
-      subscription.current_price?.plan?.display_name?.toLowerCase().includes(searchLower)
+      subscription.ID.toString().includes(searchLower) ||
+      subscription.CustomerID.toString().includes(searchLower) ||
+      subscription.CurrentPrice?.Plan?.Product?.Name?.toLowerCase().includes(searchLower) ||
+      subscription.CurrentPrice?.Plan?.DisplayName?.toLowerCase().includes(searchLower)
     )
   })
 
@@ -134,7 +134,7 @@ export default function TenantSubscriptions() {
           <ol className="inline-flex items-center space-x-1 md:space-x-3">
             <li className="inline-flex items-center">
               <Link
-                to="/tenant/subscription"
+                to="/tenant/subscriptions"
                 className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600"
               >
                 订阅系统
@@ -204,7 +204,7 @@ export default function TenantSubscriptions() {
           <ul className="divide-y divide-gray-200">
             {filteredSubscriptions.length > 0 ? (
               filteredSubscriptions.map((subscription) => (
-                <li key={subscription.id}>
+                <li key={subscription.ID}>
                   <div className="px-4 py-4">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
@@ -212,29 +212,29 @@ export default function TenantSubscriptions() {
                           <div className="flex-1">
                             <div className="flex items-center space-x-2">
                               <p className="text-sm font-medium text-blue-600">
-                                订阅 #{subscription.id}
+                                订阅 #{subscription.ID}
                               </p>
-                              {getStatusBadge(subscription.status)}
+                              {getStatusBadge(subscription.Status)}
                             </div>
                             <div className="mt-1 flex items-center space-x-4 text-sm text-gray-500">
-                              <span>客户ID: {subscription.customer_id}</span>
+                              <span>客户ID: {subscription.CustomerID}</span>
                               <span>•</span>
                               <span>
-                                产品: {subscription.current_price?.plan?.product?.name} - {subscription.current_price?.plan?.display_name}
+                                产品: {subscription.CurrentPrice?.Plan?.Product?.Name} - {subscription.CurrentPrice?.Plan?.DisplayName}
                               </span>
                               <span>•</span>
                               <span>
-                                价格: {tenantSubscriptionAPI.formatPrice(subscription.current_price?.amount_cents || 0, subscription.current_price?.currency || 'CNY')}
+                                价格: {tenantSubscriptionAPI.formatPrice(subscription.CurrentPrice?.AmountCents || 0, subscription.CurrentPrice?.Currency || 'CNY')}
                               </span>
                             </div>
                             <div className="mt-1 flex items-center space-x-4 text-sm text-gray-500">
-                              <span>开始时间: {formatDate(subscription.start_at)}</span>
+                              <span>开始时间: {formatDate(subscription.StartAt)}</span>
                               <span>•</span>
-                              <span>当前周期: {formatDate(subscription.current_period_start)} - {formatDate(subscription.current_period_end)}</span>
-                              {subscription.cancel_at && (
+                              <span>当前周期: {formatDate(subscription.CurrentPeriodStart)} - {formatDate(subscription.CurrentPeriodEnd)}</span>
+                              {subscription.CancelAt && (
                                 <>
                                   <span>•</span>
-                                  <span className="text-red-600">取消时间: {formatDate(subscription.cancel_at)}</span>
+                                  <span className="text-red-600">取消时间: {formatDate(subscription.CancelAt)}</span>
                                 </>
                               )}
                             </div>
@@ -242,7 +242,7 @@ export default function TenantSubscriptions() {
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
-                        {subscription.status === 'active' && (
+                        {subscription.Status === 'active' && (
                           <button
                             onClick={() => handleCancelClick(subscription)}
                             className="text-red-600 hover:text-red-900 text-sm font-medium"
@@ -251,7 +251,7 @@ export default function TenantSubscriptions() {
                           </button>
                         )}
                         <Link
-                          to={`/tenant/subscription/subscriptions/${subscription.id}`}
+                          to={`/tenant/subscriptions/detail/${subscription.ID}`}
                           className="text-blue-600 hover:text-blue-900 text-sm font-medium"
                         >
                           查看详情
@@ -300,10 +300,10 @@ export default function TenantSubscriptions() {
                 <h3 className="text-lg font-medium text-gray-900 mt-4">取消订阅</h3>
                 <div className="mt-2">
                   <p className="text-sm text-gray-500">
-                    确定要取消订阅 #{cancelTarget.id} 吗？
+                    确定要取消订阅 #{cancelTarget.ID} 吗？
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
-                    产品: {cancelTarget.current_price?.plan?.product?.name} - {cancelTarget.current_price?.plan?.display_name}
+                    产品: {cancelTarget.CurrentPrice?.Plan?.Product?.Name} - {cancelTarget.CurrentPrice?.Plan?.DisplayName}
                   </p>
                   <div className="mt-4">
                     <label className="block text-sm font-medium text-gray-700 mb-2 text-left">

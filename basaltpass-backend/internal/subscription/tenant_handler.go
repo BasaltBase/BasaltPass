@@ -466,6 +466,8 @@ func (h *TenantHandler) CancelTenantSubscriptionHandler(c *fiber.Ctx) error {
 
 // ========== 优惠券管理 ==========
 
+// ========== 优惠券管理 ==========
+
 // CreateTenantCouponHandler 创建优惠券
 func (h *TenantHandler) CreateTenantCouponHandler(c *fiber.Ctx) error {
 	var req CreateCouponRequest
@@ -485,6 +487,40 @@ func (h *TenantHandler) CreateTenantCouponHandler(c *fiber.Ctx) error {
 	})
 }
 
+// ListTenantCouponsHandler 获取优惠券列表
+func (h *TenantHandler) ListTenantCouponsHandler(c *fiber.Ctx) error {
+	var req ListCouponsRequest
+	if err := c.QueryParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "查询参数无效"})
+	}
+
+	// 设置默认分页参数
+	if req.Page <= 0 {
+		req.Page = 1
+	}
+	if req.PageSize <= 0 {
+		req.PageSize = 20
+	}
+
+	service := h.getTenantService(c)
+	coupons, total, err := service.ListCoupons(&req)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	totalPages := int((total + int64(req.PageSize) - 1) / int64(req.PageSize))
+
+	return c.JSON(fiber.Map{
+		"data": coupons,
+		"pagination": map[string]interface{}{
+			"page":        req.Page,
+			"page_size":   req.PageSize,
+			"total":       total,
+			"total_pages": totalPages,
+		},
+	})
+}
+
 // GetTenantCouponHandler 获取优惠券详情
 func (h *TenantHandler) GetTenantCouponHandler(c *fiber.Ctx) error {
 	code := c.Params("code")
@@ -499,6 +535,67 @@ func (h *TenantHandler) GetTenantCouponHandler(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{"data": coupon})
+}
+
+// UpdateTenantCouponHandler 更新优惠券
+func (h *TenantHandler) UpdateTenantCouponHandler(c *fiber.Ctx) error {
+	code := c.Params("code")
+	if code == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "优惠券代码无效"})
+	}
+
+	var req UpdateCouponRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
+	}
+
+	service := h.getTenantService(c)
+	coupon, err := service.UpdateCoupon(code, &req)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{
+		"data":    coupon,
+		"message": "优惠券更新成功",
+	})
+}
+
+// DeleteTenantCouponHandler 删除优惠券
+func (h *TenantHandler) DeleteTenantCouponHandler(c *fiber.Ctx) error {
+	code := c.Params("code")
+	if code == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "优惠券代码无效"})
+	}
+
+	service := h.getTenantService(c)
+	if err := service.DeleteCoupon(code); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"message": "优惠券删除成功"})
+}
+
+// ValidateTenantCouponHandler 验证优惠券
+func (h *TenantHandler) ValidateTenantCouponHandler(c *fiber.Ctx) error {
+	code := c.Params("code")
+	if code == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "优惠券代码无效"})
+	}
+
+	service := h.getTenantService(c)
+	coupon, err := service.ValidateCoupon(code)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"valid": false,
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"valid": true,
+		"data":  coupon,
+	})
 }
 
 // ========== 账单管理 ==========
@@ -663,8 +760,24 @@ func CreateTenantCouponHandler(c *fiber.Ctx) error {
 	return tenantSubscriptionHandler.CreateTenantCouponHandler(c)
 }
 
+func ListTenantCouponsHandler(c *fiber.Ctx) error {
+	return tenantSubscriptionHandler.ListTenantCouponsHandler(c)
+}
+
 func GetTenantCouponHandler(c *fiber.Ctx) error {
 	return tenantSubscriptionHandler.GetTenantCouponHandler(c)
+}
+
+func UpdateTenantCouponHandler(c *fiber.Ctx) error {
+	return tenantSubscriptionHandler.UpdateTenantCouponHandler(c)
+}
+
+func DeleteTenantCouponHandler(c *fiber.Ctx) error {
+	return tenantSubscriptionHandler.DeleteTenantCouponHandler(c)
+}
+
+func ValidateTenantCouponHandler(c *fiber.Ctx) error {
+	return tenantSubscriptionHandler.ValidateTenantCouponHandler(c)
 }
 
 // 租户账单管理处理器

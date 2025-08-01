@@ -11,7 +11,9 @@ import {
   Cog6ToothIcon,
   PlayIcon,
   StopIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  ShieldCheckIcon,
+  UsersIcon
 } from '@heroicons/react/24/outline'
 import TenantLayout from '../../components/TenantLayout'
 import { tenantAppApi, TenantApp } from '../../api/tenantApp'
@@ -248,6 +250,20 @@ export default function TenantAppList() {
                           <PlayIcon className="h-4 w-4" />
                         )}
                       </button>
+                      <Link
+                        to={`/tenant/apps/${app.id}/users`}
+                        className="inline-flex items-center p-2 border border-blue-300 rounded-md text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        title="用户权限管理"
+                      >
+                        <UsersIcon className="h-4 w-4" />
+                      </Link>
+                      <Link
+                        to={`/tenant/apps/${app.id}/roles`}
+                        className="inline-flex items-center p-2 border border-green-300 rounded-md text-sm font-medium text-green-700 bg-green-50 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                        title="角色管理"
+                      >
+                        <ShieldCheckIcon className="h-4 w-4" />
+                      </Link>
                       <Link
                         to={`/tenant/apps/${app.id}`}
                         className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"

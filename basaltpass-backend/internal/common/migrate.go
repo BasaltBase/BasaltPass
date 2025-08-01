@@ -61,6 +61,12 @@ func RunMigrations() {
 
 		// 订单系统模型
 		&model.Order{},
+
+		// 应用权限系统模型
+		&model.AppPermission{},
+		&model.AppRole{},
+		&model.AppUserPermission{},
+		&model.AppUserRole{},
 	)
 	if err != nil {
 		log.Fatalf("[Error][RunMigrations] auto migration failed: %v", err)

@@ -142,7 +142,7 @@ export default function TenantProducts() {
           <ol className="inline-flex items-center space-x-1 md:space-x-3">
             <li className="inline-flex items-center">
               <Link
-                to="/tenant/subscription"
+                to="/tenant/subscriptions"
                 className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600"
               >
                 订阅系统

@@ -162,12 +162,11 @@ export interface CancelTenantSubscriptionRequest {
 
 export interface TenantCoupon {
   ID: number;
-  TenantID?: number;
   Code: string;
   Name: string;
-  DiscountType: string;
+  DiscountType: 'percent' | 'fixed';
   DiscountValue: number;
-  Duration: string;
+  Duration: 'once' | 'repeating' | 'forever';
   DurationInCycles?: number;
   MaxRedemptions?: number;
   RedeemedCount: number;
@@ -177,26 +176,26 @@ export interface TenantCoupon {
   CreatedAt: string;
   UpdatedAt: string;
   DeletedAt?: string | null;
+  TenantID?: number;
+  Subscriptions?: any;
 }
 
 export interface CreateTenantCouponRequest {
   code: string;
-  name: string;
-  discount_type: string;
+  name?: string;
+  discount_type: 'percent' | 'fixed';
   discount_value: number;
-  duration: string;
+  duration?: 'once' | 'repeating' | 'forever';
   duration_in_cycles?: number;
   max_redemptions?: number;
   expires_at?: string;
+  is_active?: boolean;
   metadata?: Record<string, any>;
 }
 
 export interface UpdateTenantCouponRequest {
   name?: string;
-  discount_type?: string;
   discount_value?: number;
-  duration?: string;
-  duration_in_cycles?: number;
   max_redemptions?: number;
   expires_at?: string;
   is_active?: boolean;
@@ -369,8 +368,9 @@ class TenantSubscriptionAPI {
   async listCoupons(params?: {
     page?: number;
     page_size?: number;
-    status?: 'active' | 'inactive' | 'expired';
-    search?: string;
+    code?: string;
+    discount_type?: string;
+    is_active?: boolean;
   }) {
     const response = await client.get('/api/v1/admin/subscription/coupons', { params });
     return response.data;
@@ -386,13 +386,18 @@ class TenantSubscriptionAPI {
     return response.data.data;
   }
 
-  async updateCoupon(id: number, data: UpdateTenantCouponRequest): Promise<TenantCoupon> {
-    const response = await client.put(`/api/v1/admin/subscription/coupons/${id}`, data);
+  async updateCoupon(code: string, data: UpdateTenantCouponRequest): Promise<TenantCoupon> {
+    const response = await client.put(`/api/v1/admin/subscription/coupons/${code}`, data);
     return response.data.data;
   }
 
-  async deleteCoupon(id: number): Promise<void> {
-    await client.delete(`/api/v1/admin/subscription/coupons/${id}`);
+  async deleteCoupon(code: string): Promise<void> {
+    await client.delete(`/api/v1/admin/subscription/coupons/${code}`);
+  }
+
+  async validateCoupon(code: string): Promise<{ valid: boolean; data?: TenantCoupon; error?: string }> {
+    const response = await client.get(`/api/v1/admin/subscription/coupons/${code}/validate`);
+    return response.data;
   }
 
   // ========== 账单管理 ==========
@@ -501,6 +506,7 @@ export const {
   getCoupon: getTenantCoupon,
   updateCoupon: updateTenantCoupon,
   deleteCoupon: deleteTenantCoupon,
+  validateCoupon: validateTenantCoupon,
   
   createInvoice: createTenantInvoice,
   listInvoices: listTenantInvoices,

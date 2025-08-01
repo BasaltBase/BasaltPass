@@ -10,11 +10,17 @@ import {
   ShieldExclamationIcon,
   ClockIcon,
   EnvelopeIcon,
-  UserCircleIcon
+  UserCircleIcon,
+  ShieldCheckIcon,
+  KeyIcon,
+  PlusIcon,
+  XMarkIcon,
+  Cog6ToothIcon
 } from '@heroicons/react/24/outline'
 import TenantLayout from '../../../components/TenantLayout'
 import { tenantAppApi } from '../../../api/tenantApp'
 import { appUserApi, type AppUser, type AppUsersResponse } from '../../../api/appUser'
+import { userPermissionsApi, type Permission, type Role, type UserPermission, type UserRole } from '../../../api/userPermissions'
 
 export default function AppUserManagement() {
   const { id: appId } = useParams<{ id: string }>()
@@ -34,6 +40,17 @@ export default function AppUserManagement() {
   const [actionReason, setActionReason] = useState('')
   const [banUntil, setBanUntil] = useState('')
   const [processingAction, setProcessingAction] = useState(false)
+
+  // 权限管理相关状态
+  const [showPermissionModal, setShowPermissionModal] = useState(false)
+  const [permissions, setPermissions] = useState<Permission[]>([])
+  const [roles, setRoles] = useState<Role[]>([])
+  const [userPermissions, setUserPermissions] = useState<UserPermission[]>([])
+  const [userRoles, setUserRoles] = useState<UserRole[]>([])
+  const [selectedPermissions, setSelectedPermissions] = useState<number[]>([])
+  const [selectedRoles, setSelectedRoles] = useState<number[]>([])
+  const [permissionExpiry, setPermissionExpiry] = useState('')
+  const [loadingPermissions, setLoadingPermissions] = useState(false)
 
   const pageSize = 20
 
@@ -74,6 +91,123 @@ export default function AppUserManagement() {
       setError(err.response?.data?.error || '获取用户列表失败')
     } finally {
       setLoading(false)
+    }
+  }
+
+  // 获取应用权限和角色
+  const fetchPermissionsAndRoles = async () => {
+    if (!appId) return
+    
+    try {
+      const [permissionsRes, rolesRes] = await Promise.all([
+        userPermissionsApi.getAppPermissions(appId),
+        userPermissionsApi.getAppRoles(appId)
+      ])
+      setPermissions(permissionsRes.permissions || [])
+      setRoles(rolesRes.roles || [])
+    } catch (err: any) {
+      console.error('获取权限和角色失败:', err)
+    }
+  }
+
+  // 获取用户权限和角色
+  const fetchUserPermissions = async (userId: string) => {
+    if (!appId) return
+    
+    try {
+      setLoadingPermissions(true)
+      const [permissionsRes, rolesRes] = await Promise.all([
+        userPermissionsApi.getUserPermissions(appId, userId),
+        userPermissionsApi.getUserRoles(appId, userId)
+      ])
+      setUserPermissions(permissionsRes.permissions || [])
+      setUserRoles(rolesRes.roles || [])
+    } catch (err: any) {
+      console.error('获取用户权限失败:', err)
+    } finally {
+      setLoadingPermissions(false)
+    }
+  }
+
+  // 打开权限管理模态框
+  const handleManagePermissions = async (user: AppUser) => {
+    setSelectedUser(user)
+    setShowPermissionModal(true)
+    await fetchPermissionsAndRoles()
+    await fetchUserPermissions(user.user_id.toString())
+  }
+
+  // 授予用户权限
+  const handleGrantPermissions = async () => {
+    if (!selectedUser || !appId || selectedPermissions.length === 0) return
+
+    try {
+      await userPermissionsApi.grantUserPermissions(appId, selectedUser.user_id.toString(), {
+        permission_ids: selectedPermissions,
+        expires_at: permissionExpiry || undefined
+      })
+      
+      // 重新获取用户权限
+      await fetchUserPermissions(selectedUser.user_id.toString())
+      setSelectedPermissions([])
+      setPermissionExpiry('')
+      alert('权限授予成功')
+    } catch (err: any) {
+      console.error('授予权限失败:', err)
+      alert(err.response?.data?.error || '授予权限失败')
+    }
+  }
+
+  // 分配用户角色
+  const handleAssignRoles = async () => {
+    if (!selectedUser || !appId || selectedRoles.length === 0) return
+
+    try {
+      await userPermissionsApi.assignUserRoles(appId, selectedUser.user_id.toString(), {
+        role_ids: selectedRoles,
+        expires_at: permissionExpiry || undefined
+      })
+      
+      // 重新获取用户角色
+      await fetchUserPermissions(selectedUser.user_id.toString())
+      setSelectedRoles([])
+      setPermissionExpiry('')
+      alert('角色分配成功')
+    } catch (err: any) {
+      console.error('分配角色失败:', err)
+      alert(err.response?.data?.error || '分配角色失败')
+    }
+  }
+
+  // 撤销用户权限
+  const handleRevokePermission = async (permissionId: number) => {
+    if (!selectedUser || !appId) return
+
+    if (!confirm('确定要撤销此权限吗？')) return
+
+    try {
+      await userPermissionsApi.revokeUserPermission(appId, selectedUser.user_id.toString(), permissionId)
+      await fetchUserPermissions(selectedUser.user_id.toString())
+      alert('权限撤销成功')
+    } catch (err: any) {
+      console.error('撤销权限失败:', err)
+      alert(err.response?.data?.error || '撤销权限失败')
+    }
+  }
+
+  // 撤销用户角色
+  const handleRevokeRole = async (roleId: number) => {
+    if (!selectedUser || !appId) return
+
+    if (!confirm('确定要撤销此角色吗？')) return
+
+    try {
+      await userPermissionsApi.revokeUserRole(appId, selectedUser.user_id.toString(), roleId)
+      await fetchUserPermissions(selectedUser.user_id.toString())
+      alert('角色撤销成功')
+    } catch (err: any) {
+      console.error('撤销角色失败:', err)
+      alert(err.response?.data?.error || '撤销角色失败')
     }
   }
 
@@ -251,12 +385,28 @@ export default function AppUserManagement() {
               管理应用 "{app?.name}" 的用户访问权限
             </p>
           </div>
-          <button
-            onClick={() => navigate(`/tenant/apps/${appId}`)}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-          >
-            返回应用详情
-          </button>
+          <div className="flex space-x-3">
+            <button
+              onClick={() => navigate(`/tenant/apps/${appId}/permissions`)}
+              className="inline-flex items-center px-4 py-2 border border-blue-300 rounded-md shadow-sm text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100"
+            >
+              <KeyIcon className="h-4 w-4 mr-2" />
+              权限管理
+            </button>
+            <button
+              onClick={() => navigate(`/tenant/apps/${appId}/roles`)}
+              className="inline-flex items-center px-4 py-2 border border-blue-300 rounded-md shadow-sm text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100"
+            >
+              <ShieldCheckIcon className="h-4 w-4 mr-2" />
+              角色管理
+            </button>
+            <button
+              onClick={() => navigate(`/tenant/apps/${appId}`)}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+            >
+              返回应用详情
+            </button>
+          </div>
         </div>
 
         {/* 搜索和过滤 */}
@@ -391,42 +541,51 @@ export default function AppUserManagement() {
                             {user.scopes || '基础权限'}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                          {user.status === 'active' ? (
-                            <>
-                              <button
-                                onClick={() => handleUserAction(user, 'restrict')}
-                                className="text-orange-600 hover:text-orange-900"
-                              >
-                                限制
-                              </button>
-                              <button
-                                onClick={() => handleUserAction(user, 'suspend')}
-                                className="text-yellow-600 hover:text-yellow-900"
-                              >
-                                暂停
-                              </button>
-                              <button
-                                onClick={() => handleUserAction(user, 'ban')}
-                                className="text-red-600 hover:text-red-900"
-                              >
-                                封禁
-                              </button>
-                            </>
-                          ) : (
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex justify-end space-x-2">
                             <button
-                              onClick={() => handleUserAction(user, 'unban')}
-                              className="text-green-600 hover:text-green-900"
+                              onClick={() => handleManagePermissions(user)}
+                              className="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200"
                             >
-                              解封
+                              <ShieldCheckIcon className="h-3 w-3 mr-1" />
+                              权限
                             </button>
-                          )}
-                          <button
-                            onClick={() => handleRevokeAuthorization(user)}
-                            className="text-gray-600 hover:text-gray-900"
-                          >
-                            撤销授权
-                          </button>
+                            {user.status === 'active' ? (
+                              <>
+                                <button
+                                  onClick={() => handleUserAction(user, 'restrict')}
+                                  className="text-orange-600 hover:text-orange-900"
+                                >
+                                  限制
+                                </button>
+                                <button
+                                  onClick={() => handleUserAction(user, 'suspend')}
+                                  className="text-yellow-600 hover:text-yellow-900"
+                                >
+                                  暂停
+                                </button>
+                                <button
+                                  onClick={() => handleUserAction(user, 'ban')}
+                                  className="text-red-600 hover:text-red-900"
+                                >
+                                  封禁
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                onClick={() => handleUserAction(user, 'unban')}
+                                className="text-green-600 hover:text-green-900"
+                              >
+                                解封
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleRevokeAuthorization(user)}
+                              className="text-gray-600 hover:text-gray-900"
+                            >
+                              撤销授权
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -528,6 +687,261 @@ export default function AppUserManagement() {
               >
                 {processingAction ? '处理中...' : `确认${getActionText(actionType)}`}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 权限管理模态框 */}
+      {showPermissionModal && selectedUser && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-10 mx-auto p-5 border w-full max-w-6xl shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-medium text-gray-900">
+                  用户权限管理 - {selectedUser.user_nickname || selectedUser.user_email}
+                </h3>
+                <button
+                  onClick={() => setShowPermissionModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <XMarkIcon className="h-6 w-6" />
+                </button>
+              </div>
+
+              {loadingPermissions ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* 左侧：当前权限和角色 */}
+                  <div className="space-y-6">
+                    {/* 当前权限 */}
+                    <div>
+                      <h4 className="text-md font-medium text-gray-900 mb-3 flex items-center">
+                        <KeyIcon className="h-5 w-5 mr-2 text-blue-600" />
+                        当前权限 ({userPermissions.length})
+                      </h4>
+                      <div className="bg-gray-50 rounded-lg p-4 max-h-60 overflow-y-auto">
+                        {userPermissions.length > 0 ? (
+                          <div className="space-y-2">
+                            {userPermissions.map((userPerm) => (
+                              <div key={userPerm.id} className="flex items-center justify-between bg-white p-3 rounded-md border">
+                                <div className="flex-1">
+                                  <div className="text-sm font-medium text-gray-900">
+                                    {userPerm.permission.name}
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    {userPerm.permission.description}
+                                  </div>
+                                  {userPerm.expires_at && (
+                                    <div className="text-xs text-orange-600 mt-1">
+                                      过期时间: {new Date(userPerm.expires_at).toLocaleString()}
+                                    </div>
+                                  )}
+                                </div>
+                                <button
+                                  onClick={() => handleRevokePermission(userPerm.permission_id)}
+                                  className="ml-2 text-red-600 hover:text-red-800"
+                                >
+                                  <XMarkIcon className="h-4 w-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center text-gray-500 py-4">
+                            暂无权限
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 当前角色 */}
+                    <div>
+                      <h4 className="text-md font-medium text-gray-900 mb-3 flex items-center">
+                        <ShieldCheckIcon className="h-5 w-5 mr-2 text-green-600" />
+                        当前角色 ({userRoles.length})
+                      </h4>
+                      <div className="bg-gray-50 rounded-lg p-4 max-h-60 overflow-y-auto">
+                        {userRoles.length > 0 ? (
+                          <div className="space-y-2">
+                            {userRoles.map((userRole) => (
+                              <div key={userRole.id} className="flex items-center justify-between bg-white p-3 rounded-md border">
+                                <div className="flex-1">
+                                  <div className="text-sm font-medium text-gray-900">
+                                    {userRole.role.name}
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    {userRole.role.description}
+                                  </div>
+                                  <div className="text-xs text-blue-600 mt-1">
+                                    包含 {userRole.role.permissions?.length || 0} 个权限
+                                  </div>
+                                  {userRole.expires_at && (
+                                    <div className="text-xs text-orange-600 mt-1">
+                                      过期时间: {new Date(userRole.expires_at).toLocaleString()}
+                                    </div>
+                                  )}
+                                </div>
+                                <button
+                                  onClick={() => handleRevokeRole(userRole.role_id)}
+                                  className="ml-2 text-red-600 hover:text-red-800"
+                                >
+                                  <XMarkIcon className="h-4 w-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center text-gray-500 py-4">
+                            暂无角色
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 右侧：分配权限和角色 */}
+                  <div className="space-y-6">
+                    {/* 分配权限 */}
+                    <div>
+                      <h4 className="text-md font-medium text-gray-900 mb-3 flex items-center">
+                        <PlusIcon className="h-5 w-5 mr-2 text-blue-600" />
+                        分配权限
+                      </h4>
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <div className="space-y-3">
+                          <div className="max-h-40 overflow-y-auto">
+                            <div className="space-y-2">
+                              {permissions.map((permission) => {
+                                const hasPermission = userPermissions.some(up => up.permission_id === permission.id)
+                                return (
+                                  <label key={permission.id} className={`flex items-center p-2 rounded ${hasPermission ? 'bg-gray-200 text-gray-500' : 'bg-white cursor-pointer hover:bg-blue-50'}`}>
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedPermissions.includes(permission.id)}
+                                      onChange={(e) => {
+                                        if (e.target.checked) {
+                                          setSelectedPermissions([...selectedPermissions, permission.id])
+                                        } else {
+                                          setSelectedPermissions(selectedPermissions.filter(id => id !== permission.id))
+                                        }
+                                      }}
+                                      disabled={hasPermission}
+                                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:opacity-50"
+                                    />
+                                    <div className="ml-3 flex-1">
+                                      <div className="text-sm font-medium">
+                                        {permission.name}
+                                      </div>
+                                      <div className="text-xs text-gray-500">
+                                        {permission.description}
+                                      </div>
+                                    </div>
+                                    {hasPermission && (
+                                      <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
+                                        已拥有
+                                      </span>
+                                    )}
+                                  </label>
+                                )
+                              })}
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              过期时间（可选）
+                            </label>
+                            <input
+                              type="datetime-local"
+                              value={permissionExpiry}
+                              onChange={(e) => setPermissionExpiry(e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                          </div>
+                          <button
+                            onClick={handleGrantPermissions}
+                            disabled={selectedPermissions.length === 0}
+                            className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            授予选中权限 ({selectedPermissions.length})
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 分配角色 */}
+                    <div>
+                      <h4 className="text-md font-medium text-gray-900 mb-3 flex items-center">
+                        <PlusIcon className="h-5 w-5 mr-2 text-green-600" />
+                        分配角色
+                      </h4>
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <div className="space-y-3">
+                          <div className="max-h-40 overflow-y-auto">
+                            <div className="space-y-2">
+                              {roles.map((role) => {
+                                const hasRole = userRoles.some(ur => ur.role_id === role.id)
+                                return (
+                                  <label key={role.id} className={`flex items-center p-2 rounded ${hasRole ? 'bg-gray-200 text-gray-500' : 'bg-white cursor-pointer hover:bg-green-50'}`}>
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedRoles.includes(role.id)}
+                                      onChange={(e) => {
+                                        if (e.target.checked) {
+                                          setSelectedRoles([...selectedRoles, role.id])
+                                        } else {
+                                          setSelectedRoles(selectedRoles.filter(id => id !== role.id))
+                                        }
+                                      }}
+                                      disabled={hasRole}
+                                      className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded disabled:opacity-50"
+                                    />
+                                    <div className="ml-3 flex-1">
+                                      <div className="text-sm font-medium">
+                                        {role.name}
+                                      </div>
+                                      <div className="text-xs text-gray-500">
+                                        {role.description}
+                                      </div>
+                                      <div className="text-xs text-blue-500 mt-1">
+                                        包含 {role.permissions?.length || 0} 个权限
+                                      </div>
+                                    </div>
+                                    {hasRole && (
+                                      <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
+                                        已拥有
+                                      </span>
+                                    )}
+                                  </label>
+                                )
+                              })}
+                            </div>
+                          </div>
+                          <button
+                            onClick={handleAssignRoles}
+                            disabled={selectedRoles.length === 0}
+                            className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            分配选中角色 ({selectedRoles.length})
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end mt-6">
+                <button
+                  onClick={() => setShowPermissionModal(false)}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                >
+                  关闭
+                </button>
+              </div>
             </div>
           </div>
         </div>

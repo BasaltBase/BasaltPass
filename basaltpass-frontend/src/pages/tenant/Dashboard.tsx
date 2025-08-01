@@ -14,7 +14,9 @@ import {
   CreditCardIcon,
   ShoppingCartIcon,
   ServerIcon,
-  KeyIcon
+  KeyIcon,
+  ShieldCheckIcon,
+  LockClosedIcon
 } from '@heroicons/react/24/outline'
 import TenantLayout from '../../components/TenantLayout'
 import { 
@@ -63,39 +65,11 @@ interface QuickAction {
 
 const quickActions: QuickAction[] = [
   {
-    name: '订阅概览',
-    description: '查看订阅状态和收入',
-    href: '/tenant/subscriptions',
-    icon: ChartBarIcon,
-    color: 'bg-blue-500 hover:bg-blue-600'
-  },
-  {
-    name: '产品管理',
-    description: '管理订阅产品',
-    href: '/tenant/subscriptions/products',
+    name: '应用管理',
+    description: '管理您的应用',
+    href: '/tenant/apps',
     icon: CubeIcon,
-    color: 'bg-green-500 hover:bg-green-600'
-  },
-  {
-    name: '套餐管理',
-    description: '创建和管理套餐',
-    href: '/tenant/plans',
-    icon: ShoppingCartIcon,
-    color: 'bg-purple-500 hover:bg-purple-600'
-  },
-  {
-    name: '定价管理',
-    description: '设置价格和计费',
-    href: '/tenant/prices',
-    icon: CurrencyDollarIcon,
-    color: 'bg-yellow-500 hover:bg-yellow-600'
-  },
-  {
-    name: '优惠券管理',
-    description: '创建和管理优惠券',
-    href: '/tenant/coupons',
-    icon: CreditCardIcon,
-    color: 'bg-red-500 hover:bg-red-600'
+    color: 'bg-blue-500 hover:bg-blue-600'
   },
   {
     name: '用户管理',
@@ -103,6 +77,34 @@ const quickActions: QuickAction[] = [
     href: '/tenant/users',
     icon: UsersIcon,
     color: 'bg-indigo-500 hover:bg-indigo-600'
+  },
+  {
+    name: '权限管理',
+    description: '管理用户权限和角色',
+    href: '/tenant/roles',
+    icon: ShieldCheckIcon,
+    color: 'bg-green-500 hover:bg-green-600'
+  },
+  {
+    name: '订阅概览',
+    description: '查看订阅状态和收入',
+    href: '/tenant/subscriptions',
+    icon: ChartBarIcon,
+    color: 'bg-purple-500 hover:bg-purple-600'
+  },
+  {
+    name: '产品管理',
+    description: '管理订阅产品',
+    href: '/tenant/subscriptions/products',
+    icon: ServerIcon,
+    color: 'bg-orange-500 hover:bg-orange-600'
+  },
+  {
+    name: '优惠券管理',
+    description: '创建和管理优惠券',
+    href: '/tenant/coupons',
+    icon: CreditCardIcon,
+    color: 'bg-red-500 hover:bg-red-600'
   }
 ]
 
