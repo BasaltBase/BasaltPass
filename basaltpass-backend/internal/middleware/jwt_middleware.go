@@ -1,4 +1,4 @@
-package common
+package middleware
 
 import (
 	"strings"
@@ -22,7 +22,7 @@ func JWTMiddleware() fiber.Handler {
 			secret := getJWTSecret()
 			return []byte(secret), nil
 		})
-		
+
 		if err != nil || !token.Valid {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "invalid token"})
 		}
@@ -38,7 +38,7 @@ func JWTMiddleware() fiber.Handler {
 				c.Locals("userID", uint(userIDFloat))
 			}
 		}
-		
+
 		// Store tenant ID in context if available
 		if tenantID, exists := claims["tid"]; exists {
 			if tenantIDFloat, ok := tenantID.(float64); ok {

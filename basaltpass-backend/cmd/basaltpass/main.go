@@ -1,6 +1,8 @@
 package main
 
 import (
+	common2 "basaltpass-backend/internal/middleware"
+	"basaltpass-backend/internal/migration"
 	"log"
 
 	"basaltpass-backend/internal/api"
@@ -15,10 +17,10 @@ func main() {
 	app := fiber.New()
 
 	// Register global middlewares
-	common.RegisterMiddlewares(app)
+	common2.RegisterMiddlewares(app)
 
 	// Run DB migrations
-	common.RunMigrations()
+	migration.RunMigrations()
 
 	// 初始化团队处理器
 	team.InitHandler(common.DB())

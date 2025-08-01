@@ -1,6 +1,7 @@
-package common
+package middleware
 
 import (
+	common2 "basaltpass-backend/internal/common"
 	"errors"
 	"fmt"
 	"os"
@@ -28,7 +29,7 @@ func TenantMiddleware() fiber.Handler {
 		if tenantID := c.Locals("tenantID"); tenantID != nil {
 			// 验证租户是否存在且有效
 			var tenant model.Tenant
-			if err := DB().First(&tenant, tenantID).Error; err != nil {
+			if err := common2.DB().First(&tenant, tenantID).Error; err != nil {
 				// 租户不存在，记录错误并继续尝试其他方式
 				fmt.Printf("[TenantMiddleware] Tenant %v not found: %v\n", tenantID, err)
 			} else if tenant.Status != "active" {
@@ -55,7 +56,7 @@ func TenantMiddleware() fiber.Handler {
 		// 尝试从用户ID获取默认租户
 		if userID := c.Locals("userID"); userID != nil {
 			var tenantAdmin model.TenantAdmin
-			if err := DB().Where("user_id = ?", userID).Order("created_at ASC").First(&tenantAdmin).Error; err == nil {
+			if err := common2.DB().Where("user_id = ?", userID).Order("created_at ASC").First(&tenantAdmin).Error; err == nil {
 				c.Locals("tenantID", tenantAdmin.TenantID)
 				return c.Next()
 			} else {
@@ -81,13 +82,13 @@ func SuperAdminMiddleware() fiber.Handler {
 
 		// 检查是否为超级管理员
 		var user model.User
-		if err := DB().First(&user, userID).Error; err != nil {
+		if err := common2.DB().First(&user, userID).Error; err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error": "User not found",
 			})
 		}
 
-		if !user.IsSuperAdmin {
+		if !user.IsSuperAdmin() {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 				"error": "Super admin access required",
 			})
@@ -111,7 +112,7 @@ func TenantOwnerMiddleware() fiber.Handler {
 
 		// 检查用户在租户中的角色
 		var tenantAdmin model.TenantAdmin
-		if err := DB().Where("user_id = ? AND tenant_id = ?", userID, tenantID).First(&tenantAdmin).Error; err != nil {
+		if err := common2.DB().Where("user_id = ? AND tenant_id = ?", userID, tenantID).First(&tenantAdmin).Error; err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 				"error": "Access denied",
 			})
@@ -142,7 +143,7 @@ func TenantAdminMiddleware() fiber.Handler {
 
 		// 检查用户在租户中的角色
 		var tenantAdmin model.TenantAdmin
-		if err := DB().Where("user_id = ? AND tenant_id = ?", userID, tenantID).First(&tenantAdmin).Error; err != nil {
+		if err := common2.DB().Where("user_id = ? AND tenant_id = ?", userID, tenantID).First(&tenantAdmin).Error; err != nil {
 			fmt.Printf("[TenantAdminMiddleware] No tenant admin record found for user %v in tenant %v: %v\n", userID, tenantID, err)
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 				"error": "Access denied",
@@ -213,7 +214,7 @@ func ExtractTenantFromJWT(tokenString string) (uint, uint, error) {
 // ValidateTenantAccess 验证用户对租户的访问权限
 func ValidateTenantAccess(userID, tenantID uint, requiredRole model.TenantRole) error {
 	var tenantAdmin model.TenantAdmin
-	if err := DB().Where("user_id = ? AND tenant_id = ?", userID, tenantID).First(&tenantAdmin).Error; err != nil {
+	if err := common2.DB().Where("user_id = ? AND tenant_id = ?", userID, tenantID).First(&tenantAdmin).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return errors.New("access denied")
 		}

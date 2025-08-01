@@ -6,9 +6,9 @@ import (
 	"basaltpass-backend/internal/app_permission"
 	"basaltpass-backend/internal/app_user"
 	"basaltpass-backend/internal/auth"
-	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/debug"
 	"basaltpass-backend/internal/invitation"
+	"basaltpass-backend/internal/middleware"
 	"basaltpass-backend/internal/notification"
 	"basaltpass-backend/internal/oauth"
 	"basaltpass-backend/internal/order"
@@ -33,7 +33,7 @@ func RegisterRoutes(app *fiber.App) {
 	// OAuth2授权服务器端点
 	oauthServerGroup := app.Group("/oauth")
 	oauthServerGroup.Get("/authorize", oauth.AuthorizeHandler)
-	oauthServerGroup.Post("/consent", common.JWTMiddleware(), oauth.ConsentHandler)
+	oauthServerGroup.Post("/consent", middleware.JWTMiddleware(), oauth.ConsentHandler)
 	oauthServerGroup.Post("/token", oauth.TokenHandler)
 	oauthServerGroup.Get("/userinfo", oauth.UserInfoHandler)
 	oauthServerGroup.Post("/introspect", oauth.IntrospectHandler)
@@ -50,7 +50,7 @@ func RegisterRoutes(app *fiber.App) {
 	app.Get("/end_session", oauth.EndSessionHandler)
 
 	// 平台级管理API（超级管理员）
-	platformGroup := app.Group("/_admin", common.JWTMiddleware(), common.SuperAdminMiddleware())
+	platformGroup := app.Group("/_admin", middleware.JWTMiddleware(), middleware.SuperAdminMiddleware())
 
 	// 租户管理
 	platformTenantGroup := platformGroup.Group("/tenants")
@@ -64,14 +64,14 @@ func RegisterRoutes(app *fiber.App) {
 	v1 := app.Group("/api/v1")
 
 	// 用户租户管理
-	userGroup := v1.Group("/user", common.JWTMiddleware())
+	userGroup := v1.Group("/user", middleware.JWTMiddleware())
 	userGroup.Get("/tenants", tenant.GetUserTenantsHandler)
 	userGroup.Get("/profile", user.GetProfileHandler)
 	userGroup.Get("/debug", user.DebugUserHandler) // 临时调试端点
 	userGroup.Put("/profile", user.UpdateProfileHandler)
 
 	// 调试路由
-	debugGroup := v1.Group("/debug", common.JWTMiddleware())
+	debugGroup := v1.Group("/debug", middleware.JWTMiddleware())
 	debugGroup.Get("/user-tenant", debug.CheckUserTenantHandler)
 
 	// 用户应用授权管理
@@ -93,7 +93,7 @@ func RegisterRoutes(app *fiber.App) {
 	oauthGroup.Get(":provider/callback", oauth.CallbackHandler)
 
 	// 租户级管理API（需要租户上下文）
-	tenantAdminGroup := v1.Group("/admin", common.JWTMiddleware(), common.TenantMiddleware(), common.TenantAdminMiddleware())
+	tenantAdminGroup := v1.Group("/admin", middleware.JWTMiddleware(), middleware.TenantMiddleware(), middleware.TenantAdminMiddleware())
 
 	// 租户信息管理
 	tenantAdminGroup.Get("/tenant", tenant.GetTenantHandler)
@@ -201,7 +201,7 @@ func RegisterRoutes(app *fiber.App) {
 	oauthClientGroup.Post("/:client_id/revoke-tokens", oauth.RevokeClientTokensHandler)
 
 	// 租户级别的路由（直接在v1下面）
-	tenantGroup := v1.Group("/tenant", common.JWTMiddleware(), common.TenantMiddleware())
+	tenantGroup := v1.Group("/tenant", middleware.JWTMiddleware(), middleware.TenantMiddleware())
 
 	// 租户OAuth客户端管理路由
 	tenantOAuthGroup := tenantGroup.Group("/oauth/clients")
@@ -240,7 +240,7 @@ func RegisterRoutes(app *fiber.App) {
 	tenantAppGroup.Delete("/:app_id/users/:user_id/roles/:role_id", app_permission.RevokeUserRole)
 
 	// 原有的系统级管理员路由（保持向后兼容）
-	adminGroup := v1.Group("/admin", common.JWTMiddleware(), common.AdminMiddleware())
+	adminGroup := v1.Group("/admin", middleware.JWTMiddleware(), middleware.AdminMiddleware())
 	adminGroup.Get("/dashboard/stats", admin.DashboardStatsHandler)
 	adminGroup.Get("/dashboard/activities", admin.RecentActivitiesHandler)
 	adminGroup.Get("/roles", rbac.ListRolesHandler)
@@ -262,19 +262,19 @@ func RegisterRoutes(app *fiber.App) {
 
 	// Passkey authentication routes
 	passkeyGroup := v1.Group("/passkey")
-	passkeyGroup.Post("/register/begin", common.JWTMiddleware(), passkey.BeginRegistrationHandler)
-	passkeyGroup.Post("/register/finish", common.JWTMiddleware(), passkey.FinishRegistrationHandler)
+	passkeyGroup.Post("/register/begin", middleware.JWTMiddleware(), passkey.BeginRegistrationHandler)
+	passkeyGroup.Post("/register/finish", middleware.JWTMiddleware(), passkey.FinishRegistrationHandler)
 	passkeyGroup.Post("/login/begin", passkey.BeginLoginHandler)
 	passkeyGroup.Post("/login/finish", passkey.FinishLoginHandler)
-	passkeyGroup.Get("/list", common.JWTMiddleware(), passkey.ListPasskeysHandler)
-	passkeyGroup.Delete("/:id", common.JWTMiddleware(), passkey.DeletePasskeyHandler)
+	passkeyGroup.Get("/list", middleware.JWTMiddleware(), passkey.ListPasskeysHandler)
+	passkeyGroup.Delete("/:id", middleware.JWTMiddleware(), passkey.DeletePasskeyHandler)
 
 	// 用户搜索路由 (需要JWT认证)
-	usersGroup := v1.Group("/users", common.JWTMiddleware())
+	usersGroup := v1.Group("/users", middleware.JWTMiddleware())
 	usersGroup.Get("/search", user.SearchHandler)
 
 	// 团队相关路由
-	teamGroup := v1.Group("/teams", common.JWTMiddleware())
+	teamGroup := v1.Group("/teams", middleware.JWTMiddleware())
 	teamGroup.Post("/", team.CreateTeamHandler)
 	teamGroup.Get("/", team.GetUserTeamsHandler)
 	teamGroup.Get("/:id", team.GetTeamHandler)
@@ -287,7 +287,7 @@ func RegisterRoutes(app *fiber.App) {
 	teamGroup.Post("/:id/leave", team.LeaveTeamHandler)
 
 	// Invitation routes
-	inv := v1.Group("/invitations", common.JWTMiddleware())
+	inv := v1.Group("/invitations", middleware.JWTMiddleware())
 	inv.Get("/", invitation.ListIncomingHandler)
 	inv.Put("/:id/accept", invitation.AcceptHandler)
 	inv.Put("/:id/reject", invitation.RejectHandler)
@@ -296,14 +296,14 @@ func RegisterRoutes(app *fiber.App) {
 	teamGroup.Get("/:id/invitations", invitation.ListOutgoingHandler)
 	teamGroup.Delete("/:id/invitations/:inv_id", invitation.RevokeHandler)
 
-	walletGroup := v1.Group("/wallet", common.JWTMiddleware())
+	walletGroup := v1.Group("/wallet", middleware.JWTMiddleware())
 	walletGroup.Get("/balance", wallet.BalanceHandler)
 	walletGroup.Post("/recharge", wallet.RechargeHandler)
 	walletGroup.Post("/withdraw", wallet.WithdrawHandler)
 	walletGroup.Get("/history", wallet.HistoryHandler)
 
 	// 支付系统路由（需要认证）
-	paymentGroup := v1.Group("/payment", common.JWTMiddleware())
+	paymentGroup := v1.Group("/payment", middleware.JWTMiddleware())
 	paymentGroup.Post("/intents", payment.CreatePaymentIntentHandler)
 	paymentGroup.Get("/intents", payment.ListPaymentIntentsHandler)
 	paymentGroup.Get("/intents/:id", payment.GetPaymentIntentHandler)
@@ -315,14 +315,14 @@ func RegisterRoutes(app *fiber.App) {
 	app.Post("/payment/simulate/:session_id", payment.SimulatePaymentHandler)
 
 	// 订单系统路由
-	orderGroup := v1.Group("/orders", common.JWTMiddleware())
+	orderGroup := v1.Group("/orders", middleware.JWTMiddleware())
 	orderGroup.Post("/", order.CreateOrderHandler)
 	orderGroup.Get("/", order.ListOrdersHandler)
 	orderGroup.Get("/:id", order.GetOrderHandler)
 	orderGroup.Get("/number/:number", order.GetOrderByNumberHandler)
 
 	// 安全设置路由
-	securityGroup := v1.Group("/security", common.JWTMiddleware())
+	securityGroup := v1.Group("/security", middleware.JWTMiddleware())
 	securityGroup.Get("/status", security.GetSecurityStatusHandler)
 	securityGroup.Post("/password/change", security.ChangePasswordHandler)
 	securityGroup.Put("/contact", security.UpdateContactHandler)
@@ -335,7 +335,7 @@ func RegisterRoutes(app *fiber.App) {
 	securityGroup.Post("/phone/resend", security.SendPhoneVerificationHandler)
 
 	// 通知路由
-	notifGroup := v1.Group("/notifications", common.JWTMiddleware())
+	notifGroup := v1.Group("/notifications", middleware.JWTMiddleware())
 	notifGroup.Get("/", notification.ListHandler)
 	notifGroup.Get("/unread-count", notification.UnreadCountHandler)
 	notifGroup.Put("/:id/read", notification.MarkAsReadHandler)
@@ -366,7 +366,7 @@ func RegisterRoutes(app *fiber.App) {
 	couponsGroup.Get("/:code/validate", subscription.ValidateCouponHandler)
 
 	// 用户订阅相关路由（需要认证）
-	subscriptionsGroup := v1.Group("/subscriptions", common.JWTMiddleware())
+	subscriptionsGroup := v1.Group("/subscriptions", middleware.JWTMiddleware())
 	subscriptionsGroup.Post("/", subscription.CreateSubscriptionHandler)
 	subscriptionsGroup.Get("/", subscription.ListSubscriptionsHandler)
 	subscriptionsGroup.Get("/:id", subscription.GetSubscriptionHandler)
@@ -377,7 +377,7 @@ func RegisterRoutes(app *fiber.App) {
 	subscriptionsGroup.Post("/quick-checkout", subscription.QuickCheckoutHandler)
 
 	// 使用记录路由（需要认证）
-	usageGroup := v1.Group("/usage", common.JWTMiddleware())
+	usageGroup := v1.Group("/usage", middleware.JWTMiddleware())
 	usageGroup.Post("/records", subscription.CreateUsageRecordHandler)
 
 	// ========== 管理员订阅系统路由 ==========

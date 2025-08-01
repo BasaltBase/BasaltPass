@@ -1,6 +1,7 @@
 package app
 
 import (
+	"basaltpass-backend/internal/aduit"
 	"errors"
 	"time"
 
@@ -182,7 +183,7 @@ func (s *AppService) CreateApp(tenantID uint, req *CreateAppRequest) (*AppRespon
 	tx.Commit()
 
 	// 审计日志
-	common.LogAudit(tenantID, "创建应用", "app", string(rune(app.ID)), "", "")
+	aduit.LogAudit(tenantID, "创建应用", "app", string(rune(app.ID)), "", "")
 
 	clients := []model.OAuthClient{*oauthClient}
 
@@ -322,7 +323,7 @@ func (s *AppService) UpdateApp(tenantID, appID uint, req *UpdateAppRequest) (*Ap
 	}
 
 	// 审计日志
-	common.LogAudit(tenantID, "更新应用", "app", string(rune(appID)), "", "")
+	aduit.LogAudit(tenantID, "更新应用", "app", string(rune(appID)), "", "")
 
 	// 重新查询返回
 	return s.GetApp(tenantID, appID)
@@ -349,7 +350,7 @@ func (s *AppService) DeleteApp(tenantID, appID uint) error {
 		Update("is_active", false)
 
 	// 审计日志
-	common.LogAudit(tenantID, "删除应用", "app", string(rune(appID)), "", "")
+	aduit.LogAudit(tenantID, "删除应用", "app", string(rune(appID)), "", "")
 
 	return nil
 }
@@ -389,7 +390,7 @@ func (s *AppService) ToggleAppStatus(tenantID, appID uint, status string) (*AppR
 	s.db.Where("app_id = ?", appID).Find(&oauthClients)
 
 	// 审计日志
-	common.LogAudit(tenantID, "切换应用状态", "app", string(rune(appID)), "", status)
+	aduit.LogAudit(tenantID, "切换应用状态", "app", string(rune(appID)), "", status)
 
 	return s.appToResponse(&app, oauthClients), nil
 }

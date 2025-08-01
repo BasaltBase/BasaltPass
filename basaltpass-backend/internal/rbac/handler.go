@@ -2,6 +2,7 @@ package rbac
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -45,4 +46,102 @@ func AssignRoleHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.SendStatus(fiber.StatusNoContent)
+}
+
+// CheckUserRoleHandler GET /admin/user/:userId/role/:roleId/check
+func CheckUserRoleHandler(c *fiber.Ctx) error {
+	userID, err := strconv.ParseUint(c.Params("userId"), 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "无效的用户ID"})
+	}
+
+	roleID, err := strconv.ParseUint(c.Params("roleId"), 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "无效的角色ID"})
+	}
+
+	hasRole, err := HasRole(uint(userID), uint(roleID))
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{
+		"user_id":  userID,
+		"role_id":  roleID,
+		"has_role": hasRole,
+	})
+}
+
+// CheckUserRoleByCodeHandler GET /admin/user/:userId/tenant/:tenantId/role/:roleCode/check
+func CheckUserRoleByCodeHandler(c *fiber.Ctx) error {
+	userID, err := strconv.ParseUint(c.Params("userId"), 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "无效的用户ID"})
+	}
+
+	tenantID, err := strconv.ParseUint(c.Params("tenantId"), 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "无效的租户ID"})
+	}
+
+	roleCode := c.Params("roleCode")
+	if roleCode == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "角色代码不能为空"})
+	}
+
+	hasRole, err := HasRoleByCode(uint(userID), uint(tenantID), roleCode)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{
+		"user_id":   userID,
+		"tenant_id": tenantID,
+		"role_code": roleCode,
+		"has_role":  hasRole,
+	})
+}
+
+// GetUserRolesHandler GET /admin/user/:userId/tenant/:tenantId/roles
+func GetUserRolesHandler(c *fiber.Ctx) error {
+	userID, err := strconv.ParseUint(c.Params("userId"), 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "无效的用户ID"})
+	}
+
+	tenantID, err := strconv.ParseUint(c.Params("tenantId"), 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "无效的租户ID"})
+	}
+
+	roles, err := GetUserRoles(uint(userID), uint(tenantID))
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{
+		"user_id":   userID,
+		"tenant_id": tenantID,
+		"roles":     roles,
+	})
+}
+
+// RemoveUserRoleHandler DELETE /admin/user/:userId/role/:roleId
+func RemoveUserRoleHandler(c *fiber.Ctx) error {
+	userID, err := strconv.ParseUint(c.Params("userId"), 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "无效的用户ID"})
+	}
+
+	roleID, err := strconv.ParseUint(c.Params("roleId"), 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "无效的角色ID"})
+	}
+
+	err = RemoveRole(uint(userID), uint(roleID))
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"message": "角色移除成功"})
 }

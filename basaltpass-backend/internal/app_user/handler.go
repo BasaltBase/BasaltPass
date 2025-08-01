@@ -1,6 +1,7 @@
 package app_user
 
 import (
+	"basaltpass-backend/internal/aduit"
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
 	"strconv"
@@ -95,7 +96,7 @@ func RevokeUserAppHandler(c *fiber.Ctx) error {
 	}
 
 	// 记录审计日志
-	common.LogAudit(userID, "撤销应用授权", "app_user", strconv.Itoa(int(appID)), "", "")
+	aduit.LogAudit(userID, "撤销应用授权", "app_user", strconv.Itoa(int(appID)), "", "")
 
 	return c.JSON(fiber.Map{
 		"message": "Authorization revoked successfully",
@@ -151,7 +152,7 @@ func AdminRevokeUserAppHandler(c *fiber.Ctx) error {
 	}
 
 	// 记录审计日志
-	common.LogAudit(adminUserID, "管理员撤销应用授权", "app_user",
+	aduit.LogAudit(adminUserID, "管理员撤销应用授权", "app_user",
 		strconv.Itoa(int(appID))+"_"+strconv.Itoa(int(userID)), "", "")
 
 	return c.JSON(fiber.Map{
@@ -203,7 +204,7 @@ func UpdateAppUserStatusHandler(c *fiber.Ctx) error {
 	}
 
 	// 记录审计日志
-	common.LogAudit(adminUserID, "更新应用用户状态", "app_user",
+	aduit.LogAudit(adminUserID, "更新应用用户状态", "app_user",
 		strconv.Itoa(int(appID))+"_"+strconv.Itoa(int(userID)), string(req.Status), "")
 
 	return c.JSON(fiber.Map{

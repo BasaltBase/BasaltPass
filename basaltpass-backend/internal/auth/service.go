@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"basaltpass-backend/internal/aduit"
 	"errors"
 
 	"basaltpass-backend/internal/common"
@@ -274,7 +275,7 @@ func (s Service) setupFirstUserAsGlobalAdmin(tx *gorm.DB, user *model.User) erro
 		return err
 	}
 
-	common.LogAudit(user.ID, "首位用户注册", "user", string(rune(user.ID)), "", "自动设置为全局管理员")
+	aduit.LogAudit(user.ID, "首位用户注册", "user", string(rune(user.ID)), "", "自动设置为全局管理员")
 
 	return nil
 }

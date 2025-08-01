@@ -1,6 +1,7 @@
 package oauth
 
 import (
+	"basaltpass-backend/internal/aduit"
 	"errors"
 	"strings"
 	"time"
@@ -108,7 +109,7 @@ func (s *ClientService) CreateClient(creatorID uint, req *CreateClientRequest) (
 	}
 
 	// 记录审计日志
-	common.LogAudit(creatorID, "创建OAuth2客户端", "oauth_client", client.ClientID, "", "")
+	aduit.LogAudit(creatorID, "创建OAuth2客户端", "oauth_client", client.ClientID, "", "")
 
 	// 加载创建者信息
 	if err := s.db.Preload("Creator").First(client, client.ID).Error; err != nil {
@@ -165,7 +166,7 @@ func (s *ClientService) CreateClientForApp(appID, creatorID uint, req *CreateCli
 	}
 
 	// 记录审计日志
-	common.LogAudit(creatorID, "为应用创建OAuth2客户端", "oauth_client", client.ClientID, "", "")
+	aduit.LogAudit(creatorID, "为应用创建OAuth2客户端", "oauth_client", client.ClientID, "", "")
 
 	// 返回响应（包含明文密钥）
 	return s.clientToResponse(client, plainSecret), nil
@@ -260,7 +261,7 @@ func (s *ClientService) UpdateClient(clientID string, req *UpdateClientRequest) 
 	}
 
 	// 记录审计日志
-	common.LogAudit(0, "更新OAuth2客户端", "oauth_client", clientID, "", "")
+	aduit.LogAudit(0, "更新OAuth2客户端", "oauth_client", clientID, "", "")
 
 	// 重新加载数据
 	if err := s.db.Preload("Creator").First(&client, client.ID).Error; err != nil {
@@ -291,7 +292,7 @@ func (s *ClientService) DeleteClient(clientID string) error {
 	}
 
 	// 记录审计日志
-	common.LogAudit(0, "删除OAuth2客户端", "oauth_client", clientID, "", "")
+	aduit.LogAudit(0, "删除OAuth2客户端", "oauth_client", clientID, "", "")
 
 	return nil
 }
@@ -329,7 +330,7 @@ func (s *ClientService) RegenerateSecret(clientID string) (string, error) {
 	s.db.Where("client_id = ?", clientID).Delete(&model.OAuthAccessToken{})
 
 	// 记录审计日志
-	common.LogAudit(0, "重新生成OAuth2客户端密钥", "oauth_client", clientID, "", "")
+	aduit.LogAudit(0, "重新生成OAuth2客户端密钥", "oauth_client", clientID, "", "")
 
 	return plainSecret, nil
 }
@@ -371,7 +372,7 @@ func (s *ClientService) RevokeClientTokens(clientID string) error {
 	}
 
 	// 记录审计日志
-	common.LogAudit(0, "撤销OAuth2客户端所有令牌", "oauth_client", clientID, "", "")
+	aduit.LogAudit(0, "撤销OAuth2客户端所有令牌", "oauth_client", clientID, "", "")
 
 	return nil
 }

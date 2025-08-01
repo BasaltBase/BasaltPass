@@ -42,10 +42,9 @@ func DebugUserHandler(c *fiber.Ctx) error {
 		"user_id":   uid,
 		"tenant_id": tid,
 		"user": map[string]interface{}{
-			"id":             user.ID,
-			"email":          user.Email,
-			"nickname":       user.Nickname,
-			"is_super_admin": user.IsSuperAdmin,
+			"id":       user.ID,
+			"email":    user.Email,
+			"nickname": user.Nickname,
 		},
 		"tenant_associations": tenantAdmins,
 	})

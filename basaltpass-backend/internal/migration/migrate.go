@@ -1,26 +1,30 @@
-package common
+package migration
 
 import (
-	"log"
-
+	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
+	"log"
 )
 
 // 迁移数据库，自动迁移数据库表结构
 // RunMigrations performs GORM auto migration for all models.
 func RunMigrations() {
-	err := DB().AutoMigrate(
+	err := common.DB().AutoMigrate(
 		&model.User{},
 		&model.Role{},
 		&model.UserRole{},
+		&model.Permission{},
+
+		// 团队
 		&model.Team{},
 		&model.TeamMember{},
+
+		// 钱包
 		&model.Wallet{},
 		&model.WalletTx{},
 		&model.AuditLog{},
 		&model.OAuthAccount{},
 		&model.PasswordReset{},
-		&model.Permission{},
 		&model.Passkey{},
 		&model.SystemApp{},
 		&model.Notification{},
@@ -28,10 +32,10 @@ func RunMigrations() {
 
 		// 租户和应用模型
 		&model.Tenant{},
-		&model.TenantAdmin{},
+		&model.TenantAdmin{}, // 租户管理员
 		&model.App{},
-		&model.AppUser{},
-		&model.TenantQuota{},
+		&model.AppUser{},     // 业务应用用户映射
+		&model.TenantQuota{}, // 租户配额
 
 		// OAuth2模型
 		&model.OAuthClient{},
@@ -62,7 +66,7 @@ func RunMigrations() {
 		// 订单系统模型
 		&model.Order{},
 
-		// 应用权限系统模型
+		// 业务应用权限系统模型
 		&model.AppPermission{},
 		&model.AppRole{},
 		&model.AppUserPermission{},
@@ -82,7 +86,7 @@ func RunMigrations() {
 
 // handleSpecialMigrations 处理特殊的迁移情况
 func handleSpecialMigrations() {
-	db := DB()
+	db := common.DB()
 
 	// 检查是否为全新数据库（基于tenants表是否已经有数据）
 	var count int64
@@ -126,7 +130,7 @@ func handleSpecialMigrations() {
 					AND tenant_admins.tenant_id = user_tenants.tenant_id
 				)
 			`).Error; err != nil {
-				log.Printf("[Migration] Failed to migrate data from user_tenants to tenant_admins: %v", err)
+				log.Printf("[Migration] Failed to migration data from user_tenants to tenant_admins: %v", err)
 			} else {
 				log.Println("[Migration] Successfully migrated data from user_tenants to tenant_admins")
 				// 删除旧表
@@ -185,15 +189,15 @@ func handleSpecialMigrations() {
 
 // ensureDefaultTenant 确保存在默认租户
 func ensureDefaultTenant() {
-	db := DB()
+	db := common.DB()
 	var count int64
 	db.Model(&model.Tenant{}).Count(&count)
 
 	if count == 0 {
 		defaultTenant := model.Tenant{
-			Name:        "默认租户",
+			Name:        "BasaltPass",
 			Code:        "default",
-			Description: "系统默认租户",
+			Description: "Default tenant for BasaltPass",
 			Status:      "active",
 			Plan:        "free",
 			// 不设置Metadata字段，让GORM使用默认值
@@ -208,7 +212,7 @@ func ensureDefaultTenant() {
 
 // createDefaultRoles 创建默认角色
 func createDefaultRoles() {
-	db := DB()
+	db := common.DB()
 
 	// 获取默认租户
 	var defaultTenant model.Tenant
@@ -221,15 +225,15 @@ func createDefaultRoles() {
 		{
 			TenantID:    defaultTenant.ID,
 			Code:        "admin",
-			Name:        "管理员",
-			Description: "系统管理员角色",
+			Name:        "Admin",
+			Description: "Basalt system admin role",
 			IsSystem:    true,
 		},
 		{
 			TenantID:    defaultTenant.ID,
 			Code:        "user",
-			Name:        "普通用户",
-			Description: "普通用户角色",
+			Name:        "Common user",
+			Description: "Common user role",
 			IsSystem:    true,
 		},
 	}
@@ -249,7 +253,7 @@ func createDefaultRoles() {
 
 // seedSystemApps 插入默认系统应用
 func seedSystemApps() {
-	db := DB()
+	db := common.DB()
 	apps := []model.SystemApp{
 		{Name: "安全中心", Description: "账户安全相关通知"},
 		{Name: "团队", Description: "团队协作相关通知"},
@@ -267,7 +271,7 @@ func seedSystemApps() {
 
 // createSubscriptionIndexes 创建订阅系统相关的数据库索引
 func createSubscriptionIndexes() {
-	db := DB()
+	db := common.DB()
 
 	// 检查数据库类型并创建相应的索引
 	// 注意：GORM 会自动创建大部分索引，这里只处理特殊的复合索引

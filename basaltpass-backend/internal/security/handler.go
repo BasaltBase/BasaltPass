@@ -1,6 +1,7 @@
 package security
 
 import (
+	"basaltpass-backend/internal/aduit"
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
 	"basaltpass-backend/internal/notification"
@@ -102,7 +103,7 @@ func ChangePasswordHandler(c *fiber.Ctx) error {
 	}
 
 	// Log audit
-	common.LogAudit(uid, "修改密码", "", "", c.IP(), c.Get("User-Agent"))
+	aduit.LogAudit(uid, "修改密码", "", "", c.IP(), c.Get("User-Agent"))
 
 	// 发送通知
 	go notification.Send(
@@ -138,7 +139,7 @@ func UpdateContactHandler(c *fiber.Ctx) error {
 	if req.Email != "" && req.Email != user.Email {
 		updates["email"] = req.Email
 		updates["email_verified"] = false // Reset verification status
-		common.LogAudit(uid, "修改邮箱", "", req.Email, c.IP(), c.Get("User-Agent"))
+		aduit.LogAudit(uid, "修改邮箱", "", req.Email, c.IP(), c.Get("User-Agent"))
 	}
 
 	// Update phone if provided
@@ -150,7 +151,7 @@ func UpdateContactHandler(c *fiber.Ctx) error {
 			updates["phone"] = req.Phone
 			updates["phone_verified"] = false // Reset verification status
 		}
-		common.LogAudit(uid, "修改手机号", "", req.Phone, c.IP(), c.Get("User-Agent"))
+		aduit.LogAudit(uid, "修改手机号", "", req.Phone, c.IP(), c.Get("User-Agent"))
 	}
 
 	if len(updates) > 0 {
@@ -197,7 +198,7 @@ func Disable2FAHandler(c *fiber.Ctx) error {
 	}
 
 	// Log audit
-	common.LogAudit(uid, "禁用两步验证", "", "", c.IP(), c.Get("User-Agent"))
+	aduit.LogAudit(uid, "禁用两步验证", "", "", c.IP(), c.Get("User-Agent"))
 
 	return c.JSON(fiber.Map{"message": "两步验证已禁用"})
 }
@@ -233,7 +234,7 @@ func VerifyHandler(c *fiber.Ctx) error {
 
 	// Enable 2FA and log audit
 	common.DB().Model(&user).Update("two_fa_enabled", true)
-	common.LogAudit(uid, "启用两步验证", "", "", c.IP(), c.Get("User-Agent"))
+	aduit.LogAudit(uid, "启用两步验证", "", "", c.IP(), c.Get("User-Agent"))
 
 	return c.SendStatus(fiber.StatusNoContent)
 }
@@ -248,7 +249,7 @@ func SendEmailVerificationHandler(c *fiber.Ctx) error {
 	// 3. Store token in database with expiration
 
 	// For now, just log the action
-	common.LogAudit(uid, "发送邮箱验证", "", "", c.IP(), c.Get("User-Agent"))
+	aduit.LogAudit(uid, "发送邮箱验证", "", "", c.IP(), c.Get("User-Agent"))
 
 	return c.JSON(fiber.Map{"message": "验证邮件已发送"})
 }
@@ -263,7 +264,7 @@ func SendPhoneVerificationHandler(c *fiber.Ctx) error {
 	// 3. Store code in database with expiration
 
 	// For now, just log the action
-	common.LogAudit(uid, "发送手机验证", "", "", c.IP(), c.Get("User-Agent"))
+	aduit.LogAudit(uid, "发送手机验证", "", "", c.IP(), c.Get("User-Agent"))
 
 	return c.JSON(fiber.Map{"message": "验证短信已发送"})
 }
@@ -277,7 +278,7 @@ func VerifyEmailHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "验证失败"})
 	}
 
-	common.LogAudit(uid, "邮箱验证成功", "", "", c.IP(), c.Get("User-Agent"))
+	aduit.LogAudit(uid, "邮箱验证成功", "", "", c.IP(), c.Get("User-Agent"))
 
 	return c.JSON(fiber.Map{"message": "邮箱验证成功"})
 }
@@ -304,7 +305,7 @@ func VerifyPhoneHandler(c *fiber.Ctx) error {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "验证失败"})
 		}
 
-		common.LogAudit(uid, "手机验证成功", "", "", c.IP(), c.Get("User-Agent"))
+		aduit.LogAudit(uid, "手机验证成功", "", "", c.IP(), c.Get("User-Agent"))
 
 		return c.JSON(fiber.Map{"message": "手机验证成功"})
 	}

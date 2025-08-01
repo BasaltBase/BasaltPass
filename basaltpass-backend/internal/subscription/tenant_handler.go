@@ -1,9 +1,8 @@
 package subscription
 
 import (
+	"basaltpass-backend/internal/middleware"
 	"strconv"
-
-	"basaltpass-backend/internal/common"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -22,7 +21,7 @@ func NewTenantHandler(db *gorm.DB) *TenantHandler {
 // getTenantService 获取租户服务实例
 func (h *TenantHandler) getTenantService(c *fiber.Ctx) *TenantService {
 	// 从中间件获取租户ID
-	tenantID := common.GetTenantIDFromContext(c)
+	tenantID := middleware.GetTenantIDFromContext(c)
 	tenantID64 := uint64(tenantID)
 	return NewTenantService(h.db, &tenantID64)
 }
@@ -388,7 +387,7 @@ func (h *TenantHandler) GetTenantSubscriptionHandler(c *fiber.Ctx) error {
 	service := h.getTenantService(c)
 
 	// 获取当前用户ID（如果需要限制只能查看自己的订阅）
-	userID := common.GetUserIDFromContext(c)
+	userID := middleware.GetUserIDFromContext(c)
 	var customerID *uint
 	if userID != nil {
 		customerID = userID
@@ -451,7 +450,7 @@ func (h *TenantHandler) CancelTenantSubscriptionHandler(c *fiber.Ctx) error {
 	service := h.getTenantService(c)
 
 	// 获取当前用户ID（如果需要限制只能取消自己的订阅）
-	userID := common.GetUserIDFromContext(c)
+	userID := middleware.GetUserIDFromContext(c)
 	var customerID *uint
 	if userID != nil {
 		customerID = userID

@@ -2,6 +2,7 @@ package main
 
 import (
 	"basaltpass-backend/internal/common"
+	"basaltpass-backend/internal/migration"
 	"basaltpass-backend/internal/model"
 	"fmt"
 	"log"
@@ -11,7 +12,7 @@ import (
 
 func main() {
 	// 初始化数据库
-	common.RunMigrations()
+	migration.RunMigrations()
 
 	// 创建测试用户
 	password := "password123"

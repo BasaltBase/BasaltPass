@@ -16,16 +16,16 @@ var (
 )
 
 // DB returns a singleton *gorm.DB connected to a local SQLite database file.
+// Ensure that this package does NOT import anything from internal/model.
+// If you need shared types, move them to a new package, e.g., internal/types.
 func DB() *gorm.DB {
 	once.Do(func() {
 		var err error
-		// 获取当前工作目录
 		wd, err := os.Getwd()
 		if err != nil {
 			log.Fatalf("failed to get working directory: %v", err)
 		}
 
-		// 确保数据库文件在 basaltpass-backend 目录下
 		dbPath := filepath.Join(wd, "basaltpass.db")
 		log.Printf("Database path: %s", dbPath)
 

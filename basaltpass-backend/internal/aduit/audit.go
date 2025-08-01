@@ -1,6 +1,7 @@
-package common
+package aduit
 
 import (
+	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
 	"encoding/json"
 )
@@ -30,5 +31,5 @@ func LogAudit(userID uint, action, resourceType, resourceID, ip, userAgent strin
 		Data:   string(dataJSON),
 	}
 
-	DB().Create(&auditLog)
+	common.DB().Create(&auditLog)
 }

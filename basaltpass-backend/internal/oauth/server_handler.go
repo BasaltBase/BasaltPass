@@ -1,11 +1,10 @@
 package oauth
 
 import (
+	"basaltpass-backend/internal/aduit"
 	"net/http"
 	"net/url"
 	"strings"
-
-	"basaltpass-backend/internal/common"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -94,7 +93,7 @@ func ConsentHandler(c *fiber.Ctx) error {
 	}
 
 	// 记录审计日志
-	common.LogAudit(userID, "OAuth2授权", "oauth_client", clientID, c.IP(), c.Get("User-Agent"))
+	aduit.LogAudit(userID, "OAuth2授权", "oauth_client", clientID, c.IP(), c.Get("User-Agent"))
 
 	// 重定向回客户端
 	return redirectWithCode(c, redirectURI, code, state)
