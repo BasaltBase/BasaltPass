@@ -52,7 +52,7 @@ export interface UpdateTenantAppRequest {
 export const tenantAppApi = {
   // 获取租户应用列表
   async listTenantApps(page = 1, limit = 20) {
-    const response = await client.get('/api/v1/admin/apps', {
+    const response = await client.get('/api/v1/tenant/apps', {
       params: { page, limit }
     })
     return response.data
@@ -60,37 +60,37 @@ export const tenantAppApi = {
 
   // 获取租户应用详情
   async getTenantApp(id: string) {
-    const response = await client.get(`/api/v1/admin/apps/${id}`)
+    const response = await client.get(`/api/v1/tenant/apps/${id}`)
     return response.data
   },
 
   // 创建租户应用
   async createTenantApp(data: CreateTenantAppRequest) {
-    const response = await client.post('/api/v1/admin/apps', data)
+    const response = await client.post('/api/v1/tenant/apps', data)
     return response.data
   },
 
   // 更新租户应用
   async updateTenantApp(id: string, data: UpdateTenantAppRequest) {
-    const response = await client.put(`/api/v1/admin/apps/${id}`, data)
+    const response = await client.put(`/api/v1/tenant/apps/${id}`, data)
     return response.data
   },
 
   // 删除租户应用
   async deleteTenantApp(id: string) {
-    const response = await client.delete(`/api/v1/admin/apps/${id}`)
+    const response = await client.delete(`/api/v1/tenant/apps/${id}`)
     return response.data
   },
 
   // 切换应用状态
   async toggleAppStatus(id: string, status: 'active' | 'inactive') {
-    const response = await client.patch(`/api/v1/admin/apps/${id}/status`, { status })
+    const response = await client.patch(`/api/v1/tenant/apps/${id}/status`, { status })
     return response.data
   },
 
   // 获取应用统计信息
-  async getAppStats(id: string, period = '30d') {
-    const response = await client.get(`/api/v1/admin/apps/${id}/stats`, {
+  async getAppStats(id: string, period = '7d') {
+    const response = await client.get(`/api/v1/tenant/apps/${id}/stats`, {
       params: { period }
     })
     return response.data

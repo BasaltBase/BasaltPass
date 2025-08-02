@@ -216,6 +216,15 @@ func RegisterRoutes(app *fiber.App) {
 	// 租户应用管理路由
 	tenantAppGroup := tenantGroup.Group("/apps")
 
+	// 租户基础应用管理路由
+	tenantAppGroup.Get("/", appHandler.TenantListAppsHandler)
+	tenantAppGroup.Post("/", appHandler.TenantCreateAppHandler)
+	tenantAppGroup.Get("/:id", appHandler.TenantGetAppHandler)
+	tenantAppGroup.Put("/:id", appHandler.TenantUpdateAppHandler)
+	tenantAppGroup.Delete("/:id", appHandler.TenantDeleteAppHandler)
+	tenantAppGroup.Get("/:id/stats", appHandler.TenantGetAppStatsHandler)
+	tenantAppGroup.Patch("/:id/status", appHandler.TenantToggleAppStatusHandler)
+
 	// 应用权限管理路由
 	tenantAppGroup.Get("/:app_id/permissions", app_rbac.GetAppPermissions)
 	tenantAppGroup.Post("/:app_id/permissions", app_rbac.CreateAppPermission)

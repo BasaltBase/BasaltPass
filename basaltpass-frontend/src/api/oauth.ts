@@ -95,4 +95,34 @@ export const oauthApi = {
   revokeClientTokens(clientId: string) {
     return client.post<{ message: string }>(`/api/v1/admin/oauth/clients/${clientId}/revoke-tokens`)
   }
+}
+
+// 租户级别OAuth2客户端管理API
+export const tenantOAuthApi = {
+  // 获取租户OAuth客户端列表
+  listClients(page = 1, pageSize = 10, search = '') {
+    return client.get<{ data: ClientListResponse }>('/api/v1/tenant/oauth/clients', {
+      params: { page, page_size: pageSize, search }
+    })
+  },
+
+  // 创建租户OAuth客户端
+  createClient(data: CreateClientRequest) {
+    return client.post<{ data: OAuthClient; message: string }>('/api/v1/tenant/oauth/clients', data)
+  },
+
+  // 更新租户OAuth客户端
+  updateClient(clientId: string, data: UpdateClientRequest) {
+    return client.put<{ data: OAuthClient; message: string }>(`/api/v1/tenant/oauth/clients/${clientId}`, data)
+  },
+
+  // 删除租户OAuth客户端
+  deleteClient(clientId: string) {
+    return client.delete<{ message: string }>(`/api/v1/tenant/oauth/clients/${clientId}`)
+  },
+
+  // 重新生成租户OAuth客户端密钥
+  regenerateSecret(clientId: string) {
+    return client.post<{ data: { client_secret: string }; message: string }>(`/api/v1/tenant/oauth/clients/${clientId}/regenerate-secret`)
+  }
 } 
