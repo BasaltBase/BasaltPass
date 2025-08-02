@@ -3,7 +3,7 @@ package api
 import (
 	"basaltpass-backend/internal/admin"
 	appHandler "basaltpass-backend/internal/app"
-	"basaltpass-backend/internal/app_permission"
+	"basaltpass-backend/internal/app_rbac"
 	"basaltpass-backend/internal/app_user"
 	"basaltpass-backend/internal/auth"
 	"basaltpass-backend/internal/debug"
@@ -215,29 +215,29 @@ func RegisterRoutes(app *fiber.App) {
 	tenantAppGroup := tenantGroup.Group("/apps")
 
 	// 应用权限管理路由
-	tenantAppGroup.Get("/:app_id/permissions", app_permission.GetAppPermissions)
-	tenantAppGroup.Post("/:app_id/permissions", app_permission.CreateAppPermission)
-	tenantAppGroup.Put("/:app_id/permissions/:permission_id", app_permission.UpdateAppPermission)
-	tenantAppGroup.Delete("/:app_id/permissions/:permission_id", app_permission.DeleteAppPermission)
+	tenantAppGroup.Get("/:app_id/permissions", app_rbac.GetAppPermissions)
+	tenantAppGroup.Post("/:app_id/permissions", app_rbac.CreateAppPermission)
+	tenantAppGroup.Put("/:app_id/permissions/:permission_id", app_rbac.UpdateAppPermission)
+	tenantAppGroup.Delete("/:app_id/permissions/:permission_id", app_rbac.DeleteAppPermission)
 
 	// 应用角色管理路由
-	tenantAppGroup.Get("/:app_id/roles", app_permission.GetAppRoles)
-	tenantAppGroup.Post("/:app_id/roles", app_permission.CreateAppRole)
-	tenantAppGroup.Put("/:app_id/roles/:role_id", app_permission.UpdateAppRole)
-	tenantAppGroup.Delete("/:app_id/roles/:role_id", app_permission.DeleteAppRole)
+	tenantAppGroup.Get("/:app_id/roles", app_rbac.GetAppRoles)
+	tenantAppGroup.Post("/:app_id/roles", app_rbac.CreateAppRole)
+	tenantAppGroup.Put("/:app_id/roles/:role_id", app_rbac.UpdateAppRole)
+	tenantAppGroup.Delete("/:app_id/roles/:role_id", app_rbac.DeleteAppRole)
 
 	// 应用用户管理路由（包含权限）
-	tenantAppGroup.Get("/:app_id/users", app_permission.GetAppUsers)
+	tenantAppGroup.Get("/:app_id/users", app_rbac.GetAppUsers)
 	tenantAppGroup.Get("/:app_id/users/by-status", app_user.GetAppUsersByStatusHandler)
 	tenantAppGroup.Get("/:app_id/users/stats", app_user.GetAppUserStatsHandler)
 	tenantAppGroup.Put("/:app_id/users/:user_id/status", app_user.UpdateAppUserStatusHandler)
 
 	// 应用用户权限管理路由
-	tenantAppGroup.Get("/:app_id/users/:user_id/permissions", app_permission.GetUserPermissions)
-	tenantAppGroup.Post("/:app_id/users/:user_id/permissions", app_permission.GrantUserPermissions)
-	tenantAppGroup.Delete("/:app_id/users/:user_id/permissions/:permission_id", app_permission.RevokeUserPermission)
-	tenantAppGroup.Post("/:app_id/users/:user_id/roles", app_permission.AssignUserRoles)
-	tenantAppGroup.Delete("/:app_id/users/:user_id/roles/:role_id", app_permission.RevokeUserRole)
+	tenantAppGroup.Get("/:app_id/users/:user_id/permissions", app_rbac.GetUserPermissions)
+	tenantAppGroup.Post("/:app_id/users/:user_id/permissions", app_rbac.GrantUserPermissions)
+	tenantAppGroup.Delete("/:app_id/users/:user_id/permissions/:permission_id", app_rbac.RevokeUserPermission)
+	tenantAppGroup.Post("/:app_id/users/:user_id/roles", app_rbac.AssignUserRoles)
+	tenantAppGroup.Delete("/:app_id/users/:user_id/roles/:role_id", app_rbac.RevokeUserRole)
 
 	// 原有的系统级管理员路由（保持向后兼容）
 	adminGroup := v1.Group("/admin", middleware.JWTMiddleware(), middleware.AdminMiddleware())
