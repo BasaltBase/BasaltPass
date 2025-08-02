@@ -6,6 +6,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// team invitation handlers
+
 // CreateHandler POST /teams/:id/invitations
 func CreateHandler(c *fiber.Ctx) error {
 	teamID, _ := strconv.Atoi(c.Params("id"))

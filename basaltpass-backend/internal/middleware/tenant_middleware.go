@@ -70,34 +70,6 @@ func TenantMiddleware() fiber.Handler {
 	}
 }
 
-// SuperAdminMiddleware 超级管理员中间件
-func SuperAdminMiddleware() fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		userID := c.Locals("userID")
-		if userID == nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Unauthorized",
-			})
-		}
-
-		// 检查是否为超级管理员
-		var user model.User
-		if err := common2.DB().First(&user, userID).Error; err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "User not found",
-			})
-		}
-
-		if !user.IsSuperAdmin() {
-			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
-				"error": "Super admin access required",
-			})
-		}
-
-		return c.Next()
-	}
-}
-
 // TenantOwnerMiddleware 租户所有者中间件
 func TenantOwnerMiddleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {

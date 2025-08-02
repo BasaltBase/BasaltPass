@@ -9,7 +9,7 @@ import (
 	"basaltpass-backend/internal/notification"
 )
 
-var ErrAlreadyInvited = errors.New("用户已存在待处理邀请")
+var ErrAlreadyInvited = errors.New("user already invited to this team")
 
 // Create 创建邀请，可批量 inviteeIDs
 func Create(teamID, inviterID uint, inviteeIDs []uint, remark string) error {
@@ -44,7 +44,7 @@ func Create(teamID, inviterID uint, inviteeIDs []uint, remark string) error {
 
 	// 发送通知
 	for _, inv := range invites {
-		notification.Send("团队", "团队邀请", "您被邀请加入团队 "+team.Name, "info", &inv.InviterID, "团队", []uint{inv.InviteeID})
+		notification.Send("Team Center", "Team Invitation", "you are invited to the team "+team.Name, "info", &inv.InviterID, "团队", []uint{inv.InviteeID})
 	}
 	return nil
 }

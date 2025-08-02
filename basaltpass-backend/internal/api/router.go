@@ -27,6 +27,8 @@ import (
 
 // RegisterRoutes attaches all versioned API routes to the Fiber app.
 func RegisterRoutes(app *fiber.App) {
+	app.Get("./not-implemented", notImplemented)
+
 	// OIDC Discovery端点
 	app.Get("/.well-known/openid-configuration", oauth.DiscoveryHandler)
 
