@@ -387,10 +387,10 @@ func (h *TenantHandler) GetTenantSubscriptionHandler(c *fiber.Ctx) error {
 	service := h.getTenantService(c)
 
 	// 获取当前用户ID（如果需要限制只能查看自己的订阅）
-	userID := middleware.GetUserIDFromContext(c)
+	currentUserID := middleware.GetUserIDFromContext(c)
 	var userID *uint
-	if userID != nil {
-		userID = userID
+	if currentUserID != nil {
+		userID = currentUserID
 	}
 
 	subscription, err := service.GetSubscription(uint(id), userID)
@@ -450,10 +450,10 @@ func (h *TenantHandler) CancelTenantSubscriptionHandler(c *fiber.Ctx) error {
 	service := h.getTenantService(c)
 
 	// 获取当前用户ID（如果需要限制只能取消自己的订阅）
-	userID := middleware.GetUserIDFromContext(c)
+	currentUserID := middleware.GetUserIDFromContext(c)
 	var userID *uint
-	if userID != nil {
-		userID = userID
+	if currentUserID != nil {
+		userID = currentUserID
 	}
 
 	if err := service.CancelSubscription(uint(id), userID, &req); err != nil {
