@@ -267,7 +267,7 @@ const TenantNotifications: React.FC = () => {
   };
 
   return (
-    <TenantLayout>
+    <TenantLayout title="租户通知管理">
     <div className="p-6">
       {/* 消息提示 */}
       {message.visible && (

@@ -241,7 +241,7 @@ export default function TenantDashboard() {
 
   if (loading) {
     return (
-      <TenantLayout title="租户仪表板">
+      <TenantLayout title="仪表板">
         <div className="min-h-screen flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
@@ -251,7 +251,7 @@ export default function TenantDashboard() {
 
   if (error) {
     return (
-      <TenantLayout title="租户仪表板">
+      <TenantLayout title="仪表板">
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <div className="text-red-600 text-lg font-medium">{error}</div>
@@ -268,7 +268,7 @@ export default function TenantDashboard() {
   }
 
   return (
-    <TenantLayout title="租户仪表板">
+    <TenantLayout title="仪表板">
       <div className="space-y-6">
         {/* 页面标题 */}
         <div>

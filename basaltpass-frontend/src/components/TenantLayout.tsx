@@ -42,10 +42,11 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
           <div className="flex h-16 justify-between items-center">
             <div className="flex items-center">
               <Link to="/dashboard" className="flex items-center">
-                <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <div className="h-8 w-8 bg-purple-600 rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-lg">T</span>
                 </div>
-                <span className="ml-2 text-xl font-bold text-gray-900">租户控制台</span>
+                <span className="ml-2 text-xl font-bold text-gray-900">BasaltPsss</span>
+                <span className="ml-2 text-sm font-bold text-gray-500">租户控制台</span>
               </Link>
               {title && (
                 <>

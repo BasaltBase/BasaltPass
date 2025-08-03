@@ -164,7 +164,7 @@ const SubscriptionStatusManagement: React.FC = () => {
 
   if (loading) {
     return (
-      <TenantLayout>
+      <TenantLayout title="订阅状态管理">
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
@@ -173,7 +173,7 @@ const SubscriptionStatusManagement: React.FC = () => {
   }
 
   return (
-    <TenantLayout>
+    <TenantLayout title="订阅状态管理">
       <div className="space-y-6">
         <div className="sm:flex sm:items-center">
           <div className="sm:flex-auto">

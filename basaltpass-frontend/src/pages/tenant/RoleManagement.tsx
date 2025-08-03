@@ -244,7 +244,7 @@ const TenantRoleManagement: React.FC = () => {
   };
 
   return (
-    <TenantLayout>
+    <TenantLayout title="角色权限管理">
       <div className="p-6">
         {/* 消息提示 */}
         {message.visible && (

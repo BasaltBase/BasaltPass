@@ -141,7 +141,7 @@ export default function Layout({ children }: LayoutProps) {
               {/* 管理系统切换按钮 - 只在platform页面显示 */}
                 <Link
                   to="/tenant/dashboard"
-                  className="relative rounded-md bg-indigo-50 px-3 py-2 text-indigo-600 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200"
+                  className="relative rounded-md bg-purple-50 px-3 py-2 text-purple-600 hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors duration-200"
                   title="切换到租户管理"
                 >
                   <div className="flex items-center space-x-2">
