@@ -162,7 +162,7 @@ export const tenantApi = {
 
   // 获取当前租户详细信息（控制台专用）
   async getTenantInfo(): Promise<{ data: TenantInfo }> {
-    const response = await client.get('/api/v1/admin/tenant/info')
+    const response = await client.get('/api/v1/tenant/info')
     return response.data
   },
 
@@ -207,6 +207,15 @@ export const tenantApi = {
 
   async removeUser(userId: string) {
     const response = await client.delete(`/admin/users/${userId}`)
+    return response.data
+  }
+}
+
+// 租户级别API (/tenant) - 用于租户自己获取信息
+export const tenantSelfApi = {
+  // 获取当前租户信息
+  async getTenantInfo(): Promise<{ data: TenantInfo }> {
+    const response = await client.get('/api/v1/tenant/info')
     return response.data
   }
 }

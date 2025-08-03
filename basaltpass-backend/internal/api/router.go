@@ -205,6 +205,20 @@ func RegisterRoutes(app *fiber.App) {
 	// 租户级别的路由（直接在v1下面）
 	tenantGroup := v1.Group("/tenant", middleware.JWTMiddleware(), middleware.TenantMiddleware())
 
+	// 租户信息管理
+	tenantGroup.Get("/info", tenant.TenantGetInfoHandler)
+
+	// 租户通知管理
+	tenantNotifGroup := tenantGroup.Group("/notifications")
+	tenantNotifGroup.Post("/", notification.TenantCreateHandler)
+	tenantNotifGroup.Get("/", notification.TenantListHandler)
+	tenantNotifGroup.Get("/stats", notification.TenantGetNotificationStatsHandler)
+	tenantNotifGroup.Get("/:id", notification.TenantGetNotificationHandler)
+	tenantNotifGroup.Put("/:id", notification.TenantUpdateNotificationHandler)
+	tenantNotifGroup.Delete("/:id", notification.TenantDeleteHandler)
+	tenantNotifGroup.Get("/users", notification.TenantGetUsersHandler)
+	tenantNotifGroup.Get("/users/search", notification.TenantSearchUsersHandler)
+
 	// 租户OAuth客户端管理路由
 	tenantOAuthGroup := tenantGroup.Group("/oauth/clients")
 	tenantOAuthGroup.Get("/", oauth.TenantListOAuthClientsHandler)

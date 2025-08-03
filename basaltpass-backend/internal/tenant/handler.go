@@ -225,3 +225,22 @@ func InviteUserHandler(c *fiber.Ctx) error {
 		"message": "用户邀请成功",
 	})
 }
+
+// TenantGetInfoHandler 租户获取自己的信息
+// GET /api/v1/tenant/info
+func TenantGetInfoHandler(c *fiber.Ctx) error {
+	// 从JWT中间件获取租户ID
+	tenantID := c.Locals("tenantID").(uint)
+
+	info, err := tenantService.GetTenantInfo(tenantID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"data":    info,
+		"message": "获取租户信息成功",
+	})
+}

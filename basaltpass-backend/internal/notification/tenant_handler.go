@@ -66,7 +66,7 @@ func TenantDeleteHandler(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
-// TenantGetUsersHandler 获取租户下的用户列表（用于选择通知接收者）
+// TenantGetUsersHandler 获取租户下的用户列表（用于搜索通知接收者）
 // GET /admin/notifications/users
 func TenantGetUsersHandler(c *fiber.Ctx) error {
 	tenantID := c.Locals("tenantID").(uint)
@@ -78,4 +78,77 @@ func TenantGetUsersHandler(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{"data": users})
+}
+
+// TenantGetNotificationHandler 租户获取通知详情
+// GET /tenant/notifications/:id
+func TenantGetNotificationHandler(c *fiber.Ctx) error {
+	tenantID := c.Locals("tenantID").(uint)
+	notifID, _ := strconv.Atoi(c.Params("id"))
+
+	notif, err := TenantGetNotification(tenantID, uint(notifID))
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"data": notif})
+}
+
+// TenantUpdateNotificationHandler 租户更新通知
+// PUT /tenant/notifications/:id
+func TenantUpdateNotificationHandler(c *fiber.Ctx) error {
+	tenantID := c.Locals("tenantID").(uint)
+	notifID, _ := strconv.Atoi(c.Params("id"))
+
+	var req struct {
+		Title   string `json:"title"`
+		Content string `json:"content"`
+		Type    string `json:"type"`
+	}
+
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	if err := TenantUpdateNotification(tenantID, uint(notifID), req.Title, req.Content, req.Type); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"message": "通知更新成功"})
+}
+
+// TenantGetNotificationStatsHandler 租户获取通知统计信息
+// GET /tenant/notifications/stats
+func TenantGetNotificationStatsHandler(c *fiber.Ctx) error {
+	tenantID := c.Locals("tenantID").(uint)
+
+	stats, err := TenantGetNotificationStats(tenantID)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"data": stats})
+}
+
+// TenantSearchUsersHandler 租户根据邮箱、昵称等搜索用户
+// GET /tenant/notifications/users/search
+func TenantSearchUsersHandler(c *fiber.Ctx) error {
+	tenantID := c.Locals("tenantID").(uint)
+	search := c.Query("search", "")
+
+	if search == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "搜索关键词不能为空",
+		})
+	}
+
+	users, err := TenantGetUsers(tenantID, search)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{
+		"data":    users,
+		"message": "用户搜索成功",
+	})
 }

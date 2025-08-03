@@ -1,10 +1,14 @@
 package notification
 
 import (
+	"errors"
+	"fmt"
 	"time"
 
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
+
+	"gorm.io/gorm"
 )
 
 // Send 发送通知
@@ -239,4 +243,161 @@ func TenantGetUsers(tenantID uint, search string) ([]map[string]interface{}, err
 
 	err := query.Order("users.email").Find(&users).Error
 	return users, err
+}
+
+// TenantGetNotification 租户获取通知详情
+func TenantGetNotification(tenantID, notifID uint) (*model.Notification, error) {
+	db := common.DB()
+
+	// 获取租户下所有用户的ID
+	var tenantUserIDs []uint
+	err := db.Table("tenant_admins").
+		Where("tenant_id = ?", tenantID).
+		Pluck("user_id", &tenantUserIDs).Error
+	if err != nil {
+		return nil, err
+	}
+
+	if len(tenantUserIDs) == 0 {
+		return nil, fmt.Errorf("租户下没有用户")
+	}
+
+	var notif model.Notification
+	err = db.Where("id = ? AND receiver_id IN ?", notifID, tenantUserIDs).
+		Preload("App").
+		First(&notif).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("通知不存在")
+		}
+		return nil, err
+	}
+
+	return &notif, nil
+}
+
+// TenantUpdateNotification 租户更新通知
+func TenantUpdateNotification(tenantID, notifID uint, title, content, nType string) error {
+	db := common.DB()
+
+	// 获取租户下所有用户的ID
+	var tenantUserIDs []uint
+	err := db.Table("tenant_admins").
+		Where("tenant_id = ?", tenantID).
+		Pluck("user_id", &tenantUserIDs).Error
+	if err != nil {
+		return err
+	}
+
+	if len(tenantUserIDs) == 0 {
+		return fmt.Errorf("租户下没有用户")
+	}
+
+	// 只能更新发送给租户用户的通知
+	updates := map[string]interface{}{
+		"title":   title,
+		"content": content,
+		"type":    nType,
+	}
+
+	result := db.Model(&model.Notification{}).
+		Where("id = ? AND receiver_id IN ?", notifID, tenantUserIDs).
+		Updates(updates)
+
+	if result.Error != nil {
+		return result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("通知不存在或无权限修改")
+	}
+
+	return nil
+}
+
+// TenantNotificationStats 租户通知统计信息
+type TenantNotificationStats struct {
+	TotalSent      int64            `json:"total_sent"`
+	TotalRead      int64            `json:"total_read"`
+	TotalUnread    int64            `json:"total_unread"`
+	ReadRate       float64          `json:"read_rate"`
+	TypeStats      map[string]int64 `json:"type_stats"`
+	RecentActivity []struct {
+		Date  string `json:"date"`
+		Count int64  `json:"count"`
+	} `json:"recent_activity"`
+}
+
+// TenantGetNotificationStats 获取租户通知统计信息
+func TenantGetNotificationStats(tenantID uint) (*TenantNotificationStats, error) {
+	db := common.DB()
+
+	// 获取租户下所有用户的ID
+	var tenantUserIDs []uint
+	err := db.Table("tenant_admins").
+		Where("tenant_id = ?", tenantID).
+		Pluck("user_id", &tenantUserIDs).Error
+	if err != nil {
+		return nil, err
+	}
+
+	if len(tenantUserIDs) == 0 {
+		return &TenantNotificationStats{}, nil
+	}
+
+	stats := &TenantNotificationStats{
+		TypeStats: make(map[string]int64),
+	}
+
+	// 获取总发送数
+	db.Model(&model.Notification{}).
+		Where("receiver_id IN ?", tenantUserIDs).
+		Count(&stats.TotalSent)
+
+	// 获取已读数
+	db.Model(&model.Notification{}).
+		Where("receiver_id IN ? AND is_read = ?", tenantUserIDs, true).
+		Count(&stats.TotalRead)
+
+	// 计算未读数和读取率
+	stats.TotalUnread = stats.TotalSent - stats.TotalRead
+	if stats.TotalSent > 0 {
+		stats.ReadRate = float64(stats.TotalRead) / float64(stats.TotalSent) * 100
+	}
+
+	// 获取按类型统计
+	var typeStats []struct {
+		Type  string `json:"type"`
+		Count int64  `json:"count"`
+	}
+	db.Model(&model.Notification{}).
+		Select("type, COUNT(*) as count").
+		Where("receiver_id IN ?", tenantUserIDs).
+		Group("type").
+		Find(&typeStats)
+
+	for _, stat := range typeStats {
+		stats.TypeStats[stat.Type] = stat.Count
+	}
+
+	// 获取最近7天的活动统计
+	for i := 6; i >= 0; i-- {
+		date := time.Now().AddDate(0, 0, -i)
+		dateStr := date.Format("2006-01-02")
+
+		var count int64
+		db.Model(&model.Notification{}).
+			Where("receiver_id IN ? AND DATE(created_at) = ?", tenantUserIDs, dateStr).
+			Count(&count)
+
+		stats.RecentActivity = append(stats.RecentActivity, struct {
+			Date  string `json:"date"`
+			Count int64  `json:"count"`
+		}{
+			Date:  dateStr,
+			Count: count,
+		})
+	}
+
+	return stats, nil
 }
