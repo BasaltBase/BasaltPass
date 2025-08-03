@@ -231,3 +231,12 @@ await tenantSubscriptionAPI.deleteProduct(1);
 ## 总结
 
 租户产品管理API提供了完整、安全、高效的产品管理功能，满足多租户SaaS应用的需求。API设计遵循RESTful原则，具有良好的可维护性和扩展性。
+
+
+
+## 订购流程
+
+1. 在租户产品管理中创建产品/products
+2. 创建订单/orders，指定产品ID和用户ID
+3. 订单创建成功后，用户可以查看订单详情/orders/:id/confirm
+4. 点击立即支付，进入支付流程

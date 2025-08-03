@@ -72,7 +72,7 @@ const Payment: React.FC = () => {
     setLoading(true);
     try {
       const sessionRequest = {
-        payment_intent_id: paymentIntent.id,
+        payment_intent_id: paymentIntent.ID,
         success_url: `${window.location.origin}/wallet?payment=success`,
         cancel_url: `${window.location.origin}/payment?payment=canceled`,
         user_email: ''
@@ -84,7 +84,7 @@ const Payment: React.FC = () => {
       alert('支付会话创建成功！即将跳转到支付页面...');
       
       // 跳转到支付页面
-      window.open(paymentAPI.getPaymentCheckoutUrl(response.session.stripe_session_id), '_blank');
+      window.open(paymentAPI.getPaymentCheckoutUrl(response.session.StripeSessionID), '_blank');
       
     } catch (error: any) {
       alert('创建支付会话失败: ' + error.message);
@@ -173,11 +173,11 @@ const Payment: React.FC = () => {
           <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
             <h3 className="text-lg font-semibold text-green-900 mb-2">支付意图已创建</h3>
             <div className="space-y-2 text-sm">
-              <p><strong>ID:</strong> {paymentIntent.stripe_payment_intent_id}</p>
-              <p><strong>金额:</strong> {formatAmount(paymentIntent.amount)} {paymentIntent.currency}</p>
-              <p><strong>状态:</strong> <span className="text-orange-600">{paymentIntent.status}</span></p>
-              <p><strong>描述:</strong> {paymentIntent.description}</p>
-              <p><strong>创建时间:</strong> {new Date(paymentIntent.created_at).toLocaleString()}</p>
+              <p><strong>ID:</strong> {paymentIntent.StripePaymentIntentID}</p>
+              <p><strong>金额:</strong> {formatAmount(paymentIntent.Amount)} {paymentIntent.Currency}</p>
+              <p><strong>状态:</strong> <span className="text-orange-600">{paymentIntent.Status}</span></p>
+              <p><strong>描述:</strong> {paymentIntent.Description}</p>
+              <p><strong>创建时间:</strong> {new Date(paymentIntent.CreatedAt).toLocaleString()}</p>
             </div>
             
             <button

@@ -12,6 +12,8 @@ var orderService *OrderService
 
 // InitOrderHandler 初始化订单处理器
 func InitOrderHandler() {
+
+	// 确保只初始化一次
 	if orderService == nil {
 		orderService = NewOrderService(common.DB())
 	}
@@ -20,7 +22,7 @@ func InitOrderHandler() {
 // CreateOrderHandler POST /orders - 创建订单
 func CreateOrderHandler(c *fiber.Ctx) error {
 	InitOrderHandler()
-	
+
 	userID := c.Locals("userID").(uint)
 
 	var req CreateOrderRequest
@@ -54,9 +56,9 @@ func CreateOrderHandler(c *fiber.Ctx) error {
 // GetOrderHandler GET /orders/:id - 获取订单详情
 func GetOrderHandler(c *fiber.Ctx) error {
 	InitOrderHandler()
-	
+
 	userID := c.Locals("userID").(uint)
-	
+
 	orderIDStr := c.Params("id")
 	orderID, err := strconv.ParseUint(orderIDStr, 10, 32)
 	if err != nil {
@@ -81,7 +83,7 @@ func GetOrderHandler(c *fiber.Ctx) error {
 // GetOrderByNumberHandler GET /orders/number/:number - 根据订单号获取订单
 func GetOrderByNumberHandler(c *fiber.Ctx) error {
 	InitOrderHandler()
-	
+
 	userID := c.Locals("userID").(uint)
 	orderNumber := c.Params("number")
 
@@ -101,9 +103,9 @@ func GetOrderByNumberHandler(c *fiber.Ctx) error {
 // ListOrdersHandler GET /orders - 获取用户订单列表
 func ListOrdersHandler(c *fiber.Ctx) error {
 	InitOrderHandler()
-	
+
 	userID := c.Locals("userID").(uint)
-	
+
 	limitStr := c.Query("limit", "20")
 	limit, _ := strconv.Atoi(limitStr)
 	if limit > 100 {
@@ -122,4 +124,4 @@ func ListOrdersHandler(c *fiber.Ctx) error {
 		"data":    orders,
 		"count":   len(orders),
 	})
-} 
+}

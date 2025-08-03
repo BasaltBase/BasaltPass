@@ -356,10 +356,19 @@ func processSubscriptionPaymentWebhook(sessionID string, success bool) error {
 		subscriptionID := uint(subscriptionIDFloat)
 		now := time.Now()
 
+		//var order model.Order
+		//if orderIDFloat, ok := metadata["order_id"].(float64); ok {
+		//	orderID := uint(orderIDFloat)
+		//	if err := tx.Preload("Price").Where("id = ?", orderID).First(&order).Error; err != nil {
+		//		return err
+		//	}
+		//}
+
 		if success {
 			// 支付成功：激活订阅
 			if err := tx.Model(&model.Subscription{}).Where("id = ?", subscriptionID).Updates(map[string]interface{}{
-				"status":     model.SubscriptionStatusActive,
+				"status": model.SubscriptionStatusActive,
+				//		"tenant_id":  order.Price.TenantID,
 				"updated_at": now,
 			}).Error; err != nil {
 				return err
@@ -491,6 +500,7 @@ func processOrderPaymentWebhook(sessionID string, success bool) error {
 				Status:             model.SubscriptionStatusActive,
 				CurrentPriceID:     order.PriceID,
 				CouponID:           order.CouponID,
+				TenantID:           order.Price.TenantID,
 				StartAt:            now,
 				CurrentPeriodStart: now,
 				CurrentPeriodEnd:   calculatePeriodEnd(now, &order.Price),
