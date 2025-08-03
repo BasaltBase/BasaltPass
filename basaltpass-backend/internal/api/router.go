@@ -27,12 +27,25 @@ import (
 
 // RegisterRoutes attaches all versioned API routes to the Fiber app.
 func RegisterRoutes(app *fiber.App) {
+
+	// 健康检查端点
+	app.Get("/health", func(c *fiber.Ctx) error {
+		return c.SendStatus(fiber.StatusOK)
+	})
 	app.Get("./not-implemented", notImplemented)
 
 	// OIDC Discovery端点
 	app.Get("/.well-known/openid-configuration", oauth.DiscoveryHandler)
 
-	// OAuth2授权服务器端点
+	// OIDC Discovery和会话管理端点
+	app.Get("/check_session_iframe", oauth.CheckSessionIframeHandler)
+	app.Get("/end_session", oauth.EndSessionHandler)
+
+	/*
+	 * OAuth2和OIDC相关端点
+	 * 这些端点处理OAuth2授权、令牌颁发、用户信息
+	 * 和会话管理等功能。
+	 */
 	oauthServerGroup := app.Group("/oauth")
 	oauthServerGroup.Get("/authorize", oauth.AuthorizeHandler)
 	oauthServerGroup.Post("/consent", middleware.JWTMiddleware(), oauth.ConsentHandler)
@@ -46,10 +59,6 @@ func RegisterRoutes(app *fiber.App) {
 	oauthServerGroup.Post("/one-tap/login", oauth.OneTapLoginHandler)
 	oauthServerGroup.Get("/silent-auth", oauth.SilentAuthHandler)
 	oauthServerGroup.Get("/check-session", oauth.CheckSessionHandler)
-
-	// OIDC Discovery和会话管理端点
-	app.Get("/check_session_iframe", oauth.CheckSessionIframeHandler)
-	app.Get("/end_session", oauth.EndSessionHandler)
 
 	// 平台级管理API（超级管理员）
 	platformGroup := app.Group("/_admin", middleware.JWTMiddleware(), middleware.SuperAdminMiddleware())
@@ -226,6 +235,57 @@ func RegisterRoutes(app *fiber.App) {
 	tenantOAuthGroup.Put("/:client_id", oauth.TenantUpdateOAuthClientHandler)
 	tenantOAuthGroup.Delete("/:client_id", oauth.TenantDeleteOAuthClientHandler)
 	tenantOAuthGroup.Post("/:client_id/regenerate-secret", oauth.TenantRegenerateClientSecretHandler)
+
+	// 租户订阅管理（读写，所有租户成员可访问）
+	tenantSubscriptionMgmtGroup := tenantGroup.Group("/subscription")
+
+	// 租户产品管理
+	tenantProductMgmtGroup := tenantSubscriptionMgmtGroup.Group("/products")
+	tenantProductMgmtGroup.Get("/", subscription.ListTenantProductsHandler)
+	tenantProductMgmtGroup.Get("/:id", subscription.GetTenantProductHandler)
+	tenantProductMgmtGroup.Post("/", subscription.CreateTenantProductHandler)
+	tenantProductMgmtGroup.Put("/:id", subscription.UpdateTenantProductHandler)
+	tenantProductMgmtGroup.Delete("/:id", subscription.DeleteTenantProductHandler)
+
+	// 租户套餐管理
+	tenantPlanMgmtGroup := tenantSubscriptionMgmtGroup.Group("/plans")
+	tenantPlanMgmtGroup.Get("/", subscription.ListTenantPlansHandler)
+	tenantPlanMgmtGroup.Get("/:id", subscription.GetTenantPlanHandler)
+	tenantPlanMgmtGroup.Post("/", subscription.CreateTenantPlanHandler)
+	tenantPlanMgmtGroup.Put("/:id", subscription.UpdateTenantPlanHandler)
+	tenantPlanMgmtGroup.Delete("/:id", subscription.DeleteTenantPlanHandler)
+
+	// 租户定价管理
+	tenantPriceMgmtGroup := tenantSubscriptionMgmtGroup.Group("/prices")
+	tenantPriceMgmtGroup.Get("/", subscription.ListTenantPricesHandler)
+	tenantPriceMgmtGroup.Get("/:id", subscription.GetTenantPriceHandler)
+	tenantPriceMgmtGroup.Post("/", subscription.CreateTenantPriceHandler)
+	tenantPriceMgmtGroup.Put("/:id", subscription.UpdateTenantPriceHandler)
+	tenantPriceMgmtGroup.Delete("/:id", subscription.DeleteTenantPriceHandler)
+
+	// 租户订阅管理
+	tenantSubscriptionReadWriteGroup := tenantSubscriptionMgmtGroup.Group("/subscriptions")
+	tenantSubscriptionReadWriteGroup.Get("/", subscription.ListTenantSubscriptionsHandler)
+	tenantSubscriptionReadWriteGroup.Get("/:id", subscription.GetTenantSubscriptionHandler)
+	tenantSubscriptionReadWriteGroup.Post("/", subscription.CreateTenantSubscriptionHandler)
+	tenantSubscriptionReadWriteGroup.Post("/:id/cancel", subscription.CancelTenantSubscriptionHandler)
+
+	// 租户优惠券管理
+	tenantCouponMgmtGroup := tenantSubscriptionMgmtGroup.Group("/coupons")
+	tenantCouponMgmtGroup.Get("/", subscription.ListTenantCouponsHandler)
+	tenantCouponMgmtGroup.Get("/:code", subscription.GetTenantCouponHandler)
+	tenantCouponMgmtGroup.Get("/:code/validate", subscription.ValidateTenantCouponHandler)
+	tenantCouponMgmtGroup.Post("/", subscription.CreateTenantCouponHandler)
+	tenantCouponMgmtGroup.Put("/:code", subscription.UpdateTenantCouponHandler)
+	tenantCouponMgmtGroup.Delete("/:code", subscription.DeleteTenantCouponHandler)
+
+	// 租户账单管理
+	tenantInvoiceMgmtGroup := tenantSubscriptionMgmtGroup.Group("/invoices")
+	tenantInvoiceMgmtGroup.Get("/", subscription.ListTenantInvoicesHandler)
+	tenantInvoiceMgmtGroup.Post("/", subscription.CreateTenantInvoiceHandler)
+
+	// 租户统计查看
+	tenantSubscriptionMgmtGroup.Get("/stats", subscription.GetTenantSubscriptionStatsHandler)
 
 	// 租户应用管理路由
 	tenantAppGroup := tenantGroup.Group("/apps")

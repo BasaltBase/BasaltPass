@@ -14,13 +14,13 @@ import {
   ClockIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
-import * as tenantSubscriptionAPI from '@/api/tenantSubscription';
+import * as tenantSubscriptionAPI from '@api/tenant/subscription';
 import { 
   listTenantCoupons, 
   createTenantCoupon, 
   updateTenantCoupon, 
   deleteTenantCoupon 
-} from '@/api/tenantSubscription';
+} from '@api/tenant/subscription';
 
 interface CouponManagementProps {}
 

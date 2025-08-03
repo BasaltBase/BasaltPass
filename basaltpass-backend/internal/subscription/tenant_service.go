@@ -660,8 +660,15 @@ func (s *TenantService) CreateCoupon(req *CreateCouponRequest) (*model.Coupon, e
 		Metadata:         model.JSONB(req.Metadata),
 	}
 
-	if err := s.db.Create(coupon).Error; err != nil {
+	if err := s.db.Select("*").Create(coupon).Error; err != nil {
 		return nil, fmt.Errorf("创建优惠券失败: %w", err)
+	}
+
+	// 如果 IsActive 是 false，需要显式更新，因为 GORM 可能忽略零值
+	if req.IsActive != nil && !*req.IsActive {
+		if err := s.db.Model(coupon).Update("is_active", false).Error; err != nil {
+			return nil, fmt.Errorf("更新优惠券状态失败: %w", err)
+		}
 	}
 
 	return coupon, nil

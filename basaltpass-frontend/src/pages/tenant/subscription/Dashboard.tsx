@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import TenantLayout from '@components/TenantLayout'
 import {
   ChartBarIcon,
   CubeIcon,
@@ -12,8 +13,11 @@ import {
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
 } from '@heroicons/react/24/outline'
-import TenantLayout from '../../../components/TenantLayout'
-import { tenantSubscriptionAPI, TenantSubscriptionStats } from '../../../api/tenantSubscription'
+
+import {
+  tenantSubscriptionAPI,
+  TenantSubscriptionStats
+} from '@api/tenant/subscription'
 
 export default function TenantSubscriptionDashboard() {
   const [stats, setStats] = useState<TenantSubscriptionStats | null>(null)
@@ -26,7 +30,7 @@ export default function TenantSubscriptionDashboard() {
   const fetchStats = async () => {
     try {
       setLoading(true)
-      const data = await tenantSubscriptionAPI.getSubscriptionStats()
+      const data = await tenantSubscriptionAPI.adminGetSubscriptionStats()
       setStats(data)
     } catch (error) {
       console.error('获取统计数据失败:', error)
@@ -50,35 +54,35 @@ export default function TenantSubscriptionDashboard() {
     {
       name: '套餐管理',
       description: '配置产品套餐和功能特性',
-      href: '/tenant/plans',
+      href: '/tenant/subscriptions/plans',
       icon: ChartBarIcon,
       color: 'bg-green-500',
     },
     {
       name: '定价管理',
       description: '设置套餐价格和计费规则',
-      href: '/tenant/prices',
+      href: '/tenant/subscriptions/prices',
       icon: CurrencyDollarIcon,
       color: 'bg-yellow-500',
     },
     {
       name: '订阅管理',
       description: '查看和管理客户订阅',
-      href: '/tenant/subscriptions/plans',
+      href: '/tenant/subscriptions/subscriptions',
       icon: UserGroupIcon,
       color: 'bg-purple-500',
     },
     {
       name: '账单管理',
       description: '查看账单和支付记录',
-      href: '/tenant/invoices',
+      href: '/tenant/subscriptions/invoices',
       icon: DocumentTextIcon,
       color: 'bg-indigo-500',
     },
     {
       name: '优惠券管理',
       description: '创建和管理优惠券',
-      href: '/tenant/coupons',
+      href: '/tenant/subscriptions/coupons',
       icon: TicketIcon,
       color: 'bg-pink-500',
     },

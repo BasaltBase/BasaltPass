@@ -11,7 +11,7 @@ import {
   EyeIcon,
   Cog6ToothIcon
 } from '@heroicons/react/24/outline';
-import * as tenantSubscriptionAPI from '@/api/tenantSubscription';
+import * as tenantSubscriptionAPI from '@api/tenant/subscription';
 
 interface PlanManagementProps {}
 

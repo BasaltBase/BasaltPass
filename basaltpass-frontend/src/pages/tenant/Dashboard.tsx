@@ -24,7 +24,7 @@ import {
   listTenantPlans, 
   listTenantSubscriptions, 
   listTenantCoupons 
-} from '../../api/tenantSubscription'
+} from '@api/tenant/subscription'
 
 interface TenantStats {
   totalUsers: number

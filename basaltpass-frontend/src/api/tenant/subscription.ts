@@ -1,4 +1,4 @@
-import client from './client';
+import client from '../client';
 
 // 租户订阅管理API
 
@@ -125,7 +125,7 @@ export interface UpdateTenantPriceRequest {
 
 // ==================== 订阅管理 ====================
 
-export interface TenantSubscription {
+export interface Subscription {
   ID: number;
   TenantID?: number;
   CustomerID: number;
@@ -245,77 +245,129 @@ export interface TenantSubscriptionStats {
 class TenantSubscriptionAPI {
   // ========== 产品管理 ==========
 
+  // 租户管理员：创建产品
   async createProduct(data: CreateTenantProductRequest): Promise<TenantProduct> {
-    const response = await client.post('/api/v1/admin/subscription/products', data);
+    const response = await client.post('/api/v1/tenant/subscription/products', data);
     return response.data.data;
   }
 
+  // 获取产品详情（管理员或普通用户）
   async getProduct(id: number): Promise<TenantProduct> {
-    const response = await client.get(`/api/v1/admin/subscription/products/${id}`);
+    const response = await client.get(`/api/v1/tenant/subscription/products/${id}`);
     return response.data.data;
   }
 
+  // 租户管理员：获取产品详情
+  async adminGetProduct(id: number): Promise<TenantProduct> {
+    const response = await client.get(`/api/v1/tenant/subscription/products/${id}`);
+    return response.data.data;
+  }
+
+  // 列出产品（管理员或普通用户）
   async listProducts(params?: {
     page?: number;
     page_size?: number;
     code?: string;
   }) {
-    const response = await client.get('/api/v1/admin/subscription/products', { params });
+    const response = await client.get('/api/v1/tenant/subscription/products', { params });
     return response.data;
   }
 
+  // 租户管理员：列出产品
+  async adminListProducts(params?: {
+    page?: number;
+    page_size?: number;
+    code?: string;
+  }) {
+    const response = await client.get('/api/v1/tenant/subscription/products', { params });
+    return response.data;
+  }
+
+  // 租户管理员：更新产品
   async updateProduct(id: number, data: UpdateTenantProductRequest): Promise<TenantProduct> {
-    const response = await client.put(`/api/v1/admin/subscription/products/${id}`, data);
+    const response = await client.put(`/api/v1/tenant/subscription/products/${id}`, data);
     return response.data.data;
   }
 
+  // 租户管理员：删除产品
   async deleteProduct(id: number): Promise<void> {
-    await client.delete(`/api/v1/admin/subscription/products/${id}`);
+    await client.delete(`/api/v1/tenant/subscription/products/${id}`);
   }
 
   // ========== 套餐管理 ==========
 
+  // 租户管理员：创建套餐
   async createPlan(data: CreateTenantPlanRequest): Promise<TenantPlan> {
-    const response = await client.post('/api/v1/admin/subscription/plans', data);
+    const response = await client.post('/api/v1/tenant/subscription/plans', data);
     return response.data.data;
   }
 
+  // 获取套餐详情（管理员或普通用户）
   async getPlan(id: number): Promise<TenantPlan> {
-    const response = await client.get(`/api/v1/admin/subscription/plans/${id}`);
+    const response = await client.get(`/api/v1/tenant/subscription/plans/${id}`);
     return response.data.data;
   }
 
+  // 租户管理员：获取套餐详情
+  async adminGetPlan(id: number): Promise<TenantPlan> {
+    const response = await client.get(`/api/v1/tenant/subscription/plans/${id}`);
+    return response.data.data;
+  }
+
+  // 列出套餐（管理员或普通用户）
   async listPlans(params?: {
     page?: number;
     page_size?: number;
     product_id?: number;
     code?: string;
   }) {
-    const response = await client.get('/api/v1/admin/subscription/plans', { params });
+    const response = await client.get('/api/v1/tenant/subscription/plans', { params });
     return response.data;
   }
 
+  // 租户管理员：列出套餐
+  async adminListPlans(params?: {
+    page?: number;
+    page_size?: number;
+    product_id?: number;
+    code?: string;
+  }) {
+    const response = await client.get('/api/v1/tenant/subscription/plans', { params });
+    return response.data;
+  }
+
+  // 租户管理员：更新套餐
   async updatePlan(id: number, data: UpdateTenantPlanRequest): Promise<TenantPlan> {
-    const response = await client.put(`/api/v1/admin/subscription/plans/${id}`, data);
+    const response = await client.put(`/api/v1/tenant/subscription/plans/${id}`, data);
     return response.data.data;
   }
 
+  // 租户管理员：删除套餐
   async deletePlan(id: number): Promise<void> {
-    await client.delete(`/api/v1/admin/subscription/plans/${id}`);
+    await client.delete(`/api/v1/tenant/subscription/plans/${id}`);
   }
 
   // ========== 定价管理 ==========
 
+  // 租户管理员：创建定价
   async createPrice(data: CreateTenantPriceRequest): Promise<TenantPrice> {
-    const response = await client.post('/api/v1/admin/subscription/prices', data);
+    const response = await client.post('/api/v1/tenant/subscription/prices', data);
     return response.data.data;
   }
 
+  // 获取定价详情（管理员或普通用户）
   async getPrice(id: number): Promise<TenantPrice> {
-    const response = await client.get(`/api/v1/admin/subscription/prices/${id}`);
+    const response = await client.get(`/api/v1/tenant/subscription/prices/${id}`);
     return response.data.data;
   }
 
+  // 租户管理员：获取定价详情
+  async adminGetPrice(id: number): Promise<TenantPrice> {
+    const response = await client.get(`/api/v1/tenant/subscription/prices/${id}`);
+    return response.data.data;
+  }
+
+  // 列出定价（管理员或普通用户）
   async listPrices(params?: {
     page?: number;
     page_size?: number;
@@ -323,31 +375,54 @@ class TenantSubscriptionAPI {
     currency?: string;
     usage_type?: string;
   }) {
-    const response = await client.get('/api/v1/admin/subscription/prices', { params });
+    const response = await client.get('/api/v1/tenant/subscription/prices', { params });
     return response.data;
   }
 
+  // 租户管理员：列出定价
+  async adminListPrices(params?: {
+    page?: number;
+    page_size?: number;
+    plan_id?: number;
+    currency?: string;
+    usage_type?: string;
+  }) {
+    const response = await client.get('/api/v1/tenant/subscription/prices', { params });
+    return response.data;
+  }
+
+  // 租户管理员：更新定价
   async updatePrice(id: number, data: UpdateTenantPriceRequest): Promise<TenantPrice> {
-    const response = await client.put(`/api/v1/admin/subscription/prices/${id}`, data);
+    const response = await client.put(`/api/v1/tenant/subscription/prices/${id}`, data);
     return response.data.data;
   }
 
+  // 租户管理员：删除定价
   async deletePrice(id: number): Promise<void> {
-    await client.delete(`/api/v1/admin/subscription/prices/${id}`);
+    await client.delete(`/api/v1/tenant/subscription/prices/${id}`);
   }
 
   // ========== 订阅管理 ==========
 
-  async createSubscription(data: CreateTenantSubscriptionRequest): Promise<TenantSubscription> {
-    const response = await client.post('/api/v1/admin/subscription/subscriptions', data);
+  // 租户管理员：创建订阅
+  async createSubscription(data: CreateTenantSubscriptionRequest): Promise<Subscription> {
+    const response = await client.post('/api/v1/tenant/subscription/subscriptions', data);
     return response.data.data;
   }
 
-  async getSubscription(id: number): Promise<TenantSubscription> {
-    const response = await client.get(`/api/v1/admin/subscription/subscriptions/${id}`);
+  // 获取订阅详情（管理员或普通用户）
+  async getSubscription(id: number): Promise<Subscription> {
+    const response = await client.get(`/api/v1/tenant/subscription/subscriptions/${id}`);
     return response.data.data;
   }
 
+  // 租户管理员：获取订阅详情
+  async adminGetSubscription(id: number): Promise<Subscription> {
+    const response = await client.get(`/api/v1/tenant/subscription/subscriptions/${id}`);
+    return response.data.data;
+  }
+
+  // 列出订阅（管理员或普通用户）
   async listSubscriptions(params?: {
     page?: number;
     page_size?: number;
@@ -355,16 +430,30 @@ class TenantSubscriptionAPI {
     status?: string;
     price_id?: number;
   }) {
-    const response = await client.get('/api/v1/admin/subscription/subscriptions', { params });
+    const response = await client.get('/api/v1/tenant/subscription/subscriptions', { params });
     return response.data;
   }
 
+  // 租户管理员：列出订阅
+  async adminListSubscriptions(params?: {
+    page?: number;
+    page_size?: number;
+    customer_id?: number;
+    status?: string;
+    price_id?: number;
+  }) {
+    const response = await client.get('/api/v1/tenant/subscription/subscriptions', { params });
+    return response.data;
+  }
+
+  // 租户管理员：取消订阅
   async cancelSubscription(id: number, data?: CancelTenantSubscriptionRequest): Promise<void> {
-    await client.post(`/api/v1/admin/subscription/subscriptions/${id}/cancel`, data || {});
+    await client.post(`/api/v1/tenant/subscription/subscriptions/${id}/cancel`, data || {});
   }
 
   // ========== 优惠券管理 ==========
 
+  // 列出优惠券（管理员或普通用户）
   async listCoupons(params?: {
     page?: number;
     page_size?: number;
@@ -372,41 +461,66 @@ class TenantSubscriptionAPI {
     discount_type?: string;
     is_active?: boolean;
   }) {
-    const response = await client.get('/api/v1/admin/subscription/coupons', { params });
+    const response = await client.get('/api/v1/tenant/subscription/coupons', { params });
     return response.data;
   }
 
+  // 租户管理员：列出优惠券
+  async adminListCoupons(params?: {
+    page?: number;
+    page_size?: number;
+    code?: string;
+    discount_type?: string;
+    is_active?: boolean;
+  }) {
+    const response = await client.get('/api/v1/tenant/subscription/coupons', { params });
+    return response.data;
+  }
+
+  // 租户管理员：创建优惠券
   async createCoupon(data: CreateTenantCouponRequest): Promise<TenantCoupon> {
-    const response = await client.post('/api/v1/admin/subscription/coupons', data);
+    const response = await client.post('/api/v1/tenant/subscription/coupons', data);
     return response.data.data;
   }
 
+  // 获取优惠券详情（管理员或普通用户）
   async getCoupon(code: string): Promise<TenantCoupon> {
-    const response = await client.get(`/api/v1/admin/subscription/coupons/${code}`);
+    const response = await client.get(`/api/v1/tenant/subscription/coupons/${code}`);
     return response.data.data;
   }
 
+  // 租户管理员：获取优惠券详情
+  async adminGetCoupon(code: string): Promise<TenantCoupon> {
+    const response = await client.get(`/api/v1/tenant/subscription/coupons/${code}`);
+    return response.data.data;
+  }
+
+  // 租户管理员：更新优惠券
   async updateCoupon(code: string, data: UpdateTenantCouponRequest): Promise<TenantCoupon> {
-    const response = await client.put(`/api/v1/admin/subscription/coupons/${code}`, data);
+    const response = await client.put(`/api/v1/tenant/subscription/coupons/${code}`, data);
     return response.data.data;
   }
 
+  // 租户管理员：删除优惠券
   async deleteCoupon(code: string): Promise<void> {
-    await client.delete(`/api/v1/admin/subscription/coupons/${code}`);
+    await client.delete(`/api/v1/tenant/subscription/coupons/${code}`);
   }
 
+  // 验证优惠券（管理员或普通用户）
   async validateCoupon(code: string): Promise<{ valid: boolean; data?: TenantCoupon; error?: string }> {
-    const response = await client.get(`/api/v1/admin/subscription/coupons/${code}/validate`);
+    const response = await client.get(`/api/v1/tenant/subscription/coupons/${code}/validate`);
     return response.data;
   }
 
   // ========== 账单管理 ==========
 
+  // 租户管理员：创建账单
   async createInvoice(data: CreateTenantInvoiceRequest): Promise<TenantInvoice> {
-    const response = await client.post('/api/v1/admin/subscription/invoices', data);
+    const response = await client.post('/api/v1/tenant/subscription/invoices', data);
     return response.data.data;
   }
 
+  // 列出账单（管理员或普通用户）
   async listInvoices(params?: {
     page?: number;
     page_size?: number;
@@ -415,14 +529,34 @@ class TenantSubscriptionAPI {
     status?: string;
     currency?: string;
   }) {
-    const response = await client.get('/api/v1/admin/subscription/invoices', { params });
+    const response = await client.get('/api/v1/tenant/subscription/invoices', { params });
+    return response.data;
+  }
+
+  // 租户管理员：列出账单
+  async adminListInvoices(params?: {
+    page?: number;
+    page_size?: number;
+    customer_id?: number;
+    subscription_id?: number;
+    status?: string;
+    currency?: string;
+  }) {
+    const response = await client.get('/api/v1/tenant/subscription/invoices', { params });
     return response.data;
   }
 
   // ========== 统计信息 ==========
 
+  // 获取订阅统计（管理员或普通用户）
   async getSubscriptionStats(): Promise<TenantSubscriptionStats> {
-    const response = await client.get('/api/v1/admin/subscription/stats');
+    const response = await client.get('/api/v1/tenant/subscription/stats');
+    return response.data.data;
+  }
+
+  // 租户管理员：获取订阅统计
+  async adminGetSubscriptionStats(): Promise<TenantSubscriptionStats> {
+    const response = await client.get('/api/v1/tenant/subscription/stats');
     return response.data.data;
   }
 
@@ -476,40 +610,62 @@ class TenantSubscriptionAPI {
 // 导出API实例
 export const tenantSubscriptionAPI = new TenantSubscriptionAPI();
 
-// 导出快捷函数
+// 导出普通租户用户访问的快捷函数（只读）
 export const {
-  createProduct: createTenantProduct,
   getProduct: getTenantProduct,
   listProducts: listTenantProducts,
+  
+  getPlan: getTenantPlan,
+  listPlans: listTenantPlans,
+  
+  getPrice: getTenantPrice,
+  listPrices: listTenantPrices,
+  
+  getSubscription: getTenantSubscription,
+  listSubscriptions: listTenantSubscriptions,
+  
+  listCoupons: listTenantCoupons,
+  getCoupon: getTenantCoupon,
+  validateCoupon: validateTenantCoupon,
+  
+  listInvoices: listTenantInvoices,
+  
+  getSubscriptionStats: getTenantSubscriptionStats,
+} = tenantSubscriptionAPI;
+
+// 导出租户管理员访问的快捷函数（完整CRUD）
+export const {
+  createProduct: createTenantProduct,
+  adminGetProduct: adminGetTenantProduct,
+  adminListProducts: adminListTenantProducts,
   updateProduct: updateTenantProduct,
   deleteProduct: deleteTenantProduct,
   
   createPlan: createTenantPlan,
-  getPlan: getTenantPlan,
-  listPlans: listTenantPlans,
+  adminGetPlan: adminGetTenantPlan,
+  adminListPlans: adminListTenantPlans,
   updatePlan: updateTenantPlan,
   deletePlan: deleteTenantPlan,
   
   createPrice: createTenantPrice,
-  getPrice: getTenantPrice,
-  listPrices: listTenantPrices,
+  adminGetPrice: adminGetTenantPrice,
+  adminListPrices: adminListTenantPrices,
   updatePrice: updateTenantPrice,
   deletePrice: deleteTenantPrice,
   
   createSubscription: createTenantSubscription,
-  getSubscription: getTenantSubscription,
-  listSubscriptions: listTenantSubscriptions,
+  adminGetSubscription: adminGetTenantSubscription,
+  adminListSubscriptions: adminListTenantSubscriptions,
   cancelSubscription: cancelTenantSubscription,
   
-  listCoupons: listTenantCoupons,
+  adminListCoupons: adminListTenantCoupons,
   createCoupon: createTenantCoupon,
-  getCoupon: getTenantCoupon,
+  adminGetCoupon: adminGetTenantCoupon,
   updateCoupon: updateTenantCoupon,
   deleteCoupon: deleteTenantCoupon,
-  validateCoupon: validateTenantCoupon,
   
   createInvoice: createTenantInvoice,
-  listInvoices: listTenantInvoices,
+  adminListInvoices: adminListTenantInvoices,
   
-  getSubscriptionStats: getTenantSubscriptionStats,
+  adminGetSubscriptionStats: adminGetTenantSubscriptionStats,
 } = tenantSubscriptionAPI;

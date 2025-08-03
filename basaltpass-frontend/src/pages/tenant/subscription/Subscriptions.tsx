@@ -1,25 +1,26 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import TenantLayout from '@components/TenantLayout'
 import {
   ChevronRightIcon,
   MagnifyingGlassIcon,
   XMarkIcon,
   ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline'
-import TenantLayout from '../../../components/TenantLayout'
+
 import {
   tenantSubscriptionAPI,
-  TenantSubscription,
+  Subscription,
   CancelTenantSubscriptionRequest,
-} from '../../../api/tenantSubscription'
+} from '@api/tenant/subscription'
 
 export default function TenantSubscriptions() {
-  const [subscriptions, setSubscriptions] = useState<TenantSubscription[]>([])
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('')
   const [showCancelModal, setShowCancelModal] = useState(false)
-  const [cancelTarget, setCancelTarget] = useState<TenantSubscription | null>(null)
+  const [cancelTarget, setCancelTarget] = useState<Subscription | null>(null)
   const [cancelling, setCancelling] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
 
@@ -34,7 +35,7 @@ export default function TenantSubscriptions() {
       if (statusFilter) {
         params.status = statusFilter
       }
-      const data = await tenantSubscriptionAPI.listSubscriptions(params)
+      const data = await tenantSubscriptionAPI.adminListSubscriptions(params)
       setSubscriptions(data.data || [])
     } catch (error) {
       console.error('获取订阅列表失败:', error)
@@ -43,7 +44,7 @@ export default function TenantSubscriptions() {
     }
   }
 
-  const handleCancelClick = (subscription: TenantSubscription) => {
+  const handleCancelClick = (subscription: Subscription) => {
     setCancelTarget(subscription)
     setShowCancelModal(true)
   }

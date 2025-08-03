@@ -305,9 +305,21 @@ class SubscriptionAPI {
     return response.data;
   }
 
+  // 租户 - 获取优惠券列表
+  async tenantListCoupons() {
+    const response = await client.get('/api/v1/tenant/subscription/coupons');
+    return response.data;
+  }
+
   // 管理员 - 创建优惠券
   async adminCreateCoupon(data: any) {
     const response = await client.post('/api/v1/admin/coupons', data);
+    return response.data;
+  }
+
+  // 租户 - 创建优惠券
+  async tenantCreateCoupon(data: any) {
+    const response = await client.post('/api/v1/tenant/subscription/coupons', data);
     return response.data;
   }
 
@@ -317,9 +329,21 @@ class SubscriptionAPI {
     return response.data;
   }
 
+  // 租户 - 更新优惠券
+  async tenantUpdateCoupon(code: string, data: any) {
+    const response = await client.put(`/api/v1/tenant/subscription/coupons/${code}`, data);
+    return response.data;
+  }
+
   // 管理员 - 删除优惠券
   async adminDeleteCoupon(code: string) {
     const response = await client.delete(`/api/v1/admin/coupons/${code}`);
+    return response.data;
+  }
+
+  // 租户 - 删除优惠券
+  async tenantDeleteCoupon(code: string) {
+    const response = await client.delete(`/api/v1/tenant/subscription/coupons/${code}`);
     return response.data;
   }
 
@@ -335,6 +359,12 @@ class SubscriptionAPI {
     return response.data;
   }
 
+  // 租户 - 获取订阅详情
+  async tenantGetSubscription(id: number) {
+    const response = await client.get(`/api/v1/tenant/subscription/${id}`);
+    return response.data;
+  }
+  
   // 管理员 - 取消订阅
   async adminCancelSubscription(id: number, reason?: string) {
     const response = await client.put(`/api/v1/admin/subscriptions/${id}/cancel`, {

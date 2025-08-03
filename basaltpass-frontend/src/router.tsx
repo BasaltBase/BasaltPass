@@ -66,6 +66,10 @@ import TenantRoleManagement from '@pages/tenant/RoleManagement'
 import TenantSubscriptionDashboard from '@pages/tenant/subscription/Dashboard'
 import TenantProducts from '@pages/tenant/subscription/Products'
 import TenantSubscriptions from '@pages/tenant/subscription/Subscriptions'
+import TenantPlans from '@pages/tenant/subscription/Plans'
+import TenantPrices from '@pages/tenant/subscription/Prices'
+import TenantCoupons from '@pages/tenant/subscription/Coupons'
+import TenantInvoices from '@pages/tenant/subscription/Invoices'
 import SubscriptionStatusManagement from '@pages/tenant/SubscriptionStatusManagement'
 import CouponManagement from '@pages/tenant/CouponManagement'
 import PlanManagement from '@pages/tenant/PlanManagement'
@@ -397,7 +401,27 @@ export default function AppRouter() {
       } />
       <Route path="/tenant/subscriptions/plans" element={
         <ProtectedRoute>
+          <TenantPlans />
+        </ProtectedRoute>
+      } />
+      <Route path="/tenant/subscriptions/prices" element={
+        <ProtectedRoute>
+          <TenantPrices />
+        </ProtectedRoute>
+      } />
+      <Route path="/tenant/subscriptions/subscriptions" element={
+        <ProtectedRoute>
           <TenantSubscriptions />
+        </ProtectedRoute>
+      } />
+      <Route path="/tenant/subscriptions/coupons" element={
+        <ProtectedRoute>
+          <TenantCoupons />
+        </ProtectedRoute>
+      } />
+      <Route path="/tenant/subscriptions/invoices" element={
+        <ProtectedRoute>
+          <TenantInvoices />
         </ProtectedRoute>
       } />
       <Route path="/tenant/subscription-status" element={
