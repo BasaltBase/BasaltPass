@@ -1,3 +1,70 @@
 @tailwind base;
 @tailwind components;
-@tailwind utilities; 
+@tailwind utilities;
+
+/* 好看的滚动条样式 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #9ca3af #f3f4f6;
+}
+
+/* Webkit 浏览器滚动条样式 */
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-button {
+  display: none;
+}
+
+*::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 0;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #9ca3af;
+  border-radius: 0;
+  transition: all 0.2s ease;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+*::-webkit-scrollbar-thumb:active {
+  background: #4b5563;
+}
+
+/* 角落样式 */
+*::-webkit-scrollbar-corner {
+  background: #f3f4f6;
+}
+
+/* 深色模式下的滚动条样式 */
+@media (prefers-color-scheme: dark) {
+  * {
+    scrollbar-color: #6b7280 #1f2937;
+  }
+  
+  *::-webkit-scrollbar-track {
+    background: #1f2937;
+  }
+  
+  *::-webkit-scrollbar-thumb {
+    background: #6b7280;
+  }
+  
+  *::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+  }
+  
+  *::-webkit-scrollbar-thumb:active {
+    background: #d1d5db;
+  }
+  
+  *::-webkit-scrollbar-corner {
+    background: #1f2937;
+  }
+} 
