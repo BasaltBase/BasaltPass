@@ -41,8 +41,8 @@ function CreateClientModal({ isOpen, onClose, onSuccess, apps }: CreateClientMod
       // 过滤空的URI和Origins
       const cleanedData = {
         ...formData,
-        redirect_uris: formData.redirect_uris.filter(uri => uri.trim() !== ''),
-        allowed_origins: formData.allowed_origins?.filter(origin => origin.trim() !== '') || []
+        redirect_uris: (formData.redirect_uris || []).filter(uri => uri.trim() !== ''),
+        allowed_origins: (formData.allowed_origins || []).filter(origin => origin.trim() !== '')
       }
 
       await tenantOAuthApi.createClient(cleanedData)
@@ -74,14 +74,14 @@ function CreateClientModal({ isOpen, onClose, onSuccess, apps }: CreateClientMod
   const removeRedirectUri = (index: number) => {
     setFormData(prev => ({
       ...prev,
-      redirect_uris: prev.redirect_uris.filter((_, i) => i !== index)
+      redirect_uris: (prev.redirect_uris || []).filter((_, i) => i !== index)
     }))
   }
 
   const updateRedirectUri = (index: number, value: string) => {
     setFormData(prev => ({
       ...prev,
-      redirect_uris: prev.redirect_uris.map((uri, i) => i === index ? value : uri)
+      redirect_uris: (prev.redirect_uris || []).map((uri, i) => i === index ? value : uri)
     }))
   }
 
@@ -182,7 +182,7 @@ function CreateClientModal({ isOpen, onClose, onSuccess, apps }: CreateClientMod
                   className="block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 bg-white hover:border-gray-300"
                 >
                   <option value={0}>请选择要配置的应用</option>
-                  {apps.map(app => (
+                  {(apps || []).map(app => (
                     <option key={app.id} value={app.id}>{app.name}</option>
                   ))}
                 </select>
@@ -231,7 +231,7 @@ function CreateClientModal({ isOpen, onClose, onSuccess, apps }: CreateClientMod
                 重定向URI <span className="text-red-500">*</span>
               </label>
               <div className="space-y-3">
-                {formData.redirect_uris.map((uri, index) => (
+                {(formData.redirect_uris || []).map((uri, index) => (
                   <div key={index} className="flex items-center space-x-3">
                     <div className="flex-1">
                       <input
@@ -242,7 +242,7 @@ function CreateClientModal({ isOpen, onClose, onSuccess, apps }: CreateClientMod
                         placeholder="https://example.com/auth/callback"
                       />
                     </div>
-                    {formData.redirect_uris.length > 1 && (
+                    {(formData.redirect_uris || []).length > 1 && (
                       <button
                         type="button"
                         onClick={() => removeRedirectUri(index)}
@@ -490,7 +490,7 @@ function ClientDetailModal({ client, isOpen, onClose, onUpdate }: ClientDetailMo
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">重定向URI</label>
               <div className="space-y-2">
-                {client.redirect_uris.map((uri, index) => (
+                {(client.redirect_uris || []).map((uri, index) => (
                   <div key={index} className="text-sm bg-gray-50 p-2 rounded border">
                     {uri}
                   </div>
@@ -502,7 +502,7 @@ function ClientDetailModal({ client, isOpen, onClose, onUpdate }: ClientDetailMo
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">权限范围</label>
               <div className="flex flex-wrap gap-2">
-                {client.scopes.map(scope => (
+                {(client.scopes || []).map(scope => (
                   <span key={scope} className="inline-flex px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">
                     {scope}
                   </span>
@@ -542,10 +542,12 @@ export default function TenantOAuthClients() {
     try {
       setLoading(true)
       const response = await tenantOAuthApi.listAppsWithClients(page, pageSize, search)
-      setApps(response.data.apps)
-      setTotal(response.data.total)
+      setApps(response.data.apps || [])
+      setTotal(response.data.total || 0)
     } catch (err: any) {
       setError(err.response?.data?.error || '加载失败')
+      setApps([])
+      setTotal(0)
     } finally {
       setLoading(false)
     }
@@ -641,7 +643,7 @@ export default function TenantOAuthClients() {
                 重新加载
               </button>
             </div>
-          ) : apps.length === 0 ? (
+          ) : !apps || apps.length === 0 ? (
             <div className="p-8 text-center">
               <p className="text-gray-500">暂无应用</p>
               <button
@@ -653,7 +655,7 @@ export default function TenantOAuthClients() {
             </div>
           ) : (
             <div className="divide-y divide-gray-200">
-              {apps.map((app) => (
+              {(apps || []).map((app) => (
                 <div key={app.id} className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div>
@@ -669,7 +671,7 @@ export default function TenantOAuthClients() {
                     </span>
                   </div>
 
-                  {app.oauth_clients.length === 0 ? (
+                  {!app.oauth_clients || app.oauth_clients.length === 0 ? (
                     <div className="text-center py-8 bg-gray-50 rounded-lg">
                       <KeyIcon className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                       <p className="text-gray-500 mb-4">该应用暂无OAuth客户端</p>
@@ -700,7 +702,7 @@ export default function TenantOAuthClients() {
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                          {app.oauth_clients.map((client) => (
+                          {(app.oauth_clients || []).map((client) => (
                             <tr key={client.id} className="hover:bg-gray-50">
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <span className="text-xs font-mono bg-gray-100 px-2 py-1 rounded">
