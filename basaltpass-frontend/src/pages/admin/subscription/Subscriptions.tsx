@@ -6,7 +6,7 @@ import AdminLayout from '../../../components/AdminLayout'
 
 interface Subscription {
   ID: number
-  CustomerID: number
+  UserID: number
   Status: string
   CurrentPeriodEnd: string
   CreatedAt: string
@@ -21,7 +21,7 @@ interface Subscription {
       }
     }
   }
-  Customer?: {
+  User?: {
     ID: number
     Email: string
     Nickname: string
@@ -153,7 +153,7 @@ export default function AdminSubscriptions() {
   const filteredSubscriptions = subscriptions.filter(sub => {
     const matchesSearch = searchTerm === '' || 
       sub.ID.toString().includes(searchTerm) ||
-      sub.CustomerID.toString().includes(searchTerm) ||
+      sub.UserID.toString().includes(searchTerm) ||
       sub.CurrentPrice?.Plan?.DisplayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       sub.CurrentPrice?.Plan?.Product?.Name?.toLowerCase().includes(searchTerm.toLowerCase())
     
@@ -240,10 +240,10 @@ export default function AdminSubscriptions() {
                             {getStatusBadge(subscription.Status)}
                           </div>
                           <p className="mt-1 text-sm text-gray-900">
-                            用户ID: {subscription.CustomerID}
-                            {subscription.Customer?.Email && (
+                            用户ID: {subscription.UserID}
+                            {subscription.User?.Email && (
                               <span className="ml-2 text-gray-500">
-                                ({subscription.Customer.Email})
+                                ({subscription.User.Email})
                               </span>
                             )}
                           </p>
@@ -316,10 +316,10 @@ export default function AdminSubscriptions() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">用户ID</label>
                   <p className="text-sm text-gray-900">
-                    {selectedSubscription.CustomerID}
-                    {selectedSubscription.Customer?.Email && (
+                    {selectedSubscription.UserID}
+                    {selectedSubscription.User?.Email && (
                       <span className="ml-2 text-gray-500">
-                        ({selectedSubscription.Customer.Email})
+                        ({selectedSubscription.User.Email})
                       </span>
                     )}
                   </p>
@@ -362,11 +362,11 @@ export default function AdminSubscriptions() {
                     #{selectedSubscription.ID}
                   </p>
                 </div>
-                {selectedSubscription.Customer?.Nickname && (
+                {selectedSubscription.User?.Nickname && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">用户昵称</label>
                     <p className="text-sm text-gray-900">
-                      {selectedSubscription.Customer.Nickname}
+                      {selectedSubscription.User.Nickname}
                     </p>
                   </div>
                 )}
@@ -416,9 +416,9 @@ export default function AdminSubscriptions() {
                     订阅 #{cancelTarget.ID}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
-                    用户ID: {cancelTarget.CustomerID}
-                    {cancelTarget.Customer?.Email && (
-                      <span className="ml-1">({cancelTarget.Customer.Email})</span>
+                    用户ID: {cancelTarget.UserID}
+                    {cancelTarget.User?.Email && (
+                      <span className="ml-1">({cancelTarget.User.Email})</span>
                     )}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">

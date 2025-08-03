@@ -13,7 +13,7 @@ import (
 
 // CheckoutRequest 订阅结账请求
 type CheckoutRequest struct {
-	CustomerID uint    `json:"customer_id" validate:"required"`
+	UserID     uint    `json:"user_id" validate:"required"`
 	PriceID    uint    `json:"price_id" validate:"required"`
 	Quantity   float64 `json:"quantity,omitempty"`
 	CouponCode *string `json:"coupon_code,omitempty"`
@@ -51,8 +51,8 @@ func (s *CheckoutService) CreateCheckout(req *CheckoutRequest) (*CheckoutRespons
 	}()
 
 	// 步骤1: 验证客户（用户）
-	var customer model.User
-	if err := tx.First(&customer, req.CustomerID).Error; err != nil {
+	var user model.User
+	if err := tx.First(&user, req.UserID).Error; err != nil {
 		tx.Rollback()
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf("客户不存在")
@@ -136,7 +136,7 @@ func (s *CheckoutService) CreateCheckout(req *CheckoutRequest) (*CheckoutRespons
 	}
 
 	subscription := &model.Subscription{
-		CustomerID:         req.CustomerID,
+		UserID:             req.UserID,
 		Status:             status,
 		CurrentPriceID:     req.PriceID,
 		CouponID:           couponID,
@@ -153,7 +153,7 @@ func (s *CheckoutService) CreateCheckout(req *CheckoutRequest) (*CheckoutRespons
 
 	// 步骤7: 创建账单（状态为draft）
 	invoice := &model.Invoice{
-		CustomerID:     req.CustomerID,
+		UserID:         req.UserID,
 		SubscriptionID: &subscription.ID,
 		Status:         model.InvoiceStatusDraft,
 		Currency:       price.Currency,
@@ -246,7 +246,7 @@ func (s *CheckoutService) CreateCheckout(req *CheckoutRequest) (*CheckoutRespons
 		},
 	}
 
-	paymentIntent, _, err := payment.CreatePaymentIntent(req.CustomerID, paymentIntentReq)
+	paymentIntent, _, err := payment.CreatePaymentIntent(req.UserID, paymentIntentReq)
 	if err != nil {
 		return nil, fmt.Errorf("创建支付意图失败: %w", err)
 	}
@@ -261,10 +261,10 @@ func (s *CheckoutService) CreateCheckout(req *CheckoutRequest) (*CheckoutRespons
 		PaymentIntentID: paymentIntent.ID,
 		SuccessURL:      req.SuccessURL,
 		CancelURL:       req.CancelURL,
-		CustomerEmail:   customer.Email,
+		UserEmail:       user.Email,
 	}
 
-	paymentSession, sessionStripeResponse, err := payment.CreatePaymentSession(req.CustomerID, sessionReq)
+	paymentSession, sessionStripeResponse, err := payment.CreatePaymentSession(req.UserID, sessionReq)
 	if err != nil {
 		return nil, fmt.Errorf("创建支付会话失败: %w", err)
 	}
@@ -376,4 +376,3 @@ func (s *CheckoutService) calculateNextBillingDate(startDate time.Time, period m
 func stringPtr(s string) *string {
 	return &s
 }
- 

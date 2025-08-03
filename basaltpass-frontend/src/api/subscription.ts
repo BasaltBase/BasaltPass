@@ -75,7 +75,7 @@ export interface Coupon {
 // 订阅相关接口
 export interface Subscription {
   id: number;
-  customer_id: number;
+  user_id: number;
   status: string;
   current_price_id: number;
   next_price_id: number | null;
@@ -96,7 +96,7 @@ export interface Subscription {
 
 // Checkout相关接口
 export interface CheckoutRequest {
-  customer_id: number;
+  user_id: number;
   price_id: number;
   quantity?: number;
   coupon_code?: string;

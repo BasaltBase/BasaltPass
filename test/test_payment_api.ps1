@@ -102,7 +102,7 @@ $PaymentSessionData = @{
     payment_intent_id = $PaymentIntentId
     success_url = "http://localhost:3000/wallet?payment=success"
     cancel_url = "http://localhost:3000/payment?payment=canceled"
-    customer_email = "payment-test@example.com"
+    user_email = "payment-test@example.com"
 } | ConvertTo-Json
 
 try {

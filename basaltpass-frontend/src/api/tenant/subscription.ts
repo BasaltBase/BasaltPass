@@ -128,7 +128,7 @@ export interface UpdateTenantPriceRequest {
 export interface Subscription {
   ID: number;
   TenantID?: number;
-  CustomerID: number;
+  UserID: number;
   CurrentPriceID: number;
   Status: string;
   StartAt: string;
@@ -146,7 +146,7 @@ export interface Subscription {
 }
 
 export interface CreateTenantSubscriptionRequest {
-  customer_id: number;
+  user_id: number;
   price_id: number;
   quantity?: number;
   coupon_id?: number;
@@ -207,7 +207,7 @@ export interface UpdateTenantCouponRequest {
 export interface TenantInvoice {
   id: number;
   tenant_id?: number;
-  customer_id: number;
+  user_id: number;
   subscription_id?: number;
   status: string;
   currency: string;
@@ -221,7 +221,7 @@ export interface TenantInvoice {
 }
 
 export interface CreateTenantInvoiceRequest {
-  customer_id: number;
+  user_id: number;
   subscription_id?: number;
   currency: string;
   total_cents: number;
@@ -236,7 +236,7 @@ export interface TenantSubscriptionStats {
   active_subscriptions: number;
   canceled_subscriptions: number;
   paused_subscriptions: number;
-  total_customers: number;
+  total_users: number;
   monthly_revenue_cents: number;
 }
 
@@ -426,7 +426,7 @@ class TenantSubscriptionAPI {
   async listSubscriptions(params?: {
     page?: number;
     page_size?: number;
-    customer_id?: number;
+    user_id?: number;
     status?: string;
     price_id?: number;
   }) {
@@ -438,7 +438,7 @@ class TenantSubscriptionAPI {
   async adminListSubscriptions(params?: {
     page?: number;
     page_size?: number;
-    customer_id?: number;
+    user_id?: number;
     status?: string;
     price_id?: number;
   }) {
@@ -524,7 +524,7 @@ class TenantSubscriptionAPI {
   async listInvoices(params?: {
     page?: number;
     page_size?: number;
-    customer_id?: number;
+    user_id?: number;
     subscription_id?: number;
     status?: string;
     currency?: string;
@@ -537,7 +537,7 @@ class TenantSubscriptionAPI {
   async adminListInvoices(params?: {
     page?: number;
     page_size?: number;
-    customer_id?: number;
+    user_id?: number;
     subscription_id?: number;
     status?: string;
     currency?: string;

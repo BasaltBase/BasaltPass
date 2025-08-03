@@ -23,12 +23,12 @@ ALTER TABLE coupons DROP CONSTRAINT IF EXISTS coupons_code_key;
 ALTER TABLE coupons ADD CONSTRAINT uk_coupons_tenant_code UNIQUE (tenant_id, code);
 
 -- 5. 订阅表多租户适配 - 关键索引优化
-CREATE INDEX idx_subscriptions_tenant_customer_status ON subscriptions(tenant_id, customer_id, status);
+CREATE INDEX idx_subscriptions_tenant_user_status ON subscriptions(tenant_id, user_id, status);
 CREATE INDEX idx_subscriptions_tenant_status ON subscriptions(tenant_id, status);
 CREATE INDEX idx_subscriptions_tenant_current_period_end ON subscriptions(tenant_id, current_period_end);
 
 -- 6. 账单表多租户适配
-CREATE INDEX idx_invoices_tenant_customer ON invoices(tenant_id, customer_id);
+CREATE INDEX idx_invoices_tenant_user ON invoices(tenant_id, user_id);
 CREATE INDEX idx_invoices_tenant_status ON invoices(tenant_id, status);
 CREATE INDEX idx_invoices_tenant_due_at ON invoices(tenant_id, due_at);
 
@@ -156,7 +156,7 @@ RETURNS TABLE (
     total_subscriptions BIGINT,
     active_subscriptions BIGINT,
     monthly_revenue_cents BIGINT,
-    customers_count BIGINT
+    users_count BIGINT
 ) AS $$
 BEGIN
     RETURN QUERY
@@ -164,7 +164,7 @@ BEGIN
         COUNT(*) as total_subscriptions,
         COUNT(CASE WHEN status = 'active' THEN 1 END) as active_subscriptions,
         COALESCE(SUM(CASE WHEN status = 'active' AND p.billing_period = 'month' THEN p.amount_cents END), 0) as monthly_revenue_cents,
-        COUNT(DISTINCT customer_id) as customers_count
+        COUNT(DISTINCT user_id) as users_count
     FROM subscriptions s
     LEFT JOIN prices p ON s.current_price_id = p.id
     WHERE s.tenant_id = target_tenant_id;

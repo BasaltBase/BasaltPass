@@ -184,7 +184,7 @@ const (
 type Subscription struct {
 	gorm.Model
 	TenantID              *uint64            `gorm:"index"`
-	CustomerID            uint               `gorm:"not null;index"` // 对应 User.ID
+	UserID                uint               `gorm:"not null;index"` // 对应 User.ID
 	Status                SubscriptionStatus `gorm:"size:20;not null;index"`
 	CurrentPriceID        uint               `gorm:"not null"`
 	NextPriceID           *uint              // 期末换档
@@ -198,7 +198,7 @@ type Subscription struct {
 	Metadata              JSONB   `gorm:"type:jsonb"`
 
 	// 关联
-	Customer     User                `gorm:"foreignKey:CustomerID"`
+	User         User                `gorm:"foreignKey:UserID"`
 	CurrentPrice Price               `gorm:"foreignKey:CurrentPriceID"`
 	NextPrice    *Price              `gorm:"foreignKey:NextPriceID"`
 	Coupon       *Coupon             `gorm:"foreignKey:CouponID"`
@@ -281,7 +281,7 @@ const (
 type Invoice struct {
 	gorm.Model
 	TenantID       *uint64       `gorm:"index"`
-	CustomerID     uint          `gorm:"not null;index"`
+	UserID         uint          `gorm:"not null;index"`
 	SubscriptionID *uint         `gorm:"index"`
 	Status         InvoiceStatus `gorm:"size:20;not null"`
 	Currency       string        `gorm:"size:3;not null"`
@@ -292,7 +292,7 @@ type Invoice struct {
 	Metadata       JSONB `gorm:"type:jsonb"`
 
 	// 关联
-	Customer     User          `gorm:"foreignKey:CustomerID"`
+	User         User          `gorm:"foreignKey:UserID"`
 	Subscription *Subscription `gorm:"foreignKey:SubscriptionID"`
 	Items        []InvoiceItem `gorm:"foreignKey:InvoiceID"`
 	Payments     []Payment     `gorm:"foreignKey:InvoiceID"`

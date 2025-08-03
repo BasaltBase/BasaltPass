@@ -195,7 +195,7 @@ type CouponResponse struct {
 
 // CreateSubscriptionRequest 创建订阅请求
 type CreateSubscriptionRequest struct {
-	CustomerID uint                            `json:"customer_id" validate:"required"`
+	UserID uint                            `json:"user_id" validate:"required"`
 	PriceID    uint                            `json:"price_id" validate:"required"`
 	CouponCode *string                         `json:"coupon_code,omitempty"`
 	StartAt    *time.Time                      `json:"start_at,omitempty"`
@@ -229,7 +229,7 @@ type CancelSubscriptionRequest struct {
 // SubscriptionResponse 订阅响应
 type SubscriptionResponse struct {
 	ID                    uint                     `json:"id"`
-	CustomerID            uint                     `json:"customer_id"`
+	UserID            uint                     `json:"user_id"`
 	Status                model.SubscriptionStatus `json:"status"`
 	CurrentPriceID        uint                     `json:"current_price_id"`
 	NextPriceID           *uint                    `json:"next_price_id"`
@@ -293,7 +293,7 @@ type UsageRecordResponse struct {
 
 // CreateInvoiceRequest 创建账单请求
 type CreateInvoiceRequest struct {
-	CustomerID     uint                       `json:"customer_id" validate:"required"`
+	UserID     uint                       `json:"user_id" validate:"required"`
 	SubscriptionID *uint                      `json:"subscription_id,omitempty"`
 	Currency       string                     `json:"currency" validate:"required,len=3"`
 	DueAt          *time.Time                 `json:"due_at,omitempty"`
@@ -312,7 +312,7 @@ type CreateInvoiceItemRequest struct {
 // InvoiceResponse 账单响应
 type InvoiceResponse struct {
 	ID             uint                   `json:"id"`
-	CustomerID     uint                   `json:"customer_id"`
+	UserID     uint                   `json:"user_id"`
 	SubscriptionID *uint                  `json:"subscription_id"`
 	Status         model.InvoiceStatus    `json:"status"`
 	Currency       string                 `json:"currency"`
@@ -394,7 +394,7 @@ type ListPlansRequest struct {
 
 // SubscriptionListRequest 订阅列表查询请求
 type SubscriptionListRequest struct {
-	CustomerID *uint                     `json:"customer_id,omitempty"`
+	UserID *uint                     `json:"user_id,omitempty"`
 	Status     *model.SubscriptionStatus `json:"status,omitempty"`
 	PriceID    *uint                     `json:"price_id,omitempty"`
 	Page       int                       `json:"page,omitempty"`
@@ -403,7 +403,7 @@ type SubscriptionListRequest struct {
 
 // InvoiceListRequest 账单列表查询请求
 type InvoiceListRequest struct {
-	CustomerID     *uint                `json:"customer_id,omitempty"`
+	UserID     *uint                `json:"user_id,omitempty"`
 	SubscriptionID *uint                `json:"subscription_id,omitempty"`
 	Status         *model.InvoiceStatus `json:"status,omitempty"`
 	Currency       *string              `json:"currency,omitempty"`

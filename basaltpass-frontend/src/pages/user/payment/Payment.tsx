@@ -75,7 +75,7 @@ const Payment: React.FC = () => {
         payment_intent_id: paymentIntent.id,
         success_url: `${window.location.origin}/wallet?payment=success`,
         cancel_url: `${window.location.origin}/payment?payment=canceled`,
-        customer_email: ''
+        user_email: ''
       };
 
       const response = await paymentAPI.createPaymentSession(sessionRequest);

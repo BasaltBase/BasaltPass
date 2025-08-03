@@ -126,7 +126,7 @@ try {
     Write-Host "订阅信息:" -ForegroundColor Cyan
     Write-Host "  订阅ID: $($Subscription.id)" -ForegroundColor Gray
     Write-Host "  状态: $($Subscription.status)" -ForegroundColor Gray
-    Write-Host "  客户ID: $($Subscription.customer_id)" -ForegroundColor Gray
+    Write-Host "  客户ID: $($Subscription.user_id)" -ForegroundColor Gray
     Write-Host "  价格ID: $($Subscription.current_price_id)" -ForegroundColor Gray
     Write-Host "  开始时间: $($Subscription.start_at)" -ForegroundColor Gray
     Write-Host "  当前周期: $($Subscription.current_period_start) - $($Subscription.current_period_end)" -ForegroundColor Gray
@@ -228,7 +228,7 @@ try {
     Write-Host "订阅最终状态:" -ForegroundColor Cyan
     Write-Host "  订阅ID: $($UpdatedSubscription.data.id)" -ForegroundColor Gray
     Write-Host "  状态: $($UpdatedSubscription.data.status)" -ForegroundColor Gray
-    Write-Host "  客户ID: $($UpdatedSubscription.data.customer_id)" -ForegroundColor Gray
+    Write-Host "  客户ID: $($UpdatedSubscription.data.user_id)" -ForegroundColor Gray
     Write-Host "  更新时间: $($UpdatedSubscription.data.updated_at)" -ForegroundColor Gray
     
     if ($PaymentSuccess) {
@@ -299,7 +299,7 @@ Write-Host "💡 订阅管理页面地址: http://localhost:3000/subscriptions" 
 # 显示Happy Path流程验证
 Write-Host "`n📋 Happy Path流程验证:" -ForegroundColor Cyan
 Write-Host "1. ✅ Show catalog - 产品目录显示完成" -ForegroundColor Green
-Write-Host "2. ✅ Create customer - 用户（客户）验证完成" -ForegroundColor Green  
+Write-Host "2. ✅ Create user - 用户（客户）验证完成" -ForegroundColor Green  
 Write-Host "3. ✅ Checkout request - 结账请求处理完成" -ForegroundColor Green
 Write-Host "4. ✅ Atomic DB transaction - 原子事务完成" -ForegroundColor Green
 Write-Host "   - subscription: pending -> active" -ForegroundColor Green

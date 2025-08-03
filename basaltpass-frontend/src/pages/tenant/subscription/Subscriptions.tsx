@@ -75,7 +75,7 @@ export default function TenantSubscriptions() {
     const searchLower = searchTerm.toLowerCase()
     return (
       subscription.ID.toString().includes(searchLower) ||
-      subscription.CustomerID.toString().includes(searchLower) ||
+      subscription.UserID.toString().includes(searchLower) ||
       subscription.CurrentPrice?.Plan?.Product?.Name?.toLowerCase().includes(searchLower) ||
       subscription.CurrentPrice?.Plan?.DisplayName?.toLowerCase().includes(searchLower)
     )
@@ -218,7 +218,7 @@ export default function TenantSubscriptions() {
                               {getStatusBadge(subscription.Status)}
                             </div>
                             <div className="mt-1 flex items-center space-x-4 text-sm text-gray-500">
-                              <span>客户ID: {subscription.CustomerID}</span>
+                              <span>客户ID: {subscription.UserID}</span>
                               <span>•</span>
                               <span>
                                 产品: {subscription.CurrentPrice?.Plan?.Product?.Name} - {subscription.CurrentPrice?.Plan?.DisplayName}

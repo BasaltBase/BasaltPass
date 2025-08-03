@@ -18,7 +18,7 @@ func InitCheckoutHandler() {
 // CheckoutHandler POST /subscriptions/checkout - 订阅结账
 func CheckoutHandler(c *fiber.Ctx) error {
 	InitCheckoutHandler()
-	
+
 	userID := c.Locals("userID").(uint)
 
 	var req CheckoutRequest
@@ -28,8 +28,8 @@ func CheckoutHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	// 验证customerID是否是当前用户
-	if req.CustomerID != userID {
+	// 验证userID是否是当前用户
+	if req.UserID != userID {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 			"error": "只能为自己创建订阅",
 		})
@@ -65,7 +65,7 @@ func CheckoutHandler(c *fiber.Ctx) error {
 // QuickCheckoutHandler POST /subscriptions/quick-checkout - 快速订阅结账（简化参数）
 func QuickCheckoutHandler(c *fiber.Ctx) error {
 	InitCheckoutHandler()
-	
+
 	userID := c.Locals("userID").(uint)
 
 	var req struct {
@@ -82,12 +82,12 @@ func QuickCheckoutHandler(c *fiber.Ctx) error {
 
 	// 构建完整的checkout请求
 	checkoutReq := CheckoutRequest{
-		CustomerID:  userID,
-		PriceID:     req.PriceID,
-		Quantity:    req.Quantity,
-		CouponCode:  req.CouponCode,
-		SuccessURL:  "http://localhost:3000/subscriptions?payment=success",
-		CancelURL:   "http://localhost:3000/subscriptions?payment=canceled",
+		UserID: userID,
+		PriceID:    req.PriceID,
+		Quantity:   req.Quantity,
+		CouponCode: req.CouponCode,
+		SuccessURL: "http://localhost:3000/subscriptions?payment=success",
+		CancelURL:  "http://localhost:3000/subscriptions?payment=canceled",
 	}
 
 	response, err := checkoutService.CreateCheckout(&checkoutReq)
@@ -102,4 +102,4 @@ func QuickCheckoutHandler(c *fiber.Ctx) error {
 		"message": "订阅结账创建成功",
 		"data":    response,
 	})
-} 
+}

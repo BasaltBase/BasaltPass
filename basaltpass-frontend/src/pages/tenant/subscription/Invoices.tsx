@@ -19,7 +19,7 @@ export default function TenantInvoices() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [formData, setFormData] = useState<CreateTenantInvoiceRequest>({
-    customer_id: 0,
+    user_id: 0,
     currency: 'CNY',
     total_cents: 0,
     metadata: {},
@@ -60,7 +60,7 @@ export default function TenantInvoices() {
 
   const resetForm = () => {
     setFormData({
-      customer_id: 0,
+      user_id: 0,
       currency: 'CNY',
       total_cents: 0,
       metadata: {},
@@ -183,7 +183,7 @@ export default function TenantInvoices() {
                                 </span>
                               </div>
                               <div className="mt-2 flex items-center text-sm text-gray-500 space-x-4">
-                                <span>客户ID: {invoice.customer_id}</span>
+                                <span>客户ID: {invoice.user_id}</span>
                                 <span>总金额: {formatPrice(invoice.total_cents, invoice.currency)}</span>
                                 {invoice.subscription_id && (
                                   <span>订阅ID: {invoice.subscription_id}</span>
@@ -225,8 +225,8 @@ export default function TenantInvoices() {
                 <label className="block text-sm font-medium text-gray-700">客户ID</label>
                 <input
                   type="number"
-                  value={formData.customer_id || ''}
-                  onChange={(e) => setFormData({...formData, customer_id: parseInt(e.target.value) || 0})}
+                  value={formData.user_id || ''}
+                  onChange={(e) => setFormData({...formData, user_id: parseInt(e.target.value) || 0})}
                   className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                   min="1"
                   required

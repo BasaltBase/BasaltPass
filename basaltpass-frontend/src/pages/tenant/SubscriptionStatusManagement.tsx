@@ -15,7 +15,7 @@ import * as tenantSubscriptionAPI from '@api/tenant/subscription';
 interface SubscriptionWithDetails {
   id: number;
   tenant_id?: number;
-  customer_id: number;
+  user_id: number;
   status: string;
   current_price_id: number;
   start_at: string;
@@ -26,7 +26,7 @@ interface SubscriptionWithDetails {
   metadata: Record<string, any>;
   created_at: string;
   updated_at: string;
-  customer?: {
+  user?: {
     id: number;
     email: string;
     name: string;
@@ -270,7 +270,7 @@ const SubscriptionStatusManagement: React.FC = () => {
                         </div>
                         <div className="mt-1">
                           <p className="text-sm text-gray-500">
-                            客户: {subscription.customer?.name} ({subscription.customer?.email})
+                            客户: {subscription.user?.name} ({subscription.user?.email})
                           </p>
                           <p className="text-sm text-gray-500">
                             当前周期: {new Date(subscription.current_period_start).toLocaleDateString()} - {new Date(subscription.current_period_end).toLocaleDateString()}
@@ -401,7 +401,7 @@ const SubscriptionDetailModal: React.FC<{
             <div>
               <label className="block text-sm font-medium text-gray-700">客户</label>
               <p className="mt-1 text-sm text-gray-900">
-                {subscription.customer?.name} ({subscription.customer?.email})
+                {subscription.user?.name} ({subscription.user?.email})
               </p>
             </div>
             

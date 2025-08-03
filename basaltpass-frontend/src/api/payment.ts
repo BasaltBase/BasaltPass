@@ -38,7 +38,7 @@ export interface PaymentSession {
   SuccessURL: string;
   CancelURL: string;
   PaymentURL: string;
-  CustomerEmail: string;
+  UserEmail: string;
   ExpiresAt: string;
   CompletedAt: string | null;
   Metadata: string;
@@ -60,7 +60,7 @@ export interface CreatePaymentSessionRequest {
   payment_intent_id: number;
   success_url: string;
   cancel_url: string;
-  customer_email?: string;
+  user_email?: string;
 }
 
 export interface MockStripeResponse {

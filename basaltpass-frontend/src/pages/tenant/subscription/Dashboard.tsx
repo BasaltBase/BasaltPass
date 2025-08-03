@@ -199,7 +199,7 @@ export default function TenantSubscriptionDashboard() {
                   <div className="ml-5 w-0 flex-1">
                     <dl>
                       <dt className="text-sm font-medium text-gray-500 truncate">客户数量</dt>
-                      <dd className="text-lg font-medium text-gray-900">{stats.total_customers}</dd>
+                      <dd className="text-lg font-medium text-gray-900">{stats.total_users}</dd>
                     </dl>
                   </div>
                 </div>

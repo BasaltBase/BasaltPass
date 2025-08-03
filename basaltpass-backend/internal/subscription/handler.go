@@ -360,10 +360,10 @@ func (h *Handler) CreateSubscription(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
 	}
 
-	// 如果没有指定customer_id，使用当前登录用户ID
-	if req.CustomerID == 0 {
+	// 如果没有指定user_id，使用当前登录用户ID
+	if req.UserID == 0 {
 		userID := c.Locals("userID").(uint)
-		req.CustomerID = userID
+		req.UserID = userID
 	}
 
 	subscription, err := h.service.CreateSubscription(&req)
@@ -408,10 +408,10 @@ func (h *Handler) ListSubscriptions(c *fiber.Ctx) error {
 	var req SubscriptionListRequest
 
 	// 解析查询参数
-	if customerIDStr := c.Query("customer_id"); customerIDStr != "" {
-		if id, err := strconv.ParseUint(customerIDStr, 10, 32); err == nil {
+	if userIDStr := c.Query("user_id"); userIDStr != "" {
+		if id, err := strconv.ParseUint(userIDStr, 10, 32); err == nil {
 			cid := uint(id)
-			req.CustomerID = &cid
+			req.UserID = &cid
 		}
 	}
 
@@ -440,13 +440,13 @@ func (h *Handler) ListSubscriptions(c *fiber.Ctx) error {
 
 	// 普通用户只能查看自己的订阅
 	userID := c.Locals("userID").(uint)
-	if req.CustomerID == nil {
-		req.CustomerID = &userID
-	} else if *req.CustomerID != userID {
+	if req.UserID == nil {
+		req.UserID = &userID
+	} else if *req.UserID != userID {
 		// 检查是否为管理员
 		userRole := c.Locals("userRole")
 		if userRole == nil || userRole != "admin" {
-			req.CustomerID = &userID
+			req.UserID = &userID
 		}
 	}
 
@@ -548,10 +548,10 @@ func (h *Handler) AdminListSubscriptions(c *fiber.Ctx) error {
 	var req SubscriptionListRequest
 
 	// 解析查询参数
-	if customerIDStr := c.Query("customer_id"); customerIDStr != "" {
-		if id, err := strconv.ParseUint(customerIDStr, 10, 32); err == nil {
+	if userIDStr := c.Query("user_id"); userIDStr != "" {
+		if id, err := strconv.ParseUint(userIDStr, 10, 32); err == nil {
 			cid := uint(id)
-			req.CustomerID = &cid
+			req.UserID = &cid
 		}
 	}
 

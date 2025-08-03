@@ -573,7 +573,7 @@ func (s *Service) CreateSubscription(req *CreateSubscriptionRequest) (*model.Sub
 
 	// 验证用户存在
 	var user model.User
-	if err := tx.First(&user, req.CustomerID).Error; err != nil {
+	if err := tx.First(&user, req.UserID).Error; err != nil {
 		tx.Rollback()
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf("用户不存在")
@@ -626,7 +626,7 @@ func (s *Service) CreateSubscription(req *CreateSubscriptionRequest) (*model.Sub
 	}
 
 	subscription := &model.Subscription{
-		CustomerID:         req.CustomerID,
+		UserID:             req.UserID,
 		Status:             status,
 		CurrentPriceID:     req.PriceID,
 		CouponID:           couponID,
@@ -721,14 +721,14 @@ func (s *Service) CreateSubscription(req *CreateSubscriptionRequest) (*model.Sub
 }
 
 // GetSubscription 获取订阅详情
-func (s *Service) GetSubscription(id uint, customerID *uint) (*model.Subscription, error) {
+func (s *Service) GetSubscription(id uint, userID *uint) (*model.Subscription, error) {
 	query := s.db.Preload("CurrentPrice.Plan.Product").
 		Preload("NextPrice.Plan.Product").
 		Preload("Coupon").
 		Preload("Items.Price")
 
-	if customerID != nil {
-		query = query.Where("customer_id = ?", *customerID)
+	if userID != nil {
+		query = query.Where("user_id = ?", *userID)
 	}
 
 	var subscription model.Subscription
@@ -749,8 +749,8 @@ func (s *Service) ListSubscriptions(req *SubscriptionListRequest) ([]model.Subsc
 
 	query := s.db.Model(&model.Subscription{})
 
-	if req.CustomerID != nil {
-		query = query.Where("customer_id = ?", *req.CustomerID)
+	if req.UserID != nil {
+		query = query.Where("user_id = ?", *req.UserID)
 	}
 	if req.Status != nil {
 		query = query.Where("status = ?", *req.Status)
@@ -780,7 +780,7 @@ func (s *Service) ListSubscriptions(req *SubscriptionListRequest) ([]model.Subsc
 }
 
 // CancelSubscription 取消订阅
-func (s *Service) CancelSubscription(id uint, customerID *uint, req *CancelSubscriptionRequest) error {
+func (s *Service) CancelSubscription(id uint, userID *uint, req *CancelSubscriptionRequest) error {
 	// 开启事务
 	tx := s.db.Begin()
 	defer func() {
@@ -790,8 +790,8 @@ func (s *Service) CancelSubscription(id uint, customerID *uint, req *CancelSubsc
 	}()
 
 	query := tx.Model(&model.Subscription{}).Where("id = ?", id)
-	if customerID != nil {
-		query = query.Where("customer_id = ?", *customerID)
+	if userID != nil {
+		query = query.Where("user_id = ?", *userID)
 	}
 
 	// 检查订阅是否存在且可取消

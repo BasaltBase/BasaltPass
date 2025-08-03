@@ -510,7 +510,7 @@ func (s *TenantService) CreateSubscription(req *CreateSubscriptionRequest) (*mod
 	now := time.Now()
 	subscription := &model.Subscription{
 		TenantID:           s.tenantID,
-		CustomerID:         req.CustomerID,
+		UserID:             req.UserID,
 		CurrentPriceID:     req.PriceID,
 		Status:             model.SubscriptionStatusActive,
 		StartAt:            now,
@@ -527,7 +527,7 @@ func (s *TenantService) CreateSubscription(req *CreateSubscriptionRequest) (*mod
 }
 
 // GetSubscription 获取订阅详情
-func (s *TenantService) GetSubscription(id uint, customerID *uint) (*model.Subscription, error) {
+func (s *TenantService) GetSubscription(id uint, userID *uint) (*model.Subscription, error) {
 	var subscription model.Subscription
 	query := s.db.Preload("CurrentPrice.Plan.Product").Preload("Coupon").
 		Where("id = ?", id)
@@ -540,8 +540,8 @@ func (s *TenantService) GetSubscription(id uint, customerID *uint) (*model.Subsc
 	}
 
 	// 如果指定了客户ID，则只返回该客户的订阅
-	if customerID != nil {
-		query = query.Where("customer_id = ?", *customerID)
+	if userID != nil {
+		query = query.Where("user_id = ?", *userID)
 	}
 
 	if err := query.First(&subscription).Error; err != nil {
@@ -570,8 +570,8 @@ func (s *TenantService) ListSubscriptions(req *SubscriptionListRequest) ([]model
 		query = query.Where("tenant_id IS NULL")
 	}
 
-	if req.CustomerID != nil {
-		query = query.Where("customer_id = ?", *req.CustomerID)
+	if req.UserID != nil {
+		query = query.Where("user_id = ?", *req.UserID)
 	}
 
 	if req.Status != nil {
@@ -601,7 +601,7 @@ func (s *TenantService) ListSubscriptions(req *SubscriptionListRequest) ([]model
 }
 
 // CancelSubscription 取消订阅
-func (s *TenantService) CancelSubscription(id uint, customerID *uint, req *CancelSubscriptionRequest) error {
+func (s *TenantService) CancelSubscription(id uint, userID *uint, req *CancelSubscriptionRequest) error {
 	query := s.db.Model(&model.Subscription{}).Where("id = ?", id)
 
 	// 添加租户过滤
@@ -611,8 +611,8 @@ func (s *TenantService) CancelSubscription(id uint, customerID *uint, req *Cance
 		query = query.Where("tenant_id IS NULL")
 	}
 
-	if customerID != nil {
-		query = query.Where("customer_id = ?", *customerID)
+	if userID != nil {
+		query = query.Where("user_id = ?", *userID)
 	}
 
 	updates := map[string]interface{}{
@@ -876,7 +876,7 @@ func (s *TenantService) CreateInvoice(req *CreateInvoiceRequest) (*model.Invoice
 
 	invoice := &model.Invoice{
 		TenantID:       s.tenantID,
-		CustomerID:     req.CustomerID,
+		UserID:         req.UserID,
 		SubscriptionID: req.SubscriptionID,
 		Status:         model.InvoiceStatusDraft,
 		Currency:       req.Currency,
@@ -898,7 +898,7 @@ func (s *TenantService) ListInvoices(req *InvoiceListRequest) ([]model.Invoice, 
 	var total int64
 
 	query := s.db.Model(&model.Invoice{}).
-		Preload("Customer").
+		Preload("User").
 		Preload("Subscription")
 
 	// 添加租户过滤
@@ -908,8 +908,8 @@ func (s *TenantService) ListInvoices(req *InvoiceListRequest) ([]model.Invoice, 
 		query = query.Where("tenant_id IS NULL")
 	}
 
-	if req.CustomerID != nil {
-		query = query.Where("customer_id = ?", *req.CustomerID)
+	if req.UserID != nil {
+		query = query.Where("user_id = ?", *req.UserID)
 	}
 
 	if req.SubscriptionID != nil {
@@ -999,16 +999,16 @@ func (s *TenantService) GetTenantSubscriptionStats() (*TenantSubscriptionStats, 
 	}
 
 	// 查询客户数量
-	customerQuery := s.db.Model(&model.Subscription{}).
-		Distinct("customer_id")
+	userQuery := s.db.Model(&model.Subscription{}).
+		Distinct("user_id")
 
 	if s.tenantID != nil {
-		customerQuery = customerQuery.Where("tenant_id = ?", *s.tenantID)
+		userQuery = userQuery.Where("tenant_id = ?", *s.tenantID)
 	} else {
-		customerQuery = customerQuery.Where("tenant_id IS NULL")
+		userQuery = userQuery.Where("tenant_id IS NULL")
 	}
 
-	if err := customerQuery.Count(&stats.TotalCustomers).Error; err != nil {
+	if err := userQuery.Count(&stats.TotalUsers).Error; err != nil {
 		return nil, fmt.Errorf("查询客户统计失败: %w", err)
 	}
 
@@ -1044,6 +1044,6 @@ type TenantSubscriptionStats struct {
 	ActiveSubscriptions   int64 `json:"active_subscriptions"`
 	CanceledSubscriptions int64 `json:"canceled_subscriptions"`
 	PausedSubscriptions   int64 `json:"paused_subscriptions"`
-	TotalCustomers        int64 `json:"total_customers"`
+	TotalUsers            int64 `json:"total_users"`
 	MonthlyRevenueCents   int64 `json:"monthly_revenue_cents"`
 }

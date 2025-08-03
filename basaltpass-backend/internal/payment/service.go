@@ -32,7 +32,7 @@ type CreatePaymentSessionRequest struct {
 	PaymentIntentID uint   `json:"payment_intent_id" validate:"required"`
 	SuccessURL      string `json:"success_url" validate:"required,url"`
 	CancelURL       string `json:"cancel_url" validate:"required,url"`
-	CustomerEmail   string `json:"customer_email"`
+	UserEmail       string `json:"user_email"`
 }
 
 // MockStripeResponse Stripe模拟响应
@@ -155,7 +155,7 @@ func CreatePaymentSession(userID uint, req CreatePaymentSessionRequest) (*model.
 		SuccessURL:      req.SuccessURL,
 		CancelURL:       req.CancelURL,
 		PaymentURL:      paymentURL,
-		CustomerEmail:   req.CustomerEmail,
+		UserEmail:       req.UserEmail,
 		ExpiresAt:       &[]time.Time{time.Now().Add(24 * time.Hour)}[0], // 24小时后过期
 	}
 
@@ -182,7 +182,7 @@ func CreatePaymentSession(userID uint, req CreatePaymentSessionRequest) (*model.
 			"success_url":    session.SuccessURL,
 			"cancel_url":     session.CancelURL,
 			"url":            fmt.Sprintf("https://checkout.stripe.com/c/pay/%s", session.StripeSessionID),
-			"customer_email": session.CustomerEmail,
+			"user_email":     session.UserEmail,
 			"expires_at":     session.ExpiresAt.Unix(),
 			"created":        session.CreatedAt.Unix(),
 		},
@@ -487,7 +487,7 @@ func processOrderPaymentWebhook(sessionID string, success bool) error {
 
 			// 为订单创建订阅
 			subscription := &model.Subscription{
-				CustomerID:         order.UserID,
+				UserID:             order.UserID,
 				Status:             model.SubscriptionStatusActive,
 				CurrentPriceID:     order.PriceID,
 				CouponID:           order.CouponID,

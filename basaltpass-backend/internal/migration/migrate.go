@@ -277,7 +277,7 @@ func createSubscriptionIndexes() {
 	// 注意：GORM 会自动创建大部分索引，这里只处理特殊的复合索引
 
 	// 为 subscriptions 表创建复合索引
-	db.Exec("CREATE INDEX IF NOT EXISTS idx_subscriptions_customer_status ON subscriptions(customer_id, status)")
+	db.Exec("CREATE INDEX IF NOT EXISTS idx_subscriptions_user_status ON subscriptions(user_id, status)")
 	db.Exec("CREATE INDEX IF NOT EXISTS idx_subscriptions_current_period_end ON subscriptions(current_period_end)")
 
 	// 为 usage_records 表创建复合索引

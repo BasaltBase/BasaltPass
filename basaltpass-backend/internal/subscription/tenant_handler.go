@@ -388,12 +388,12 @@ func (h *TenantHandler) GetTenantSubscriptionHandler(c *fiber.Ctx) error {
 
 	// 获取当前用户ID（如果需要限制只能查看自己的订阅）
 	userID := middleware.GetUserIDFromContext(c)
-	var customerID *uint
+	var userID *uint
 	if userID != nil {
-		customerID = userID
+		userID = userID
 	}
 
-	subscription, err := service.GetSubscription(uint(id), customerID)
+	subscription, err := service.GetSubscription(uint(id), userID)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -451,12 +451,12 @@ func (h *TenantHandler) CancelTenantSubscriptionHandler(c *fiber.Ctx) error {
 
 	// 获取当前用户ID（如果需要限制只能取消自己的订阅）
 	userID := middleware.GetUserIDFromContext(c)
-	var customerID *uint
+	var userID *uint
 	if userID != nil {
-		customerID = userID
+		userID = userID
 	}
 
-	if err := service.CancelSubscription(uint(id), customerID, &req); err != nil {
+	if err := service.CancelSubscription(uint(id), userID, &req); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 

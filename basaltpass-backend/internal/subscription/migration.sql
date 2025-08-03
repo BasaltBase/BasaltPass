@@ -127,7 +127,7 @@ CREATE INDEX idx_coupons_duration ON coupons(duration);
 CREATE TABLE subscriptions (
     id                      BIGSERIAL PRIMARY KEY,
     tenant_id               BIGINT NULL,
-    customer_id             BIGINT NOT NULL,  -- 对应 users.id
+    user_id             BIGINT NOT NULL,  -- 对应 users.id
     status                  VARCHAR(20) NOT NULL CHECK (status IN ('trialing','active','paused','canceled','overdue')),
     current_price_id        BIGINT NOT NULL,
     next_price_id           BIGINT NULL,
@@ -142,7 +142,7 @@ CREATE TABLE subscriptions (
     created_at              TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at              TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
-    CONSTRAINT fk_subscriptions_customer FOREIGN KEY (customer_id) REFERENCES users(id),
+    CONSTRAINT fk_subscriptions_user FOREIGN KEY (user_id) REFERENCES users(id),
     CONSTRAINT fk_subscriptions_current_price FOREIGN KEY (current_price_id) REFERENCES prices(id),
     CONSTRAINT fk_subscriptions_next_price FOREIGN KEY (next_price_id) REFERENCES prices(id),
     CONSTRAINT fk_subscriptions_coupon FOREIGN KEY (coupon_id) REFERENCES coupons(id)
@@ -150,7 +150,7 @@ CREATE TABLE subscriptions (
 
 -- 订阅表索引（关键查询优化）
 CREATE INDEX idx_subscriptions_tenant_id ON subscriptions(tenant_id);
-CREATE INDEX idx_subscriptions_customer_status ON subscriptions(customer_id, status);  -- 关键复合索引
+CREATE INDEX idx_subscriptions_user_status ON subscriptions(user_id, status);  -- 关键复合索引
 CREATE INDEX idx_subscriptions_current_price_id ON subscriptions(current_price_id);
 CREATE INDEX idx_subscriptions_next_price_id ON subscriptions(next_price_id);
 CREATE INDEX idx_subscriptions_coupon_id ON subscriptions(coupon_id);
@@ -235,7 +235,7 @@ CREATE INDEX idx_subscription_events_type ON subscription_events(event_type);
 CREATE TABLE invoices (
     id                BIGSERIAL PRIMARY KEY,
     tenant_id         BIGINT NULL,
-    customer_id       BIGINT NOT NULL,
+    user_id       BIGINT NOT NULL,
     subscription_id   BIGINT NULL,
     status            VARCHAR(20) NOT NULL CHECK (status IN ('draft','posted','paid','void','uncollectible')),
     currency          CHAR(3) NOT NULL,
@@ -247,13 +247,13 @@ CREATE TABLE invoices (
     created_at        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
-    CONSTRAINT fk_invoices_customer FOREIGN KEY (customer_id) REFERENCES users(id),
+    CONSTRAINT fk_invoices_user FOREIGN KEY (user_id) REFERENCES users(id),
     CONSTRAINT fk_invoices_subscription FOREIGN KEY (subscription_id) REFERENCES subscriptions(id)
 );
 
 -- 账单表索引
 CREATE INDEX idx_invoices_tenant_id ON invoices(tenant_id);
-CREATE INDEX idx_invoices_customer_id ON invoices(customer_id);
+CREATE INDEX idx_invoices_user_id ON invoices(user_id);
 CREATE INDEX idx_invoices_subscription_id ON invoices(subscription_id);
 CREATE INDEX idx_invoices_status ON invoices(status);
 CREATE INDEX idx_invoices_due_at ON invoices(due_at);

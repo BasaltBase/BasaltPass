@@ -64,7 +64,7 @@ type PaymentSession struct {
 	SuccessURL      string               `gorm:"size:500"`
 	CancelURL       string               `gorm:"size:500"`
 	PaymentURL      string               `gorm:"size:500"` // 支付页面URL
-	CustomerEmail   string               `gorm:"size:128"`
+	UserEmail       string               `gorm:"size:128"`
 	ExpiresAt       *time.Time
 	CompletedAt     *time.Time
 	Metadata        string `gorm:"type:json"`
