@@ -358,6 +358,12 @@ func RegisterRoutes(app *fiber.App) {
 	usersGroup := v1.Group("/users", middleware.JWTMiddleware())
 	usersGroup.Get("/search", user.SearchHandler)
 
+	// 租户用户订阅查看路由（需要租户上下文但不需要管理员权限）
+	tenantUserGroup := v1.Group("/tenant", middleware.JWTMiddleware(), middleware.TenantMiddleware())
+	tenantUserSubscriptionGroup := tenantUserGroup.Group("/subscriptions")
+	tenantUserSubscriptionGroup.Get("/", subscription.ListTenantUserSubscriptionsHandler)
+	tenantUserSubscriptionGroup.Get("/:id", subscription.GetTenantUserSubscriptionHandler)
+
 	// 团队相关路由
 	teamGroup := v1.Group("/teams", middleware.JWTMiddleware())
 	teamGroup.Post("/", team.CreateTeamHandler)

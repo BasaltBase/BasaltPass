@@ -561,6 +561,7 @@ func (s *TenantService) ListSubscriptions(req *SubscriptionListRequest) ([]model
 
 	query := s.db.Model(&model.Subscription{}).
 		Preload("CurrentPrice.Plan.Product").
+		Preload("User").
 		Preload("Coupon")
 
 	// 添加租户过滤

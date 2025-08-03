@@ -652,6 +652,58 @@ func (h *TenantHandler) ListTenantInvoicesHandler(c *fiber.Ctx) error {
 	})
 }
 
+// ========== 租户用户订阅查看（不需要admin权限，需要tenant权限）==========
+
+// ListTenantUserSubscriptionsHandler 租户用户获取订阅列表
+func (h *TenantHandler) ListTenantUserSubscriptionsHandler(c *fiber.Ctx) error {
+	var req SubscriptionListRequest
+	if err := c.QueryParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数无效"})
+	}
+
+	// 设置默认分页参数
+	if req.Page <= 0 {
+		req.Page = 1
+	}
+	if req.PageSize <= 0 {
+		req.PageSize = 20
+	}
+
+	service := h.getTenantService(c)
+	subscriptions, total, err := service.ListSubscriptions(&req) // 获取租户下的订阅列表
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	totalPages := int((total + int64(req.PageSize) - 1) / int64(req.PageSize))
+
+	return c.JSON(fiber.Map{
+		"data": subscriptions,
+		"pagination": map[string]interface{}{
+			"page":        req.Page,
+			"page_size":   req.PageSize,
+			"total":       total,
+			"total_pages": totalPages,
+		},
+	})
+}
+
+// GetTenantUserSubscriptionHandler 租户用户获取订阅详情
+func (h *TenantHandler) GetTenantUserSubscriptionHandler(c *fiber.Ctx) error {
+	id, err := strconv.ParseUint(c.Params("id"), 10, 32) // 检查ID是否有效 十进制 uint32类型
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "订阅ID无效"})
+	}
+
+	service := h.getTenantService(c)
+	subscription, err := service.GetSubscription(uint(id), nil)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"data": subscription})
+}
+
 // ========== 统计信息 ==========
 
 // GetTenantSubscriptionStatsHandler 获取租户订阅统计
@@ -791,4 +843,13 @@ func ListTenantInvoicesHandler(c *fiber.Ctx) error {
 // 租户统计处理器
 func GetTenantSubscriptionStatsHandler(c *fiber.Ctx) error {
 	return tenantSubscriptionHandler.GetTenantSubscriptionStatsHandler(c)
+}
+
+// 租户用户订阅查看处理器（不需要管理员权限，需要租户）
+func ListTenantUserSubscriptionsHandler(c *fiber.Ctx) error {
+	return tenantSubscriptionHandler.ListTenantUserSubscriptionsHandler(c)
+}
+
+func GetTenantUserSubscriptionHandler(c *fiber.Ctx) error {
+	return tenantSubscriptionHandler.GetTenantUserSubscriptionHandler(c)
 }

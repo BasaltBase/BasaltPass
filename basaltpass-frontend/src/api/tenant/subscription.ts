@@ -130,19 +130,27 @@ export interface Subscription {
   TenantID?: number;
   UserID: number;
   CurrentPriceID: number;
+  NextPriceID?: number | null;
   Status: string;
   StartAt: string;
   CurrentPeriodStart: string;
   CurrentPeriodEnd: string;
-  CancelAt?: string;
-  Quantity: number;
-  CouponID?: number;
+  CancelAt?: string | null;
+  CanceledAt?: string | null;
+  Quantity?: number;
+  CouponID?: number | null;
+  GatewaySubscriptionID?: string | null;
   Metadata: Record<string, any>;
   CreatedAt: string;
   UpdatedAt: string;
   DeletedAt?: string | null;
   CurrentPrice: TenantPrice;
-  Coupon?: TenantCoupon;
+  NextPrice?: TenantPrice | null;
+  Coupon?: TenantCoupon | null;
+  User?: any; // 用户信息，通常不完整
+  Items?: any[] | null;
+  Events?: any[] | null;
+  Invoices?: any[] | null;
 }
 
 export interface CreateTenantSubscriptionRequest {
@@ -560,6 +568,26 @@ class TenantSubscriptionAPI {
     return response.data.data;
   }
 
+  // ========== 租户用户订阅查看（不需要管理员权限） ==========
+
+  // 租户用户：获取租户下所有订阅列表
+  async listTenantSubscriptions(params?: {
+    page?: number;
+    page_size?: number;
+    user_id?: number;
+    status?: string;
+    price_id?: number;
+  }) {
+    const response = await client.get('/api/v1/tenant/subscriptions', { params });
+    return response.data;
+  }
+
+  // 租户用户：获取订阅详情
+  async getTenantSubscription(id: number): Promise<Subscription> {
+    const response = await client.get(`/api/v1/tenant/subscriptions/${id}`);
+    return response.data.data;
+  }
+
   // ========== 辅助方法 ==========
 
   formatPrice(amountCents: number, currency: string): string {
@@ -623,6 +651,8 @@ export const {
   
   getSubscription: getTenantSubscription,
   listSubscriptions: listTenantSubscriptions,
+  listTenantSubscriptions: listTenantUserSubscriptions, // 新增：专门为租户用户提供的订阅列表
+  getTenantSubscription: getTenantUserSubscription, // 新增：专门为租户用户提供的订阅详情
   
   listCoupons: listTenantCoupons,
   getCoupon: getTenantCoupon,

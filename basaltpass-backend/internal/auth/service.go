@@ -270,11 +270,6 @@ func (s Service) setupFirstUserAsGlobalAdmin(tx *gorm.DB, user *model.User) erro
 		return err
 	}
 
-	// 7. 设置为超级管理员
-	if err := tx.Model(user).Update("is_super_admin", true).Error; err != nil {
-		return err
-	}
-
 	aduit.LogAudit(user.ID, "首位用户注册", "user", string(rune(user.ID)), "", "自动设置为全局管理员")
 
 	return nil

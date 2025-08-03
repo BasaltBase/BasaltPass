@@ -111,7 +111,6 @@ export default function TenantInfoPage() {
                   <div>用户ID: {debugInfo.user_id}</div>
                   <div>租户ID: {debugInfo.tenant_id || '未设置'}</div>
                   <div>用户邮箱: {debugInfo.user?.email}</div>
-                  <div>是否超级管理员: {debugInfo.user?.is_super_admin ? '是' : '否'}</div>
                   <div>租户关联数量: {debugInfo.tenant_associations?.length || 0}</div>
                   {debugInfo.tenant_associations?.length > 0 && (
                     <div className="mt-2">

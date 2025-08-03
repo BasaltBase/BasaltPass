@@ -12,6 +12,8 @@ import {
   tenantSubscriptionAPI,
   Subscription,
   CancelTenantSubscriptionRequest,
+  listTenantUserSubscriptions,
+  getTenantUserSubscription,
 } from '@api/tenant/subscription'
 
 export default function TenantSubscriptions() {
@@ -35,7 +37,7 @@ export default function TenantSubscriptions() {
       if (statusFilter) {
         params.status = statusFilter
       }
-      const data = await tenantSubscriptionAPI.adminListSubscriptions(params)
+      const data = await listTenantUserSubscriptions(params)
       setSubscriptions(data.data || [])
     } catch (error) {
       console.error('获取订阅列表失败:', error)
@@ -232,10 +234,10 @@ export default function TenantSubscriptions() {
                               <span>开始时间: {formatDate(subscription.StartAt)}</span>
                               <span>•</span>
                               <span>当前周期: {formatDate(subscription.CurrentPeriodStart)} - {formatDate(subscription.CurrentPeriodEnd)}</span>
-                              {subscription.CancelAt && (
+                              {subscription.CanceledAt && (
                                 <>
                                   <span>•</span>
-                                  <span className="text-red-600">取消时间: {formatDate(subscription.CancelAt)}</span>
+                                  <span className="text-red-600">取消时间: {formatDate(subscription.CanceledAt)}</span>
                                 </>
                               )}
                             </div>
