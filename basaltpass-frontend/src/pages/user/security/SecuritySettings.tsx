@@ -9,8 +9,8 @@ import {
   disable2FA,
   resendEmailVerification,
   resendPhoneVerification
-} from '../../../api/security'
-import { listPasskeys, PasskeyInfo } from '../../../api/passkey'
+} from '@api/user/security'
+import { listPasskeys, PasskeyInfo } from '@api/oauth/passkey'
 import { isPasskeySupported } from '../../../utils/webauthn'
 import { 
   ShieldCheckIcon,

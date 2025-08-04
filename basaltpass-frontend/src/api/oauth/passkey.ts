@@ -1,11 +1,11 @@
-import client from './client'
+import client from '../client'
 import { 
   registerPasskey, 
   loginWithPasskey, 
   formatCredentialCreationResponse, 
   formatCredentialAssertionResponse,
   getWebAuthnErrorMessage
-} from '../utils/webauthn'
+} from '@utils/webauthn'
 
 export interface PasskeyInfo {
   id: number

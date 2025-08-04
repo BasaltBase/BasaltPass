@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getBalance } from '../../../api/wallet'
+import { getBalance } from '@api/user/wallet'
 import { Link } from 'react-router-dom'
 import Layout from '../../../components/Layout'
 import { 

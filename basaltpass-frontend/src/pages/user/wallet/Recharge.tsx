@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { recharge } from '../../../api/wallet'
+import { recharge } from '@api/user/wallet'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../../../components/Layout'
 import { 

@@ -10,7 +10,8 @@ import {
   CogIcon
 } from '@heroicons/react/24/outline'
 import AdminLayout from '@components/AdminLayout'
-import { platformApi, Tenant } from '@api/tenant'
+import { Tenant } from '@api/tenant/tenant'
+import {tenant} from "@api/admin/tenant";
 
 export default function TenantList() {
   const [tenants, setTenants] = useState<Tenant[]>([])
@@ -26,7 +27,7 @@ export default function TenantList() {
   const loadTenants = async () => {
     try {
       setLoading(true)
-      const response = await platformApi.listTenants(page, 20)
+      const response = await tenant.listTenants(page, 20)
       setTenants(response.tenants || [])
       // 计算总页数，如果API返回total而不是total_pages
       const totalPages = response.total_pages || Math.ceil((response.total || 0) / 20)
@@ -45,7 +46,7 @@ export default function TenantList() {
     }
 
     try {
-      await platformApi.deleteTenant(String(id))
+      await tenant.deleteTenant(String(id))
       await loadTenants()
     } catch (error) {
       console.error('Failed to delete tenant:', error)

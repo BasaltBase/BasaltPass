@@ -10,7 +10,7 @@ import {
   Cog6ToothIcon
 } from '@heroicons/react/24/outline'
 import TenantLayout from '@components/TenantLayout'
-import { tenantAppApi, TenantApp, UpdateTenantAppRequest } from '@api/tenantApp'
+import { tenantAppApi, TenantApp, UpdateTenantAppRequest } from '@api/tenant/tenantApp'
 
 export default function AppSettings() {
   const { id } = useParams<{ id: string }>()

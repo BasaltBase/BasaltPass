@@ -10,7 +10,8 @@ import {
   CheckCircleIcon
 } from '@heroicons/react/24/outline'
 import AdminLayout from '@components/AdminLayout'
-import { platformApi, CreateTenantRequest } from '@api/tenant'
+import { CreateTenantRequest } from '@api/tenant/tenant'
+import {tenant} from "@api/admin/tenant";
 
 const CreateTenant: React.FC = () => {
   const navigate = useNavigate()
@@ -74,7 +75,7 @@ const CreateTenant: React.FC = () => {
       setLoading(true)
       setError(null)
       
-      await platformApi.createTenant(formData)
+      await tenant.createTenant(formData)
       
       // 创建成功后跳转到租户列表
       navigate('/admin/tenants', { 

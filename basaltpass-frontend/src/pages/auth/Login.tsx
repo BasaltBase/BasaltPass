@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import client from '../../api/client'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
-import { loginWithPasskeyFlow } from '../../api/passkey'
+import { loginWithPasskeyFlow } from '@api/oauth/passkey'
 import { isPasskeySupported } from '../../utils/webauthn'
 import { EyeIcon, EyeSlashIcon, ShieldCheckIcon, EnvelopeIcon, KeyIcon } from '@heroicons/react/24/outline'
 

@@ -1,4 +1,4 @@
-import client from './client'
+import client from '../client'
 
 // OAuth2客户端类型定义
 export interface OAuthClient {

@@ -1,4 +1,4 @@
-import client from './client'
+import client from '../client'
 
 // 用户权限管理相关的API接口
 

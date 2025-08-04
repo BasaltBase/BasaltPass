@@ -1,4 +1,4 @@
-import client from './client'
+import client from '../client'
 
 export const listUsers = (q = '') => client.get('/api/v1/admin/users', { params: { q } })
 export const banUser = (id: number, banned: boolean) => client.post(`/api/v1/admin/user/${id}/ban`, { banned })

@@ -11,8 +11,8 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline'
 import TenantLayout from '../../../components/TenantLayout'
-import { tenantAppApi } from '../../../api/tenantApp'
-import { userPermissionsApi, type Permission, type Role } from '../../../api/userPermissions'
+import { tenantAppApi } from '@api/tenant/tenantApp'
+import { userPermissionsApi, type Permission, type Role } from '@api/tenant/appPermissions'
 
 export default function AppRoleManagement() {
   const { id: appId } = useParams<{ id: string }>()

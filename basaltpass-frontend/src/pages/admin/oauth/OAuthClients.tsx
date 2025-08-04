@@ -10,7 +10,7 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline'
 import { ChevronRightIcon } from '@heroicons/react/24/outline'
-import { oauthApi, type OAuthClient, type CreateClientRequest } from '@api/oauth'
+import { oauthApi, type OAuthClient, type CreateClientRequest } from '@api/oauth/oauth'
 import { Link } from 'react-router-dom'
 import AdminLayout from '@components/AdminLayout'
 

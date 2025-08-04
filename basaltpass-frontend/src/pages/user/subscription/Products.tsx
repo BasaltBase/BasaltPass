@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import Layout from '../../../components/Layout'
 import { listProducts } from '../../../api/subscription'
-import { createOrder, CreateOrderRequest } from '../../../api/order'
+import { createOrder, CreateOrderRequest } from '@api/payment/order'
 import { Product, Price } from '../../../types/subscription'
 import { Link, useNavigate } from 'react-router-dom'
 import client from '../../../api/client'

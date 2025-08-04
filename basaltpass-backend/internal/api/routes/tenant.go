@@ -129,6 +129,26 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 	// 租户信息管理
 	tenantGroup.Get("/info", tenant.TenantGetInfoHandler)
 
+	// 租户用户管理路由
+	tenantUserGroup := tenantGroup.Group("/users")
+	tenantUserGroup.Get("/", tenant.GetTenantUsersHandler)
+	tenantUserGroup.Get("/stats", tenant.GetTenantUserStatsHandler)
+	tenantUserGroup.Get("/:id", tenant.GetTenantUserHandler)
+	tenantUserGroup.Put("/:id", tenant.UpdateTenantUserHandler)
+	tenantUserGroup.Delete("/:id", tenant.RemoveTenantUserHandler)
+	tenantUserGroup.Post("/invite", tenant.InviteTenantUserHandler)
+	tenantUserGroup.Post("/:id/resend-invitation", tenant.ResendInvitationHandler)
+
+	// 租户角色管理路由
+	tenantRoleGroupV2 := tenantGroup.Group("/roles")
+	tenantRoleGroupV2.Get("/", tenant.GetTenantRoles)
+	tenantRoleGroupV2.Post("/", tenant.CreateTenantRole)
+	tenantRoleGroupV2.Put("/:id", tenant.UpdateTenantRole)
+	tenantRoleGroupV2.Delete("/:id", tenant.DeleteTenantRole)
+	tenantRoleGroupV2.Get("/users", tenant.GetTenantUsersForRole)
+	tenantRoleGroupV2.Post("/assign", tenant.AssignUserRoles)
+	tenantRoleGroupV2.Get("/users/:user_id", tenant.GetUserRoles)
+
 	// 租户通知管理
 	tenantNotifGroup := tenantGroup.Group("/notifications")
 	tenantNotifGroup.Post("/", notification.TenantCreateHandler)
@@ -237,8 +257,7 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 	tenantAppGroup.Delete("/:app_id/users/:user_id/roles/:role_id", app_rbac.RevokeUserRole)
 
 	// 租户用户订阅查看路由（需要租户上下文但不需要管理员权限）
-	tenantUserGroup := v1.Group("/tenant", middleware.JWTMiddleware(), middleware.TenantMiddleware())
-	tenantUserSubscriptionGroup := tenantUserGroup.Group("/subscriptions")
+	tenantUserSubscriptionGroup := v1.Group("/tenant", middleware.JWTMiddleware(), middleware.TenantMiddleware()).Group("/subscriptions")
 	tenantUserSubscriptionGroup.Get("/", subscription.ListTenantUserSubscriptionsHandler)
 	tenantUserSubscriptionGroup.Get("/:id", subscription.GetTenantUserSubscriptionHandler)
 }

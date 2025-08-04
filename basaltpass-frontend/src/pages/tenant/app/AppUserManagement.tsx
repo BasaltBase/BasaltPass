@@ -18,9 +18,9 @@ import {
   Cog6ToothIcon
 } from '@heroicons/react/24/outline'
 import TenantLayout from '../../../components/TenantLayout'
-import { tenantAppApi } from '../../../api/tenantApp'
-import { appUserApi, type AppUser, type AppUsersResponse } from '../../../api/appUser'
-import { userPermissionsApi, type Permission, type Role, type UserPermission, type UserRole } from '../../../api/userPermissions'
+import { tenantAppApi } from '@api/tenant/tenantApp'
+import { appUserApi, type AppUser, type AppUsersResponse } from '@api/tenant/appUser'
+import { userPermissionsApi, type Permission, type Role, type UserPermission, type UserRole } from '@api/tenant/appPermissions'
 
 export default function AppUserManagement() {
   const { id: appId } = useParams<{ id: string }>()

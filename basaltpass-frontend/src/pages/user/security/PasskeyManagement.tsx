@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { listPasskeys, createPasskey, deletePasskey, PasskeyInfo } from '../../../api/passkey'
+import { listPasskeys, createPasskey, deletePasskey, PasskeyInfo } from '@api/oauth/passkey'
 import { isPasskeySupported } from '../../../utils/webauthn'
 import Layout from '../../../components/Layout'
 import { 

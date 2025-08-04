@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeftIcon, RocketLaunchIcon, PlusIcon, TrashIcon, CubeIcon, KeyIcon, DocumentTextIcon } from '@heroicons/react/24/outline'
-import { tenantAppApi, CreateTenantAppRequest } from '../../../api/tenantApp'
+import { tenantAppApi, CreateTenantAppRequest } from '@api/tenant/tenantApp'
 import TenantLayout from '../../../components/TenantLayout'
 
 export default function CreateApp() {

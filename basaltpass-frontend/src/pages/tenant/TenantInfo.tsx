@@ -12,7 +12,7 @@ import {
   InformationCircleIcon
 } from '@heroicons/react/24/outline'
 import TenantLayout from '../../components/TenantLayout'
-import { tenantApi, TenantInfo } from '../../api/tenant'
+import { tenantApi, TenantInfo } from '@api/tenant/tenant'
 
 export default function TenantInfoPage() {
   const [tenantInfo, setTenantInfo] = useState<TenantInfo | null>(null)

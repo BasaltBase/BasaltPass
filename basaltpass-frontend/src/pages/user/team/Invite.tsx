@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import Layout from '../../../components/Layout'
-import { invitationApi } from '../../../api/invitation'
-import { userApi, UserSearchResult } from '../../../api/user'
+import { invitationApi } from '@api/user/invitation'
+import { userApi, UserSearchResult } from '@api/user/user'
 import { useNavigate, useParams } from 'react-router-dom'
 import { XMarkIcon, UserIcon, MagnifyingGlassIcon, DocumentTextIcon } from '@heroicons/react/24/outline'
 

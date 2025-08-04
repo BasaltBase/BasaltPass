@@ -1,4 +1,4 @@
-import client from './client'
+import client from '../client'
 
 // 应用用户管理相关的API接口
 
@@ -45,14 +45,6 @@ export interface AppUsersResponse {
 
 // 应用用户管理API
 export const appUserApi = {
-  // 获取应用用户列表
-  async getAppUsers(appId: string, page = 1, limit = 20) {
-    const response = await client.get(`/api/v1/admin/apps/${appId}/users`, {
-      params: { page, limit }
-    })
-    return response.data
-  },
-
   // 根据状态获取应用用户列表
   async getAppUsersByStatus(appId: string, status?: string, page = 1, limit = 20) {
     const params: any = { page, limit }

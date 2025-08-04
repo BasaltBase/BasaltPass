@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { withdraw } from '../../../api/wallet'
+import { withdraw } from '@api/user/wallet'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../../../components/Layout'
 import { 

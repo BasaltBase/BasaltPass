@@ -54,7 +54,7 @@ export const getTenantRoles = (params?: {
   app_id?: string
   search?: string
 }) => {
-  return client.get('/api/v1/admin/roles', { params })
+  return client.get('/api/v1/tenant/roles', { params })
 }
 
 // 创建租户角色

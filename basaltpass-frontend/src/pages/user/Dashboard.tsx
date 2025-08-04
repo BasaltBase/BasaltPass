@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import Layout from '../../components/Layout'
-import { getBalance } from '../../api/wallet'
-import { getSecurityStatus, SecurityStatus } from '../../api/security'
+import { getBalance } from '@api/user/wallet'
+import { getSecurityStatus, SecurityStatus } from '@api/user/security'
 import { 
   WalletIcon, 
   UserIcon, 

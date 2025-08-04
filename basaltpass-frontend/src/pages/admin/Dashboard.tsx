@@ -16,7 +16,7 @@ import {
   CubeIcon,
   KeyIcon
 } from '@heroicons/react/24/outline'
-import { getDashboardStats, getRecentActivities } from '../../api/admin'
+import { getDashboardStats, getRecentActivities } from '@api/admin/admin'
 import AdminLayout from '../../components/AdminLayout'
 
 interface DashboardStats {

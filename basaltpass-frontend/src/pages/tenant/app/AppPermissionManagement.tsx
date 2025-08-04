@@ -12,8 +12,8 @@ import {
   LockClosedIcon
 } from '@heroicons/react/24/outline'
 import TenantLayout from '../../../components/TenantLayout'
-import { tenantAppApi } from '../../../api/tenantApp'
-import userPermissionsApi, { type Permission } from '../../../api/userPermissions'
+import { tenantAppApi } from '@api/tenant/tenantApp'
+import userPermissionsApi, { type Permission } from '@api/tenant/appPermissions'
 
 export default function AppPermissionManagement() {
   const { id: appId } = useParams<{ id: string }>()
