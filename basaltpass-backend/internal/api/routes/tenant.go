@@ -15,115 +15,11 @@ import (
 
 // RegisterTenantRoutes 注册租户相关路由
 func RegisterTenantRoutes(v1 fiber.Router) {
-	// 租户级管理API（需要租户上下文）
-	tenantAdminGroup := v1.Group("/admin", middleware.JWTMiddleware(), middleware.TenantMiddleware(), middleware.TenantAdminMiddleware())
-
-	// 租户信息管理
-	tenantAdminGroup.Get("/tenant", tenant.GetTenantHandler)
-	tenantAdminGroup.Get("/tenant/info", tenant.GetTenantInfoHandler)
-	tenantAdminGroup.Put("/tenant", tenant.UpdateTenantHandler)
-	tenantAdminGroup.Post("/tenant/users/invite", tenant.InviteUserHandler)
-
-	// 租户通知管理
-	tenantNotificationGroup := tenantAdminGroup.Group("/notifications")
-	tenantNotificationGroup.Post("/", notification.TenantCreateHandler)
-	tenantNotificationGroup.Get("/", notification.TenantListHandler)
-	tenantNotificationGroup.Delete("/:id", notification.TenantDeleteHandler)
-	tenantNotificationGroup.Get("/users", notification.TenantGetUsersHandler)
-
-	// 租户角色管理
-	tenantRoleGroup := tenantAdminGroup.Group("/roles")
-	tenantRoleGroup.Post("/", tenant.CreateTenantRole)
-	tenantRoleGroup.Get("/", tenant.GetTenantRoles)
-	tenantRoleGroup.Put("/:id", tenant.UpdateTenantRole)
-	tenantRoleGroup.Delete("/:id", tenant.DeleteTenantRole)
-	tenantRoleGroup.Get("/users", tenant.GetTenantUsersForRole)
-	tenantRoleGroup.Post("/assign", tenant.AssignUserRoles)
-	tenantRoleGroup.Get("/users/:user_id", tenant.GetUserRoles)
-
-	// 租户订阅管理
-	tenantSubscriptionGroup := tenantAdminGroup.Group("/subscription")
-
-	// 产品管理
-	tenantProductGroup := tenantSubscriptionGroup.Group("/products")
-	tenantProductGroup.Post("/", subscription.CreateTenantProductHandler)
-	tenantProductGroup.Get("/", subscription.ListTenantProductsHandler)
-	tenantProductGroup.Get("/:id", subscription.GetTenantProductHandler)
-	tenantProductGroup.Put("/:id", subscription.UpdateTenantProductHandler)
-	tenantProductGroup.Delete("/:id", subscription.DeleteTenantProductHandler)
-
-	// 套餐管理
-	tenantPlanGroup := tenantSubscriptionGroup.Group("/plans")
-	tenantPlanGroup.Post("/", subscription.CreateTenantPlanHandler)
-	tenantPlanGroup.Get("/", subscription.ListTenantPlansHandler)
-	tenantPlanGroup.Get("/:id", subscription.GetTenantPlanHandler)
-	tenantPlanGroup.Put("/:id", subscription.UpdateTenantPlanHandler)
-	tenantPlanGroup.Delete("/:id", subscription.DeleteTenantPlanHandler)
-
-	// 定价管理
-	tenantPriceGroup := tenantSubscriptionGroup.Group("/prices")
-	tenantPriceGroup.Post("/", subscription.CreateTenantPriceHandler)
-	tenantPriceGroup.Get("/", subscription.ListTenantPricesHandler)
-	tenantPriceGroup.Get("/:id", subscription.GetTenantPriceHandler)
-	tenantPriceGroup.Put("/:id", subscription.UpdateTenantPriceHandler)
-	tenantPriceGroup.Delete("/:id", subscription.DeleteTenantPriceHandler)
-
-	// 订阅管理
-	tenantSubscriptionCRUDGroup := tenantSubscriptionGroup.Group("/subscriptions")
-	tenantSubscriptionCRUDGroup.Post("/", subscription.CreateTenantSubscriptionHandler)
-	tenantSubscriptionCRUDGroup.Get("/", subscription.ListTenantSubscriptionsHandler)
-	tenantSubscriptionCRUDGroup.Get("/:id", subscription.GetTenantSubscriptionHandler)
-	tenantSubscriptionCRUDGroup.Post("/:id/cancel", subscription.CancelTenantSubscriptionHandler)
-
-	// 优惠券管理
-	tenantCouponGroup := tenantSubscriptionGroup.Group("/coupons")
-	tenantCouponGroup.Post("/", subscription.CreateTenantCouponHandler)
-	tenantCouponGroup.Get("/", subscription.ListTenantCouponsHandler)
-	tenantCouponGroup.Get("/:code", subscription.GetTenantCouponHandler)
-	tenantCouponGroup.Put("/:code", subscription.UpdateTenantCouponHandler)
-	tenantCouponGroup.Delete("/:code", subscription.DeleteTenantCouponHandler)
-	tenantCouponGroup.Get("/:code/validate", subscription.ValidateTenantCouponHandler)
-
-	// 账单管理
-	tenantInvoiceGroup := tenantSubscriptionGroup.Group("/invoices")
-	tenantInvoiceGroup.Post("/", subscription.CreateTenantInvoiceHandler)
-	tenantInvoiceGroup.Get("/", subscription.ListTenantInvoicesHandler)
-
-	// 统计信息
-	tenantSubscriptionGroup.Get("/stats", subscription.GetTenantSubscriptionStatsHandler)
-
-	// 应用管理
-	appGroup := tenantAdminGroup.Group("/apps")
-	appGroup.Post("/", appHandler.CreateAppHandler)
-	appGroup.Get("/", appHandler.ListAppsHandler)
-	appGroup.Get("/:id", appHandler.GetAppHandler)
-	appGroup.Put("/:id", appHandler.UpdateAppHandler)
-	appGroup.Delete("/:id", appHandler.DeleteAppHandler)
-	appGroup.Patch("/:id/status", appHandler.ToggleAppStatusHandler)
-	appGroup.Get("/:id/stats", appHandler.GetAppStatsHandler)
-
-	// 应用用户管理路由（租户级）
-	appGroup.Get("/:app_id/users", app_user.GetAppUsersHandler)
-	appGroup.Get("/:app_id/users/stats", app_user.GetAppUserStatsHandler)
-	appGroup.Delete("/:app_id/users/:user_id", app_user.AdminRevokeUserAppHandler)
-
-	// 新增：应用用户状态管理
-	appGroup.Put("/:app_id/users/:user_id/status", app_user.UpdateAppUserStatusHandler)
-	appGroup.Get("/:app_id/users/by-status", app_user.GetAppUsersByStatusHandler)
-
-	// OAuth2客户端管理路由（租户级）
-	oauthClientGroup := tenantAdminGroup.Group("/oauth/clients")
-	oauthClientGroup.Post("/", oauth.CreateClientHandler)
-	oauthClientGroup.Get("/", oauth.ListClientsHandler)
-	oauthClientGroup.Get("/:client_id", oauth.GetClientHandler)
-	oauthClientGroup.Put("/:client_id", oauth.UpdateClientHandler)
-	oauthClientGroup.Delete("/:client_id", oauth.DeleteClientHandler)
-	oauthClientGroup.Post("/:client_id/regenerate-secret", oauth.RegenerateSecretHandler)
-	oauthClientGroup.Get("/:client_id/stats", oauth.GetClientStatsHandler)
-	oauthClientGroup.Get("/:client_id/tokens", oauth.GetTokensHandler)
-	oauthClientGroup.Post("/:client_id/revoke-tokens", oauth.RevokeClientTokensHandler)
-
-	// 租户级别的路由（直接在v1下面）
+	/**
+	 * 租户级路由
+	 * 这些路由需要租户上下文，但不需要管理员权限
+	 * 所有租户成员可访问
+	 */
 	tenantGroup := v1.Group("/tenant", middleware.JWTMiddleware(), middleware.TenantMiddleware())
 
 	// 租户信息管理
@@ -136,7 +32,7 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 	tenantUserGroup.Get("/:id", tenant.GetTenantUserHandler)
 	tenantUserGroup.Put("/:id", tenant.UpdateTenantUserHandler)
 	tenantUserGroup.Delete("/:id", tenant.RemoveTenantUserHandler)
-	tenantUserGroup.Post("/invite", tenant.InviteTenantUserHandler)
+	tenantUserGroup.Post("/invite", tenant.InviteTenantUserHandler) // /tenant/users/invite
 	tenantUserGroup.Post("/:id/resend-invitation", tenant.ResendInvitationHandler)
 
 	// 租户角色管理路由
