@@ -10,8 +10,8 @@ import {
   ArrowPathIcon,
   ClipboardDocumentIcon
 } from '@heroicons/react/24/outline'
-import TenantLayout from '../../components/TenantLayout'
-import { tenantOAuthApi, TenantAppWithClients, CreateTenantOAuthClientRequest, TenantOAuthClient } from '../../api/tenantOAuth'
+import TenantLayout from '@components/TenantLayout'
+import { tenantOAuthApi, TenantAppWithClients, CreateTenantOAuthClientRequest, TenantOAuthClient } from '@api/tenantOAuth'
 
 interface CreateClientModalProps {
   isOpen: boolean

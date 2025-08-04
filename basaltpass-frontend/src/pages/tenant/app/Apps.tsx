@@ -15,8 +15,8 @@ import {
   ShieldCheckIcon,
   UsersIcon
 } from '@heroicons/react/24/outline'
-import TenantLayout from '../../components/TenantLayout'
-import { tenantAppApi, TenantApp } from '../../api/tenantApp'
+import TenantLayout from '@components/TenantLayout'
+import { tenantAppApi, TenantApp } from '@api/tenantApp'
 
 export default function TenantAppList() {
   const [apps, setApps] = useState<TenantApp[]>([])

@@ -12,9 +12,9 @@ import {
   ShieldExclamationIcon,
   EyeIcon
 } from '@heroicons/react/24/outline'
-import TenantLayout from '../../components/TenantLayout'
-import { tenantAppApi } from '../../api/tenantApp'
-import { appUserApi, type AppUserStats } from '../../api/appUser'
+import TenantLayout from '@components/TenantLayout'
+import { tenantAppApi } from '@api/tenantApp'
+import { appUserApi, type AppUserStats } from '@api/appUser'
 
 interface AppWithUserStats {
   id: string

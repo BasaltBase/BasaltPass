@@ -17,8 +17,8 @@ import {
   UserGroupIcon,
   ArrowRightIcon
 } from '@heroicons/react/24/outline'
-import TenantLayout from '../../components/TenantLayout'
-import { tenantAppApi, TenantApp } from '../../api/tenantApp'
+import TenantLayout from '@components/TenantLayout'
+import { tenantAppApi, TenantApp } from '@api/tenantApp'
 
 export default function AppDetail() {
   const { id } = useParams<{ id: string }>()

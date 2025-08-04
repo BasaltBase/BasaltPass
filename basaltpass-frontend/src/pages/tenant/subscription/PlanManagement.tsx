@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import TenantLayout from '@/components/TenantLayout';
+import TenantLayout from '@components/TenantLayout';
 import { 
   RocketLaunchIcon,
   PlusIcon,

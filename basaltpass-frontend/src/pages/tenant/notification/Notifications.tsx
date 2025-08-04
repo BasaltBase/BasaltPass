@@ -16,10 +16,10 @@ import {
   TenantCreateNotificationRequest,
   TenantUser,
   tenantNotificationApi
-} from '../../api/tenant/notification';
-import { tenantNotificationApi as notificationApi } from '../../api/notification';
-import client from '../../api/client';
-import TenantLayout from '@/components/TenantLayout';
+} from '@api/tenant/notification';
+import { tenantNotificationApi as notificationApi } from '@api/notification';
+import client from '@api/client';
+import TenantLayout from '@components/TenantLayout';
 
 const TenantNotifications: React.FC = () => {
   const [notifications, setNotifications] = useState<TenantNotification[]>([]);

@@ -25,8 +25,8 @@ import {
   getUserRoles,
   TenantUser,
   UserRole
-} from '../../api/tenantRole';
-import TenantLayout from '@/components/TenantLayout';
+} from '@api/tenantRole';
+import TenantLayout from '@components/TenantLayout';
 
 const TenantRoleManagement: React.FC = () => {
   const [roles, setRoles] = useState<Role[]>([]);

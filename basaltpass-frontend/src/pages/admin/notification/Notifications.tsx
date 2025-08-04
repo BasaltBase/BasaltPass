@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { notificationApi, Notification, CreateNotificationRequest } from '../../api/notification'
+import { notificationApi, Notification, CreateNotificationRequest } from '@api/notification'
 import { 
   BellIcon, 
   PlusIcon,
@@ -10,7 +10,7 @@ import {
   XCircleIcon,
   ChevronRightIcon
 } from '@heroicons/react/24/outline'
-import AdminLayout from '../../components/AdminLayout'
+import AdminLayout from '@components/AdminLayout'
 import { Link } from 'react-router-dom'
 
 const AdminNotifications: React.FC = () => {
