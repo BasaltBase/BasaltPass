@@ -10,7 +10,7 @@ import {
   ChartBarIcon,
   Cog6ToothIcon
 } from '@heroicons/react/24/outline'
-import { appApi, App } from '../../../api/app'
+import { appApi, App } from '@api/admin/app'
 import TenantLayout from '../../../components/TenantLayout'
 
 export default function AppList() {

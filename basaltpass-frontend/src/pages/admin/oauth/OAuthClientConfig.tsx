@@ -10,7 +10,7 @@ import {
   TrashIcon,
   PlusIcon
 } from '@heroicons/react/24/outline'
-import { appApi, OAuthClientInfo, CreateOAuthClientRequest, UpdateOAuthClientRequest } from '@api/app'
+import { appApi, OAuthClientInfo, CreateOAuthClientRequest, UpdateOAuthClientRequest } from '@api/admin/app'
 import AdminLayout from '@components/AdminLayout'
 
 export default function OAuthClientConfig() {

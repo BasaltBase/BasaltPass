@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import Layout from '../../components/Layout'
 import { useNotifications } from '../../contexts/NotificationContext'
-import { notificationApi, Notification } from '../../api/notification'
+import { notificationApi, TenantNotification } from '@api/tenant/tenantNotification'
 import { 
   BellIcon, 
   CheckIcon, 
@@ -14,7 +14,7 @@ import {
 
 const Notifications: React.FC = () => {
   const { markAsRead, markAllAsRead, deleteNotification } = useNotifications()
-  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [notifications, setNotifications] = useState<TenantNotification[]>([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)

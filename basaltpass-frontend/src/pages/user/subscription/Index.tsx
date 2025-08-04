@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import Layout from '../../../components/Layout'
-import { listSubscriptions, cancelSubscription } from '../../../api/subscription'
+import { listSubscriptions, cancelSubscription } from '@api/subscription/subscription'
 import { SubscriptionResponse } from '../../../types/subscription'
 import { Link } from 'react-router-dom'
 import { ChevronRightIcon, CubeIcon, WalletIcon, QuestionMarkCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'

@@ -1,4 +1,4 @@
-import client from '../client';
+import client from '../../client';
 
 // 订单状态枚举
 export type OrderStatus = 'pending' | 'paid' | 'expired' | 'cancelled';

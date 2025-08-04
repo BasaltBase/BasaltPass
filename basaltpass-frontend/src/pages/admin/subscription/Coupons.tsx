@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { adminListCoupons, adminCreateCoupon, adminUpdateCoupon, adminDeleteCoupon } from '../../../api/subscription'
+import { adminListCoupons, adminCreateCoupon, adminUpdateCoupon, adminDeleteCoupon } from '@api/subscription/subscription'
 import { Coupon } from '../../../types/subscription'
 import { Link } from 'react-router-dom'
 import { ChevronRightIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'

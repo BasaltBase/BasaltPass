@@ -1,6 +1,6 @@
-import client from './client'
+import client from '../client'
 
-export interface Notification {
+export interface TenantNotification {
   id: number
   user_id: number
   title: string
@@ -20,7 +20,7 @@ export interface CreateNotificationRequest {
 }
 
 export interface NotificationResponse {
-  data: Notification[]
+  data: TenantNotification[]
   total: number
   page: number
   page_size: number

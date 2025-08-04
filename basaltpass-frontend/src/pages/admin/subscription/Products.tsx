@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { adminListProducts, adminCreateProduct, adminUpdateProduct, adminDeleteProduct } from '../../../api/subscription'
+import { adminListProducts, adminCreateProduct, adminUpdateProduct, adminDeleteProduct } from '@api/subscription/subscription'
 import { Product } from '../../../types/subscription'
 import { Link } from 'react-router-dom'
 import { ChevronRightIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'

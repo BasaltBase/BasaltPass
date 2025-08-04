@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { notificationApi, Notification, CreateNotificationRequest } from '@api/notification'
+import { notificationApi, TenantNotification, CreateNotificationRequest } from '@api/tenant/tenantNotification'
 import { 
   BellIcon, 
   PlusIcon,
@@ -14,7 +14,7 @@ import AdminLayout from '@components/AdminLayout'
 import { Link } from 'react-router-dom'
 
 const AdminNotifications: React.FC = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [notifications, setNotifications] = useState<TenantNotification[]>([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)

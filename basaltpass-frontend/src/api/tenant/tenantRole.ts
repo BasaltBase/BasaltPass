@@ -1,5 +1,5 @@
 // 角色和权限管理 API
-import client from './client'
+import client from '../client'
 
 export interface Role {
   id: number
@@ -59,17 +59,17 @@ export const getTenantRoles = (params?: {
 
 // 创建租户角色
 export const createTenantRole = (data: CreateRoleRequest) => {
-  return client.post('/api/v1/admin/roles', data)
+  return client.post('/api/v1/tenant/roles', data)
 }
 
 // 更新租户角色
 export const updateTenantRole = (id: number, data: CreateRoleRequest) => {
-  return client.put(`/api/v1/admin/roles/${id}`, data)
+  return client.put(`/api/v1/tenant/roles/${id}`, data)
 }
 
 // 删除租户角色
 export const deleteTenantRole = (id: number) => {
-  return client.delete(`/api/v1/admin/roles/${id}`)
+  return client.delete(`/api/v1/tenant/roles/${id}`)
 }
 
 // 获取租户用户列表（用于角色分配）
@@ -78,15 +78,15 @@ export const getTenantUsersForRole = (params?: {
   page_size?: number
   search?: string
 }) => {
-  return client.get('/api/v1/admin/roles/users', { params })
+  return client.get('/api/v1/tenant/roles/users', { params })
 }
 
 // 分配用户角色
 export const assignUserRoles = (data: UserRoleRequest) => {
-  return client.post('/api/v1/admin/roles/assign', data)
+  return client.post('/api/v1/tenant/roles/assign', data)
 }
 
 // 获取用户角色
 export const getUserRoles = (userId: number) => {
-  return client.get(`/api/v1/admin/roles/users/${userId}`)
+  return client.get(`/api/v1/tenant/roles/users/${userId}`)
 }

@@ -17,7 +17,7 @@ import {
   TenantUser,
   tenantNotificationApi
 } from '@api/tenant/notification';
-import { tenantNotificationApi as notificationApi } from '@api/notification';
+import { tenantNotificationApi as notificationApi } from '@api/tenant/tenantNotification';
 import client from '@api/client';
 import TenantLayout from '@components/TenantLayout';
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { subscriptionAPI, Product, Price, CheckoutResponse } from '../../../api/subscription';
+import { subscriptionAPI, Product, Price, CheckoutResponse } from '@api/subscription/subscription';
 
 const SubscriptionCheckout: React.FC = () => {
   const [loading, setLoading] = useState(false);

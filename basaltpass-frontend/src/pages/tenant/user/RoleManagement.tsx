@@ -25,7 +25,7 @@ import {
   getUserRoles,
   TenantUser,
   UserRole
-} from '@api/tenantRole';
+} from '@api/tenant/tenantRole';
 import TenantLayout from '@components/TenantLayout';
 
 const TenantRoleManagement: React.FC = () => {

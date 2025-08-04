@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import Layout from '../../../components/Layout'
-import { getOrder } from '@api/payment/order'
-import { paymentAPI } from '@api/payment/payment'
-import { OrderResponse } from '@api/payment/order'
+import { getOrder } from '@api/subscription/payment/order'
+import { paymentAPI } from '@api/subscription/payment/payment'
+import { OrderResponse } from '@api/subscription/payment/order'
 import { ChevronRightIcon, ClockIcon, CreditCardIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import { CheckCircleIcon, ShoppingCartIcon } from '@heroicons/react/24/solid'
 

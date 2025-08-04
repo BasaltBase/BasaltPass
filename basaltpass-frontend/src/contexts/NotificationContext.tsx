@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { notificationApi, Notification } from '../api/notification'
+import { notificationApi, TenantNotification } from '@api/tenant/tenantNotification'
 
 interface NotificationContextType {
-  notifications: Notification[]
+  notifications: TenantNotification[]
   unreadCount: number
   loading: boolean
   loadNotifications: () => Promise<void>
@@ -27,7 +27,7 @@ interface NotificationProviderProps {
 }
 
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
-  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [notifications, setNotifications] = useState<TenantNotification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(false)
 
