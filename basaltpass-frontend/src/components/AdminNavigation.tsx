@@ -33,6 +33,14 @@ const navigation: NavigationItem[] = [
     icon: BuildingOfficeIcon,
   },
   {
+    name: '用户管理',
+    icon: UsersIcon,
+    children: [
+      { name: '用户列表', href: '/admin/users', icon: UsersIcon },
+      { name: '角色管理', href: '/admin/roles', icon: KeyIcon },
+    ]
+  },
+  {
     name: '平台管理',
     icon: Cog6ToothIcon,
     children: [
@@ -71,7 +79,7 @@ const navigation: NavigationItem[] = [
 
 export default function AdminNavigation() {
   const location = useLocation()
-  const [expandedSections, setExpandedSections] = useState<string[]>(['订阅与支付'])
+  const [expandedSections, setExpandedSections] = useState<string[]>(['用户管理', '平台管理', '订阅与支付'])
 
   const toggleSection = (sectionName: string) => {
     setExpandedSections(prev => 

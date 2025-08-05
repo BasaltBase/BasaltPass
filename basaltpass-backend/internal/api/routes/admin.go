@@ -2,6 +2,7 @@ package routes
 
 import (
 	"basaltpass-backend/internal/admin"
+	adminUser "basaltpass-backend/internal/admin/user"
 	appHandler "basaltpass-backend/internal/app"
 	"basaltpass-backend/internal/app_user"
 	"basaltpass-backend/internal/middleware"
@@ -35,11 +36,22 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 	adminGroup.Get("/roles", rbac.ListRolesHandler)                        // /admin/roles
 	adminGroup.Post("/roles", rbac.CreateRoleHandler)                      // /admin/roles
 	adminGroup.Post("/user/:id/role", rbac.AssignRoleHandler)              // /admin/user/:id/role
-	adminGroup.Get("/users", admin.ListUsersHandler)                       // /admin/users
-	adminGroup.Post("/user/:id/ban", admin.BanUserHandler)                 // /admin/user/:id/ban
-	adminGroup.Get("/wallets", admin.ListWalletTxHandler)                  // /admin/wallets
-	adminGroup.Post("/tx/:id/approve", admin.ApproveTxHandler)             // /admin/tx/:id/approve
-	adminGroup.Get("/logs", admin.ListAuditHandler)                        // /admin/logs
+
+	// 新的用户管理路由（替换原有的用户相关路由）
+	adminUserGroup := adminGroup.Group("/users")
+	adminUserGroup.Get("/", adminUser.ListUsersHandler)                             // /admin/users
+	adminUserGroup.Post("/", adminUser.CreateUserHandler)                           // /admin/users
+	adminUserGroup.Get("/stats", adminUser.GetUserStatsHandler)                     // /admin/users/stats
+	adminUserGroup.Get("/:id", adminUser.GetUserHandler)                            // /admin/users/:id
+	adminUserGroup.Put("/:id", adminUser.UpdateUserHandler)                         // /admin/users/:id
+	adminUserGroup.Delete("/:id", adminUser.DeleteUserHandler)                      // /admin/users/:id
+	adminUserGroup.Post("/:id/ban", adminUser.BanUserHandler)                       // /admin/users/:id/ban
+	adminUserGroup.Post("/:id/roles", adminUser.AssignGlobalRoleHandler)            // /admin/users/:id/roles
+	adminUserGroup.Delete("/:id/roles/:role_id", adminUser.RemoveGlobalRoleHandler) // /admin/users/:id/roles/:role_id
+
+	adminGroup.Get("/wallets", admin.ListWalletTxHandler)      // /admin/wallets
+	adminGroup.Post("/tx/:id/approve", admin.ApproveTxHandler) // /admin/tx/:id/approve
+	adminGroup.Get("/logs", admin.ListAuditHandler)            // /admin/logs
 
 	// OAuth2客户端管理路由（高级管理级）
 	oauthClientGroup := adminGroup.Group("/oauth/clients")                                // /admin/oauth/clients

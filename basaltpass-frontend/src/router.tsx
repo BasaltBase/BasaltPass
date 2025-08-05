@@ -7,6 +7,7 @@ import Profile from '@pages/user/profile/Index'
 import OauthSuccess from '@pages/auth/OauthSuccess'
 import Roles from '@pages/admin/user/Roles'
 import Users from '@pages/admin/user/Users'
+import UserDetail from '@pages/admin/user/UserDetail'
 import WalletIndex from '@pages/user/wallet/Index'
 import Recharge from '@pages/user/wallet/Recharge'
 import Withdraw from '@pages/user/wallet/Withdraw'
@@ -258,6 +259,11 @@ export default function AppRouter() {
       <Route path="/admin/users" element={
         <ProtectedRoute>
           <Users />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/users/:id" element={
+        <ProtectedRoute>
+          <UserDetail />
         </ProtectedRoute>
       } />
       <Route path="/admin/roles" element={

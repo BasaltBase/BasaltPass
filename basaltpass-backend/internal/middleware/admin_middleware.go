@@ -17,7 +17,7 @@ func AdminMiddleware() fiber.Handler {
 		uid := uidVal.(uint)
 		var count int64
 		common.DB().Model(&model.UserRole{}).
-			Joins("JOIN roles ON roles.id = user_roles.role_id AND roles.name = ?", "admin").
+			Joins("JOIN roles ON roles.id = user_roles.role_id AND roles.code = ?", "admin").
 			Where("user_roles.user_id = ?", uid).
 			Count(&count)
 		if count == 0 {
