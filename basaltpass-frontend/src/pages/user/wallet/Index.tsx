@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { getBalance } from '@api/user/wallet'
+import { getCurrencies, Currency } from '@api/user/currency'
 import { Link } from 'react-router-dom'
 import Layout from '../../../components/Layout'
+import CurrencySelector from '../../../components/CurrencySelector'
 import { 
   WalletIcon, 
   ArrowUpIcon, 
@@ -13,21 +15,61 @@ import {
 
 export default function WalletIndex() {
   const [balance, setBalance] = useState<number | null>(null)
+  const [selectedCurrency, setSelectedCurrency] = useState<Currency | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    getBalance('USD').then((res) => {
-      setBalance(res.data.balance)
-      setIsLoading(false)
-    }).catch(() => {
-      setIsLoading(false)
-    })
+    // 初始化时加载货币列表并设置默认货币
+    loadDefaultCurrency()
   }, [])
+
+  useEffect(() => {
+    if (selectedCurrency) {
+      loadBalance()
+    }
+  }, [selectedCurrency])
+
+  const loadDefaultCurrency = async () => {
+    try {
+      const response = await getCurrencies()
+      if (response.data.length > 0) {
+        // 优先选择USD，如果没有则选择第一个
+        const defaultCurrency = response.data.find(c => c.code === 'USD') || response.data[0]
+        setSelectedCurrency(defaultCurrency)
+      } else {
+        setIsLoading(false)
+      }
+    } catch (error) {
+      console.error('Failed to load currencies:', error)
+      setIsLoading(false)
+    }
+  }
+
+  const loadBalance = async () => {
+    if (!selectedCurrency) return
+    
+    try {
+      const res = await getBalance(selectedCurrency.code)
+      setBalance(res.data.balance)
+    } catch (error) {
+      console.error('Failed to load balance:', error)
+      setBalance(null)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const formatBalance = (balance: number, currency: Currency) => {
+    const amount = balance / Math.pow(10, currency.decimal_places)
+    return `${currency.symbol}${amount.toFixed(Math.min(currency.decimal_places, 8))}`
+  }
 
   const walletStats = [
     {
-      name: '总资产',
-      value: balance !== null ? `$${(balance / 100).toFixed(2)}` : '--',
+      name: '当前余额',
+      value: selectedCurrency && balance !== null 
+        ? formatBalance(balance, selectedCurrency)
+        : '--',
       icon: WalletIcon,
       color: 'text-blue-600',
       bgColor: 'bg-blue-100'
@@ -61,12 +103,25 @@ export default function WalletIndex() {
   return (
     <Layout>
       <div className="space-y-6">
-        {/* 页面标题 */}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">我的钱包</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            管理您的资金和交易
-          </p>
+        {/* 页面标题和货币选择 */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">我的钱包</h1>
+            <p className="mt-1 text-sm text-gray-500">
+              管理您的资金和交易
+            </p>
+          </div>
+          {!isLoading && (
+            <div className="w-64">
+              <CurrencySelector
+                value={selectedCurrency?.code || ''}
+                onChange={(currency) => {
+                  setSelectedCurrency(currency)
+                  setIsLoading(true)
+                }}
+              />
+            </div>
+          )}
         </div>
 
         {/* 钱包概览 */}
@@ -74,9 +129,14 @@ export default function WalletIndex() {
           <div className="px-6 py-8">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-blue-100 text-sm font-medium">当前余额</p>
+                <p className="text-blue-100 text-sm font-medium">
+                  当前余额 {selectedCurrency && `(${selectedCurrency.code})`}
+                </p>
                 <p className="text-white text-3xl font-bold">
-                  {balance !== null ? `$${(balance / 100).toFixed(2)}` : '--'}
+                  {selectedCurrency && balance !== null 
+                    ? formatBalance(balance, selectedCurrency)
+                    : '--'
+                  }
                 </p>
                 <p className="text-blue-100 text-sm mt-1">
                   最后更新: {new Date().toLocaleString('zh-CN')}

@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { withdraw } from '@api/user/wallet'
+import { Currency } from '@api/user/currency'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../../../components/Layout'
+import CurrencySelector from '../../../components/CurrencySelector'
 import { 
   ArrowDownIcon,
   CreditCardIcon,
@@ -45,6 +47,7 @@ const quickAmounts = [50, 100, 200, 500, 1000, 2000]
 export default function Withdraw() {
   const navigate = useNavigate()
   const [amount, setAmount] = useState('')
+  const [selectedCurrency, setSelectedCurrency] = useState<Currency | null>(null)
   const [selectedMethod, setSelectedMethod] = useState('alipay')
   const [accountInfo, setAccountInfo] = useState('')
   const [error, setError] = useState('')
@@ -59,6 +62,11 @@ export default function Withdraw() {
       return
     }
 
+    if (!selectedCurrency) {
+      setError('请选择提现货币')
+      return
+    }
+
     if (!accountInfo.trim()) {
       setError('请输入收款账户信息')
       return
@@ -68,7 +76,11 @@ export default function Withdraw() {
     setError('')
     
     try {
-      await withdraw('USD', Number(amount) * 100)
+      // 根据货币的小数位数计算最小单位金额
+      const decimals = selectedCurrency.decimal_places
+      const amountInSmallestUnit = Math.round(Number(amount) * Math.pow(10, decimals))
+      
+      await withdraw(selectedCurrency.code, amountInSmallestUnit)
       setSuccess(true)
       setTimeout(() => {
         navigate('/wallet')

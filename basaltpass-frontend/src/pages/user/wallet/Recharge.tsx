@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { recharge } from '@api/user/wallet'
+import { Currency } from '@api/user/currency'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../../../components/Layout'
+import CurrencySelector from '../../../components/CurrencySelector'
 import { 
   ArrowUpIcon,
   CreditCardIcon,
@@ -41,9 +43,32 @@ const paymentMethods = [
 
 const quickAmounts = [50, 100, 200, 500, 1000, 2000]
 
+// 根据货币类型获取合适的快速金额
+const getQuickAmounts = (currency: Currency): number[] => {
+  switch (currency.type) {
+    case 'crypto':
+      if (currency.code === 'BTC') {
+        return [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
+      } else if (currency.code === 'ETH') {
+        return [0.01, 0.05, 0.1, 0.5, 1, 5]
+      }
+      return [1, 10, 50, 100, 500, 1000]
+    case 'points':
+      return [100, 500, 1000, 5000, 10000, 50000]
+    default: // fiat
+      return quickAmounts
+  }
+}
+
+// 格式化金额显示
+const formatAmount = (amount: number, currency: Currency): string => {
+  return amount.toFixed(Math.min(currency.decimal_places, 8))
+}
+
 export default function Recharge() {
   const navigate = useNavigate()
   const [amount, setAmount] = useState('')
+  const [selectedCurrency, setSelectedCurrency] = useState<Currency | null>(null)
   const [selectedMethod, setSelectedMethod] = useState('alipay')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -57,11 +82,20 @@ export default function Recharge() {
       return
     }
 
+    if (!selectedCurrency) {
+      setError('请选择充值货币')
+      return
+    }
+
     setIsLoading(true)
     setError('')
     
     try {
-      await recharge('USD', Number(amount) * 100)
+      // 根据货币的小数位数计算最小单位金额
+      const decimals = selectedCurrency.decimal_places
+      const amountInSmallestUnit = Math.round(Number(amount) * Math.pow(10, decimals))
+      
+      await recharge(selectedCurrency.code, amountInSmallestUnit)
       setSuccess(true)
       setTimeout(() => {
         navigate('/wallet')
@@ -141,14 +175,28 @@ export default function Recharge() {
               </div>
               
               <form onSubmit={submit} className="space-y-6">
+                {/* 货币选择 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    选择货币
+                  </label>
+                  <CurrencySelector
+                    value={selectedCurrency?.code || ''}
+                    onChange={setSelectedCurrency}
+                    className="w-full"
+                  />
+                </div>
+
                 {/* 金额输入 */}
                 <div>
                   <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-2">
-                    充值金额 (CNY)
+                    充值金额 {selectedCurrency && `(${selectedCurrency.code})`}
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <span className="text-gray-500 sm:text-sm">¥</span>
+                      <span className="text-gray-500 sm:text-sm">
+                        {selectedCurrency?.symbol || '$'}
+                      </span>
                     </div>
                     <input
                       id="amount"
@@ -157,37 +205,41 @@ export default function Recharge() {
                       onChange={(e) => handleAmountChange(e.target.value)}
                       placeholder="0.00"
                       min="0.01"
-                      step="0.01"
-                      className="block w-full pl-7 pr-12 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      step={selectedCurrency ? `0.${'0'.repeat(Math.max(0, selectedCurrency.decimal_places - 1))}1` : "0.01"}
+                      className="block w-full pl-7 pr-16 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     />
                     <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                      <span className="text-gray-500 sm:text-sm">CNY</span>
+                      <span className="text-gray-500 sm:text-sm">
+                        {selectedCurrency?.code || 'USD'}
+                      </span>
                     </div>
                   </div>
                 </div>
 
                 {/* 快速金额选择 */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    快速选择金额
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {quickAmounts.map((value) => (
-                      <button
-                        key={value}
-                        type="button"
-                        onClick={() => handleQuickAmount(value)}
-                        className={`px-3 py-2 text-sm font-medium rounded-md border transition-colors ${
-                          amount === value.toString()
-                            ? 'border-blue-500 bg-blue-50 text-blue-700'
-                            : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                        }`}
-                      >
-                        ¥{value}
-                      </button>
-                    ))}
+                {selectedCurrency && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      快速选择金额
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {getQuickAmounts(selectedCurrency).map((value) => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => handleQuickAmount(value)}
+                          className={`px-3 py-2 text-sm font-medium rounded-md border transition-colors ${
+                            amount === value.toString()
+                              ? 'border-blue-500 bg-blue-50 text-blue-700'
+                              : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          {selectedCurrency.symbol}{formatAmount(value, selectedCurrency)}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* 支付方式选择 */}
                 <div>
@@ -227,7 +279,7 @@ export default function Recharge() {
                 {/* 提交按钮 */}
                 <button
                   type="submit"
-                  disabled={isLoading || !amount || parseFloat(amount) <= 0}
+                  disabled={isLoading || !amount || parseFloat(amount) <= 0 || !selectedCurrency}
                   className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? (
@@ -239,7 +291,7 @@ export default function Recharge() {
                       处理中...
                     </>
                   ) : (
-                    `充值 ¥${amount || '0.00'}`
+                    `充值 ${selectedCurrency?.symbol || ''}${amount || '0.00'} ${selectedCurrency?.code || ''}`
                   )}
                 </button>
               </form>

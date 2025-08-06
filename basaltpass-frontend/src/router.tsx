@@ -13,6 +13,7 @@ import Recharge from '@pages/user/wallet/Recharge'
 import Withdraw from '@pages/user/wallet/Withdraw'
 import History from '@pages/user/wallet/History'
 import WalletsAdmin from '@pages/admin/user/Wallets'
+import WalletManagement from '@pages/admin/wallet/WalletManagement'
 import Logs from '@pages/admin/Logs'
 import SecuritySettings from '@pages/user/security/SecuritySettings'
 import TwoFA from '@pages/user/security/TwoFA'
@@ -275,6 +276,11 @@ export default function AppRouter() {
         </ProtectedRoute>
       } />
       <Route path="/admin/wallets" element={
+        <ProtectedRoute>
+          <WalletManagement />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/wallets/legacy" element={
         <ProtectedRoute>
           <WalletsAdmin />
         </ProtectedRoute>

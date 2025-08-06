@@ -3,6 +3,7 @@ package routes
 import (
 	"basaltpass-backend/internal/app_user"
 	"basaltpass-backend/internal/auth"
+	"basaltpass-backend/internal/currency"
 	"basaltpass-backend/internal/debug"
 	"basaltpass-backend/internal/invitation"
 	"basaltpass-backend/internal/middleware"
@@ -93,6 +94,11 @@ func RegisterUserRoutes(v1 fiber.Router) {
 	walletGroup.Post("/recharge", wallet.RechargeHandler)
 	walletGroup.Post("/withdraw", wallet.WithdrawHandler)
 	walletGroup.Get("/history", wallet.HistoryHandler)
+
+	// 货币系统路由（公开API，不需要认证）
+	currencyGroup := v1.Group("/currencies")
+	currencyGroup.Get("/", currency.GetCurrenciesHandler)
+	currencyGroup.Get("/:code", currency.GetCurrencyHandler)
 
 	// 支付系统路由（需要认证）
 	paymentGroup := v1.Group("/payment", middleware.JWTMiddleware())

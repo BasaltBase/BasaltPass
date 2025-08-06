@@ -2,6 +2,7 @@ package migration
 
 import (
 	"basaltpass-backend/internal/common"
+	"basaltpass-backend/internal/currency"
 	"basaltpass-backend/internal/model"
 	"log"
 )
@@ -9,7 +10,24 @@ import (
 // 迁移数据库，自动迁移数据库表结构
 // RunMigrations performs GORM auto migration for all models.
 func RunMigrations() {
-	err := common.DB().AutoMigrate(
+	// 首先创建 currencies 表
+	db := common.DB()
+	if err := db.AutoMigrate(&model.Currency{}); err != nil {
+		log.Fatalf("[Error] Failed to create currencies table: %v", err)
+	}
+
+	// 然后初始化默认货币
+	if err := currency.InitDefaultCurrencies(); err != nil {
+		log.Printf("[Migration] Failed to initialize default currencies: %v", err)
+	} else {
+		log.Println("[Migration] Successfully initialized default currencies")
+	}
+
+	// 迁移钱包货币字段（在完整AutoMigrate之前处理）
+	MigrateWalletCurrencyField()
+
+	// 执行完整的自动迁移
+	err := db.AutoMigrate(
 		&model.User{},
 		&model.Role{},
 		&model.UserRole{},
@@ -19,7 +37,7 @@ func RunMigrations() {
 		&model.Team{},
 		&model.TeamMember{},
 
-		// 钱包
+		// 钱包（货币表已经在前面创建了）
 		&model.Wallet{},
 		&model.WalletTx{},
 		&model.AuditLog{},
@@ -82,9 +100,7 @@ func RunMigrations() {
 	createDefaultRoles()
 	seedSystemApps()
 	createSubscriptionIndexes()
-}
-
-// handleSpecialMigrations 处理特殊的迁移情况
+} // handleSpecialMigrations 处理特殊的迁移情况
 func handleSpecialMigrations() {
 	db := common.DB()
 

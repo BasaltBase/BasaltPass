@@ -4,6 +4,7 @@ import (
 	"basaltpass-backend/internal/admin"
 	adminTenant "basaltpass-backend/internal/admin/tenant"
 	adminUser "basaltpass-backend/internal/admin/user"
+	adminWallet "basaltpass-backend/internal/admin/wallet"
 	appHandler "basaltpass-backend/internal/app"
 	"basaltpass-backend/internal/app_user"
 	"basaltpass-backend/internal/middleware"
@@ -63,7 +64,29 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 	adminTenantGroup.Get("/:id/users", adminTenant.GetTenantUsersHandler)              // /admin/tenants/:id/users
 	adminTenantGroup.Delete("/:id/users/:userId", adminTenant.RemoveTenantUserHandler) // /admin/tenants/:id/users/:userId
 
-	adminGroup.Get("/wallets", admin.ListWalletTxHandler)      // /admin/wallets
+	// 钱包管理路由
+	walletHandler := adminWallet.NewAdminWalletHandler()
+	adminWalletGroup := adminGroup.Group("/wallets")
+	adminWalletGroup.Get("/", walletHandler.ListWallets)                           // /admin/wallets
+	adminWalletGroup.Post("/", walletHandler.CreateWallet)                         // /admin/wallets
+	adminWalletGroup.Get("/stats", walletHandler.GetWalletStats)                   // /admin/wallets/stats
+	adminWalletGroup.Get("/:id/transactions", walletHandler.GetWalletTransactions) // /admin/wallets/:id/transactions
+	adminWalletGroup.Post("/:id/adjust", walletHandler.AdjustBalance)              // /admin/wallets/:id/adjust
+	adminWalletGroup.Post("/:id/freeze", walletHandler.FreezeWallet)               // /admin/wallets/:id/freeze
+	adminWalletGroup.Post("/:id/unfreeze", walletHandler.UnfreezeWallet)           // /admin/wallets/:id/unfreeze
+	adminWalletGroup.Delete("/:id", walletHandler.DeleteWallet)                    // /admin/wallets/:id
+
+	// 用户钱包管理
+	adminGroup.Get("/users/:id/wallets", walletHandler.GetUserWallets) // /admin/users/:id/wallets
+
+	// 团队钱包管理
+	adminGroup.Get("/teams/:id/wallets", walletHandler.GetTeamWallets) // /admin/teams/:id/wallets
+
+	// 货币管理
+	adminGroup.Get("/currencies", walletHandler.GetCurrencies) // /admin/currencies
+
+	// 保留原有的钱包交易审批路由（向后兼容）
+	adminGroup.Get("/wallet-tx", admin.ListWalletTxHandler)    // /admin/wallet-tx (deprecated, use /admin/wallets instead)
 	adminGroup.Post("/tx/:id/approve", admin.ApproveTxHandler) // /admin/tx/:id/approve
 	adminGroup.Get("/logs", admin.ListAuditHandler)            // /admin/logs
 

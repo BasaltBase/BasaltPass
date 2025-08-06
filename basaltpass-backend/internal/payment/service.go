@@ -244,7 +244,7 @@ func SimulatePayment(sessionID string, success bool) (*MockStripeResponse, error
 
 	// 如果支付成功，更新用户钱包
 	if success {
-		if err := wallet.Recharge(session.UserID, session.Currency, session.Amount); err != nil {
+		if err := wallet.RechargeByCode(session.UserID, session.Currency, session.Amount); err != nil {
 			return nil, fmt.Errorf("failed to update wallet: %w", err)
 		}
 	}
