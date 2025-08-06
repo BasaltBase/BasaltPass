@@ -2,28 +2,36 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { 
   BuildingOfficeIcon, 
-  GlobeAltIcon, 
   CreditCardIcon,
   DocumentTextIcon,
   CogIcon,
   ExclamationTriangleIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  UserIcon
 } from '@heroicons/react/24/outline'
 import AdminLayout from '@components/AdminLayout'
-import { CreateTenantRequest } from '@api/tenant/tenant'
-import {tenant} from "@api/admin/tenant";
+import { adminTenantApi, AdminCreateTenantRequest, TenantSettings } from '@api/admin/tenant'
 
 const CreateTenant: React.FC = () => {
   const navigate = useNavigate()
-  const [formData, setFormData] = useState<CreateTenantRequest>({
+  const [formData, setFormData] = useState<AdminCreateTenantRequest>({
     name: '',
-    domain: '',
+    code: '',
+    description: '',
     plan: 'free',
-    settings: {}
+    owner_email: '',
+    settings: {
+      max_users: 100,
+      max_apps: 10,
+      max_storage: 1024,
+      enable_api: true,
+      enable_sso: false,
+      enable_audit: false,
+    }
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [domainError, setDomainError] = useState<string | null>(null)
+  const [codeError, setCodeError] = useState<string | null>(null)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -32,24 +40,34 @@ const CreateTenant: React.FC = () => {
       [name]: value
     }))
 
-    // 实时验证域名格式
-    if (name === 'domain') {
-      validateDomain(value)
+    // 实时验证代码格式
+    if (name === 'code') {
+      validateCode(value)
     }
   }
 
-  const validateDomain = (domain: string) => {
-    if (!domain) {
-      setDomainError(null)
+  const handleSettingChange = (key: keyof TenantSettings, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      settings: {
+        ...prev.settings!,
+        [key]: value
+      }
+    }))
+  }
+
+  const validateCode = (code: string) => {
+    if (!code) {
+      setCodeError(null)
       return
     }
 
-    // 简单的域名格式验证
-    const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]*\.[a-zA-Z]{2,}$/
-    if (!domainRegex.test(domain)) {
-      setDomainError('请输入有效的域名格式 (例如: example.com)')
+    // 验证代码格式：只允许字母和数字
+    const codeRegex = /^[a-zA-Z0-9]+$/
+    if (!codeRegex.test(code)) {
+      setCodeError('代码只能包含字母和数字')
     } else {
-      setDomainError(null)
+      setCodeError(null)
     }
   }
 
@@ -61,13 +79,18 @@ const CreateTenant: React.FC = () => {
       return
     }
 
-    if (!formData.domain.trim()) {
-      setError('域名不能为空')
+    if (!formData.code.trim()) {
+      setError('租户代码不能为空')
       return
     }
 
-    if (domainError) {
-      setError('请修正域名格式错误')
+    if (!formData.owner_email.trim()) {
+      setError('所有者邮箱不能为空')
+      return
+    }
+
+    if (codeError) {
+      setError('请修正代码格式错误')
       return
     }
 
@@ -75,7 +98,7 @@ const CreateTenant: React.FC = () => {
       setLoading(true)
       setError(null)
       
-      await tenant.createTenant(formData)
+      await adminTenantApi.createTenant(formData)
       
       // 创建成功后跳转到租户列表
       navigate('/admin/tenants', { 
@@ -177,36 +200,73 @@ const CreateTenant: React.FC = () => {
                 <p className="text-xs text-gray-500">租户的显示名称，用于在平台中标识该组织</p>
               </div>
 
-              {/* 域名 */}
+              {/* 租户代码 */}
               <div className="space-y-2">
-                <label htmlFor="domain" className="flex items-center text-sm font-semibold text-gray-700">
-                  <GlobeAltIcon className="h-5 w-5 mr-2 text-indigo-500" />
-                  域名 <span className="text-red-500 ml-1">*</span>
+                <label htmlFor="code" className="flex items-center text-sm font-semibold text-gray-700">
+                  <DocumentTextIcon className="h-5 w-5 mr-2 text-indigo-500" />
+                  租户代码 <span className="text-red-500 ml-1">*</span>
                 </label>
                 <div className="relative">
                   <input
                     type="text"
-                    id="domain"
-                    name="domain"
-                    value={formData.domain}
+                    id="code"
+                    name="code"
+                    value={formData.code}
                     onChange={handleInputChange}
                     className={`block w-full px-4 py-3 border rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300 ${
-                      domainError ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500'
+                      codeError ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500'
                     }`}
-                    placeholder="example.com"
+                    placeholder="tenant-code"
                     required
                   />
-                  {domainError && (
+                  {codeError && (
                     <div className="absolute inset-y-0 right-0 flex items-center pr-3">
                       <ExclamationTriangleIcon className="h-5 w-5 text-red-400" />
                     </div>
                   )}
                 </div>
-                {domainError ? (
-                  <p className="text-xs text-red-500">{domainError}</p>
+                {codeError ? (
+                  <p className="text-xs text-red-500">{codeError}</p>
                 ) : (
-                  <p className="text-xs text-gray-500">租户的专属域名，用于访问该租户的服务</p>
+                  <p className="text-xs text-gray-500">租户的唯一标识符，只能包含字母和数字</p>
                 )}
+              </div>
+
+              {/* 所有者邮箱 */}
+              <div className="space-y-2">
+                <label htmlFor="owner_email" className="flex items-center text-sm font-semibold text-gray-700">
+                  <UserIcon className="h-5 w-5 mr-2 text-indigo-500" />
+                  所有者邮箱 <span className="text-red-500 ml-1">*</span>
+                </label>
+                <input
+                  type="email"
+                  id="owner_email"
+                  name="owner_email"
+                  value={formData.owner_email}
+                  onChange={handleInputChange}
+                  className="block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300"
+                  placeholder="admin@example.com"
+                  required
+                />
+                <p className="text-xs text-gray-500">该用户将成为租户的所有者，必须是已存在的用户</p>
+              </div>
+
+              {/* 描述 */}
+              <div className="space-y-2">
+                <label htmlFor="description" className="flex items-center text-sm font-semibold text-gray-700">
+                  <DocumentTextIcon className="h-5 w-5 mr-2 text-indigo-500" />
+                  描述 (可选)
+                </label>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  rows={3}
+                  className="block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300"
+                  placeholder="描述该租户的用途或特点..."
+                />
+                <p className="text-xs text-gray-500">租户的详细描述信息</p>
               </div>
             </div>
 
@@ -281,7 +341,7 @@ const CreateTenant: React.FC = () => {
               </button>
               <button
                 type="submit"
-                disabled={loading || !!domainError}
+                disabled={loading || !!codeError}
                 className="px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center"
               >
                 {loading ? (

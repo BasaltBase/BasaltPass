@@ -7,31 +7,39 @@ import {
   TrashIcon,
   BuildingOfficeIcon,
   UsersIcon,
-  CogIcon
+  CogIcon,
+  MagnifyingGlassIcon
 } from '@heroicons/react/24/outline'
 import AdminLayout from '@components/AdminLayout'
-import { Tenant } from '@api/tenant/tenant'
-import {tenant} from "@api/admin/tenant";
+import { adminTenantApi, AdminTenantResponse, AdminTenantListRequest } from '@api/admin/tenant'
 
 export default function TenantList() {
-  const [tenants, setTenants] = useState<Tenant[]>([])
+  const [tenants, setTenants] = useState<AdminTenantResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState('')
+  const [plan, setPlan] = useState('')
 
   useEffect(() => {
     loadTenants()
-  }, [page])
+  }, [page, search, status, plan])
 
   const loadTenants = async () => {
     try {
       setLoading(true)
-      const response = await tenant.listTenants(page, 20)
-      setTenants(response.tenants || [])
-      // 计算总页数，如果API返回total而不是total_pages
-      const totalPages = response.total_pages || Math.ceil((response.total || 0) / 20)
-      setTotalPages(totalPages)
+      const params: AdminTenantListRequest = {
+        page,
+        limit: 20,
+        search: search || undefined,
+        status: status || undefined,
+        plan: plan || undefined,
+      }
+      const response = await adminTenantApi.getTenantList(params)
+      setTenants(response.tenants)
+      setTotalPages(response.pagination.total_pages)
     } catch (error) {
       console.error('Failed to load tenants:', error)
       setError('加载租户列表失败')
@@ -40,13 +48,13 @@ export default function TenantList() {
     }
   }
 
-  const handleDeleteTenant = async (id: string | number) => {
+  const handleDeleteTenant = async (id: number) => {
     if (!confirm('确定要删除这个租户吗？此操作不可撤销。')) {
       return
     }
 
     try {
-      await tenant.deleteTenant(String(id))
+      await adminTenantApi.deleteTenant(id)
       await loadTenants()
     } catch (error) {
       console.error('Failed to delete tenant:', error)
@@ -58,12 +66,10 @@ export default function TenantList() {
     switch (plan) {
       case 'free':
         return 'bg-gray-100 text-gray-800'
-      case 'basic':
+      case 'pro':
         return 'bg-blue-100 text-blue-800'
-      case 'premium':
-        return 'bg-purple-100 text-purple-800'
       case 'enterprise':
-        return 'bg-yellow-100 text-yellow-800'
+        return 'bg-purple-100 text-purple-800'
       default:
         return 'bg-gray-100 text-gray-800'
     }
@@ -79,6 +85,32 @@ export default function TenantList() {
         return 'bg-gray-100 text-gray-800'
       default:
         return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  const getPlanDisplayName = (plan: string) => {
+    switch (plan) {
+      case 'free':
+        return '免费版'
+      case 'pro':
+        return '专业版'
+      case 'enterprise':
+        return '企业版'
+      default:
+        return plan
+    }
+  }
+
+  const getStatusDisplayName = (status: string) => {
+    switch (status) {
+      case 'active':
+        return '活跃'
+      case 'suspended':
+        return '暂停'
+      case 'deleted':
+        return '已删除'
+      default:
+        return status
     }
   }
 
@@ -106,6 +138,7 @@ export default function TenantList() {
   )
 
   return (
+    <AdminLayout title="租户管理" actions={actions}>
       <div className="space-y-6">
         {/* 页面头部 */}
         <div>
@@ -116,6 +149,50 @@ export default function TenantList() {
           <p className="mt-1 text-sm text-gray-500">
             管理平台上的所有租户
           </p>
+        </div>
+
+        {/* 搜索和过滤 */}
+        <div className="bg-white p-4 rounded-lg shadow">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="搜索租户名称、代码或描述..."
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="sm:w-32">
+              <select
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+              >
+                <option value="">所有状态</option>
+                <option value="active">活跃</option>
+                <option value="suspended">暂停</option>
+                <option value="deleted">已删除</option>
+              </select>
+            </div>
+            <div className="sm:w-32">
+              <select
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                value={plan}
+                onChange={(e) => setPlan(e.target.value)}
+              >
+                <option value="">所有套餐</option>
+                <option value="free">免费版</option>
+                <option value="pro">专业版</option>
+                <option value="enterprise">企业版</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         {/* 错误提示 */}
@@ -144,14 +221,20 @@ export default function TenantList() {
                             {tenant.name}
                           </h3>
                           <span className={`ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPlanBadgeColor(tenant.plan)}`}>
-                            {tenant.plan.toUpperCase()}
+                            {getPlanDisplayName(tenant.plan)}
                           </span>
-                          <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeColor(tenant.status || 'active')}`}>
-                            {tenant.status === 'active' ? '正常' : tenant.status === 'suspended' ? '暂停' : tenant.status === 'deleted' ? '已删除' : '正常'}
+                          <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeColor(tenant.status)}`}>
+                            {getStatusDisplayName(tenant.status)}
                           </span>
                         </div>
                         <div className="mt-1 flex items-center text-sm text-gray-500">
-                          <span>{tenant.domain || '未设置域名'}</span>
+                          <span>代码: {tenant.code}</span>
+                          <span className="mx-2">•</span>
+                          <span>所有者: {tenant.owner_name || tenant.owner_email}</span>
+                          <span className="mx-2">•</span>
+                          <span>用户: {tenant.user_count}</span>
+                          <span className="mx-2">•</span>
+                          <span>应用: {tenant.app_count}</span>
                           <span className="mx-2">•</span>
                           <span>创建于 {new Date(tenant.created_at).toLocaleDateString()}</span>
                         </div>
@@ -160,21 +243,21 @@ export default function TenantList() {
                   </div>
                   <div className="flex items-center space-x-2">
                     <Link
-                      to={`/platform/tenants/${tenant.id}`}
+                      to={`/admin/tenants/${tenant.id}`}
                       className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                       title="查看详情"
                     >
                       <EyeIcon className="h-4 w-4" />
                     </Link>
                     <Link
-                      to={`/platform/tenants/${tenant.id}/edit`}
+                      to={`/admin/tenants/${tenant.id}/edit`}
                       className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                       title="编辑"
                     >
                       <PencilIcon className="h-4 w-4" />
                     </Link>
                     <Link
-                      to={`/platform/tenants/${tenant.id}/users`}
+                      to={`/admin/tenants/${tenant.id}/users`}
                       className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                       title="用户管理"
                     >
@@ -244,5 +327,6 @@ export default function TenantList() {
           </div>
         )}
       </div>
+    </AdminLayout>
   )
 }

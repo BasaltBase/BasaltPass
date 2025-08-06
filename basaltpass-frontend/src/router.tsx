@@ -48,6 +48,9 @@ import OrderSuccess from '@pages/user/order/OrderSuccess'
 import About from '@pages/user/About'
 import TenantList from '@pages/admin/tenant/TenantList'
 import CreateTenant from '@pages/admin/tenant/CreateTenant'
+import TenantDetail from '@pages/admin/tenant/TenantDetail'
+import EditTenant from '@pages/admin/tenant/EditTenant'
+import TenantUsers from '@pages/admin/tenant/TenantUsers'
 import AppList from '@pages/admin/app/AppList'
 import CreateApp from '@pages/admin/app/CreateApp'
 import AdminDashboard from '@pages/admin/Dashboard'
@@ -329,6 +332,21 @@ export default function AppRouter() {
       <Route path="/admin/tenants/new" element={
         <ProtectedRoute>
           <CreateTenant />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/tenants/:id" element={
+        <ProtectedRoute>
+          <TenantDetail />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/tenants/:id/edit" element={
+        <ProtectedRoute>
+          <EditTenant />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/tenants/:id/users" element={
+        <ProtectedRoute>
+          <TenantUsers />
         </ProtectedRoute>
       } />
       <Route path="/admin/settings" element={

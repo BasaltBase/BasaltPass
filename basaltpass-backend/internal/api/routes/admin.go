@@ -2,6 +2,7 @@ package routes
 
 import (
 	"basaltpass-backend/internal/admin"
+	adminTenant "basaltpass-backend/internal/admin/tenant"
 	adminUser "basaltpass-backend/internal/admin/user"
 	appHandler "basaltpass-backend/internal/app"
 	"basaltpass-backend/internal/app_user"
@@ -48,6 +49,19 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 	adminUserGroup.Post("/:id/ban", adminUser.BanUserHandler)                       // /admin/users/:id/ban
 	adminUserGroup.Post("/:id/roles", adminUser.AssignGlobalRoleHandler)            // /admin/users/:id/roles
 	adminUserGroup.Delete("/:id/roles/:role_id", adminUser.RemoveGlobalRoleHandler) // /admin/users/:id/roles/:role_id
+
+	// 新的租户管理路由
+	adminTenantGroup := adminGroup.Group("/tenants")
+	adminTenantGroup.Get("/", adminTenant.GetTenantListHandler)       // /admin/tenants
+	adminTenantGroup.Post("/", adminTenant.CreateTenantHandler)       // /admin/tenants
+	adminTenantGroup.Get("/stats", adminTenant.GetTenantStatsHandler) // /admin/tenants/stats
+	adminTenantGroup.Get("/:id", adminTenant.GetTenantDetailHandler)  // /admin/tenants/:id
+	adminTenantGroup.Put("/:id", adminTenant.UpdateTenantHandler)     // /admin/tenants/:id
+	adminTenantGroup.Delete("/:id", adminTenant.DeleteTenantHandler)  // /admin/tenants/:id
+
+	// 租户用户管理
+	adminTenantGroup.Get("/:id/users", adminTenant.GetTenantUsersHandler)              // /admin/tenants/:id/users
+	adminTenantGroup.Delete("/:id/users/:userId", adminTenant.RemoveTenantUserHandler) // /admin/tenants/:id/users/:userId
 
 	adminGroup.Get("/wallets", admin.ListWalletTxHandler)      // /admin/wallets
 	adminGroup.Post("/tx/:id/approve", admin.ApproveTxHandler) // /admin/tx/:id/approve

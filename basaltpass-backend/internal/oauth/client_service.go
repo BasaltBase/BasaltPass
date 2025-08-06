@@ -59,6 +59,7 @@ type ClientResponse struct {
 	CreatedAt      string    `json:"created_at"`
 	UpdatedAt      string    `json:"updated_at"`
 	Creator        *UserInfo `json:"creator,omitempty"`
+	App            *AppInfo  `json:"app,omitempty"`
 }
 
 // UserInfo 用户信息
@@ -66,6 +67,12 @@ type UserInfo struct {
 	ID       uint   `json:"id"`
 	Email    string `json:"email"`
 	Nickname string `json:"nickname"`
+}
+
+type AppInfo struct {
+	ID          uint   `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }
 
 // CreateClient 创建OAuth2客户端
@@ -187,7 +194,7 @@ func (s *ClientService) GetClient(clientID string) (*ClientResponse, error) {
 
 // ListClients 获取客户端列表
 func (s *ClientService) ListClients(page, pageSize int, search string) ([]*ClientResponse, int64, error) {
-	query := s.db.Model(&model.OAuthClient{}).Preload("Creator")
+	query := s.db.Model(&model.OAuthClient{}).Preload("App").Preload("Creator")
 
 	// 搜索
 	if search != "" {
@@ -425,8 +432,8 @@ func isValidURL(urlStr string) bool {
 func (s *ClientService) clientToResponse(client *model.OAuthClient, plainSecret string) *ClientResponse {
 	resp := &ClientResponse{
 		ID:             client.ID,
-		Name:           "", // TODO: 从关联的App获取
-		Description:    "", // TODO: 从关联的App获取
+		Name:           client.App.Name,
+		Description:    client.App.Description,
 		ClientID:       client.ClientID,
 		RedirectURIs:   client.GetRedirectURIList(),
 		Scopes:         client.GetScopeList(),
