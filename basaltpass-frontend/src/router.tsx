@@ -42,6 +42,7 @@ import AdminProducts from '@pages/admin/subscription/Products'
 import AdminPlans from '@pages/admin/subscription/Plans'
 import AdminPrices from '@pages/admin/subscription/Prices'
 import AdminCoupons from '@pages/admin/subscription/Coupons'
+import AdminPermissions from '@pages/admin/rbac/Permissions'
 import Payment from '@pages/user/payment/Payment'
 import SubscriptionCheckout from '@pages/user/subscription/Checkout'
 import OrderConfirm from '@pages/user/order/OrderConfirm'
@@ -273,6 +274,11 @@ export default function AppRouter() {
       <Route path="/admin/roles" element={
         <ProtectedRoute>
           <Roles />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/permissions" element={
+        <ProtectedRoute>
+          <AdminPermissions />
         </ProtectedRoute>
       } />
       <Route path="/admin/wallets" element={

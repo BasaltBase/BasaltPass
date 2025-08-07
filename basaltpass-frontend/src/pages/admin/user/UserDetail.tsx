@@ -21,6 +21,7 @@ import {
   KeyIcon
 } from '@heroicons/react/24/outline'
 import AdminLayout from '@components/AdminLayout'
+import { listRoles, type AdminRole } from '@api/admin/roles'
 
 export default function UserDetail() {
   const { id } = useParams<{ id: string }>()
@@ -29,6 +30,9 @@ export default function UserDetail() {
   const [loading, setLoading] = useState(true)
   const [showBanModal, setShowBanModal] = useState(false)
   const [banReason, setBanReason] = useState('')
+  const [showAssignRole, setShowAssignRole] = useState(false)
+  const [roles, setRoles] = useState<AdminRole[]>([])
+  const [selectedRoleId, setSelectedRoleId] = useState<number | null>(null)
 
   useEffect(() => {
     if (id) {
@@ -61,6 +65,33 @@ export default function UserDetail() {
       loadUser(user.id)
     } catch (error) {
       console.error('操作失败:', error)
+    }
+  }
+
+  const openAssignRole = async () => {
+    try {
+      const r = await listRoles()
+  // 兼容“全局角色”识别：is_system 为 true 或 tenant_id 为 0/空
+  const all = r.data || []
+  const globals = all.filter(x => x.is_system || !x.tenant_id || x.tenant_id === 0)
+  const toShow = globals.length > 0 ? globals : all
+  setRoles(toShow)
+  setSelectedRoleId(toShow[0]?.ID ?? null)
+      setShowAssignRole(true)
+    } catch (e) {
+      console.error('加载角色失败', e)
+    }
+  }
+
+  const submitAssignRole = async () => {
+    if (!user || !selectedRoleId) return
+    try {
+      await adminUserApi.assignGlobalRole(user.id, { role_id: selectedRoleId })
+      setShowAssignRole(false)
+      await loadUser(user.id)
+    } catch (e) {
+      console.error('分配角色失败', e)
+      alert('分配角色失败')
     }
   }
 
@@ -202,6 +233,12 @@ export default function UserDetail() {
                 )}
               </button>
               <button
+                onClick={openAssignRole}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+              >
+                <KeyIcon className="h-4 w-4 mr-2" /> 分配全局角色
+              </button>
+              <button
                 onClick={handleDeleteUser}
                 className="inline-flex items-center px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50"
               >
@@ -317,6 +354,31 @@ export default function UserDetail() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 分配全局角色 */}
+        {showAssignRole && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div className="relative top-20 mx-auto p-5 border w-[480px] shadow-lg rounded-md bg-white">
+              <div className="mb-4">
+                <h3 className="text-lg font-medium text-gray-900">分配全局角色</h3>
+                <p className="text-sm text-gray-500 mt-1">仅可分配“全局角色”（tenant_id 为空或 0）。</p>
+              </div>
+              <div className="space-y-3">
+                <label className="text-sm text-gray-700">选择角色</label>
+                <select className="w-full border rounded px-3 py-2" value={selectedRoleId ?? ''} onChange={(e)=>setSelectedRoleId(Number(e.target.value))}>
+                  <option value="" disabled>请选择角色</option>
+                  {roles.map(r => (
+                    <option key={r.ID} value={r.ID}>{r.name} ({r.code})</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button className="px-4 py-2 border rounded" onClick={()=>setShowAssignRole(false)}>取消</button>
+                <button className="px-4 py-2 bg-indigo-600 text-white rounded disabled:opacity-50" disabled={!selectedRoleId} onClick={submitAssignRole}>确认分配</button>
               </div>
             </div>
           </div>

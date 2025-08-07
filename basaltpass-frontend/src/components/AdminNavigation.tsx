@@ -71,6 +71,7 @@ const navigation: NavigationItem[] = [
     name: '系统管理',
     icon: Cog6ToothIcon,
     children: [
+  { name: '权限管理', href: '/admin/permissions', icon: KeyIcon },
       { name: '通知管理', href: '/admin/notifications', icon: BellIcon },
       { name: '审计日志', href: '/admin/logs', icon: DocumentTextIcon },
     ]

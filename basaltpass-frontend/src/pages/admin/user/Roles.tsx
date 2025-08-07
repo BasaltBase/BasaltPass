@@ -1,13 +1,25 @@
 import { useEffect, useState } from 'react'
 import client from '@api/client'
 import { PlusIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
+import { listPermissions, getRolePermissions, setRolePermissions, type Permission } from '@api/admin/permissions'
 import { Link } from 'react-router-dom'
 import AdminLayout from '@components/AdminLayout'
 
+interface RawRole {
+  ID: number
+  Name?: string
+  Description?: string
+  name?: string
+  description?: string
+  code?: string
+  tenant_id?: number
+  is_system?: boolean
+}
+
 interface Role {
   ID: number
-  Name: string
-  Description: string
+  name: string
+  description: string
 }
 
 export default function Roles() {
@@ -17,12 +29,26 @@ export default function Roles() {
   const [error, setError] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [creating, setCreating] = useState(false)
+  const [assigningRole, setAssigningRole] = useState<Role | null>(null)
+  const [allPerms, setAllPerms] = useState<Permission[]>([])
+  const [checked, setChecked] = useState<Record<number, boolean>>({})
+  const [savingPerms, setSavingPerms] = useState(false)
 
   const load = () => {
-    client.get<Role[]>('/api/v1/admin/roles').then((r) => setRoles(r.data))
+    client.get<RawRole[]>('/api/v1/admin/roles').then((r) => {
+      const normalized: Role[] = (r.data || []).map((item) => ({
+        ID: item.ID,
+        name: item.name ?? item.Name ?? '',
+        description: item.description ?? item.Description ?? '',
+      }))
+      setRoles(normalized)
+    })
   }
 
   useEffect(load, [])
+  useEffect(() => {
+    listPermissions().then(r => setAllPerms(r.data)).catch(()=>{})
+  }, [])
 
   const createRole = async () => {
     if (!name.trim()) {
@@ -48,6 +74,32 @@ export default function Roles() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     createRole()
+  }
+
+  const openAssign = async (role: Role) => {
+    setAssigningRole(role)
+    try {
+      const r = await getRolePermissions(role.ID)
+      const preset: Record<number, boolean> = {}
+      r.data.forEach(p => { preset[p.ID] = true })
+      setChecked(preset)
+    } catch {}
+  }
+
+  const togglePerm = (pid: number) => setChecked(prev => ({ ...prev, [pid]: !prev[pid] }))
+
+  const saveAssign = async () => {
+    if (!assigningRole) return
+    setSavingPerms(true)
+    try {
+      const ids = Object.keys(checked).filter(k => checked[Number(k)]).map(Number)
+      await setRolePermissions(assigningRole.ID, ids)
+      setAssigningRole(null)
+    } catch (e:any) {
+      alert(e.response?.data?.error || '保存失败')
+    } finally {
+      setSavingPerms(false)
+    }
   }
 
   return (
@@ -103,8 +155,11 @@ export default function Roles() {
                 {roles.map((r) => (
                   <tr key={r.ID} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{r.ID}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{r.Name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{r.Description}</td>
+          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{r.name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{r.description}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
+                      <button className="px-3 py-1 border rounded" onClick={() => openAssign(r)}>分配权限</button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -181,6 +236,33 @@ export default function Roles() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* 权限分配模态框 */}
+      {assigningRole && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10">
+          <div className="w-3/4 max-w-4xl p-6 border shadow-lg rounded-md bg-white">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold text-gray-900">为角色分配权限 - {assigningRole.name}</h2>
+              <button 
+                onClick={() => setAssigningRole(null)}
+                className="text-gray-400 hover:text-gray-600 text-xl font-bold"
+              >✕</button>
+            </div>
+            <div className="h-[480px] overflow-auto border rounded p-4 grid grid-cols-2 gap-3">
+              {allPerms.map(p => (
+                <label key={p.ID} className="flex items-center gap-3 text-sm">
+                  <input type="checkbox" checked={!!checked[p.ID]} onChange={() => togglePerm(p.ID)} />
+                  <span className="font-mono text-gray-800">{p.Code}</span>
+                  <span className="text-gray-500">{p.Desc}</span>
+                </label>
+              ))}
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button className="px-4 py-2 border rounded" onClick={() => setAssigningRole(null)}>取消</button>
+              <button className="px-4 py-2 bg-indigo-600 text-white rounded disabled:opacity-50" disabled={savingPerms} onClick={saveAssign}>{savingPerms ? '保存中...' : '保存'}</button>
+            </div>
           </div>
         </div>
       )}

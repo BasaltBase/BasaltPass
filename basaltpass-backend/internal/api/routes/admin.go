@@ -39,6 +39,18 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 	adminGroup.Post("/roles", rbac.CreateRoleHandler)                      // /admin/roles
 	adminGroup.Post("/user/:id/role", rbac.AssignRoleHandler)              // /admin/user/:id/role
 
+	// 权限管理（系统级）
+	adminPermGroup := adminGroup.Group("/permissions")
+	adminPermGroup.Get("/", rbac.ListPermissionsHandler)        // /admin/permissions
+	adminPermGroup.Post("/", rbac.CreatePermissionHandler)      // /admin/permissions
+	adminPermGroup.Put("/:id", rbac.UpdatePermissionHandler)    // /admin/permissions/:id
+	adminPermGroup.Delete("/:id", rbac.DeletePermissionHandler) // /admin/permissions/:id
+
+	// 角色-权限管理
+	adminGroup.Get("/roles/:id/permissions", rbac.GetRolePermissionsHandler)                     // /admin/roles/:id/permissions
+	adminGroup.Post("/roles/:id/permissions", rbac.SetRolePermissionsHandler)                    // /admin/roles/:id/permissions
+	adminGroup.Delete("/roles/:id/permissions/:permission_id", rbac.RemoveRolePermissionHandler) // /admin/roles/:id/permissions/:permission_id
+
 	// 新的用户管理路由（替换原有的用户相关路由）
 	adminUserGroup := adminGroup.Group("/users")
 	adminUserGroup.Get("/", adminUser.ListUsersHandler)                             // /admin/users
