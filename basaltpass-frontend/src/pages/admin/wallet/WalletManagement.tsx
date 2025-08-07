@@ -367,7 +367,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                     id="user-id"
                     value={filters.user_id}
                     onChange={(e) => setFilters({ ...filters, user_id: e.target.value })}
-                    className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm transition-colors duration-200"
+                    className="block w-full rounded-xl border-gray-200 bg-white/80 placeholder-gray-400 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 sm:text-sm transition-all duration-200"
                     placeholder="输入用户ID"
                   />
                 </div>
@@ -383,7 +383,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                     id="team-id"
                     value={filters.team_id}
                     onChange={(e) => setFilters({ ...filters, team_id: e.target.value })}
-                    className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm transition-colors duration-200"
+                    className="block w-full rounded-xl border-gray-200 bg-white/80 placeholder-gray-400 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 sm:text-sm transition-all duration-200"
                     placeholder="输入团队ID"
                   />
                 </div>
@@ -397,7 +397,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                   id="currency"
                   value={filters.currency_code}
                   onChange={(e) => setFilters({ ...filters, currency_code: e.target.value })}
-                  className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm transition-colors duration-200"
+                  className="block w-full rounded-xl border-gray-200 bg-white/80 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 sm:text-sm transition-all duration-200"
                 >
                   <option value="">全部货币</option>
                   {Array.isArray(currencies) && currencies.map(currency => (
@@ -415,7 +415,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                   id="page-size"
                   value={pageSize}
                   onChange={(e) => setPageSize(Number(e.target.value))}
-                  className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm transition-colors duration-200"
+                  className="block w-full rounded-xl border-gray-200 bg-white/80 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 sm:text-sm transition-all duration-200"
                 >
                   <option value={10}>10 条</option>
                   <option value={20}>20 条</option>
@@ -798,22 +798,27 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       用户/团队 ID *
                     </label>
-                    <input
-                      type="number"
-                      value={createForm.user_id || createForm.team_id || ''}
-                      onChange={(e) => {
-                        const value = e.target.value ? parseInt(e.target.value) : undefined;
-                        const walletType = document.querySelector('input[name="wallet_type"]:checked')?.getAttribute('value');
-                        if (walletType === 'user') {
-                          setCreateForm({ ...createForm, user_id: value, team_id: undefined });
-                        } else {
-                          setCreateForm({ ...createForm, team_id: value, user_id: undefined });
-                        }
-                      }}
-                      className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      placeholder="输入用户或团队 ID"
-                      required
-                    />
+                    <div className="relative">
+                      <span className="pointer-events-none absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                        <UsersIcon className="h-5 w-5" />
+                      </span>
+                      <input
+                        type="number"
+                        value={createForm.user_id || createForm.team_id || ''}
+                        onChange={(e) => {
+                          const value = e.target.value ? parseInt(e.target.value) : undefined;
+                          const walletType = document.querySelector('input[name="wallet_type"]:checked')?.getAttribute('value');
+                          if (walletType === 'user') {
+                            setCreateForm({ ...createForm, user_id: value, team_id: undefined });
+                          } else {
+                            setCreateForm({ ...createForm, team_id: value, user_id: undefined });
+                          }
+                        }}
+                        className="block w-full rounded-xl border-gray-200 bg-white/80 placeholder-gray-400 pl-10 pr-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 sm:text-sm"
+                        placeholder="输入用户或团队 ID"
+                        required
+                      />
+                    </div>
                   </div>
 
                   <div>
@@ -823,7 +828,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                     <select
                       value={createForm.currency_code}
                       onChange={(e) => setCreateForm({ ...createForm, currency_code: e.target.value })}
-                      className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      className="block w-full rounded-xl border-gray-200 bg-white/80 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 sm:text-sm"
                       required
                     >
                       <option value="">选择货币</option>
@@ -839,14 +844,22 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       初始余额
                     </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={createForm.initial_balance}
-                      onChange={(e) => setCreateForm({ ...createForm, initial_balance: parseFloat(e.target.value) || 0 })}
-                      className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      placeholder="0.00"
-                    />
+                    <div className="relative">
+                      <span className="pointer-events-none absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                        <CurrencyDollarIcon className="h-5 w-5" />
+                      </span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={createForm.initial_balance}
+                        onChange={(e) => setCreateForm({ ...createForm, initial_balance: parseFloat(e.target.value) || 0 })}
+                        className="block w-full rounded-xl border-gray-200 bg-white/80 placeholder-gray-400 pl-10 pr-16 py-2 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 sm:text-sm"
+                        placeholder="0.00"
+                      />
+                      <span className="absolute inset-y-0 right-0 pr-3 flex items-center text-xs font-medium text-gray-500">
+                        {createForm.currency_code || 'CUR'}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="flex justify-end space-x-3 pt-4">
@@ -914,15 +927,23 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       调整金额 *
                     </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={adjustForm.amount}
-                      onChange={(e) => setAdjustForm({ ...adjustForm, amount: parseFloat(e.target.value) || 0 })}
-                      className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      placeholder="输入正数增加，负数减少"
-                      required
-                    />
+                    <div className="relative">
+                      <span className="pointer-events-none absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                        <CurrencyDollarIcon className="h-5 w-5" />
+                      </span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={adjustForm.amount}
+                        onChange={(e) => setAdjustForm({ ...adjustForm, amount: parseFloat(e.target.value) || 0 })}
+                        className="block w-full rounded-xl border-gray-200 bg-white/80 placeholder-gray-400 pl-10 pr-16 py-2 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 sm:text-sm"
+                        placeholder="输入正数增加，负数减少"
+                        required
+                      />
+                      <span className="absolute inset-y-0 right-0 pr-3 flex items-center text-xs font-medium text-gray-500">
+                        {selectedWallet.currency.code}
+                      </span>
+                    </div>
                     <p className="mt-1 text-xs text-gray-500">
                       输入正数增加余额，负数减少余额
                     </p>
@@ -935,7 +956,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                     <textarea
                       value={adjustForm.reason}
                       onChange={(e) => setAdjustForm({ ...adjustForm, reason: e.target.value })}
-                      className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      className="block w-full rounded-xl border-gray-200 bg-white/80 placeholder-gray-400 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 sm:text-sm"
                       rows={3}
                       placeholder="请输入调整原因"
                       required
