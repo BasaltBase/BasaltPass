@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { adminListSubscriptions, adminCancelSubscription, adminGetSubscription } from '@api/subscription/subscription'
 import { Link } from 'react-router-dom'
 import { ChevronRightIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import AdminLayout from '../../../components/AdminLayout'
+import { adminTenantApi, AdminTenantResponse } from '@api/admin/tenant'
 
 interface Subscription {
   ID: number
@@ -26,6 +27,8 @@ interface Subscription {
     Email: string
     Nickname: string
   }
+  // 新增：租户ID
+  TenantID?: number
 }
 
 export default function AdminSubscriptions() {
@@ -38,20 +41,51 @@ export default function AdminSubscriptions() {
   const [canceling, setCanceling] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  // 新增：租户筛选
+  const [tenants, setTenants] = useState<AdminTenantResponse[]>([])
+  const [selectedTenantId, setSelectedTenantId] = useState<string>('')
+
+  const tenantMap = useMemo(() => {
+    const m = new Map<number, AdminTenantResponse>()
+    tenants.forEach(t => m.set(t.id, t))
+    return m
+  }, [tenants])
+
+  const renderTenantInfo = (tenantId?: number) => {
+    if (!tenantId) return <span className="text-gray-400">系统级</span>
+    const t = tenantMap.get(tenantId)
+    if (!t) return <span className="text-gray-400">租户 #{tenantId}</span>
+    return (
+      <span>
+        租户: {t.name} ({t.code}) · 计划: {t.plan} · 状态: {t.status}
+      </span>
+    )
+  }
 
   useEffect(() => {
+    fetchTenants()
     fetchSubscriptions()
   }, [])
 
-  // 调试模态框状态
   useEffect(() => {
+    fetchSubscriptions()
+  }, [selectedTenantId])
 
-  }, [showDetailModal, selectedSubscription])
+  const fetchTenants = async () => {
+    try {
+      const res = await adminTenantApi.getTenantList({ page: 1, limit: 1000 })
+      setTenants(res.tenants || [])
+    } catch (e) {
+      console.error('获取租户列表失败:', e)
+    }
+  }
 
   const fetchSubscriptions = async () => {
     try {
       setLoading(true)
-      const res = await adminListSubscriptions()
+      const params: any = {}
+      if (selectedTenantId) params.tenant_id = parseInt(selectedTenantId)
+      const res = await adminListSubscriptions(params)
       
       
       // 根据实际API响应结构调整数据提取
@@ -194,8 +228,19 @@ export default function AdminSubscriptions() {
 
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-semibold text-gray-900">订阅管理</h1>
-          <div className="flex space-x-4">
-            
+          <div className="flex space-x-4 items-center">
+            {/* 新增：租户筛选 */}
+            <select
+              value={selectedTenantId}
+              onChange={(e) => setSelectedTenantId(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+            >
+              <option value="">全部租户</option>
+              {tenants.map(t => (
+                <option key={t.id} value={t.id}>{t.name} ({t.code})</option>
+              ))}
+            </select>
+            {/* 现有搜索与状态过滤 */}
             <input
               type="text"
               placeholder="搜索订阅ID、用户ID、产品名称..."
@@ -258,6 +303,10 @@ export default function AdminSubscriptions() {
                           </p>
                           <p className="mt-1 text-sm text-gray-500">
                             周期结束: {formatDate(subscription.CurrentPeriodEnd)}
+                          </p>
+                          {/* 新增：租户信息 */}
+                          <p className="mt-1 text-xs text-gray-500">
+                            {renderTenantInfo(subscription.TenantID as unknown as number)}
                           </p>
                         </div>
                       </div>
@@ -339,6 +388,13 @@ export default function AdminSubscriptions() {
                     </p>
                   </div>
                 )}
+                {/* 新增：租户信息 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">租户</label>
+                  <p className="text-sm text-gray-900">
+                    {renderTenantInfo(selectedSubscription.TenantID as unknown as number)}
+                  </p>
+                </div>
               </div>
               
               <div className="space-y-6">
@@ -456,4 +512,4 @@ export default function AdminSubscriptions() {
       </div>
     </AdminLayout>
   )
-} 
+}

@@ -228,8 +228,8 @@ class SubscriptionAPI {
   // 管理员API
   
   // 管理员 - 获取产品列表
-  async adminListProducts() {
-    const response = await client.get('/api/v1/admin/products');
+  async adminListProducts(params?: { tenant_id?: number; page?: number; page_size?: number; code?: string; is_active?: boolean; }) {
+    const response = await client.get('/api/v1/admin/products', { params });
     return response.data;
   }
 
@@ -252,8 +252,8 @@ class SubscriptionAPI {
   }
 
   // 管理员 - 获取套餐列表  
-  async adminListPlans() {
-    const response = await client.get('/api/v1/admin/plans');
+  async adminListPlans(params?: { tenant_id?: number; page?: number; page_size?: number; product_id?: number; code?: string; is_active?: boolean; }) {
+    const response = await client.get('/api/v1/admin/plans', { params });
     return response.data;
   }
 
@@ -276,8 +276,8 @@ class SubscriptionAPI {
   }
 
   // 管理员 - 获取价格列表
-  async adminListPrices() {
-    const response = await client.get('/api/v1/admin/prices');
+  async adminListPrices(params?: { tenant_id?: number; page?: number; page_size?: number; plan_id?: number; currency?: string; usage_type?: string; is_active?: boolean; }) {
+    const response = await client.get('/api/v1/admin/prices', { params });
     return response.data;
   }
 
@@ -348,8 +348,8 @@ class SubscriptionAPI {
   }
 
   // 管理员 - 获取订阅列表
-  async adminListSubscriptions() {
-    const response = await client.get('/api/v1/admin/subscriptions');
+  async adminListSubscriptions(params?: { tenant_id?: number; page?: number; page_size?: number; user_id?: number; status?: string; price_id?: number; }) {
+    const response = await client.get('/api/v1/admin/subscriptions', { params });
     return response.data;
   }
 
@@ -377,15 +377,15 @@ class SubscriptionAPI {
 export const subscriptionAPI = new SubscriptionAPI();
 
 // 导出管理员API函数以便直接使用
-export const adminListProducts = () => subscriptionAPI.adminListProducts();
+export const adminListProducts = (params?: { tenant_id?: number; page?: number; page_size?: number; code?: string; is_active?: boolean; }) => subscriptionAPI.adminListProducts(params);
 export const adminCreateProduct = (data: any) => subscriptionAPI.adminCreateProduct(data);
 export const adminUpdateProduct = (id: number, data: any) => subscriptionAPI.adminUpdateProduct(id, data);
 export const adminDeleteProduct = (id: number) => subscriptionAPI.adminDeleteProduct(id);
-export const adminListPlans = () => subscriptionAPI.adminListPlans();
+export const adminListPlans = (params?: { tenant_id?: number; page?: number; page_size?: number; product_id?: number; code?: string; is_active?: boolean; }) => subscriptionAPI.adminListPlans(params);
 export const adminCreatePlan = (data: any) => subscriptionAPI.adminCreatePlan(data);
 export const adminUpdatePlan = (id: number, data: any) => subscriptionAPI.adminUpdatePlan(id, data);
 export const adminDeletePlan = (id: number) => subscriptionAPI.adminDeletePlan(id);
-export const adminListPrices = () => subscriptionAPI.adminListPrices();
+export const adminListPrices = (params?: { tenant_id?: number; page?: number; page_size?: number; plan_id?: number; currency?: string; usage_type?: string; is_active?: boolean; }) => subscriptionAPI.adminListPrices(params);
 export const adminCreatePrice = (data: any) => subscriptionAPI.adminCreatePrice(data);
 export const adminUpdatePrice = (id: number, data: any) => subscriptionAPI.adminUpdatePrice(id, data);
 export const adminDeletePrice = (id: number) => subscriptionAPI.adminDeletePrice(id);
@@ -401,6 +401,6 @@ export const getSubscription = (id: number) => subscriptionAPI.getSubscription(i
 export const cancelSubscription = (id: number, reason?: string) => subscriptionAPI.cancelSubscription(id, reason);
 
 // 导出管理员订阅相关函数
-export const adminListSubscriptions = () => subscriptionAPI.adminListSubscriptions();
+export const adminListSubscriptions = (params?: { tenant_id?: number; page?: number; page_size?: number; user_id?: number; status?: string; price_id?: number; }) => subscriptionAPI.adminListSubscriptions(params);
 export const adminGetSubscription = (id: number) => subscriptionAPI.adminGetSubscription(id);
-export const adminCancelSubscription = (id: number, reason?: string) => subscriptionAPI.adminCancelSubscription(id, reason); 
+export const adminCancelSubscription = (id: number, reason?: string) => subscriptionAPI.adminCancelSubscription(id, reason);

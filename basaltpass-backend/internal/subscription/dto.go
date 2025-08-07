@@ -195,7 +195,7 @@ type CouponResponse struct {
 
 // CreateSubscriptionRequest 创建订阅请求
 type CreateSubscriptionRequest struct {
-	UserID uint                            `json:"user_id" validate:"required"`
+	UserID     uint                            `json:"user_id" validate:"required"`
 	PriceID    uint                            `json:"price_id" validate:"required"`
 	CouponCode *string                         `json:"coupon_code,omitempty"`
 	StartAt    *time.Time                      `json:"start_at,omitempty"`
@@ -229,7 +229,7 @@ type CancelSubscriptionRequest struct {
 // SubscriptionResponse 订阅响应
 type SubscriptionResponse struct {
 	ID                    uint                     `json:"id"`
-	UserID            uint                     `json:"user_id"`
+	UserID                uint                     `json:"user_id"`
 	Status                model.SubscriptionStatus `json:"status"`
 	CurrentPriceID        uint                     `json:"current_price_id"`
 	NextPriceID           *uint                    `json:"next_price_id"`
@@ -293,7 +293,7 @@ type UsageRecordResponse struct {
 
 // CreateInvoiceRequest 创建账单请求
 type CreateInvoiceRequest struct {
-	UserID     uint                       `json:"user_id" validate:"required"`
+	UserID         uint                       `json:"user_id" validate:"required"`
 	SubscriptionID *uint                      `json:"subscription_id,omitempty"`
 	Currency       string                     `json:"currency" validate:"required,len=3"`
 	DueAt          *time.Time                 `json:"due_at,omitempty"`
@@ -312,7 +312,7 @@ type CreateInvoiceItemRequest struct {
 // InvoiceResponse 账单响应
 type InvoiceResponse struct {
 	ID             uint                   `json:"id"`
-	UserID     uint                   `json:"user_id"`
+	UserID         uint                   `json:"user_id"`
 	SubscriptionID *uint                  `json:"subscription_id"`
 	Status         model.InvoiceStatus    `json:"status"`
 	Currency       string                 `json:"currency"`
@@ -382,6 +382,7 @@ type ListProductsRequest struct {
 	PaginationRequest
 	Code     *string `query:"code"`
 	IsActive *bool   `query:"is_active"`
+	TenantID *uint64 `query:"tenant_id"`
 }
 
 // ListPlansRequest 套餐列表请求
@@ -390,20 +391,22 @@ type ListPlansRequest struct {
 	ProductID *uint   `query:"product_id"`
 	Code      *string `query:"code"`
 	IsActive  *bool   `query:"is_active"`
+	TenantID  *uint64 `query:"tenant_id"`
 }
 
 // SubscriptionListRequest 订阅列表查询请求
 type SubscriptionListRequest struct {
-	UserID *uint                     `json:"user_id,omitempty"`
-	Status     *model.SubscriptionStatus `json:"status,omitempty"`
-	PriceID    *uint                     `json:"price_id,omitempty"`
-	Page       int                       `json:"page,omitempty"`
-	PageSize   int                       `json:"page_size,omitempty"`
+	UserID   *uint                     `json:"user_id,omitempty"`
+	Status   *model.SubscriptionStatus `json:"status,omitempty"`
+	PriceID  *uint                     `json:"price_id,omitempty"`
+	Page     int                       `json:"page,omitempty"`
+	PageSize int                       `json:"page_size,omitempty"`
+	TenantID *uint64                   `json:"tenant_id,omitempty"`
 }
 
 // InvoiceListRequest 账单列表查询请求
 type InvoiceListRequest struct {
-	UserID     *uint                `json:"user_id,omitempty"`
+	UserID         *uint                `json:"user_id,omitempty"`
 	SubscriptionID *uint                `json:"subscription_id,omitempty"`
 	Status         *model.InvoiceStatus `json:"status,omitempty"`
 	Currency       *string              `json:"currency,omitempty"`
@@ -436,6 +439,7 @@ type ListPricesRequest struct {
 	Currency  *string `query:"currency"`
 	UsageType *string `query:"usage_type"`
 	IsActive  *bool   `query:"is_active"`
+	TenantID  *uint64 `query:"tenant_id"`
 }
 
 // ListCouponsRequest 优惠券列表请求

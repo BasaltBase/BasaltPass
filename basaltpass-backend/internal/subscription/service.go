@@ -58,6 +58,11 @@ func (s *Service) ListProducts(req *ListProductsRequest) ([]*model.Product, int6
 
 	query := s.db.Model(&model.Product{}).Preload("Plans").Preload("Plans.Features").Preload("Plans.Prices")
 
+	// 按租户筛选（可选）
+	if req.TenantID != nil {
+		query = query.Where("tenant_id = ?", *req.TenantID)
+	}
+
 	// 根据code过滤
 	if req.Code != nil && *req.Code != "" {
 		query = query.Where("code LIKE ?", "%"+*req.Code+"%")
@@ -178,6 +183,11 @@ func (s *Service) ListPlans(req *ListPlansRequest) ([]*model.Plan, int64, error)
 	var total int64
 
 	query := s.db.Model(&model.Plan{}).Preload("Product").Preload("Features").Preload("Prices")
+
+	// 按租户筛选（可选）
+	if req.TenantID != nil {
+		query = query.Where("tenant_id = ?", *req.TenantID)
+	}
 
 	if req.ProductID != nil {
 		query = query.Where("product_id = ?", *req.ProductID)
@@ -339,6 +349,11 @@ func (s *Service) ListPrices(req *ListPricesRequest) ([]*model.Price, int64, err
 	var total int64
 
 	query := s.db.Model(&model.Price{}).Preload("Plan").Preload("Plan.Product")
+
+	// 按租户筛选（可选）
+	if req.TenantID != nil {
+		query = query.Where("tenant_id = ?", *req.TenantID)
+	}
 
 	if req.PlanID != nil {
 		query = query.Where("plan_id = ?", *req.PlanID)
@@ -748,6 +763,11 @@ func (s *Service) ListSubscriptions(req *SubscriptionListRequest) ([]model.Subsc
 	var total int64
 
 	query := s.db.Model(&model.Subscription{})
+
+	// 按租户筛选（可选）
+	if req.TenantID != nil {
+		query = query.Where("tenant_id = ?", *req.TenantID)
+	}
 
 	if req.UserID != nil {
 		query = query.Where("user_id = ?", *req.UserID)

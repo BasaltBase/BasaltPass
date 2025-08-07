@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { adminListPrices, adminCreatePrice, adminUpdatePrice, adminDeletePrice, adminListPlans } from '@api/subscription/subscription'
 import { Price, Plan } from '../../../types/subscription'
 import { Link } from 'react-router-dom'
 import { ChevronRightIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import AdminLayout from '../../../components/AdminLayout'
+import { adminTenantApi, AdminTenantResponse } from '@api/admin/tenant'
 
 export default function AdminPrices() {
   const [prices, setPrices] = useState<Price[]>([])
@@ -14,6 +15,14 @@ export default function AdminPrices() {
   const [deleteTarget, setDeleteTarget] = useState<Price | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [editingPrice, setEditingPrice] = useState<Price | null>(null)
+  // 新增：租户筛选
+  const [tenants, setTenants] = useState<AdminTenantResponse[]>([])
+  const [selectedTenantId, setSelectedTenantId] = useState<string>('')
+  // 分页状态
+  const [page, setPage] = useState<number>(1)
+  const [pageSize, setPageSize] = useState<number>(20)
+  const [total, setTotal] = useState<number>(0)
+  const [totalPages, setTotalPages] = useState<number>(1)
   const [formData, setFormData] = useState({
     plan_id: '',
     amount_cents: '',
@@ -26,32 +35,64 @@ export default function AdminPrices() {
   })
 
   useEffect(() => {
+    fetchTenants()
     fetchData()
   }, [])
+
+  useEffect(() => {
+    // 切换租户时重置到第1页
+    setPage(1)
+  }, [selectedTenantId])
+
+  useEffect(() => {
+    fetchData()
+  }, [selectedTenantId, page, pageSize])
+
+  const fetchTenants = async () => {
+    try {
+      const res = await adminTenantApi.getTenantList({ page: 1, limit: 1000 })
+      setTenants(res.tenants || [])
+    } catch (e) {
+      console.error('获取租户列表失败:', e)
+    }
+  }
 
   const fetchData = async () => {
     try {
       setLoading(true)
+  const params: any = {}
+      if (selectedTenantId) params.tenant_id = parseInt(selectedTenantId)
+  params.page = page
+  params.page_size = pageSize
       const [pricesRes, plansRes] = await Promise.all([
-        adminListPrices(),
-        adminListPlans()
+        adminListPrices(params),
+        adminListPlans(params)
       ])
-      
-      // 处理定价数据
-      const pricesRaw = pricesRes.data.Data
-      let pricesList: any = []
-      if (Array.isArray(pricesRaw)) pricesList = pricesRaw
-      else if (Array.isArray(pricesRaw.data)) pricesList = pricesRaw.data
-      else if (Array.isArray(pricesRaw.data?.Data)) pricesList = pricesRaw.data.Data
-      setPrices(pricesList)
+      const extractPager = (body: any) => {
+        const p = body?.data ?? body?.Data ?? body
+        const list = Array.isArray(p?.data)
+          ? p.data
+          : Array.isArray(p?.Data)
+          ? p.Data
+          : Array.isArray(body?.data?.data)
+          ? body.data.data
+          : Array.isArray(body?.data?.Data)
+          ? body.data.Data
+          : []
+        const total = p?.total ?? p?.Total ?? body?.data?.total ?? 0
+        const pageVal = p?.page ?? p?.Page ?? body?.data?.page ?? 1
+        const pageSizeVal = p?.page_size ?? p?.PageSize ?? body?.data?.page_size ?? 20
+        const totalPagesVal = p?.total_pages ?? p?.TotalPages ?? body?.data?.total_pages ?? Math.ceil((total || 0) / (pageSizeVal || 1))
+        return { list, total, page: pageVal, pageSize: pageSizeVal, totalPages: totalPagesVal }
+      }
 
-      // 处理套餐数据
-      const plansRaw = plansRes.data.Data
-      let plansList: any = []
-      if (Array.isArray(plansRaw)) plansList = plansRaw
-      else if (Array.isArray(plansRaw.data)) plansList = plansRaw.data
-      else if (Array.isArray(plansRaw.data?.Data)) plansList = plansRaw.data.Data
-      setPlans(plansList)
+      const pricesPager = extractPager(pricesRes)
+      setPrices(pricesPager.list)
+      setTotal(pricesPager.total)
+      setTotalPages(pricesPager.totalPages)
+
+      const plansPager = extractPager(plansRes)
+      setPlans(plansPager.list)
     } catch (error) {
       console.error('获取数据失败:', error)
     } finally {
@@ -152,6 +193,23 @@ export default function AdminPrices() {
     return `${interval}${periodMap[period] || period}`
   }
 
+  const tenantMap = useMemo(() => {
+    const m = new Map<number, AdminTenantResponse>()
+    tenants.forEach(t => m.set(t.id, t))
+    return m
+  }, [tenants])
+
+  const renderTenantInfo = (tenantId?: number) => {
+    if (!tenantId) return <span className="text-gray-400">系统级</span>
+    const t = tenantMap.get(tenantId)
+    if (!t) return <span className="text-gray-400">租户 #{tenantId}</span>
+    return (
+      <span>
+        租户: {t.name} ({t.code}) · 计划: {t.plan} · 状态: {t.status}
+      </span>
+    )
+  }
+
   if (loading) {
     return (
       <AdminLayout title="价格管理">
@@ -192,12 +250,25 @@ export default function AdminPrices() {
 
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-semibold text-gray-900">定价管理</h1>
-          <button
-            onClick={() => setShowModal(true)}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-          >
-            新建定价
-          </button>
+          <div className="flex items-center space-x-3">
+            {/* 新增：租户筛选 */}
+            <select
+              value={selectedTenantId}
+              onChange={(e) => setSelectedTenantId(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+            >
+              <option value="">全部租户</option>
+              {tenants.map(t => (
+                <option key={t.id} value={t.id}>{t.name} ({t.code})</option>
+              ))}
+            </select>
+            <button
+              onClick={() => setShowModal(true)}
+              className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+            >
+              新建定价
+            </button>
+          </div>
         </div>
 
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
@@ -222,6 +293,10 @@ export default function AdminPrices() {
                               试用期: {price.TrialDays} 天
                             </p>
                           )}
+                          {/* 新增：租户信息 */}
+                          <p className="mt-1 text-xs text-gray-500">
+                            {renderTenantInfo(price.TenantID as unknown as number)}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -248,6 +323,32 @@ export default function AdminPrices() {
               </li>
             )}
           </ul>
+        </div>
+
+        {/* 分页控件 */}
+        <div className="flex items-center justify-between py-3">
+          <div className="text-sm text-gray-600">共 {total} 条 · 第 {page} / {totalPages} 页</div>
+          <div className="flex items-center space-x-2">
+            <button
+              className="px-3 py-1 border rounded disabled:opacity-50"
+              disabled={page <= 1}
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+            >上一页</button>
+            <button
+              className="px-3 py-1 border rounded disabled:opacity-50"
+              disabled={page >= totalPages}
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            >下一页</button>
+            <select
+              className="ml-2 px-2 py-1 border rounded"
+              value={pageSize}
+              onChange={(e) => { setPageSize(parseInt(e.target.value)); setPage(1) }}
+            >
+              <option value={10}>每页 10</option>
+              <option value={20}>每页 20</option>
+              <option value={50}>每页 50</option>
+            </select>
+          </div>
         </div>
 
         {showModal && (
@@ -468,4 +569,4 @@ export default function AdminPrices() {
       </div>
     </AdminLayout>
   )
-} 
+}

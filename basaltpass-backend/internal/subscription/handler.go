@@ -567,6 +567,14 @@ func (h *Handler) AdminListSubscriptions(c *fiber.Ctx) error {
 		}
 	}
 
+	// 新增：按租户筛选
+	if tenantIDStr := c.Query("tenant_id"); tenantIDStr != "" {
+		if id, err := strconv.ParseUint(tenantIDStr, 10, 64); err == nil {
+			tid := uint64(id)
+			req.TenantID = &tid
+		}
+	}
+
 	req.Page, _ = strconv.Atoi(c.Query("page", "1"))
 	req.PageSize, _ = strconv.Atoi(c.Query("page_size", "20"))
 
@@ -626,15 +634,28 @@ func AdminListPlansHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid query parameters"})
 	}
 
+	// 默认分页
+	if req.Page <= 0 {
+		req.Page = 1
+	}
+	if req.PageSize <= 0 {
+		req.PageSize = 20
+	}
+
 	plans, total, err := subscriptionService.ListPlans(&req)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
+	totalPages := int((total + int64(req.PageSize) - 1) / int64(req.PageSize))
+
 	return c.JSON(fiber.Map{
-		"data": fiber.Map{
-			"Data":  plans,
-			"Total": total,
+		"data": PaginatedResponse{
+			Data:       plans,
+			Total:      total,
+			Page:       req.Page,
+			PageSize:   req.PageSize,
+			TotalPages: totalPages,
 		},
 	})
 }
@@ -696,15 +717,28 @@ func AdminListPricesHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid query parameters"})
 	}
 
+	// 默认分页
+	if req.Page <= 0 {
+		req.Page = 1
+	}
+	if req.PageSize <= 0 {
+		req.PageSize = 20
+	}
+
 	prices, total, err := subscriptionService.ListPrices(&req)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
+	totalPages := int((total + int64(req.PageSize) - 1) / int64(req.PageSize))
+
 	return c.JSON(fiber.Map{
-		"data": fiber.Map{
-			"Data":  prices,
-			"Total": total,
+		"data": PaginatedResponse{
+			Data:       prices,
+			Total:      total,
+			Page:       req.Page,
+			PageSize:   req.PageSize,
+			TotalPages: totalPages,
 		},
 	})
 }
@@ -722,6 +756,56 @@ func AdminGetPriceHandler(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{"data": price})
+}
+
+// ========== 额外的管理员处理器以匹配路由绑定 ==========
+
+// AdminListProductsHandler 管理员获取所有产品列表
+func AdminListProductsHandler(c *fiber.Ctx) error {
+	var req ListProductsRequest
+	if err := c.QueryParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid query parameters"})
+	}
+
+	// 默认分页
+	if req.Page <= 0 {
+		req.Page = 1
+	}
+	if req.PageSize <= 0 {
+		req.PageSize = 20
+	}
+
+	products, total, err := subscriptionService.ListProducts(&req)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	totalPages := int((total + int64(req.PageSize) - 1) / int64(req.PageSize))
+
+	return c.JSON(fiber.Map{
+		"data": PaginatedResponse{
+			Data:       products,
+			Total:      total,
+			Page:       req.Page,
+			PageSize:   req.PageSize,
+			TotalPages: totalPages,
+		},
+	})
+}
+
+// AdminGetProductHandler 管理员获取产品详情
+func AdminGetProductHandler(c *fiber.Ctx) error {
+	productID, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid product ID"})
+	}
+
+	product, err := subscriptionService.GetProduct(uint(productID))
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"data": product})
 }
 
 // UpdatePriceHandler 更新定价（管理员）
@@ -751,8 +835,7 @@ func DeletePriceHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid price ID"})
 	}
 
-	err = subscriptionService.DeletePrice(uint(priceID))
-	if err != nil {
+	if err := subscriptionService.DeletePrice(uint(priceID)); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
@@ -766,27 +849,40 @@ func AdminListCouponsHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid query parameters"})
 	}
 
+	// 默认分页
+	if req.Page <= 0 {
+		req.Page = 1
+	}
+	if req.PageSize <= 0 {
+		req.PageSize = 20
+	}
+
 	coupons, total, err := subscriptionService.ListCoupons(&req)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
+	totalPages := int((total + int64(req.PageSize) - 1) / int64(req.PageSize))
+
 	return c.JSON(fiber.Map{
-		"data": fiber.Map{
-			"Data":  coupons,
-			"Total": total,
+		"data": PaginatedResponse{
+			Data:       coupons,
+			Total:      total,
+			Page:       req.Page,
+			PageSize:   req.PageSize,
+			TotalPages: totalPages,
 		},
 	})
 }
 
 // AdminGetCouponHandler 管理员获取优惠券详情
 func AdminGetCouponHandler(c *fiber.Ctx) error {
-	couponCode := c.Params("code")
-	if couponCode == "" {
+	code := c.Params("code")
+	if code == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid coupon code"})
 	}
 
-	coupon, err := subscriptionService.GetCoupon(couponCode)
+	coupon, err := subscriptionService.GetCoupon(code)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -796,8 +892,8 @@ func AdminGetCouponHandler(c *fiber.Ctx) error {
 
 // UpdateCouponHandler 更新优惠券（管理员）
 func UpdateCouponHandler(c *fiber.Ctx) error {
-	couponCode := c.Params("code")
-	if couponCode == "" {
+	code := c.Params("code")
+	if code == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid coupon code"})
 	}
 
@@ -806,7 +902,7 @@ func UpdateCouponHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 	}
 
-	coupon, err := subscriptionService.UpdateCoupon(couponCode, &req)
+	coupon, err := subscriptionService.UpdateCoupon(code, &req)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -816,50 +912,14 @@ func UpdateCouponHandler(c *fiber.Ctx) error {
 
 // DeleteCouponHandler 删除优惠券（管理员）
 func DeleteCouponHandler(c *fiber.Ctx) error {
-	couponCode := c.Params("code")
-	if couponCode == "" {
+	code := c.Params("code")
+	if code == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid coupon code"})
 	}
 
-	err := subscriptionService.DeleteCoupon(couponCode)
-	if err != nil {
+	if err := subscriptionService.DeleteCoupon(code); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	return c.JSON(fiber.Map{"message": "Coupon deleted successfully"})
-}
-
-// AdminListProductsHandler 管理员获取所有产品列表
-func AdminListProductsHandler(c *fiber.Ctx) error {
-	var req ListProductsRequest
-	if err := c.QueryParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid query parameters"})
-	}
-
-	products, total, err := subscriptionService.ListProducts(&req)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-	}
-
-	return c.JSON(fiber.Map{
-		"data": fiber.Map{
-			"Data":  products,
-			"Total": total,
-		},
-	})
-}
-
-// AdminGetProductHandler 管理员获取产品详情
-func AdminGetProductHandler(c *fiber.Ctx) error {
-	productID, err := strconv.Atoi(c.Params("id"))
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid product ID"})
-	}
-
-	product, err := subscriptionService.GetProduct(uint(productID))
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-	}
-
-	return c.JSON(fiber.Map{"data": product})
 }
