@@ -12,7 +12,8 @@ import {
 import { useNotifications } from '../contexts/NotificationContext'
 
 // 增强版通知图标组件，使用NotificationProvider
-const EnhancedNotificationIcon: React.FC = () => {
+// 可配置“查看全部通知”跳转路径，默认 /notifications
+const EnhancedNotificationIcon: React.FC<{ viewAllPath?: string }> = ({ viewAllPath = '/notifications' }) => {
   const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotifications()
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -41,7 +42,7 @@ const EnhancedNotificationIcon: React.FC = () => {
 
   const handleViewAllNotifications = () => {
     setIsOpen(false)
-    navigate('/notifications')
+    navigate(viewAllPath)
   }
 
   const getTypeIcon = (type: string) => {

@@ -150,9 +150,7 @@ export default function Layout({ children }: LayoutProps) {
                   </div>
                 </Link>
               
-            <Link to="/notifications">
-              <EnhancedNotificationIcon />
-            </Link>
+            <EnhancedNotificationIcon viewAllPath="/notifications" />
             <button
               onClick={handleLogoutClick}
               className="text-gray-500 hover:text-gray-900 flex items-center"

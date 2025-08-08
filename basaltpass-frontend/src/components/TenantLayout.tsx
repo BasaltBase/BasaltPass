@@ -1,9 +1,10 @@
 import { ReactNode, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Bars3Icon, BellIcon, ChevronDownIcon, ArrowsRightLeftIcon } from '@heroicons/react/24/outline'
+import { Bars3Icon, ChevronDownIcon, ArrowsRightLeftIcon } from '@heroicons/react/24/outline'
 import { UserIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline'
 import TenantNavigation from './TenantNavigation'
 import { useAuth } from '../contexts/AuthContext'
+import EnhancedNotificationIcon from './EnhancedNotificationIcon'
 
 interface TenantLayoutProps {
   children: ReactNode
@@ -87,18 +88,11 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
                 </Link>
               )}
               
-              {/* 通知 */}
-              <Link
-                to="/tenant/notifications"
-                className="relative rounded-full bg-white p-1 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              >
+              {/* 通知：使用全局 NotificationProvider 的组件，跳转到租户通知页 */}
+              <div className="relative">
                 <span className="sr-only">查看通知</span>
-                <BellIcon className="h-6 w-6" />
-                {/* 通知徽章 */}
-                <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-red-500 text-xs text-white flex items-center justify-center">
-                  2
-                </span>
-              </Link>
+                <EnhancedNotificationIcon viewAllPath="/tenant/notifications" />
+              </div>
 
               {/* 用户菜单 */}
               <div className="relative">

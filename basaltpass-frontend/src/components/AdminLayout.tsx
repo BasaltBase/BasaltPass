@@ -1,9 +1,10 @@
 import { ReactNode, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Bars3Icon, BellIcon, ChevronDownIcon, ArrowsRightLeftIcon } from '@heroicons/react/24/outline'
+import { Bars3Icon, ChevronDownIcon, ArrowsRightLeftIcon } from '@heroicons/react/24/outline'
 import { UserIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline'
 import AdminNavigation from './AdminNavigation'
 import { useAuth } from '../contexts/AuthContext'
+import EnhancedNotificationIcon from './EnhancedNotificationIcon'
 
 interface AdminLayoutProps {
   children: ReactNode
@@ -85,18 +86,11 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
                 </Link>
               )}
               
-              {/* 通知 */}
-              <Link
-                to="/notifications"
-                className="relative rounded-full bg-white p-1 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-              >
+              {/* 通知：使用全局 NotificationProvider 的组件 */}
+              <div className="relative">
                 <span className="sr-only">查看通知</span>
-                <BellIcon className="h-6 w-6" />
-                {/* 通知徽章 */}
-                <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-red-500 text-xs text-white flex items-center justify-center">
-                  3
-                </span>
-              </Link>
+                <EnhancedNotificationIcon viewAllPath="/admin/notifications" />
+              </div>
 
               {/* 用户菜单 */}
               <div className="relative">
