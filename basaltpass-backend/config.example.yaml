@@ -1,0 +1,37 @@
+server:
+  address: ":8080"
+
+database:
+  driver: "sqlite"
+  # DSN can override path, e.g., './data/basaltpass.db'
+  dsn: ""
+  path: "basaltpass.db"
+
+cors:
+  allow_origins:
+    - "http://localhost:5173"
+    - "http://127.0.0.1:5173"
+    - "http://localhost:3000"
+  allow_methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
+  allow_headers:
+    - "Origin"
+    - "Content-Type"
+    - "Accept"
+    - "Authorization"
+    - "X-Requested-With"
+    - "Access-Control-Request-Method"
+    - "Access-Control-Request-Headers"
+    - "X-Tenant-ID"
+  allow_credentials: true
+  expose_headers:
+    - "Authorization"
+    - "Content-Length"
+    - "Access-Control-Allow-Origin"
+    - "Access-Control-Allow-Headers"
+    - "Cache-Control"
+    - "Content-Language"
+    - "Content-Type"
+    - "Expires"
+    - "Last-Modified"
+    - "Pragma"
+  max_age_seconds: 86400

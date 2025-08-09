@@ -7,13 +7,22 @@ import (
 
 	"basaltpass-backend/internal/api"
 	"basaltpass-backend/internal/common"
+	"basaltpass-backend/internal/config"
 	"basaltpass-backend/internal/subscription"
 	"basaltpass-backend/internal/team"
+
+	"os"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 func main() {
+	// Load configuration (config file optional; env vars supported)
+	cfgPath := os.Getenv("BASALTPASS_CONFIG")
+	if _, err := config.Load(cfgPath); err != nil {
+		log.Fatalf("failed to load config: %v", err)
+	}
+
 	app := fiber.New()
 
 	// Register global middlewares
@@ -39,5 +48,7 @@ func main() {
 		return c.SendString("ok")
 	})
 
-	log.Fatal(app.Listen(":8080"))
+	addr := config.Get().Server.Address
+	log.Printf("starting server on %s", addr)
+	log.Fatal(app.Listen(addr))
 }

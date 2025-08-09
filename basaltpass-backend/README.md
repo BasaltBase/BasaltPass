@@ -20,6 +20,24 @@
 ### 安装依赖
 
 ```bash
+### 配置（可选）
+
+后端支持从配置文件与环境变量加载设置。
+
+- 配置文件：在工作目录或 `./config` 放置 `config.yaml`（示例见 `config.example.yaml`）。
+- 环境变量：以 `BASALTPASS_` 前缀覆盖，例如：
+
+```
+BASALTPASS_SERVER_ADDRESS=:8081
+BASALTPASS_DATABASE_DRIVER=sqlite
+BASALTPASS_DATABASE_PATH=./data/basaltpass.db
+```
+
+支持的主要字段：
+
+- server.address
+- database.driver / database.dsn / database.path（当前支持 sqlite）
+- cors.allow_origins / allow_methods / allow_headers / allow_credentials / expose_headers / max_age_seconds
 cd basaltpass-backend
 go mod tidy
 ```

@@ -43,6 +43,7 @@ import AdminPlans from '@pages/admin/subscription/Plans'
 import AdminPrices from '@pages/admin/subscription/Prices'
 import AdminCoupons from '@pages/admin/subscription/Coupons'
 import AdminPermissions from '@pages/admin/rbac/Permissions'
+import AdminSettingsPage from '@pages/admin/settings/Index'
 import Payment from '@pages/user/payment/Payment'
 import SubscriptionCheckout from '@pages/user/subscription/Checkout'
 import OrderConfirm from '@pages/user/order/OrderConfirm'
@@ -363,7 +364,7 @@ export default function AppRouter() {
       } />
       <Route path="/admin/settings" element={
         <ProtectedRoute>
-          <AdminDashboard />
+          <AdminSettingsPage />
         </ProtectedRoute>
       } />
       

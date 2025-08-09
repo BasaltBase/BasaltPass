@@ -2,6 +2,7 @@ package routes
 
 import (
 	"basaltpass-backend/internal/admin"
+	adminSettings "basaltpass-backend/internal/admin/settings"
 	adminTenant "basaltpass-backend/internal/admin/tenant"
 	adminUser "basaltpass-backend/internal/admin/user"
 	adminWallet "basaltpass-backend/internal/admin/wallet"
@@ -101,6 +102,13 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 	adminGroup.Get("/wallet-tx", admin.ListWalletTxHandler)    // /admin/wallet-tx (deprecated, use /admin/wallets instead)
 	adminGroup.Post("/tx/:id/approve", admin.ApproveTxHandler) // /admin/tx/:id/approve
 	adminGroup.Get("/logs", admin.ListAuditHandler)            // /admin/logs
+
+	// 系统设置管理
+	settingsGroup := adminGroup.Group("/settings")
+	settingsGroup.Get("/", adminSettings.ListSettingsHandler)           // /admin/settings
+	settingsGroup.Get("/:key", adminSettings.GetSettingHandler)         // /admin/settings/:key
+	settingsGroup.Post("/", adminSettings.UpsertSettingHandler)         // /admin/settings
+	settingsGroup.Put("/bulk", adminSettings.BulkUpdateSettingsHandler) // /admin/settings/bulk
 
 	// OAuth2客户端管理路由（高级管理级）
 	oauthClientGroup := adminGroup.Group("/oauth/clients")                                // /admin/oauth/clients

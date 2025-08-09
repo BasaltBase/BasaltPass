@@ -1,10 +1,13 @@
 package common
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"sync"
+
+	"basaltpass-backend/internal/config"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -15,21 +18,36 @@ var (
 	once sync.Once
 )
 
-// DB returns a singleton *gorm.DB connected to a local SQLite database file.
-// Ensure that this package does NOT import anything from internal/model.
-// If you need shared types, move them to a new package, e.g., internal/types.
+// DB returns a singleton *gorm.DB connected using configured driver.
+// Keep this package decoupled from internal/model to avoid import cycles.
 func DB() *gorm.DB {
 	once.Do(func() {
 		var err error
-		wd, err := os.Getwd()
-		if err != nil {
-			log.Fatalf("failed to get working directory: %v", err)
+
+		cfg := config.Get()
+		driver := cfg.Database.Driver
+
+		switch driver {
+		case "sqlite", "sqlite3", "":
+			// Prefer DSN when provided; else build from path relative to CWD
+			dsn := cfg.Database.DSN
+			if dsn == "" {
+				wd, err := os.Getwd()
+				if err != nil {
+					log.Fatalf("failed to get working directory: %v", err)
+				}
+				dbPath := cfg.Database.Path
+				if dbPath == "" {
+					dbPath = "basaltpass.db"
+				}
+				dsn = filepath.Join(wd, dbPath)
+			}
+			log.Printf("Database (sqlite) DSN: %s", dsn)
+			db, err = gorm.Open(sqlite.Open(dsn), &gorm.Config{})
+		default:
+			err = fmt.Errorf("unsupported database driver: %s", driver)
 		}
 
-		dbPath := filepath.Join(wd, "basaltpass.db")
-		log.Printf("Database path: %s", dbPath)
-
-		db, err = gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
 		if err != nil {
 			log.Fatalf("failed to connect database: %v", err)
 		}
