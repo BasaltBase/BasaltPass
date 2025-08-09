@@ -9,7 +9,7 @@ import {
 import { 
   BellIcon as BellIconSolid 
 } from '@heroicons/react/24/solid'
-import { useNotifications } from '../contexts/NotificationContext'
+import { useNotifications }                   from '../contexts/NotificationContext'
 
 // 增强版通知图标组件，使用NotificationProvider
 // 可配置“查看全部通知”跳转路径，默认 /notifications
