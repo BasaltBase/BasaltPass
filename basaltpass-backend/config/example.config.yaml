@@ -1,0 +1,51 @@
+# BasaltPass Backend 配置文件
+# 提示：该文件会被自动发现（basaltpass-backend/config/config.yaml）
+# 也可通过环境变量 BASALTPASS_CONFIG 指定其他路径。
+
+# 环境：develop / staging / production
+env: develop
+
+server:
+  # 监听地址（host:port 或 :port）
+  address: ":8080"
+
+database:
+  # 仅内置 sqlite，可选：sqlite
+  driver: "sqlite"
+  # sqlite 数据库存放路径（相对当前工作目录）
+  path: "basaltpass.db"
+  # dsn 优先级高于 path；留空则使用 path
+  dsn: ""
+
+cors:
+  # 允许的跨域来源
+  allow_origins:
+    - "http://localhost:5173"
+    - "http://localhost:5174"
+    - "http://127.0.0.1:5173"
+    - "http://localhost:3000"
+  # 允许的方法
+  allow_methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
+  # 允许的头
+  allow_headers:
+    - "Origin"
+    - "Content-Type"
+    - "Accept"
+    - "Authorization"
+    - "X-Requested-With"
+    - "Access-Control-Request-Method"
+    - "Access-Control-Request-Headers"
+    - "X-Tenant-ID"
+  allow_credentials: true
+  expose_headers:
+    - "Authorization"
+    - "Content-Length"
+    - "Access-Control-Allow-Origin"
+    - "Access-Control-Allow-Headers"
+    - "Cache-Control"
+    - "Content-Language"
+    - "Content-Type"
+    - "Expires"
+    - "Last-Modified"
+    - "Pragma"
+  max_age_seconds: 86400

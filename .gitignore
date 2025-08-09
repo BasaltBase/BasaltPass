@@ -22,3 +22,6 @@ basaltpass-frontend/.vscode/
 basaltpass-backend/.vscode/
 basaltpass-frontend/.idea/
 basaltpass-backend/.idea/
+
+# config
+basaltpass-backend/config/config.yaml

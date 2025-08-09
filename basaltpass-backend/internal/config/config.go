@@ -10,6 +10,8 @@ import (
 
 // Config holds application configuration loaded from file and environment.
 type Config struct {
+	// Env indicates current environment: develop, staging, production
+	Env    string `mapstructure:"env"`
 	Server struct {
 		// Address in host:port or :port format, e.g. ":8080"
 		Address string `mapstructure:"address"`
@@ -48,6 +50,7 @@ func Load(path string) (*Config, error) {
 	v := viper.New()
 
 	// Defaults
+	v.SetDefault("env", "develop")
 	v.SetDefault("server.address", ":8080")
 	v.SetDefault("database.driver", "sqlite")
 	v.SetDefault("database.path", "basaltpass.db")
@@ -113,4 +116,16 @@ func Get() *Config {
 		}
 	}
 	return &cfg
+}
+
+// IsDevelop returns true when env is "develop" (default)
+func IsDevelop() bool { return strings.EqualFold(Get().Env, "develop") }
+
+// IsStaging returns true when env is "staging"
+func IsStaging() bool { return strings.EqualFold(Get().Env, "staging") }
+
+// IsProduction returns true when env is "production" or "prod"
+func IsProduction() bool {
+	e := strings.ToLower(Get().Env)
+	return e == "production" || e == "prod"
 }

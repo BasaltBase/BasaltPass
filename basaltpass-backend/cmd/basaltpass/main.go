@@ -20,8 +20,11 @@ func main() {
 	// Load configuration (config file optional; env vars supported)
 	cfgPath := os.Getenv("BASALTPASS_CONFIG")
 	if _, err := config.Load(cfgPath); err != nil {
-		log.Fatalf("failed to load config: %v", err)
+		log.Fatalf("[main][error] Failed to load config: %v", err)
 	}
+
+	// Print current environment
+	log.Printf("[main][info] Environment: %s (develop=%v, staging=%v, production=%v)", config.Get().Env, config.IsDevelop(), config.IsStaging(), config.IsProduction())
 
 	app := fiber.New()
 
@@ -45,10 +48,10 @@ func main() {
 
 	// Health-check route
 	app.Get("/health", func(c *fiber.Ctx) error {
-		return c.SendString("ok")
+		return c.SendString("[main][info] Health check OK")
 	})
 
 	addr := config.Get().Server.Address
-	log.Printf("starting server on %s", addr)
+	log.Printf("[main][info] Starting server on %s", addr)
 	log.Fatal(app.Listen(addr))
 }
