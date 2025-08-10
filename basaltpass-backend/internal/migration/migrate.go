@@ -2,12 +2,19 @@ package migration
 
 import (
 	"basaltpass-backend/internal/common"
+	"basaltpass-backend/internal/config"
 	"basaltpass-backend/internal/currency"
 	"basaltpass-backend/internal/model"
 	"basaltpass-backend/internal/settings"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"log"
+	"math/rand"
 	"strings"
+	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 // 迁移数据库，自动迁移数据库表结构
@@ -131,11 +138,42 @@ func handleSpecialMigrations() {
 	if count == 0 {
 		log.Println("[Migration] Fresh database detected, ensuring default tenant...")
 		ensureDefaultTenant()
+		// 仅当配置启用时注入演示数据
+		if cfg := config.Get(); cfg.Seeding.Enabled {
+			if err := seedDevData(); err != nil {
+				log.Printf("[Migration] Seed dev data failed: %v", err)
+			} else {
+				log.Println("[Migration] Seeded development demo data")
+			}
+		}
+		// 开发环境：创建一个超级管理员账户（邮箱 a@.a / 手机 101 / 密码 123456）并赋予超管角色
+		if config.IsDevelop() {
+			if err := seedDevSuperAdmin(); err != nil {
+				log.Printf("[Migration] Seed dev superadmin failed: %v", err)
+			} else {
+				log.Println("[Migration] Seeded development superadmin user")
+			}
+		}
 		return
 	}
 
 	// 现有数据库的特殊迁移逻辑
 	log.Println("[Migration] Existing database detected, applying compatibility migrations...")
+
+	// 如果由于之前失败导致仅创建了租户/角色等，但没有用户与价格，则在启用 seeding 时补种一次
+	if cfg := config.Get(); cfg.Seeding.Enabled {
+		var userCnt, priceCnt int64
+		_ = db.Model(&model.User{}).Count(&userCnt).Error
+		_ = db.Model(&model.Price{}).Count(&priceCnt).Error
+		if userCnt == 0 && priceCnt == 0 {
+			log.Println("[Migration] No users and prices found; running dev seeding fallback...")
+			if err := seedDevData(); err != nil {
+				log.Printf("[Migration] Fallback seed failed: %v", err)
+			} else {
+				log.Println("[Migration] Fallback dev seed completed")
+			}
+		}
+	}
 
 	// 处理 user_tenants 表重命名为 tenant_admins
 	if db.Migrator().HasTable("user_tenants") {
@@ -217,6 +255,72 @@ func handleSpecialMigrations() {
 
 		log.Println("[Migration] Successfully migrated roles table with tenant_id")
 	}
+}
+
+// seedDevSuperAdmin 创建一个开发用超级管理员账户
+func seedDevSuperAdmin() error {
+	db := common.DB()
+
+	// 1) 创建用户（a@.a / 101 / 123456）
+	// 密码使用 bcrypt
+	hash, err := bcrypt.GenerateFromPassword([]byte("123456"), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	u := model.User{Email: "a@.a", Phone: "101", PasswordHash: string(hash), Nickname: "superadmin", EmailVerified: true, PhoneVerified: true}
+	if err := db.Create(&u).Error; err != nil {
+		return err
+	}
+
+	// 2) 赋予超级管理员角色（约定 role_id=1 为超管，User.IsSuperAdmin 基于此判断）
+	ur := model.UserRole{UserID: u.ID, RoleID: 1}
+	if err := db.Create(&ur).Error; err != nil {
+		return err
+	}
+
+	// 3) 在 tenant_admins 中将其关联到默认租户（code=default），作为 owner（幂等）
+	var tenant model.Tenant
+	if err := db.Where("code = ?", "default").First(&tenant).Error; err != nil {
+		// 回退：取任意一个租户
+		if err := db.First(&tenant).Error; err != nil {
+			return nil // 若没有租户则跳过，不影响后续
+		}
+	}
+	var cnt int64
+	if err := db.Model(&model.TenantAdmin{}).
+		Where("user_id = ? AND tenant_id = ?", u.ID, tenant.ID).
+		Count(&cnt).Error; err == nil && cnt == 0 {
+		_ = db.Create(&model.TenantAdmin{UserID: u.ID, TenantID: tenant.ID, Role: model.TenantRoleOwner}).Error
+	}
+	// 4) 在默认租户下创建一个演示 App，并将超管加入为 app user
+	if err := db.Where("code = ?", "default").First(&tenant).Error; err != nil {
+		if err := db.First(&tenant).Error; err != nil {
+			return nil
+		}
+	}
+	demoApp := model.App{TenantID: tenant.ID, Name: "SuperAdmin Demo App", Description: "Demo app for superadmin"}
+	if err := db.Create(&demoApp).Error; err == nil {
+		now := time.Now()
+		_ = db.Create(&model.AppUser{AppID: demoApp.ID, UserID: u.ID, FirstAuthorizedAt: now, LastAuthorizedAt: now, Status: model.AppUserStatusActive}).Error
+	}
+
+	// 5) 在默认租户下为超管创建一个产品/套餐/价格，并生成一个订阅
+	prod := model.Product{Code: "P-superadmin-demo", Name: "SuperAdmin Product", Description: "Demo product for superadmin"}
+	if err := db.Create(&prod).Error; err == nil {
+		plan := model.Plan{ProductID: prod.ID, Code: "pro", DisplayName: "Pro", PlanVersion: 1}
+		if err := db.Create(&plan).Error; err == nil {
+			price := model.Price{PlanID: plan.ID, Currency: "CNY", AmountCents: 19900, BillingPeriod: model.BillingPeriodMonth, BillingInterval: 1, UsageType: model.UsageTypeLicense}
+			if err := db.Create(&price).Error; err == nil {
+				now := time.Now()
+				periodEnd := now.AddDate(0, 1, 0)
+				s := model.Subscription{UserID: u.ID, Status: model.SubscriptionStatusActive, CurrentPriceID: price.ID, StartAt: now, CurrentPeriodStart: now, CurrentPeriodEnd: periodEnd}
+				if err := db.Create(&s).Error; err == nil {
+					_ = db.Create(&model.SubscriptionItem{SubscriptionID: s.ID, PriceID: price.ID, Quantity: 1, Metering: model.MeteringPerUnit}).Error
+				}
+			}
+		}
+	}
+	return nil
 }
 
 // ensureDefaultTenant 确保存在默认租户
@@ -705,4 +809,279 @@ func seedDefaultSystemSettings() {
 			log.Printf("[Migration] create setting %s failed: %v", d.Key, err)
 		}
 	}
+}
+
+// seedDevData 在开发环境为全新库注入模拟数据
+func seedDevData() error {
+	db := common.DB()
+
+	log.Println("[Seed] Begin development data seeding...")
+
+	// 1) 创建 5 个租户
+	tenants := make([]model.Tenant, 0, 5)
+	for i := 1; i <= 5; i++ {
+		t := model.Tenant{
+			Name:        fmt.Sprintf("Demo Tenant %d", i),
+			Code:        fmt.Sprintf("tenant_demo_%d", i),
+			Description: "Seeded tenant for development",
+			Status:      model.TenantStatusActive,
+			Plan:        model.TenantPlanFree,
+		}
+		if err := db.Create(&t).Error; err != nil {
+			log.Printf("[Seed][tenant] create failed: %v", err)
+			continue
+		}
+		tenants = append(tenants, t)
+	}
+	log.Printf("[Seed] tenants created: %d", len(tenants))
+
+	// 2) 为每个租户创建 2 个 app，总计 ~10 个
+	apps := make([]model.App, 0, 10)
+	for _, t := range tenants {
+		for j := 1; j <= 2; j++ {
+			a := model.App{
+				TenantID:    t.ID,
+				Name:        fmt.Sprintf("%s App %d", t.Code, j),
+				Description: "Demo application",
+				Status:      model.AppStatusActive,
+			}
+			if err := db.Create(&a).Error; err != nil {
+				log.Printf("[Seed][app] create failed: %v", err)
+				continue
+			}
+			apps = append(apps, a)
+		}
+	}
+	log.Printf("[Seed] apps created: %d", len(apps))
+
+	// 3) 创建 50 个用户
+	users := make([]model.User, 0, 50)
+	pwHash, _ := bcrypt.GenerateFromPassword([]byte("123456"), bcrypt.DefaultCost)
+	for i := 1; i <= 50; i++ {
+		u := model.User{
+			Email:         fmt.Sprintf("user%02d@example.com", i),
+			Phone:         fmt.Sprintf("200%03d", i),
+			Nickname:      fmt.Sprintf("User%02d", i),
+			EmailVerified: true,
+			PhoneVerified: true,
+			PasswordHash:  string(pwHash),
+		}
+		if err := db.Create(&u).Error; err != nil {
+			log.Printf("[Seed][user] create failed: %v", err)
+			continue
+		}
+		users = append(users, u)
+	}
+	log.Printf("[Seed] users created: %d", len(users))
+
+	// 3.1) 从 50 名用户中抽 5 名，关联为非 default 的租户管理员（role=admin）
+	if len(users) > 0 && len(tenants) > 0 {
+		sel := 5
+		if len(users) < sel {
+			sel = len(users)
+		}
+		// 随机挑选 sel 名用户
+		idxs := rand.Perm(len(users))
+		pickedUsers := make([]model.User, 0, sel)
+		for i := 0; i < sel; i++ {
+			pickedUsers = append(pickedUsers, users[idxs[i]])
+		}
+		// 将挑选的用户轮询分配给 5 个 demo 租户（非 default）作为管理员
+		adminBind := 0
+		for i, t := range tenants {
+			u := pickedUsers[i%len(pickedUsers)]
+			var cnt int64
+			if err := db.Model(&model.TenantAdmin{}).
+				Where("user_id = ? AND tenant_id = ?", u.ID, t.ID).
+				Count(&cnt).Error; err == nil && cnt == 0 {
+				if err := db.Create(&model.TenantAdmin{UserID: u.ID, TenantID: t.ID, Role: model.TenantRoleAdmin}).Error; err == nil {
+					adminBind++
+				} else {
+					log.Printf("[Seed][tenant_admin] bind failed tenant=%d user=%d: %v", t.ID, u.ID, err)
+				}
+			}
+		}
+		log.Printf("[Seed] tenant admins bound for non-default tenants: %d", adminBind)
+	}
+
+	// 4) 随机把这些用户加入到上述 10 个 app 中（可叠加）
+	rand.Seed(time.Now().UnixNano())
+	for _, u := range users {
+		// 每个用户加入 1~3 个随机 app
+		n := 1 + rand.Intn(3)
+		picked := map[int]struct{}{}
+		for k := 0; k < n; k++ {
+			if len(apps) == 0 {
+				break
+			}
+			idx := rand.Intn(len(apps))
+			if _, ok := picked[idx]; ok {
+				continue
+			}
+			picked[idx] = struct{}{}
+			now := time.Now()
+			au := model.AppUser{
+				AppID:             apps[idx].ID,
+				UserID:            u.ID,
+				FirstAuthorizedAt: now,
+				LastAuthorizedAt:  now,
+				Status:            model.AppUserStatusActive,
+			}
+			if err := db.Create(&au).Error; err != nil {
+				log.Printf("[Seed][app_user] bind failed u=%d app=%d: %v", u.ID, apps[idx].ID, err)
+			}
+		}
+	}
+	log.Println("[Seed] app-user bindings created")
+
+	// 5) 在每个租户中，创建 3~5 个商品；每个商品 1 个计划 + 1 个定价
+	allPrices := make([]model.Price, 0, 64)
+	for _, t := range tenants {
+		productCount := 3 + rand.Intn(3) // 3,4,5
+		for p := 1; p <= productCount; p++ {
+			prod := model.Product{
+				Code:        fmt.Sprintf("P-%s-%d", t.Code, p),
+				Name:        fmt.Sprintf("Product %d of %s", p, t.Code),
+				Description: "Demo product",
+			}
+			if err := db.Create(&prod).Error; err != nil {
+				log.Printf("[Seed][product] create failed: %v", err)
+				continue
+			}
+			plan := model.Plan{
+				ProductID:   prod.ID,
+				Code:        fmt.Sprintf("basic-%d", p),
+				DisplayName: "Basic",
+				PlanVersion: 1,
+			}
+			if err := db.Create(&plan).Error; err != nil {
+				log.Printf("[Seed][plan] create failed: %v", err)
+				continue
+			}
+			price := model.Price{
+				PlanID:          plan.ID,
+				Currency:        "CNY",
+				AmountCents:     int64(9900),
+				BillingPeriod:   model.BillingPeriodMonth,
+				BillingInterval: 1,
+				UsageType:       model.UsageTypeLicense,
+			}
+			if err := db.Create(&price).Error; err != nil {
+				log.Printf("[Seed][price] create failed: %v", err)
+				continue
+			}
+			allPrices = append(allPrices, price)
+		}
+	}
+	log.Printf("[Seed] products/plans/prices created, prices=%d", len(allPrices))
+
+	// 6) 为部分用户创建订阅（以及订阅项、账单、支付）
+	subsCreated := 0
+	for _, u := range users {
+		if len(allPrices) == 0 {
+			break
+		}
+		// 50% 概率创建 1~2 个订阅
+		if rand.Float64() < 0.5 {
+			sCount := 1 + rand.Intn(2)
+			for k := 0; k < sCount; k++ {
+				p := allPrices[rand.Intn(len(allPrices))]
+				now := time.Now()
+				periodEnd := now.AddDate(0, 1, 0)
+				s := model.Subscription{
+					UserID:             u.ID,
+					Status:             model.SubscriptionStatusActive,
+					CurrentPriceID:     p.ID,
+					StartAt:            now,
+					CurrentPeriodStart: now,
+					CurrentPeriodEnd:   periodEnd,
+				}
+				if err := db.Create(&s).Error; err != nil {
+					log.Printf("[Seed][subscription] create failed user=%d: %v", u.ID, err)
+					continue
+				}
+				subsCreated++
+
+				item := model.SubscriptionItem{
+					SubscriptionID: s.ID,
+					PriceID:        p.ID,
+					Quantity:       1,
+					Metering:       model.MeteringPerUnit,
+				}
+				if err := db.Create(&item).Error; err != nil {
+					log.Printf("[Seed][subscription_item] create failed sub=%d: %v", s.ID, err)
+				}
+
+				// 创建一张已支付账单和对应支付记录
+				inv := model.Invoice{
+					UserID:         u.ID,
+					SubscriptionID: &s.ID,
+					Status:         model.InvoiceStatusPaid,
+					Currency:       p.Currency,
+					TotalCents:     p.AmountCents,
+				}
+				if err := db.Create(&inv).Error; err != nil {
+					log.Printf("[Seed][invoice] create failed sub=%d: %v", s.ID, err)
+				} else {
+					pay := model.Payment{
+						InvoiceID:   inv.ID,
+						AmountCents: p.AmountCents,
+						Currency:    p.Currency,
+						Status:      model.PaymentStatusSucceeded,
+					}
+					if err := db.Create(&pay).Error; err != nil {
+						log.Printf("[Seed][payment] create failed invoice=%d: %v", inv.ID, err)
+					}
+				}
+			}
+		}
+	}
+	log.Printf("[Seed] subscriptions created: %d", subsCreated)
+
+	// 7) 创建 10 个 teams，并随机塞入成员
+	teams := make([]model.Team, 0, 10)
+	for i := 1; i <= 10; i++ {
+		tm := model.Team{
+			Name:        fmt.Sprintf("Demo Team %02d", i),
+			Description: "Seeded team",
+			IsActive:    true,
+		}
+		if err := db.Create(&tm).Error; err != nil {
+			log.Printf("[Seed][team] create failed: %v", err)
+			continue
+		}
+		teams = append(teams, tm)
+	}
+	for _, tm := range teams {
+		// 每个团队加入 3~8 个成员
+		m := 3 + rand.Intn(6)
+		picked := map[int]struct{}{}
+		for k := 0; k < m; k++ {
+			if len(users) == 0 {
+				break
+			}
+			idx := rand.Intn(len(users))
+			if _, ok := picked[idx]; ok {
+				continue
+			}
+			picked[idx] = struct{}{}
+			role := model.TeamRoleMember
+			if k == 0 { // 第一个为 owner
+				role = model.TeamRoleOwner
+			}
+			if err := db.Create(&model.TeamMember{TeamID: tm.ID, UserID: users[idx].ID, Role: role}).Error; err != nil {
+				log.Printf("[Seed][team_member] bind failed team=%d user=%d: %v", tm.ID, users[idx].ID, err)
+			}
+		}
+	}
+	log.Println("[Seed] teams and members created")
+
+	// 基础校验：至少应有用户与价格
+	var userCnt, priceCnt int64
+	_ = db.Model(&model.User{}).Count(&userCnt).Error
+	_ = db.Model(&model.Price{}).Count(&priceCnt).Error
+	if userCnt == 0 || priceCnt == 0 {
+		return errors.New("seed incomplete: users or prices not created")
+	}
+	return nil
 }

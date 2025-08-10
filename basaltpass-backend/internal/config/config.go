@@ -34,6 +34,10 @@ type Config struct {
 		ExposeHeaders    []string `mapstructure:"expose_headers"`
 		MaxAgeSeconds    int      `mapstructure:"max_age_seconds"`
 	} `mapstructure:"cors"`
+	Seeding struct {
+		// Enabled controls whether to auto-inject demo data on first run (empty DB)
+		Enabled bool `mapstructure:"enabled"`
+	} `mapstructure:"seeding"`
 }
 
 var cfg Config
@@ -52,6 +56,7 @@ func Load(path string) (*Config, error) {
 	// Defaults
 	v.SetDefault("env", "develop")
 	v.SetDefault("server.address", ":8080")
+	v.SetDefault("seeding.enabled", false)
 	v.SetDefault("database.driver", "sqlite")
 	v.SetDefault("database.path", "basaltpass.db")
 	v.SetDefault("cors.allow_origins", []string{
