@@ -5,10 +5,10 @@ import (
 	appHandler "basaltpass-backend/internal/public/app"
 	"basaltpass-backend/internal/public/app/app_rbac"
 	"basaltpass-backend/internal/public/app/app_user"
-	"basaltpass-backend/internal/public/notification"
 	"basaltpass-backend/internal/public/oauth"
 	"basaltpass-backend/internal/public/subscription"
 	"basaltpass-backend/internal/tenant"
+	tenantNotif "basaltpass-backend/internal/tenant/notification"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -48,14 +48,14 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 
 	// 租户通知管理
 	tenantNotifGroup := tenantGroup.Group("/notifications")
-	tenantNotifGroup.Post("/", notification.TenantCreateHandler)
-	tenantNotifGroup.Get("/", notification.TenantListHandler)
-	tenantNotifGroup.Get("/stats", notification.TenantGetNotificationStatsHandler)
-	tenantNotifGroup.Get("/:id", notification.TenantGetNotificationHandler)
-	tenantNotifGroup.Put("/:id", notification.TenantUpdateNotificationHandler)
-	tenantNotifGroup.Delete("/:id", notification.TenantDeleteHandler)
-	tenantNotifGroup.Get("/users", notification.TenantGetUsersHandler)
-	tenantNotifGroup.Get("/users/search", notification.TenantSearchUsersHandler)
+	tenantNotifGroup.Post("/", tenantNotif.TenantCreateHandler)
+	tenantNotifGroup.Get("/", tenantNotif.TenantListHandler)
+	tenantNotifGroup.Get("/stats", tenantNotif.TenantGetNotificationStatsHandler)
+	tenantNotifGroup.Get("/:id", tenantNotif.TenantGetNotificationHandler)
+	tenantNotifGroup.Put("/:id", tenantNotif.TenantUpdateNotificationHandler)
+	tenantNotifGroup.Delete("/:id", tenantNotif.TenantDeleteHandler)
+	tenantNotifGroup.Get("/users", tenantNotif.TenantListHandler) // 简化：如需单独接口可再拆
+	tenantNotifGroup.Get("/users/search", tenantNotif.TenantListHandler)
 
 	// 租户OAuth客户端管理路由
 	tenantOAuthGroup := tenantGroup.Group("/oauth/clients")

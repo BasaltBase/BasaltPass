@@ -7,7 +7,6 @@ import (
 	"basaltpass-backend/internal/public/auth"
 	"basaltpass-backend/internal/public/currency"
 	"basaltpass-backend/internal/public/invitation"
-	"basaltpass-backend/internal/public/notification"
 	"basaltpass-backend/internal/public/oauth"
 	"basaltpass-backend/internal/public/order"
 	"basaltpass-backend/internal/public/passkey"
@@ -16,8 +15,10 @@ import (
 	"basaltpass-backend/internal/public/wallet"
 	"basaltpass-backend/internal/tenant"
 	"basaltpass-backend/internal/user"
+	userNotif "basaltpass-backend/internal/user/notification"
 	"basaltpass-backend/internal/user/security"
 	userTeam "basaltpass-backend/internal/user/team"
+
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -129,11 +130,11 @@ func RegisterUserRoutes(v1 fiber.Router) {
 
 	// 通知路由
 	notifGroup := v1.Group("/notifications", middleware.JWTMiddleware())
-	notifGroup.Get("/", notification.ListHandler)
-	notifGroup.Get("/unread-count", notification.UnreadCountHandler)
-	notifGroup.Put("/:id/read", notification.MarkAsReadHandler)
-	notifGroup.Put("/mark-all-read", notification.MarkAllAsReadHandler)
-	notifGroup.Delete("/:id", notification.DeleteHandler)
+	notifGroup.Get("/", userNotif.ListHandler)
+	notifGroup.Get("/unread-count", userNotif.UnreadCountHandler)
+	notifGroup.Put("/:id/read", userNotif.MarkAsReadHandler)
+	notifGroup.Put("/mark-all-read", userNotif.MarkAllAsReadHandler)
+	notifGroup.Delete("/:id", userNotif.DeleteHandler)
 
 	// ========== 订阅系统路由 ==========
 	// 产品和套餐路由（公开，无需认证）

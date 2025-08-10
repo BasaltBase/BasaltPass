@@ -2,6 +2,7 @@ package routes
 
 import (
 	"basaltpass-backend/internal/admin"
+	adminNotification "basaltpass-backend/internal/admin/notification"
 	adminSettings "basaltpass-backend/internal/admin/settings"
 	adminTeam "basaltpass-backend/internal/admin/team"
 	adminTenant "basaltpass-backend/internal/admin/tenant"
@@ -10,7 +11,6 @@ import (
 	"basaltpass-backend/internal/middleware"
 	appHandler "basaltpass-backend/internal/public/app"
 	"basaltpass-backend/internal/public/app/app_user"
-	"basaltpass-backend/internal/public/notification"
 	"basaltpass-backend/internal/public/oauth"
 	rbac2 "basaltpass-backend/internal/public/rbac"
 	"basaltpass-backend/internal/public/subscription"
@@ -162,9 +162,9 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 
 	// 管理员通知路由
 	adminNotif := adminGroup.Group("/notifications")
-	adminNotif.Post("/", notification.AdminCreateHandler)      // /admin/notifications
-	adminNotif.Get("/", notification.AdminListHandler)         // /admin/notifications
-	adminNotif.Delete("/:id", notification.AdminDeleteHandler) // /admin/notifications/:id
+	adminNotif.Post("/", adminNotification.AdminCreateHandler)      // /admin/notifications
+	adminNotif.Get("/", adminNotification.AdminListHandler)         // /admin/notifications
+	adminNotif.Delete("/:id", adminNotification.AdminDeleteHandler) // /admin/notifications/:id
 
 	// ========== 管理员订阅系统路由 ==========
 	// 产品管理

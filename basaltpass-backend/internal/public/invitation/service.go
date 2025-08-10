@@ -1,7 +1,7 @@
 package invitation
 
 import (
-	"basaltpass-backend/internal/public/notification"
+	notif "basaltpass-backend/internal/notification"
 	"errors"
 	"time"
 
@@ -44,7 +44,7 @@ func Create(teamID, inviterID uint, inviteeIDs []uint, remark string) error {
 
 	// 发送通知
 	for _, inv := range invites {
-		notification.Send("Team Center", "Team Invitation", "you are invited to the team "+team.Name, "info", &inv.InviterID, "团队", []uint{inv.InviteeID})
+		notif.Send("Team Center", "Team Invitation", "you are invited to the team "+team.Name, "info", &inv.InviterID, "团队", []uint{inv.InviteeID})
 	}
 	return nil
 }
@@ -82,7 +82,7 @@ func Accept(userID, invitationID uint) error {
 	// 把用户加入团队
 	db.Create(&model.TeamMember{TeamID: inv.TeamID, UserID: userID, Role: model.TeamRoleMember, Status: "active", JoinedAt: time.Now().Unix()})
 	// 通知邀请人
-	notification.Send("团队", "邀请已接受", "用户已接受加入团队", "success", &userID, "系统", []uint{inv.InviterID})
+	notif.Send("团队", "邀请已接受", "用户已接受加入团队", "success", &userID, "系统", []uint{inv.InviterID})
 	return nil
 }
 
@@ -101,7 +101,7 @@ func Reject(userID, invitationID uint) error {
 	if err := db.Save(&inv).Error; err != nil {
 		return err
 	}
-	notification.Send("团队", "邀请被拒绝", "用户拒绝加入团队", "warning", &userID, "系统", []uint{inv.InviterID})
+	notif.Send("团队", "邀请被拒绝", "用户拒绝加入团队", "warning", &userID, "系统", []uint{inv.InviterID})
 	return nil
 }
 
@@ -120,6 +120,6 @@ func Revoke(inviterID, invitationID uint) error {
 	if err := db.Save(&inv).Error; err != nil {
 		return err
 	}
-	notification.Send("团队", "邀请已撤回", "团队邀请已被撤回", "warning", &inv.InviterID, "系统", []uint{inv.InviteeID})
+	notif.Send("团队", "邀请已撤回", "团队邀请已被撤回", "warning", &inv.InviterID, "系统", []uint{inv.InviteeID})
 	return nil
 }
