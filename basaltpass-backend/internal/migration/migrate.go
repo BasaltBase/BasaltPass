@@ -3,9 +3,9 @@ package migration
 import (
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/config"
-	"basaltpass-backend/internal/currency"
 	"basaltpass-backend/internal/model"
-	"basaltpass-backend/internal/settings"
+	"basaltpass-backend/internal/public/currency"
+	"basaltpass-backend/internal/user/settings"
 	"encoding/json"
 	"errors"
 	"fmt"

@@ -1,13 +1,13 @@
 package routes
 
 import (
-	appHandler "basaltpass-backend/internal/app"
-	"basaltpass-backend/internal/app_rbac"
-	"basaltpass-backend/internal/app_user"
 	"basaltpass-backend/internal/middleware"
-	"basaltpass-backend/internal/notification"
-	"basaltpass-backend/internal/oauth"
-	"basaltpass-backend/internal/subscription"
+	appHandler "basaltpass-backend/internal/public/app"
+	"basaltpass-backend/internal/public/app/app_rbac"
+	"basaltpass-backend/internal/public/app/app_user"
+	"basaltpass-backend/internal/public/notification"
+	"basaltpass-backend/internal/public/oauth"
+	"basaltpass-backend/internal/public/subscription"
 	"basaltpass-backend/internal/tenant"
 
 	"github.com/gofiber/fiber/v2"

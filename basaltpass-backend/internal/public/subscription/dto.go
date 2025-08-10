@@ -73,9 +73,9 @@ type PlanResponse struct {
 	EffectiveAt  *time.Time             `json:"effective_at"`
 	DeprecatedAt *time.Time             `json:"deprecated_at"`
 	CreatedAt    time.Time              `json:"created_at"`
-	UpdatedAt    time.Time              `json:"updated_at"`
-	Features     []PlanFeatureResponse  `json:"features,omitempty"`
-	Prices       []PriceResponse        `json:"prices,omitempty"`
+	UpdatedAt    time.Time             `json:"updated_at"`
+	Features     []PlanFeatureResponse `json:"features,omitempty"`
+	Prices       []PriceResponse       `json:"prices,omitempty"`
 }
 
 // ========== 套餐功能相关 DTO ==========

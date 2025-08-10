@@ -3,12 +3,12 @@ package main
 import (
 	common2 "basaltpass-backend/internal/middleware"
 	"basaltpass-backend/internal/migration"
+	subscription2 "basaltpass-backend/internal/public/subscription"
 	"log"
 
 	"basaltpass-backend/internal/api"
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/config"
-	"basaltpass-backend/internal/subscription"
 	userTeam "basaltpass-backend/internal/user/team"
 
 	"os"
@@ -38,10 +38,10 @@ func main() {
 	userTeam.InitHandler(common.DB())
 
 	// 初始化订阅处理器
-	subscription.InitHandler(common.DB())
+	subscription2.InitHandler(common.DB())
 
 	// 初始化租户订阅处理器
-	subscription.InitTenantHandler(common.DB())
+	subscription2.InitTenantHandler(common.DB())
 
 	// Register API routes
 	api.RegisterRoutes(app)

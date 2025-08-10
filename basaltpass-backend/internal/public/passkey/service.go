@@ -1,12 +1,12 @@
 package passkey
 
 import (
+	"basaltpass-backend/internal/public/auth"
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
 	"time"
 
-	"basaltpass-backend/internal/auth"
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
 

@@ -1,9 +1,8 @@
 package oauth
 
 import (
+	"basaltpass-backend/internal/public/app"
 	"strconv"
-
-	"basaltpass-backend/internal/app"
 
 	"github.com/gofiber/fiber/v2"
 )

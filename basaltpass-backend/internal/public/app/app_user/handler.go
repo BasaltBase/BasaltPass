@@ -1,9 +1,9 @@
 package app_user
 
 import (
-	"basaltpass-backend/internal/aduit"
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
+	"basaltpass-backend/internal/public/aduit"
 	"strconv"
 	"time"
 

@@ -1,10 +1,10 @@
 package wallet
 
 import (
+	"basaltpass-backend/internal/public/currency"
 	"errors"
 
 	"basaltpass-backend/internal/common"
-	"basaltpass-backend/internal/currency"
 	"basaltpass-backend/internal/model"
 
 	"gorm.io/gorm"

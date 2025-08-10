@@ -1,10 +1,10 @@
 package security
 
 import (
-	"basaltpass-backend/internal/aduit"
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
-	"basaltpass-backend/internal/notification"
+	"basaltpass-backend/internal/public/aduit"
+	"basaltpass-backend/internal/public/notification"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/pquerna/otp/totp"

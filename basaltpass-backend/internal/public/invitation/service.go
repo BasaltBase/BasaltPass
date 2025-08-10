@@ -1,12 +1,12 @@
 package invitation
 
 import (
+	"basaltpass-backend/internal/public/notification"
 	"errors"
 	"time"
 
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
-	"basaltpass-backend/internal/notification"
 )
 
 var ErrAlreadyInvited = errors.New("user already invited to this team")

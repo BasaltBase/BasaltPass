@@ -1,13 +1,12 @@
 package subscription
 
 import (
+	"basaltpass-backend/internal/public/payment"
 	"errors"
 	"fmt"
 	"time"
 
 	"basaltpass-backend/internal/model"
-	"basaltpass-backend/internal/payment"
-
 	"gorm.io/gorm"
 )
 

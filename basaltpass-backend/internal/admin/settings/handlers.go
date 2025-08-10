@@ -1,13 +1,12 @@
 package settings
 
 import (
+	settingssvc "basaltpass-backend/internal/user/settings"
 	"encoding/json"
 	"net/http"
 
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
-	settingssvc "basaltpass-backend/internal/settings"
-
 	"github.com/gofiber/fiber/v2"
 )
 

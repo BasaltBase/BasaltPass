@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"basaltpass-backend/internal/payment"
+	"basaltpass-backend/internal/public/payment"
 
 	"github.com/gofiber/fiber/v2"
 )

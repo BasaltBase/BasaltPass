@@ -1,6 +1,7 @@
 package oauth
 
 import (
+	"basaltpass-backend/internal/public/app/app_user"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
@@ -10,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"basaltpass-backend/internal/app_user"
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
 

@@ -1,13 +1,12 @@
 package auth
 
 import (
-	"basaltpass-backend/internal/aduit"
+	"basaltpass-backend/internal/public/aduit"
+	"basaltpass-backend/internal/user/security"
 	"errors"
 
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
-	"basaltpass-backend/internal/security"
-
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
