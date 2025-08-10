@@ -14,9 +14,9 @@ import (
 	"basaltpass-backend/internal/payment"
 	"basaltpass-backend/internal/security"
 	"basaltpass-backend/internal/subscription"
-	"basaltpass-backend/internal/team"
 	"basaltpass-backend/internal/tenant"
 	"basaltpass-backend/internal/user"
+	userTeam "basaltpass-backend/internal/user/team"
 	"basaltpass-backend/internal/wallet"
 
 	"github.com/gofiber/fiber/v2"
@@ -68,16 +68,16 @@ func RegisterUserRoutes(v1 fiber.Router) {
 
 	// 团队相关路由
 	teamGroup := v1.Group("/teams", middleware.JWTMiddleware())
-	teamGroup.Post("/", team.CreateTeamHandler)
-	teamGroup.Get("/", team.GetUserTeamsHandler)
-	teamGroup.Get("/:id", team.GetTeamHandler)
-	teamGroup.Put("/:id", team.UpdateTeamHandler)
-	teamGroup.Delete("/:id", team.DeleteTeamHandler)
-	teamGroup.Get("/:id/members", team.GetTeamMembersHandler)
-	teamGroup.Post("/:id/members", team.AddMemberHandler)
-	teamGroup.Put("/:id/members/:member_id", team.UpdateMemberRoleHandler)
-	teamGroup.Delete("/:id/members/:member_id", team.RemoveMemberHandler)
-	teamGroup.Post("/:id/leave", team.LeaveTeamHandler)
+	teamGroup.Post("/", userTeam.CreateTeamHandler)
+	teamGroup.Get("/", userTeam.GetUserTeamsHandler)
+	teamGroup.Get("/:id", userTeam.GetTeamHandler)
+	teamGroup.Put("/:id", userTeam.UpdateTeamHandler)
+	teamGroup.Delete("/:id", userTeam.DeleteTeamHandler)
+	teamGroup.Get("/:id/members", userTeam.GetTeamMembersHandler)
+	teamGroup.Post("/:id/members", userTeam.AddMemberHandler)
+	teamGroup.Put("/:id/members/:member_id", userTeam.UpdateMemberRoleHandler)
+	teamGroup.Delete("/:id/members/:member_id", userTeam.RemoveMemberHandler)
+	teamGroup.Post("/:id/leave", userTeam.LeaveTeamHandler)
 
 	// Invitation routes
 	inv := v1.Group("/invitations", middleware.JWTMiddleware())

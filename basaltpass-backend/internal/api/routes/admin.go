@@ -3,6 +3,7 @@ package routes
 import (
 	"basaltpass-backend/internal/admin"
 	adminSettings "basaltpass-backend/internal/admin/settings"
+	adminTeam "basaltpass-backend/internal/admin/team"
 	adminTenant "basaltpass-backend/internal/admin/tenant"
 	adminUser "basaltpass-backend/internal/admin/user"
 	adminWallet "basaltpass-backend/internal/admin/wallet"
@@ -94,6 +95,17 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 
 	// 团队钱包管理
 	adminGroup.Get("/teams/:id/wallets", walletHandler.GetTeamWallets) // /admin/teams/:id/wallets
+	// 团队管理
+	adminTeamGroup := adminGroup.Group("/teams")
+	adminTeamGroup.Get("/", adminTeam.ListTeamsHandler)
+	adminTeamGroup.Get("/:id", adminTeam.GetTeamHandler)
+	adminTeamGroup.Put("/:id", adminTeam.UpdateTeamHandler)
+	adminTeamGroup.Delete("/:id", adminTeam.DeleteTeamHandler)
+	adminTeamGroup.Get("/:id/members", adminTeam.ListMembersHandler)
+	adminTeamGroup.Post("/:id/members", adminTeam.AddMemberHandler)
+	adminTeamGroup.Delete("/:id/members/:user_id", adminTeam.RemoveMemberHandler)
+	adminTeamGroup.Post("/:id/transfer/:new_owner_id", adminTeam.TransferOwnershipHandler)
+	adminTeamGroup.Post("/:id/active", adminTeam.ToggleActiveHandler)
 
 	// 货币管理
 	adminGroup.Get("/currencies", walletHandler.GetCurrencies) // /admin/currencies

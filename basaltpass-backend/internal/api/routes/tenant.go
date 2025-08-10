@@ -17,8 +17,8 @@ import (
 func RegisterTenantRoutes(v1 fiber.Router) {
 	/**
 	 * 租户级路由
-	 * 这些路由需要租户上下文，但不需要管理员权限
-	 * 所有租户成员可访问
+	 * 这些路由需要租户上下文，但不需要全局管理员权限
+	 * 所有租户管理员
 	 */
 	tenantGroup := v1.Group("/tenant", middleware.JWTMiddleware(), middleware.TenantMiddleware())
 
@@ -27,7 +27,8 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 
 	// 租户用户管理路由
 	tenantUserGroup := tenantGroup.Group("/users")
-	tenantUserGroup.Get("/", tenant.GetTenantUsersHandler)
+	tenantUserGroup.Get("/", tenant.GetTenantUsersHandler) // 获取tenant的全部app的全部用户
+	tenantUserGroup.Get("/app-linked", tenant.GetTenantAppLinkedUsersHandler)
 	tenantUserGroup.Get("/stats", tenant.GetTenantUserStatsHandler)
 	tenantUserGroup.Get("/:id", tenant.GetTenantUserHandler)
 	tenantUserGroup.Put("/:id", tenant.UpdateTenantUserHandler)

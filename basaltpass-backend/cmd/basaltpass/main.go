@@ -9,7 +9,7 @@ import (
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/config"
 	"basaltpass-backend/internal/subscription"
-	"basaltpass-backend/internal/team"
+	userTeam "basaltpass-backend/internal/user/team"
 
 	"os"
 
@@ -34,8 +34,8 @@ func main() {
 	// Run DB migrations
 	migration.RunMigrations()
 
-	// 初始化团队处理器
-	team.InitHandler(common.DB())
+	// 初始化团队处理器（用户侧）
+	userTeam.InitHandler(common.DB())
 
 	// 初始化订阅处理器
 	subscription.InitHandler(common.DB())

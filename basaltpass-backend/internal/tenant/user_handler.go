@@ -129,6 +129,87 @@ func GetTenantUsersHandler(c *fiber.Ctx) error {
 	})
 }
 
+// TenantAppLinkedUserResponse 授权了当前租户任一应用的用户（从 app_users 聚合）
+type TenantAppLinkedUserResponse struct {
+	ID               uint       `json:"id"`
+	Email            string     `json:"email"`
+	Nickname         string     `json:"nickname"`
+	Avatar           string     `json:"avatar"`
+	AppCount         int64      `json:"app_count"`
+	LastAuthorizedAt *time.Time `json:"last_authorized_at"`
+	LastActiveAt     *time.Time `json:"last_active_at"`
+}
+
+// GetTenantAppLinkedUsersHandler 获取授权了当前租户任一应用的所有用户（来自 app_users）
+// GET /api/v1/tenant/users/app-linked
+func GetTenantAppLinkedUsersHandler(c *fiber.Ctx) error {
+	tenantID := c.Locals("tenantID").(uint)
+
+	// 分页与筛选
+	page, _ := strconv.Atoi(c.Query("page", "1"))
+	limit, _ := strconv.Atoi(c.Query("limit", "20"))
+	search := c.Query("search", "")
+	status := c.Query("status", "") // 过滤 app_users.status，可选
+
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit > 100 {
+		limit = 20
+	}
+	offset := (page - 1) * limit
+
+	// 基础联结：租户下的应用(apps.tenant_id = tenantID) 与 app_users、users
+	base := tenantService.db.Table("users").
+		Joins("JOIN app_users au ON au.user_id = users.id").
+		Joins("JOIN apps a ON a.id = au.app_id").
+		Where("a.tenant_id = ?", tenantID)
+
+	if search != "" {
+		base = base.Where("LOWER(users.email) LIKE LOWER(?) OR LOWER(users.nickname) LIKE LOWER(?)", "%"+search+"%", "%"+search+"%")
+	}
+	if status != "" {
+		base = base.Where("au.status = ?", status)
+	}
+
+	// 统计去重后的用户数量
+	var total int64
+	if err := base.Distinct("users.id").Count(&total).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "统计用户数量失败",
+		})
+	}
+
+	// 查询列表：按用户分组聚合（最近授权/活跃时间、涉及应用数）
+	var users []TenantAppLinkedUserResponse
+	listQuery := base.Select(`
+			users.id,
+			users.email,
+			users.nickname,
+			users.avatar_url as avatar,
+			COUNT(DISTINCT au.app_id) as app_count,
+			MAX(au.last_authorized_at) as last_authorized_at,
+			MAX(au.last_active_at) as last_active_at`).
+		Group("users.id, users.email, users.nickname, users.avatar_url").
+		Order("MAX(au.last_authorized_at) DESC").
+		Offset(offset).Limit(limit)
+
+	if err := listQuery.Scan(&users).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "查询用户列表失败",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"users": users,
+		"pagination": fiber.Map{
+			"page":  page,
+			"limit": limit,
+			"total": total,
+		},
+	})
+}
+
 // GetTenantUserStatsHandler 获取租户用户统计
 // GET /api/v1/tenant/users/stats
 func GetTenantUserStatsHandler(c *fiber.Ctx) error {
