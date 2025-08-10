@@ -14,7 +14,9 @@ import {
   ArrowsRightLeftIcon,
   CreditCardIcon,
   CubeIcon,
-  InformationCircleIcon
+  InformationCircleIcon,
+  ChevronDownIcon,
+  ArrowRightOnRectangleIcon
 } from '@heroicons/react/24/outline'
 import { useAuth } from '../contexts/AuthContext'
 import EnhancedNotificationIcon from './EnhancedNotificationIcon'
@@ -38,16 +40,18 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const location = useLocation()
-  const { logout } = useAuth()
+  const { user, logout } = useAuth()
 
   const handleLogout = () => {
     logout()
   }
 
-  const handleLogoutClick = () => {
-    setShowLogoutConfirm(true)
+  const getUserInitial = () => {
+    if (user?.nickname) return user.nickname.charAt(0).toUpperCase()
+    if (user?.email) return user.email.charAt(0).toUpperCase()
+    return 'U'
   }
 
   const isActive = (href: string) => location.pathname === href
@@ -151,13 +155,65 @@ export default function Layout({ children }: LayoutProps) {
                 </Link>
               
             <EnhancedNotificationIcon viewAllPath="/notifications" />
-            <button
-              onClick={handleLogoutClick}
-              className="text-gray-500 hover:text-gray-900 flex items-center"
-              title="退出登录"
-            >
-              <ArrowsRightLeftIcon className="h-6 w-6" />
-            </button>
+            {/* 用户菜单 */}
+            <div className="relative">
+              <button
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                className="flex items-center rounded-full bg-white p-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:bg-gray-50"
+                title="打开用户菜单"
+              >
+                <span className="sr-only">打开用户菜单</span>
+                {user?.avatar_url ? (
+                  <img
+                    className="h-8 w-8 rounded-full object-cover"
+                    src={user.avatar_url}
+                    alt={user?.nickname || user?.email || 'User'}
+                  />
+                ) : (
+                  <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center">
+                    <span className="text-sm font-medium text-white">{getUserInitial()}</span>
+                  </div>
+                )}
+                <ChevronDownIcon className="ml-1 h-4 w-4 text-gray-500" />
+              </button>
+
+              {isUserMenuOpen && (
+                <div className="absolute right-0 z-50 mt-2 w-56 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                  <div className="px-4 py-3 border-b border-gray-200">
+                    <p className="text-sm text-gray-900 font-medium">{user?.nickname || '用户'}</p>
+                    <p className="text-sm text-gray-500 truncate">{user?.email}</p>
+                  </div>
+                  <Link
+                    to="/profile"
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={() => setIsUserMenuOpen(false)}
+                  >
+                    <UserIcon className="mr-3 h-4 w-4" />
+                    个人资料
+                  </Link>
+                  <Link
+                    to="/settings"
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={() => setIsUserMenuOpen(false)}
+                  >
+                    <CogIcon className="mr-3 h-4 w-4" />
+                    设置
+                  </Link>
+                  <div className="border-t border-gray-200"></div>
+                  <button
+                    onClick={handleLogout}
+                    className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    <ArrowRightOnRectangleIcon className="mr-3 h-4 w-4" />
+                    登出
+                  </button>
+                </div>
+              )}
+
+              {isUserMenuOpen && (
+                <div className="fixed inset-0 z-40" onClick={() => setIsUserMenuOpen(false)} />
+              )}
+            </div>
           </div>
         </div>
 
@@ -171,38 +227,7 @@ export default function Layout({ children }: LayoutProps) {
         </main>
       </div>
 
-      {/* 退出登录确认对话框 */}
-      {showLogoutConfirm && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
-          <div className="relative mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="mt-3 text-center">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
-                确认退出登录
-              </h3>
-              <p className="text-sm text-gray-500 mb-6">
-                您确定要退出登录吗？退出后需要重新登录才能访问系统。
-              </p>
-              <div className="flex justify-center space-x-3">
-                <button
-                  onClick={() => setShowLogoutConfirm(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                >
-                  取消
-                </button>
-                <button
-                  onClick={() => {
-                    setShowLogoutConfirm(false);
-                    handleLogout();
-                  }}
-                  className="px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700"
-                >
-                  确认退出
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+  {/* 移除旧的确认退出对话框，登出入口移至用户菜单 */}
     </div>
   )
 } 
