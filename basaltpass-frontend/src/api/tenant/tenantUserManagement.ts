@@ -12,6 +12,11 @@ export interface TenantUser {
   last_login_at?: string
   created_at: string
   updated_at: string
+  // 新增字段：同一用户可能使用该租户的多个应用
+  app_count?: number
+  last_authorized_at?: string
+  last_active_at?: string
+  is_tenant_admin?: boolean
 }
 
 export interface TenantUserStats {

@@ -28,6 +28,7 @@ const navigation = [
   { name: '钱包', href: '/wallet', icon: WalletIcon },
   { name: '我的订阅', href: '/subscriptions', icon: CreditCardIcon },
   { name: '产品与套餐', href: '/products', icon: CubeIcon },
+  { name: '我的应用', href: '/my-apps', icon: CubeIcon },
   { name: '安全', href: '/security', icon: ShieldCheckIcon },
   { name: '设置', href: '/settings', icon: CogIcon },
   { name: '帮助', href: '/help', icon: QuestionMarkCircleIcon },

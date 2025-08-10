@@ -21,6 +21,7 @@ import PasskeyManagement from '@pages/user/security/PasskeyManagement'
 import Dashboard from '@pages/user/Dashboard'
 import Settings from '@pages/user/Settings'
 import Help from '@pages/user/Help'
+import UserAppsIndex from '@pages/user/apps/Index'
 import TeamIndex from '@pages/user/team/Index'
 import CreateTeam from '@pages/user/team/Create'
 import TeamDetail from '@pages/user/team/Detail'
@@ -113,6 +114,11 @@ export default function AppRouter() {
       <Route path="/settings" element={
         <ProtectedRoute>
           <Settings />
+        </ProtectedRoute>
+      } />
+      <Route path="/my-apps" element={
+        <ProtectedRoute>
+          <UserAppsIndex />
         </ProtectedRoute>
       } />
       <Route path="/help" element={

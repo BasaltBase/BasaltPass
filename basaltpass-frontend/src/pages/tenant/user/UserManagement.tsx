@@ -727,6 +727,9 @@ export default function TenantUserManagement() {
                             用户
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            应用数
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             角色
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -769,10 +772,20 @@ export default function TenantUserManagement() {
                                 </div>
                               </div>
                             </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                              {user.app_count ?? 0}
+                            </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
-                                {getRoleText(user.role)}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
+                                  {getRoleText(user.role)}
+                                </span>
+                                {!user.is_tenant_admin && (
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                                    应用用户
+                                  </span>
+                                )}
+                              </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(user.status)}`}>
@@ -780,14 +793,14 @@ export default function TenantUserManagement() {
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {user.last_login_at ? new Date(user.last_login_at).toLocaleDateString() : '从未登录'}
+                              {user.last_login_at ? new Date(user.last_login_at).toLocaleDateString() : (user.last_active_at ? new Date(user.last_active_at).toLocaleDateString() : 'N/A')}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                               {new Date(user.created_at).toLocaleDateString()}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                               <div className="flex items-center justify-end space-x-2">
-                                {user.role !== 'owner' && (
+                                {user.is_tenant_admin && user.role !== 'owner' && (
                                   <>
                                     <button
                                       onClick={() => handleEditUser(user)}
@@ -803,7 +816,7 @@ export default function TenantUserManagement() {
                                     </button>
                                   </>
                                 )}
-                                {user.status === 'inactive' && (
+                                {user.is_tenant_admin && user.status === 'inactive' && (
                                   <button
                                     onClick={() => handleResendInvitation(user)}
                                     className="text-green-600 hover:text-green-800"
