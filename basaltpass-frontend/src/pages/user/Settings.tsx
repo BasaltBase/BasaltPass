@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import Layout from '../../components/Layout'
-import { PSelect } from '../../components'
+import { PSelect, PCard } from '../../components'
 import { 
   UserIcon, 
   BellIcon, 
@@ -42,12 +42,11 @@ export default function Settings() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
 
           {/* 区域设置 */}
-          <div className="bg-white shadow rounded-lg">
-            <div className="px-4 py-5 sm:p-6">
-              <div className="flex items-center mb-4">
-                <GlobeAltIcon className="h-5 w-5 text-gray-400 mr-2" />
-                <h3 className="text-lg font-medium text-gray-900">区域设置</h3>
-              </div>
+          <PCard>
+            <div className="flex items-center mb-4">
+              <GlobeAltIcon className="h-5 w-5 text-gray-400 mr-2" />
+              <h3 className="text-lg font-medium text-gray-900">区域设置</h3>
+            </div>
               <div className="space-y-4">
                 <div>
                   <PSelect
@@ -80,16 +79,14 @@ export default function Settings() {
                   </PSelect>
                 </div>
               </div>
-            </div>
-          </div>
+          </PCard>
 
                      {/* 通知设置 */}
-          <div className="bg-white shadow rounded-lg">
-            <div className="px-4 py-5 sm:p-6">
-              <div className="flex items-center mb-4">
-                <BellIcon className="h-5 w-5 text-gray-400 mr-2" />
-                <h3 className="text-lg font-medium text-gray-900">通知设置</h3>
-              </div>
+          <PCard>
+            <div className="flex items-center mb-4">
+              <BellIcon className="h-5 w-5 text-gray-400 mr-2" />
+              <h3 className="text-lg font-medium text-gray-900">通知设置</h3>
+            </div>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -171,8 +168,7 @@ export default function Settings() {
                   </button>
                 </div>
               </div>
-            </div>
-          </div>
+          </PCard>
         </div>
 
         {/* 保存按钮 */}
