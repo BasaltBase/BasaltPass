@@ -18,6 +18,7 @@ import {
   PlusIcon
 } from '@heroicons/react/24/outline'
 import AdminLayout from '@components/AdminLayout'
+import { PInput, PButton, PCheckbox } from '../../../components'
 
 export default function Users() {
   const [users, setUsers] = useState<AdminUser[]>([])
@@ -206,13 +207,13 @@ export default function Users() {
               管理系统中的所有用户，包括查看、修改、封禁和删除操作
             </p>
           </div>
-          <button
+          <PButton
             onClick={() => setShowCreateModal(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
+            variant="primary"
+            leftIcon={<PlusIcon className="h-4 w-4" />}
           >
-            <PlusIcon className="h-4 w-4 mr-2" />
             添加用户
-          </button>
+          </PButton>
         </div>
 
         {/* 统计卡片 */}
@@ -290,18 +291,13 @@ export default function Users() {
             <div className="flex flex-col sm:flex-row gap-4">
               {/* 搜索框 */}
               <div className="flex-1">
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="搜索用户（邮箱、电话、昵称）"
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    value={params.search}
-                    onChange={(e) => handleSearch(e.target.value)}
-                  />
-                </div>
+                <PInput
+                  type="text"
+                  placeholder="搜索用户（邮箱、电话、昵称）"
+                  value={params.search}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  icon={<MagnifyingGlassIcon className="h-5 w-5" />}
+                />
               </div>
 
               {/* 状态筛选 */}
@@ -446,7 +442,9 @@ export default function Users() {
                           >
                             <EyeIcon className="h-4 w-4" />
                           </Link>
-                          <button
+                          <PButton
+                            variant="ghost"
+                            size="sm"
                             onClick={() => handleBanUser(user)}
                             className={user.banned ? "text-green-600 hover:text-green-800" : "text-red-600 hover:text-red-800"}
                             title={user.banned ? "解封用户" : "封禁用户"}
@@ -456,14 +454,16 @@ export default function Users() {
                             ) : (
                               <ShieldExclamationIcon className="h-4 w-4" />
                             )}
-                          </button>
-                          <button
+                          </PButton>
+                          <PButton
+                            variant="ghost"
+                            size="sm"
                             onClick={() => handleDeleteUser(user)}
                             className="text-red-600 hover:text-red-800"
                             title="删除用户"
                           >
                             <TrashIcon className="h-4 w-4" />
-                          </button>
+                          </PButton>
                         </div>
                       </td>
                     </tr>
@@ -477,20 +477,22 @@ export default function Users() {
           {!loading && pagination.total_pages > 1 && (
             <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
               <div className="flex-1 flex justify-between sm:hidden">
-                <button
+                <PButton
+                  variant="secondary"
+                  size="sm"
                   onClick={() => handlePageChange(pagination.page - 1)}
                   disabled={pagination.page <= 1}
-                  className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   上一页
-                </button>
-                <button
+                </PButton>
+                <PButton
+                  variant="secondary"
+                  size="sm"
                   onClick={() => handlePageChange(pagination.page + 1)}
                   disabled={pagination.page >= pagination.total_pages}
-                  className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   下一页
-                </button>
+                </PButton>
               </div>
               <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                 <div>
@@ -504,13 +506,15 @@ export default function Users() {
                 </div>
                 <div>
                   <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                    <button
+                    <PButton
+                      variant="secondary"
+                      size="sm"
                       onClick={() => handlePageChange(pagination.page - 1)}
                       disabled={pagination.page <= 1}
-                      className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="rounded-l-md rounded-r-none"
                     >
                       上一页
-                    </button>
+                    </PButton>
                     
                     {/* 页码按钮 */}
                     {Array.from({ length: Math.min(5, pagination.total_pages) }, (_, i) => {
@@ -526,27 +530,27 @@ export default function Users() {
                       }
                       
                       return (
-                        <button
+                        <PButton
                           key={page}
+                          variant={page === pagination.page ? "primary" : "secondary"}
+                          size="sm"
                           onClick={() => handlePageChange(page)}
-                          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                            page === pagination.page
-                              ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                              : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                          }`}
+                          className="rounded-none"
                         >
                           {page}
-                        </button>
+                        </PButton>
                       );
                     })}
                     
-                    <button
+                    <PButton
+                      variant="secondary"
+                      size="sm"
                       onClick={() => handlePageChange(pagination.page + 1)}
                       disabled={pagination.page >= pagination.total_pages}
-                      className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="rounded-r-md rounded-l-none"
                     >
                       下一页
-                    </button>
+                    </PButton>
                   </nav>
                 </div>
               </div>
@@ -560,7 +564,9 @@ export default function Users() {
             <div className="w-3/4 max-w-2xl p-6 border shadow-lg rounded-md bg-white">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-semibold text-gray-900">创建新用户</h2>
-                <button 
+                <PButton 
+                  variant="ghost"
+                  size="sm"
                   onClick={() => {
                     setShowCreateModal(false)
                     setCreateError('')
@@ -576,95 +582,61 @@ export default function Users() {
                   className="text-gray-400 hover:text-gray-600 text-xl font-bold"
                 >
                   ✕
-                </button>
+                </PButton>
               </div>
               
               <form onSubmit={(e) => { e.preventDefault(); handleCreateUser(); }} className="space-y-6">
                 {/* 第一行：邮箱和手机号 */}
                 <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      邮箱 <span className="text-red-500">*</span>
-                    </label>
-                    <input 
-                      type="email"
-                      className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500" 
-                      placeholder="输入邮箱地址" 
-                      value={createForm.email} 
-                      onChange={(e) => setCreateForm(prev => ({ ...prev, email: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      手机号
-                    </label>
-                    <input 
-                      type="tel"
-                      className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500" 
-                      placeholder="输入手机号" 
-                      value={createForm.phone} 
-                      onChange={(e) => setCreateForm(prev => ({ ...prev, phone: e.target.value }))}
-                    />
-                  </div>
+                  <PInput
+                    type="email"
+                    label={<>邮箱 <span className="text-red-500">*</span></>}
+                    placeholder="输入邮箱地址"
+                    value={createForm.email}
+                    onChange={(e) => setCreateForm(prev => ({ ...prev, email: e.target.value }))}
+                    required
+                  />
+                  <PInput
+                    type="tel"
+                    label="手机号"
+                    placeholder="输入手机号"
+                    value={createForm.phone}
+                    onChange={(e) => setCreateForm(prev => ({ ...prev, phone: e.target.value }))}
+                  />
                 </div>
 
                 {/* 第二行：密码和昵称 */}
                 <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      密码 <span className="text-red-500">*</span>
-                    </label>
-                    <input 
-                      type="password"
-                      className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500" 
-                      placeholder="输入密码（至少6位）" 
-                      value={createForm.password} 
-                      onChange={(e) => setCreateForm(prev => ({ ...prev, password: e.target.value }))}
-                      required
-                      minLength={6}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      昵称
-                    </label>
-                    <input 
-                      type="text"
-                      className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500" 
-                      placeholder="输入用户昵称" 
-                      value={createForm.nickname} 
-                      onChange={(e) => setCreateForm(prev => ({ ...prev, nickname: e.target.value }))}
-                    />
-                  </div>
+                  <PInput
+                    type="password"
+                    label={<>密码 <span className="text-red-500">*</span></>}
+                    placeholder="输入密码（至少6位）"
+                    value={createForm.password}
+                    onChange={(e) => setCreateForm(prev => ({ ...prev, password: e.target.value }))}
+                    required
+                    minLength={6}
+                  />
+                  <PInput
+                    type="text"
+                    label="昵称"
+                    placeholder="输入用户昵称"
+                    value={createForm.nickname}
+                    onChange={(e) => setCreateForm(prev => ({ ...prev, nickname: e.target.value }))}
+                  />
                 </div>
 
                 {/* 第三行：验证状态 */}
                 <div className="grid grid-cols-2 gap-6">
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id="email_verified"
-                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                      checked={createForm.email_verified}
-                      onChange={(e) => setCreateForm(prev => ({ ...prev, email_verified: e.target.checked }))}
-                    />
-                    <label htmlFor="email_verified" className="ml-2 block text-sm text-gray-900">
-                      邮箱已验证
-                    </label>
-                  </div>
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id="phone_verified"
-                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                      checked={createForm.phone_verified}
-                      onChange={(e) => setCreateForm(prev => ({ ...prev, phone_verified: e.target.checked }))}
-                    />
-                    <label htmlFor="phone_verified" className="ml-2 block text-sm text-gray-900">
-                      手机已验证
-                    </label>
-                  </div>
+                  <PCheckbox
+                    label="邮箱已验证"
+                    checked={createForm.email_verified}
+                    onChange={(e) => setCreateForm(prev => ({ ...prev, email_verified: e.target.checked }))}
+                  />
+                  <PCheckbox
+                    label="手机已验证"
+                    checked={createForm.phone_verified}
+                    onChange={(e) => setCreateForm(prev => ({ ...prev, phone_verified: e.target.checked }))}
+                  />
                 </div>
 
                 {/* 错误信息显示 */}
@@ -676,8 +648,9 @@ export default function Users() {
 
                 {/* 按钮区域 */}
                 <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
-                  <button
+                  <PButton
                     type="button"
+                    variant="secondary"
                     onClick={() => {
                       setShowCreateModal(false)
                       setCreateError('')
@@ -690,17 +663,17 @@ export default function Users() {
                         phone_verified: false
                       })
                     }}
-                    className="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                   >
                     取消
-                  </button>
-                  <button
+                  </PButton>
+                  <PButton
                     type="submit"
                     disabled={creating}
-                    className="px-6 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                    variant="primary"
+                    loading={creating}
                   >
-                    {creating ? '创建中...' : '创建用户'}
-                  </button>
+                    创建用户
+                  </PButton>
                 </div>
               </form>
             </div>

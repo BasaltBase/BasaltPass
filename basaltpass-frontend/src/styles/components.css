@@ -1,0 +1,196 @@
+/* BasaltPass 组件样式指南 */
+
+/*
+  这个文件包含了 P-Input 和 P-Button 组件的设计令牌和样式规范
+  确保整个应用的视觉一致性
+*/
+
+:root {
+  /* 颜色系统 */
+  --bp-primary: #4f46e5;        /* indigo-600 */
+  --bp-primary-hover: #4338ca;  /* indigo-700 */
+  --bp-primary-light: #eef2ff;  /* indigo-50 */
+  
+  --bp-secondary: #6b7280;      /* gray-500 */
+  --bp-secondary-hover: #4b5563; /* gray-600 */
+  --bp-secondary-light: #f9fafb; /* gray-50 */
+  
+  --bp-danger: #dc2626;         /* red-600 */
+  --bp-danger-hover: #b91c1c;   /* red-700 */
+  --bp-danger-light: #fef2f2;   /* red-50 */
+  
+  --bp-success: #059669;        /* emerald-600 */
+  --bp-success-hover: #047857;  /* emerald-700 */
+  --bp-success-light: #ecfdf5;  /* emerald-50 */
+  
+  --bp-warning: #d97706;        /* amber-600 */
+  --bp-warning-hover: #b45309;  /* amber-700 */
+  --bp-warning-light: #fffbeb;  /* amber-50 */
+  
+  /* 边框和背景 */
+  --bp-border: #d1d5db;         /* gray-300 */
+  --bp-border-focus: #4f46e5;   /* indigo-600 */
+  --bp-background: #ffffff;     /* white */
+  --bp-background-alt: #f9fafb; /* gray-50 */
+  
+  /* 文本颜色 */
+  --bp-text-primary: #111827;   /* gray-900 */
+  --bp-text-secondary: #6b7280; /* gray-500 */
+  --bp-text-placeholder: #9ca3af; /* gray-400 */
+  
+  /* 阴影 */
+  --bp-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --bp-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --bp-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  
+  /* 圆角 */
+  --bp-radius-sm: 0.375rem;     /* 6px */
+  --bp-radius-md: 0.5rem;       /* 8px */
+  --bp-radius-lg: 0.75rem;      /* 12px */
+  --bp-radius-xl: 1rem;         /* 16px */
+  
+  /* 间距 */
+  --bp-space-1: 0.25rem;        /* 4px */
+  --bp-space-2: 0.5rem;         /* 8px */
+  --bp-space-3: 0.75rem;        /* 12px */
+  --bp-space-4: 1rem;           /* 16px */
+  --bp-space-6: 1.5rem;         /* 24px */
+  --bp-space-8: 2rem;           /* 32px */
+  
+  /* 字体大小 */
+  --bp-text-xs: 0.75rem;        /* 12px */
+  --bp-text-sm: 0.875rem;       /* 14px */
+  --bp-text-base: 1rem;         /* 16px */
+  --bp-text-lg: 1.125rem;       /* 18px */
+  --bp-text-xl: 1.25rem;        /* 20px */
+  
+  /* 过渡 */
+  --bp-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bp-background: #1f2937;      /* gray-800 */
+    --bp-background-alt: #111827;  /* gray-900 */
+    --bp-text-primary: #f9fafb;    /* gray-50 */
+    --bp-text-secondary: #9ca3af;  /* gray-400 */
+    --bp-border: #4b5563;          /* gray-600 */
+  }
+}
+
+/* 组件特定样式类 */
+.bp-input-base {
+  @apply block w-full border transition-all duration-200 
+         focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500
+         disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed;
+}
+
+.bp-input-default {
+  @apply border-gray-300 rounded-md shadow-sm bg-white;
+}
+
+.bp-input-rounded {
+  @apply border-gray-200 rounded-xl shadow-sm bg-white/80;
+}
+
+.bp-input-minimal {
+  @apply border-gray-200 rounded-lg bg-gray-50;
+}
+
+.bp-input-error {
+  @apply border-red-300 focus:border-red-500 focus:ring-red-500;
+}
+
+.bp-button-base {
+  @apply inline-flex items-center justify-center border font-medium
+         focus:outline-none focus:ring-2 focus:ring-offset-2 
+         transition-all duration-200 ease-in-out
+         disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.bp-button-primary {
+  @apply border-transparent text-white bg-indigo-600 
+         hover:bg-indigo-700 focus:ring-indigo-500 shadow-sm;
+}
+
+.bp-button-secondary {
+  @apply border-gray-300 text-gray-700 bg-white 
+         hover:bg-gray-50 focus:ring-indigo-500 shadow-sm;
+}
+
+.bp-button-danger {
+  @apply border-transparent text-white bg-red-600 
+         hover:bg-red-700 focus:ring-red-500 shadow-sm;
+}
+
+.bp-button-ghost {
+  @apply border-transparent text-indigo-600 bg-transparent 
+         hover:bg-indigo-50 focus:ring-indigo-500;
+}
+
+.bp-button-gradient {
+  @apply border-transparent text-white bg-gradient-to-r from-blue-600 to-indigo-600 
+         hover:from-blue-700 hover:to-indigo-700 focus:ring-blue-500 shadow-sm;
+}
+
+/* 响应式断点 */
+@media (max-width: 640px) {
+  .bp-responsive-stack {
+    @apply flex-col space-y-2 space-x-0;
+  }
+  
+  .bp-responsive-full {
+    @apply w-full;
+  }
+}
+
+/* 动画 */
+@keyframes bp-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.bp-loading-spinner {
+  animation: bp-spin 1s linear infinite;
+}
+
+/* 可访问性增强 */
+.bp-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* 高对比度模式支持 */
+@media (prefers-contrast: high) {
+  .bp-input-base {
+    @apply border-2 border-black;
+  }
+  
+  .bp-button-base {
+    @apply border-2 border-black;
+  }
+}
+
+/* 减少动画偏好 */
+@media (prefers-reduced-motion: reduce) {
+  .bp-input-base,
+  .bp-button-base {
+    @apply transition-none;
+  }
+  
+  .bp-loading-spinner {
+    animation: none;
+  }
+}

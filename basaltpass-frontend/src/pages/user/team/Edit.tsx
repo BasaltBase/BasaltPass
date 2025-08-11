@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../../../components/Layout';
+import { PInput, PButton } from '../../../components';
 import { teamApi, TeamResponse, CreateTeamRequest } from '@api/user/team';
 import { UserGroupIcon, DocumentTextIcon, PhotoIcon } from '@heroicons/react/24/outline';
 
@@ -139,21 +140,16 @@ const EditTeam: React.FC = () => {
                 团队名称 <span className="text-red-500 ml-1">*</span>
               </label>
               <div className="relative">
-                <input
+                <PInput
                   type="text"
                   id="name"
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  className="block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300"
                   placeholder="输入团队名称"
                   required
+                  icon={<UserGroupIcon className="h-5 w-5" />}
                 />
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                  <div className="h-5 w-5 text-gray-400">
-                    <UserGroupIcon className="h-5 w-5" />
-                  </div>
-                </div>
               </div>
             </div>
 
@@ -186,20 +182,15 @@ const EditTeam: React.FC = () => {
                 团队头像URL
               </label>
               <div className="relative">
-                <input
+                <PInput
                   type="url"
                   id="avatar_url"
                   name="avatar_url"
                   value={formData.avatar_url}
                   onChange={handleInputChange}
-                  className="block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300"
                   placeholder="https://example.com/avatar.png"
+                  icon={<PhotoIcon className="h-5 w-5" />}
                 />
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                  <div className="h-5 w-5 text-gray-400">
-                    <PhotoIcon className="h-5 w-5" />
-                  </div>
-                </div>
               </div>
               {formData.avatar_url && (
                 <div className="mt-2 flex items-center space-x-2">

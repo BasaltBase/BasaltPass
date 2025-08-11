@@ -4,6 +4,7 @@ import { Currency } from '@api/user/currency'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../../../components/Layout'
 import CurrencySelector from '../../../components/CurrencySelector'
+import { PButton, PInput } from '../../../components'
 import { 
   ArrowDownIcon,
   CreditCardIcon,
@@ -135,12 +136,14 @@ export default function Withdraw() {
       <div className="space-y-6">
         {/* 页面标题 */}
         <div className="flex items-center">
-          <button 
+          <PButton 
+            variant="ghost"
+            size="sm"
             onClick={() => navigate('/wallet')}
             className="mr-4 p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
           >
             <ArrowLeftIcon className="h-5 w-5" />
-          </button>
+          </PButton>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">提现资金</h1>
             <p className="mt-1 text-sm text-gray-500">
@@ -176,27 +179,16 @@ export default function Withdraw() {
               <form onSubmit={submit} className="space-y-6">
                 {/* 金额输入 */}
                 <div>
-                  <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-2">
-                    提现金额 (CNY)
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <span className="text-gray-500 sm:text-sm">¥</span>
-                    </div>
-                    <input
-                      id="amount"
-                      type="number"
-                      value={amount}
-                      onChange={(e) => handleAmountChange(e.target.value)}
-                      placeholder="0.00"
-                      min="0.01"
-                      step="0.01"
-                      className="block w-full pl-7 pr-12 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    />
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                      <span className="text-gray-500 sm:text-sm">CNY</span>
-                    </div>
-                  </div>
+                  <PInput
+                    id="amount"
+                    type="number"
+                    label="提现金额 (CNY)"
+                    value={amount}
+                    onChange={(e) => handleAmountChange(e.target.value)}
+                    placeholder="0.00"
+                    min="0.01"
+                    step="0.01"
+                  />
                 </div>
 
                 {/* 快速金额选择 */}
@@ -206,18 +198,15 @@ export default function Withdraw() {
                   </label>
                   <div className="grid grid-cols-3 gap-2">
                     {quickAmounts.map((value) => (
-                      <button
+                      <PButton
                         key={value}
                         type="button"
+                        variant={amount === value.toString() ? "danger" : "secondary"}
+                        size="sm"
                         onClick={() => handleQuickAmount(value)}
-                        className={`px-3 py-2 text-sm font-medium rounded-md border transition-colors ${
-                          amount === value.toString()
-                            ? 'border-red-500 bg-red-50 text-red-700'
-                            : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                        }`}
                       >
                         ¥{value}
-                      </button>
+                      </PButton>
                     ))}
                   </div>
                 </div>
@@ -259,37 +248,26 @@ export default function Withdraw() {
 
                 {/* 收款账户信息 */}
                 <div>
-                  <label htmlFor="accountInfo" className="block text-sm font-medium text-gray-700 mb-2">
-                    收款账户信息
-                  </label>
-                  <input
+                  <PInput
                     id="accountInfo"
                     type="text"
+                    label="收款账户信息"
                     value={accountInfo}
                     onChange={(e) => setAccountInfo(e.target.value)}
                     placeholder={getAccountPlaceholder()}
-                    className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   />
                 </div>
 
                 {/* 提交按钮 */}
-                <button
+                <PButton
                   type="submit"
+                  variant="danger"
+                  fullWidth
                   disabled={isLoading || !amount || parseFloat(amount) <= 0 || !accountInfo.trim()}
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  loading={isLoading}
                 >
-                  {isLoading ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      处理中...
-                    </>
-                  ) : (
-                    `提现 ¥${amount || '0.00'}`
-                  )}
-                </button>
+                  {isLoading ? '处理中...' : `提现 ¥${amount || '0.00'}`}
+                </PButton>
               </form>
             </div>
           </div>

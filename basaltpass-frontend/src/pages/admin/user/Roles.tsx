@@ -4,6 +4,7 @@ import { PlusIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 import { listPermissions, getRolePermissions, setRolePermissions, type Permission } from '@api/admin/permissions'
 import { Link } from 'react-router-dom'
 import AdminLayout from '@components/AdminLayout'
+import { PCheckbox, PButton, PInput } from '../../../components'
 
 interface RawRole {
   ID: number
@@ -129,13 +130,13 @@ export default function Roles() {
               管理系统角色和权限
             </p>
           </div>
-          <button
+          <PButton
             onClick={() => setShowCreateModal(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-blue-700"
+            variant="primary"
+            leftIcon={<PlusIcon className="h-4 w-4" />}
           >
-            <PlusIcon className="h-4 w-4 mr-2" />
             添加角色
-          </button>
+          </PButton>
         </div>
 
         <div className="bg-white shadow rounded-lg">
@@ -158,7 +159,7 @@ export default function Roles() {
           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{r.name}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{r.description}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                      <button className="px-3 py-1 border rounded" onClick={() => openAssign(r)}>分配权限</button>
+                      <PButton variant="secondary" size="sm" onClick={() => openAssign(r)}>分配权限</PButton>
                     </td>
                   </tr>
                 ))}
@@ -173,42 +174,34 @@ export default function Roles() {
           <div className="w-3/4 max-w-4xl p-6 border shadow-lg rounded-md bg-white">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-gray-900">创建新角色</h2>
-              <button 
+              <PButton 
+                variant="ghost"
+                size="sm"
                 onClick={() => setShowCreateModal(false)}
                 className="text-gray-400 hover:text-gray-600 text-xl font-bold"
               >
                 ✕
-              </button>
+              </PButton>
             </div>
             
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* 第一行：角色名称和角色描述 */}
               <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    角色名称 <span className="text-red-500">*</span>
-                  </label>
-                  <input 
-                    type="text"
-                    className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500" 
-                    placeholder="输入角色名称" 
-                    value={name} 
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    角色描述
-                  </label>
-                  <input 
-                    type="text"
-                    className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500" 
-                    placeholder="输入角色描述" 
-                    value={desc} 
-                    onChange={(e) => setDesc(e.target.value)} 
-                  />
-                </div>
+                <PInput
+                  type="text"
+                  label={<>角色名称 <span className="text-red-500">*</span></>}
+                  placeholder="输入角色名称"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+                <PInput
+                  type="text"
+                  label="角色描述"
+                  placeholder="输入角色描述"
+                  value={desc}
+                  onChange={(e) => setDesc(e.target.value)}
+                />
               </div>
 
               {/* 错误信息显示 */}
@@ -220,20 +213,21 @@ export default function Roles() {
 
               {/* 按钮区域 */}
               <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
-                <button
+                <PButton
                   type="button"
+                  variant="secondary"
                   onClick={() => setShowCreateModal(false)}
-                  className="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                 >
                   取消
-                </button>
-                <button
+                </PButton>
+                <PButton
                   type="submit"
+                  variant="primary"
                   disabled={creating}
-                  className="px-6 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                  loading={creating}
                 >
-                  {creating ? '创建中...' : '创建角色'}
-                </button>
+                  创建角色
+                </PButton>
               </div>
             </form>
           </div>
@@ -245,23 +239,32 @@ export default function Roles() {
           <div className="w-3/4 max-w-4xl p-6 border shadow-lg rounded-md bg-white">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-gray-900">为角色分配权限 - {assigningRole.name}</h2>
-              <button 
+              <PButton 
+                variant="ghost"
+                size="sm"
                 onClick={() => setAssigningRole(null)}
                 className="text-gray-400 hover:text-gray-600 text-xl font-bold"
-              >✕</button>
+              >✕</PButton>
             </div>
             <div className="h-[480px] overflow-auto border rounded p-4 grid grid-cols-2 gap-3">
               {allPerms.map(p => (
-                <label key={p.ID} className="flex items-center gap-3 text-sm">
-                  <input type="checkbox" checked={!!checked[p.ID]} onChange={() => togglePerm(p.ID)} />
-                  <span className="font-mono text-gray-800">{p.Code}</span>
-                  <span className="text-gray-500">{p.Desc}</span>
-                </label>
+                <div key={p.ID} className="flex items-center gap-3 text-sm">
+                  <PCheckbox 
+                    checked={!!checked[p.ID]} 
+                    onChange={() => togglePerm(p.ID)}
+                    label={
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-gray-800">{p.Code}</span>
+                        <span className="text-gray-500">{p.Desc}</span>
+                      </div>
+                    }
+                  />
+                </div>
               ))}
             </div>
             <div className="flex justify-end gap-3 mt-6">
-              <button className="px-4 py-2 border rounded" onClick={() => setAssigningRole(null)}>取消</button>
-              <button className="px-4 py-2 bg-indigo-600 text-white rounded disabled:opacity-50" disabled={savingPerms} onClick={saveAssign}>{savingPerms ? '保存中...' : '保存'}</button>
+              <PButton variant="secondary" onClick={() => setAssigningRole(null)}>取消</PButton>
+              <PButton variant="primary" disabled={savingPerms} loading={savingPerms} onClick={saveAssign}>保存</PButton>
             </div>
           </div>
         </div>

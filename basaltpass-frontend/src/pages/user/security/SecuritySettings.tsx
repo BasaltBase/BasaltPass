@@ -27,6 +27,7 @@ import {
   LockClosedIcon,
   FingerPrintIcon
 } from '@heroicons/react/24/outline'
+import { PInput, PButton } from '../../../components'
 
 export default function SecuritySettings() {
   const navigate = useNavigate()
@@ -293,81 +294,51 @@ export default function SecuritySettings() {
                 {/* 密码修改表单 */}
                 {showPasswordForm && (
                   <form onSubmit={handlePasswordChange} className="bg-gray-50 p-4 rounded-lg space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">当前密码</label>
-                      <div className="mt-1 relative">
-                        <input
-                          type={showPasswords.current ? 'text' : 'password'}
-                          value={passwordForm.current_password}
-                          onChange={(e) => setPasswordForm({...passwordForm, current_password: e.target.value})}
-                          className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm pr-10"
-                          required
-                        />
-                        <button
-                          type="button"
-                          className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                          onClick={() => setShowPasswords({...showPasswords, current: !showPasswords.current})}
-                        >
-                          {showPasswords.current ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
-                        </button>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">新密码</label>
-                      <div className="mt-1 relative">
-                        <input
-                          type={showPasswords.new ? 'text' : 'password'}
-                          value={passwordForm.new_password}
-                          onChange={(e) => setPasswordForm({...passwordForm, new_password: e.target.value})}
-                          className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm pr-10"
-                          required
-                          minLength={8}
-                        />
-                        <button
-                          type="button"
-                          className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                          onClick={() => setShowPasswords({...showPasswords, new: !showPasswords.new})}
-                        >
-                          {showPasswords.new ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
-                        </button>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">确认新密码</label>
-                      <div className="mt-1 relative">
-                        <input
-                          type={showPasswords.confirm ? 'text' : 'password'}
-                          value={passwordForm.confirm_password}
-                          onChange={(e) => setPasswordForm({...passwordForm, confirm_password: e.target.value})}
-                          className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm pr-10"
-                          required
-                        />
-                        <button
-                          type="button"
-                          className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                          onClick={() => setShowPasswords({...showPasswords, confirm: !showPasswords.confirm})}
-                        >
-                          {showPasswords.confirm ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
-                        </button>
-                      </div>
-                    </div>
+                    <PInput
+                      type="password"
+                      label="当前密码"
+                      value={passwordForm.current_password}
+                      onChange={(e) => setPasswordForm({...passwordForm, current_password: e.target.value})}
+                      required
+                      showPassword={showPasswords.current}
+                      onTogglePassword={() => setShowPasswords({...showPasswords, current: !showPasswords.current})}
+                    />
+                    <PInput
+                      type="password"
+                      label="新密码"
+                      value={passwordForm.new_password}
+                      onChange={(e) => setPasswordForm({...passwordForm, new_password: e.target.value})}
+                      required
+                      minLength={8}
+                      showPassword={showPasswords.new}
+                      onTogglePassword={() => setShowPasswords({...showPasswords, new: !showPasswords.new})}
+                    />
+                    <PInput
+                      type="password"
+                      label="确认新密码"
+                      value={passwordForm.confirm_password}
+                      onChange={(e) => setPasswordForm({...passwordForm, confirm_password: e.target.value})}
+                      required
+                      showPassword={showPasswords.confirm}
+                      onTogglePassword={() => setShowPasswords({...showPasswords, confirm: !showPasswords.confirm})}
+                    />
                     <div className="flex space-x-3">
-                      <button
+                      <PButton
                         type="submit"
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        variant="primary"
                       >
                         确认修改
-                      </button>
-                      <button
+                      </PButton>
+                      <PButton
                         type="button"
+                        variant="secondary"
                         onClick={() => {
                           setShowPasswordForm(false)
                           setPasswordForm({ current_password: '', new_password: '', confirm_password: '' })
                         }}
-                        className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                       >
                         取消
-                      </button>
+                      </PButton>
                     </div>
                   </form>
                 )}
@@ -523,43 +494,37 @@ export default function SecuritySettings() {
               {/* 联系方式修改表单 */}
               {showContactForm && (
                 <form onSubmit={handleContactUpdate} className="mt-6 bg-gray-50 p-4 rounded-lg space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">邮箱地址</label>
-                    <input
-                      type="email"
-                      value={contactForm.email}
-                      onChange={(e) => setContactForm({...contactForm, email: e.target.value})}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">手机号码</label>
-                    <input
-                      type="tel"
-                      value={contactForm.phone}
-                      onChange={(e) => setContactForm({...contactForm, phone: e.target.value})}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      placeholder="可选"
-                    />
-                  </div>
+                  <PInput
+                    type="email"
+                    label="邮箱地址"
+                    value={contactForm.email}
+                    onChange={(e) => setContactForm({...contactForm, email: e.target.value})}
+                    required
+                  />
+                  <PInput
+                    type="tel"
+                    label="手机号码"
+                    value={contactForm.phone}
+                    onChange={(e) => setContactForm({...contactForm, phone: e.target.value})}
+                    placeholder="可选"
+                  />
                   <div className="flex space-x-3">
-                    <button
+                    <PButton
                       type="submit"
-                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      variant="primary"
                     >
                       保存修改
-                    </button>
-                    <button
+                    </PButton>
+                    <PButton
                       type="button"
+                      variant="secondary"
                       onClick={() => {
                         setShowContactForm(false)
                         setContactForm({ email: securityStatus.email, phone: securityStatus.phone || '' })
                       }}
-                      className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                     >
                       取消
-                    </button>
+                    </PButton>
                   </div>
                 </form>
               )}

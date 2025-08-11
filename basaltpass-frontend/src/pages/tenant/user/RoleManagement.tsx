@@ -27,6 +27,7 @@ import {
   UserRole
 } from '@api/tenant/tenantRole';
 import TenantLayout from '@components/TenantLayout';
+import { PCheckbox, PInput, PButton } from '../../../components';
 
 const TenantRoleManagement: React.FC = () => {
   const [roles, setRoles] = useState<Role[]>([]);
@@ -669,9 +670,8 @@ const TenantRoleManagement: React.FC = () => {
                         {selectedUser ? (
                           <div className="space-y-3">
                             {roles.map((role) => (
-                              <label key={role.id} className="flex items-start space-x-3 cursor-pointer">
-                                <input
-                                  type="checkbox"
+                              <div key={role.id} className="flex items-start space-x-3">
+                                <PCheckbox
                                   checked={selectedRoleIds.includes(role.id)}
                                   onChange={(e) => {
                                     if (e.target.checked) {
@@ -680,7 +680,6 @@ const TenantRoleManagement: React.FC = () => {
                                       setSelectedRoleIds(selectedRoleIds.filter(id => id !== role.id));
                                     }
                                   }}
-                                  className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                                 />
                                 <div className="flex-1">
                                   <div className="flex items-center space-x-2">
@@ -694,7 +693,7 @@ const TenantRoleManagement: React.FC = () => {
                                     <div className="text-xs text-gray-400 mt-1">{role.description}</div>
                                   )}
                                 </div>
-                              </label>
+                              </div>
                             ))}
                             <div className="pt-4 border-t">
                               <button

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import Layout from '../../../components/Layout'
+import { PInput } from '../../../components'
 import { invitationApi } from '@api/user/invitation'
 import { userApi, UserSearchResult } from '@api/user/user'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -16,7 +17,7 @@ const Invite: React.FC = () => {
   const [searchLoading, setSearchLoading] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
   const navigate = useNavigate()
-  const searchTimeoutRef = useRef<number>()
+  const searchTimeoutRef = useRef<NodeJS.Timeout>()
 
   // 搜索用户
   const searchUsers = async (query: string) => {
@@ -125,19 +126,14 @@ const Invite: React.FC = () => {
               搜索用户
             </label>
             <div className="relative">
-              <input
+              <PInput
                 type="text"
                 value={searchQuery}
                 onChange={handleSearchChange}
                 onFocus={() => searchQuery && setShowDropdown(true)}
-                className="block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300"
                 placeholder="输入用户名或邮箱搜索..."
+                icon={<MagnifyingGlassIcon className="h-5 w-5" />}
               />
-              <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                <div className="h-5 w-5 text-gray-400">
-                  <MagnifyingGlassIcon className="h-5 w-5" />
-                </div>
-              </div>
             </div>
           </div>
           

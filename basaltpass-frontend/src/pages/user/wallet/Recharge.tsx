@@ -4,6 +4,7 @@ import { Currency } from '@api/user/currency'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../../../components/Layout'
 import CurrencySelector from '../../../components/CurrencySelector'
+import { PInput } from '../../../components'
 import { 
   ArrowUpIcon,
   CreditCardIcon,
@@ -189,31 +190,16 @@ export default function Recharge() {
 
                 {/* 金额输入 */}
                 <div>
-                  <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-2">
-                    充值金额 {selectedCurrency && `(${selectedCurrency.code})`}
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <span className="text-gray-500 sm:text-sm">
-                        {selectedCurrency?.symbol || '$'}
-                      </span>
-                    </div>
-                    <input
-                      id="amount"
-                      type="number"
-                      value={amount}
-                      onChange={(e) => handleAmountChange(e.target.value)}
-                      placeholder="0.00"
-                      min="0.01"
-                      step={selectedCurrency ? `0.${'0'.repeat(Math.max(0, selectedCurrency.decimal_places - 1))}1` : "0.01"}
-                      className="block w-full pl-7 pr-16 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    />
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                      <span className="text-gray-500 sm:text-sm">
-                        {selectedCurrency?.code || 'USD'}
-                      </span>
-                    </div>
-                  </div>
+                  <PInput
+                    id="amount"
+                    type="number"
+                    label={`充值金额 ${selectedCurrency ? `(${selectedCurrency.code})` : ''}`}
+                    value={amount}
+                    onChange={(e) => handleAmountChange(e.target.value)}
+                    placeholder="0.00"
+                    min="0.01"
+                    step={selectedCurrency ? `0.${'0'.repeat(Math.max(0, selectedCurrency.decimal_places - 1))}1` : "0.01"}
+                  />
                 </div>
 
                 {/* 快速金额选择 */}

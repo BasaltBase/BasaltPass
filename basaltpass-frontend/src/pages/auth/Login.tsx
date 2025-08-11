@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { loginWithPasskeyFlow } from '@api/oauth/passkey'
 import { isPasskeySupported } from '../../utils/webauthn'
 import { EyeIcon, EyeSlashIcon, ShieldCheckIcon, EnvelopeIcon, KeyIcon } from '@heroicons/react/24/outline'
+import { PInput, PButton, PCheckbox } from '../../components'
 
 function Login() {
   const navigate = useNavigate()
@@ -23,6 +24,7 @@ function Login() {
   const [available2FAMethods, setAvailable2FAMethods] = useState<string[]>([])
   const [twoFACode, setTwoFACode] = useState('')
   const [emailCode, setEmailCode] = useState('')
+  const [rememberMe, setRememberMe] = useState(false)
 
   // 登录第一步：用户名密码
   const submitPasswordLogin = async (e: React.FormEvent) => {
@@ -133,30 +135,32 @@ function Login() {
                 const IconComponent = get2FAMethodIcon(method)
                 const isSelected = method === twoFAType
                 return (
-                  <button
+                  <PButton
                     key={method}
                     type="button"
+                    variant={isSelected ? "primary" : "ghost"}
+                    fullWidth
                     onClick={() => switch2FAMethod(method)}
-                    className={`w-full flex items-center p-4 border rounded-lg transition-colors ${
+                    leftIcon={<IconComponent className={`h-5 w-5 ${
+                      isSelected ? 'text-white' : 'text-gray-400'
+                    }`} />}
+                    className={`justify-start ${
                       isSelected
-                        ? 'border-blue-500 bg-blue-50'
+                        ? 'border-blue-500 bg-blue-600'
                         : 'border-gray-300 hover:border-gray-400'
                     }`}
                   >
-                    <IconComponent className={`h-5 w-5 mr-3 ${
-                      isSelected ? 'text-blue-600' : 'text-gray-400'
-                    }`} />
                     <span className={`font-medium ${
-                      isSelected ? 'text-blue-900' : 'text-gray-900'
+                      isSelected ? 'text-white' : 'text-gray-900'
                     }`}>
                       {get2FAMethodName(method)}
                     </span>
                     {isSelected && (
                       <div className="ml-auto">
-                        <div className="w-2 h-2 bg-indigo-600 rounded-full"></div>
+                        <div className="w-2 h-2 bg-white rounded-full"></div>
                       </div>
                     )}
-                  </button>
+                  </PButton>
                 )
               })}
             </div>
@@ -193,31 +197,28 @@ function Login() {
       return (
         <form className="space-y-6" onSubmit={submit2FAVerify}>
           <div className="space-y-4">
-            <div>
-              <label htmlFor="2fa-code" className="block text-sm font-medium text-gray-700">
-                二步验证码
-              </label>
-              <input
-                id="2fa-code"
-                name="2fa-code"
-                type="text"
-                required
-                maxLength={6}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="请输入6位验证码"
-                value={twoFACode}
-                onChange={(e) => setTwoFACode(e.target.value)}
-              />
-            </div>
+            <PInput
+              id="2fa-code"
+              name="2fa-code"
+              type="text"
+              required
+              maxLength={6}
+              label="二步验证码"
+              placeholder="请输入6位验证码"
+              value={twoFACode}
+              onChange={(e) => setTwoFACode(e.target.value)}
+            />
           </div>
           <div>
-            <button
+            <PButton
               type="submit"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              variant="gradient"
+              fullWidth
+              loading={isLoading}
             >
-              {isLoading ? '验证中...' : '验证登录'}
-            </button>
+              验证登录
+            </PButton>
           </div>
         </form>
       )
@@ -225,30 +226,27 @@ function Login() {
       return (
         <form className="space-y-6" onSubmit={submit2FAVerify}>
           <div className="space-y-4">
-            <div>
-              <label htmlFor="email-code" className="block text-sm font-medium text-gray-700">
-                邮箱验证码
-              </label>
-              <input
-                id="email-code"
-                name="email-code"
-                type="text"
-                required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="请输入邮箱收到的验证码"
-                value={emailCode}
-                onChange={(e) => setEmailCode(e.target.value)}
-              />
-            </div>
+            <PInput
+              id="email-code"
+              name="email-code"
+              type="text"
+              required
+              label="邮箱验证码"
+              placeholder="请输入邮箱收到的验证码"
+              value={emailCode}
+              onChange={(e) => setEmailCode(e.target.value)}
+            />
           </div>
           <div>
-            <button
+            <PButton
               type="submit"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              variant="gradient"
+              fullWidth
+              loading={isLoading}
             >
-              {isLoading ? '验证中...' : '验证登录'}
-            </button>
+              验证登录
+            </PButton>
           </div>
         </form>
       )
@@ -273,14 +271,16 @@ function Login() {
             </div>
           </div>
           <div>
-            <button
+            <PButton
               type="submit"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              variant="gradient"
+              fullWidth
+              loading={isLoading}
+              leftIcon={<ShieldCheckIcon className="h-5 w-5" />}
             >
-              <ShieldCheckIcon className="h-5 w-5 mr-2" />
-              {isLoading ? '验证中...' : '使用Passkey验证'}
-            </button>
+              使用Passkey验证
+            </PButton>
           </div>
         </form>
       )
@@ -320,62 +320,35 @@ function Login() {
         {step === 1 && (
           <form className="mt-8 space-y-6" onSubmit={submitPasswordLogin}>
             <div className="space-y-4">
-              <div>
-                <label htmlFor="identifier" className="block text-sm font-medium text-gray-700">
-                  邮箱或手机号
-                </label>
-                <input
-                  id="identifier"
-                  name="identifier"
-                  type="text"
-                  required
-                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                  placeholder="请输入邮箱或手机号"
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
-                />
-              </div>
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                  密码
-                </label>
-                <div className="mt-1 relative">
-                  <input
-                    id="password"
-                    name="password"
-                    type={showPassword ? 'text' : 'password'}
-                    required
-                    className="appearance-none relative block w-full px-3 py-2 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                    placeholder="请输入密码"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeSlashIcon className="h-5 w-5 text-gray-400" />
-                    ) : (
-                      <EyeIcon className="h-5 w-5 text-gray-400" />
-                    )}
-                  </button>
-                </div>
-              </div>
+              <PInput
+                id="identifier"
+                name="identifier"
+                type="text"
+                required
+                label="邮箱或手机号"
+                placeholder="请输入邮箱或手机号"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+              />
+              <PInput
+                id="password"
+                name="password"
+                type="password"
+                required
+                label="密码"
+                placeholder="请输入密码"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                showPassword={showPassword}
+                onTogglePassword={() => setShowPassword(!showPassword)}
+              />
             </div>
             <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                  记住我
-                </label>
-              </div>
+              <PCheckbox
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                label="记住我"
+              />
               <div className="text-sm">
                 <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
                   忘记密码？
@@ -383,19 +356,15 @@ function Login() {
               </div>
             </div>
             <div>
-              <button
+              <PButton
                 type="submit"
                 disabled={isLoading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                variant="gradient"
+                fullWidth
+                loading={isLoading}
               >
-                {isLoading ? (
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                ) : null}
-                {isLoading ? '登录中...' : '登录'}
-              </button>
+                登录
+              </PButton>
             </div>
           </form>
         )}
