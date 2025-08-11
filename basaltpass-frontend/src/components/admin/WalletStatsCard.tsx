@@ -7,6 +7,7 @@ import {
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import { adminWalletApi, WalletStats } from '../../api/adminWallet';
+import { PButton } from '../index';
 
 interface WalletStatsCardProps {}
 
@@ -35,13 +36,15 @@ const WalletStatsCard: React.FC<WalletStatsCardProps> = () => {
       <div className="bg-white shadow rounded-lg p-6">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-medium text-gray-900">钱包统计</h3>
-          <button
+          <PButton
+            variant="ghost"
+            size="sm"
             onClick={loadStats}
             disabled={loading}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 hover:text-gray-600 p-2"
           >
             <ArrowPathIcon className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
-          </button>
+          </PButton>
         </div>
         <div className="mt-4">
           <div className="animate-pulse">
@@ -91,13 +94,15 @@ const WalletStatsCard: React.FC<WalletStatsCardProps> = () => {
     <div className="bg-white shadow rounded-lg p-6">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-medium text-gray-900">钱包统计</h3>
-        <button
+        <PButton
+          variant="ghost"
+          size="sm"
           onClick={loadStats}
           disabled={loading}
-          className="text-gray-400 hover:text-gray-600"
+          className="text-gray-400 hover:text-gray-600 p-2"
         >
           <ArrowPathIcon className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
-        </button>
+        </PButton>
       </div>
 
       {/* 基础统计卡片 */}

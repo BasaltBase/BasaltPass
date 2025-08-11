@@ -18,6 +18,7 @@ import {
   ChevronDownIcon,
   ArrowRightOnRectangleIcon
 } from '@heroicons/react/24/outline'
+import { PButton } from './index'
 import { useAuth } from '../contexts/AuthContext'
 import EnhancedNotificationIcon from './EnhancedNotificationIcon'
 
@@ -65,12 +66,14 @@ export default function Layout({ children }: LayoutProps) {
           <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
           <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white">
             <div className="absolute top-0 right-0 -mr-12 pt-2">
-              <button
-                className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+              <PButton
+                variant="ghost"
+                size="sm"
+                className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:ring-inset focus:ring-white text-white hover:text-white"
                 onClick={() => setSidebarOpen(false)}
               >
-                <XMarkIcon className="h-6 w-6 text-white" />
-              </button>
+                <XMarkIcon className="h-6 w-6" />
+              </PButton>
             </div>
             <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
               <div className="flex-shrink-0 flex items-center px-4">
@@ -130,12 +133,14 @@ export default function Layout({ children }: LayoutProps) {
       <div className="flex flex-col w-0 flex-1 overflow-hidden">
         {/* 顶部导航栏 */}
         <div className="md:hidden pl-1 pt-1 sm:pl-3 sm:pt-3">
-          <button
-            className="-ml-0.5 -mt-0.5 h-12 w-12 inline-flex items-center justify-center rounded-md text-gray-500 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+          <PButton
+            variant="ghost"
+            size="md"
+            className="-ml-0.5 -mt-0.5 h-12 w-12 inline-flex items-center justify-center rounded-md text-gray-500 hover:text-gray-900 focus:ring-inset focus:ring-indigo-500"
             onClick={() => setSidebarOpen(true)}
           >
             <Bars3Icon className="h-6 w-6" />
-          </button>
+          </PButton>
         </div>
         
         {/* 桌面端顶部栏 */}
@@ -158,9 +163,11 @@ export default function Layout({ children }: LayoutProps) {
             <EnhancedNotificationIcon viewAllPath="/notifications" />
             {/* 用户菜单 */}
             <div className="relative">
-              <button
+              <PButton
+                variant="ghost"
+                size="sm"
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="flex items-center rounded-full bg-white p-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:bg-gray-50"
+                className="flex items-center rounded-full bg-white p-1 text-sm focus:ring-blue-500 focus:ring-offset-2 hover:bg-gray-50"
                 title="打开用户菜单"
               >
                 <span className="sr-only">打开用户菜单</span>
@@ -176,7 +183,7 @@ export default function Layout({ children }: LayoutProps) {
                   </div>
                 )}
                 <ChevronDownIcon className="ml-1 h-4 w-4 text-gray-500" />
-              </button>
+              </PButton>
 
               {isUserMenuOpen && (
                 <div className="absolute right-0 z-50 mt-2 w-56 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
@@ -201,13 +208,14 @@ export default function Layout({ children }: LayoutProps) {
                     设置
                   </Link>
                   <div className="border-t border-gray-200"></div>
-                  <button
+                  <PButton
+                    variant="ghost"
                     onClick={handleLogout}
-                    className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 justify-start"
                   >
                     <ArrowRightOnRectangleIcon className="mr-3 h-4 w-4" />
                     登出
-                  </button>
+                  </PButton>
                 </div>
               )}
 

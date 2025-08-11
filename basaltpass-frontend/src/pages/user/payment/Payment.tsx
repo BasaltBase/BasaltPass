@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { paymentAPI, CreatePaymentIntentRequest, PaymentIntent, MockStripeResponse } from '@api/subscription/payment/payment';
 import { getBalance } from '@api/user/wallet';
+import { PSelect } from '../../../components';
 
 const Payment: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -130,19 +131,16 @@ const Payment: React.FC = () => {
           </div>
 
           <div>
-            <label htmlFor="currency" className="block text-sm font-medium text-gray-700 mb-1">
-              币种
-            </label>
-            <select
+            <PSelect
               id="currency"
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              label="币种"
             >
               <option value="USD">USD - 美元</option>
               <option value="CNY">CNY - 人民币</option>
               <option value="EUR">EUR - 欧元</option>
-            </select>
+            </PSelect>
           </div>
 
           <div>

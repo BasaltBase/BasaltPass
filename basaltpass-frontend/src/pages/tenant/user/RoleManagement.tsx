@@ -13,6 +13,7 @@ import {
   ChevronRightIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
+import { PSelect } from '../../../components';
 import {
   Role,
   CreateRoleRequest,
@@ -307,15 +308,15 @@ const TenantRoleManagement: React.FC = () => {
             </div>
             <div className="sm:w-48">
               <div className="relative">
-                <FunnelIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <select
+                <FunnelIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 z-10" />
+                <PSelect
                   value={appFilter}
                   onChange={(e) => setAppFilter(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white"
+                  className="pl-10"
                 >
                   <option value="">全部范围</option>
                   <option value="tenant">租户级角色</option>
-                </select>
+                </PSelect>
               </div>
             </div>
           </div>

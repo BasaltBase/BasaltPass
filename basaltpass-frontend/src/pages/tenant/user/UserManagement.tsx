@@ -21,6 +21,7 @@ import {
   ChevronRightIcon
 } from '@heroicons/react/24/outline'
 import TenantLayout from '@components/TenantLayout'
+import { PInput, PSelect, PButton } from '../../../components'
 import { tenantAppApi } from '@api/tenant/tenantApp'
 import { appUserApi, type AppUserStats } from '@api/tenant/appUser'
 import { 
@@ -645,27 +646,27 @@ export default function TenantUserManagement() {
             {activeTab === 'users' && (
               <div className="sm:w-48">
                 <div className="relative">
-                  <FunnelIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                  <select
+                  <FunnelIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400 z-10" />
+                  <PSelect
                     value={roleFilter}
-                    onChange={(e) => setRoleFilter(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setRoleFilter(e.target.value)}
+                    className="pl-10"
                   >
                     <option value="">所有角色</option>
                     <option value="owner">所有者</option>
                     <option value="admin">管理员</option>
                     <option value="member">成员</option>
-                  </select>
+                  </PSelect>
                 </div>
               </div>
             )}
             <div className="sm:w-48">
               <div className="relative">
-                <FunnelIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                <select
+                <FunnelIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400 z-10" />
+                <PSelect
                   value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value)}
+                  className="pl-10"
                 >
                   <option value="">所有状态</option>
                   {activeTab === 'users' ? (
@@ -681,7 +682,7 @@ export default function TenantUserManagement() {
                       <option value="pending">待激活</option>
                     </>
                   )}
-                </select>
+                </PSelect>
               </div>
             </div>
           </div>
@@ -1053,17 +1054,14 @@ const InviteUserModal: React.FC<{
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                角色 *
-              </label>
-              <select
+              <PSelect
                 value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value as 'admin' | 'member' })}
-                className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, role: e.target.value as 'admin' | 'member' })}
+                label="角色 *"
               >
                 <option value="member">成员</option>
                 <option value="admin">管理员</option>
-              </select>
+              </PSelect>
             </div>
 
             <div>
@@ -1140,32 +1138,26 @@ const EditUserModal: React.FC<{
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                角色
-              </label>
-              <select
+              <PSelect
                 value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value as 'admin' | 'member' })}
-                className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, role: e.target.value as 'admin' | 'member' })}
+                label="角色"
               >
                 <option value="member">成员</option>
                 <option value="admin">管理员</option>
-              </select>
+              </PSelect>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                状态
-              </label>
-              <select
+              <PSelect
                 value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' | 'suspended' })}
-                className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' | 'suspended' })}
+                label="状态"
               >
                 <option value="active">活跃</option>
                 <option value="inactive">非活跃</option>
                 <option value="suspended">已暂停</option>
-              </select>
+              </PSelect>
             </div>
 
             <div className="flex justify-end space-x-3 pt-4">

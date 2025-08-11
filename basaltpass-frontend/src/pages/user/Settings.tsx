@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Layout from '../../components/Layout'
+import { PSelect } from '../../components'
 import { 
   UserIcon, 
   BellIcon, 
@@ -49,43 +50,34 @@ export default function Settings() {
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    语言
-                  </label>
-                  <select
+                  <PSelect
                     value={language}
                     onChange={(e) => setLanguage(e.target.value)}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    label="语言"
                   >
                     <option value="zh-CN">简体中文</option>
                     <option value="en-US">English</option>
                     <option value="ja-JP">日本語</option>
-                  </select>
+                  </PSelect>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    时区
-                  </label>
-                  <select
+                  <PSelect
                     value={timezone}
                     onChange={(e) => setTimezone(e.target.value)}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    label="时区"
                   >
                     <option value="Asia/Shanghai">中国标准时间 (UTC+8)</option>
                     <option value="America/New_York">美国东部时间 (UTC-5)</option>
                     <option value="Europe/London">格林威治标准时间 (UTC+0)</option>
-                  </select>
+                  </PSelect>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    货币
-                  </label>
-                  <select className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                  <PSelect label="货币">
                     <option value="CNY">人民币 (CNY)</option>
                     <option value="USD">美元 (USD)</option>
                     <option value="EUR">欧元 (EUR)</option>
                     <option value="JPY">日元 (JPY)</option>
-                  </select>
+                  </PSelect>
                 </div>
               </div>
             </div>

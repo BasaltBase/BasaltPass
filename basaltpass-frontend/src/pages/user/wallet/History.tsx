@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { history } from '@api/user/wallet'
 import { Link } from 'react-router-dom'
 import Layout from '../../../components/Layout'
+import { PInput, PSelect } from '../../../components'
 import { 
   ClockIcon,
   ArrowUpIcon,
@@ -247,23 +248,24 @@ export default function History() {
                   <FunnelIcon className="h-5 w-5 text-gray-400 mr-2" />
                   <span className="text-sm font-medium text-gray-700">筛选:</span>
                 </div>
-                <select
+                <PSelect
                   value={filter}
                   onChange={(e) => setFilter(e.target.value)}
-                  className="border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  size="sm"
+                  fullWidth={false}
+                  className="min-w-32"
                 >
                   <option value="all">全部交易</option>
                   <option value="recharge">充值</option>
                   <option value="withdraw">提现</option>
-                </select>
+                </PSelect>
               </div>
               <div className="flex-1 max-w-xs">
-                <input
+                <PInput
                   type="text"
                   placeholder="搜索交易ID或状态..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 />
               </div>
             </div>

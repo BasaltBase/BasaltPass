@@ -5,6 +5,7 @@ import { UserIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon } from '@heroicons/r
 import TenantNavigation from './TenantNavigation'
 import { useAuth } from '../contexts/AuthContext'
 import EnhancedNotificationIcon from './EnhancedNotificationIcon'
+import { PButton } from './index'
 
 interface TenantLayoutProps {
   children: ReactNode
@@ -96,9 +97,11 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
 
               {/* 用户菜单 */}
               <div className="relative">
-                <button 
+                <PButton
+                  variant="ghost" 
+                  size="sm"
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center rounded-full bg-white p-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:bg-gray-50"
+                  className="flex items-center rounded-full bg-white p-1 text-sm focus:ring-blue-500 focus:ring-offset-2 hover:bg-gray-50"
                 >
                   <span className="sr-only">打开用户菜单</span>
                   {user?.avatar_url ? (
@@ -113,7 +116,7 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
                     </div>
                   )}
                   <ChevronDownIcon className="ml-1 h-4 w-4 text-gray-500" />
-                </button>
+                </PButton>
 
                 {/* 用户下拉菜单 */}
                 {isUserMenuOpen && (
@@ -147,13 +150,14 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
                     
                     <div className="border-t border-gray-200"></div>
                     
-                    <button
+                    <PButton
+                      variant="ghost"
                       onClick={handleLogout}
-                      className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 justify-start"
                     >
                       <ArrowRightOnRectangleIcon className="mr-3 h-4 w-4" />
                       登出
-                    </button>
+                    </PButton>
                   </div>
                 )}
 
