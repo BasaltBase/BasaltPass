@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import Layout from '../../../components/Layout'
+import { PCard, PButton } from '../../../components'
 import { listSubscriptions, cancelSubscription } from '@api/subscription/subscription'
 import { SubscriptionResponse } from '../../../types/subscription'
 import { Link } from 'react-router-dom'
@@ -96,67 +97,15 @@ export default function SubscriptionIndex() {
     }
   }
 
-    if (loading) {
+  if (loading) {
     return (
       <Layout>
         <div className="flex justify-center items-center h-64">
-          <div className="text-lg">加载中...</div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
-
-      {/* 取消订阅确认模态框 */}
-      {showCancelModal && cancelTarget && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="mt-3 text-center">
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
-                <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mt-4">
-                确认取消订阅
-              </h3>
-              <div className="mt-2 px-7 py-3">
-                <p className="text-sm text-gray-500">
-                  您确定要取消以下订阅吗？
-                </p>
-                <div className="mt-3 p-3 bg-gray-50 rounded-md">
-                  <p className="text-sm font-medium text-gray-900">
-                    订阅 #{cancelTarget.ID}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {cancelTarget.CurrentPrice?.Plan?.Product?.Name || '未知产品'} - 
-                    {cancelTarget.CurrentPrice?.Plan?.DisplayName || '未知套餐'}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    当前状态: {cancelTarget.Status === 'trialing' ? '试用中' : '进行中'}
-                  </p>
-                </div>
-                <p className="text-sm text-gray-500 mt-3">
-                  取消后，您将无法继续使用相关服务，直到重新订阅。
-                </p>
-              </div>
-              <div className="flex justify-center space-x-3 mt-4">
-                <button
-                  onClick={handleCancelCancel}
-                  disabled={canceling}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 text-base font-medium rounded-md shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-50"
-                >
-                  取消
-                </button>
-                <button
-                  onClick={handleCancelConfirm}
-                  disabled={canceling}
-                  className="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50"
-                >
-                  {canceling ? '处理中...' : '确认取消'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </Layout>
-  )
-}
+      </Layout>
+    )
+  }
 
   return (
     <Layout>
@@ -185,16 +134,15 @@ export default function SubscriptionIndex() {
               管理您的所有订阅，查看状态和账单信息
             </p>
           </div>
-          <Link
-            to="/products"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-          >
-            <CubeIcon className="h-4 w-4 mr-2" />
-            浏览产品
+          <Link to="/products">
+            <PButton variant="primary">
+              <CubeIcon className="h-4 w-4 mr-2" />
+              浏览产品
+            </PButton>
           </Link>
         </div>
 
-        <div className="bg-white shadow overflow-hidden sm:rounded-md">
+        <PCard>
           <div className="divide-y divide-gray-200">
             {subscriptions && subscriptions.length > 0 ? (
               subscriptions.map((sub) => (
@@ -215,32 +163,32 @@ export default function SubscriptionIndex() {
                       </p>
                     </div>
                     <div className="flex items-center space-x-3">
-                          <div className="flex items-center">
-                            {statusBadge(sub.Status)}
-                          </div>
-                          {(sub.Status === 'trialing' || sub.Status === 'active') && (
-                            <button
-                              onClick={() => handleCancelClick(sub)}
-                              className="text-red-600 hover:text-red-900 text-sm font-medium flex items-center cursor-pointer px-2 py-1 rounded hover:bg-red-50"
-                            >
-                              取消订阅
-                            </button>
-                          )}
-                        </div>
+                      <div className="flex items-center">
+                        {statusBadge(sub.Status)}
+                      </div>
+                      {(sub.Status === 'trialing' || sub.Status === 'active') && (
+                        <PButton
+                          onClick={() => handleCancelClick(sub)}
+                          variant="danger"
+                          size="sm"
+                        >
+                          取消订阅
+                        </PButton>
+                      )}
+                    </div>
                   </div>
                 </div>
-                
               ))
             ) : (
               <div className="px-4 py-8 text-center text-gray-500">
                 暂无订阅记录
               </div>
             )}
-                      </div>
-        </div>
+          </div>
+        </PCard>
 
         {/* 相关链接 */}
-        <div className="bg-gray-50 rounded-lg p-6">
+        <PCard variant="bordered" className="p-6">
           <h3 className="text-lg font-medium text-gray-900 mb-4">相关链接</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Link
@@ -274,7 +222,7 @@ export default function SubscriptionIndex() {
               </div>
             </Link>
           </div>
-        </div>
+        </PCard>
       </div>
 
       {/* 取消订阅确认模态框 */}
@@ -309,20 +257,20 @@ export default function SubscriptionIndex() {
                 </p>
               </div>
               <div className="flex justify-center space-x-3 mt-4">
-                <button
+                <PButton
                   onClick={handleCancelCancel}
                   disabled={canceling}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 text-base font-medium rounded-md shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-50"
+                  variant="secondary"
                 >
                   取消
-                </button>
-                <button
+                </PButton>
+                <PButton
                   onClick={handleCancelConfirm}
                   disabled={canceling}
-                  className="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50"
+                  variant="danger"
                 >
                   {canceling ? '处理中...' : '确认取消'}
-                </button>
+                </PButton>
               </div>
             </div>
           </div>
@@ -330,4 +278,4 @@ export default function SubscriptionIndex() {
       )}
     </Layout>
   )
-} 
+}

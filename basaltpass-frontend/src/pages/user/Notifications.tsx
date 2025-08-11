@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import Layout from '../../components/Layout'
+import { PCard, PButton, PSelect } from '../../components'
 import { useNotifications } from '../../contexts/NotificationContext'
 import { notificationApi, TenantNotification } from '@api/tenant/tenantNotification'
 import { 
@@ -121,20 +122,20 @@ const Notifications: React.FC = () => {
           </div>
           <div className="flex items-center space-x-3">
             {unreadCount > 0 && (
-              <button
+              <PButton
                 onClick={handleMarkAllAsRead}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-blue-700"
+                variant="primary"
               >
                 <CheckIcon className="h-4 w-4 mr-2" />
                 全部已读
-              </button>
+              </PButton>
             )}
           </div>
         </div>
 
         {/* 过滤器 */}
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-6 py-4 border-b border-gray-200">
+        <PCard>
+          <div className="border-b border-gray-200 pb-4 mb-4">
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => setFilter('all')}
@@ -168,10 +169,10 @@ const Notifications: React.FC = () => {
               </button>
             </div>
           </div>
-        </div>
+        </PCard>
 
         {/* 通知列表 */}
-        <div className="bg-white shadow rounded-lg">
+        <PCard>
           {loading ? (
             <div className="flex justify-center items-center h-64">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -246,36 +247,38 @@ const Notifications: React.FC = () => {
               ))}
             </div>
           )}
-        </div>
+        </PCard>
 
         {/* 分页 */}
         {total > pageSize && (
-          <div className="bg-white shadow rounded-lg px-6 py-4">
+          <PCard className="px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-700">
                 显示第 {(page - 1) * pageSize + 1} 到 {Math.min(page * pageSize, total)} 条，共 {total} 条
               </div>
               <div className="flex items-center space-x-2">
-                <button
+                <PButton
                   onClick={() => setPage(page - 1)}
                   disabled={page === 1}
-                  className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  variant="secondary"
+                  size="sm"
                 >
                   上一页
-                </button>
+                </PButton>
                 <span className="px-3 py-2 text-sm text-gray-700">
                   {page} / {Math.ceil(total / pageSize)}
                 </span>
-                <button
+                <PButton
                   onClick={() => setPage(page + 1)}
                   disabled={page >= Math.ceil(total / pageSize)}
-                  className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  variant="secondary"
+                  size="sm"
                 >
                   下一页
-                </button>
+                </PButton>
               </div>
             </div>
-          </div>
+          </PCard>
         )}
       </div>
     </Layout>

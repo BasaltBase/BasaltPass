@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import Layout from '../../../components/Layout'
+import { PCard, PButton } from '../../../components'
 import { listProducts } from '@api/subscription/subscription'
 import { createOrder, CreateOrderRequest } from '@api/subscription/payment/order'
 import { Product, Price } from '../../../types/subscription'
@@ -113,7 +114,7 @@ export default function ProductsPage() {
     return (
       <Layout>
         <div className="flex justify-center items-center h-64">
-          <div className="text-lg">加载中...</div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
       </Layout>
     )
@@ -146,20 +147,18 @@ export default function ProductsPage() {
               浏览可用的产品和套餐，选择适合您需求的订阅方案
             </p>
           </div>
-          <Link
-            to="/subscriptions"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-          >
-            <CreditCardIcon className="h-4 w-4 mr-2" />
-            我的订阅
+          <Link to="/subscriptions">
+            <PButton variant="primary">
+              <CreditCardIcon className="h-4 w-4 mr-2" />
+              我的订阅
+            </PButton>
           </Link>
         </div>
 
         <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
           {products && products.length > 0 ? (
             products.map((product) => (
-              <div key={product.ID} className="bg-white overflow-hidden shadow-lg rounded-xl border border-gray-200">
-                <div className="px-6 py-6">
+              <PCard key={product.ID} variant="bordered" className="p-6">
                   <div className="flex items-center mb-4">
                     <div className="flex-shrink-0">
                       <CubeIcon className="h-10 w-10 text-indigo-600" />
@@ -206,23 +205,17 @@ export default function ProductsPage() {
                                          price.UsageType === 'metered' ? '按量计费' : '分层计费'}
                                       </p>
                                     </div>
-                                    <button
+                                    <PButton
                                       onClick={() => handleSubscribe(price)}
                                       disabled={subscribingPrice === price.ID}
-                                      className="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                      variant="primary"
+                                      size="sm"
+                                      loading={subscribingPrice === price.ID}
+                                      className="ml-3"
                                     >
-                                      {subscribingPrice === price.ID ? (
-                                        <div className="flex items-center">
-                                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                                          处理中...
-                                        </div>
-                                      ) : (
-                                        <div className="flex items-center">
-                                          立即订阅
-                                          <ArrowRightIcon className="h-4 w-4 ml-1" />
-                                        </div>
-                                      )}
-                            </button>
+                                      立即订阅
+                                      <ArrowRightIcon className="h-4 w-4 ml-1" />
+                                    </PButton>
                           </div>
                         ))}
                       </div>
@@ -236,8 +229,7 @@ export default function ProductsPage() {
                       ))}
                     </div>
                   )}
-                </div>
-              </div>
+                </PCard>
             ))
           ) : (
             <div className="col-span-full text-center py-12">
@@ -249,7 +241,7 @@ export default function ProductsPage() {
         </div>
 
         {/* 相关链接 */}
-        <div className="bg-gray-50 rounded-lg p-6">
+        <PCard variant="bordered" className="p-6">
           <h3 className="text-lg font-medium text-gray-900 mb-4">相关链接</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Link
@@ -283,7 +275,7 @@ export default function ProductsPage() {
               </div>
             </Link>
           </div>
-        </div>
+        </PCard>
       </div>
     </Layout>
   )

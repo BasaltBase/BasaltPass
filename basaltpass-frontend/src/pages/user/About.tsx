@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import Layout from '../../components/Layout'
+import { PCard, PButton } from '../../components'
 import { 
   ArrowLeftIcon, 
   CodeBracketIcon, 
@@ -72,12 +73,11 @@ const About: React.FC = () => {
       <div className="max-w-6xl mx-auto space-y-8">
         {/* 返回按钮 */}
         <div className="flex items-center">
-          <Link
-            to="/dashboard"
-            className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
-          >
-            <ArrowLeftIcon className="w-4 h-4 mr-2" />
-            返回仪表板
+          <Link to="/dashboard">
+            <PButton variant="secondary">
+              <ArrowLeftIcon className="w-4 h-4 mr-2" />
+              返回仪表板
+            </PButton>
           </Link>
         </div>
 
@@ -109,16 +109,17 @@ const About: React.FC = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((feature, index) => (
-              <div
+              <PCard
                 key={index}
-                className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200"
+                variant="bordered"
+                hoverable
               >
                 <div className="bg-gradient-to-r from-blue-500 to-indigo-600 w-12 h-12 rounded-xl flex items-center justify-center mb-4 shadow-lg">
                   <feature.icon className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">{feature.title}</h3>
                 <p className="text-gray-600">{feature.description}</p>
-              </div>
+              </PCard>
             ))}
           </div>
         </div>
@@ -134,7 +135,7 @@ const About: React.FC = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* 前端技术栈 */}
-            <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-200">
+            <PCard variant="bordered" size="lg">
               <div className="flex items-center mb-6">
                 <div className="bg-gradient-to-r from-blue-500 to-indigo-600 w-10 h-10 rounded-xl flex items-center justify-center mr-4 shadow-lg">
                   <CodeBracketIcon className="w-5 h-5 text-white" />
@@ -152,10 +153,10 @@ const About: React.FC = () => {
                   </div>
                 ))}
               </div>
-            </div>
+            </PCard>
 
             {/* 后端技术栈 */}
-            <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-200">
+            <PCard variant="bordered" size="lg">
               <div className="flex items-center mb-6">
                 <div className="bg-gradient-to-r from-green-500 to-emerald-600 w-10 h-10 rounded-xl flex items-center justify-center mr-4 shadow-lg">
                   <CpuChipIcon className="w-5 h-5 text-white" />
@@ -173,7 +174,7 @@ const About: React.FC = () => {
                   </div>
                 ))}
               </div>
-            </div>
+            </PCard>
           </div>
         </div>
 

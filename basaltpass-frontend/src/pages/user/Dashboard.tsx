@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import Layout from '../../components/Layout'
+import { PCard, PButton } from '../../components'
 import { getBalance } from '@api/user/wallet'
 import { getSecurityStatus, SecurityStatus } from '@api/user/security'
 import { 
@@ -147,12 +148,12 @@ export default function Dashboard() {
           <div className="text-center">
             <div className="text-red-600 text-lg font-medium mb-2">加载失败</div>
             <div className="text-gray-500">{error}</div>
-            <button 
+            <PButton 
               onClick={() => window.location.reload()} 
-              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              className="mt-4"
             >
               重试
-            </button>
+            </PButton>
           </div>
         </div>
       </Layout>
@@ -173,9 +174,10 @@ export default function Dashboard() {
         {/* 统计卡片 */}
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           {stats.map((item) => (
-            <div
+            <PCard
               key={item.name}
-              className="relative overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:px-6"
+              variant="default"
+              hoverable
             >
               <dt>
                 <div className="absolute rounded-md bg-blue-500 p-3">
@@ -203,16 +205,15 @@ export default function Dashboard() {
                   {item.change}
                 </p>
               </dd>
-            </div>
+            </PCard>
           ))}
         </div>
 
         {/* 快速操作 */}
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
-              快速操作
-            </h3>
+        <PCard>
+          <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
+            快速操作
+          </h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
               <Link
                 to="/wallet/recharge"
@@ -354,16 +355,14 @@ export default function Dashboard() {
                 </div>
               </Link>
             </div>
-          </div>
-        </div>
+        </PCard>
 
         {/* 最近交易 */}
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium leading-6 text-gray-900">
-                最近交易
-              </h3>
+        <PCard>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium leading-6 text-gray-900">
+              最近交易
+            </h3>
               <Link
                 to="/wallet/history"
                 className="text-sm font-medium text-blue-600 hover:text-blue-500"
@@ -419,8 +418,7 @@ export default function Dashboard() {
                 ))}
               </ul>
             </div>
-          </div>
-        </div>
+        </PCard>
       </div>
     </Layout>
   )
