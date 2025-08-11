@@ -1,7 +1,7 @@
 package invitation
 
 import (
-	notif "basaltpass-backend/internal/notification"
+	notif "basaltpass-backend/internal/service/notification"
 	"errors"
 	"time"
 

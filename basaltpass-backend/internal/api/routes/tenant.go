@@ -1,15 +1,14 @@
 package routes
 
 import (
+	tenant2 "basaltpass-backend/internal/handler/tenant"
+	tenantNotif "basaltpass-backend/internal/handler/tenant/notification"
 	"basaltpass-backend/internal/middleware"
 	appHandler "basaltpass-backend/internal/public/app"
 	"basaltpass-backend/internal/public/app/app_rbac"
 	"basaltpass-backend/internal/public/app/app_user"
 	"basaltpass-backend/internal/public/oauth"
 	"basaltpass-backend/internal/public/subscription"
-	"basaltpass-backend/internal/tenant"
-	tenantNotif "basaltpass-backend/internal/tenant/notification"
-
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -23,28 +22,28 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 	tenantGroup := v1.Group("/tenant", middleware.JWTMiddleware(), middleware.TenantMiddleware())
 
 	// 租户信息管理
-	tenantGroup.Get("/info", tenant.TenantGetInfoHandler)
+	tenantGroup.Get("/info", tenant2.TenantGetInfoHandler)
 
 	// 租户用户管理路由
 	tenantUserGroup := tenantGroup.Group("/users")
-	tenantUserGroup.Get("/", tenant.GetTenantUsersHandler) // 获取tenant的全部app的全部用户
-	tenantUserGroup.Get("/app-linked", tenant.GetTenantAppLinkedUsersHandler)
-	tenantUserGroup.Get("/stats", tenant.GetTenantUserStatsHandler)
-	tenantUserGroup.Get("/:id", tenant.GetTenantUserHandler)
-	tenantUserGroup.Put("/:id", tenant.UpdateTenantUserHandler)
-	tenantUserGroup.Delete("/:id", tenant.RemoveTenantUserHandler)
-	tenantUserGroup.Post("/invite", tenant.InviteTenantUserHandler) // /tenant/users/invite
-	tenantUserGroup.Post("/:id/resend-invitation", tenant.ResendInvitationHandler)
+	tenantUserGroup.Get("/", tenant2.GetTenantUsersHandler) // 获取tenant的全部app的全部用户
+	tenantUserGroup.Get("/app-linked", tenant2.GetTenantAppLinkedUsersHandler)
+	tenantUserGroup.Get("/stats", tenant2.GetTenantUserStatsHandler)
+	tenantUserGroup.Get("/:id", tenant2.GetTenantUserHandler)
+	tenantUserGroup.Put("/:id", tenant2.UpdateTenantUserHandler)
+	tenantUserGroup.Delete("/:id", tenant2.RemoveTenantUserHandler)
+	tenantUserGroup.Post("/invite", tenant2.InviteTenantUserHandler) // /tenant/users/invite
+	tenantUserGroup.Post("/:id/resend-invitation", tenant2.ResendInvitationHandler)
 
 	// 租户角色管理路由
 	tenantRoleGroupV2 := tenantGroup.Group("/roles")
-	tenantRoleGroupV2.Get("/", tenant.GetTenantRoles)
-	tenantRoleGroupV2.Post("/", tenant.CreateTenantRole)
-	tenantRoleGroupV2.Put("/:id", tenant.UpdateTenantRole)
-	tenantRoleGroupV2.Delete("/:id", tenant.DeleteTenantRole)
-	tenantRoleGroupV2.Get("/users", tenant.GetTenantUsersForRole)
-	tenantRoleGroupV2.Post("/assign", tenant.AssignUserRoles)
-	tenantRoleGroupV2.Get("/users/:user_id", tenant.GetUserRoles)
+	tenantRoleGroupV2.Get("/", tenant2.GetTenantRoles)
+	tenantRoleGroupV2.Post("/", tenant2.CreateTenantRole)
+	tenantRoleGroupV2.Put("/:id", tenant2.UpdateTenantRole)
+	tenantRoleGroupV2.Delete("/:id", tenant2.DeleteTenantRole)
+	tenantRoleGroupV2.Get("/users", tenant2.GetTenantUsersForRole)
+	tenantRoleGroupV2.Post("/assign", tenant2.AssignUserRoles)
+	tenantRoleGroupV2.Get("/users/:user_id", tenant2.GetUserRoles)
 
 	// 租户通知管理
 	tenantNotifGroup := tenantGroup.Group("/notifications")

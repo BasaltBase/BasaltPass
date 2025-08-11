@@ -2,6 +2,11 @@ package routes
 
 import (
 	"basaltpass-backend/internal/debug"
+	"basaltpass-backend/internal/handler/tenant"
+	"basaltpass-backend/internal/handler/user"
+	userNotif "basaltpass-backend/internal/handler/user/notification"
+	"basaltpass-backend/internal/handler/user/security"
+	userTeam "basaltpass-backend/internal/handler/user/team"
 	"basaltpass-backend/internal/middleware"
 	"basaltpass-backend/internal/public/app/app_user"
 	"basaltpass-backend/internal/public/auth"
@@ -13,12 +18,6 @@ import (
 	"basaltpass-backend/internal/public/payment"
 	subscription2 "basaltpass-backend/internal/public/subscription"
 	"basaltpass-backend/internal/public/wallet"
-	"basaltpass-backend/internal/tenant"
-	"basaltpass-backend/internal/user"
-	userNotif "basaltpass-backend/internal/user/notification"
-	"basaltpass-backend/internal/user/security"
-	userTeam "basaltpass-backend/internal/user/team"
-
 	"github.com/gofiber/fiber/v2"
 )
 

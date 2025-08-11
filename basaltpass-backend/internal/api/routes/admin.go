@@ -1,21 +1,20 @@
 package routes
 
 import (
-	"basaltpass-backend/internal/admin"
-	adminNotification "basaltpass-backend/internal/admin/notification"
-	adminSettings "basaltpass-backend/internal/admin/settings"
-	adminTeam "basaltpass-backend/internal/admin/team"
-	adminTenant "basaltpass-backend/internal/admin/tenant"
-	adminUser "basaltpass-backend/internal/admin/user"
-	adminWallet "basaltpass-backend/internal/admin/wallet"
+	admin2 "basaltpass-backend/internal/handler/admin"
+	adminNotification "basaltpass-backend/internal/handler/admin/notification"
+	adminSettings "basaltpass-backend/internal/handler/admin/settings"
+	adminTeam "basaltpass-backend/internal/handler/admin/team"
+	adminTenant "basaltpass-backend/internal/handler/admin/tenant"
+	adminUser "basaltpass-backend/internal/handler/admin/user"
+	adminWallet "basaltpass-backend/internal/handler/admin/wallet"
+	"basaltpass-backend/internal/handler/tenant"
 	"basaltpass-backend/internal/middleware"
 	appHandler "basaltpass-backend/internal/public/app"
 	"basaltpass-backend/internal/public/app/app_user"
 	"basaltpass-backend/internal/public/oauth"
 	rbac2 "basaltpass-backend/internal/public/rbac"
 	"basaltpass-backend/internal/public/subscription"
-	"basaltpass-backend/internal/tenant"
-
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -35,11 +34,11 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 	// 原有的系统级管理员路由（保持向后兼容）
 	adminGroup := v1.Group("/admin", middleware.JWTMiddleware(), middleware.AdminMiddleware())
 
-	adminGroup.Get("/dashboard/stats", admin.DashboardStatsHandler)        // /admin/dashboard/stats
-	adminGroup.Get("/dashboard/activities", admin.RecentActivitiesHandler) // /admin/dashboard/activities
-	adminGroup.Get("/roles", rbac2.ListRolesHandler)                       // /admin/roles
-	adminGroup.Post("/roles", rbac2.CreateRoleHandler)                     // /admin/roles
-	adminGroup.Post("/user/:id/role", rbac2.AssignRoleHandler)             // /admin/user/:id/role
+	adminGroup.Get("/dashboard/stats", admin2.DashboardStatsHandler)        // /admin/dashboard/stats
+	adminGroup.Get("/dashboard/activities", admin2.RecentActivitiesHandler) // /admin/dashboard/activities
+	adminGroup.Get("/roles", rbac2.ListRolesHandler)                        // /admin/roles
+	adminGroup.Post("/roles", rbac2.CreateRoleHandler)                      // /admin/roles
+	adminGroup.Post("/user/:id/role", rbac2.AssignRoleHandler)              // /admin/user/:id/role
 
 	// 权限管理（系统级）
 	adminPermGroup := adminGroup.Group("/permissions")
@@ -111,9 +110,9 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 	adminGroup.Get("/currencies", walletHandler.GetCurrencies) // /admin/currencies
 
 	// 保留原有的钱包交易审批路由（向后兼容）
-	adminGroup.Get("/wallet-tx", admin.ListWalletTxHandler)    // /admin/wallet-tx (deprecated, use /admin/wallets instead)
-	adminGroup.Post("/tx/:id/approve", admin.ApproveTxHandler) // /admin/tx/:id/approve
-	adminGroup.Get("/logs", admin.ListAuditHandler)            // /admin/logs
+	adminGroup.Get("/wallet-tx", admin2.ListWalletTxHandler)    // /admin/wallet-tx (deprecated, use /admin/wallets instead)
+	adminGroup.Post("/tx/:id/approve", admin2.ApproveTxHandler) // /admin/tx/:id/approve
+	adminGroup.Get("/logs", admin2.ListAuditHandler)            // /admin/logs
 
 	// 系统设置管理
 	settingsGroup := adminGroup.Group("/settings")

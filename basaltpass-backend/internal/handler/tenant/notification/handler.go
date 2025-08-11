@@ -3,7 +3,7 @@ package notification
 import (
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
-	notif "basaltpass-backend/internal/notification"
+	notif "basaltpass-backend/internal/service/notification"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"

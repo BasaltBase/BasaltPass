@@ -1,6 +1,7 @@
 package main
 
 import (
+	userTeam "basaltpass-backend/internal/handler/user/team"
 	common2 "basaltpass-backend/internal/middleware"
 	"basaltpass-backend/internal/migration"
 	subscription2 "basaltpass-backend/internal/public/subscription"
@@ -9,7 +10,6 @@ import (
 	"basaltpass-backend/internal/api"
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/config"
-	userTeam "basaltpass-backend/internal/user/team"
 	"basaltpass-backend/internal/utils"
 
 	"os"

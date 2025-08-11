@@ -1,7 +1,7 @@
 package settings
 
 import (
-	settingssvc "basaltpass-backend/internal/user/settings"
+	settingssvc "basaltpass-backend/internal/handler/user/settings"
 	"encoding/json"
 	"net/http"
 
