@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import Layout from '../../../components/Layout';
+import { PCard, PButton } from '../../../components';
 import { teamApi } from '@api/user/team';
 
 interface TeamMember {

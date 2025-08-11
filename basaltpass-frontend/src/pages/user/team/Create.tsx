@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../../components/Layout';
+import { PCard, PButton, PInput } from '../../../components';
 import { teamApi, CreateTeamRequest } from '@api/user/team';
 import { UserGroupIcon, DocumentTextIcon, PhotoIcon } from '@heroicons/react/24/outline';
 
@@ -57,8 +58,8 @@ const CreateTeam: React.FC = () => {
           </p>
         </div>
 
-        <div className="bg-white shadow-lg rounded-xl border border-gray-100">
-          <form onSubmit={handleSubmit} className="p-8 space-y-8">
+        <PCard variant="bordered" size="lg">
+          <form onSubmit={handleSubmit} className="space-y-8">
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-md p-4">
                 <div className="flex">
@@ -80,23 +81,16 @@ const CreateTeam: React.FC = () => {
                 <UserGroupIcon className="h-5 w-5 mr-2 text-indigo-500" />
                 团队名称 <span className="text-red-500 ml-1">*</span>
               </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  className="block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300"
-                  placeholder="输入团队名称"
-                  required
-                />
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                  <div className="h-5 w-5 text-gray-400">
-                    <UserGroupIcon className="h-5 w-5" />
-                  </div>
-                </div>
-              </div>
+              <PInput
+                type="text"
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                placeholder="输入团队名称"
+                size="lg"
+                required
+              />
             </div>
 
             <div className="space-y-2">
@@ -104,22 +98,15 @@ const CreateTeam: React.FC = () => {
                 <DocumentTextIcon className="h-5 w-5 mr-2 text-indigo-500" />
                 团队描述
               </label>
-              <div className="relative">
-                <textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  rows={4}
-                  className="block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300 resize-none"
-                  placeholder="描述团队的目的和职责..."
-                />
-                <div className="absolute top-3 right-3">
-                  <div className="h-5 w-5 text-gray-400">
-                    <DocumentTextIcon className="h-5 w-5" />
-                  </div>
-                </div>
-              </div>
+              <textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                rows={4}
+                className="block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300 resize-none"
+                placeholder="描述团队的目的和职责..."
+              />
             </div>
 
             <div className="space-y-2">
@@ -127,22 +114,15 @@ const CreateTeam: React.FC = () => {
                 <PhotoIcon className="h-5 w-5 mr-2 text-indigo-500" />
                 团队头像URL
               </label>
-              <div className="relative">
-                <input
-                  type="url"
-                  id="avatar_url"
-                  name="avatar_url"
-                  value={formData.avatar_url}
-                  onChange={handleInputChange}
-                  className="block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300"
-                  placeholder="https://example.com/avatar.png"
-                />
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                  <div className="h-5 w-5 text-gray-400">
-                    <PhotoIcon className="h-5 w-5" />
-                  </div>
-                </div>
-              </div>
+              <PInput
+                type="url"
+                id="avatar_url"
+                name="avatar_url"
+                value={formData.avatar_url}
+                onChange={handleInputChange}
+                placeholder="https://example.com/avatar.png"
+                size="lg"
+              />
               {formData.avatar_url && (
                 <div className="mt-2 flex items-center space-x-2">
                   <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
@@ -154,33 +134,26 @@ const CreateTeam: React.FC = () => {
             </div>
 
             <div className="flex justify-end space-x-4 pt-8 border-t border-gray-100">
-              <button
+              <PButton
                 type="button"
+                variant="secondary"
                 onClick={() => navigate('/teams')}
-                className="px-6 py-3 border border-gray-200 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+                size="lg"
               >
                 取消
-              </button>
-              <button
+              </PButton>
+              <PButton
                 type="submit"
+                variant="primary"
                 disabled={loading}
-                className="inline-flex justify-center py-3 px-6 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                loading={loading}
+                size="lg"
               >
-                {loading ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    创建中...
-                  </>
-                ) : (
-                  '创建团队'
-                )}
-              </button>
+                创建团队
+              </PButton>
             </div>
           </form>
-        </div>
+        </PCard>
       </div>
     </Layout>
   );

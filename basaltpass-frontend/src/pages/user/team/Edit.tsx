@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../../../components/Layout';
-import { PInput, PButton } from '../../../components';
+import { PCard, PInput, PButton } from '../../../components';
 import { teamApi, TeamResponse, CreateTeamRequest } from '@api/user/team';
 import { UserGroupIcon, DocumentTextIcon, PhotoIcon } from '@heroicons/react/24/outline';
 
