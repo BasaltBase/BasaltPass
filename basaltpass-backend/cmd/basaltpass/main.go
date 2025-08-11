@@ -10,6 +10,7 @@ import (
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/config"
 	userTeam "basaltpass-backend/internal/user/team"
+	"basaltpass-backend/internal/utils"
 
 	"os"
 
@@ -26,7 +27,9 @@ func main() {
 	// Print current environment
 	log.Printf("[main][info] Environment: %s (develop=%v, staging=%v, production=%v)", config.Get().Env, config.IsDevelop(), config.IsStaging(), config.IsProduction())
 
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		ErrorHandler: common2.ErrorHandler,
+	})
 
 	// Register global middlewares
 	common2.RegisterMiddlewares(app)
@@ -50,6 +53,15 @@ func main() {
 	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.SendString("[main][info] Health check OK")
 	})
+
+	// Export route map in develop for auditing
+	if config.IsDevelop() {
+		if err := utils.DumpRoutes(app, "docs/ROUTES.md"); err != nil {
+			log.Printf("[main][warn] route dump failed: %v", err)
+		} else {
+			log.Printf("[main][info] route map exported to docs/ROUTES.md")
+		}
+	}
 
 	addr := config.Get().Server.Address
 	log.Printf("[main][info] Starting server on %s", addr)
