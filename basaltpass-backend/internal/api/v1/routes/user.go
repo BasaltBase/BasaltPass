@@ -2,11 +2,11 @@ package routes
 
 import (
 	"basaltpass-backend/internal/handler/public/app/app_user"
-	"basaltpass-backend/internal/handler/public/invitation"
 	"basaltpass-backend/internal/handler/public/order"
 	"basaltpass-backend/internal/handler/public/payment"
 	"basaltpass-backend/internal/handler/public/subscription"
 	"basaltpass-backend/internal/handler/user"
+	userInvitation "basaltpass-backend/internal/handler/user/invitation"
 	userNotif "basaltpass-backend/internal/handler/user/notification"
 	userSecurity "basaltpass-backend/internal/handler/user/security"
 	userTeam "basaltpass-backend/internal/handler/user/team"
@@ -66,15 +66,15 @@ func RegisterUserRoutes(v1 fiber.Router) {
 	teamGroup.Put("/:id/members/:member_id", userTeam.UpdateMemberRoleHandler)
 	teamGroup.Delete("/:id/members/:member_id", userTeam.RemoveMemberHandler)
 	teamGroup.Post("/:id/leave", userTeam.LeaveTeamHandler)
-	teamGroup.Post("/:id/invitations", invitation.CreateHandler)
-	teamGroup.Get("/:id/invitations", invitation.ListOutgoingHandler)
-	teamGroup.Delete("/:id/invitations/:inv_id", invitation.RevokeHandler)
+	teamGroup.Post(":id/invitations", userInvitation.CreateHandler)
+	teamGroup.Get(":id/invitations", userInvitation.ListOutgoingHandler)
+	teamGroup.Delete(":id/invitations/:inv_id", userInvitation.RevokeHandler)
 
 	// Invitation routes
 	inv := v1.Group("/invitations", middleware.JWTMiddleware())
-	inv.Get("/", invitation.ListIncomingHandler)
-	inv.Put("/:id/accept", invitation.AcceptHandler)
-	inv.Put("/:id/reject", invitation.RejectHandler)
+	inv.Get("/", userInvitation.ListIncomingHandler)
+	inv.Put(":id/accept", userInvitation.AcceptHandler)
+	inv.Put(":id/reject", userInvitation.RejectHandler)
 
 	// ========== 钱包以及订阅系统路由 ==========
 
