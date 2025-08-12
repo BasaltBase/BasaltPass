@@ -270,9 +270,45 @@ func (h *Handler) CreatePrice(c *fiber.Ctx) error {
 	})
 }
 
+func ListPricesHandler(c *fiber.Ctx) error {
+	return subscriptionHandler.ListPrices(c)
+}
+
 // GetPriceHandler 获取定价详情
 func GetPriceHandler(c *fiber.Ctx) error {
 	return subscriptionHandler.GetPrice(c)
+}
+
+func (h *Handler) ListPrices(c *fiber.Ctx) error {
+	var req ListPricesRequest
+	if err := c.QueryParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid query parameters"})
+	}
+
+	// 设置默认分页参数
+	if req.Page <= 0 {
+		req.Page = 1
+	}
+	if req.PageSize <= 0 {
+		req.PageSize = 20
+	}
+
+	prices, total, err := h.service.ListPrices(&req)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	totalPages := int((total + int64(req.PageSize) - 1) / int64(req.PageSize))
+
+	return c.JSON(fiber.Map{
+		"data": PaginatedResponse{
+			Data:       prices,
+			Total:      total,
+			Page:       req.Page,
+			PageSize:   req.PageSize,
+			TotalPages: totalPages,
+		},
+	})
 }
 
 func (h *Handler) GetPrice(c *fiber.Ctx) error {

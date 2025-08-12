@@ -2,7 +2,9 @@ package routes
 
 import (
 	"basaltpass-backend/internal/middleware"
+	auth2 "basaltpass-backend/internal/public/auth"
 	oauth2 "basaltpass-backend/internal/public/oauth"
+	passkey2 "basaltpass-backend/internal/public/passkey"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -21,6 +23,11 @@ func RegisterOAuthRoutes(v1 fiber.Router) {
 	 * 这些端点处理OAuth2授权、令牌颁发、用户信息
 	 * 和会话管理等功能。
 	 */
+
+	oauthGroup := v1.Group("/auth/oauth")
+	oauthGroup.Get(":provider/login", oauth2.LoginHandler)
+	oauthGroup.Get(":provider/callback", oauth2.CallbackHandler)
+
 	oauthServerGroup := v1.Group("/oauth")
 	oauthServerGroup.Get("/authorize", oauth2.AuthorizeHandler)
 	oauthServerGroup.Post("/consent", middleware.JWTMiddleware(), oauth2.ConsentHandler)
@@ -34,4 +41,23 @@ func RegisterOAuthRoutes(v1 fiber.Router) {
 	oauthServerGroup.Post("/one-tap/login", oauth2.OneTapLoginHandler)
 	oauthServerGroup.Get("/silent-auth", oauth2.SilentAuthHandler)
 	oauthServerGroup.Get("/check-session", oauth2.CheckSessionHandler)
+
+	// 认证相关路由
+	authGroup := v1.Group("/auth")
+	authGroup.Post("/register", auth2.RegisterHandler)
+	authGroup.Post("/login", auth2.LoginHandler)
+	authGroup.Post("/refresh", auth2.RefreshHandler)
+	authGroup.Post("/password/reset-request", auth2.RequestResetHandler)
+	authGroup.Post("/password/reset", auth2.ResetPasswordHandler)
+	authGroup.Post("/verify-2fa", auth2.Verify2FAHandler)
+	authGroup.Get("/debug/cookies", auth2.DebugCookiesHandler) // 调试端点
+
+	// Passkey authentication routes
+	passkeyGroup := v1.Group("/passkey")
+	passkeyGroup.Post("/register/begin", middleware.JWTMiddleware(), passkey2.BeginRegistrationHandler)
+	passkeyGroup.Post("/register/finish", middleware.JWTMiddleware(), passkey2.FinishRegistrationHandler)
+	passkeyGroup.Post("/login/begin", passkey2.BeginLoginHandler)
+	passkeyGroup.Post("/login/finish", passkey2.FinishLoginHandler)
+	passkeyGroup.Get("/list", middleware.JWTMiddleware(), passkey2.ListPasskeysHandler)
+	passkeyGroup.Delete("/:id", middleware.JWTMiddleware(), passkey2.DeletePasskeyHandler)
 }
