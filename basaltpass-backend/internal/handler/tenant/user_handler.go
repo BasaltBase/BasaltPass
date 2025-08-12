@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"time"
 
+	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
 
 	"github.com/gofiber/fiber/v2"
@@ -71,7 +72,7 @@ func GetTenantUsersHandler(c *fiber.Ctx) error {
 	offset := (page - 1) * limit
 
 	// 基于租户的应用从 app_users 聚合使用该租户应用的用户
-	base := tenantService.db.Table("users u").
+	base := common.DB().Table("users u").
 		Joins("JOIN app_users au ON au.user_id = u.id").
 		Joins("JOIN apps a ON a.id = au.app_id").
 		Joins("LEFT JOIN tenant_admins ta ON ta.user_id = u.id AND ta.tenant_id = ?", tenantID).
@@ -237,7 +238,7 @@ func GetTenantAppLinkedUsersHandler(c *fiber.Ctx) error {
 	offset := (page - 1) * limit
 
 	// 基础联结：租户下的应用(apps.tenant_id = tenantID) 与 app_users、users
-	base := tenantService.db.Table("users").
+	base := common.DB().Table("users").
 		Joins("JOIN app_users au ON au.user_id = users.id").
 		Joins("JOIN apps a ON a.id = au.app_id").
 		Where("a.tenant_id = ?", tenantID)
@@ -296,7 +297,7 @@ func GetTenantUserStatsHandler(c *fiber.Ctx) error {
 
 	// 基于 app_users 以及当前租户的应用来统计
 	// 总用户数（授权了该租户任一应用的去重用户）
-	if err := tenantService.db.Table("users u").
+	if err := common.DB().Table("users u").
 		Joins("JOIN app_users au ON au.user_id = u.id").
 		Joins("JOIN apps a ON a.id = au.app_id").
 		Where("a.tenant_id = ?", tenantID).
@@ -305,7 +306,7 @@ func GetTenantUserStatsHandler(c *fiber.Ctx) error {
 	}
 
 	// 活跃用户（邮箱已验证且未删除）
-	if err := tenantService.db.Table("users u").
+	if err := common.DB().Table("users u").
 		Joins("JOIN app_users au ON au.user_id = u.id").
 		Joins("JOIN apps a ON a.id = au.app_id").
 		Where("a.tenant_id = ? AND u.email_verified = 1 AND u.deleted_at IS NULL", tenantID).
@@ -314,7 +315,7 @@ func GetTenantUserStatsHandler(c *fiber.Ctx) error {
 	}
 
 	// 暂停用户（已删除）
-	if err := tenantService.db.Table("users u").
+	if err := common.DB().Table("users u").
 		Joins("JOIN app_users au ON au.user_id = u.id").
 		Joins("JOIN apps a ON a.id = au.app_id").
 		Where("a.tenant_id = ? AND u.deleted_at IS NOT NULL", tenantID).
@@ -325,7 +326,7 @@ func GetTenantUserStatsHandler(c *fiber.Ctx) error {
 	// 本月新用户：第一次授权该租户任何应用的时间在本月内
 	now := time.Now()
 	startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-	sub := tenantService.db.Table("users u").
+	sub := common.DB().Table("users u").
 		Select("u.id, MIN(au.created_at) as first_auth").
 		Joins("JOIN app_users au ON au.user_id = u.id").
 		Joins("JOIN apps a ON a.id = au.app_id").
@@ -333,7 +334,7 @@ func GetTenantUserStatsHandler(c *fiber.Ctx) error {
 		Group("u.id").
 		Having("MIN(au.created_at) >= ?", startOfMonth)
 
-	if err := tenantService.db.Table("(?) as t", sub).
+	if err := common.DB().Table("(?) as t", sub).
 		Count(&stats.NewUsersThisMonth).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "统计本月新用户失败"})
 	}
@@ -363,7 +364,7 @@ func UpdateTenantUserHandler(c *fiber.Ctx) error {
 
 	// 检查用户是否属于该租户
 	var tenantAdmin model.TenantAdmin
-	if err := tenantService.db.Where("tenant_id = ? AND user_id = ?", tenantID, uint(userID)).
+	if err := common.DB().Where("tenant_id = ? AND user_id = ?", tenantID, uint(userID)).
 		First(&tenantAdmin).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
@@ -395,7 +396,7 @@ func UpdateTenantUserHandler(c *fiber.Ctx) error {
 	// 更新用户状态
 	if req.Status != nil {
 		var user model.User
-		if err := tenantService.db.First(&user, uint(userID)).Error; err != nil {
+		if err := common.DB().First(&user, uint(userID)).Error; err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": "查询用户失败",
 			})
@@ -404,14 +405,14 @@ func UpdateTenantUserHandler(c *fiber.Ctx) error {
 		switch *req.Status {
 		case "active":
 			// 激活用户 - 清除删除标记
-			if err := tenantService.db.Unscoped().Model(&user).Update("deleted_at", nil).Error; err != nil {
+			if err := common.DB().Unscoped().Model(&user).Update("deleted_at", nil).Error; err != nil {
 				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 					"error": "激活用户失败",
 				})
 			}
 		case "suspended":
 			// 暂停用户 - 软删除
-			if err := tenantService.db.Delete(&user).Error; err != nil {
+			if err := common.DB().Delete(&user).Error; err != nil {
 				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 					"error": "暂停用户失败",
 				})
@@ -420,7 +421,7 @@ func UpdateTenantUserHandler(c *fiber.Ctx) error {
 	}
 
 	// 保存租户角色更改
-	if err := tenantService.db.Save(&tenantAdmin).Error; err != nil {
+	if err := common.DB().Save(&tenantAdmin).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "更新用户失败",
 		})
@@ -444,7 +445,7 @@ func RemoveTenantUserHandler(c *fiber.Ctx) error {
 
 	// 检查用户是否属于该租户
 	var tenantAdmin model.TenantAdmin
-	if err := tenantService.db.Where("tenant_id = ? AND user_id = ?", tenantID, uint(userID)).
+	if err := common.DB().Where("tenant_id = ? AND user_id = ?", tenantID, uint(userID)).
 		First(&tenantAdmin).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
@@ -464,7 +465,7 @@ func RemoveTenantUserHandler(c *fiber.Ctx) error {
 	}
 
 	// 删除租户用户关联
-	if err := tenantService.db.Delete(&tenantAdmin).Error; err != nil {
+	if err := common.DB().Delete(&tenantAdmin).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "移除用户失败",
 		})
@@ -502,12 +503,12 @@ func InviteTenantUserHandler(c *fiber.Ctx) error {
 
 	// 检查用户是否已存在
 	var existingUser model.User
-	userExists := tenantService.db.Where("email = ?", req.Email).First(&existingUser).Error == nil
+	userExists := common.DB().Where("email = ?", req.Email).First(&existingUser).Error == nil
 
 	if userExists {
 		// 检查是否已经是该租户的用户
 		var existingTenantAdmin model.TenantAdmin
-		if tenantService.db.Where("tenant_id = ? AND user_id = ?", tenantID, existingUser.ID).
+		if common.DB().Where("tenant_id = ? AND user_id = ?", tenantID, existingUser.ID).
 			First(&existingTenantAdmin).Error == nil {
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
 				"error": "用户已经是该租户的成员",
@@ -521,7 +522,7 @@ func InviteTenantUserHandler(c *fiber.Ctx) error {
 			Role:     model.TenantRole(req.Role),
 		}
 
-		if err := tenantService.db.Create(&tenantAdmin).Error; err != nil {
+		if err := common.DB().Create(&tenantAdmin).Error; err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": "添加用户到租户失败",
 			})
@@ -561,7 +562,7 @@ func GetTenantUserHandler(c *fiber.Ctx) error {
 	}
 
 	var user TenantUserResponse
-	if err := tenantService.db.Table("tenant_admins").
+	if err := common.DB().Table("tenant_admins").
 		Select(`users.id, users.email, users.nickname, users.avatar, 
 			tenant_admins.role, 
 			CASE 

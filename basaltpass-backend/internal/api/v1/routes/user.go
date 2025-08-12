@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"basaltpass-backend/internal/handler/tenant"
 	"basaltpass-backend/internal/handler/user"
 	userNotif "basaltpass-backend/internal/handler/user/notification"
 	userSecurity "basaltpass-backend/internal/handler/user/security"
@@ -23,7 +22,7 @@ func RegisterUserRoutes(v1 fiber.Router) {
 
 	// 用户租户管理
 	userGroup := v1.Group("/user", middleware.JWTMiddleware())
-	userGroup.Get("/tenants", tenant.GetUserTenantsHandler)
+	userGroup.Get("/tenants", user.GetUserTenantsHandler)
 	userGroup.Get("/profile", user.GetProfileHandler)
 	userGroup.Get("/debug", user.DebugUserHandler) // 临时调试端点
 	userGroup.Put("/profile", user.UpdateProfileHandler)

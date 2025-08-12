@@ -8,29 +8,18 @@ import (
 	adminTenant "basaltpass-backend/internal/handler/admin/tenant"
 	adminUser "basaltpass-backend/internal/handler/admin/user"
 	adminWallet "basaltpass-backend/internal/handler/admin/wallet"
-	"basaltpass-backend/internal/handler/tenant"
 	"basaltpass-backend/internal/middleware"
 	appHandler "basaltpass-backend/internal/public/app"
 	"basaltpass-backend/internal/public/app/app_user"
 	"basaltpass-backend/internal/public/oauth"
 	rbac2 "basaltpass-backend/internal/public/rbac"
 	"basaltpass-backend/internal/public/subscription"
+
 	"github.com/gofiber/fiber/v2"
 )
 
 // RegisterAdminRoutes 注册系统级管理员路由
 func RegisterAdminRoutes(v1 fiber.Router) {
-	// 平台级管理API（超级管理员）
-	platformGroup := v1.Group("/_admin", middleware.JWTMiddleware(), middleware.SuperAdminMiddleware())
-
-	// 租户管理
-	platformTenantGroup := platformGroup.Group("/tenants")
-	platformTenantGroup.Post("/", tenant.CreateTenantHandler)      // /_admin/tenants
-	platformTenantGroup.Get("/", tenant.ListTenantsHandler)        // /_admin/tenants
-	platformTenantGroup.Get("/:id", tenant.GetTenantHandler)       // /_admin/tenants/:id
-	platformTenantGroup.Put("/:id", tenant.UpdateTenantHandler)    // /_admin/tenants/:id
-	platformTenantGroup.Delete("/:id", tenant.DeleteTenantHandler) // /_admin/tenants/:id
-
 	// 原有的系统级管理员路由（保持向后兼容）
 	adminGroup := v1.Group("/admin", middleware.JWTMiddleware(), middleware.AdminMiddleware())
 

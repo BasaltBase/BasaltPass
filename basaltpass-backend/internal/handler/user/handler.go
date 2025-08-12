@@ -3,12 +3,14 @@ package user
 import (
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
+	tenant2 "basaltpass-backend/internal/service/tenant"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 var svc = Service{}
+var tenantSvc = tenant2.NewTenantService()
 
 // GetProfileHandler handles GET /user/profile
 func GetProfileHandler(c *fiber.Ctx) error {
@@ -18,6 +20,23 @@ func GetProfileHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.JSON(profile)
+}
+
+// GetUserTenantsHandler 获取用户的租户列表
+// GET /user/tenants
+func GetUserTenantsHandler(c *fiber.Ctx) error {
+	userID := c.Locals("userID").(uint)
+
+	tenants, err := tenantSvc.GetUserTenants(userID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"data": tenants,
+	})
 }
 
 // DebugUserHandler 调试用户状态 - 临时调试端点

@@ -528,7 +528,7 @@ func seedSystemPermissions() {
 		{Code: "admin.subscriptions.read", Desc: "查看订阅"},
 		{Code: "admin.subscriptions.cancel", Desc: "取消订阅"},
 
-		// 超管专用（/_admin/**）
+		// 超管专用（/super_admin/**）
 		{Code: "superadmin.tenants.create", Desc: "超管：创建租户"},
 		{Code: "superadmin.tenants.read", Desc: "超管：查看租户"},
 		{Code: "superadmin.tenants.update", Desc: "超管：更新租户"},
