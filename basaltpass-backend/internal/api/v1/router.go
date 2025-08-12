@@ -1,7 +1,7 @@
-package api
+package v1
 
 import (
-	"basaltpass-backend/internal/api/routes"
+	routes2 "basaltpass-backend/internal/api/v1/routes"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -13,17 +13,17 @@ func RegisterRoutes(app *fiber.App) {
 	v1 := app.Group("/api/v1")
 
 	// 注册公开路由（无需认证）
-	routes.RegisterPublicRoutes(app)
+	routes2.RegisterPublicRoutes(app)
 
 	// 注册OAuth相关路由
-	routes.RegisterOAuthRoutes(app)
+	routes2.RegisterOAuthRoutes(app)
 
 	// 注册用户相关路由
-	routes.RegisterUserRoutes(v1)
+	routes2.RegisterUserRoutes(v1)
 
 	// 注册租户相关路由
-	routes.RegisterTenantRoutes(v1)
+	routes2.RegisterTenantRoutes(v1)
 
 	// 注册管理员相关路由
-	routes.RegisterAdminRoutes(v1)
+	routes2.RegisterAdminRoutes(v1)
 }

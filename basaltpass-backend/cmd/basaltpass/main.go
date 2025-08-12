@@ -1,13 +1,13 @@
 package main
 
 import (
+	"basaltpass-backend/internal/api/v1"
 	userTeam "basaltpass-backend/internal/handler/user/team"
 	common2 "basaltpass-backend/internal/middleware"
 	"basaltpass-backend/internal/migration"
 	subscription2 "basaltpass-backend/internal/public/subscription"
 	"log"
 
-	"basaltpass-backend/internal/api"
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/config"
 	"basaltpass-backend/internal/utils"
@@ -47,7 +47,7 @@ func main() {
 	subscription2.InitTenantHandler(common.DB())
 
 	// Register API routes
-	api.RegisterRoutes(app)
+	v1.RegisterRoutes(app)
 
 	// Health-check route
 	app.Get("/health", func(c *fiber.Ctx) error {
