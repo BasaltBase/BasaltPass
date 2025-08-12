@@ -1,8 +1,8 @@
 package auth
 
 import (
-	"basaltpass-backend/internal/handler/public/aduit"
 	"basaltpass-backend/internal/handler/user/security"
+	"basaltpass-backend/internal/service/aduit"
 	"errors"
 
 	"basaltpass-backend/internal/common"

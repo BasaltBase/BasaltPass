@@ -1,7 +1,7 @@
 package oauth
 
 import (
-	"basaltpass-backend/internal/handler/public/aduit"
+	"basaltpass-backend/internal/service/aduit"
 	"net/http"
 	"net/url"
 	"strings"

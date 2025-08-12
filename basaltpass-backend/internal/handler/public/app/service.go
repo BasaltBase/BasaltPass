@@ -1,7 +1,7 @@
 package app
 
 import (
-	"basaltpass-backend/internal/handler/public/aduit"
+	"basaltpass-backend/internal/service/aduit"
 	"errors"
 	"time"
 
