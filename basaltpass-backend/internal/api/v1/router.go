@@ -13,10 +13,10 @@ func RegisterRoutes(app *fiber.App) {
 	v1 := app.Group("/api/v1")
 
 	// 注册公开路由（无需认证）
-	routes2.RegisterPublicRoutes(app)
+	routes2.RegisterPublicRoutes(v1)
 
 	// 注册OAuth相关路由
-	routes2.RegisterOAuthRoutes(app)
+	routes2.RegisterOAuthRoutes(v1)
 
 	// 注册用户相关路由
 	routes2.RegisterUserRoutes(v1)

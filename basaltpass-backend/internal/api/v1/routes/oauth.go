@@ -8,20 +8,20 @@ import (
 )
 
 // RegisterOAuthRoutes 注册OAuth相关路由
-func RegisterOAuthRoutes(app *fiber.App) {
+func RegisterOAuthRoutes(v1 fiber.Router) {
 	// OIDC Discovery端点
-	app.Get("/.well-known/openid-configuration", oauth2.DiscoveryHandler)
+	v1.Get("/.well-known/openid-configuration", oauth2.DiscoveryHandler)
 
 	// OIDC Discovery和会话管理端点
-	app.Get("/check_session_iframe", oauth2.CheckSessionIframeHandler)
-	app.Get("/end_session", oauth2.EndSessionHandler)
+	v1.Get("/check_session_iframe", oauth2.CheckSessionIframeHandler)
+	v1.Get("/end_session", oauth2.EndSessionHandler)
 
 	/*
 	 * OAuth2和OIDC相关端点
 	 * 这些端点处理OAuth2授权、令牌颁发、用户信息
 	 * 和会话管理等功能。
 	 */
-	oauthServerGroup := app.Group("/oauth")
+	oauthServerGroup := v1.Group("/oauth")
 	oauthServerGroup.Get("/authorize", oauth2.AuthorizeHandler)
 	oauthServerGroup.Post("/consent", middleware.JWTMiddleware(), oauth2.ConsentHandler)
 	oauthServerGroup.Post("/token", oauth2.TokenHandler)

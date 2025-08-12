@@ -25,7 +25,7 @@ type OIDCDiscoveryResponse struct {
 	AuthorizationEndpoint             string   `json:"authorization_endpoint"`
 	TokenEndpoint                     string   `json:"token_endpoint"`
 	UserinfoEndpoint                  string   `json:"userinfo_endpoint"`
-	JwksURI                          string   `json:"jwks_uri"`
+	JwksURI                           string   `json:"jwks_uri"`
 	RegistrationEndpoint              string   `json:"registration_endpoint,omitempty"`
 	ScopesSupported                   []string `json:"scopes_supported"`
 	ResponseTypesSupported            []string `json:"response_types_supported"`
@@ -36,10 +36,10 @@ type OIDCDiscoveryResponse struct {
 	IDTokenSigningAlgValuesSupported  []string `json:"id_token_signing_alg_values_supported"`
 	ClaimsSupported                   []string `json:"claims_supported"`
 	CodeChallengeMethodsSupported     []string `json:"code_challenge_methods_supported"`
-	
+
 	// TODO ⬇️ One-Tap Auth支持
-	CheckSessionIframe                string `json:"check_session_iframe,omitempty"`
-	EndSessionEndpoint                string `json:"end_session_endpoint,omitempty"`
+	CheckSessionIframe string `json:"check_session_iframe,omitempty"`
+	EndSessionEndpoint string `json:"end_session_endpoint,omitempty"`
 }
 
 // DiscoveryHandler OIDC Discovery端点
@@ -53,12 +53,12 @@ func DiscoveryHandler(c *fiber.Ctx) error {
 	baseURL := scheme + "://" + c.Get("Host")
 
 	discovery := &OIDCDiscoveryResponse{
-		Issuer:                baseURL,
-		AuthorizationEndpoint: baseURL + "/oauth/authorize",
-		TokenEndpoint:         baseURL + "/oauth/token",
-		UserinfoEndpoint:      baseURL + "/oauth/userinfo",
-		JwksURI:              baseURL + "/oauth/jwks",
-		
+		Issuer:                baseURL + "/api/v1",
+		AuthorizationEndpoint: baseURL + "/api/v1/oauth/authorize",
+		TokenEndpoint:         baseURL + "/api/v1/oauth/token",
+		UserinfoEndpoint:      baseURL + "/api/v1/oauth/userinfo",
+		JwksURI:               baseURL + "/api/v1/oauth/jwks",
+
 		ScopesSupported: []string{
 			"openid",
 			"profile",
@@ -103,10 +103,10 @@ func DiscoveryHandler(c *fiber.Ctx) error {
 			"plain",
 			"S256",
 		},
-		
+
 		// TODO ⬇️ One-Tap Auth和Silent Auth端点
-		CheckSessionIframe: baseURL + "/check_session_iframe",
-		EndSessionEndpoint: baseURL + "/end_session",
+		CheckSessionIframe: baseURL + "/api/v1/check_session_iframe",
+		EndSessionEndpoint: baseURL + "/api/v1/end_session",
 	}
 
 	return c.JSON(discovery)
@@ -122,7 +122,7 @@ func JWKSHandler(c *fiber.Ctx) error {
 	if publicKey == nil {
 		if err := initKeys(); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "key_generation_failed",
+				"error":             "key_generation_failed",
 				"error_description": "Failed to generate RSA keys",
 			})
 		}
@@ -132,7 +132,7 @@ func JWKSHandler(c *fiber.Ctx) error {
 	jwk, err := generateRSAJWK(publicKey, keyID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "jwk_generation_failed",
+			"error":             "jwk_generation_failed",
 			"error_description": "Failed to generate JWK",
 		})
 	}
@@ -175,12 +175,12 @@ func generateRSAJWK(pubKey *rsa.PublicKey, kid string) (map[string]interface{}, 
 	e := base64.RawURLEncoding.EncodeToString(eBytes)
 
 	jwk := map[string]interface{}{
-		"kty": "RSA",           // 密钥类型
-		"use": "sig",           // 用途：签名
-		"alg": "RS256",         // 算法
-		"kid": kid,             // 密钥ID
-		"n":   n,               // RSA模数
-		"e":   e,               // RSA指数
+		"kty": "RSA",   // 密钥类型
+		"use": "sig",   // 用途：签名
+		"alg": "RS256", // 算法
+		"kid": kid,     // 密钥ID
+		"n":   n,       // RSA模数
+		"e":   e,       // RSA指数
 	}
 
 	return jwk, nil
@@ -229,7 +229,7 @@ func CheckSessionIframeHandler(c *fiber.Ctx) error {
 </body>
 </html>
 	`
-	
+
 	c.Set("Content-Type", "text/html")
 	return c.SendString(html)
 }
@@ -239,7 +239,7 @@ func CheckSessionIframeHandler(c *fiber.Ctx) error {
 func EndSessionHandler(c *fiber.Ctx) error {
 	// TODO ⬇️ 实现会话注销逻辑
 	return c.Status(fiber.StatusNotImplemented).JSON(fiber.Map{
-		"error": "not_implemented",
+		"error":             "not_implemented",
 		"error_description": "End session endpoint - TODO ⬇️",
 	})
 }

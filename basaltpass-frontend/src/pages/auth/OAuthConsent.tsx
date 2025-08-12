@@ -44,7 +44,7 @@ export default function OAuthConsent() {
       }
 
       // 发送同意请求
-      const response = await fetch('/oauth/consent', {
+  const response = await fetch('/api/v1/oauth/consent', {
         method: 'POST',
         body: formData,
         credentials: 'include',
@@ -80,7 +80,7 @@ export default function OAuthConsent() {
       }
 
       // 发送拒绝请求
-      const response = await fetch('/oauth/consent', {
+  const response = await fetch('/api/v1/oauth/consent', {
         method: 'POST',
         body: formData,
         credentials: 'include',

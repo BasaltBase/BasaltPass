@@ -222,7 +222,7 @@ class SubscriptionAPI {
 
   // 获取支付页面URL
   getPaymentCheckoutUrl(sessionId: string): string {
-    return `/payment/checkout/${sessionId}`;
+  return `/api/v1/payment/checkout/${sessionId}`;
   }
 
   // 管理员API

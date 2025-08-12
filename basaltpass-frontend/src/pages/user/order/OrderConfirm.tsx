@@ -90,7 +90,7 @@ export default function OrderConfirmPage() {
       
       
       // 跳转到支付页面（后端提供的支付模拟页面）
-      const checkoutUrl = `http://localhost:8080/payment/checkout/${sessionResponse.session.StripeSessionID}`
+  const checkoutUrl = `http://localhost:8080/api/v1/payment/checkout/${sessionResponse.session.StripeSessionID}`
       
       window.location.href = checkoutUrl 
 

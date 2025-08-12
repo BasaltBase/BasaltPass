@@ -262,7 +262,7 @@ func buildLoginURL(c *fiber.Ctx, req *AuthorizeRequest) string {
 	loginURL := "/login"
 
 	// 构建原始OAuth2授权URL作为重定向参数
-	originalURL := "/oauth/authorize?" + c.Context().QueryArgs().String()
+	originalURL := "/api/v1/oauth/authorize?" + c.Context().QueryArgs().String()
 
 	return loginURL + "?redirect=" + url.QueryEscape(originalURL)
 }

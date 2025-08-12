@@ -137,7 +137,7 @@ class PaymentAPI {
 
   // 获取支付页面URL
   getPaymentCheckoutUrl(sessionId: string): string {
-    return `/payment/checkout/${sessionId}`;
+  return `/api/v1/payment/checkout/${sessionId}`;
   }
 }
 
