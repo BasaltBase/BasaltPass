@@ -6,7 +6,6 @@ import (
 	"basaltpass-backend/internal/handler/public/order"
 	"basaltpass-backend/internal/handler/public/payment"
 	"basaltpass-backend/internal/handler/public/subscription"
-	"basaltpass-backend/internal/handler/public/wallet"
 	"basaltpass-backend/internal/handler/user"
 	userNotif "basaltpass-backend/internal/handler/user/notification"
 	userSecurity "basaltpass-backend/internal/handler/user/security"
@@ -81,10 +80,10 @@ func RegisterUserRoutes(v1 fiber.Router) {
 
 	// 钱包用户系统路由（需要认证）
 	walletGroup := v1.Group("/wallet", middleware.JWTMiddleware())
-	walletGroup.Get("/balance", wallet.BalanceHandler)
-	walletGroup.Post("/recharge", wallet.RechargeHandler)
-	walletGroup.Post("/withdraw", wallet.WithdrawHandler)
-	walletGroup.Get("/history", wallet.HistoryHandler)
+	walletGroup.Get("/balance", user.GetWalletBalanceHandler)
+	walletGroup.Post("/recharge", user.RechargeWalletHandler)
+	walletGroup.Post("/withdraw", user.WithdrawWalletHandler)
+	walletGroup.Get("/history", user.WalletHistoryHandler)
 
 	// 支付系统路由（需要认证）
 	paymentGroup := v1.Group("/payment", middleware.JWTMiddleware())

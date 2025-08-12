@@ -1,7 +1,7 @@
 package payment
 
 import (
-	"basaltpass-backend/internal/handler/public/wallet"
+	"basaltpass-backend/internal/service/wallet"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
@@ -11,6 +11,7 @@ import (
 
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
+
 	"gorm.io/gorm"
 )
 

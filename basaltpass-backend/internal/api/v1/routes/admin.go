@@ -14,6 +14,7 @@ import (
 	"basaltpass-backend/internal/handler/public/rbac"
 	"basaltpass-backend/internal/handler/public/subscription"
 	"basaltpass-backend/internal/middleware"
+
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -98,9 +99,9 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 	adminGroup.Get("/currencies", walletHandler.GetCurrencies) // /admin/currencies
 
 	// 保留原有的钱包交易审批路由（向后兼容）
-	adminGroup.Get("/wallet-tx", admin2.ListWalletTxHandler)    // /admin/wallet-tx (deprecated, use /admin/wallets instead)
-	adminGroup.Post("/tx/:id/approve", admin2.ApproveTxHandler) // /admin/tx/:id/approve
-	adminGroup.Get("/logs", admin2.ListAuditHandler)            // /admin/logs
+	adminGroup.Get("/wallet-tx", admin2.ListWalletTxHandler)          // /admin/wallet-tx (deprecated, use /admin/wallets instead)
+	adminGroup.Post("/tx/:id/approve", admin2.ApproveWalletTxHandler) // /admin/tx/:id/approve (deprecated)
+	adminGroup.Get("/logs", admin2.ListAuditHandler)                  // /admin/logs
 
 	// 系统设置管理
 	settingsGroup := adminGroup.Group("/settings")
