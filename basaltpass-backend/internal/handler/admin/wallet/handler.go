@@ -1,8 +1,8 @@
 package wallet
 
 import (
+	"basaltpass-backend/internal/handler/public/currency"
 	"basaltpass-backend/internal/model"
-	"basaltpass-backend/internal/public/currency"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"

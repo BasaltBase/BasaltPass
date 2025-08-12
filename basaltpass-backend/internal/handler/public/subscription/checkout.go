@@ -1,7 +1,7 @@
 package subscription
 
 import (
-	"basaltpass-backend/internal/public/payment"
+	"basaltpass-backend/internal/handler/public/payment"
 	"errors"
 	"fmt"
 	"time"

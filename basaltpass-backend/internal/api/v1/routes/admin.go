@@ -8,13 +8,12 @@ import (
 	adminTenant "basaltpass-backend/internal/handler/admin/tenant"
 	adminUser "basaltpass-backend/internal/handler/admin/user"
 	adminWallet "basaltpass-backend/internal/handler/admin/wallet"
+	appHandler "basaltpass-backend/internal/handler/public/app"
+	"basaltpass-backend/internal/handler/public/app/app_user"
+	"basaltpass-backend/internal/handler/public/oauth"
+	"basaltpass-backend/internal/handler/public/rbac"
+	"basaltpass-backend/internal/handler/public/subscription"
 	"basaltpass-backend/internal/middleware"
-	appHandler "basaltpass-backend/internal/public/app"
-	"basaltpass-backend/internal/public/app/app_user"
-	"basaltpass-backend/internal/public/oauth"
-	rbac2 "basaltpass-backend/internal/public/rbac"
-	"basaltpass-backend/internal/public/subscription"
-
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -25,21 +24,21 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 
 	adminGroup.Get("/dashboard/stats", admin2.DashboardStatsHandler)        // /admin/dashboard/stats
 	adminGroup.Get("/dashboard/activities", admin2.RecentActivitiesHandler) // /admin/dashboard/activities
-	adminGroup.Get("/roles", rbac2.ListRolesHandler)                        // /admin/roles
-	adminGroup.Post("/roles", rbac2.CreateRoleHandler)                      // /admin/roles
-	adminGroup.Post("/user/:id/role", rbac2.AssignRoleHandler)              // /admin/user/:id/role
+	adminGroup.Get("/roles", rbac.ListRolesHandler)                         // /admin/roles
+	adminGroup.Post("/roles", rbac.CreateRoleHandler)                       // /admin/roles
+	adminGroup.Post("/user/:id/role", rbac.AssignRoleHandler)               // /admin/user/:id/role
 
 	// 权限管理（系统级）
 	adminPermGroup := adminGroup.Group("/permissions")
-	adminPermGroup.Get("/", rbac2.ListPermissionsHandler)        // /admin/permissions
-	adminPermGroup.Post("/", rbac2.CreatePermissionHandler)      // /admin/permissions
-	adminPermGroup.Put("/:id", rbac2.UpdatePermissionHandler)    // /admin/permissions/:id
-	adminPermGroup.Delete("/:id", rbac2.DeletePermissionHandler) // /admin/permissions/:id
+	adminPermGroup.Get("/", rbac.ListPermissionsHandler)        // /admin/permissions
+	adminPermGroup.Post("/", rbac.CreatePermissionHandler)      // /admin/permissions
+	adminPermGroup.Put("/:id", rbac.UpdatePermissionHandler)    // /admin/permissions/:id
+	adminPermGroup.Delete("/:id", rbac.DeletePermissionHandler) // /admin/permissions/:id
 
 	// 角色-权限管理
-	adminGroup.Get("/roles/:id/permissions", rbac2.GetRolePermissionsHandler)                     // /admin/roles/:id/permissions
-	adminGroup.Post("/roles/:id/permissions", rbac2.SetRolePermissionsHandler)                    // /admin/roles/:id/permissions
-	adminGroup.Delete("/roles/:id/permissions/:permission_id", rbac2.RemoveRolePermissionHandler) // /admin/roles/:id/permissions/:permission_id
+	adminGroup.Get("/roles/:id/permissions", rbac.GetRolePermissionsHandler)                     // /admin/roles/:id/permissions
+	adminGroup.Post("/roles/:id/permissions", rbac.SetRolePermissionsHandler)                    // /admin/roles/:id/permissions
+	adminGroup.Delete("/roles/:id/permissions/:permission_id", rbac.RemoveRolePermissionHandler) // /admin/roles/:id/permissions/:permission_id
 
 	// 新的用户管理路由（替换原有的用户相关路由）
 	adminUserGroup := adminGroup.Group("/users")

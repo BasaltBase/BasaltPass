@@ -1,7 +1,7 @@
 package payment
 
 import (
-	"basaltpass-backend/internal/public/wallet"
+	"basaltpass-backend/internal/handler/public/wallet"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"

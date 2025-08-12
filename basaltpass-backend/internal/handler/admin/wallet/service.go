@@ -2,8 +2,8 @@ package wallet
 
 import (
 	"basaltpass-backend/internal/common"
+	"basaltpass-backend/internal/handler/public/currency"
 	"basaltpass-backend/internal/model"
-	"basaltpass-backend/internal/public/currency"
 	"errors"
 	"fmt"
 	"time"

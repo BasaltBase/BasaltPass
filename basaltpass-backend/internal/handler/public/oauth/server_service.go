@@ -1,7 +1,7 @@
 package oauth
 
 import (
-	"basaltpass-backend/internal/public/app/app_user"
+	"basaltpass-backend/internal/handler/public/app/app_user"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"

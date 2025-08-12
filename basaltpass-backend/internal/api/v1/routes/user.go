@@ -1,18 +1,17 @@
 package routes
 
 import (
+	"basaltpass-backend/internal/handler/public/app/app_user"
+	"basaltpass-backend/internal/handler/public/invitation"
+	"basaltpass-backend/internal/handler/public/order"
+	"basaltpass-backend/internal/handler/public/payment"
+	"basaltpass-backend/internal/handler/public/subscription"
+	"basaltpass-backend/internal/handler/public/wallet"
 	"basaltpass-backend/internal/handler/user"
 	userNotif "basaltpass-backend/internal/handler/user/notification"
 	userSecurity "basaltpass-backend/internal/handler/user/security"
 	userTeam "basaltpass-backend/internal/handler/user/team"
 	"basaltpass-backend/internal/middleware"
-
-	"basaltpass-backend/internal/public/app/app_user"
-	"basaltpass-backend/internal/public/invitation"
-	"basaltpass-backend/internal/public/order"
-	"basaltpass-backend/internal/public/payment"
-	subscription2 "basaltpass-backend/internal/public/subscription"
-	"basaltpass-backend/internal/public/wallet"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -104,35 +103,35 @@ func RegisterUserRoutes(v1 fiber.Router) {
 
 	// 产品相关路由
 	productsGroup := v1.Group("/products")
-	productsGroup.Get("/", subscription2.ListProductsHandler)
-	productsGroup.Get("/:id", subscription2.GetProductHandler)
+	productsGroup.Get("/", subscription.ListProductsHandler)
+	productsGroup.Get("/:id", subscription.GetProductHandler)
 
 	// 套餐相关路由
 	plansGroup := v1.Group("/plans")
-	plansGroup.Get("/", subscription2.ListPlansHandler)
-	plansGroup.Get("/:id", subscription2.GetPlanHandler)
+	plansGroup.Get("/", subscription.ListPlansHandler)
+	plansGroup.Get("/:id", subscription.GetPlanHandler)
 
 	// 价格相关路由
 	pricesGroup := v1.Group("/prices")
-	pricesGroup.Get("/", subscription2.ListPricesHandler)
-	pricesGroup.Get("/:id", subscription2.GetPriceHandler)
+	pricesGroup.Get("/", subscription.ListPricesHandler)
+	pricesGroup.Get("/:id", subscription.GetPriceHandler)
 
 	// 优惠券验证（无需认证）
 	couponsGroup := v1.Group("/coupons")
-	couponsGroup.Get("/:code/validate", subscription2.ValidateCouponHandler)
+	couponsGroup.Get("/:code/validate", subscription.ValidateCouponHandler)
 
 	// 用户订阅相关路由（需要认证）
 	subscriptionsGroup := v1.Group("/subscriptions", middleware.JWTMiddleware())
-	subscriptionsGroup.Post("/", subscription2.CreateSubscriptionHandler)
-	subscriptionsGroup.Get("/", subscription2.ListSubscriptionsHandler)
-	subscriptionsGroup.Get("/:id", subscription2.GetSubscriptionHandler)
-	subscriptionsGroup.Put("/:id/cancel", subscription2.CancelSubscriptionHandler)
+	subscriptionsGroup.Post("/", subscription.CreateSubscriptionHandler)
+	subscriptionsGroup.Get("/", subscription.ListSubscriptionsHandler)
+	subscriptionsGroup.Get("/:id", subscription.GetSubscriptionHandler)
+	subscriptionsGroup.Put("/:id/cancel", subscription.CancelSubscriptionHandler)
 
 	// 订阅结账路由
-	subscriptionsGroup.Post("/checkout", subscription2.CheckoutHandler)
-	subscriptionsGroup.Post("/quick-checkout", subscription2.QuickCheckoutHandler)
+	subscriptionsGroup.Post("/checkout", subscription.CheckoutHandler)
+	subscriptionsGroup.Post("/quick-checkout", subscription.QuickCheckoutHandler)
 
 	// 使用记录路由（需要认证）
 	usageGroup := v1.Group("/usage", middleware.JWTMiddleware())
-	usageGroup.Post("/records", subscription2.CreateUsageRecordHandler)
+	usageGroup.Post("/records", subscription.CreateUsageRecordHandler)
 }

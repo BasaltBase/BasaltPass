@@ -2,10 +2,9 @@ package routes
 
 import (
 	"basaltpass-backend/internal/debug"
+	"basaltpass-backend/internal/handler/public/currency"
+	"basaltpass-backend/internal/handler/public/payment"
 	"basaltpass-backend/internal/middleware"
-	"basaltpass-backend/internal/public/currency"
-	"basaltpass-backend/internal/public/payment"
-
 	"github.com/gofiber/fiber/v2"
 )
 

@@ -1,22 +1,21 @@
 package routes
 
 import (
+	auth2 "basaltpass-backend/internal/handler/public/auth"
+	"basaltpass-backend/internal/handler/public/oauth"
+	passkey2 "basaltpass-backend/internal/handler/public/passkey"
 	"basaltpass-backend/internal/middleware"
-	auth2 "basaltpass-backend/internal/public/auth"
-	oauth2 "basaltpass-backend/internal/public/oauth"
-	passkey2 "basaltpass-backend/internal/public/passkey"
-
 	"github.com/gofiber/fiber/v2"
 )
 
 // RegisterOAuthRoutes 注册OAuth相关路由
 func RegisterOAuthRoutes(v1 fiber.Router) {
 	// OIDC Discovery端点
-	v1.Get("/.well-known/openid-configuration", oauth2.DiscoveryHandler)
+	v1.Get("/.well-known/openid-configuration", oauth.DiscoveryHandler)
 
 	// OIDC Discovery和会话管理端点
-	v1.Get("/check_session_iframe", oauth2.CheckSessionIframeHandler)
-	v1.Get("/end_session", oauth2.EndSessionHandler)
+	v1.Get("/check_session_iframe", oauth.CheckSessionIframeHandler)
+	v1.Get("/end_session", oauth.EndSessionHandler)
 
 	/*
 	 * OAuth2和OIDC相关端点
@@ -25,22 +24,22 @@ func RegisterOAuthRoutes(v1 fiber.Router) {
 	 */
 
 	oauthGroup := v1.Group("/auth/oauth")
-	oauthGroup.Get(":provider/login", oauth2.LoginHandler)
-	oauthGroup.Get(":provider/callback", oauth2.CallbackHandler)
+	oauthGroup.Get(":provider/login", oauth.LoginHandler)
+	oauthGroup.Get(":provider/callback", oauth.CallbackHandler)
 
 	oauthServerGroup := v1.Group("/oauth")
-	oauthServerGroup.Get("/authorize", oauth2.AuthorizeHandler)
-	oauthServerGroup.Post("/consent", middleware.JWTMiddleware(), oauth2.ConsentHandler)
-	oauthServerGroup.Post("/token", oauth2.TokenHandler)
-	oauthServerGroup.Get("/userinfo", oauth2.UserInfoHandler)
-	oauthServerGroup.Post("/introspect", oauth2.IntrospectHandler)
-	oauthServerGroup.Post("/revoke", oauth2.RevokeHandler)
-	oauthServerGroup.Get("/jwks", oauth2.JWKSHandler)
+	oauthServerGroup.Get("/authorize", oauth.AuthorizeHandler)
+	oauthServerGroup.Post("/consent", middleware.JWTMiddleware(), oauth.ConsentHandler)
+	oauthServerGroup.Post("/token", oauth.TokenHandler)
+	oauthServerGroup.Get("/userinfo", oauth.UserInfoHandler)
+	oauthServerGroup.Post("/introspect", oauth.IntrospectHandler)
+	oauthServerGroup.Post("/revoke", oauth.RevokeHandler)
+	oauthServerGroup.Get("/jwks", oauth.JWKSHandler)
 
 	// TODO ⬇️ One-Tap Auth和Silent Auth端点
-	oauthServerGroup.Post("/one-tap/login", oauth2.OneTapLoginHandler)
-	oauthServerGroup.Get("/silent-auth", oauth2.SilentAuthHandler)
-	oauthServerGroup.Get("/check-session", oauth2.CheckSessionHandler)
+	oauthServerGroup.Post("/one-tap/login", oauth.OneTapLoginHandler)
+	oauthServerGroup.Get("/silent-auth", oauth.SilentAuthHandler)
+	oauthServerGroup.Get("/check-session", oauth.CheckSessionHandler)
 
 	// 认证相关路由
 	authGroup := v1.Group("/auth")

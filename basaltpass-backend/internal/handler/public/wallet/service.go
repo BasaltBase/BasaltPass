@@ -1,7 +1,7 @@
 package wallet
 
 import (
-	"basaltpass-backend/internal/public/currency"
+	"basaltpass-backend/internal/handler/public/currency"
 	"errors"
 
 	"basaltpass-backend/internal/common"

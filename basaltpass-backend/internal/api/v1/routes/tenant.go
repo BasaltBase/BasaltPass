@@ -1,14 +1,14 @@
 package routes
 
 import (
+	appHandler "basaltpass-backend/internal/handler/public/app"
+	app_rbac2 "basaltpass-backend/internal/handler/public/app/app_rbac"
+	"basaltpass-backend/internal/handler/public/app/app_user"
+	"basaltpass-backend/internal/handler/public/oauth"
+	"basaltpass-backend/internal/handler/public/subscription"
 	tenant2 "basaltpass-backend/internal/handler/tenant"
 	tenantNotif "basaltpass-backend/internal/handler/tenant/notification"
 	"basaltpass-backend/internal/middleware"
-	appHandler "basaltpass-backend/internal/public/app"
-	"basaltpass-backend/internal/public/app/app_rbac"
-	"basaltpass-backend/internal/public/app/app_user"
-	"basaltpass-backend/internal/public/oauth"
-	"basaltpass-backend/internal/public/subscription"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -128,29 +128,29 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 	tenantAppGroup.Patch("/:id/status", appHandler.TenantToggleAppStatusHandler)
 
 	// 应用权限管理路由
-	tenantAppGroup.Get("/:app_id/permissions", app_rbac.GetAppPermissions)
-	tenantAppGroup.Post("/:app_id/permissions", app_rbac.CreateAppPermission)
-	tenantAppGroup.Put("/:app_id/permissions/:permission_id", app_rbac.UpdateAppPermission)
-	tenantAppGroup.Delete("/:app_id/permissions/:permission_id", app_rbac.DeleteAppPermission)
+	tenantAppGroup.Get("/:app_id/permissions", app_rbac2.GetAppPermissions)
+	tenantAppGroup.Post("/:app_id/permissions", app_rbac2.CreateAppPermission)
+	tenantAppGroup.Put("/:app_id/permissions/:permission_id", app_rbac2.UpdateAppPermission)
+	tenantAppGroup.Delete("/:app_id/permissions/:permission_id", app_rbac2.DeleteAppPermission)
 
 	// 应用角色管理路由
-	tenantAppGroup.Get("/:app_id/roles", app_rbac.GetAppRoles)
-	tenantAppGroup.Post("/:app_id/roles", app_rbac.CreateAppRole)
-	tenantAppGroup.Put("/:app_id/roles/:role_id", app_rbac.UpdateAppRole)
-	tenantAppGroup.Delete("/:app_id/roles/:role_id", app_rbac.DeleteAppRole)
+	tenantAppGroup.Get("/:app_id/roles", app_rbac2.GetAppRoles)
+	tenantAppGroup.Post("/:app_id/roles", app_rbac2.CreateAppRole)
+	tenantAppGroup.Put("/:app_id/roles/:role_id", app_rbac2.UpdateAppRole)
+	tenantAppGroup.Delete("/:app_id/roles/:role_id", app_rbac2.DeleteAppRole)
 
 	// 应用用户管理路由（包含权限）
-	tenantAppGroup.Get("/:app_id/users", app_rbac.GetAppUsers)
+	tenantAppGroup.Get("/:app_id/users", app_rbac2.GetAppUsers)
 	tenantAppGroup.Get("/:app_id/users/by-status", app_user.GetAppUsersByStatusHandler)
 	tenantAppGroup.Get("/:app_id/users/stats", app_user.GetAppUserStatsHandler)
 	tenantAppGroup.Put("/:app_id/users/:user_id/status", app_user.UpdateAppUserStatusHandler)
 
 	// 应用用户权限管理路由
-	tenantAppGroup.Get("/:app_id/users/:user_id/permissions", app_rbac.GetUserPermissions)
-	tenantAppGroup.Post("/:app_id/users/:user_id/permissions", app_rbac.GrantUserPermissions)
-	tenantAppGroup.Delete("/:app_id/users/:user_id/permissions/:permission_id", app_rbac.RevokeUserPermission)
-	tenantAppGroup.Post("/:app_id/users/:user_id/roles", app_rbac.AssignUserRoles)
-	tenantAppGroup.Delete("/:app_id/users/:user_id/roles/:role_id", app_rbac.RevokeUserRole)
+	tenantAppGroup.Get("/:app_id/users/:user_id/permissions", app_rbac2.GetUserPermissions)
+	tenantAppGroup.Post("/:app_id/users/:user_id/permissions", app_rbac2.GrantUserPermissions)
+	tenantAppGroup.Delete("/:app_id/users/:user_id/permissions/:permission_id", app_rbac2.RevokeUserPermission)
+	tenantAppGroup.Post("/:app_id/users/:user_id/roles", app_rbac2.AssignUserRoles)
+	tenantAppGroup.Delete("/:app_id/users/:user_id/roles/:role_id", app_rbac2.RevokeUserRole)
 
 	// 租户用户订阅查看路由（需要租户上下文但不需要管理员权限）
 	tenantUserSubscriptionGroup := v1.Group("/tenant", middleware.JWTMiddleware(), middleware.TenantMiddleware()).Group("/subscriptions")
