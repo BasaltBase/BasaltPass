@@ -10,7 +10,7 @@ import (
 var tenantService = tenant2.NewTenantService()
 
 // GetTenantInfoHandler 获取租户基础信息（租户控制台专用）
-// GET /admin/tenant/info
+// GET /tenant/tenant/info
 func GetTenantInfoHandler(c *fiber.Ctx) error {
 	tenantID := c.Locals("tenantID").(uint)
 
@@ -28,13 +28,13 @@ func GetTenantInfoHandler(c *fiber.Ctx) error {
 }
 
 // InviteUserHandler 邀请用户加入租户 （正在开发）
-// POST /admin/tenant/users/invite
+// POST /tenant/tenant/users/invite
 func InviteUserHandler(c *fiber.Ctx) error {
 	tenantID := c.Locals("tenantID").(uint)
 
 	var req struct {
 		UserID uint   `json:"user_id" validate:"required"`
-		Role   string `json:"role" validate:"required,oneof=admin member"`
+		Role   string `json:"role" validate:"required,oneof=tenant member"`
 	}
 
 	if err := c.BodyParser(&req); err != nil {

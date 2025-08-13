@@ -1,6 +1,8 @@
 package tenant
 
 import (
+	admindto "basaltpass-backend/internal/dto/tenant"
+	tenant2 "basaltpass-backend/internal/service/tenant"
 	"strconv"
 
 	"basaltpass-backend/internal/common"
@@ -8,12 +10,12 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-var adminTenantService = NewAdminTenantService(common.DB())
+var adminTenantService = tenant2.NewAdminTenantService(common.DB())
 
 // GetTenantListHandler 获取租户列表
 func GetTenantListHandler(c *fiber.Ctx) error {
 	// 解析查询参数
-	var req AdminTenantListRequest
+	var req admindto.AdminTenantListRequest
 
 	if err := c.QueryParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -64,7 +66,7 @@ func GetTenantDetailHandler(c *fiber.Ctx) error {
 
 // CreateTenantHandler 创建租户
 func CreateTenantHandler(c *fiber.Ctx) error {
-	var req AdminCreateTenantRequest
+	var req admindto.AdminCreateTenantRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "请求参数错误",
@@ -73,18 +75,14 @@ func CreateTenantHandler(c *fiber.Ctx) error {
 
 	tenant, err := adminTenantService.CreateTenant(req)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
-
-	// 转换为列表响应格式
-	response := adminTenantService.convertToAdminTenantListResponse(*tenant)
-
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"data":    response,
-		"message": "租户创建成功",
-	})
+	// 重新获取详情用于返回（含统计）
+	detail, derr := adminTenantService.GetTenantDetail(tenant.ID)
+	if derr != nil { // 回退到最小字段
+		return c.Status(fiber.StatusCreated).JSON(fiber.Map{"data": fiber.Map{"id": tenant.ID, "name": tenant.Name}, "message": "租户创建成功"})
+	}
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"data": detail, "message": "租户创建成功"})
 }
 
 // UpdateTenantHandler 更新租户信息
@@ -96,7 +94,7 @@ func UpdateTenantHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	var req AdminUpdateTenantRequest
+	var req admindto.AdminUpdateTenantRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "请求参数错误",
@@ -156,7 +154,7 @@ func GetTenantUsersHandler(c *fiber.Ctx) error {
 	}
 
 	// 解析查询参数
-	var req AdminTenantUserListRequest
+	var req admindto.AdminTenantUserListRequest
 	if err := c.QueryParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "查询参数错误",

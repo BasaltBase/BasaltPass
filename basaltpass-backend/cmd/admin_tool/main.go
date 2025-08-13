@@ -21,8 +21,8 @@ func main() {
 		fmt.Println("用法:")
 		fmt.Println("  go run cmd/admin_tool/main.go list-users")
 		fmt.Println("  go run cmd/admin_tool/main.go list-roles")
-		fmt.Println("  go run cmd/admin_tool/main.go assign-admin <user_id>")
-		fmt.Println("  go run cmd/admin_tool/main.go create-admin-role")
+		fmt.Println("  go run cmd/admin_tool/main.go assign-tenant <user_id>")
+		fmt.Println("  go run cmd/admin_tool/main.go create-tenant-role")
 		return
 	}
 
@@ -33,7 +33,7 @@ func main() {
 		listUsers()
 	case "list-roles":
 		listRoles()
-	case "assign-admin":
+	case "assign-tenant":
 		if len(os.Args) < 3 {
 			fmt.Println("请提供用户ID")
 			return
@@ -44,7 +44,7 @@ func main() {
 			return
 		}
 		assignAdmin(uint(userID))
-	case "create-admin-role":
+	case "create-tenant-role":
 		createAdminRole()
 	default:
 		fmt.Println("未知命令:", command)
@@ -90,15 +90,15 @@ func listRoles() {
 func createAdminRole() {
 	// 检查admin角色是否已存在
 	var existingRole model.Role
-	if err := common.DB().Where("name = ?", "admin").First(&existingRole).Error; err == nil {
+	if err := common.DB().Where("name = ?", "tenant").First(&existingRole).Error; err == nil {
 		fmt.Println("admin角色已存在")
 		return
 	}
 
 	// 创建admin角色
 	role := model.Role{
-		Name:        "admin",
-		Code:        "admin",
+		Name:        "tenant",
+		Code:        "tenant",
 		Description: "系统管理员",
 	}
 
@@ -119,11 +119,11 @@ func assignAdmin(userID uint) {
 
 	// 检查admin角色是否存在
 	var adminRole model.Role
-	if err := common.DB().Where("name = ?", "admin").First(&adminRole).Error; err != nil {
+	if err := common.DB().Where("name = ?", "tenant").First(&adminRole).Error; err != nil {
 		fmt.Println("admin角色不存在，正在创建...")
 		createAdminRole()
 		// 重新查询
-		if err := common.DB().Where("name = ?", "admin").First(&adminRole).Error; err != nil {
+		if err := common.DB().Where("name = ?", "tenant").First(&adminRole).Error; err != nil {
 			fmt.Println("创建admin角色失败")
 			return
 		}

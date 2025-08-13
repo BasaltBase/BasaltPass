@@ -59,7 +59,7 @@ type TenantUserInfo struct {
 	ID       uint   `json:"id"`
 	Email    string `json:"email"`
 	Nickname string `json:"nickname"`
-	Role     string `json:"role"` // tenant role: owner, admin, member
+	Role     string `json:"role"` // tenant role: owner, tenant, member
 }
 
 // CreateTenantRole 创建租户角色

@@ -1,7 +1,7 @@
 package oauth
 
 import (
-	"basaltpass-backend/internal/handler/public/auth"
+	"basaltpass-backend/internal/service/auth"
 	"context"
 	"net/http"
 	"os"

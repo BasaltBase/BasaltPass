@@ -1,8 +1,8 @@
 package wallet
 
 import (
-	"basaltpass-backend/internal/handler/public/currency"
 	"basaltpass-backend/internal/model"
+	"basaltpass-backend/internal/service/currency"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -23,12 +23,12 @@ type WalletResponse struct {
 	Team       interface{} `json:"team,omitempty"`
 }
 
-// AdminWalletHandler handles admin wallet operations
+// AdminWalletHandler handles tenant wallet operations
 type AdminWalletHandler struct {
 	service *AdminWalletService
 }
 
-// NewAdminWalletHandler creates a new admin wallet handler
+// NewAdminWalletHandler creates a new tenant wallet handler
 func NewAdminWalletHandler() *AdminWalletHandler {
 	return &AdminWalletHandler{
 		service: NewAdminWalletService(),
@@ -89,7 +89,7 @@ type AdjustBalanceRequest struct {
 	Reason string  `json:"reason" validate:"required"`
 }
 
-// ListWallets GET /admin/wallets - List all wallets with filtering and pagination
+// ListWallets GET /tenant/wallets - List all wallets with filtering and pagination
 func (h *AdminWalletHandler) ListWallets(c *fiber.Ctx) error {
 	var req ListWalletsRequest
 	if err := c.QueryParser(&req); err != nil {
@@ -124,7 +124,7 @@ func (h *AdminWalletHandler) ListWallets(c *fiber.Ctx) error {
 	})
 }
 
-// GetUserWallets GET /admin/users/:id/wallets - Get all wallets for a specific user
+// GetUserWallets GET /tenant/users/:id/wallets - Get all wallets for a specific user
 func (h *AdminWalletHandler) GetUserWallets(c *fiber.Ctx) error {
 	userID, err := strconv.ParseUint(c.Params("id"), 10, 32)
 	if err != nil {
@@ -145,7 +145,7 @@ func (h *AdminWalletHandler) GetUserWallets(c *fiber.Ctx) error {
 	})
 }
 
-// GetTeamWallets GET /admin/teams/:id/wallets - Get all wallets for a specific team
+// GetTeamWallets GET /tenant/teams/:id/wallets - Get all wallets for a specific team
 func (h *AdminWalletHandler) GetTeamWallets(c *fiber.Ctx) error {
 	teamID, err := strconv.ParseUint(c.Params("id"), 10, 32)
 	if err != nil {
@@ -166,7 +166,7 @@ func (h *AdminWalletHandler) GetTeamWallets(c *fiber.Ctx) error {
 	})
 }
 
-// CreateWallet POST /admin/wallets - Create a new wallet
+// CreateWallet POST /tenant/wallets - Create a new wallet
 func (h *AdminWalletHandler) CreateWallet(c *fiber.Ctx) error {
 	var req CreateWalletRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -207,7 +207,7 @@ func (h *AdminWalletHandler) CreateWallet(c *fiber.Ctx) error {
 	})
 }
 
-// AdjustBalance POST /admin/wallets/:id/adjust - Adjust wallet balance
+// AdjustBalance POST /tenant/wallets/:id/adjust - Adjust wallet balance
 func (h *AdminWalletHandler) AdjustBalance(c *fiber.Ctx) error {
 	walletID, err := strconv.ParseUint(c.Params("id"), 10, 32)
 	if err != nil {
@@ -249,7 +249,7 @@ func (h *AdminWalletHandler) AdjustBalance(c *fiber.Ctx) error {
 	})
 }
 
-// FreezeWallet POST /admin/wallets/:id/freeze - Freeze a wallet
+// FreezeWallet POST /tenant/wallets/:id/freeze - Freeze a wallet
 func (h *AdminWalletHandler) FreezeWallet(c *fiber.Ctx) error {
 	walletID, err := strconv.ParseUint(c.Params("id"), 10, 32)
 	if err != nil {
@@ -284,7 +284,7 @@ func (h *AdminWalletHandler) FreezeWallet(c *fiber.Ctx) error {
 	})
 }
 
-// UnfreezeWallet POST /admin/wallets/:id/unfreeze - Unfreeze a wallet
+// UnfreezeWallet POST /tenant/wallets/:id/unfreeze - Unfreeze a wallet
 func (h *AdminWalletHandler) UnfreezeWallet(c *fiber.Ctx) error {
 	walletID, err := strconv.ParseUint(c.Params("id"), 10, 32)
 	if err != nil {
@@ -319,7 +319,7 @@ func (h *AdminWalletHandler) UnfreezeWallet(c *fiber.Ctx) error {
 	})
 }
 
-// DeleteWallet DELETE /admin/wallets/:id - Delete a wallet
+// DeleteWallet DELETE /tenant/wallets/:id - Delete a wallet
 func (h *AdminWalletHandler) DeleteWallet(c *fiber.Ctx) error {
 	walletID, err := strconv.ParseUint(c.Params("id"), 10, 32)
 	if err != nil {
@@ -354,7 +354,7 @@ func (h *AdminWalletHandler) DeleteWallet(c *fiber.Ctx) error {
 	})
 }
 
-// GetWalletTransactions GET /admin/wallets/:id/transactions - Get wallet transaction history
+// GetWalletTransactions GET /tenant/wallets/:id/transactions - Get wallet transaction history
 func (h *AdminWalletHandler) GetWalletTransactions(c *fiber.Ctx) error {
 	walletID, err := strconv.ParseUint(c.Params("id"), 10, 32)
 	if err != nil {
@@ -391,7 +391,7 @@ func (h *AdminWalletHandler) GetWalletTransactions(c *fiber.Ctx) error {
 	})
 }
 
-// GetWalletStats GET /admin/wallets/stats - Get wallet statistics
+// GetWalletStats GET /tenant/wallets/stats - Get wallet statistics
 func (h *AdminWalletHandler) GetWalletStats(c *fiber.Ctx) error {
 	stats, err := h.service.GetWalletStats()
 	if err != nil {
@@ -405,7 +405,7 @@ func (h *AdminWalletHandler) GetWalletStats(c *fiber.Ctx) error {
 	})
 }
 
-// GetCurrencies GET /admin/currencies - Get all available currencies
+// GetCurrencies GET /tenant/currencies - Get all available currencies
 func (h *AdminWalletHandler) GetCurrencies(c *fiber.Ctx) error {
 	currencies, err := currency.GetAllCurrencies()
 	if err != nil {

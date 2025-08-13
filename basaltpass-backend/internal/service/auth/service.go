@@ -232,12 +232,12 @@ func (s Service) setupFirstUserAsGlobalAdmin(tx *gorm.DB, user *model.User) erro
 
 	// 3. 获取或创建全局管理员角色
 	var adminRole model.Role
-	if err := tx.Where("code = ? AND tenant_id = ?", "admin", defaultTenant.ID).First(&adminRole).Error; err != nil {
+	if err := tx.Where("code = ? AND tenant_id = ?", "tenant", defaultTenant.ID).First(&adminRole).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// 创建全局管理员角色
 			adminRole = model.Role{
 				TenantID:    defaultTenant.ID,
-				Code:        "admin",
+				Code:        "tenant",
 				Name:        "全局管理员",
 				Description: "系统全局管理员，拥有所有权限",
 				IsSystem:    true,

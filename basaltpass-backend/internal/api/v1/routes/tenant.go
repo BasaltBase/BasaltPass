@@ -1,12 +1,12 @@
 package routes
 
 import (
-	appHandler "basaltpass-backend/internal/handler/public/app"
 	app_rbac2 "basaltpass-backend/internal/handler/public/app/app_rbac"
 	"basaltpass-backend/internal/handler/public/app/app_user"
 	"basaltpass-backend/internal/handler/public/oauth"
 	"basaltpass-backend/internal/handler/public/subscription"
 	tenant2 "basaltpass-backend/internal/handler/tenant"
+	"basaltpass-backend/internal/handler/tenant/app"
 	tenantNotif "basaltpass-backend/internal/handler/tenant/notification"
 	"basaltpass-backend/internal/middleware"
 	"github.com/gofiber/fiber/v2"
@@ -119,13 +119,13 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 	tenantAppGroup := tenantGroup.Group("/apps")
 
 	// 租户基础应用管理路由
-	tenantAppGroup.Get("/", appHandler.TenantListAppsHandler)
-	tenantAppGroup.Post("/", appHandler.TenantCreateAppHandler)
-	tenantAppGroup.Get("/:id", appHandler.TenantGetAppHandler)
-	tenantAppGroup.Put("/:id", appHandler.TenantUpdateAppHandler)
-	tenantAppGroup.Delete("/:id", appHandler.TenantDeleteAppHandler)
-	tenantAppGroup.Get("/:id/stats", appHandler.TenantGetAppStatsHandler)
-	tenantAppGroup.Patch("/:id/status", appHandler.TenantToggleAppStatusHandler)
+	tenantAppGroup.Get("/", app.TenantListAppsHandler)
+	tenantAppGroup.Post("/", app.TenantCreateAppHandler)
+	tenantAppGroup.Get("/:id", app.TenantGetAppHandler)
+	tenantAppGroup.Put("/:id", app.TenantUpdateAppHandler)
+	tenantAppGroup.Delete("/:id", app.TenantDeleteAppHandler)
+	tenantAppGroup.Get("/:id/stats", app.TenantGetAppStatsHandler)
+	tenantAppGroup.Patch("/:id/status", app.TenantToggleAppStatusHandler)
 
 	// 应用权限管理路由
 	tenantAppGroup.Get("/:app_id/permissions", app_rbac2.GetAppPermissions)

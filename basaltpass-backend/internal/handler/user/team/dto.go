@@ -49,12 +49,12 @@ type TeamMemberResponse struct {
 // AddMemberRequest 添加成员请求
 type AddMemberRequest struct {
 	UserID uint           `json:"user_id" validate:"required"`
-	Role   model.TeamRole `json:"role" validate:"required,oneof=owner admin member"`
+	Role   model.TeamRole `json:"role" validate:"required,oneof=owner tenant member"`
 }
 
 // UpdateMemberRoleRequest 更新成员角色请求
 type UpdateMemberRoleRequest struct {
-	Role model.TeamRole `json:"role" validate:"required,oneof=owner admin member"`
+	Role model.TeamRole `json:"role" validate:"required,oneof=owner tenant member"`
 }
 
 // UserTeamResponse 用户的团队信息

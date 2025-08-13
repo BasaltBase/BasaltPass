@@ -10,9 +10,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// 用户管理相关的handler已移动到 internal/admin/user 包中
+// 用户管理相关的handler已移动到 internal/tenant/user 包中
 
-// DashboardStatsHandler GET /admin/dashboard/stats
+// DashboardStatsHandler GET /tenant/dashboard/stats
 func DashboardStatsHandler(c *fiber.Ctx) error {
 	db := common.DB()
 
@@ -62,7 +62,7 @@ func DashboardStatsHandler(c *fiber.Ctx) error {
 	return c.JSON(stats)
 }
 
-// RecentActivitiesHandler GET /admin/dashboard/activities
+// RecentActivitiesHandler GET /tenant/dashboard/activities
 func RecentActivitiesHandler(c *fiber.Ctx) error {
 	db := common.DB()
 

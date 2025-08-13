@@ -12,7 +12,7 @@ type createPermissionReq struct {
 	Desc string `json:"desc"`
 }
 
-// ListPermissionsHandler GET /admin/permissions
+// ListPermissionsHandler GET /tenant/permissions
 func ListPermissionsHandler(c *fiber.Ctx) error {
 	var perms []model.Permission
 	if err := common.DB().Order("code asc").Find(&perms).Error; err != nil {
@@ -21,7 +21,7 @@ func ListPermissionsHandler(c *fiber.Ctx) error {
 	return c.JSON(perms)
 }
 
-// CreatePermissionHandler POST /admin/permissions
+// CreatePermissionHandler POST /tenant/permissions
 func CreatePermissionHandler(c *fiber.Ctx) error {
 	var req createPermissionReq
 	if err := c.BodyParser(&req); err != nil {
@@ -37,7 +37,7 @@ func CreatePermissionHandler(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(perm)
 }
 
-// UpdatePermissionHandler PUT /admin/permissions/:id
+// UpdatePermissionHandler PUT /tenant/permissions/:id
 func UpdatePermissionHandler(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var perm model.Permission
@@ -58,7 +58,7 @@ func UpdatePermissionHandler(c *fiber.Ctx) error {
 	return c.JSON(perm)
 }
 
-// DeletePermissionHandler DELETE /admin/permissions/:id
+// DeletePermissionHandler DELETE /tenant/permissions/:id
 func DeletePermissionHandler(c *fiber.Ctx) error {
 	id := c.Params("id")
 	tx := common.DB().Begin()
@@ -74,7 +74,7 @@ func DeletePermissionHandler(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
-// GetRolePermissionsHandler GET /admin/roles/:id/permissions
+// GetRolePermissionsHandler GET /tenant/roles/:id/permissions
 func GetRolePermissionsHandler(c *fiber.Ctx) error {
 	roleID := c.Params("id")
 	var permissions []model.Permission
@@ -92,7 +92,7 @@ type setRolePermissionsReq struct {
 	PermissionIDs []uint `json:"permission_ids"`
 }
 
-// SetRolePermissionsHandler POST /admin/roles/:id/permissions
+// SetRolePermissionsHandler POST /tenant/roles/:id/permissions
 // Replace role's permissions with provided list.
 func SetRolePermissionsHandler(c *fiber.Ctx) error {
 	roleID := c.Params("id")
@@ -115,7 +115,7 @@ func SetRolePermissionsHandler(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"message": "权限已更新"})
 }
 
-// RemoveRolePermissionHandler DELETE /admin/roles/:id/permissions/:permission_id
+// RemoveRolePermissionHandler DELETE /tenant/roles/:id/permissions/:permission_id
 func RemoveRolePermissionHandler(c *fiber.Ctx) error {
 	roleID := c.Params("id")
 	permID := c.Params("permission_id")

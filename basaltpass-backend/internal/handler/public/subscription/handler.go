@@ -481,7 +481,7 @@ func (h *Handler) ListSubscriptions(c *fiber.Ctx) error {
 	} else if *req.UserID != userID {
 		// 检查是否为管理员
 		userRole := c.Locals("userRole")
-		if userRole == nil || userRole != "admin" {
+		if userRole == nil || userRole != "tenant" {
 			req.UserID = &userID
 		}
 	}

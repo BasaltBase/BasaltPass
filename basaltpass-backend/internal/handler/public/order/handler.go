@@ -1,6 +1,7 @@
 package order
 
 import (
+	order2 "basaltpass-backend/internal/service/order"
 	"strconv"
 
 	"basaltpass-backend/internal/common"
@@ -8,14 +9,14 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-var orderService *OrderService
+var orderService *order2.OrderService
 
 // InitOrderHandler 初始化订单处理器
 func InitOrderHandler() {
 
 	// 确保只初始化一次
 	if orderService == nil {
-		orderService = NewOrderService(common.DB())
+		orderService = order2.NewOrderService(common.DB())
 	}
 }
 
@@ -25,7 +26,7 @@ func CreateOrderHandler(c *fiber.Ctx) error {
 
 	userID := c.Locals("userID").(uint)
 
-	var req CreateOrderRequest
+	var req order2.CreateOrderRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "请求参数错误",

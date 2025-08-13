@@ -1,6 +1,8 @@
 package team
 
 import (
+	admindto "basaltpass-backend/internal/dto/team"
+	team2 "basaltpass-backend/internal/service/team"
 	"strconv"
 
 	"basaltpass-backend/internal/common"
@@ -8,10 +10,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-var svc = NewService(common.DB())
+var svc = team2.NewService(common.DB())
 
 func ListTeamsHandler(c *fiber.Ctx) error {
-	var req ListTeamsRequest
+	var req admindto.ListTeamsRequest
 	if err := c.QueryParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "查询参数错误"})
 	}
@@ -39,7 +41,7 @@ func UpdateTeamHandler(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "无效的团队ID"})
 	}
-	var req AdminUpdateTeamRequest
+	var req admindto.AdminUpdateTeamRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
 	}
@@ -77,7 +79,7 @@ func AddMemberHandler(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "无效的团队ID"})
 	}
-	var req AddMemberRequest
+	var req admindto.AddMemberRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
 	}

@@ -2,8 +2,8 @@ package wallet
 
 import (
 	"basaltpass-backend/internal/common"
-	"basaltpass-backend/internal/handler/public/currency"
 	"basaltpass-backend/internal/model"
+	"basaltpass-backend/internal/service/currency"
 	"errors"
 	"fmt"
 	"time"
@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// AdminWalletService provides admin-level wallet management functions
+// AdminWalletService provides tenant-level wallet management functions
 type AdminWalletService struct{}
 
 // getMultiplier returns the multiplier for converting decimal to smallest unit
@@ -33,7 +33,7 @@ func convertFromSmallestUnit(amount int64, decimalPlaces int) float64 {
 	return float64(amount) / float64(getMultiplier(decimalPlaces))
 }
 
-// NewAdminWalletService creates a new admin wallet service
+// NewAdminWalletService creates a new tenant wallet service
 func NewAdminWalletService() *AdminWalletService {
 	return &AdminWalletService{}
 }
@@ -202,7 +202,7 @@ func (s *AdminWalletService) CreateWalletForTeam(teamID uint, currencyCode strin
 	return &newWallet, nil
 }
 
-// AdjustBalance adjusts wallet balance (admin operation)
+// AdjustBalance adjusts wallet balance (tenant operation)
 func (s *AdminWalletService) AdjustBalance(walletID uint, amount float64, reason string, operatorID uint) error {
 	db := common.DB()
 
@@ -378,7 +378,7 @@ func (s *AdminWalletService) GetWalletStats() (map[string]interface{}, error) {
 	return stats, nil
 }
 
-// DeleteWallet deletes a wallet (admin operation)
+// DeleteWallet deletes a wallet (tenant operation)
 func (s *AdminWalletService) DeleteWallet(walletID uint, operatorID uint) error {
 	db := common.DB()
 

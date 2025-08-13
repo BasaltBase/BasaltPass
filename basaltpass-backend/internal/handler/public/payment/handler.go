@@ -1,6 +1,7 @@
 package payment
 
 import (
+	payment2 "basaltpass-backend/internal/service/payment"
 	"fmt"
 	"strconv"
 
@@ -11,7 +12,7 @@ import (
 func CreatePaymentIntentHandler(c *fiber.Ctx) error {
 	userID := c.Locals("userID").(uint)
 
-	var req CreatePaymentIntentRequest
+	var req payment2.CreatePaymentIntentRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body",
@@ -25,7 +26,7 @@ func CreatePaymentIntentHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	paymentIntent, mockResponse, err := CreatePaymentIntent(userID, req)
+	paymentIntent, mockResponse, err := payment2.CreatePaymentIntent(userID, req)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
@@ -42,14 +43,14 @@ func CreatePaymentIntentHandler(c *fiber.Ctx) error {
 func CreatePaymentSessionHandler(c *fiber.Ctx) error {
 	userID := c.Locals("userID").(uint)
 
-	var req CreatePaymentSessionRequest
+	var req payment2.CreatePaymentSessionRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body",
 		})
 	}
 
-	session, mockResponse, err := CreatePaymentSession(userID, req)
+	session, mockResponse, err := payment2.CreatePaymentSession(userID, req)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
@@ -74,7 +75,7 @@ func GetPaymentIntentHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	paymentIntent, err := GetPaymentIntent(userID, uint(paymentIntentID))
+	paymentIntent, err := payment2.GetPaymentIntent(userID, uint(paymentIntentID))
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": "[GetPaymentIntentHandler] Payment intent not found",
@@ -89,7 +90,7 @@ func GetPaymentSessionHandler(c *fiber.Ctx) error {
 	userID := c.Locals("userID").(uint)
 	sessionID := c.Params("session_id")
 
-	session, err := GetPaymentSession(userID, sessionID)
+	session, err := payment2.GetPaymentSession(userID, sessionID)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": "Payment session not found",
@@ -109,7 +110,7 @@ func ListPaymentIntentsHandler(c *fiber.Ctx) error {
 		limit = 100 // 限制最大查询数量
 	}
 
-	paymentIntents, err := ListPaymentIntents(userID, limit)
+	paymentIntents, err := payment2.ListPaymentIntents(userID, limit)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
@@ -134,7 +135,7 @@ func SimulatePaymentHandler(c *fiber.Ctx) error {
 		req.Success = true
 	}
 
-	mockResponse, err := SimulatePayment(sessionID, req.Success)
+	mockResponse, err := payment2.SimulatePayment(sessionID, req.Success)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
@@ -153,7 +154,7 @@ func PaymentCheckoutHandler(c *fiber.Ctx) error {
 	sessionID := c.Params("session_id")
 
 	// 获取session信息以获取success_url
-	session, err := GetPaymentSessionByStripeID(sessionID)
+	session, err := payment2.GetPaymentSessionByStripeID(sessionID)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": "Payment session not found",

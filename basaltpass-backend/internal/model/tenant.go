@@ -48,7 +48,7 @@ type TenantRole string
 
 const (
 	TenantRoleOwner  TenantRole = "owner"
-	TenantRoleAdmin  TenantRole = "admin"
+	TenantRoleAdmin  TenantRole = "tenant"
 	TenantRoleMember TenantRole = "member"
 )
 

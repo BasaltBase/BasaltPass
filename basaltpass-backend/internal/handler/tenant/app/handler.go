@@ -1,10 +1,38 @@
 package app
 
 import (
+	app2 "basaltpass-backend/internal/service/app"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 )
+
+/**
+* @Description : 租户应用处理器
+* @Time : 2025/8/13
+* @Author : Henry
+ */
+var appService = app2.NewAppService()
+
+// 辅助函数：从上下文获取租户ID
+func getTenantIDFromContext(c *fiber.Ctx) uint {
+	// 从JWT中间件设置的Locals获取租户ID
+	if tenantID := c.Locals("tenantID"); tenantID != nil {
+		if tid, ok := tenantID.(uint); ok {
+			return tid
+		}
+	}
+
+	// 兜底：从Header获取租户ID（用于系统管理员操作）
+	tenantIDStr := c.Get("X-Tenant-ID")
+	if tenantIDStr != "" {
+		if id, err := strconv.ParseUint(tenantIDStr, 10, 32); err == nil {
+			return uint(id)
+		}
+	}
+
+	return 0
+}
 
 // TenantListAppsHandler 租户获取应用列表
 // GET /api/v1/tenant/apps
@@ -130,7 +158,7 @@ func TenantCreateAppHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	var req CreateAppRequest
+	var req app2.CreateAppRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "请求参数错误",
@@ -170,7 +198,7 @@ func TenantUpdateAppHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	var req UpdateAppRequest
+	var req app2.UpdateAppRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "请求参数错误",

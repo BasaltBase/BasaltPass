@@ -7,7 +7,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// AdminMiddleware allows only users with role 'admin'.
+// AdminMiddleware allows only users with role 'tenant'.
 func AdminMiddleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		uidVal := c.Locals("userID")
@@ -17,11 +17,11 @@ func AdminMiddleware() fiber.Handler {
 		uid := uidVal.(uint)
 		var count int64
 		common.DB().Model(&model.UserRole{}).
-			Joins("JOIN roles ON roles.id = user_roles.role_id AND roles.code = ?", "admin").
+			Joins("JOIN roles ON roles.id = user_roles.role_id AND roles.code = ?", "tenant").
 			Where("user_roles.user_id = ?", uid).
 			Count(&count)
 		if count == 0 {
-			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "admin required"})
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "tenant required"})
 		}
 		return c.Next()
 	}
@@ -47,7 +47,7 @@ func SuperAdminMiddleware() fiber.Handler {
 
 		if !user.IsSuperAdmin() {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
-				"error": "Super admin access required",
+				"error": "Super tenant access required",
 			})
 		}
 

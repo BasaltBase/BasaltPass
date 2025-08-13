@@ -1,12 +1,15 @@
 package auth
 
-import "github.com/gofiber/fiber/v2"
+import (
+	auth2 "basaltpass-backend/internal/service/auth"
+	"github.com/gofiber/fiber/v2"
+)
 
-var svc = Service{}
+var svc = auth2.Service{}
 
 // RegisterHandler handles POST /auth/register
 func RegisterHandler(c *fiber.Ctx) error {
-	var req RegisterRequest
+	var req auth2.RegisterRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -19,7 +22,7 @@ func RegisterHandler(c *fiber.Ctx) error {
 
 // LoginHandler handles POST /auth/login
 func LoginHandler(c *fiber.Ctx) error {
-	var req LoginRequest
+	var req auth2.LoginRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -106,7 +109,7 @@ func ResetPasswordHandler(c *fiber.Ctx) error {
 
 // Verify2FAHandler handles POST /auth/verify-2fa
 func Verify2FAHandler(c *fiber.Ctx) error {
-	var req Verify2FARequest
+	var req auth2.Verify2FARequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}

@@ -14,7 +14,7 @@ func init() {
 }
 
 // ListUsersHandler 获取用户列表
-// GET /admin/users
+// GET /tenant/users
 func ListUsersHandler(c *fiber.Ctx) error {
 	var req AdminUserListRequest
 	if err := c.QueryParser(&req); err != nil {
@@ -34,7 +34,7 @@ func ListUsersHandler(c *fiber.Ctx) error {
 }
 
 // GetUserHandler 获取用户详情
-// GET /admin/users/:id
+// GET /tenant/users/:id
 func GetUserHandler(c *fiber.Ctx) error {
 	userIDStr := c.Params("id")
 	userID, err := strconv.ParseUint(userIDStr, 10, 32)
@@ -60,7 +60,7 @@ func GetUserHandler(c *fiber.Ctx) error {
 }
 
 // UpdateUserHandler 更新用户信息
-// PUT /admin/users/:id
+// PUT /tenant/users/:id
 func UpdateUserHandler(c *fiber.Ctx) error {
 	userIDStr := c.Params("id")
 	userID, err := strconv.ParseUint(userIDStr, 10, 32)
@@ -90,7 +90,7 @@ func UpdateUserHandler(c *fiber.Ctx) error {
 }
 
 // BanUserHandler 封禁/解封用户
-// POST /admin/users/:id/ban
+// POST /tenant/users/:id/ban
 func BanUserHandler(c *fiber.Ctx) error {
 	userIDStr := c.Params("id")
 	userID, err := strconv.ParseUint(userIDStr, 10, 32)
@@ -125,7 +125,7 @@ func BanUserHandler(c *fiber.Ctx) error {
 }
 
 // DeleteUserHandler 删除用户
-// DELETE /admin/users/:id
+// DELETE /tenant/users/:id
 func DeleteUserHandler(c *fiber.Ctx) error {
 	userIDStr := c.Params("id")
 	userID, err := strconv.ParseUint(userIDStr, 10, 32)
@@ -148,7 +148,7 @@ func DeleteUserHandler(c *fiber.Ctx) error {
 }
 
 // GetUserStatsHandler 获取用户统计数据
-// GET /admin/users/stats
+// GET /tenant/users/stats
 func GetUserStatsHandler(c *fiber.Ctx) error {
 	stats, err := adminUserService.GetUserStats()
 	if err != nil {
@@ -161,7 +161,7 @@ func GetUserStatsHandler(c *fiber.Ctx) error {
 }
 
 // AssignGlobalRoleHandler 分配全局角色
-// POST /admin/users/:id/roles
+// POST /tenant/users/:id/roles
 func AssignGlobalRoleHandler(c *fiber.Ctx) error {
 	userIDStr := c.Params("id")
 	userID, err := strconv.ParseUint(userIDStr, 10, 32)
@@ -191,7 +191,7 @@ func AssignGlobalRoleHandler(c *fiber.Ctx) error {
 }
 
 // RemoveGlobalRoleHandler 移除全局角色
-// DELETE /admin/users/:id/roles/:role_id
+// DELETE /tenant/users/:id/roles/:role_id
 func RemoveGlobalRoleHandler(c *fiber.Ctx) error {
 	userIDStr := c.Params("id")
 	userID, err := strconv.ParseUint(userIDStr, 10, 32)
@@ -222,7 +222,7 @@ func RemoveGlobalRoleHandler(c *fiber.Ctx) error {
 }
 
 // CreateUserHandler 创建新用户
-// POST /admin/users
+// POST /tenant/users
 func CreateUserHandler(c *fiber.Ctx) error {
 	var req AdminCreateUserRequest
 	if err := c.BodyParser(&req); err != nil {

@@ -8,9 +8,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// 管理员钱包相关 Handler (路径前缀: /admin/wallet)
+// 管理员钱包相关 Handler (路径前缀: /tenant/wallet)
 
-// ListWalletTxHandler GET /admin/wallet/txs?status=
+// ListWalletTxHandler GET /tenant/wallet/txs?status=
 func ListWalletTxHandler(c *fiber.Ctx) error {
 	status := c.Query("status")
 	var txs []model.WalletTx
@@ -22,7 +22,7 @@ func ListWalletTxHandler(c *fiber.Ctx) error {
 	return c.JSON(txs)
 }
 
-// ApproveWalletTxHandler POST /admin/wallet/tx/:id/approve {status}
+// ApproveWalletTxHandler POST /tenant/wallet/tx/:id/approve {status}
 func ApproveWalletTxHandler(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var body struct {
@@ -40,7 +40,7 @@ func ApproveWalletTxHandler(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
-// GetUserWalletBalanceHandler GET /admin/wallet/:user_id/balance?currency=USD
+// GetUserWalletBalanceHandler GET /tenant/wallet/:user_id/balance?currency=USD
 func GetUserWalletBalanceHandler(c *fiber.Ctx) error {
 	uidParam := c.Params("user_id")
 	userID := parseUint(uidParam)

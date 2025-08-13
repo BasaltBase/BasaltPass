@@ -17,7 +17,7 @@ type AdminCreateRequest struct {
 	ReceiverIDs []uint `json:"receiver_ids"`
 }
 
-// AdminCreateHandler POST /admin/notifications
+// AdminCreateHandler POST /tenant/notifications
 func AdminCreateHandler(c *fiber.Ctx) error {
 	var req AdminCreateRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -30,7 +30,7 @@ func AdminCreateHandler(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusCreated)
 }
 
-// AdminListHandler GET /admin/notifications
+// AdminListHandler GET /tenant/notifications
 func AdminListHandler(c *fiber.Ctx) error {
 	page, _ := strconv.Atoi(c.Query("page", "1"))
 	pageSize, _ := strconv.Atoi(c.Query("page_size", "20"))
@@ -44,7 +44,7 @@ func AdminListHandler(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"data": notifs, "total": total, "page": page, "page_size": pageSize})
 }
 
-// AdminDeleteHandler DELETE /admin/notifications/:id
+// AdminDeleteHandler DELETE /tenant/notifications/:id
 func AdminDeleteHandler(c *fiber.Ctx) error {
 	nid, _ := strconv.Atoi(c.Params("id"))
 	if err := common.DB().Delete(&model.Notification{}, uint(nid)).Error; err != nil {

@@ -1,10 +1,6 @@
-package tenant
+package admindto
 
-import (
-	"time"
-)
-
-// 请求DTO
+import "time"
 
 // AdminTenantListRequest 管理员租户列表请求
 type AdminTenantListRequest struct {
@@ -47,8 +43,6 @@ type AdminTenantUserListRequest struct {
 	Role     string `query:"role"`      // owner, tenant, member
 	Status   string `query:"status"`    // active, suspended, banned
 }
-
-// 响应DTO
 
 // AdminTenantListResponse 管理员租户列表响应
 type AdminTenantListResponse struct {
@@ -114,8 +108,6 @@ type AdminTenantUser struct {
 	LastActiveAt *time.Time `json:"last_active_at,omitempty"`
 	CreatedAt    time.Time  `json:"created_at"`
 }
-
-// 嵌套DTO
 
 // TenantSettings 租户设置
 type TenantSettings struct {

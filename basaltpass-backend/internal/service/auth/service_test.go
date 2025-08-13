@@ -1,6 +1,8 @@
 package auth
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestGenerateTokenPair(t *testing.T) {
 	p, err := GenerateTokenPair(1)

@@ -36,7 +36,7 @@ type TeamRole string
 
 const (
 	TeamRoleOwner  TeamRole = "owner"  // 所有者
-	TeamRoleAdmin  TeamRole = "admin"  // 管理员
+	TeamRoleAdmin  TeamRole = "tenant" // 管理员
 	TeamRoleMember TeamRole = "member" // 普通成员
 )
 

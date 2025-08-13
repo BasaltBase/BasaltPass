@@ -1,6 +1,7 @@
 package passkey
 
 import (
+	passkey2 "basaltpass-backend/internal/service/passkey"
 	"net/http"
 	"strconv"
 
@@ -10,7 +11,7 @@ import (
 )
 
 // 服务实例
-var svc = Service{}
+var svc = passkey2.Service{}
 
 // Session存储 - 简化实现，在生产环境中应该使用更安全的session存储
 var sessionStore = make(map[string]*webauthn.SessionData)

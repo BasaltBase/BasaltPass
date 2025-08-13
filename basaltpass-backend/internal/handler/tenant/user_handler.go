@@ -17,7 +17,7 @@ type TenantUserResponse struct {
 	Email       string     `json:"email"`
 	Nickname    string     `json:"nickname"`
 	Avatar      string     `json:"avatar"`
-	Role        string     `json:"role"`   // tenant role: owner, admin, member (非管理员用户默认为 member)
+	Role        string     `json:"role"`   // tenant role: owner, tenant, member (非管理员用户默认为 member)
 	Status      string     `json:"status"` // active, inactive, suspended（根据 users 表推断）
 	LastLoginAt *time.Time `json:"last_login_at"`
 	CreatedAt   time.Time  `json:"created_at"`
@@ -39,14 +39,14 @@ type TenantUserStatsResponse struct {
 
 // UpdateTenantUserRequest 更新租户用户请求
 type UpdateTenantUserRequest struct {
-	Role   *string `json:"role,omitempty"`   // admin, member
+	Role   *string `json:"role,omitempty"`   // tenant, member
 	Status *string `json:"status,omitempty"` // active, inactive, suspended
 }
 
 // InviteTenantUserRequest 邀请租户用户请求
 type InviteTenantUserRequest struct {
 	Email   string `json:"email" validate:"required,email"`
-	Role    string `json:"role" validate:"required,oneof=admin member"`
+	Role    string `json:"role" validate:"required,oneof=tenant member"`
 	Message string `json:"message,omitempty"`
 }
 
@@ -385,7 +385,7 @@ func UpdateTenantUserHandler(c *fiber.Ctx) error {
 
 	// 更新租户角色
 	if req.Role != nil {
-		if *req.Role != "admin" && *req.Role != "member" {
+		if *req.Role != "tenant" && *req.Role != "member" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": "无效的角色类型",
 			})
@@ -495,7 +495,7 @@ func InviteTenantUserHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	if req.Role != "admin" && req.Role != "member" {
+	if req.Role != "tenant" && req.Role != "member" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "无效的角色类型",
 		})

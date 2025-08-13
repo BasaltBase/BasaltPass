@@ -1,15 +1,16 @@
 package app
 
 import (
+	app2 "basaltpass-backend/internal/service/app"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-var appService = NewAppService()
+var appService = app2.NewAppService()
 
 // CreateAppHandler 创建应用
-// POST /admin/apps
+// POST /tenant/apps
 func CreateAppHandler(c *fiber.Ctx) error {
 	// 从JWT中获取租户ID
 	tenantID := getTenantIDFromContext(c)
@@ -19,7 +20,7 @@ func CreateAppHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	var req CreateAppRequest
+	var req app2.CreateAppRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "请求参数错误",
@@ -40,7 +41,7 @@ func CreateAppHandler(c *fiber.Ctx) error {
 }
 
 // ListAppsHandler 获取应用列表
-// GET /admin/apps
+// GET /tenant/apps
 func ListAppsHandler(c *fiber.Ctx) error {
 	tenantID := getTenantIDFromContext(c)
 	if tenantID == 0 {
@@ -79,7 +80,7 @@ func ListAppsHandler(c *fiber.Ctx) error {
 }
 
 // GetAppHandler 获取应用详情
-// GET /admin/apps/:id
+// GET /tenant/apps/:id
 func GetAppHandler(c *fiber.Ctx) error {
 	tenantID := getTenantIDFromContext(c)
 	if tenantID == 0 {
@@ -108,7 +109,7 @@ func GetAppHandler(c *fiber.Ctx) error {
 }
 
 // UpdateAppHandler 更新应用
-// PUT /admin/apps/:id
+// PUT /tenant/apps/:id
 func UpdateAppHandler(c *fiber.Ctx) error {
 	tenantID := getTenantIDFromContext(c)
 	if tenantID == 0 {
@@ -124,7 +125,7 @@ func UpdateAppHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	var req UpdateAppRequest
+	var req app2.UpdateAppRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "请求参数错误",
@@ -145,7 +146,7 @@ func UpdateAppHandler(c *fiber.Ctx) error {
 }
 
 // DeleteAppHandler 删除应用
-// DELETE /admin/apps/:id
+// DELETE /tenant/apps/:id
 func DeleteAppHandler(c *fiber.Ctx) error {
 	tenantID := getTenantIDFromContext(c)
 	if tenantID == 0 {
@@ -173,7 +174,7 @@ func DeleteAppHandler(c *fiber.Ctx) error {
 }
 
 // ToggleAppStatusHandler 切换应用状态
-// PATCH /admin/apps/:id/status
+// PATCH /tenant/apps/:id/status
 func ToggleAppStatusHandler(c *fiber.Ctx) error {
 	tenantID := getTenantIDFromContext(c)
 	if tenantID == 0 {
@@ -219,7 +220,7 @@ func ToggleAppStatusHandler(c *fiber.Ctx) error {
 }
 
 // GetAppStatsHandler 获取应用统计数据
-// GET /admin/apps/:id/stats
+// GET /tenant/apps/:id/stats
 func GetAppStatsHandler(c *fiber.Ctx) error {
 	tenantID := getTenantIDFromContext(c)
 	if tenantID == 0 {
@@ -272,7 +273,7 @@ func getTenantIDFromContext(c *fiber.Ctx) uint {
 // 系统级管理员处理程序（不需要租户上下文）
 
 // AdminListAppsHandler 系统管理员获取所有应用列表
-// GET /admin/apps
+// GET /tenant/apps
 func AdminListAppsHandler(c *fiber.Ctx) error {
 	// 解析分页参数
 	page, _ := strconv.Atoi(c.Query("page", "1"))
@@ -306,7 +307,7 @@ func AdminListAppsHandler(c *fiber.Ctx) error {
 }
 
 // AdminGetAppHandler 系统管理员获取应用详情
-// GET /admin/apps/:id
+// GET /tenant/apps/:id
 func AdminGetAppHandler(c *fiber.Ctx) error {
 	appID := c.Params("id")
 	if appID == "" {
@@ -328,9 +329,9 @@ func AdminGetAppHandler(c *fiber.Ctx) error {
 }
 
 // AdminCreateAppHandler 系统管理员创建应用
-// POST /admin/apps
+// POST /tenant/apps
 func AdminCreateAppHandler(c *fiber.Ctx) error {
-	var req AdminCreateAppRequest
+	var req app2.AdminCreateAppRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "无效的请求数据",
@@ -364,7 +365,7 @@ func AdminCreateAppHandler(c *fiber.Ctx) error {
 }
 
 // AdminUpdateAppHandler 系统管理员更新应用
-// PUT /admin/apps/:id
+// PUT /tenant/apps/:id
 func AdminUpdateAppHandler(c *fiber.Ctx) error {
 	appID := c.Params("id")
 	if appID == "" {
@@ -373,7 +374,7 @@ func AdminUpdateAppHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	var req UpdateAppRequest
+	var req app2.UpdateAppRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "无效的请求数据",
@@ -393,7 +394,7 @@ func AdminUpdateAppHandler(c *fiber.Ctx) error {
 }
 
 // AdminDeleteAppHandler 系统管理员删除应用
-// DELETE /admin/apps/:id
+// DELETE /tenant/apps/:id
 func AdminDeleteAppHandler(c *fiber.Ctx) error {
 	appID := c.Params("id")
 	if appID == "" {

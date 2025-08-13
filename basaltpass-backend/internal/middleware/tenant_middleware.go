@@ -116,7 +116,7 @@ func TenantAdminMiddleware() fiber.Handler {
 		// 检查用户在租户中的角色
 		var tenantAdmin model.TenantAdmin
 		if err := common2.DB().Where("user_id = ? AND tenant_id = ?", userID, tenantID).First(&tenantAdmin).Error; err != nil {
-			fmt.Printf("[TenantAdminMiddleware] No tenant admin record found for user %v in tenant %v: %v\n", userID, tenantID, err)
+			fmt.Printf("[TenantAdminMiddleware] No tenant tenant record found for user %v in tenant %v: %v\n", userID, tenantID, err)
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 				"error": "Access denied",
 			})
@@ -125,7 +125,7 @@ func TenantAdminMiddleware() fiber.Handler {
 		if tenantAdmin.Role != model.TenantRoleOwner && tenantAdmin.Role != model.TenantRoleAdmin {
 			fmt.Printf("[TenantAdminMiddleware] User %v has insufficient role %s in tenant %v\n", userID, tenantAdmin.Role, tenantID)
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
-				"error": "Tenant admin access required",
+				"error": "Tenant tenant access required",
 			})
 		}
 
@@ -201,7 +201,7 @@ func ValidateTenantAccess(userID, tenantID uint, requiredRole model.TenantRole) 
 		}
 	case model.TenantRoleAdmin:
 		if tenantAdmin.Role != model.TenantRoleOwner && tenantAdmin.Role != model.TenantRoleAdmin {
-			return errors.New("admin access required")
+			return errors.New("tenant access required")
 		}
 	case model.TenantRoleMember:
 		// 任何角色都可以访问

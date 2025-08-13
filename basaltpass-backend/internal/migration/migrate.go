@@ -3,9 +3,9 @@ package migration
 import (
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/config"
-	"basaltpass-backend/internal/handler/public/currency"
 	"basaltpass-backend/internal/handler/user/settings"
 	"basaltpass-backend/internal/model"
+	"basaltpass-backend/internal/service/currency"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -112,7 +112,7 @@ func RunMigrations() {
 	seedSystemApps()
 	createSubscriptionIndexes()
 
-	// 系统权限种子化，并赋予默认租户的 admin 角色
+	// 系统权限种子化，并赋予默认租户的 tenant 角色
 	seedSystemPermissions()
 	createAdditionalSystemRoles()
 	assignPermissionsToPredefinedRoles()
@@ -360,9 +360,9 @@ func createDefaultRoles() {
 	roles := []model.Role{
 		{
 			TenantID:    defaultTenant.ID,
-			Code:        "admin",
+			Code:        "tenant",
 			Name:        "Admin",
-			Description: "Basalt system admin role",
+			Description: "Basalt system tenant role",
 			IsSystem:    true,
 		},
 		{
@@ -435,98 +435,98 @@ func seedSystemPermissions() {
 	type perm struct{ Code, Desc string }
 	perms := []perm{
 		// 仪表盘
-		{Code: "admin.dashboard.stats.read", Desc: "查看管理仪表盘统计"},
-		{Code: "admin.dashboard.activities.read", Desc: "查看管理仪表盘活动"},
+		{Code: "tenant.dashboard.stats.read", Desc: "查看管理仪表盘统计"},
+		{Code: "tenant.dashboard.activities.read", Desc: "查看管理仪表盘活动"},
 
 		// 角色与权限
-		{Code: "admin.roles.read", Desc: "查看系统角色"},
-		{Code: "admin.roles.create", Desc: "创建系统角色"},
-		{Code: "admin.roles.permissions.read", Desc: "查看角色的权限"},
-		{Code: "admin.roles.permissions.set", Desc: "设置角色的权限"},
-		{Code: "admin.roles.permissions.remove", Desc: "移除角色的权限"},
-		{Code: "admin.permissions.read", Desc: "查看系统权限"},
-		{Code: "admin.permissions.create", Desc: "创建系统权限"},
-		{Code: "admin.permissions.update", Desc: "更新系统权限"},
-		{Code: "admin.permissions.delete", Desc: "删除系统权限"},
+		{Code: "tenant.roles.read", Desc: "查看系统角色"},
+		{Code: "tenant.roles.create", Desc: "创建系统角色"},
+		{Code: "tenant.roles.permissions.read", Desc: "查看角色的权限"},
+		{Code: "tenant.roles.permissions.set", Desc: "设置角色的权限"},
+		{Code: "tenant.roles.permissions.remove", Desc: "移除角色的权限"},
+		{Code: "tenant.permissions.read", Desc: "查看系统权限"},
+		{Code: "tenant.permissions.create", Desc: "创建系统权限"},
+		{Code: "tenant.permissions.update", Desc: "更新系统权限"},
+		{Code: "tenant.permissions.delete", Desc: "删除系统权限"},
 
 		// 用户管理
-		{Code: "admin.users.read", Desc: "查看用户"},
-		{Code: "admin.users.create", Desc: "创建用户"},
-		{Code: "admin.users.update", Desc: "更新用户"},
-		{Code: "admin.users.delete", Desc: "删除用户"},
-		{Code: "admin.users.stats.read", Desc: "查看用户统计"},
-		{Code: "admin.users.ban", Desc: "封禁用户"},
+		{Code: "tenant.users.read", Desc: "查看用户"},
+		{Code: "tenant.users.create", Desc: "创建用户"},
+		{Code: "tenant.users.update", Desc: "更新用户"},
+		{Code: "tenant.users.delete", Desc: "删除用户"},
+		{Code: "tenant.users.stats.read", Desc: "查看用户统计"},
+		{Code: "tenant.users.ban", Desc: "封禁用户"},
 
 		// 租户管理（系统级）
-		{Code: "admin.tenants.read", Desc: "查看租户"},
-		{Code: "admin.tenants.create", Desc: "创建租户"},
-		{Code: "admin.tenants.update", Desc: "更新租户"},
-		{Code: "admin.tenants.delete", Desc: "删除租户"},
-		{Code: "admin.tenants.stats.read", Desc: "查看租户统计"},
-		{Code: "admin.tenants.users.read", Desc: "查看租户用户"},
-		{Code: "admin.tenants.users.delete", Desc: "移除租户用户"},
+		{Code: "tenant.tenants.read", Desc: "查看租户"},
+		{Code: "tenant.tenants.create", Desc: "创建租户"},
+		{Code: "tenant.tenants.update", Desc: "更新租户"},
+		{Code: "tenant.tenants.delete", Desc: "删除租户"},
+		{Code: "tenant.tenants.stats.read", Desc: "查看租户统计"},
+		{Code: "tenant.tenants.users.read", Desc: "查看租户用户"},
+		{Code: "tenant.tenants.users.delete", Desc: "移除租户用户"},
 
 		// 钱包与货币
-		{Code: "admin.wallets.read", Desc: "查看钱包"},
-		{Code: "admin.wallets.create", Desc: "创建钱包"},
-		{Code: "admin.wallets.delete", Desc: "删除钱包"},
-		{Code: "admin.wallets.stats.read", Desc: "查看钱包统计"},
-		{Code: "admin.wallets.transactions.read", Desc: "查看钱包交易"},
-		{Code: "admin.wallets.adjust", Desc: "调整钱包余额"},
-		{Code: "admin.wallets.freeze", Desc: "冻结钱包"},
-		{Code: "admin.wallets.unfreeze", Desc: "解冻钱包"},
-		{Code: "admin.currencies.read", Desc: "查看货币列表"},
+		{Code: "tenant.wallets.read", Desc: "查看钱包"},
+		{Code: "tenant.wallets.create", Desc: "创建钱包"},
+		{Code: "tenant.wallets.delete", Desc: "删除钱包"},
+		{Code: "tenant.wallets.stats.read", Desc: "查看钱包统计"},
+		{Code: "tenant.wallets.transactions.read", Desc: "查看钱包交易"},
+		{Code: "tenant.wallets.adjust", Desc: "调整钱包余额"},
+		{Code: "tenant.wallets.freeze", Desc: "冻结钱包"},
+		{Code: "tenant.wallets.unfreeze", Desc: "解冻钱包"},
+		{Code: "tenant.currencies.read", Desc: "查看货币列表"},
 
 		// 通知
-		{Code: "admin.notifications.read", Desc: "查看通知"},
-		{Code: "admin.notifications.create", Desc: "创建通知"},
-		{Code: "admin.notifications.delete", Desc: "删除通知"},
+		{Code: "tenant.notifications.read", Desc: "查看通知"},
+		{Code: "tenant.notifications.create", Desc: "创建通知"},
+		{Code: "tenant.notifications.delete", Desc: "删除通知"},
 
 		// OAuth 客户端
-		{Code: "admin.oauth.clients.read", Desc: "查看 OAuth 客户端"},
-		{Code: "admin.oauth.clients.create", Desc: "创建 OAuth 客户端"},
-		{Code: "admin.oauth.clients.update", Desc: "更新 OAuth 客户端"},
-		{Code: "admin.oauth.clients.delete", Desc: "删除 OAuth 客户端"},
-		{Code: "admin.oauth.clients.secret.regenerate", Desc: "重置客户端密钥"},
-		{Code: "admin.oauth.clients.tokens.read", Desc: "查看客户端令牌"},
-		{Code: "admin.oauth.clients.tokens.revoke", Desc: "吊销客户端令牌"},
+		{Code: "tenant.oauth.clients.read", Desc: "查看 OAuth 客户端"},
+		{Code: "tenant.oauth.clients.create", Desc: "创建 OAuth 客户端"},
+		{Code: "tenant.oauth.clients.update", Desc: "更新 OAuth 客户端"},
+		{Code: "tenant.oauth.clients.delete", Desc: "删除 OAuth 客户端"},
+		{Code: "tenant.oauth.clients.secret.regenerate", Desc: "重置客户端密钥"},
+		{Code: "tenant.oauth.clients.tokens.read", Desc: "查看客户端令牌"},
+		{Code: "tenant.oauth.clients.tokens.revoke", Desc: "吊销客户端令牌"},
 
 		// 系统级应用管理
-		{Code: "admin.apps.read", Desc: "查看系统应用"},
-		{Code: "admin.apps.create", Desc: "创建系统应用"},
-		{Code: "admin.apps.update", Desc: "更新系统应用"},
-		{Code: "admin.apps.delete", Desc: "删除系统应用"},
-		{Code: "admin.apps.status.update", Desc: "更新系统应用状态"},
-		{Code: "admin.apps.stats.read", Desc: "查看系统应用统计"},
-		{Code: "admin.app_users.read", Desc: "查看应用用户"},
-		{Code: "admin.app_users.delete", Desc: "移除应用用户"},
-		{Code: "admin.app_users.status.update", Desc: "更新应用用户状态"},
-		{Code: "admin.app_users.by_status.read", Desc: "按状态查看应用用户"},
+		{Code: "tenant.apps.read", Desc: "查看系统应用"},
+		{Code: "tenant.apps.create", Desc: "创建系统应用"},
+		{Code: "tenant.apps.update", Desc: "更新系统应用"},
+		{Code: "tenant.apps.delete", Desc: "删除系统应用"},
+		{Code: "tenant.apps.status.update", Desc: "更新系统应用状态"},
+		{Code: "tenant.apps.stats.read", Desc: "查看系统应用统计"},
+		{Code: "tenant.app_users.read", Desc: "查看应用用户"},
+		{Code: "tenant.app_users.delete", Desc: "移除应用用户"},
+		{Code: "tenant.app_users.status.update", Desc: "更新应用用户状态"},
+		{Code: "tenant.app_users.by_status.read", Desc: "按状态查看应用用户"},
 
 		// 商业化 / 订阅
-		{Code: "admin.products.read", Desc: "查看产品"},
-		{Code: "admin.products.create", Desc: "创建产品"},
-		{Code: "admin.products.update", Desc: "更新产品"},
-		{Code: "admin.products.delete", Desc: "删除产品"},
+		{Code: "tenant.products.read", Desc: "查看产品"},
+		{Code: "tenant.products.create", Desc: "创建产品"},
+		{Code: "tenant.products.update", Desc: "更新产品"},
+		{Code: "tenant.products.delete", Desc: "删除产品"},
 
-		{Code: "admin.plans.read", Desc: "查看套餐"},
-		{Code: "admin.plans.create", Desc: "创建套餐"},
-		{Code: "admin.plans.update", Desc: "更新套餐"},
-		{Code: "admin.plans.delete", Desc: "删除套餐"},
-		{Code: "admin.plans.features.create", Desc: "创建套餐功能项"},
+		{Code: "tenant.plans.read", Desc: "查看套餐"},
+		{Code: "tenant.plans.create", Desc: "创建套餐"},
+		{Code: "tenant.plans.update", Desc: "更新套餐"},
+		{Code: "tenant.plans.delete", Desc: "删除套餐"},
+		{Code: "tenant.plans.features.create", Desc: "创建套餐功能项"},
 
-		{Code: "admin.prices.read", Desc: "查看定价"},
-		{Code: "admin.prices.create", Desc: "创建定价"},
-		{Code: "admin.prices.update", Desc: "更新定价"},
-		{Code: "admin.prices.delete", Desc: "删除定价"},
+		{Code: "tenant.prices.read", Desc: "查看定价"},
+		{Code: "tenant.prices.create", Desc: "创建定价"},
+		{Code: "tenant.prices.update", Desc: "更新定价"},
+		{Code: "tenant.prices.delete", Desc: "删除定价"},
 
-		{Code: "admin.coupons.read", Desc: "查看优惠券"},
-		{Code: "admin.coupons.create", Desc: "创建优惠券"},
-		{Code: "admin.coupons.update", Desc: "更新优惠券"},
-		{Code: "admin.coupons.delete", Desc: "删除优惠券"},
+		{Code: "tenant.coupons.read", Desc: "查看优惠券"},
+		{Code: "tenant.coupons.create", Desc: "创建优惠券"},
+		{Code: "tenant.coupons.update", Desc: "更新优惠券"},
+		{Code: "tenant.coupons.delete", Desc: "删除优惠券"},
 
-		{Code: "admin.subscriptions.read", Desc: "查看订阅"},
-		{Code: "admin.subscriptions.cancel", Desc: "取消订阅"},
+		{Code: "tenant.subscriptions.read", Desc: "查看订阅"},
+		{Code: "tenant.subscriptions.cancel", Desc: "取消订阅"},
 
 		// 超管专用（/super_admin/**）
 		{Code: "superadmin.tenants.create", Desc: "超管：创建租户"},
@@ -551,7 +551,7 @@ func seedSystemPermissions() {
 	}
 }
 
-// assignPermissionsToAdminRole 将全部系统权限授予默认租户的 admin 角色
+// assignPermissionsToAdminRole 将全部系统权限授予默认租户的 tenant 角色
 func assignPermissionsToAdminRole() {
 	db := common.DB()
 
@@ -559,14 +559,14 @@ func assignPermissionsToAdminRole() {
 	var tenant model.Tenant
 	if err := db.Where("code = ?", "default").First(&tenant).Error; err != nil {
 		if err := db.First(&tenant).Error; err != nil {
-			log.Printf("[Migration] No tenant found, skip assigning permissions to admin role")
+			log.Printf("[Migration] No tenant found, skip assigning permissions to tenant role")
 			return
 		}
 	}
 
-	// 查找默认租户的 admin 角色
+	// 查找默认租户的 tenant 角色
 	var adminRole model.Role
-	if err := db.Where("code = ? AND tenant_id = ?", "admin", tenant.ID).First(&adminRole).Error; err != nil {
+	if err := db.Where("code = ? AND tenant_id = ?", "tenant", tenant.ID).First(&adminRole).Error; err != nil {
 		log.Printf("[Migration] Admin role not found for tenant %d, skip permission binding", tenant.ID)
 		return
 	}
@@ -578,7 +578,7 @@ func assignPermissionsToAdminRole() {
 		return
 	}
 
-	// 为 admin 角色绑定权限（若未绑定）
+	// 为 tenant 角色绑定权限（若未绑定）
 	for _, p := range perms {
 		var cnt int64
 		if err := db.Model(&model.RolePermission{}).
@@ -589,7 +589,7 @@ func assignPermissionsToAdminRole() {
 		}
 		if cnt == 0 {
 			if err := db.Create(&model.RolePermission{RoleID: adminRole.ID, PermissionID: p.ID}).Error; err != nil {
-				log.Printf("[Migration] Failed to bind permission %s to admin role: %v", p.Code, err)
+				log.Printf("[Migration] Failed to bind permission %s to tenant role: %v", p.Code, err)
 			}
 		}
 	}
@@ -662,11 +662,11 @@ func assignPermissionsToPredefinedRoles() {
 		codeToPerm[p.Code] = p
 	}
 
-	// 动态生成只读权限集合（admin.* 的只读、统计、只读变体）
+	// 动态生成只读权限集合（tenant.* 的只读、统计、只读变体）
 	var viewerCodes []string
 	for _, p := range perms {
 		c := p.Code
-		if strings.HasPrefix(c, "admin.") && (strings.HasSuffix(c, ".read") || strings.HasSuffix(c, ".stats.read") || strings.HasSuffix(c, ".transactions.read") || strings.HasSuffix(c, ".by_status.read")) {
+		if strings.HasPrefix(c, "tenant.") && (strings.HasSuffix(c, ".read") || strings.HasSuffix(c, ".stats.read") || strings.HasSuffix(c, ".transactions.read") || strings.HasSuffix(c, ".by_status.read")) {
 			viewerCodes = append(viewerCodes, c)
 		}
 	}
@@ -679,53 +679,53 @@ func assignPermissionsToPredefinedRoles() {
 
 		// 用户管理
 		"user_manager": {
-			"admin.dashboard.stats.read", "admin.dashboard.activities.read",
-			"admin.users.read", "admin.users.create", "admin.users.update", "admin.users.delete", "admin.users.ban", "admin.users.stats.read",
+			"tenant.dashboard.stats.read", "tenant.dashboard.activities.read",
+			"tenant.users.read", "tenant.users.create", "tenant.users.update", "tenant.users.delete", "tenant.users.ban", "tenant.users.stats.read",
 		},
 
 		// 租户查看
-		"tenant_viewer": {"admin.tenants.read", "admin.tenants.stats.read", "admin.tenants.users.read"},
+		"tenant_viewer": {"tenant.tenants.read", "tenant.tenants.stats.read", "tenant.tenants.users.read"},
 
 		// 钱包管理
 		"wallet_manager": {
-			"admin.wallets.read", "admin.wallets.create", "admin.wallets.delete", "admin.wallets.stats.read", "admin.wallets.transactions.read",
-			"admin.wallets.adjust", "admin.wallets.freeze", "admin.wallets.unfreeze", "admin.currencies.read",
+			"tenant.wallets.read", "tenant.wallets.create", "tenant.wallets.delete", "tenant.wallets.stats.read", "tenant.wallets.transactions.read",
+			"tenant.wallets.adjust", "tenant.wallets.freeze", "tenant.wallets.unfreeze", "tenant.currencies.read",
 		},
 
 		// OAuth 管理
 		"oauth_manager": {
-			"admin.oauth.clients.read", "admin.oauth.clients.create", "admin.oauth.clients.update", "admin.oauth.clients.delete",
-			"admin.oauth.clients.secret.regenerate", "admin.oauth.clients.tokens.read", "admin.oauth.clients.tokens.revoke",
+			"tenant.oauth.clients.read", "tenant.oauth.clients.create", "tenant.oauth.clients.update", "tenant.oauth.clients.delete",
+			"tenant.oauth.clients.secret.regenerate", "tenant.oauth.clients.tokens.read", "tenant.oauth.clients.tokens.revoke",
 		},
 
 		// 通知管理
-		"notification_manager": {"admin.notifications.read", "admin.notifications.create", "admin.notifications.delete"},
+		"notification_manager": {"tenant.notifications.read", "tenant.notifications.create", "tenant.notifications.delete"},
 
 		// 系统应用管理
 		"app_manager": {
-			"admin.apps.read", "admin.apps.create", "admin.apps.update", "admin.apps.delete", "admin.apps.status.update", "admin.apps.stats.read",
-			"admin.app_users.read", "admin.app_users.delete", "admin.app_users.status.update", "admin.app_users.by_status.read",
+			"tenant.apps.read", "tenant.apps.create", "tenant.apps.update", "tenant.apps.delete", "tenant.apps.status.update", "tenant.apps.stats.read",
+			"tenant.app_users.read", "tenant.app_users.delete", "tenant.app_users.status.update", "tenant.app_users.by_status.read",
 		},
 
 		// 商品与定价管理
 		"product_manager": {
-			"admin.products.read", "admin.products.create", "admin.products.update", "admin.products.delete",
-			"admin.plans.read", "admin.plans.create", "admin.plans.update", "admin.plans.delete", "admin.plans.features.create",
-			"admin.prices.read", "admin.prices.create", "admin.prices.update", "admin.prices.delete",
-			"admin.coupons.read", "admin.coupons.create", "admin.coupons.update", "admin.coupons.delete",
+			"tenant.products.read", "tenant.products.create", "tenant.products.update", "tenant.products.delete",
+			"tenant.plans.read", "tenant.plans.create", "tenant.plans.update", "tenant.plans.delete", "tenant.plans.features.create",
+			"tenant.prices.read", "tenant.prices.create", "tenant.prices.update", "tenant.prices.delete",
+			"tenant.coupons.read", "tenant.coupons.create", "tenant.coupons.update", "tenant.coupons.delete",
 		},
 
 		// 订阅运营
 		"subscription_manager": {
-			"admin.subscriptions.read", "admin.subscriptions.cancel",
+			"tenant.subscriptions.read", "tenant.subscriptions.cancel",
 			// 只读的商品与定价
-			"admin.products.read", "admin.plans.read", "admin.prices.read", "admin.coupons.read",
+			"tenant.products.read", "tenant.plans.read", "tenant.prices.read", "tenant.coupons.read",
 		},
 	}
 
 	// support 角色 = viewer 基础 + 少量操作权限
 	supportCodes := append([]string{}, viewerCodes...)
-	supportCodes = append(supportCodes, "admin.subscriptions.cancel", "admin.app_users.status.update", "admin.users.ban")
+	supportCodes = append(supportCodes, "tenant.subscriptions.cancel", "tenant.app_users.status.update", "tenant.users.ban")
 	rolePerms["support"] = supportCodes
 
 	// 绑定函数（幂等）
@@ -744,8 +744,8 @@ func assignPermissionsToPredefinedRoles() {
 			if _, ok := uniq[c]; ok {
 				continue
 			}
-			// 仅允许 admin.*，避免意外赋予 superadmin.* 到普通角色
-			if strings.HasPrefix(c, "admin.") {
+			// 仅允许 tenant.*，避免意外赋予 superadmin.* 到普通角色
+			if strings.HasPrefix(c, "tenant.") {
 				uniq[c] = struct{}{}
 				filtered = append(filtered, c)
 			}
@@ -874,7 +874,7 @@ func seedDevData() error {
 	}
 	log.Printf("[Seed] users created: %d", len(users))
 
-	// 3.1) 从 50 名用户中抽 5 名，关联为非 default 的租户管理员（role=admin）
+	// 3.1) 从 50 名用户中抽 5 名，关联为非 default 的租户管理员（role=tenant）
 	if len(users) > 0 && len(tenants) > 0 {
 		sel := 5
 		if len(users) < sel {

@@ -9,7 +9,7 @@ import (
 var clientService = NewClientService()
 
 // CreateClientHandler 创建OAuth2客户端
-// POST /admin/oauth/clients
+// POST /tenant/oauth/clients
 func CreateClientHandler(c *fiber.Ctx) error {
 	var req CreateClientRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -36,7 +36,7 @@ func CreateClientHandler(c *fiber.Ctx) error {
 }
 
 // ListClientsHandler 获取OAuth2客户端列表
-// GET /admin/oauth/clients
+// GET /tenant/oauth/clients
 func ListClientsHandler(c *fiber.Ctx) error {
 	// 解析分页参数
 	page, _ := strconv.Atoi(c.Query("page", "1"))
@@ -69,7 +69,7 @@ func ListClientsHandler(c *fiber.Ctx) error {
 }
 
 // GetClientHandler 获取OAuth2客户端详情
-// GET /admin/oauth/clients/:client_id
+// GET /tenant/oauth/clients/:client_id
 func GetClientHandler(c *fiber.Ctx) error {
 	clientID := c.Params("client_id")
 
@@ -86,7 +86,7 @@ func GetClientHandler(c *fiber.Ctx) error {
 }
 
 // UpdateClientHandler 更新OAuth2客户端
-// PUT /admin/oauth/clients/:client_id
+// PUT /tenant/oauth/clients/:client_id
 func UpdateClientHandler(c *fiber.Ctx) error {
 	clientID := c.Params("client_id")
 
@@ -111,7 +111,7 @@ func UpdateClientHandler(c *fiber.Ctx) error {
 }
 
 // DeleteClientHandler 删除OAuth2客户端
-// DELETE /admin/oauth/clients/:client_id
+// DELETE /tenant/oauth/clients/:client_id
 func DeleteClientHandler(c *fiber.Ctx) error {
 	clientID := c.Params("client_id")
 
@@ -127,7 +127,7 @@ func DeleteClientHandler(c *fiber.Ctx) error {
 }
 
 // RegenerateSecretHandler 重新生成客户端密钥
-// POST /admin/oauth/clients/:client_id/regenerate-secret
+// POST /tenant/oauth/clients/:client_id/regenerate-secret
 func RegenerateSecretHandler(c *fiber.Ctx) error {
 	clientID := c.Params("client_id")
 
@@ -147,7 +147,7 @@ func RegenerateSecretHandler(c *fiber.Ctx) error {
 }
 
 // GetClientStatsHandler 获取客户端统计信息
-// GET /admin/oauth/clients/:client_id/stats
+// GET /tenant/oauth/clients/:client_id/stats
 func GetClientStatsHandler(c *fiber.Ctx) error {
 	clientID := c.Params("client_id")
 
@@ -164,7 +164,7 @@ func GetClientStatsHandler(c *fiber.Ctx) error {
 }
 
 // GetTokensHandler 获取客户端的活跃令牌列表
-// GET /admin/oauth/clients/:client_id/tokens
+// GET /tenant/oauth/clients/:client_id/tokens
 func GetTokensHandler(c *fiber.Ctx) error {
 	page, _ := strconv.Atoi(c.Query("page", "1"))
 	pageSize, _ := strconv.Atoi(c.Query("page_size", "10"))
@@ -189,7 +189,7 @@ func GetTokensHandler(c *fiber.Ctx) error {
 }
 
 // RevokeClientTokensHandler 撤销客户端的所有令牌
-// POST /admin/oauth/clients/:client_id/revoke-tokens
+// POST /tenant/oauth/clients/:client_id/revoke-tokens
 func RevokeClientTokensHandler(c *fiber.Ctx) error {
 	clientID := c.Params("client_id")
 
