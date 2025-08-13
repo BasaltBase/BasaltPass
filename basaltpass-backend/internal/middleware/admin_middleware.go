@@ -3,6 +3,7 @@ package middleware
 import (
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
+	"fmt"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -15,13 +16,23 @@ func AdminMiddleware() fiber.Handler {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthenticated"})
 		}
 		uid := uidVal.(uint)
+
+		// 先判断是否为超级管理员
+		var user model.User
+		if err := common.DB().First(&user, uid).Error; err == nil {
+			if user.IsSuperAdmin() {
+				return c.Next()
+			}
+		}
+
 		var count int64
 		common.DB().Model(&model.UserRole{}).
 			Joins("JOIN roles ON roles.id = user_roles.role_id AND roles.code = ?", "tenant").
 			Where("user_roles.user_id = ?", uid).
 			Count(&count)
 		if count == 0 {
-			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "tenant required"})
+			fmt.Printf("[AdminMiddleware] user %d forbidden: missing role 'tenant'\n", uid)
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "tenant role required"})
 		}
 		return c.Next()
 	}

@@ -2,6 +2,7 @@ package routes
 
 import (
 	admin2 "basaltpass-backend/internal/handler/admin"
+	adminInvitation "basaltpass-backend/internal/handler/admin/invitation"
 	adminNotification "basaltpass-backend/internal/handler/admin/notification"
 	adminSettings "basaltpass-backend/internal/handler/admin/settings"
 	adminTeam "basaltpass-backend/internal/handler/admin/team"
@@ -22,6 +23,8 @@ import (
 func RegisterAdminRoutes(v1 fiber.Router) {
 	// 原有的系统级管理员路由（保持向后兼容）
 	adminGroup := v1.Group("/tenant", middleware.JWTMiddleware(), middleware.AdminMiddleware())
+	// 新增 /admin 前缀别名，逐步迁移
+	adminAliasGroup := v1.Group("/admin", middleware.JWTMiddleware(), middleware.AdminMiddleware())
 
 	adminGroup.Get("/dashboard/stats", admin2.DashboardStatsHandler)        // /tenant/dashboard/stats
 	adminGroup.Get("/dashboard/activities", admin2.RecentActivitiesHandler) // /tenant/dashboard/activities
@@ -86,17 +89,47 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 	// 团队管理
 	adminTeamGroup := adminGroup.Group("/teams")
 	adminTeamGroup.Get("/", adminTeam.ListTeamsHandler)
+	adminTeamGroup.Post("/", adminTeam.CreateTeamHandler)
 	adminTeamGroup.Get("/:id", adminTeam.GetTeamHandler)
 	adminTeamGroup.Put("/:id", adminTeam.UpdateTeamHandler)
 	adminTeamGroup.Delete("/:id", adminTeam.DeleteTeamHandler)
 	adminTeamGroup.Get("/:id/members", adminTeam.ListMembersHandler)
 	adminTeamGroup.Post("/:id/members", adminTeam.AddMemberHandler)
 	adminTeamGroup.Delete("/:id/members/:user_id", adminTeam.RemoveMemberHandler)
+	adminTeamGroup.Put("/:id/members/:user_id/role", adminTeam.UpdateMemberRoleHandler)
 	adminTeamGroup.Post("/:id/transfer/:new_owner_id", adminTeam.TransferOwnershipHandler)
 	adminTeamGroup.Post("/:id/active", adminTeam.ToggleActiveHandler)
 
+	// alias teams
+	aliasTeams := adminAliasGroup.Group("/teams")
+	aliasTeams.Get("/", adminTeam.ListTeamsHandler)
+	aliasTeams.Post("/", adminTeam.CreateTeamHandler)
+	aliasTeams.Get("/:id", adminTeam.GetTeamHandler)
+	aliasTeams.Put("/:id", adminTeam.UpdateTeamHandler)
+	aliasTeams.Delete("/:id", adminTeam.DeleteTeamHandler)
+	aliasTeams.Get("/:id/members", adminTeam.ListMembersHandler)
+	aliasTeams.Post("/:id/members", adminTeam.AddMemberHandler)
+	aliasTeams.Delete("/:id/members/:user_id", adminTeam.RemoveMemberHandler)
+	aliasTeams.Put("/:id/members/:user_id/role", adminTeam.UpdateMemberRoleHandler)
+	aliasTeams.Post("/:id/transfer/:new_owner_id", adminTeam.TransferOwnershipHandler)
+	aliasTeams.Post("/:id/active", adminTeam.ToggleActiveHandler)
+
 	// 货币管理
 	adminGroup.Get("/currencies", walletHandler.GetCurrencies) // /tenant/currencies
+
+	// 邀请管理
+	adminInvitationGroup := adminGroup.Group("/invitations")
+	adminInvitationGroup.Get("/", adminInvitation.ListInvitationsHandler)
+	adminInvitationGroup.Post("/", adminInvitation.CreateInvitationHandler)
+	adminInvitationGroup.Put("/:id/status", adminInvitation.UpdateInvitationStatusHandler)
+	adminInvitationGroup.Delete("/:id", adminInvitation.DeleteInvitationHandler)
+
+	// alias invitations
+	aliasInv := adminAliasGroup.Group("/invitations")
+	aliasInv.Get("/", adminInvitation.ListInvitationsHandler)
+	aliasInv.Post("/", adminInvitation.CreateInvitationHandler)
+	aliasInv.Put("/:id/status", adminInvitation.UpdateInvitationStatusHandler)
+	aliasInv.Delete("/:id", adminInvitation.DeleteInvitationHandler)
 
 	// 保留原有的钱包交易审批路由（向后兼容）
 	adminGroup.Get("/wallet-tx", admin2.ListWalletTxHandler)          // /tenant/wallet-tx (deprecated, use /tenant/wallets instead)

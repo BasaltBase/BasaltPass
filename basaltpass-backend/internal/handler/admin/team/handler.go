@@ -6,11 +6,27 @@ import (
 	"strconv"
 
 	"basaltpass-backend/internal/common"
+	"basaltpass-backend/internal/model"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 var svc = team2.NewService(common.DB())
+
+func CreateTeamHandler(c *fiber.Ctx) error {
+	var req admindto.AdminCreateTeamRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
+	}
+	if req.Name == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "团队名称不能为空"})
+	}
+	id, err := svc.CreateTeam(req)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"message": "创建成功", "id": id})
+}
 
 func ListTeamsHandler(c *fiber.Ctx) error {
 	var req admindto.ListTeamsRequest
@@ -102,6 +118,30 @@ func RemoveMemberHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.JSON(fiber.Map{"message": "移除成功"})
+}
+
+func UpdateMemberRoleHandler(c *fiber.Ctx) error {
+	id, err := strconv.ParseUint(c.Params("id"), 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "无效的团队ID"})
+	}
+	uid, err := strconv.ParseUint(c.Params("user_id"), 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "无效的用户ID"})
+	}
+	var body struct {
+		Role string `json:"role"`
+	}
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
+	}
+	if body.Role == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "角色不能为空"})
+	}
+	if err := svc.UpdateMemberRole(uint(id), uint(uid), model.TeamRole(body.Role)); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"message": "更新成功"})
 }
 
 func TransferOwnershipHandler(c *fiber.Ctx) error {

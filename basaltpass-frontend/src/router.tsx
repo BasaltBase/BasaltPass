@@ -82,6 +82,8 @@ import SubscriptionStatusManagement from '@pages/tenant/subscription/Subscriptio
 import CouponManagement from '@pages/tenant/subscription/CouponManagement'
 import PlanManagement from '@pages/tenant/subscription/PlanManagement'
 import PriceManagement from '@pages/tenant/subscription/PriceManagement'
+import AdminTeamsPage from '@pages/admin/team/Teams'
+import AdminInvitationsPage from '@pages/admin/invitation/Invitations'
 
 export default function AppRouter() {
   return (
@@ -286,6 +288,16 @@ export default function AppRouter() {
       <Route path="/admin/permissions" element={
         <ProtectedRoute>
           <AdminPermissions />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/teams" element={
+        <ProtectedRoute>
+          <AdminTeamsPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/invitations" element={
+        <ProtectedRoute>
+          <AdminInvitationsPage />
         </ProtectedRoute>
       } />
       <Route path="/admin/wallets" element={

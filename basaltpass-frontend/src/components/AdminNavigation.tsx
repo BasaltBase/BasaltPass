@@ -4,6 +4,7 @@ import {
   BuildingOfficeIcon,
   CubeIcon,
   UsersIcon,
+  UserGroupIcon,
   Cog6ToothIcon,
   ChevronDownIcon,
   ChevronRightIcon,
@@ -37,6 +38,14 @@ const navigation: NavigationItem[] = [
     icon: UsersIcon,
     children: [
       { name: '用户列表', href: '/admin/users', icon: UsersIcon },
+    ]
+  },
+    {
+    name: '协作管理',
+    icon: UsersIcon,
+    children: [
+      { name: '团队管理', href: '/admin/teams', icon: UsersIcon },
+      { name: '邀请管理', href: '/admin/invitations', icon: UserGroupIcon },
     ]
   },
   {

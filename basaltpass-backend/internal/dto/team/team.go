@@ -31,6 +31,14 @@ type AdminUpdateTeamRequest struct {
 	IsActive    *bool  `json:"is_active"`
 }
 
+// AdminCreateTeamRequest 创建团队
+type AdminCreateTeamRequest struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	AvatarURL   string `json:"avatar_url"`
+	OwnerUserID uint   `json:"owner_user_id"`
+}
+
 type TeamMemberResponse struct {
 	ID        uint   `json:"id"`
 	TeamID    uint   `json:"team_id"`

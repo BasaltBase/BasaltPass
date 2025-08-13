@@ -90,6 +90,13 @@ func (s *Service) RemoveMember(id uint, userID uint) error {
 	return s.db.Where("team_id = ? AND user_id = ?", id, userID).Delete(&model.TeamMember{}).Error
 }
 
+func (s *Service) UpdateMemberRole(teamID, userID uint, role model.TeamRole) error {
+	if !role.IsValid() {
+		return nil
+	}
+	return s.db.Model(&model.TeamMember{}).Where("team_id = ? AND user_id = ?", teamID, userID).Update("role", role).Error
+}
+
 func (s *Service) ListMembers(id uint) ([]admindto.TeamMemberResponse, error) {
 	var members []model.TeamMember
 	if err := s.db.Preload("User").Where("team_id = ?", id).Find(&members).Error; err != nil {
@@ -125,6 +132,20 @@ func (s *Service) TransferOwnership(teamID, newOwnerID uint) error {
 
 func (s *Service) ToggleActive(teamID uint, active bool) error {
 	return s.db.Model(&model.Team{}).Where("id = ?", teamID).Update("is_active", active).Error
+}
+
+func (s *Service) CreateTeam(req admindto.AdminCreateTeamRequest) (uint, error) {
+	t := model.Team{Name: req.Name, Description: req.Description, AvatarURL: req.AvatarURL, IsActive: true}
+	if err := s.db.Create(&t).Error; err != nil {
+		return 0, err
+	}
+	if req.OwnerUserID > 0 {
+		m := model.TeamMember{TeamID: t.ID, UserID: req.OwnerUserID, Role: model.TeamRoleOwner, Status: "active", JoinedAt: time.Now().Unix()}
+		if err := s.db.Create(&m).Error; err != nil {
+			return t.ID, err
+		}
+	}
+	return t.ID, nil
 }
 
 func (s *Service) Stats() (map[string]any, error) {
