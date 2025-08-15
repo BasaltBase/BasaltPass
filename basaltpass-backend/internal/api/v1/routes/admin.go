@@ -56,6 +56,18 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 	adminUserGroup.Post("/:id/roles", adminUser.AssignGlobalRoleHandler)            // /tenant/users/:id/roles
 	adminUserGroup.Delete("/:id/roles/:role_id", adminUser.RemoveGlobalRoleHandler) // /tenant/users/:id/roles/:role_id
 
+	// alias: /api/v1/admin/users 与 /api/v1/tenant/users 保持一致，便于前端迁移
+	aliasUserGroup := adminAliasGroup.Group("/users")
+	aliasUserGroup.Get("/", adminUser.ListUsersHandler)
+	aliasUserGroup.Post("/", adminUser.CreateUserHandler)
+	aliasUserGroup.Get("/stats", adminUser.GetUserStatsHandler)
+	aliasUserGroup.Get("/:id", adminUser.GetUserHandler)
+	aliasUserGroup.Put("/:id", adminUser.UpdateUserHandler)
+	aliasUserGroup.Delete("/:id", adminUser.DeleteUserHandler)
+	aliasUserGroup.Post("/:id/ban", adminUser.BanUserHandler)
+	aliasUserGroup.Post("/:id/roles", adminUser.AssignGlobalRoleHandler)
+	aliasUserGroup.Delete("/:id/roles/:role_id", adminUser.RemoveGlobalRoleHandler)
+
 	// 新的租户管理路由
 	adminTenantGroup := adminGroup.Group("/tenants")
 	adminTenantGroup.Get("/", adminTenant.GetTenantListHandler)       // /tenant/tenants
@@ -65,9 +77,21 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 	adminTenantGroup.Put("/:id", adminTenant.UpdateTenantHandler)     // /tenant/tenants/:id
 	adminTenantGroup.Delete("/:id", adminTenant.DeleteTenantHandler)  // /tenant/tenants/:id
 
+	// alias: /api/v1/admin/tenants 与 /api/v1/tenant/tenants 对齐
+	aliasTenantGroup := adminAliasGroup.Group("/tenants")
+	aliasTenantGroup.Get("/", adminTenant.GetTenantListHandler)
+	aliasTenantGroup.Post("/", adminTenant.CreateTenantHandler)
+	aliasTenantGroup.Get("/stats", adminTenant.GetTenantStatsHandler)
+	aliasTenantGroup.Get("/:id", adminTenant.GetTenantDetailHandler)
+	aliasTenantGroup.Put("/:id", adminTenant.UpdateTenantHandler)
+	aliasTenantGroup.Delete("/:id", adminTenant.DeleteTenantHandler)
+
 	// 租户用户管理
 	adminTenantGroup.Get("/:id/users", adminTenant.GetTenantUsersHandler)              // /tenant/tenants/:id/users
 	adminTenantGroup.Delete("/:id/users/:userId", adminTenant.RemoveTenantUserHandler) // /tenant/tenants/:id/users/:userId
+	// alias 租户用户管理
+	aliasTenantGroup.Get("/:id/users", adminTenant.GetTenantUsersHandler)
+	aliasTenantGroup.Delete("/:id/users/:userId", adminTenant.RemoveTenantUserHandler)
 
 	// 钱包管理路由
 	walletHandler := adminWallet.NewAdminWalletHandler()
@@ -83,6 +107,127 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 
 	// 用户钱包管理
 	adminGroup.Get("/users/:id/wallets", walletHandler.GetUserWallets) // /tenant/users/:id/wallets
+	// alias user wallets
+	adminAliasGroup.Get("/users/:id/wallets", walletHandler.GetUserWallets)
+
+	// ===== 其它缺失的 /admin 别名路由补全 =====
+	// Dashboard
+	adminAliasGroup.Get("/dashboard/stats", admin2.DashboardStatsHandler)
+	adminAliasGroup.Get("/dashboard/activities", admin2.RecentActivitiesHandler)
+
+	// 角色与权限
+	adminAliasGroup.Get("/roles", rbac.ListRolesHandler)
+	adminAliasGroup.Post("/roles", rbac.CreateRoleHandler)
+	adminAliasGroup.Post("/user/:id/role", rbac.AssignRoleHandler)
+
+	aliasPermGroup := adminAliasGroup.Group("/permissions")
+	aliasPermGroup.Get("/", rbac.ListPermissionsHandler)
+	aliasPermGroup.Post("/", rbac.CreatePermissionHandler)
+	aliasPermGroup.Put("/:id", rbac.UpdatePermissionHandler)
+	aliasPermGroup.Delete("/:id", rbac.DeletePermissionHandler)
+
+	adminAliasGroup.Get("/roles/:id/permissions", rbac.GetRolePermissionsHandler)
+	adminAliasGroup.Post("/roles/:id/permissions", rbac.SetRolePermissionsHandler)
+	adminAliasGroup.Delete("/roles/:id/permissions/:permission_id", rbac.RemoveRolePermissionHandler)
+
+	// 钱包集合（原 /tenant/wallets）
+	aliasWalletGroup := adminAliasGroup.Group("/wallets")
+	aliasWalletGroup.Get("/", walletHandler.ListWallets)
+	aliasWalletGroup.Post("/", walletHandler.CreateWallet)
+	aliasWalletGroup.Get("/stats", walletHandler.GetWalletStats)
+	aliasWalletGroup.Get("/:id/transactions", walletHandler.GetWalletTransactions)
+	aliasWalletGroup.Post("/:id/adjust", walletHandler.AdjustBalance)
+	aliasWalletGroup.Post("/:id/freeze", walletHandler.FreezeWallet)
+	aliasWalletGroup.Post("/:id/unfreeze", walletHandler.UnfreezeWallet)
+	aliasWalletGroup.Delete("/:id", walletHandler.DeleteWallet)
+
+	// 货币
+	adminAliasGroup.Get("/currencies", walletHandler.GetCurrencies)
+
+	// 设置
+	aliasSettings := adminAliasGroup.Group("/settings")
+	aliasSettings.Get("/", adminSettings.ListSettingsHandler)
+	aliasSettings.Get("/:key", adminSettings.GetSettingHandler)
+	aliasSettings.Post("/", adminSettings.UpsertSettingHandler)
+	aliasSettings.Put("/bulk", adminSettings.BulkUpdateSettingsHandler)
+
+	// OAuth Clients
+	aliasOAuthClients := adminAliasGroup.Group("/oauth/clients")
+	aliasOAuthClients.Post("/", oauth.CreateClientHandler)
+	aliasOAuthClients.Get("/", oauth.ListClientsHandler)
+	aliasOAuthClients.Get("/:client_id", oauth.GetClientHandler)
+	aliasOAuthClients.Put("/:client_id", oauth.UpdateClientHandler)
+	aliasOAuthClients.Delete("/:client_id", oauth.DeleteClientHandler)
+	aliasOAuthClients.Post("/:client_id/regenerate-secret", oauth.RegenerateSecretHandler)
+	aliasOAuthClients.Get("/:client_id/stats", oauth.GetClientStatsHandler)
+	aliasOAuthClients.Get("/:client_id/tokens", oauth.GetTokensHandler)
+	aliasOAuthClients.Post("/:client_id/revoke-tokens", oauth.RevokeClientTokensHandler)
+
+	// Apps （系统级 + 应用用户管理）
+	aliasApps := adminAliasGroup.Group("/apps")
+	aliasApps.Post("/", appHandler.AdminCreateAppHandler)
+	aliasApps.Get("/", appHandler.AdminListAppsHandler)
+	aliasApps.Get("/:id", appHandler.AdminGetAppHandler)
+	aliasApps.Put("/:id", appHandler.AdminUpdateAppHandler)
+	aliasApps.Delete("/:id", appHandler.AdminDeleteAppHandler)
+	aliasApps.Post("/", appHandler.CreateAppHandler)
+	aliasApps.Get("/", appHandler.ListAppsHandler)
+	aliasApps.Get("/:id", appHandler.GetAppHandler)
+	aliasApps.Put("/:id", appHandler.UpdateAppHandler)
+	aliasApps.Delete("/:id", appHandler.DeleteAppHandler)
+	aliasApps.Patch("/:id/status", appHandler.ToggleAppStatusHandler)
+	aliasApps.Get("/:id/stats", appHandler.GetAppStatsHandler)
+	aliasApps.Get("/:app_id/users", app_user.GetAppUsersHandler)
+	aliasApps.Get("/:app_id/users/stats", app_user.GetAppUserStatsHandler)
+	aliasApps.Delete("/:app_id/users/:user_id", app_user.AdminRevokeUserAppHandler)
+	aliasApps.Put("/:app_id/users/:user_id/status", app_user.UpdateAppUserStatusHandler)
+	aliasApps.Get("/:app_id/users/by-status", app_user.GetAppUsersByStatusHandler)
+
+	// Notifications
+	aliasNotif := adminAliasGroup.Group("/notifications")
+	aliasNotif.Post("/", adminNotification.AdminCreateHandler)
+	aliasNotif.Get("/", adminNotification.AdminListHandler)
+	aliasNotif.Delete("/:id", adminNotification.AdminDeleteHandler)
+
+	// 订阅系统
+	aliasProducts := adminAliasGroup.Group("/products")
+	aliasProducts.Get("/", subscription.AdminListProductsHandler)
+	aliasProducts.Get("/:id", subscription.AdminGetProductHandler)
+	aliasProducts.Post("/", subscription.CreateProductHandler)
+	aliasProducts.Put("/:id", subscription.UpdateProductHandler)
+	aliasProducts.Delete("/:id", subscription.DeleteProductHandler)
+
+	aliasPlans := adminAliasGroup.Group("/plans")
+	aliasPlans.Get("/", subscription.AdminListPlansHandler)
+	aliasPlans.Get("/:id", subscription.AdminGetPlanHandler)
+	aliasPlans.Post("/", subscription.CreatePlanHandler)
+	aliasPlans.Put("/:id", subscription.UpdatePlanHandler)
+	aliasPlans.Delete("/:id", subscription.DeletePlanHandler)
+	aliasPlans.Post("/features", subscription.CreatePlanFeatureHandler)
+
+	aliasPrices := adminAliasGroup.Group("/prices")
+	aliasPrices.Get("/", subscription.AdminListPricesHandler)
+	aliasPrices.Get("/:id", subscription.AdminGetPriceHandler)
+	aliasPrices.Post("/", subscription.CreatePriceHandler)
+	aliasPrices.Put("/:id", subscription.UpdatePriceHandler)
+	aliasPrices.Delete("/:id", subscription.DeletePriceHandler)
+
+	aliasCoupons := adminAliasGroup.Group("/coupons")
+	aliasCoupons.Get("/", subscription.AdminListCouponsHandler)
+	aliasCoupons.Get("/:code", subscription.AdminGetCouponHandler)
+	aliasCoupons.Post("/", subscription.CreateCouponHandler)
+	aliasCoupons.Put("/:code", subscription.UpdateCouponHandler)
+	aliasCoupons.Delete("/:code", subscription.DeleteCouponHandler)
+
+	aliasSubscriptions := adminAliasGroup.Group("/subscriptions")
+	aliasSubscriptions.Get("/", subscription.AdminListSubscriptionsHandler)
+	aliasSubscriptions.Get("/:id", subscription.AdminGetSubscriptionHandler)
+	aliasSubscriptions.Put("/:id/cancel", subscription.AdminCancelSubscriptionHandler)
+
+	// 日志与旧钱包交易（兼容）
+	adminAliasGroup.Get("/wallet-tx", admin2.ListWalletTxHandler)
+	adminAliasGroup.Post("/tx/:id/approve", admin2.ApproveWalletTxHandler)
+	adminAliasGroup.Get("/logs", admin2.ListAuditHandler)
 
 	// 团队钱包管理
 	adminGroup.Get("/teams/:id/wallets", walletHandler.GetTeamWallets) // /tenant/teams/:id/wallets
