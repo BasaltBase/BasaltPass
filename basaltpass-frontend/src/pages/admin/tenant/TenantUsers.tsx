@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { 
+import {
   UsersIcon,
   UserIcon,
   ShieldCheckIcon,
@@ -10,10 +10,22 @@ import {
   MagnifyingGlassIcon,
   ArrowLeftIcon,
   PlusIcon,
-  StarIcon
+  StarIcon,
+  CheckCircleIcon,
+  ExclamationCircleIcon
 } from '@heroicons/react/24/outline'
 import AdminLayout from '@components/AdminLayout'
-import { adminTenantApi, AdminTenantDetailResponse, AdminTenantUser, AdminTenantUserListRequest } from '@api/admin/tenant'
+import {
+  adminTenantApi,
+  AdminTenantDetailResponse,
+  AdminTenantUser,
+  AdminTenantUserListRequest,
+  AdminTenantInviteUserRequest,
+  AdminTenantUpdateUserRequest,
+  AdminTenantUserDetail
+} from '@api/admin/tenant'
+import TenantUserDetailDrawer from '@components/admin/TenantUserDetailDrawer'
+import Modal from '@components/common/Modal'
 
 // 类型定义
 interface TenantUser extends AdminTenantUser {
@@ -32,6 +44,25 @@ const TenantUsers: React.FC = () => {
   const [search, setSearch] = useState('')
   const [userType, setUserType] = useState<'all' | 'tenant_admin' | 'app_user'>('all')
   const [role, setRole] = useState('')
+  const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const [isInviteOpen, setInviteOpen] = useState(false)
+  const [inviteForm, setInviteForm] = useState<AdminTenantInviteUserRequest>({
+    email: '',
+    role: 'member',
+    message: ''
+  })
+  const [inviteSubmitting, setInviteSubmitting] = useState(false)
+  const [isDetailOpen, setDetailOpen] = useState(false)
+  const [detailLoading, setDetailLoading] = useState(false)
+  const [detailError, setDetailError] = useState<string | null>(null)
+  const [detailUser, setDetailUser] = useState<AdminTenantUserDetail | null>(null)
+  const [isEditOpen, setEditOpen] = useState(false)
+  const [editSubmitting, setEditSubmitting] = useState(false)
+  const [editingUser, setEditingUser] = useState<TenantUser | null>(null)
+  const [editForm, setEditForm] = useState<AdminTenantUpdateUserRequest>({
+    role: 'member',
+    status: 'active'
+  })
 
   useEffect(() => {
     if (id) {
@@ -54,10 +85,11 @@ const TenantUsers: React.FC = () => {
 
   const loadUsers = async () => {
     if (!id) return
-    
+
     try {
       setLoading(true)
-      
+      setError(null)
+
       const params: AdminTenantUserListRequest = {
         page,
         limit: 20,
@@ -74,6 +106,78 @@ const TenantUsers: React.FC = () => {
       setError('加载用户列表失败')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleOpenInvite = () => {
+    setInviteOpen(true)
+    setAlert(null)
+  }
+
+  const handleInviteSubmit = async () => {
+    if (!id) return
+
+    try {
+      setInviteSubmitting(true)
+      await adminTenantApi.inviteTenantUser(parseInt(id), inviteForm)
+      setAlert({ type: 'success', message: '邀请发送成功' })
+      setInviteOpen(false)
+      setInviteForm({ email: '', role: 'member', message: '' })
+      await loadUsers()
+    } catch (error: any) {
+      const message = error.response?.data?.error || error.response?.data?.message || '邀请用户失败'
+      setAlert({ type: 'error', message })
+    } finally {
+      setInviteSubmitting(false)
+    }
+  }
+
+  const handleViewDetail = async (userId: number) => {
+    if (!id) return
+
+    setDetailOpen(true)
+    setDetailLoading(true)
+    setDetailError(null)
+    setDetailUser(null)
+
+    try {
+      const response = await adminTenantApi.getTenantUserDetail(parseInt(id), userId)
+      setDetailUser(response)
+    } catch (error: any) {
+      console.error('Failed to fetch user detail:', error)
+      const message = error.response?.data?.error || error.response?.data?.message || '获取用户详情失败'
+      setDetailError(message)
+    } finally {
+      setDetailLoading(false)
+    }
+  }
+
+  const handleOpenEdit = (user: TenantUser) => {
+    setEditingUser(user)
+    setEditForm({
+      role: user.role === 'owner' ? 'admin' : (user.role as 'admin' | 'member'),
+      status: user.status
+    })
+    setEditOpen(true)
+    setAlert(null)
+  }
+
+  const handleEditSubmit = async () => {
+    if (!id || !editingUser) return
+
+    try {
+      setEditSubmitting(true)
+      await adminTenantApi.updateTenantUser(parseInt(id), editingUser.id, editForm)
+      setAlert({ type: 'success', message: '用户权限已更新' })
+      setEditOpen(false)
+      setEditingUser(null)
+      await loadUsers()
+    } catch (error: any) {
+      console.error('Failed to update user:', error)
+      const message = error.response?.data?.error || error.response?.data?.message || '更新用户权限失败'
+      setAlert({ type: 'error', message })
+    } finally {
+      setEditSubmitting(false)
     }
   }
 
@@ -186,7 +290,7 @@ const TenantUsers: React.FC = () => {
   const actions = (
     <div className="flex space-x-3">
       <button
-        onClick={() => {/* TODO: 实现添加用户功能 */}}
+        onClick={handleOpenInvite}
         className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
       >
         <PlusIcon className="h-4 w-4 mr-2" />
@@ -198,6 +302,23 @@ const TenantUsers: React.FC = () => {
   return (
     <AdminLayout title={`用户管理 - ${tenant?.name || '租户'}`} actions={actions}>
       <div className="space-y-6">
+        {alert && (
+          <div
+            className={`flex items-start rounded-md p-4 ${
+              alert.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+            }`}
+          >
+            {alert.type === 'success' ? (
+              <CheckCircleIcon className="h-5 w-5 mt-0.5 mr-3" />
+            ) : (
+              <ExclamationCircleIcon className="h-5 w-5 mt-0.5 mr-3" />
+            )}
+            <div>
+              <p className="text-sm font-medium">{alert.message}</p>
+            </div>
+          </div>
+        )}
+
         {/* 错误提示 */}
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-md p-4">
@@ -323,7 +444,7 @@ const TenantUsers: React.FC = () => {
                     </div>
                     <div className="flex items-center space-x-2">
                       <button
-                        onClick={() => {/* TODO: 查看用户详情 */}}
+                        onClick={() => handleViewDetail(user.id)}
                         className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                         title="查看详情"
                       >
@@ -332,7 +453,7 @@ const TenantUsers: React.FC = () => {
                       {user.role !== 'owner' && (
                         <>
                           <button
-                            onClick={() => {/* TODO: 编辑用户权限 */}}
+                            onClick={() => handleOpenEdit(user)}
                             className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                             title="编辑权限"
                           >
@@ -391,8 +512,234 @@ const TenantUsers: React.FC = () => {
           </div>
         )}
       </div>
+
+      <InviteTenantUserModal
+        open={isInviteOpen}
+        formData={inviteForm}
+        submitting={inviteSubmitting}
+        onClose={() => setInviteOpen(false)}
+        onChange={setInviteForm}
+        onSubmit={handleInviteSubmit}
+      />
+
+      <EditTenantUserModal
+        open={isEditOpen}
+        user={editingUser}
+        formData={editForm}
+        submitting={editSubmitting}
+        onClose={() => {
+          setEditOpen(false)
+          setEditingUser(null)
+        }}
+        onChange={setEditForm}
+        onSubmit={handleEditSubmit}
+      />
+
+      <TenantUserDetailDrawer
+        open={isDetailOpen}
+        loading={detailLoading}
+        user={detailUser}
+        error={detailError}
+        onClose={() => setDetailOpen(false)}
+      />
     </AdminLayout>
   )
+}
+
+interface InviteTenantUserModalProps {
+  open: boolean
+  formData: AdminTenantInviteUserRequest
+  submitting: boolean
+  onSubmit: () => void
+  onClose: () => void
+  onChange: (data: AdminTenantInviteUserRequest) => void
+}
+
+const InviteTenantUserModal: React.FC<InviteTenantUserModalProps> = ({
+  open,
+  formData,
+  submitting,
+  onSubmit,
+  onClose,
+  onChange
+}) => (
+  <Modal
+    open={open}
+    title="邀请租户用户"
+    onClose={onClose}
+    description="向租户添加新的管理员或成员，系统会发送邀请邮件"
+  >
+    <form
+      onSubmit={(event) => {
+        event.preventDefault()
+        onSubmit()
+      }}
+      className="space-y-4"
+    >
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">邮箱地址 *</label>
+        <input
+          type="email"
+          required
+          value={formData.email}
+          onChange={(event) => onChange({ ...formData, email: event.target.value })}
+          className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
+          placeholder="user@example.com"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">角色 *</label>
+        <select
+          value={formData.role}
+          onChange={(event) => onChange({ ...formData, role: event.target.value as 'admin' | 'member' })}
+          className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
+        >
+          <option value="member">成员</option>
+          <option value="admin">管理员</option>
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">邀请信息（可选）</label>
+        <textarea
+          value={formData.message || ''}
+          onChange={(event) => onChange({ ...formData, message: event.target.value })}
+          rows={3}
+          className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
+          placeholder="欢迎加入我们的租户团队..."
+        />
+      </div>
+
+      <div className="flex justify-end space-x-3 pt-4">
+        <button
+          type="button"
+          onClick={onClose}
+          disabled={submitting}
+          className="px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-60"
+        >
+          取消
+        </button>
+        <button
+          type="submit"
+          disabled={submitting}
+          className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60"
+        >
+          {submitting ? '发送中...' : '发送邀请'}
+        </button>
+      </div>
+    </form>
+  </Modal>
+)
+
+interface EditTenantUserModalProps {
+  open: boolean
+  user: TenantUser | null
+  formData: AdminTenantUpdateUserRequest
+  submitting: boolean
+  onSubmit: () => void
+  onClose: () => void
+  onChange: (data: AdminTenantUpdateUserRequest) => void
+}
+
+const EditTenantUserModal: React.FC<EditTenantUserModalProps> = ({
+  open,
+  user,
+  formData,
+  submitting,
+  onSubmit,
+  onClose,
+  onChange
+}) => {
+  const statusOptions = ['active', 'suspended', 'banned']
+  const uniqueStatusOptions = user && !statusOptions.includes(user.status) ? [...statusOptions, user.status] : statusOptions
+
+  return (
+    <Modal
+      open={open}
+      title={user ? `编辑用户权限 - ${user.nickname || user.email}` : '编辑用户权限'}
+      onClose={onClose}
+      description="调整租户用户的角色和账号状态"
+    >
+      {user && (
+        <form
+          onSubmit={(event) => {
+            event.preventDefault()
+            onSubmit()
+          }}
+          className="space-y-4"
+        >
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">邮箱</label>
+            <input
+              type="email"
+              value={user.email}
+              disabled
+              className="block w-full border border-gray-200 rounded-md px-3 py-2 bg-gray-100 text-gray-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">角色</label>
+            <select
+              value={formData.role || 'member'}
+              onChange={(event) => onChange({ ...formData, role: event.target.value as 'admin' | 'member' })}
+              className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value="member">成员</option>
+              <option value="admin">管理员</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">状态</label>
+            <select
+              value={formData.status || ''}
+              onChange={(event) => onChange({ ...formData, status: event.target.value })}
+              className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              {uniqueStatusOptions.map((option) => (
+                <option key={option} value={option}>
+                  {translateStatusOption(option)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={submitting}
+              className="px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-60"
+            >
+              取消
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60"
+            >
+              {submitting ? '保存中...' : '保存更改'}
+            </button>
+          </div>
+        </form>
+      )}
+    </Modal>
+  )
+}
+
+const translateStatusOption = (status: string) => {
+  switch (status) {
+    case 'active':
+      return '活跃'
+    case 'suspended':
+      return '暂停'
+    case 'banned':
+      return '封禁'
+    default:
+      return status
+  }
 }
 
 export default TenantUsers
