@@ -25,10 +25,11 @@ func LogAudit(userID uint, action, resourceType, resourceID, ip, userAgent strin
 	dataJSON, _ := json.Marshal(data)
 
 	auditLog := model.AuditLog{
-		UserID: userID,
-		Action: action,
-		IP:     ip,
-		Data:   string(dataJSON),
+		UserID:    userID,
+		Action:    action,
+		IP:        ip,
+		UserAgent: userAgent,
+		Data:      string(dataJSON),
 	}
 
 	common.DB().Create(&auditLog)
