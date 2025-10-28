@@ -3,6 +3,7 @@ package passkey
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"time"
 
@@ -14,6 +15,37 @@ import (
 )
 
 type Service struct{}
+
+// RequestContext encapsulates metadata about the incoming request for audit logging.
+type RequestContext struct {
+	IP        string
+	UserAgent string
+	Data      map[string]interface{}
+}
+
+func buildAuditLogData(ctx *RequestContext, defaults map[string]interface{}) (string, error) {
+	combined := make(map[string]interface{})
+	for k, v := range defaults {
+		combined[k] = v
+	}
+
+	if ctx != nil && ctx.Data != nil {
+		for k, v := range ctx.Data {
+			combined[k] = v
+		}
+	}
+
+	if len(combined) == 0 {
+		return "", nil
+	}
+
+	payload, err := json.Marshal(combined)
+	if err != nil {
+		return "", err
+	}
+
+	return string(payload), nil
+}
 
 // GetWebAuthnInstance 获取WebAuthn实例
 func (s *Service) GetWebAuthnInstance() (*webauthn.WebAuthn, error) {
@@ -103,20 +135,38 @@ func (s *Service) UpdatePasskeyUsage(credentialID []byte, signCount uint32) erro
 }
 
 // GenerateTokensForUser 为用户生成JWT tokens
-func (s *Service) GenerateTokensForUser(userID uint) (*auth.TokenPair, error) {
+func (s *Service) GenerateTokensForUser(userID uint, ctx *RequestContext) (*auth.TokenPair, error) {
 	tokens, err := auth.GenerateTokenPair(userID)
 	if err != nil {
 		return nil, err
 	}
 
 	// 记录审计日志
-	auditLog := model.AuditLog{
-		UserID: userID,
-		Action: "passkey_login",
-		IP:     "", // TODO: 从请求中获取IP
-		Data:   "User logged in using Passkey",
+	defaults := map[string]interface{}{
+		"event": "User logged in using Passkey",
 	}
-	common.DB().Create(&auditLog)
+
+	data, err := buildAuditLogData(ctx, defaults)
+	if err != nil {
+		return nil, err
+	}
+
+	auditLog := model.AuditLog{
+		UserID:    userID,
+		Action:    "passkey_login",
+		IP:        "",
+		UserAgent: "",
+		Data:      data,
+	}
+
+	if ctx != nil {
+		auditLog.IP = ctx.IP
+		auditLog.UserAgent = ctx.UserAgent
+	}
+
+	if err := common.DB().Create(&auditLog).Error; err != nil {
+		return nil, err
+	}
 
 	return &tokens, nil
 }
@@ -132,7 +182,7 @@ func (s *Service) ListPasskeys(userID uint) ([]model.Passkey, error) {
 }
 
 // DeletePasskey 删除指定的Passkey
-func (s *Service) DeletePasskey(userID, passkeyID uint) error {
+func (s *Service) DeletePasskey(userID, passkeyID uint, ctx *RequestContext) error {
 	// 验证Passkey属于该用户
 	var passkey model.Passkey
 	err := common.DB().Where("id = ? AND user_id = ?", passkeyID, userID).First(&passkey).Error
@@ -146,14 +196,32 @@ func (s *Service) DeletePasskey(userID, passkeyID uint) error {
 		return err
 	}
 
-	// 记录审计日志
-	auditLog := model.AuditLog{
-		UserID: userID,
-		Action: "delete_passkey",
-		IP:     "", // TODO: 从请求中获取IP
-		Data:   "User deleted a Passkey: " + passkey.Name,
+	defaults := map[string]interface{}{
+		"event":        "User deleted a Passkey",
+		"passkey_name": passkey.Name,
 	}
-	common.DB().Create(&auditLog)
+
+	data, err := buildAuditLogData(ctx, defaults)
+	if err != nil {
+		return err
+	}
+
+	auditLog := model.AuditLog{
+		UserID:    userID,
+		Action:    "delete_passkey",
+		IP:        "",
+		UserAgent: "",
+		Data:      data,
+	}
+
+	if ctx != nil {
+		auditLog.IP = ctx.IP
+		auditLog.UserAgent = ctx.UserAgent
+	}
+
+	if err := common.DB().Create(&auditLog).Error; err != nil {
+		return err
+	}
 
 	return nil
 }
