@@ -1,8 +1,11 @@
 package passkey
 
 import (
+	"log"
 	"net/http"
 	"strconv"
+
+	"basaltpass-backend/internal/security"
 
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/gofiber/fiber/v2"
@@ -14,6 +17,14 @@ var svc = Service{}
 
 // Session存储 - 简化实现，在生产环境中应该使用更安全的session存储
 var sessionStore = make(map[string]*webauthn.SessionData)
+
+func newRequestContext(c *fiber.Ctx, data map[string]interface{}) *RequestContext {
+	return &RequestContext{
+		IP:        c.IP(),
+		UserAgent: c.Get(fiber.HeaderUserAgent),
+		Data:      data,
+	}
+}
 
 // getUserID 安全地从context中获取用户ID
 func getUserID(c *fiber.Ctx) (uint, error) {
@@ -249,7 +260,11 @@ func FinishLoginHandler(c *fiber.Ctx) error {
 	}
 
 	// 生成JWT tokens
-	tokens, err := svc.GenerateTokensForUser(user.ID)
+	ctx := newRequestContext(c, map[string]interface{}{
+		"email": req.Email,
+	})
+
+	tokens, err := svc.GenerateTokensForUser(user.ID, ctx)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
@@ -267,6 +282,10 @@ func FinishLoginHandler(c *fiber.Ctx) error {
 		Path:     "/",
 		MaxAge:   7 * 24 * 60 * 60,
 	})
+
+	if err := security.RecordLoginSuccess(user.ID, c.IP(), c.Get("User-Agent")); err != nil {
+		log.Printf("failed to record login history: %v", err)
+	}
 
 	return c.JSON(fiber.Map{
 		"access_token": tokens.AccessToken,
@@ -317,7 +336,11 @@ func DeletePasskeyHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	err = svc.DeletePasskey(userID, uint(passkeyID))
+	ctx := newRequestContext(c, map[string]interface{}{
+		"passkey_id": passkeyID,
+	})
+
+	err = svc.DeletePasskey(userID, uint(passkeyID), ctx)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),

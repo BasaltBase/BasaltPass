@@ -201,6 +201,7 @@ func GetUserTenantsHandler(c *fiber.Ctx) error {
 // POST /admin/tenant/users/invite
 func InviteUserHandler(c *fiber.Ctx) error {
 	tenantID := c.Locals("tenantID").(uint)
+	currentUserID := c.Locals("userID").(uint)
 
 	var req struct {
 		UserID uint   `json:"user_id" validate:"required"`
@@ -213,9 +214,20 @@ func InviteUserHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	// TODO: 添加权限检查
+	role, err := tenantService.GetMemberRole(tenantID, currentUserID)
+	if err != nil {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error": "无权限邀请用户",
+		})
+	}
 
-	if err := tenantService.InviteUserToTenant(tenantID, req.UserID, model.TenantRole(req.Role)); err != nil {
+	if role != model.TenantRoleOwner && role != model.TenantRoleAdmin {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error": "无权限邀请用户",
+		})
+	}
+
+	if err := tenantService.InviteUserToTenant(tenantID, currentUserID, req.UserID, model.TenantRole(req.Role)); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})

@@ -16,7 +16,7 @@ interface AuthContextType {
   user: User | null
   isAuthenticated: boolean
   isLoading: boolean
-  login: (token: string) => void
+  login: (token: string) => Promise<void>
   logout: () => void
   checkAuth: () => Promise<void>
 }
@@ -82,14 +82,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [])
 
-  const login = useCallback((token: string) => {
+  const login = useCallback(async (token: string) => {
     debugAuth.log('Login called with token', token.substring(0, 20) + '...')
     localStorage.setItem('access_token', token)
-    // 登录后立即设置用户状态，避免重复API调用
-    setUser({ id: 0, email: '', nickname: '用户' }) // 临时用户信息
-    setIsLoading(false)
-    setHasChecked(true)
-    debugAuth.log('Login completed, user set')
+    setIsLoading(true)
+    try {
+      const response = await client.get('/api/v1/user/profile')
+      const profileData = response.data?.data ?? response.data
+
+      if (!profileData || typeof profileData !== 'object') {
+        throw new Error('Invalid user profile response')
+      }
+
+      debugAuth.log('Login completed, user set', profileData)
+      setUser(profileData)
+    } catch (error) {
+      debugAuth.log('Failed to fetch profile after login', error)
+      clearAccessToken()
+      setUser(null)
+      throw error
+    } finally {
+      setIsLoading(false)
+      setHasChecked(true)
+    }
   }, [])
 
   const logout = useCallback(() => {

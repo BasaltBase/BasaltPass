@@ -123,6 +123,33 @@ export interface AdminTenantUser {
   created_at: string;
 }
 
+export interface AdminTenantUserApp {
+  id: number;
+  name: string;
+  role?: string;
+  added_at?: string;
+}
+
+export interface AdminTenantUserDetail extends AdminTenantUser {
+  phone?: string;
+  last_login_at?: string;
+  updated_at?: string;
+  permissions?: string[];
+  apps?: AdminTenantUserApp[];
+  extra_info?: Record<string, string | number | boolean | null>;
+}
+
+export interface AdminTenantInviteUserRequest {
+  email: string;
+  role: 'admin' | 'member';
+  message?: string;
+}
+
+export interface AdminTenantUpdateUserRequest {
+  role?: 'admin' | 'member';
+  status?: string;
+}
+
 export interface AdminTenantUserListRequest {
   page?: number;
   limit?: number;
@@ -181,6 +208,22 @@ export const adminTenantApi = {
   async getTenantUsers(tenantId: number, params: AdminTenantUserListRequest = {}): Promise<AdminTenantUserListResponse> {
     const response = await client.get(`/api/v1/admin/tenants/${tenantId}/users`, { params });
     return response.data;
+  },
+
+  // 邀请租户用户
+  async inviteTenantUser(tenantId: number, data: AdminTenantInviteUserRequest): Promise<void> {
+    await client.post(`/api/v1/admin/tenants/${tenantId}/users/invite`, data);
+  },
+
+  // 获取租户用户详情
+  async getTenantUserDetail(tenantId: number, userId: number): Promise<AdminTenantUserDetail> {
+    const response = await client.get(`/api/v1/admin/tenants/${tenantId}/users/${userId}`);
+    return response.data;
+  },
+
+  // 更新租户用户权限或状态
+  async updateTenantUser(tenantId: number, userId: number, data: AdminTenantUpdateUserRequest): Promise<void> {
+    await client.put(`/api/v1/admin/tenants/${tenantId}/users/${userId}`, data);
   },
 
   // 移除租户用户

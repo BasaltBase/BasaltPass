@@ -1,11 +1,15 @@
 package tenant
 
 import (
-	"basaltpass-backend/internal/model"
+	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 	"time"
+
+	"basaltpass-backend/internal/model"
 
 	"gorm.io/gorm"
 )
@@ -379,12 +383,235 @@ func (s *AdminTenantService) getTenantStats(tenantID uint) (*TenantStats, error)
 	s.db.Model(&model.App{}).Where("tenant_id = ?", tenantID).Count(&stats.TotalApps)
 	s.db.Model(&model.App{}).Where("tenant_id = ? AND status = ?", tenantID, "active").Count(&stats.ActiveApps)
 
-	// TODO: 获取存储和API调用统计
 	stats.StorageUsed = 0
 	stats.APICallsThisMonth = 0
 	stats.LastActiveAt = nil
 
+	now := time.Now().UTC()
+	periodStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
+
+	var usageMetric model.TenantUsageMetric
+	err := s.db.Where("tenant_id = ? AND period_start = ?", tenantID, periodStart).First(&usageMetric).Error
+	metricFound := err == nil
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+
+	if metricFound {
+		stats.StorageUsed = usageMetric.StorageUsed
+		stats.APICallsThisMonth = usageMetric.APICallCount
+		if usageMetric.LastActiveAt != nil {
+			stats.LastActiveAt = usageMetric.LastActiveAt
+		}
+	}
+
+	shouldPersistMetric := !metricFound
+
+	if stats.StorageUsed == 0 {
+		storageUsed, err := s.estimateTenantStorageUsage(tenantID)
+		if err != nil {
+			return nil, err
+		}
+		stats.StorageUsed = storageUsed
+		if usageMetric.StorageUsed != storageUsed {
+			usageMetric.StorageUsed = storageUsed
+			shouldPersistMetric = true
+		}
+	}
+
+	apiCalls, lastAPICallAt, err := s.aggregateTenantAPICalls(tenantID, periodStart)
+	if err != nil {
+		return nil, err
+	}
+	if stats.APICallsThisMonth == 0 {
+		stats.APICallsThisMonth = apiCalls
+		if usageMetric.APICallCount != apiCalls {
+			usageMetric.APICallCount = apiCalls
+			shouldPersistMetric = true
+		}
+	}
+
+	// 计算活跃时间（API日志、审计日志等来源取最大值）
+	candidateTimes := make([]time.Time, 0, 3)
+	if stats.LastActiveAt != nil {
+		candidateTimes = append(candidateTimes, *stats.LastActiveAt)
+	}
+	if lastAPICallAt != nil {
+		candidateTimes = append(candidateTimes, *lastAPICallAt)
+	}
+	auditLastActive, err := s.findTenantLastActiveFromAudit(tenantID)
+	if err != nil {
+		return nil, err
+	}
+	if auditLastActive != nil {
+		candidateTimes = append(candidateTimes, *auditLastActive)
+	}
+
+	if len(candidateTimes) > 0 {
+		latest := candidateTimes[0]
+		for _, ts := range candidateTimes[1:] {
+			if ts.After(latest) {
+				latest = ts
+			}
+		}
+		stats.LastActiveAt = &latest
+		if usageMetric.LastActiveAt == nil || latest.After(*usageMetric.LastActiveAt) {
+			usageMetric.LastActiveAt = &latest
+			shouldPersistMetric = true
+		}
+	}
+
+	if !metricFound {
+		usageMetric.TenantID = tenantID
+		usageMetric.PeriodStart = periodStart
+	}
+
+	if shouldPersistMetric {
+		if metricFound {
+			if err := s.db.Save(&usageMetric).Error; err != nil {
+				return nil, err
+			}
+		} else {
+			if err := s.db.Create(&usageMetric).Error; err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	return &stats, nil
+}
+
+func (s *AdminTenantService) aggregateTenantAPICalls(tenantID uint, periodStart time.Time) (int64, *time.Time, error) {
+	periodEnd := periodStart.AddDate(0, 1, 0)
+
+	var apiSum sql.NullFloat64
+	row := s.db.Table("usage_records AS ur").
+		Joins("JOIN subscription_items AS si ON si.id = ur.subscription_item_id").
+		Joins("JOIN subscriptions AS sub ON sub.id = si.subscription_id").
+		Where("sub.tenant_id = ?", tenantID).
+		Where("ur.ts >= ? AND ur.ts < ?", periodStart, periodEnd).
+		Select("COALESCE(SUM(ur.quantity), 0)").
+		Row()
+	if err := row.Scan(&apiSum); err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return 0, nil, err
+	}
+
+	var lastAPICall sql.NullString
+	lastRow := s.db.Table("usage_records AS ur").
+		Joins("JOIN subscription_items AS si ON si.id = ur.subscription_item_id").
+		Joins("JOIN subscriptions AS sub ON sub.id = si.subscription_id").
+		Where("sub.tenant_id = ?", tenantID).
+		Select("MAX(ur.ts)").
+		Row()
+	if err := lastRow.Scan(&lastAPICall); err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return 0, nil, err
+	}
+
+	var apiCalls int64
+	if apiSum.Valid {
+		apiCalls = int64(math.Round(apiSum.Float64))
+	}
+
+	if lastAPICall.Valid {
+		if ts, err := parseTimestamp(lastAPICall.String); err == nil {
+			return apiCalls, ts, nil
+		}
+	}
+
+	return apiCalls, nil, nil
+}
+
+func (s *AdminTenantService) estimateTenantStorageUsage(tenantID uint) (int64, error) {
+	var tenant model.Tenant
+	if err := s.db.Select("metadata").First(&tenant, tenantID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return 0, nil
+		}
+		return 0, err
+	}
+
+	if tenant.Metadata == nil {
+		return 0, nil
+	}
+
+	var total int64
+
+	if v, ok := tenant.Metadata["storage_used_mb"]; ok {
+		total += parseNumericToInt64(v)
+	}
+
+	if usageData, ok := tenant.Metadata["usage"].(map[string]interface{}); ok {
+		if storage, ok := usageData["storage_mb"]; ok {
+			total += parseNumericToInt64(storage)
+		}
+	}
+
+	return total, nil
+}
+
+func (s *AdminTenantService) findTenantLastActiveFromAudit(tenantID uint) (*time.Time, error) {
+	var auditLast sql.NullString
+	row := s.db.Table("audit_logs AS al").
+		Joins("JOIN tenant_admins AS ta ON ta.user_id = al.user_id").
+		Where("ta.tenant_id = ?", tenantID).
+		Select("MAX(al.created_at)").
+		Row()
+	if err := row.Scan(&auditLast); err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, err
+	}
+
+	if auditLast.Valid {
+		if ts, err := parseTimestamp(auditLast.String); err == nil {
+			return ts, nil
+		}
+	}
+
+	return nil, nil
+}
+
+func parseNumericToInt64(value interface{}) int64 {
+	switch v := value.(type) {
+	case int:
+		return int64(v)
+	case int32:
+		return int64(v)
+	case int64:
+		return v
+	case float32:
+		return int64(math.Round(float64(v)))
+	case float64:
+		return int64(math.Round(v))
+	case json.Number:
+		if i, err := v.Int64(); err == nil {
+			return i
+		}
+		if f, err := v.Float64(); err == nil {
+			return int64(math.Round(f))
+		}
+	}
+	return 0
+}
+
+func parseTimestamp(value string) (*time.Time, error) {
+	if value == "" {
+		return nil, fmt.Errorf("empty time string")
+	}
+
+	layouts := []string{
+		time.RFC3339Nano,
+		time.RFC3339,
+		"2006-01-02 15:04:05.999999999-07:00",
+		"2006-01-02 15:04:05.999999999",
+		"2006-01-02 15:04:05",
+	}
+
+	for _, layout := range layouts {
+		if ts, err := time.Parse(layout, value); err == nil {
+			return &ts, nil
+		}
+	}
+
+	return nil, fmt.Errorf("unsupported time format: %s", value)
 }
 
 // getRecentUsers 获取最近用户

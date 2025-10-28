@@ -123,6 +123,7 @@ func RegisterUserRoutes(v1 fiber.Router) {
 	securityGroup.Post("/2fa/setup", security.SetupHandler)
 	securityGroup.Post("/2fa/verify", security.VerifyHandler)
 	securityGroup.Post("/2fa/disable", security.Disable2FAHandler)
+	securityGroup.Get("/login-history", security.GetLoginHistoryHandler)
 	securityGroup.Post("/email/verify", security.VerifyEmailHandler)
 	securityGroup.Post("/email/resend", security.SendEmailVerificationHandler)
 	securityGroup.Post("/phone/verify", security.VerifyPhoneHandler)

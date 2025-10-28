@@ -136,7 +136,7 @@ func (s Service) LoginV2(req LoginRequest) (LoginResult, error) {
 	if err != nil {
 		return LoginResult{}, err
 	}
-	return LoginResult{Need2FA: false, TokenPair: tokens}, nil
+	return LoginResult{Need2FA: false, TokenPair: tokens, UserID: user.ID}, nil
 }
 
 // Refresh validates a refresh token and returns a new token pair.
