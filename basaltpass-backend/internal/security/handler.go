@@ -5,6 +5,7 @@ import (
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
 	"basaltpass-backend/internal/notification"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/pquerna/otp/totp"
@@ -201,6 +202,65 @@ func Disable2FAHandler(c *fiber.Ctx) error {
 	aduit.LogAudit(uid, "禁用两步验证", "", "", c.IP(), c.Get("User-Agent"))
 
 	return c.JSON(fiber.Map{"message": "两步验证已禁用"})
+}
+
+// GetLoginHistoryHandler 返回用户登录历史
+func GetLoginHistoryHandler(c *fiber.Ctx) error {
+	uid := c.Locals("userID").(uint)
+
+	page, err := strconv.Atoi(c.Query("page", "1"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "无效的页码"})
+	}
+
+	pageSize, err := strconv.Atoi(c.Query("page_size", "10"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "无效的分页大小"})
+	}
+
+	if page < 1 {
+		page = 1
+	}
+	if pageSize <= 0 {
+		pageSize = 10
+	}
+	if pageSize > 100 {
+		pageSize = 100
+	}
+
+	sortOrder := c.Query("sort", "desc")
+
+	svc := NewLoginHistoryService(common.DB())
+	records, total, err := svc.ListLoginHistory(uid, page, pageSize, sortOrder)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "获取登录历史失败"})
+	}
+
+	totalPages := 0
+	if total > 0 {
+		totalPages = int((total + int64(pageSize) - 1) / int64(pageSize))
+	}
+
+	items := make([]fiber.Map, 0, len(records))
+	for _, record := range records {
+		items = append(items, fiber.Map{
+			"id":         record.ID,
+			"ip":         record.IP,
+			"user_agent": record.UserAgent,
+			"status":     record.Status,
+			"created_at": record.CreatedAt,
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"data": items,
+		"pagination": fiber.Map{
+			"page":        page,
+			"page_size":   pageSize,
+			"total":       total,
+			"total_pages": totalPages,
+		},
+	})
 }
 
 // SetupHandler generates TOTP secret and returns it.

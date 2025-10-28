@@ -1,8 +1,11 @@
 package passkey
 
 import (
+	"log"
 	"net/http"
 	"strconv"
+
+	"basaltpass-backend/internal/security"
 
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/gofiber/fiber/v2"
@@ -279,6 +282,10 @@ func FinishLoginHandler(c *fiber.Ctx) error {
 		Path:     "/",
 		MaxAge:   7 * 24 * 60 * 60,
 	})
+
+	if err := security.RecordLoginSuccess(user.ID, c.IP(), c.Get("User-Agent")); err != nil {
+		log.Printf("failed to record login history: %v", err)
+	}
 
 	return c.JSON(fiber.Map{
 		"access_token": tokens.AccessToken,
