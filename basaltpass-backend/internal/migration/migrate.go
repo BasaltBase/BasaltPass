@@ -55,6 +55,7 @@ func RunMigrations() {
 		&model.App{},
 		&model.AppUser{},     // 业务应用用户映射
 		&model.TenantQuota{}, // 租户配额
+		&model.TenantUsageMetric{},
 
 		// OAuth2模型
 		&model.OAuthClient{},
