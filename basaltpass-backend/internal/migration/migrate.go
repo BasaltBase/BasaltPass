@@ -42,6 +42,7 @@ func RunMigrations() {
 		&model.Wallet{},
 		&model.WalletTx{},
 		&model.AuditLog{},
+		&model.LoginLog{},
 		&model.OAuthAccount{},
 		&model.PasswordReset{},
 		&model.Passkey{},
