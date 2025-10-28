@@ -1,11 +1,20 @@
 package oauth
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
+
+	"basaltpass-backend/internal/auth"
+	"basaltpass-backend/internal/common"
+	"basaltpass-backend/internal/model"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+	"gorm.io/gorm"
 )
 
 // OneTapAuthRequest One-Tap认证请求
@@ -39,7 +48,6 @@ type SilentAuthRequest struct {
 // OneTapLoginHandler One-Tap登录端点
 // POST /oauth/one-tap/login
 func OneTapLoginHandler(c *fiber.Ctx) error {
-	// TODO ⬇️ 实现One-Tap登录逻辑
 	var req OneTapAuthRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(OneTapAuthResponse{
@@ -49,24 +57,26 @@ func OneTapLoginHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	// 1. 验证客户端ID
-	// TODO ⬇️ 从数据库验证客户端
-	
-	// 2. 检查用户会话
-	userID := getUserFromSession(c)
-	if userID == "" {
+	client, err := validateOAuthClient(req.ClientID, req.RedirectURI)
+	if err != nil {
+		return handleOneTapError(c, err, req.State)
+	}
+
+	user, err := getUserFromSession(c)
+	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(OneTapAuthResponse{
 			Success:   false,
+			State:     req.State,
 			Error:     "login_required",
 			ErrorDesc: "User not authenticated",
 		})
 	}
 
-	// 3. 生成ID Token
-	idToken, err := generateIDToken(userID, req.ClientID, req.Nonce)
+	idToken, err := generateIDToken(c, user, client, req.Nonce)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(OneTapAuthResponse{
 			Success:   false,
+			State:     req.State,
 			Error:     "server_error",
 			ErrorDesc: "Failed to generate ID token",
 		})
@@ -82,115 +92,150 @@ func OneTapLoginHandler(c *fiber.Ctx) error {
 // SilentAuthHandler 静默认证端点
 // GET /oauth/silent-auth
 func SilentAuthHandler(c *fiber.Ctx) error {
-	// TODO ⬇️ 实现静默认证逻辑
 	clientID := c.Query("client_id")
 	prompt := c.Query("prompt")
 	redirectURI := c.Query("redirect_uri")
 	state := c.Query("state")
 	nonce := c.Query("nonce")
 
-	if clientID == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("Missing client_id")
-	}
-
-	// 检查prompt参数
 	if prompt != "none" {
-		return c.Status(fiber.StatusBadRequest).SendString("Invalid prompt parameter")
+		return renderSilentAuthError(c, fiber.StatusBadRequest, redirectURI, state, "invalid_request")
 	}
 
-	// 检查用户会话
-	userID := getUserFromSession(c)
-	if userID == "" {
-		// 静默认证失败，返回错误页面
-		return renderSilentAuthError(c, redirectURI, state, "login_required")
-	}
-
-	// 生成ID Token
-	idToken, err := generateIDToken(userID, clientID, nonce)
+	client, err := validateOAuthClient(clientID, redirectURI)
 	if err != nil {
-		return renderSilentAuthError(c, redirectURI, state, "server_error")
+		if oe, ok := err.(*oauthError); ok {
+			return renderSilentAuthError(c, oe.status, redirectURI, state, oe.code)
+		}
+		return renderSilentAuthError(c, fiber.StatusInternalServerError, redirectURI, state, "server_error")
 	}
 
-	// 返回成功页面，通过postMessage发送结果
+	user, err := getUserFromSession(c)
+	if err != nil {
+		return renderSilentAuthError(c, fiber.StatusUnauthorized, redirectURI, state, "login_required")
+	}
+
+	idToken, err := generateIDToken(c, user, client, nonce)
+	if err != nil {
+		return renderSilentAuthError(c, fiber.StatusInternalServerError, redirectURI, state, "server_error")
+	}
+
 	return renderSilentAuthSuccess(c, redirectURI, state, idToken)
 }
 
 // CheckSessionHandler 检查会话状态
 // GET /oauth/check-session
 func CheckSessionHandler(c *fiber.Ctx) error {
-	// TODO ⬇️ 实现会话检查逻辑
-	userID := getUserFromSession(c)
-	
+	user, err := getUserFromSession(c)
+	if err != nil {
+		return c.JSON(fiber.Map{
+			"authenticated": false,
+			"user_id":       nil,
+			"session_time":  time.Now().Unix(),
+		})
+	}
+
 	return c.JSON(fiber.Map{
-		"authenticated": userID != "",
-		"user_id":      userID,
-		"session_time": time.Now().Unix(),
+		"authenticated": true,
+		"user_id":       user.ID,
+		"session_time":  time.Now().Unix(),
 	})
 }
 
-// getUserFromSession 从会话中获取用户ID
-func getUserFromSession(c *fiber.Ctx) string {
-	// TODO ⬇️ 实现会话检查逻辑
-	// 1. 检查JWT token
-	// 2. 检查会话cookie
-	// 3. 验证用户状态
-	
-	// 临时实现：从Authorization header获取
-	auth := c.Get("Authorization")
-	if auth == "" {
-		return ""
-	}
-
-	// 简单的JWT解析示例
-	tokenString := ""
-	if len(auth) > 7 && auth[:7] == "Bearer " {
-		tokenString = auth[7:]
-	}
-
-	if tokenString == "" {
-		return ""
-	}
-
-	// TODO ⬇️ 使用正确的JWT验证
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		// TODO ⬇️ 使用正确的密钥验证
-		return []byte("temporary-secret"), nil
-	})
-
-	if err != nil || !token.Valid {
-		return ""
-	}
-
-	if claims, ok := token.Claims.(jwt.MapClaims); ok {
-		if userID, exists := claims["sub"]; exists {
-			return fmt.Sprintf("%v", userID)
+// getUserFromSession 从会话中获取用户
+func getUserFromSession(c *fiber.Ctx) (*model.User, error) {
+	if userVal := c.Locals("userID"); userVal != nil {
+		switch v := userVal.(type) {
+		case uint:
+			return loadActiveUser(v)
+		case int:
+			return loadActiveUser(uint(v))
+		case string:
+			if parsed, err := strconv.ParseUint(v, 10, 64); err == nil {
+				return loadActiveUser(uint(parsed))
+			}
 		}
 	}
 
-	return ""
+	tokenString := extractTokenFromRequest(c)
+	if tokenString == "" {
+		return nil, errors.New("no session token found")
+	}
+
+	token, err := auth.ParseToken(tokenString)
+	if err != nil || token == nil || !token.Valid {
+		return nil, errors.New("invalid session token")
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, errors.New("invalid session claims")
+	}
+
+	rawSub, ok := claims["sub"]
+	if !ok {
+		return nil, errors.New("missing subject claim")
+	}
+
+	var userID uint
+	switch v := rawSub.(type) {
+	case float64:
+		userID = uint(v)
+	case json.Number:
+		if parsed, parseErr := v.Int64(); parseErr == nil {
+			userID = uint(parsed)
+		}
+	case string:
+		if parsed, parseErr := strconv.ParseUint(v, 10, 64); parseErr == nil {
+			userID = uint(parsed)
+		}
+	default:
+		return nil, errors.New("unsupported subject claim type")
+	}
+
+	if userID == 0 {
+		return nil, errors.New("invalid subject claim")
+	}
+
+	return loadActiveUser(userID)
 }
 
 // generateIDToken 生成ID Token
-func generateIDToken(userID, clientID, nonce string) (string, error) {
-	// TODO ⬇️ 实现完整的ID Token生成
+func generateIDToken(c *fiber.Ctx, user *model.User, client *model.OAuthClient, nonce string) (string, error) {
 	now := time.Now()
-	
+	issuer := fmt.Sprintf("%s://%s", c.Protocol(), c.Hostname())
+
 	claims := jwt.MapClaims{
-		"iss":   "http://localhost:8080", // TODO ⬇️ 使用正确的issuer
-		"sub":   userID,
-		"aud":   clientID,
-		"exp":   now.Add(time.Hour).Unix(),
-		"iat":   now.Unix(),
-		"auth_time": now.Unix(),
+		"iss":                issuer,
+		"sub":                fmt.Sprintf("%d", user.ID),
+		"aud":                client.ClientID,
+		"azp":                client.ClientID,
+		"exp":                now.Add(time.Hour).Unix(),
+		"iat":                now.Unix(),
+		"auth_time":          now.Unix(),
+		"preferred_username": preferredUsername(user),
 	}
 
 	if nonce != "" {
 		claims["nonce"] = nonce
 	}
+	if user.Email != "" {
+		claims["email"] = user.Email
+		claims["email_verified"] = user.EmailVerified
+	}
+	if user.Nickname != "" {
+		claims["name"] = user.Nickname
+	}
 
-	// TODO ⬇️ 使用RSA私钥签名
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte("temporary-secret"))
+	privateKey, err := GetPrivateKey()
+	if err != nil {
+		return "", err
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+	token.Header["kid"] = GetKeyID()
+
+	return token.SignedString(privateKey)
 }
 
 // renderSilentAuthSuccess 渲染静默认证成功页面
@@ -209,11 +254,11 @@ func renderSilentAuthSuccess(c *fiber.Ctx, redirectURI, state, idToken string) e
             id_token: '%s',
             state: '%s'
         };
-        
+
         if (window.parent && window.parent !== window) {
             window.parent.postMessage(result, '*');
         }
-        
+
         // 如果有redirect_uri，也可以重定向
         const redirectUri = '%s';
         if (redirectUri) {
@@ -226,14 +271,14 @@ func renderSilentAuthSuccess(c *fiber.Ctx, redirectURI, state, idToken string) e
     </script>
 </body>
 </html>
-	`, idToken, state, redirectURI)
-	
+        `, idToken, state, redirectURI)
+
 	c.Set("Content-Type", "text/html")
 	return c.SendString(html)
 }
 
 // renderSilentAuthError 渲染静默认证错误页面
-func renderSilentAuthError(c *fiber.Ctx, redirectURI, state, errorCode string) error {
+func renderSilentAuthError(c *fiber.Ctx, status int, redirectURI, state, errorCode string) error {
 	html := fmt.Sprintf(`
 <!DOCTYPE html>
 <html>
@@ -248,11 +293,11 @@ func renderSilentAuthError(c *fiber.Ctx, redirectURI, state, errorCode string) e
             error: '%s',
             state: '%s'
         };
-        
+
         if (window.parent && window.parent !== window) {
             window.parent.postMessage(result, '*');
         }
-        
+
         // 如果有redirect_uri，重定向到错误页面
         const redirectUri = '%s';
         if (redirectUri) {
@@ -265,9 +310,106 @@ func renderSilentAuthError(c *fiber.Ctx, redirectURI, state, errorCode string) e
     </script>
 </body>
 </html>
-	`, errorCode, state, redirectURI)
-	
+        `, errorCode, state, redirectURI)
+
 	c.Set("Content-Type", "text/html")
-	c.Status(fiber.StatusUnauthorized)
+	c.Status(status)
 	return c.SendString(html)
+}
+
+func validateOAuthClient(clientID, redirectURI string) (*model.OAuthClient, error) {
+	if strings.TrimSpace(clientID) == "" {
+		return nil, &oauthError{status: fiber.StatusBadRequest, code: "invalid_request", description: "Missing client_id"}
+	}
+	if strings.TrimSpace(redirectURI) == "" {
+		return nil, &oauthError{status: fiber.StatusBadRequest, code: "invalid_request", description: "Missing redirect_uri"}
+	}
+
+	var client model.OAuthClient
+	if err := common.DB().Where("client_id = ?", clientID).First(&client).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, &oauthError{status: fiber.StatusUnauthorized, code: "invalid_client", description: "OAuth client not found"}
+		}
+		return nil, err
+	}
+
+	if !client.IsActive {
+		return nil, &oauthError{status: fiber.StatusUnauthorized, code: "invalid_client", description: "OAuth client disabled"}
+	}
+
+	if !client.ValidateRedirectURI(redirectURI) {
+		return nil, &oauthError{status: fiber.StatusBadRequest, code: "invalid_request", description: "redirect_uri not registered"}
+	}
+
+	return &client, nil
+}
+
+func handleOneTapError(c *fiber.Ctx, err error, state string) error {
+	if oe, ok := err.(*oauthError); ok {
+		return c.Status(oe.status).JSON(OneTapAuthResponse{
+			Success:   false,
+			State:     state,
+			Error:     oe.code,
+			ErrorDesc: oe.description,
+		})
+	}
+	return c.Status(fiber.StatusInternalServerError).JSON(OneTapAuthResponse{
+		Success:   false,
+		State:     state,
+		Error:     "server_error",
+		ErrorDesc: "Internal server error",
+	})
+}
+
+type oauthError struct {
+	status      int
+	code        string
+	description string
+}
+
+func (e *oauthError) Error() string {
+	return e.description
+}
+
+func preferredUsername(user *model.User) string {
+	if user.Nickname != "" {
+		return user.Nickname
+	}
+	return user.Email
+}
+
+func extractTokenFromRequest(c *fiber.Ctx) string {
+	if authHeader := c.Get("Authorization"); strings.HasPrefix(authHeader, "Bearer ") {
+		return strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
+	}
+	if token := c.Cookies("access_token"); token != "" {
+		return token
+	}
+	if cookie := c.Cookies("Authorization"); strings.HasPrefix(cookie, "Bearer ") {
+		return strings.TrimSpace(strings.TrimPrefix(cookie, "Bearer "))
+	}
+	if cookie := c.Cookies("token"); cookie != "" {
+		return cookie
+	}
+	return ""
+}
+
+func loadActiveUser(userID uint) (*model.User, error) {
+	if userID == 0 {
+		return nil, errors.New("invalid user id")
+	}
+
+	var user model.User
+	if err := common.DB().First(&user, userID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("user not found")
+		}
+		return nil, err
+	}
+
+	if user.Banned {
+		return nil, errors.New("user banned")
+	}
+
+	return &user, nil
 }

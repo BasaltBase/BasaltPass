@@ -36,3 +36,11 @@ func DB() *gorm.DB {
 	})
 	return db
 }
+
+// SetDBForTest injects a custom database connection for tests.
+func SetDBForTest(testDB *gorm.DB) {
+	db = testDB
+	once = sync.Once{}
+	once.Do(func() {})
+	db = testDB
+}
