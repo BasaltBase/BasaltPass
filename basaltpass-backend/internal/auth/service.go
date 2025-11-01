@@ -39,6 +39,9 @@ func (s Service) Register(req RegisterRequest) (*model.User, error) {
 
 	// 开始事务
 	tx := common.DB().Begin()
+	if err := tx.Error; err != nil {
+		return nil, err
+	}
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
@@ -57,9 +60,29 @@ func (s Service) Register(req RegisterRequest) (*model.User, error) {
 		return nil, err
 	}
 
+	defaultTenant, err := s.ensureDefaultTenant(tx)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	if err := s.ensureDefaultRoles(tx, defaultTenant.ID); err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
 	// 如果是第一个用户，设置为全局管理员
 	if isFirstUser {
-		if err := s.setupFirstUserAsGlobalAdmin(tx, user); err != nil {
+		if err := s.setupFirstUserAsGlobalAdmin(tx, user, defaultTenant); err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+	} else {
+		if err := s.assignUserToTenant(tx, user.ID, defaultTenant.ID, model.TenantRoleMember); err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+		if err := s.assignUserRole(tx, user.ID, defaultTenant.ID, "user"); err != nil {
 			tx.Rollback()
 			return nil, err
 		}
@@ -114,13 +137,6 @@ func (s Service) LoginV2(req LoginRequest) (LoginResult, error) {
 			defaultMethod = "passkey"
 		}
 	}
-	if !user.EmailVerified {
-		availableMethods = append(availableMethods, "email")
-		if defaultMethod == "" {
-			defaultMethod = "email"
-		}
-	}
-
 	// 如果有2FA方式，返回需要验证
 	if len(availableMethods) > 0 {
 		return LoginResult{
@@ -178,6 +194,9 @@ func (s Service) Verify2FA(req Verify2FARequest) (TokenPair, error) {
 		if user.TOTPSecret == "" || !user.TwoFAEnabled {
 			return TokenPair{}, errors.New("2FA not enabled")
 		}
+		if req.Code == "" {
+			return TokenPair{}, errors.New("missing totp code")
+		}
 		if !security.ValidateTOTP(user.TOTPSecret, req.Code) {
 			return TokenPair{}, errors.New("invalid TOTP code")
 		}
@@ -188,11 +207,6 @@ func (s Service) Verify2FA(req Verify2FARequest) (TokenPair, error) {
 		}
 		// 这里假设前端已完成WebAuthn流程，后端只需确认用户有passkey
 		// 可扩展为调用passkey.FinishLoginHandler等
-	case "email":
-		if !user.EmailVerified {
-			return TokenPair{}, errors.New("email not verified")
-		}
-		// 邮箱验证码校验逻辑可扩展
 	default:
 		return TokenPair{}, errors.New("unsupported 2FA type")
 	}
@@ -200,77 +214,117 @@ func (s Service) Verify2FA(req Verify2FARequest) (TokenPair, error) {
 }
 
 // setupFirstUserAsGlobalAdmin 设置第一个用户为全局管理员
-func (s Service) setupFirstUserAsGlobalAdmin(tx *gorm.DB, user *model.User) error {
-	// 1. 获取或创建默认租户
-	var defaultTenant model.Tenant
-	if err := tx.Where("code = ?", "default").First(&defaultTenant).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			// 创建默认租户
-			defaultTenant = model.Tenant{
-				Name:        "BasaltPass",
-				Code:        "default",
-				Description: "BasaltPass系统默认租户",
-				Status:      "active",
-				Plan:        "enterprise", // 给第一个用户企业版权限
-			}
-			if err := tx.Create(&defaultTenant).Error; err != nil {
-				return err
-			}
-		} else {
-			return err
-		}
-	}
-
-	// 2. 创建租户管理员关联，设置为Owner
-	tenantAdmin := model.TenantAdmin{
-		UserID:   user.ID,
-		TenantID: defaultTenant.ID,
-		Role:     "owner", // 设置为租户Owner
-	}
-	if err := tx.Create(&tenantAdmin).Error; err != nil {
+func (s Service) setupFirstUserAsGlobalAdmin(tx *gorm.DB, user *model.User, tenant *model.Tenant) error {
+	if err := s.assignUserToTenant(tx, user.ID, tenant.ID, model.TenantRoleOwner); err != nil {
 		return err
 	}
 
-	// 3. 获取或创建全局管理员角色
-	var adminRole model.Role
-	if err := tx.Where("code = ? AND tenant_id = ?", "admin", defaultTenant.ID).First(&adminRole).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			// 创建全局管理员角色
-			adminRole = model.Role{
-				TenantID:    defaultTenant.ID,
-				Code:        "admin",
-				Name:        "全局管理员",
-				Description: "系统全局管理员，拥有所有权限",
-				IsSystem:    true,
-			}
-			if err := tx.Create(&adminRole).Error; err != nil {
-				return err
-			}
-		} else {
-			return err
-		}
-	}
-
-	// 4. 创建用户-角色关联
-	userRole := model.UserRole{
-		UserID: user.ID,
-		RoleID: adminRole.ID,
-	}
-	if err := tx.Create(&userRole).Error; err != nil {
+	if err := s.assignUserRole(tx, user.ID, tenant.ID, "admin"); err != nil {
 		return err
 	}
 
-	// 5. 更新用户昵称为更友好的名称
-	if err := tx.Model(user).Update("nickname", "系统管理员").Error; err != nil {
-		return err
+	updates := map[string]interface{}{
+		"nickname":       "系统管理员",
+		"email_verified": true,
 	}
-
-	// 6.将email验证状态设置为已验证
-	if err := tx.Model(user).Update("email_verified", true).Error; err != nil {
+	if err := tx.Model(user).Updates(updates).Error; err != nil {
 		return err
 	}
 
 	aduit.LogAudit(user.ID, "首位用户注册", "user", string(rune(user.ID)), "", "自动设置为全局管理员")
 
 	return nil
+}
+
+func (s Service) ensureDefaultTenant(tx *gorm.DB) (*model.Tenant, error) {
+	var tenant model.Tenant
+	if err := tx.Where("code = ?", "default").First(&tenant).Error; err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, err
+		}
+
+		tenant = model.Tenant{
+			Name:        "BasaltPass",
+			Code:        "default",
+			Description: "BasaltPass系统默认租户",
+			Status:      "active",
+			Plan:        "enterprise",
+		}
+		if err := tx.Create(&tenant).Error; err != nil {
+			return nil, err
+		}
+	}
+
+	return &tenant, nil
+}
+
+func (s Service) ensureDefaultRoles(tx *gorm.DB, tenantID uint) error {
+	roles := []model.Role{
+		{
+			TenantID:    tenantID,
+			Code:        "admin",
+			Name:        "全局管理员",
+			Description: "系统全局管理员，拥有所有权限",
+			IsSystem:    true,
+		},
+		{
+			TenantID:    tenantID,
+			Code:        "user",
+			Name:        "普通用户",
+			Description: "默认普通用户角色",
+			IsSystem:    true,
+		},
+	}
+
+	for _, role := range roles {
+		var existing model.Role
+		if err := tx.Where("code = ? AND tenant_id = ?", role.Code, tenantID).First(&existing).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				roleToCreate := role
+				if err := tx.Create(&roleToCreate).Error; err != nil {
+					return err
+				}
+			} else {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (s Service) assignUserToTenant(tx *gorm.DB, userID, tenantID uint, tenantRole model.TenantRole) error {
+	var existing model.TenantAdmin
+	if err := tx.Where("user_id = ? AND tenant_id = ?", userID, tenantID).First(&existing).Error; err == nil {
+		return nil
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
+
+	tenantAdmin := model.TenantAdmin{
+		UserID:   userID,
+		TenantID: tenantID,
+		Role:     tenantRole,
+	}
+	return tx.Create(&tenantAdmin).Error
+}
+
+func (s Service) assignUserRole(tx *gorm.DB, userID, tenantID uint, roleCode string) error {
+	var role model.Role
+	if err := tx.Where("code = ? AND tenant_id = ?", roleCode, tenantID).First(&role).Error; err != nil {
+		return err
+	}
+
+	var existing model.UserRole
+	if err := tx.Where("user_id = ? AND role_id = ?", userID, role.ID).First(&existing).Error; err == nil {
+		return nil
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
+
+	userRole := model.UserRole{
+		UserID: userID,
+		RoleID: role.ID,
+	}
+	return tx.Create(&userRole).Error
 }

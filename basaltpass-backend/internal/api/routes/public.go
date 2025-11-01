@@ -12,7 +12,7 @@ func RegisterPublicRoutes(app *fiber.App) {
 	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusOK)
 	})
-	app.Get("./not-implemented", notImplemented)
+	app.Get("/not-implemented", notImplemented)
 
 	// 支付页面和模拟支付路由（无需认证，模拟真实Stripe行为）
 	app.Get("/payment/checkout/:session_id", payment.PaymentCheckoutHandler)
