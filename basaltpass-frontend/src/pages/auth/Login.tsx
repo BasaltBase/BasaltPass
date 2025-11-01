@@ -27,18 +27,61 @@ function Login() {
   // 登录第一步：用户名密码
   const submitPasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    const normalizedIdentifier = identifier.trim()
+    if (!normalizedIdentifier) {
+      setError('请输入邮箱或手机号')
+      return
+    }
+    if (!password) {
+      setError('请输入密码')
+      return
+    }
+
     setIsLoading(true)
     setError('')
+    setTwoFACode('')
+    setEmailCode('')
+    setAvailable2FAMethods([])
+    setTwoFAType('')
+    setUserId(null)
+
     try {
       const res = await client.post('/api/v1/auth/login', {
-        identifier,
+        identifier: normalizedIdentifier,
         password,
       })
-      if (res.data.need_2fa) {
-        setUserId(res.data.user_id)
-        setTwoFAType(res.data['2fa_type'])
-        setAvailable2FAMethods(res.data.available_2fa_methods || [])
 
+      if (res.data.need_2fa) {
+        const responseUserId = res.data.user_id
+        if (!responseUserId) {
+          throw new Error('登录会话无效，请重试')
+        }
+
+        const rawMethods: string[] = Array.isArray(res.data.available_2fa_methods)
+          ? res.data.available_2fa_methods
+          : []
+        const supportedMethods = rawMethods.filter(method => method !== 'passkey' || isPasskeySupported())
+
+        if (supportedMethods.length === 0) {
+          if (rawMethods.includes('passkey') && !isPasskeySupported()) {
+            setError('当前设备不支持Passkey，请更换设备或使用其他验证方式。')
+          } else {
+            setError('暂未配置可用的二次验证方式，请联系管理员。')
+          }
+          setStep(1)
+          return
+        }
+
+        const defaultMethod: string | undefined = res.data['2fa_type']
+        const nextMethod = defaultMethod && supportedMethods.includes(defaultMethod)
+          ? defaultMethod
+          : supportedMethods[0]
+
+        setIdentifier(normalizedIdentifier)
+        setUserId(responseUserId)
+        setTwoFAType(nextMethod)
+        setAvailable2FAMethods(supportedMethods)
         setStep(2)
       } else if (res.data.access_token) {
         await login(res.data.access_token)
@@ -85,21 +128,53 @@ function Login() {
   // 登录第二步：二次验证
   const submit2FAVerify = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!userId) {
+      setError('登录会话已失效，请重新登录')
+      setStep(1)
+      return
+    }
+
+    if (!twoFAType) {
+      setError('请选择二次验证方式')
+      return
+    }
+
     setIsLoading(true)
     setError('')
+
     try {
-      let payload: any = {
+      const payload: Record<string, any> = {
         user_id: userId,
         two_fa_type: twoFAType,
       }
+
       if (twoFAType === 'totp') {
-        payload.code = twoFACode
+        const code = twoFACode.trim()
+        if (!code) {
+          setError('请输入二步验证码')
+          setIsLoading(false)
+          return
+        }
+        payload.code = code
       } else if (twoFAType === 'email') {
-        payload.code = emailCode
+        const code = emailCode.trim()
+        if (!code) {
+          setError('请输入邮箱验证码')
+          setIsLoading(false)
+          return
+        }
+        payload.code = code
       } else if (twoFAType === 'passkey') {
-        // 进行真正的Passkey验证
+        const passkeyIdentifier = identifier.trim()
+        if (!passkeyIdentifier) {
+          setError('缺少用于Passkey验证的邮箱，请返回上一步重新输入')
+          setIsLoading(false)
+          return
+        }
+
         try {
-          const passkeyResult = await loginWithPasskeyFlow(identifier)
+          const passkeyResult = await loginWithPasskeyFlow(passkeyIdentifier)
           await login(passkeyResult.access_token)
           navigate('/dashboard')
           return // 直接返回，不需要调用verify-2fa API
@@ -108,7 +183,12 @@ function Login() {
           setIsLoading(false)
           return
         }
+      } else {
+        setError('暂不支持的二次验证方式，请选择其他方式')
+        setIsLoading(false)
+        return
       }
+
       const res = await client.post('/api/v1/auth/verify-2fa', payload)
       await login(res.data.access_token)
       navigate('/dashboard')
