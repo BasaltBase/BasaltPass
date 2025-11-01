@@ -17,17 +17,33 @@ function Register() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
+    const trimmedEmail = email.trim()
+    const trimmedPhone = phone.trim()
+
+    if (!trimmedEmail && !trimmedPhone) {
+      setError('请至少填写邮箱或手机号')
+      return
+    }
+
     if (password !== confirmPassword) {
       setError('密码确认不匹配')
       return
     }
-    
+
     setIsLoading(true)
     setError('')
-    
+
     try {
-      await client.post('/api/v1/auth/register', { email, phone, password })
+      const payload: Record<string, string> = { password }
+      if (trimmedEmail) {
+        payload.email = trimmedEmail
+      }
+      if (trimmedPhone) {
+        payload.phone = trimmedPhone
+      }
+
+      await client.post('/api/v1/auth/register', payload)
       navigate('/login')
     } catch (err: any) {
       setError(err.response?.data?.error || '注册失败，请检查您的信息')
@@ -77,7 +93,6 @@ function Register() {
                 id="email"
                 name="email"
                 type="email"
-                required
                 className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                 placeholder="请输入邮箱地址"
                 value={email}
@@ -93,7 +108,6 @@ function Register() {
                 id="phone"
                 name="phone"
                 type="tel"
-                required
                 className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                 placeholder="请输入手机号码"
                 value={phone}
