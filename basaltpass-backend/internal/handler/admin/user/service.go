@@ -1,11 +1,13 @@
 package user
 
 import (
-	"basaltpass-backend/internal/model"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
 	"time"
+
+	"basaltpass-backend/internal/model"
 
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -168,7 +170,7 @@ func (s *AdminUserService) UpdateUser(userID uint, req UpdateUserRequest) error 
 }
 
 // BanUser 封禁/解封用户
-func (s *AdminUserService) BanUser(userID uint, req BanUserRequest) error {
+func (s *AdminUserService) BanUser(userID uint, req BanUserRequest, operatorID uint) error {
 	var user model.User
 	if err := s.db.First(&user, userID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -177,28 +179,44 @@ func (s *AdminUserService) BanUser(userID uint, req BanUserRequest) error {
 		return err
 	}
 
-	// 更新用户状态
-	if err := s.db.Model(&user).Update("banned", req.Banned).Error; err != nil {
-		return err
-	}
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&user).Update("banned", req.Banned).Error; err != nil {
+			return err
+		}
 
-	// 记录审计日志
-	//action := "解封用户"
-	//if req.Banned {
-	//	action = "封禁用户"
-	//}
+		action := "admin_unban_user"
+		if req.Banned {
+			action = "admin_ban_user"
+		}
 
-	// TODO: 添加审计日志记录
-	// auditLog := model.AuditLog{
-	// 	Action:     action,
-	// 	ObjectType: "user",
-	// 	ObjectID:   fmt.Sprintf("%d", userID),
-	// 	Details:    req.Reason,
-	// 	Comment:    req.Comment,
-	// }
-	// s.db.Create(&auditLog)
+		auditPayload := map[string]interface{}{
+			"target_user_id": userID,
+			"banned":         req.Banned,
+		}
 
-	return nil
+		if req.Reason != "" {
+			auditPayload["reason"] = req.Reason
+		}
+		if req.Comment != "" {
+			auditPayload["comment"] = req.Comment
+		}
+		if req.BanUntil != nil {
+			auditPayload["ban_until"] = req.BanUntil
+		}
+
+		payloadBytes, err := json.Marshal(auditPayload)
+		if err != nil {
+			return err
+		}
+
+		auditLog := model.AuditLog{
+			UserID: operatorID,
+			Action: action,
+			Data:   string(payloadBytes),
+		}
+
+		return tx.Create(&auditLog).Error
+	})
 }
 
 // DeleteUser 删除用户（软删除）
@@ -380,13 +398,24 @@ func (s *AdminUserService) getUserActivityStats(userID uint) (*ActivityStats, er
 	// 获取用户加入的团队数
 	s.db.Model(&model.TeamMember{}).Where("user_id = ?", userID).Count(&stats.TeamsCount)
 
-	// TODO: 添加订阅统计
-	// s.db.Model(&model.Subscription{}).Where("user_id = ?", userID).Count(&stats.SubscriptionsCount)
+	if err := s.db.Model(&model.Subscription{}).Where("user_id = ?", userID).Count(&stats.SubscriptionsCount).Error; err != nil {
+		return nil, err
+	}
 
-	// TODO: 添加登录统计
-	// 这里需要根据实际的登录日志表来获取
-	stats.TotalLogins = 0
-	stats.LastLoginAt = nil
+	if err := s.db.Model(&model.LoginLog{}).Where("user_id = ?", userID).Count(&stats.TotalLogins).Error; err != nil {
+		return nil, err
+	}
+
+	if stats.TotalLogins > 0 {
+		var lastLogin model.LoginLog
+		if err := s.db.Where("user_id = ?", userID).Order("logged_at DESC").First(&lastLogin).Error; err != nil {
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, err
+			}
+		} else {
+			stats.LastLoginAt = &lastLogin.LoggedAt
+		}
+	}
 
 	return &stats, nil
 }

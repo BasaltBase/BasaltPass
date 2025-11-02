@@ -107,7 +107,21 @@ func BanUserHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	err = adminUserService.BanUser(uint(userID), req)
+	operatorVal := c.Locals("userID")
+	if operatorVal == nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "未授权的操作者",
+		})
+	}
+
+	operatorID, ok := operatorVal.(uint)
+	if !ok {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "无法解析操作者信息",
+		})
+	}
+
+	err = adminUserService.BanUser(uint(userID), req, operatorID)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),

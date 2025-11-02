@@ -62,11 +62,13 @@ const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
   const updateDropdownPosition = () => {
     if (inputRef) {
       const rect = inputRef.getBoundingClientRect()
-      setDropdownPosition({
+      const newPosition = {
         top: rect.bottom + window.scrollY + 8,
         left: rect.left + window.scrollX,
         width: rect.width
-      })
+      }
+      console.log('更新下拉框位置:', newPosition)
+      setDropdownPosition(newPosition)
     }
   }
 
@@ -120,7 +122,9 @@ const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
       switch (entity) {
         case 'user': {
           if (context === 'admin') {
+            console.log('开始 admin 用户搜索，查询:', q)
             const res = await adminUserApi.getUsers({ search: q, limit, page: 1 })
+            console.log('Admin 用户搜索响应:', res)
             items = res.users.map((u: AdminUser): BaseEntityItem => ({
               id: u.id,
               label: u.nickname || u.email,
@@ -129,6 +133,7 @@ const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
               raw: u,
               type: 'user'
             }))
+            console.log('转换后的 items:', items)
           } else { // 普通 user 场景
             const res = await userApi.search(q, limit)
             items = res.data.map((u: UserSearchResult): BaseEntityItem => ({
@@ -172,13 +177,17 @@ const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
           break
         }
       }
+      console.log('搜索结果 items:', items)
       // 过滤已选择
       const filtered = items.filter(it => !value.some(v => v.id === it.id && v.type === it.type))
+      console.log('过滤后的结果:', filtered)
       setResults(filtered)
+      console.log('设置 open 为 true')
       setOpen(true)
     } catch (e) {
       console.error('搜索失败', e)
       setResults([])
+      setOpen(false)
     } finally {
       setLoading(false)
     }
@@ -186,6 +195,7 @@ const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
 
   const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value
+    console.log('输入值变化:', val)
     setQuery(val)
     
     // 实时更新下拉框位置
@@ -194,7 +204,10 @@ const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
     }
     
     if (timerRef.current) clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(() => doSearch(val), debounceMs)
+    timerRef.current = setTimeout(() => {
+      console.log('防抖触发搜索:', val)
+      doSearch(val)
+    }, debounceMs)
   }
 
   const addItem = (item: BaseEntityItem) => {
@@ -243,21 +256,26 @@ const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
 
   // Portal下拉框组件
   const Dropdown = () => {
+    console.log('Dropdown 渲染:', { open, results: results.length, loading })
     if (!open || typeof document === 'undefined') return null
 
     return ReactDOM.createPortal(
       <div
         style={{
           position: 'fixed',
-          top: `${dropdownPosition.top}px`,
-          left: `${dropdownPosition.left}px`,
-          width: `${dropdownPosition.width}px`,
-          zIndex: 9999,
+          top: '100px', // 临时固定位置测试
+          left: '50px',
+          width: '400px',
+          zIndex: 999999,
           maxHeight: '288px',
           overflowY: 'auto'
         }}
-        className="bg-white border border-gray-200 rounded-xl shadow-2xl backdrop-blur-sm"
+        className="bg-white border-2 border-red-500 rounded-xl shadow-2xl backdrop-blur-sm"
+        onClick={(e) => e.stopPropagation()}
       >
+        <div className="p-2 bg-yellow-100 text-xs">
+          调试信息: open={open.toString()}, results={results.length}, position=top:{dropdownPosition.top},left:{dropdownPosition.left}
+        </div>
         {loading ? (
           <div className="px-4 py-4 text-center text-gray-500">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600 mx-auto" />

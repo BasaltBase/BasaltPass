@@ -172,8 +172,15 @@ const TenantDetail: React.FC = () => {
     )
   }
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString?: string) => {
+    if (!dateString) {
+      return '--'
+    }
     return new Date(dateString).toLocaleString('zh-CN')
+  }
+
+  const formatNumber = (value?: number | null) => {
+    return new Intl.NumberFormat('zh-CN').format(value ?? 0)
   }
 
   if (loading) {
@@ -520,23 +527,39 @@ const TenantDetail: React.FC = () => {
                   <ChartBarIcon className="h-5 w-5 mr-2 text-gray-400" />
                   统计信息
                 </h3>
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <dt className="text-sm font-medium text-gray-500">用户数量</dt>
                     <dd className="mt-1 text-2xl font-semibold text-indigo-600">
-                      {tenant.user_count || 0}
+                      {formatNumber(tenant.user_count)}
                     </dd>
                   </div>
                   <div>
                     <dt className="text-sm font-medium text-gray-500">应用数量</dt>
                     <dd className="mt-1 text-2xl font-semibold text-purple-600">
-                      {tenant.app_count || 0}
+                      {formatNumber(tenant.app_count)}
                     </dd>
                   </div>
                   <div>
                     <dt className="text-sm font-medium text-gray-500">存储使用</dt>
                     <dd className="mt-1 text-2xl font-semibold text-green-600">
-                      {tenant.stats?.storage_used || 0} MB
+                      {formatNumber(tenant.stats?.storage_used)} MB
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">API 调用（本月）</dt>
+                    <dd className="mt-1 text-2xl font-semibold text-blue-600">
+                      {formatNumber(tenant.stats?.api_calls_this_month)}
+                    </dd>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <dt className="text-sm font-medium text-gray-500">最近活跃时间</dt>
+                    <dd
+                      className={`mt-1 text-lg font-semibold ${
+                        tenant.stats?.last_active_at ? 'text-gray-700' : 'text-gray-400'
+                      }`}
+                    >
+                      {tenant.stats?.last_active_at ? formatDate(tenant.stats.last_active_at) : '--'}
                     </dd>
                   </div>
                 </div>

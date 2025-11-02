@@ -1,7 +1,14 @@
 package auth
 
 import (
+<<<<<<< HEAD:basaltpass-backend/internal/handler/public/auth/handler.go
 	auth2 "basaltpass-backend/internal/service/auth"
+=======
+	"log"
+
+	"basaltpass-backend/internal/security"
+
+>>>>>>> 3817a436ec432dbb02163f194c246b1b89f56628:basaltpass-backend/internal/auth/handler.go
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -47,8 +54,11 @@ func LoginHandler(c *fiber.Ctx) error {
 		SameSite: "Lax",
 		Path:     "/",
 		MaxAge:   7 * 24 * 60 * 60, // 7天
-		Domain:   "", // 空字符串表示当前域
+		Domain:   "",               // 空字符串表示当前域
 	})
+	if err := security.RecordLoginSuccess(result.UserID, c.IP(), c.Get("User-Agent")); err != nil {
+		log.Printf("failed to record login history: %v", err)
+	}
 	return c.JSON(fiber.Map{"access_token": result.TokenPair.AccessToken})
 }
 
@@ -71,7 +81,7 @@ func RefreshHandler(c *fiber.Ctx) error {
 		SameSite: "Lax",
 		Path:     "/",
 		MaxAge:   7 * 24 * 60 * 60, // 7天
-		Domain:   "", // 空字符串表示当前域
+		Domain:   "",               // 空字符串表示当前域
 	})
 	return c.JSON(fiber.Map{"access_token": tokens.AccessToken})
 }
@@ -124,6 +134,9 @@ func Verify2FAHandler(c *fiber.Ctx) error {
 		Path:     "/",
 		MaxAge:   7 * 24 * 60 * 60,
 	})
+	if err := security.RecordLoginSuccess(req.UserID, c.IP(), c.Get("User-Agent")); err != nil {
+		log.Printf("failed to record login history: %v", err)
+	}
 	return c.JSON(fiber.Map{"access_token": tokens.AccessToken})
 }
 
@@ -131,15 +144,15 @@ func Verify2FAHandler(c *fiber.Ctx) error {
 func DebugCookiesHandler(c *fiber.Ctx) error {
 	cookies := c.Request().Header.Cookie("refresh_token")
 	allCookies := make(map[string]string)
-	
+
 	c.Request().Header.VisitAllCookie(func(key, value []byte) {
 		allCookies[string(key)] = string(value)
 	})
-	
+
 	return c.JSON(fiber.Map{
-		"refresh_token": string(cookies),
-		"all_cookies": allCookies,
+		"refresh_token":     string(cookies),
+		"all_cookies":       allCookies,
 		"has_refresh_token": len(cookies) > 0,
-		"headers": string(c.Request().Header.Header()),
+		"headers":           string(c.Request().Header.Header()),
 	})
 }

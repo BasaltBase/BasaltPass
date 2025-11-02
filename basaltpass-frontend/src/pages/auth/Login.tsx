@@ -43,13 +43,14 @@ function Login() {
 
         setStep(2)
       } else if (res.data.access_token) {
-        login(res.data.access_token)
+        await login(res.data.access_token)
         navigate('/dashboard')
       } else {
         setError('未知的登录响应')
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || '登录失败，请检查您的凭据')
+      const message = err.response?.data?.error || err.message || '登录失败，请检查您的凭据'
+      setError(message)
     } finally {
       setIsLoading(false)
     }
@@ -101,7 +102,7 @@ function Login() {
         // 进行真正的Passkey验证
         try {
           const passkeyResult = await loginWithPasskeyFlow(identifier)
-          login(passkeyResult.access_token)
+          await login(passkeyResult.access_token)
           navigate('/dashboard')
           return // 直接返回，不需要调用verify-2fa API
         } catch (err: any) {
@@ -111,10 +112,11 @@ function Login() {
         }
       }
       const res = await client.post('/api/v1/auth/verify-2fa', payload)
-      login(res.data.access_token)
+      await login(res.data.access_token)
       navigate('/dashboard')
     } catch (err: any) {
-      setError(err.response?.data?.error || '二次验证失败')
+      const message = err.response?.data?.error || err.message || '二次验证失败'
+      setError(message)
     } finally {
       setIsLoading(false)
     }

@@ -319,8 +319,30 @@ func (s *TenantService) DeleteTenant(tenantID uint) error {
 	return nil
 }
 
+// GetMemberRole 获取租户成员角色
+func (s *TenantService) GetMemberRole(tenantID, userID uint) (model.TenantRole, error) {
+	var tenantAdmin model.TenantAdmin
+	if err := s.db.Where("tenant_id = ? AND user_id = ?", tenantID, userID).First(&tenantAdmin).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return "", errors.New("用户不在该租户中")
+		}
+		return "", err
+	}
+
+	return tenantAdmin.Role, nil
+}
+
 // InviteUserToTenant 邀请用户加入租户
-func (s *TenantService) InviteUserToTenant(tenantID, userID uint, role model.TenantRole) error {
+func (s *TenantService) InviteUserToTenant(tenantID, inviterUserID, userID uint, role model.TenantRole) error {
+	inviterRole, err := s.GetMemberRole(tenantID, inviterUserID)
+	if err != nil {
+		return errors.New("无权限邀请用户")
+	}
+
+	if inviterRole != model.TenantRoleOwner && inviterRole != model.TenantRoleAdmin {
+		return errors.New("无权限邀请用户")
+	}
+
 	// 检查用户是否已在租户中
 	var existingTA model.TenantAdmin
 	if err := s.db.Where("user_id = ? AND tenant_id = ?", userID, tenantID).First(&existingTA).Error; err == nil {

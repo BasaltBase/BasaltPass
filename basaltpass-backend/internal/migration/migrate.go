@@ -51,6 +51,7 @@ func RunMigrations() {
 		&model.Wallet{},
 		&model.WalletTx{},
 		&model.AuditLog{},
+		&model.LoginLog{},
 		&model.OAuthAccount{},
 		&model.PasswordReset{},
 		&model.Passkey{},
@@ -64,6 +65,7 @@ func RunMigrations() {
 		&model.App{},
 		&model.AppUser{},     // 业务应用用户映射
 		&model.TenantQuota{}, // 租户配额
+		&model.TenantUsageMetric{},
 
 		// OAuth2模型
 		&model.OAuthClient{},

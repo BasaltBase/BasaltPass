@@ -53,11 +53,19 @@ func DiscoveryHandler(c *fiber.Ctx) error {
 	baseURL := scheme + "://" + c.Get("Host")
 
 	discovery := &OIDCDiscoveryResponse{
+<<<<<<< HEAD:basaltpass-backend/internal/handler/public/oauth/discovery.go
 		Issuer:                baseURL + "/api/v1",
 		AuthorizationEndpoint: baseURL + "/api/v1/oauth/authorize",
 		TokenEndpoint:         baseURL + "/api/v1/oauth/token",
 		UserinfoEndpoint:      baseURL + "/api/v1/oauth/userinfo",
 		JwksURI:               baseURL + "/api/v1/oauth/jwks",
+=======
+		Issuer:                baseURL,
+		AuthorizationEndpoint: baseURL + "/oauth/authorize",
+		TokenEndpoint:         baseURL + "/oauth/token",
+		UserinfoEndpoint:      baseURL + "/oauth/userinfo",
+		JwksURI:               baseURL + "/oauth/jwks",
+>>>>>>> 3817a436ec432dbb02163f194c246b1b89f56628:basaltpass-backend/internal/oauth/discovery.go
 
 		ScopesSupported: []string{
 			"openid",
@@ -146,9 +154,6 @@ func JWKSHandler(c *fiber.Ctx) error {
 
 // initKeys 初始化RSA密钥对
 func initKeys() error {
-	keyMutex.Lock()
-	defer keyMutex.Unlock()
-
 	if privateKey != nil {
 		return nil // 已经初始化
 	}
@@ -189,7 +194,14 @@ func generateRSAJWK(pubKey *rsa.PublicKey, kid string) (map[string]interface{}, 
 // GetPrivateKey 获取私钥（用于JWT签名）
 func GetPrivateKey() (*rsa.PrivateKey, error) {
 	keyMutex.RLock()
-	defer keyMutex.RUnlock()
+	if privateKey != nil {
+		defer keyMutex.RUnlock()
+		return privateKey, nil
+	}
+	keyMutex.RUnlock()
+
+	keyMutex.Lock()
+	defer keyMutex.Unlock()
 
 	if privateKey == nil {
 		if err := initKeys(); err != nil {

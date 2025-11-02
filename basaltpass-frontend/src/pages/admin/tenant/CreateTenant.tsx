@@ -10,6 +10,7 @@ import {
   UserIcon
 } from '@heroicons/react/24/outline'
 import AdminLayout from '@components/AdminLayout'
+import { EntitySearchSelect, BaseEntityItem } from '../../../components'
 import { adminTenantApi, AdminCreateTenantRequest, TenantSettings } from '@api/admin/tenant'
 
 const CreateTenant: React.FC = () => {
@@ -29,6 +30,7 @@ const CreateTenant: React.FC = () => {
       enable_audit: false,
     }
   })
+  const [selectedOwner, setSelectedOwner] = useState<BaseEntityItem[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [codeError, setCodeError] = useState<string | null>(null)
@@ -84,8 +86,8 @@ const CreateTenant: React.FC = () => {
       return
     }
 
-    if (!formData.owner_email.trim()) {
-      setError('所有者邮箱不能为空')
+    if (!formData.owner_email.trim() && selectedOwner.length === 0) {
+      setError('请选择租户所有者')
       return
     }
 
@@ -98,7 +100,17 @@ const CreateTenant: React.FC = () => {
       setLoading(true)
       setError(null)
       
-      await adminTenantApi.createTenant(formData)
+      // 使用选中的用户邮箱或手动输入的邮箱
+      const ownerEmail = selectedOwner.length > 0 
+        ? selectedOwner[0].subtitle || selectedOwner[0].raw.email 
+        : formData.owner_email
+      
+      const requestData = {
+        ...formData,
+        owner_email: ownerEmail
+      }
+      
+      await adminTenantApi.createTenant(requestData)
       
       // 创建成功后跳转到租户列表
       navigate('/admin/tenants', { 
@@ -232,23 +244,44 @@ const CreateTenant: React.FC = () => {
                 )}
               </div>
 
-              {/* 所有者邮箱 */}
+              {/* 所有者选择 */}
               <div className="space-y-2">
-                <label htmlFor="owner_email" className="flex items-center text-sm font-semibold text-gray-700">
+                <label className="flex items-center text-sm font-semibold text-gray-700">
                   <UserIcon className="h-5 w-5 mr-2 text-indigo-500" />
-                  所有者邮箱 <span className="text-red-500 ml-1">*</span>
+                  租户所有者 <span className="text-red-500 ml-1">*</span>
                 </label>
-                <input
-                  type="email"
-                  id="owner_email"
-                  name="owner_email"
-                  value={formData.owner_email}
-                  onChange={handleInputChange}
-                  className="block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300"
-                  placeholder="admin@example.com"
-                  required
-                />
-                <p className="text-xs text-gray-500">该用户将成为租户的所有者，必须是已存在的用户</p>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <EntitySearchSelect
+                    entity="user"
+                    context="admin"
+                    value={selectedOwner}
+                    onChange={setSelectedOwner}
+                    placeholder="搜索用户名或邮箱..."
+                    maxSelect={1}
+                    variant="chips"
+                    limit={10}
+                  />
+                </div>
+                <p className="text-xs text-gray-500">搜索并选择一个用户作为该租户的所有者</p>
+                
+                {/* 备用邮箱输入 */}
+                {selectedOwner.length === 0 && (
+                  <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-sm text-yellow-800 mb-2">
+                      如果找不到用户，您也可以直接输入邮箱地址：
+                    </p>
+                    <input
+                      type="email"
+                      id="owner_email"
+                      name="owner_email"
+                      value={formData.owner_email}
+                      onChange={handleInputChange}
+                      className="block w-full px-3 py-2 border border-yellow-300 rounded-md shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white"
+                      placeholder="admin@example.com"
+                    />
+                    <p className="text-xs text-yellow-600 mt-1">该邮箱必须对应平台中的现有用户</p>
+                  </div>
+                )}
               </div>
 
               {/* 描述 */}
