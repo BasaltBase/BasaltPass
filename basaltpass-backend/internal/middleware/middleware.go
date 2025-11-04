@@ -13,6 +13,13 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 )
 
+/**
+*
+* Basalt Middleware Registration and Error Handling
+* Registers global middlewares and provides unified error handling.
+*
+ */
+
 // ErrorHandler provides a unified JSON error response for all handlers.
 func ErrorHandler(c *fiber.Ctx, err error) error {
 	// Default to 500 unless it's a *fiber.Error
@@ -21,7 +28,7 @@ func ErrorHandler(c *fiber.Ctx, err error) error {
 	if errors.As(err, &e) {
 		code = e.Code
 	}
-	// You can extend this to map custom domain errors to codes here.
+
 	return c.Status(code).JSON(fiber.Map{
 		"error":   err.Error(),
 		"code":    code,

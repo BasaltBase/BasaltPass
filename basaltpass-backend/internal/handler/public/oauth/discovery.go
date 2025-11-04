@@ -53,19 +53,11 @@ func DiscoveryHandler(c *fiber.Ctx) error {
 	baseURL := scheme + "://" + c.Get("Host")
 
 	discovery := &OIDCDiscoveryResponse{
-<<<<<<< HEAD:basaltpass-backend/internal/handler/public/oauth/discovery.go
 		Issuer:                baseURL + "/api/v1",
 		AuthorizationEndpoint: baseURL + "/api/v1/oauth/authorize",
 		TokenEndpoint:         baseURL + "/api/v1/oauth/token",
 		UserinfoEndpoint:      baseURL + "/api/v1/oauth/userinfo",
 		JwksURI:               baseURL + "/api/v1/oauth/jwks",
-=======
-		Issuer:                baseURL,
-		AuthorizationEndpoint: baseURL + "/oauth/authorize",
-		TokenEndpoint:         baseURL + "/oauth/token",
-		UserinfoEndpoint:      baseURL + "/oauth/userinfo",
-		JwksURI:               baseURL + "/oauth/jwks",
->>>>>>> 3817a436ec432dbb02163f194c246b1b89f56628:basaltpass-backend/internal/oauth/discovery.go
 
 		ScopesSupported: []string{
 			"openid",

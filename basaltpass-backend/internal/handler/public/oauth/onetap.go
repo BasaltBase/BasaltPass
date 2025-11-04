@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"basaltpass-backend/internal/auth"
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
+	auth "basaltpass-backend/internal/service/auth"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"

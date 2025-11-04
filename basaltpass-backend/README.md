@@ -38,6 +38,19 @@ BASALTPASS_DATABASE_PATH=./data/basaltpass.db
 - server.address
 - database.driver / database.dsn / database.path（当前支持 sqlite）
 - cors.allow_origins / allow_methods / allow_headers / allow_credentials / expose_headers / max_age_seconds
+
+同时支持从 `.env` 文件加载敏感信息（优先于配置文件）：
+
+- 默认查找位置：`basaltpass-backend/.env` 或 项目根目录 `./.env`
+- 可通过 `BASALTPASS_ENV_FILE` 指定自定义路径
+- 建议在 `.env` 中设置 JWT 签名密钥等敏感变量：
+
+```
+# .env
+JWT_SECRET=change-me
+# 也可在此覆盖配置项（对应 viper 键名，点号改为下划线）
+BASALTPASS_SERVER_ADDRESS=:8080
+```
 cd basaltpass-backend
 go mod tidy
 ```
@@ -57,6 +70,8 @@ go build cmd/basaltpass/main.go
 ```
 
 ## API 接口
+
+- S2S 服务间 API（机器可消费）：见 `docs/S2S_API.md`
 
 ### 健康检查
 

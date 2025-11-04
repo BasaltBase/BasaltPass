@@ -149,3 +149,228 @@ paths:
       responses:
         '200':
           description: Logs 
+  
+  # ===================== S2S APIs =====================
+  /api/v1/s2s/users/{id}:
+    get:
+      summary: Get user by ID (S2S)
+      description: Service-to-service API. Returns basic user profile by ID.
+      security:
+        - ClientID: []
+          ClientSecret: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/S2SUser'
+                  error:
+                    oneOf:
+                      - type: 'null'
+                      - $ref: '#/components/schemas/ErrorObject'
+                  request_id:
+                    type: string
+        '400': { description: Invalid parameter }
+        '401': { description: Invalid client }
+        '403': { description: Insufficient scope }
+        '404': { description: Not found }
+
+  /api/v1/s2s/users/{id}/roles:
+    get:
+      summary: Get user roles in tenant (S2S)
+      description: Returns roles for user in given tenant. If tenant_id omitted, uses calling client's tenant.
+      security:
+        - ClientID: []
+          ClientSecret: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: tenant_id
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      roles:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/S2SRole'
+                  error:
+                    oneOf:
+                      - type: 'null'
+                      - $ref: '#/components/schemas/ErrorObject'
+                  request_id:
+                    type: string
+        '400': { description: Invalid parameter }
+        '401': { description: Invalid client }
+        '403': { description: Insufficient scope }
+        '500': { description: Server error }
+
+  /api/v1/s2s/users/{id}/permissions:
+    get:
+      summary: Get user role codes in tenant (S2S)
+      description: Returns role codes array for user in tenant (simplified permissions). If tenant_id omitted, uses client's tenant.
+      security:
+        - ClientID: []
+          ClientSecret: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: tenant_id
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      roles:
+                        type: array
+                        items:
+                          type: string
+                  error:
+                    oneOf:
+                      - type: 'null'
+                      - $ref: '#/components/schemas/ErrorObject'
+                  request_id:
+                    type: string
+        '400': { description: Invalid parameter }
+        '401': { description: Invalid client }
+        '403': { description: Insufficient scope }
+        '500': { description: Server error }
+
+  /api/v1/s2s/users/{id}/wallets:
+    get:
+      summary: Get user wallet by currency (S2S)
+      description: Returns wallet balance and recent transactions for given currency code.
+      security:
+        - ClientID: []
+          ClientSecret: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: currency
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/S2SUserWallet'
+                  error:
+                    oneOf:
+                      - type: 'null'
+                      - $ref: '#/components/schemas/ErrorObject'
+                  request_id:
+                    type: string
+        '400': { description: Invalid parameter }
+        '401': { description: Invalid client }
+        '403': { description: Insufficient scope }
+        '500': { description: Server error }
+
+components:
+  securitySchemes:
+    ClientID:
+      type: apiKey
+      in: header
+      name: client_id
+    ClientSecret:
+      type: apiKey
+      in: header
+      name: client_secret
+  schemas:
+    ErrorObject:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+    S2SUser:
+      type: object
+      properties:
+        id: { type: integer }
+        email: { type: string }
+        nickname: { type: string }
+        avatar_url: { type: string }
+        email_verified: { type: boolean }
+        phone: { type: string }
+        phone_verified: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    S2SRole:
+      type: object
+      properties:
+        id: { type: integer }
+        code: { type: string }
+        name: { type: string }
+        description: { type: string }
+    S2SWalletTx:
+      type: object
+      properties:
+        id: { type: integer }
+        wallet_id: { type: integer }
+        type: { type: string, description: 'recharge|withdraw|...' }
+        amount: { type: integer, description: 'in smallest unit' }
+        status: { type: string }
+        reference: { type: string }
+        created_at: { type: string, format: date-time }
+    S2SUserWallet:
+      type: object
+      properties:
+        currency: { type: string }
+        balance: { type: integer }
+        wallet_id: { type: integer }
+        transactions:
+          type: array
+          items: { $ref: '#/components/schemas/S2SWalletTx' }

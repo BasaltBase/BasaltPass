@@ -8,8 +8,12 @@ services:
       - "8080:8080"
     volumes:
       - data:/data
+    # Load environment variables from project .env (JWT_SECRET, BASALTPASS_*)
+    env_file:
+      - .env
+    # Optional fallback if .env is missing: use default secret
     environment:
-      - JWT_SECRET=supersecret
+      - JWT_SECRET=${JWT_SECRET:-supersecret}
   frontend:
     build:
       context: .

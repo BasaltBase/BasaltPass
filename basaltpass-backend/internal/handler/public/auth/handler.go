@@ -1,14 +1,10 @@
 package auth
 
 import (
-<<<<<<< HEAD:basaltpass-backend/internal/handler/public/auth/handler.go
+	security "basaltpass-backend/internal/handler/user/security"
 	auth2 "basaltpass-backend/internal/service/auth"
-=======
 	"log"
 
-	"basaltpass-backend/internal/security"
-
->>>>>>> 3817a436ec432dbb02163f194c246b1b89f56628:basaltpass-backend/internal/auth/handler.go
 	"github.com/gofiber/fiber/v2"
 )
 

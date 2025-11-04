@@ -8,6 +8,15 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+/*
+*
+* Basalt AdminMiddleware
+* Allows only basalt pass super admins.
+* Super admins (is_super_admin = true) are always allowed.
+* Tenant admins do not count here.
+*
+ */
+
 // AdminMiddleware allows only users with role 'tenant'.
 func AdminMiddleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -17,7 +26,7 @@ func AdminMiddleware() fiber.Handler {
 		}
 		uid := uidVal.(uint)
 
-		// 先判断是否为超级管理员
+		// Check if user is super admin
 		var user model.User
 		if err := common.DB().First(&user, uid).Error; err == nil {
 			if user.IsSuperAdmin() {
@@ -38,7 +47,7 @@ func AdminMiddleware() fiber.Handler {
 	}
 }
 
-// SuperAdminMiddleware 超级管理员(Basalt)中间件
+// SuperAdminMiddleware 超级管理员(Basalt 方面)中间件
 func SuperAdminMiddleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		userID := c.Locals("userID")
@@ -48,17 +57,17 @@ func SuperAdminMiddleware() fiber.Handler {
 			})
 		}
 
-		// 检查是否为超级管理员
+		// Check if user is super admin
 		var user model.User
 		if err := common.DB().First(&user, userID).Error; err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "User not found",
+				"error": "[admin_middleware] User not found",
 			})
 		}
 
 		if !user.IsSuperAdmin() {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
-				"error": "Super tenant access required",
+				"error": "[admin_middleware] Basalt super admin access required",
 			})
 		}
 

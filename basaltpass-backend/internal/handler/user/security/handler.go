@@ -3,13 +3,9 @@ package security
 import (
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
-<<<<<<< HEAD:basaltpass-backend/internal/handler/user/security/handler.go
 	"basaltpass-backend/internal/service/aduit"
 	notif "basaltpass-backend/internal/service/notification"
-=======
-	"basaltpass-backend/internal/notification"
 	"strconv"
->>>>>>> 3817a436ec432dbb02163f194c246b1b89f56628:basaltpass-backend/internal/security/handler.go
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/pquerna/otp/totp"

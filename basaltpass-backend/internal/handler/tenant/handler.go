@@ -31,6 +31,7 @@ func GetTenantInfoHandler(c *fiber.Ctx) error {
 // POST /tenant/tenant/users/invite
 func InviteUserHandler(c *fiber.Ctx) error {
 	tenantID := c.Locals("tenantID").(uint)
+	inviterUserID := c.Locals("userID").(uint)
 
 	var req struct {
 		UserID uint   `json:"user_id" validate:"required"`
@@ -45,7 +46,7 @@ func InviteUserHandler(c *fiber.Ctx) error {
 
 	// TODO: 添加权限检查
 
-	if err := tenantService.InviteUserToTenant(tenantID, req.UserID, model.TenantRole(req.Role)); err != nil {
+	if err := tenantService.InviteUserToTenant(tenantID, inviterUserID, req.UserID, model.TenantRole(req.Role)); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})

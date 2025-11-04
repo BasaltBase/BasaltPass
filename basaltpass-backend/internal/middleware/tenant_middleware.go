@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strconv"
 
 	"basaltpass-backend/internal/model"
 
@@ -13,6 +12,13 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"gorm.io/gorm"
 )
+
+/**
+* Basalt TenantMiddleware
+* Ensures requests are associated with a valid tenant context.
+* Extracts tenant ID from JWT, headers, or user associations.
+*
+ */
 
 // getJWTSecret 获取JWT密钥
 func getJWTSecret() string {
@@ -25,48 +31,43 @@ func getJWTSecret() string {
 // TenantMiddleware 租户隔离中间件
 func TenantMiddleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		// 首先尝试从JWT中间件设置的tenantID获取
-		if tenantID := c.Locals("tenantID"); tenantID != nil {
-			// 验证租户是否存在且有效
-			var tenant model.Tenant
-			if err := common2.DB().First(&tenant, tenantID).Error; err != nil {
-				// 租户不存在，记录错误并继续尝试其他方式
-				fmt.Printf("[TenantMiddleware] Tenant %v not found: %v\n", tenantID, err)
-			} else if tenant.Status != "active" {
-				fmt.Printf("[TenantMiddleware] Tenant %v status is %s, not active\n", tenantID, tenant.Status)
-			} else {
-				// 租户存在且状态正常
-				return c.Next()
-			}
+		// 统一策略：仅基于用户身份关联解析租户，不信任客户端/令牌携带的租户ID
+		userID := c.Locals("userID")
+		if userID == nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "Missing user context",
+			})
 		}
 
-		// 如果JWT中没有租户信息，尝试从Header获取（管理API）
-		tenantIDStr := c.Get("X-Tenant-ID")
-		if tenantIDStr != "" {
-			tenantID, err := strconv.ParseUint(tenantIDStr, 10, 32)
-			if err != nil {
-				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-					"error": "Invalid tenant ID",
-				})
-			}
-			c.Locals("tenantID", uint(tenantID))
-			return c.Next()
+		// 基于用户-租户关联关系查找默认租户：优先使用创建时间最早的一条作为默认
+		var tenantAdmin model.TenantAdmin
+		if err := common2.DB().Where("user_id = ?", userID).Order("created_at ASC").First(&tenantAdmin).Error; err != nil {
+			fmt.Printf("[TenantMiddleware] No tenant association found for user %v: %v\n", userID, err)
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "Missing tenant association",
+			})
 		}
 
-		// 尝试从用户ID获取默认租户
-		if userID := c.Locals("userID"); userID != nil {
-			var tenantAdmin model.TenantAdmin
-			if err := common2.DB().Where("user_id = ?", userID).Order("created_at ASC").First(&tenantAdmin).Error; err == nil {
-				c.Locals("tenantID", tenantAdmin.TenantID)
-				return c.Next()
-			} else {
-				fmt.Printf("[TenantMiddleware] No tenant association found for user %v: %v\n", userID, err)
-			}
+		// 校验租户有效性
+		var tenant model.Tenant
+		if err := common2.DB().First(&tenant, tenantAdmin.TenantID).Error; err != nil {
+			fmt.Printf("[TenantMiddleware] Tenant %v not found for user %v: %v\n", tenantAdmin.TenantID, userID, err)
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "Invalid tenant association",
+			})
+		}
+		if tenant.Status != "active" {
+			fmt.Printf("[TenantMiddleware] Tenant %v status is %s, not active\n", tenant.ID, tenant.Status)
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"error": "Tenant is not active",
+			})
 		}
 
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "Missing tenant context",
-		})
+		// 将租户上下文与角色放入请求上下文
+		c.Locals("tenantID", tenant.ID)
+		c.Locals("tenantRole", tenantAdmin.Role)
+
+		return c.Next()
 	}
 }
 

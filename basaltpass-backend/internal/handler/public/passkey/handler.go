@@ -1,15 +1,14 @@
 package passkey
 
 import (
-<<<<<<< HEAD:basaltpass-backend/internal/handler/public/passkey/handler.go
 	passkey2 "basaltpass-backend/internal/service/passkey"
-=======
-	"log"
->>>>>>> 3817a436ec432dbb02163f194c246b1b89f56628:basaltpass-backend/internal/passkey/handler.go
 	"net/http"
 	"strconv"
+	"sync"
 
-	"basaltpass-backend/internal/security"
+	"log"
+
+	security "basaltpass-backend/internal/handler/user/security"
 
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/gofiber/fiber/v2"
@@ -19,11 +18,35 @@ import (
 // 服务实例
 var svc = passkey2.Service{}
 
-// Session存储 - 简化实现，在生产环境中应该使用更安全的session存储
-var sessionStore = make(map[string]*webauthn.SessionData)
+// Session存储（并发安全）- 简化实现，在生产环境中应使用更安全、可过期的存储（如Redis）
+type sessionStoreMap struct {
+	mu sync.RWMutex
+	m  map[string]*webauthn.SessionData
+}
 
-func newRequestContext(c *fiber.Ctx, data map[string]interface{}) *RequestContext {
-	return &RequestContext{
+func (s *sessionStoreMap) Set(key string, v *webauthn.SessionData) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.m[key] = v
+}
+
+func (s *sessionStoreMap) Get(key string) (*webauthn.SessionData, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	v, ok := s.m[key]
+	return v, ok
+}
+
+func (s *sessionStoreMap) Delete(key string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	delete(s.m, key)
+}
+
+var sessionStore = &sessionStoreMap{m: make(map[string]*webauthn.SessionData)}
+
+func newRequestContext(c *fiber.Ctx, data map[string]interface{}) *passkey2.RequestContext {
+	return &passkey2.RequestContext{
 		IP:        c.IP(),
 		UserAgent: c.Get(fiber.HeaderUserAgent),
 		Data:      data,
@@ -84,7 +107,7 @@ func BeginRegistrationHandler(c *fiber.Ctx) error {
 
 	// 存储session数据 (简化实现)
 	sessionKey := sessionData.Challenge
-	sessionStore[sessionKey] = sessionData
+	sessionStore.Set(sessionKey, sessionData)
 
 	return c.JSON(options)
 }
@@ -109,7 +132,7 @@ func FinishRegistrationHandler(c *fiber.Ctx) error {
 	}
 
 	// 从session存储中获取session数据
-	sessionData, exists := sessionStore[req.Challenge]
+	sessionData, exists := sessionStore.Get(req.Challenge)
 	if !exists {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid session",
@@ -150,7 +173,7 @@ func FinishRegistrationHandler(c *fiber.Ctx) error {
 	}
 
 	// 清理session数据
-	delete(sessionStore, req.Challenge)
+	sessionStore.Delete(req.Challenge)
 
 	return c.JSON(fiber.Map{
 		"id":         passkey.ID,
@@ -204,7 +227,7 @@ func BeginLoginHandler(c *fiber.Ctx) error {
 
 	// 存储session数据
 	sessionKey := sessionData.Challenge
-	sessionStore[sessionKey] = sessionData
+	sessionStore.Set(sessionKey, sessionData)
 
 	return c.JSON(options)
 }
@@ -224,7 +247,7 @@ func FinishLoginHandler(c *fiber.Ctx) error {
 	}
 
 	// 从session存储中获取session数据
-	sessionData, exists := sessionStore[req.Challenge]
+	sessionData, exists := sessionStore.Get(req.Challenge)
 	if !exists {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid session",
@@ -276,7 +299,7 @@ func FinishLoginHandler(c *fiber.Ctx) error {
 	}
 
 	// 清理session数据
-	delete(sessionStore, req.Challenge)
+	sessionStore.Delete(req.Challenge)
 
 	// 设置refresh token cookie
 	c.Cookie(&fiber.Cookie{
@@ -285,6 +308,8 @@ func FinishLoginHandler(c *fiber.Ctx) error {
 		HTTPOnly: true,
 		Path:     "/",
 		MaxAge:   7 * 24 * 60 * 60,
+		Secure:   c.Secure(),
+		SameSite: "Lax",
 	})
 
 	if err := security.RecordLoginSuccess(user.ID, c.IP(), c.Get("User-Agent")); err != nil {

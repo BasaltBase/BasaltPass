@@ -3,9 +3,11 @@ package config
 import (
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/spf13/viper"
+	gotenv "github.com/subosito/gotenv"
 )
 
 // Config holds application configuration loaded from file and environment.
@@ -52,6 +54,25 @@ func Load(path string) (*Config, error) {
 	}
 
 	v := viper.New()
+
+	// 1) Load .env first so that os.Getenv can see values (incl. JWT_SECRET)
+	// Priority: BASALTPASS_ENV_FILE > ./.env > ../.env
+	if custom := os.Getenv("BASALTPASS_ENV_FILE"); custom != "" {
+		if err := gotenv.Load(custom); err == nil {
+			log.Printf("loaded env from %s", custom)
+		} else {
+			log.Printf("env file not found at %s (skip): %v", custom, err)
+		}
+	} else {
+		// try common locations relative to the backend working directory
+		tried := []string{".env", "../.env"}
+		for _, f := range tried {
+			if err := gotenv.Load(f); err == nil {
+				log.Printf("loaded env from %s", f)
+				break
+			}
+		}
+	}
 
 	// Defaults
 	v.SetDefault("env", "develop")

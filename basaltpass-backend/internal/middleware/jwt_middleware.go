@@ -7,29 +7,35 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+/**
+* Basalt JWTMiddleware
+* Validates JWT from Authorization header and stores user ID in context.
+* For all users with all kinds of roles.
+*
+ */
+
 // JWTMiddleware validates JWT from Authorization header and stores user ID in context.
 func JWTMiddleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		authHeader := c.Get("Authorization")
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "missing token"})
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "[Basalt Auth] missing token"})
 		}
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 
 		// Parse and validate token
 		token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
-			// 获取JWT密钥
-			secret := getJWTSecret()
+			secret := getJWTSecret() // get from env/config
 			return []byte(secret), nil
 		})
 
 		if err != nil || !token.Valid {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "invalid token"})
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "[Basalt Auth] invalid token"})
 		}
 
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "invalid claims"})
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "[Basalt Auth] invalid claims"})
 		}
 
 		// Store user ID in context

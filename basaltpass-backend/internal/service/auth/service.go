@@ -7,6 +7,7 @@ import (
 
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
+
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -152,17 +153,8 @@ func (s Service) Refresh(refreshToken string) (TokenPair, error) {
 	if !ok {
 		return TokenPair{}, errors.New("invalid subject")
 	}
-
-	// 获取租户信息（如果存在）
-	var tenantID uint = 0
-	if tid, exists := claims["tid"]; exists {
-		if tenantIDFloat, ok := tid.(float64); ok {
-			tenantID = uint(tenantIDFloat)
-		}
-	}
-
-	// 使用带租户信息的token生成方法
-	return GenerateTokenPairWithTenant(uint(userIDFloat), tenantID)
+	// 不信任令牌中携带的租户上下文，刷新时基于用户默认租户重新生成
+	return GenerateTokenPairWithTenant(uint(userIDFloat), 0)
 }
 
 // Verify2FA 校验二次验证信息，成功返回token

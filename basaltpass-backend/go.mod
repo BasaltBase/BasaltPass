@@ -8,9 +8,10 @@ require (
 	github.com/go-webauthn/webauthn v0.13.4
 	github.com/gofiber/fiber/v2 v2.52.0
 	github.com/golang-jwt/jwt/v5 v5.2.3
-	github.com/pquerna/otp v1.4.0
+	github.com/pquerna/otp v1.5.0
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.10.0
+	github.com/subosito/gotenv v1.6.0
 	github.com/valyala/fasthttp v1.51.0
 	golang.org/x/crypto v0.40.0
 	golang.org/x/oauth2 v0.18.0
@@ -49,7 +50,6 @@ require (
 	github.com/spf13/afero v1.11.0 // indirect
 	github.com/spf13/cast v1.6.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect

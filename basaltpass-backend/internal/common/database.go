@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2025.  Zeturn. Contains AI-generated content, reviewed by Zeturn.
+ */
+
 package common
 
 import (

@@ -26,4 +26,7 @@ func RegisterRoutes(app *fiber.App) {
 
 	// 注册管理员相关路由
 	routes2.RegisterAdminRoutes(v1)
+
+	// 注册服务间（S2S）路由
+	routes2.RegisterS2SRoutes(v1)
 }

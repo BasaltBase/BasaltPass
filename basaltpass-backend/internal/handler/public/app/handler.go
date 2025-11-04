@@ -259,14 +259,6 @@ func getTenantIDFromContext(c *fiber.Ctx) uint {
 		}
 	}
 
-	// 兜底：从Header获取租户ID（用于系统管理员操作）
-	tenantIDStr := c.Get("X-Tenant-ID")
-	if tenantIDStr != "" {
-		if id, err := strconv.ParseUint(tenantIDStr, 10, 32); err == nil {
-			return uint(id)
-		}
-	}
-
 	return 0
 }
 

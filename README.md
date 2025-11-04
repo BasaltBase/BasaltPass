@@ -9,3 +9,15 @@ docker-compose up -d --build
 ```
 
 Default admin login: create via API then assign `admin` role. 
+
+## 配置约定（env vs config）
+
+- `.env`（项目根）：放置敏感/经常变动的变量，例如 `JWT_SECRET`、数据库密码、第三方 API Key；同时可用 `BASALTPASS_*` 覆盖配置（把点号改为下划线）。
+- `basaltpass-backend/config/config.yaml`：系统级、相对稳定的默认配置，例如 CORS 白名单、监听端口、SQLite 路径等。
+
+优先级（高 → 低）：
+1. 进程环境变量（包含从 `.env` 加载的内容）
+2. 配置文件 `config.yaml`
+3. 代码中的默认值
+
+Docker 运行时：`docker-compose.yml` 会读取根目录 `.env`，同时为 `JWT_SECRET` 提供默认回退。
