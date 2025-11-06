@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import TenantLayout from '@components/TenantLayout'
+import { PInput, PButton, PTextarea } from '../../../components'
 import {
   ChevronRightIcon,
   PlusIcon,
@@ -160,13 +161,11 @@ export default function TenantProducts() {
 
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-semibold text-gray-900">产品管理</h1>
-          <button
-            onClick={() => setShowModal(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center gap-2"
-          >
-            <PlusIcon className="h-5 w-5" />
-            创建产品
-          </button>
+          <PButton onClick={() => setShowModal(true)}>
+            <span className="inline-flex items-center gap-2">
+              <PlusIcon className="h-5 w-5" /> 创建产品
+            </span>
+          </PButton>
         </div>
 
         {/* 产品列表 */}
@@ -195,20 +194,24 @@ export default function TenantProducts() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button
+                      <PButton
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleEdit(product)}
                         className="text-blue-600 hover:text-blue-900"
                         title="编辑产品"
                       >
                         <PencilIcon className="h-5 w-5" />
-                      </button>
-                      <button
+                      </PButton>
+                      <PButton
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleDeleteClick(product)}
                         className="text-red-600 hover:text-red-900"
                         title="删除产品"
                       >
                         <TrashIcon className="h-5 w-5" />
-                      </button>
+                      </PButton>
                     </div>
                   </div>
                 </li>
@@ -232,13 +235,11 @@ export default function TenantProducts() {
                   <h3 className="mt-2 text-sm font-medium text-gray-900">暂无产品</h3>
                   <p className="mt-1 text-sm text-gray-500">开始创建您的第一个产品吧</p>
                   <div className="mt-6">
-                    <button
-                      onClick={() => setShowModal(true)}
-                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 gap-2"
-                    >
-                      <PlusIcon className="h-5 w-5" />
-                      创建产品
-                    </button>
+                    <PButton onClick={() => setShowModal(true)}>
+                      <span className="inline-flex items-center gap-2">
+                        <PlusIcon className="h-5 w-5" /> 创建产品
+                      </span>
+                    </PButton>
                   </div>
                 </div>
               </li>
@@ -262,15 +263,12 @@ export default function TenantProducts() {
                 <form onSubmit={handleSubmit}>
                   {/* 产品代码字段 */}
                   <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      产品代码 <span className="text-red-500">*</span>
-                    </label>
-                    <input
+                    <PInput
+                      label={<span>产品代码 <span className="text-red-500">*</span></span>}
                       type="text"
                       required
                       value={formData.code}
                       onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                      className="block w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                       placeholder="例如: basic-plan"
                       disabled={!!editingProduct}
                     />
@@ -283,52 +281,43 @@ export default function TenantProducts() {
 
                   {/* 产品名称字段 */}
                   <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      产品名称 <span className="text-red-500">*</span>
-                    </label>
-                    <input
+                    <PInput
+                      label={<span>产品名称 <span className="text-red-500">*</span></span>}
                       type="text"
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="block w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                       placeholder="例如: 基础版"
                     />
                   </div>
 
                   {/* 产品描述字段 */}
                   <div className="mb-8">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      产品描述
-                    </label>
-                    <textarea
+                    <PTextarea
+                      label="产品描述"
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       rows={4}
-                      className="block w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
                       placeholder="描述产品的功能和特点..."
                     />
                   </div>
 
                   {/* 按钮组 */}
                   <div className="flex justify-end gap-3">
-                    <button
+                    <PButton
                       type="button"
+                      variant="secondary"
                       onClick={() => {
                         setShowModal(false)
                         setEditingProduct(null)
                         resetForm()
                       }}
-                      className="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
                     >
                       取消
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors shadow-sm"
-                    >
+                    </PButton>
+                    <PButton type="submit">
                       {editingProduct ? '保存更改' : '创建产品'}
-                    </button>
+                    </PButton>
                   </div>
                 </form>
               </div>
@@ -354,23 +343,23 @@ export default function TenantProducts() {
                   </p>
                 </div>
                 <div className="flex justify-center gap-3 mt-4">
-                  <button
+                  <PButton
                     onClick={() => {
                       setShowDeleteModal(false)
                       setDeleteTarget(null)
                     }}
                     disabled={deleting}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 disabled:opacity-50"
+                    variant="secondary"
                   >
                     取消
-                  </button>
-                  <button
+                  </PButton>
+                  <PButton
                     onClick={handleDeleteConfirm}
-                    disabled={deleting}
-                    className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 disabled:opacity-50"
+                    loading={deleting}
+                    variant="danger"
                   >
-                    {deleting ? '删除中...' : '确认删除'}
-                  </button>
+                    确认删除
+                  </PButton>
                 </div>
               </div>
             </div>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getBalance } from '@api/user/wallet'
+import { getBalance, history as getHistory } from '@api/user/wallet'
 import { getCurrencies, Currency } from '@api/user/currency'
 import { Link } from 'react-router-dom'
 import Layout from '../../../components/Layout'
@@ -17,6 +17,15 @@ export default function WalletIndex() {
   const [balance, setBalance] = useState<number | null>(null)
   const [selectedCurrency, setSelectedCurrency] = useState<Currency | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [txs, setTxs] = useState<Array<{
+    ID: number
+    Type: string
+    Amount: number
+    Status: string
+    CreatedAt: string
+  }>>([])
+  const [monthlyIncome, setMonthlyIncome] = useState<number>(0)   // 以最小货币单位存储
+  const [monthlyExpense, setMonthlyExpense] = useState<number>(0) // 以最小货币单位存储
 
   useEffect(() => {
     // 初始化时加载货币列表并设置默认货币
@@ -25,7 +34,8 @@ export default function WalletIndex() {
 
   useEffect(() => {
     if (selectedCurrency) {
-      loadBalance()
+      // 并行加载余额与最近交易
+      loadData(selectedCurrency.code)
     }
   }, [selectedCurrency])
 
@@ -45,15 +55,48 @@ export default function WalletIndex() {
     }
   }
 
-  const loadBalance = async () => {
-    if (!selectedCurrency) return
-    
+  const loadData = async (currencyCode: string) => {
+    setIsLoading(true)
     try {
-      const res = await getBalance(selectedCurrency.code)
-      setBalance(res.data.balance)
+      const [balanceRes, historyRes] = await Promise.all([
+        getBalance(currencyCode),
+        // 拉更多一些记录以覆盖当月，若当月交易较多可在后端增加聚合接口
+        getHistory(currencyCode, 200)
+      ])
+      setBalance(balanceRes.data.balance)
+      const list = historyRes.data || []
+      setTxs(list)
+      // 计算当月收入/支出（以交易时间为准）
+      const now = new Date()
+      const y = now.getFullYear()
+      const m = now.getMonth()
+      let income = 0
+      let expense = 0
+      for (const t of list) {
+        const d = new Date(t.CreatedAt)
+        if (d.getFullYear() === y && d.getMonth() === m) {
+          const type = (t.Type || '').toLowerCase()
+          if (type === 'recharge') {
+            income += Math.abs(t.Amount)
+          } else if (type === 'withdraw') {
+            // 后端提现保存为负数，这里取绝对值累加支出
+            expense += Math.abs(t.Amount)
+          } else {
+            // 兜底：按金额正负划分
+            if (t.Amount >= 0) income += t.Amount
+            else expense += Math.abs(t.Amount)
+          }
+        }
+      }
+      setMonthlyIncome(income)
+      setMonthlyExpense(expense)
     } catch (error) {
-      console.error('Failed to load balance:', error)
+      console.error('Failed to load wallet data:', error)
+      // 出错时保底：余额置空、交易清空
       setBalance(null)
+      setTxs([])
+      setMonthlyIncome(0)
+      setMonthlyExpense(0)
     } finally {
       setIsLoading(false)
     }
@@ -61,6 +104,13 @@ export default function WalletIndex() {
 
   const formatBalance = (balance: number, currency: Currency) => {
     const amount = balance / Math.pow(10, currency.decimal_places)
+    return `${currency.symbol}${amount.toFixed(Math.min(currency.decimal_places, 8))}`
+  }
+
+  const formatWithCurrency = (amountMinor: number, currency?: Currency | null) => {
+    if (!currency) return '--'
+    const divisor = Math.pow(10, currency.decimal_places)
+    const amount = amountMinor / divisor
     return `${currency.symbol}${amount.toFixed(Math.min(currency.decimal_places, 8))}`
   }
 
@@ -76,14 +126,14 @@ export default function WalletIndex() {
     },
     {
       name: '本月收入',
-      value: '+$1,250.00',
+      value: selectedCurrency ? `+${formatWithCurrency(monthlyIncome, selectedCurrency)}` : '--',
       icon: ChartBarIcon,
       color: 'text-green-600',
       bgColor: 'bg-green-100'
     },
     {
       name: '本月支出',
-      value: '-$450.00',
+      value: selectedCurrency ? `-${formatWithCurrency(monthlyExpense, selectedCurrency)}` : '--',
       icon: ChartBarIcon,
       color: 'text-red-600',
       bgColor: 'bg-red-100'
@@ -231,7 +281,7 @@ export default function WalletIndex() {
           </div>
         </div>
 
-        {/* 最近交易预览 */}
+        {/* 最近交易预览（真实数据） */}
         <div className="bg-white shadow rounded-lg">
           <div className="px-4 py-5 sm:p-6">
             <div className="flex items-center justify-between mb-4">
@@ -245,56 +295,61 @@ export default function WalletIndex() {
                 查看全部
               </Link>
             </div>
-            <div className="flow-root">
-              <ul className="-my-5 divide-y divide-gray-200">
-                <li className="py-4">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex-shrink-0">
-                      <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
-                        <ArrowUpIcon className="h-4 w-4 text-green-600" />
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        支付宝充值
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        2024-01-15 14:30
-                      </p>
-                    </div>
-                    <div className="flex-shrink-0 text-right">
-                      <p className="text-sm font-medium text-green-600">+¥500.00</p>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        已完成
-                      </span>
-                    </div>
-                  </div>
-                </li>
-                <li className="py-4">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex-shrink-0">
-                      <div className="h-8 w-8 bg-red-100 rounded-full flex items-center justify-center">
-                        <ArrowDownIcon className="h-4 w-4 text-red-600" />
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        提现到银行卡
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        2024-01-14 09:15
-                      </p>
-                    </div>
-                    <div className="flex-shrink-0 text-right">
-                      <p className="text-sm font-medium text-red-600">-¥200.00</p>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                        处理中
-                      </span>
-                    </div>
-                  </div>
-                </li>
-              </ul>
-            </div>
+            {txs.length === 0 ? (
+              <div className="text-center py-8 text-sm text-gray-500">暂无最近交易</div>
+            ) : (
+              <div className="flow-root">
+                <ul className="-my-5 divide-y divide-gray-200">
+                  {txs.slice(0, 5).map((tx) => {
+                    const isRecharge = tx.Type && tx.Type.toLowerCase() === 'recharge'
+                    const iconBg = isRecharge ? 'bg-green-100' : 'bg-red-100'
+                    const amountColor = isRecharge ? 'text-green-600' : 'text-red-600'
+                    const sign = isRecharge ? '+' : '-'
+                    const statusLower = (tx.Status || '').toLowerCase()
+                    const statusColor = statusLower === 'success' || statusLower === 'completed'
+                      ? 'bg-green-100 text-green-800'
+                      : statusLower === 'pending'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-gray-100 text-gray-800'
+                    const formatTxAmount = () => {
+                      if (!selectedCurrency) return `${sign}${tx.Amount}`
+                      const divisor = Math.pow(10, selectedCurrency.decimal_places)
+                      const amount = (tx.Amount / divisor).toFixed(Math.min(selectedCurrency.decimal_places, 8))
+                      return `${sign}${selectedCurrency.symbol}${amount}`
+                    }
+                    return (
+                      <li key={tx.ID} className="py-4">
+                        <div className="flex items-center space-x-4">
+                          <div className="flex-shrink-0">
+                            <div className={`h-8 w-8 ${iconBg} rounded-full flex items-center justify-center`}>
+                              {isRecharge ? (
+                                <ArrowUpIcon className="h-4 w-4 text-green-600" />
+                              ) : (
+                                <ArrowDownIcon className="h-4 w-4 text-red-600" />
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {isRecharge ? '充值' : '提现'} #{tx.ID}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {new Date(tx.CreatedAt).toLocaleString('zh-CN')}
+                            </p>
+                          </div>
+                          <div className="flex-shrink-0 text-right">
+                            <p className={`text-sm font-medium ${amountColor}`}>{formatTxAmount()}</p>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColor}`}>
+                              {statusLower === 'success' || statusLower === 'completed' ? '已完成' : statusLower === 'pending' ? '处理中' : (tx.Status || '未知')}
+                            </span>
+                          </div>
+                        </div>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import Layout from '../../../components/Layout'
 import { invitationApi } from '@api/user/invitation'
-import { EntitySearchSelect, type BaseEntityItem } from '../../../components'
+import { EntitySearchSelect, type BaseEntityItem, PButton, PTextarea } from '../../../components'
 import { useNavigate, useParams } from 'react-router-dom'
 import { DocumentTextIcon } from '@heroicons/react/24/outline'
 
@@ -46,12 +46,13 @@ const Invite: React.FC = () => {
               搜索并邀请用户加入您的团队
             </p>
           </div>
-          <button
+          <PButton
             onClick={() => navigate(`/teams/${teamId}`)}
-            className="group px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gradient-to-r hover:from-indigo-500 hover:to-purple-600 hover:text-white hover:border-transparent transition-all duration-300 shadow-sm"
+            variant="secondary"
+            size="sm"
           >
-            <span className="group-hover:tracking-wide transition-all">返回团队</span>
-          </button>
+            返回团队
+          </PButton>
         </div>
 
         {/* 用户搜索 - 使用通用组件 */}
@@ -77,51 +78,32 @@ const Invite: React.FC = () => {
               <DocumentTextIcon className="h-5 w-5 mr-2 text-indigo-500" />
               邀请备注 (可选)
             </label>
-            <div className="relative">
-              <textarea
-                value={remark}
-                onChange={e => setRemark(e.target.value)}
-                rows={3}
-    className="block w-full px-4 py-3 border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300 resize-none"
-                placeholder="可以在这里添加邀请说明..."
-              />
-              <div className="absolute top-3 right-3">
-                <div className="h-5 w-5 text-gray-400">
-                  <DocumentTextIcon className="h-5 w-5" />
-                </div>
-              </div>
-            </div>
+            <PTextarea
+              value={remark}
+              onChange={e => setRemark(e.target.value)}
+              rows={3}
+              placeholder="可以在这里添加邀请说明..."
+              variant="rounded"
+            />
           </div>
         </div>
 
         {/* 操作按钮 */}
         <div className="flex justify-end space-x-4 pt-8 border-t border-gray-100">
-          <button
+          <PButton
             onClick={() => navigate(`/teams/${teamId}`)}
-            className="group relative px-6 py-3 border border-gray-200 rounded-xl shadow-sm text-sm font-medium text-gray-600 bg-white hover:text-indigo-600 hover:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all overflow-hidden"
+            variant="secondary"
           >
-            <span className="relative z-10">取消</span>
-            <span className="absolute inset-0 bg-gradient-to-r from-indigo-50 to-purple-50 opacity-0 group-hover:opacity-100 transition-opacity" />
-          </button>
-          <button
+            取消
+          </PButton>
+          <PButton
             disabled={loading || selectedUsers.length === 0}
+            loading={loading}
             onClick={submit}
-            className={`group relative px-7 py-3 rounded-xl font-medium transition-all duration-300 overflow-hidden ${
-              loading || selectedUsers.length === 0
-                ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white hover:shadow-lg hover:shadow-indigo-500/30'
-            }`}
+            variant="primary"
           >
-            <span className="relative z-10 flex items-center">
-              {loading && (
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/40 border-t-white mr-2" />
-              )}
-              {loading ? '发送中...' : `发送邀请 (${selectedUsers.length})`}
-            </span>
-            {!loading && selectedUsers.length > 0 && (
-              <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.25),transparent)]" />
-            )}
-          </button>
+            {`发送邀请 (${selectedUsers.length})`}
+          </PButton>
         </div>
       </div>
 

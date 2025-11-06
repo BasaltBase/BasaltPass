@@ -17,6 +17,7 @@ import {
 import { adminWalletApi, Wallet, Currency, CreateWalletRequest, AdjustBalanceRequest } from '../../../api/adminWallet';
 import AdminLayout from '../../../components/AdminLayout';
 import WalletStatsCard from '../../../components/admin/WalletStatsCard';
+import { PInput, PSelect, PButton, PCard } from '../../../components';
 
 interface WalletManagementProps {}
 
@@ -252,7 +253,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
     <AdminLayout>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
         {/* 页面标题 */}
-        <div className="bg-white shadow-sm border-b border-gray-200">
+        <PCard variant="bordered" className="border-b-0 rounded-none">
           <div className="px-4 py-6 sm:px-6 lg:px-8">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -268,19 +269,20 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
               </div>
             </div>
           </div>
-        </div>
+        </PCard>
 
         <div className="px-4 py-6 sm:px-6 lg:px-8">
           {/* 快速操作卡片 */}
-          <div className="bg-white shadow-sm rounded-xl border border-gray-200 mb-6">
+          <PCard variant="bordered" className="mb-6">
             <div className="px-6 py-5">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <span className="inline-block w-2 h-2 bg-indigo-500 rounded-full mr-2"></span>
                 快速操作
               </h3>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <button
+                <PButton
                   onClick={() => setCreateModalVisible(true)}
+                  variant="secondary"
                   className="group relative rounded-xl border border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50 px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-indigo-300 hover:shadow-md focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 transition-all duration-300"
                 >
                   <div className="flex-shrink-0">
@@ -288,15 +290,16 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                       <PlusIcon className="h-5 w-5 text-white" />
                     </div>
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 text-left">
                     <p className="text-sm font-medium text-gray-900">创建钱包</p>
                     <p className="text-sm text-gray-500">为用户或团队创建新钱包</p>
                   </div>
-                </button>
+                </PButton>
 
-                <button
+                <PButton
                   onClick={() => loadWallets()}
                   disabled={loading}
+                  variant="secondary"
                   className="group relative rounded-xl border border-gray-200 bg-gradient-to-r from-blue-50 to-cyan-50 px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-blue-300 hover:shadow-md focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2 transition-all duration-300 disabled:opacity-50"
                 >
                   <div className="flex-shrink-0">
@@ -304,14 +307,15 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                       <ArrowPathIcon className={`h-5 w-5 text-white ${loading ? 'animate-spin' : ''}`} />
                     </div>
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 text-left">
                     <p className="text-sm font-medium text-gray-900">刷新数据</p>
                     <p className="text-sm text-gray-500">重新加载钱包列表</p>
                   </div>
-                </button>
+                </PButton>
 
-                <button
+                <PButton
                   onClick={() => window.open('/admin/analytics', '_blank')}
+                  variant="secondary"
                   className="group relative rounded-xl border border-gray-200 bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-green-300 hover:shadow-md focus-within:ring-2 focus-within:ring-green-500 focus-within:ring-offset-2 transition-all duration-300"
                 >
                   <div className="flex-shrink-0">
@@ -319,17 +323,17 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                       <CurrencyDollarIcon className="h-5 w-5 text-white" />
                     </div>
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 text-left">
                     <p className="text-sm font-medium text-gray-900">财务分析</p>
                     <p className="text-sm text-gray-500">查看钱包统计报告</p>
                   </div>
-                </button>
+                </PButton>
               </div>
             </div>
-          </div>
+          </PCard>
 
           {/* 钱包统计 */}
-          <div className="bg-white shadow-sm rounded-xl border border-gray-200 mb-6">
+          <PCard variant="bordered" className="mb-6">
             <div className="px-6 py-5">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
@@ -337,67 +341,54 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
               </h3>
               <WalletStatsCard />
             </div>
-          </div>
+          </PCard>
 
           {/* 筛选器 */}
-          <div className="bg-white shadow-sm rounded-xl border border-gray-200 mb-6">
+          <PCard variant="bordered" className="mb-6">
             <div className="px-6 py-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900 flex items-center">
                   <span className="inline-block w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
                   筛选条件
                 </h3>
-                <button
+                <PButton
                   onClick={() => setFilters({ user_id: '', team_id: '', currency_code: '' })}
-                  className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+                  variant="secondary"
+                  size="sm"
+                  className="inline-flex items-center"
                 >
                   <FunnelIcon className="h-4 w-4 mr-1" />
                   清除筛选
-                </button>
+                </PButton>
               </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
               <div>
-                <label htmlFor="user-id" className="block text-sm font-medium text-gray-700 mb-2">
-                  <UsersIcon className="inline h-4 w-4 mr-1" />
-                  用户ID
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    id="user-id"
-                    value={filters.user_id}
-                    onChange={(e) => setFilters({ ...filters, user_id: e.target.value })}
-                    className="block w-full rounded-xl border-gray-200 bg-white/80 placeholder-gray-400 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 sm:text-sm transition-all duration-200"
-                    placeholder="输入用户ID"
-                  />
-                </div>
+                <PInput
+                  id="user-id"
+                  value={filters.user_id}
+                  onChange={(e) => setFilters({ ...filters, user_id: e.target.value })}
+                  placeholder="输入用户ID"
+                  label={<><UsersIcon className="inline h-4 w-4 mr-1" />用户ID</>}
+                  variant="rounded"
+                />
               </div>
               <div>
-                <label htmlFor="team-id" className="block text-sm font-medium text-gray-700 mb-2">
-                  <UserGroupIcon className="inline h-4 w-4 mr-1" />
-                  团队ID
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    id="team-id"
-                    value={filters.team_id}
-                    onChange={(e) => setFilters({ ...filters, team_id: e.target.value })}
-                    className="block w-full rounded-xl border-gray-200 bg-white/80 placeholder-gray-400 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 sm:text-sm transition-all duration-200"
-                    placeholder="输入团队ID"
-                  />
-                </div>
+                <PInput
+                  id="team-id"
+                  value={filters.team_id}
+                  onChange={(e) => setFilters({ ...filters, team_id: e.target.value })}
+                  placeholder="输入团队ID"
+                  label={<><UserGroupIcon className="inline h-4 w-4 mr-1" />团队ID</>}
+                  variant="rounded"
+                />
               </div>
               <div>
-                <label htmlFor="currency" className="block text-sm font-medium text-gray-700 mb-2">
-                  <CurrencyDollarIcon className="inline h-4 w-4 mr-1" />
-                  货币类型
-                </label>
-                <select
+                <PSelect
                   id="currency"
                   value={filters.currency_code}
                   onChange={(e) => setFilters({ ...filters, currency_code: e.target.value })}
-                  className="block w-full rounded-xl border-gray-200 bg-white/80 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 sm:text-sm transition-all duration-200"
+                  label={<><CurrencyDollarIcon className="inline h-4 w-4 mr-1" />货币类型</>}
+                  variant="rounded"
                 >
                   <option value="">全部货币</option>
                   {Array.isArray(currencies) && currencies.map(currency => (
@@ -405,30 +396,28 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                       {currency.code} - {currency.name}
                     </option>
                   ))}
-                </select>
+                </PSelect>
               </div>
               <div>
-                <label htmlFor="page-size" className="block text-sm font-medium text-gray-700 mb-2">
-                  每页显示
-                </label>
-                <select
+                <PSelect
                   id="page-size"
                   value={pageSize}
                   onChange={(e) => setPageSize(Number(e.target.value))}
-                  className="block w-full rounded-xl border-gray-200 bg-white/80 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 sm:text-sm transition-all duration-200"
+                  label="每页显示"
+                  variant="rounded"
                 >
                   <option value={10}>10 条</option>
                   <option value={20}>20 条</option>
                   <option value={50}>50 条</option>
                   <option value={100}>100 条</option>
-                </select>
+                </PSelect>
               </div>
               </div>
             </div>
-          </div>
+          </PCard>
 
           {/* 钱包表格 */}
-          <div className="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden">
+          <PCard variant="bordered" className="overflow-hidden">
             <div className="px-6 py-5 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900 flex items-center">
@@ -540,47 +529,51 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex space-x-2">
-                            <button
+                            <PButton
                               onClick={() => {
                                 setSelectedWallet(wallet);
                                 setAdjustModalVisible(true);
                               }}
-                              className="inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+                              variant="primary"
+                              size="sm"
+                              className="inline-flex items-center p-2 rounded-full"
                               title="调整余额"
                             >
                               <PencilIcon className="h-4 w-4" />
-                            </button>
+                            </PButton>
                             
                             {wallet.status === 'active' ? (
-                              <button
+                              <PButton
                                 onClick={() => handleFreezeWallet(wallet)}
-                                className="inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200"
+                                variant="danger"
+                                size="sm"
+                                className="inline-flex items-center p-2 rounded-full"
                                 title="冻结钱包"
                               >
                                 <LockClosedIcon className="h-4 w-4" />
-                              </button>
+                              </PButton>
                             ) : (
-                              <button
+                              <PButton
                                 onClick={() => handleUnfreezeWallet(wallet)}
-                                className="inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200"
+                                variant="secondary"
+                                size="sm"
+                                className="inline-flex items-center p-2 rounded-full bg-green-600 text-white hover:bg-green-700"
                                 title="解冻钱包"
                               >
                                 <LockOpenIcon className="h-4 w-4" />
-                              </button>
+                              </PButton>
                             )}
                             
-                            <button
+                            <PButton
                               onClick={() => handleDeleteWallet(wallet)}
                               disabled={wallet.balance !== 0}
-                              className={`inline-flex items-center p-2 border border-transparent rounded-full shadow-sm transition-colors duration-200 ${
-                                wallet.balance !== 0 
-                                  ? 'text-gray-400 bg-gray-200 cursor-not-allowed' 
-                                  : 'text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500'
-                              }`}
+                              variant={wallet.balance !== 0 ? 'secondary' : 'danger'}
+                              size="sm"
+                              className={`inline-flex items-center p-2 rounded-full ${wallet.balance !== 0 ? 'text-gray-400 bg-gray-200 cursor-not-allowed' : ''}`}
                               title="删除钱包"
                             >
                               <TrashIcon className="h-4 w-4" />
-                            </button>
+                            </PButton>
                           </div>
                         </td>
                       </tr>
@@ -594,13 +587,13 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                               开始创建第一个钱包吧
                             </p>
                             <div className="mt-6">
-                              <button
+                              <PButton
                                 onClick={() => setCreateModalVisible(true)}
-                                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                variant="primary"
                               >
                                 <PlusIcon className="h-4 w-4 mr-2" />
                                 创建钱包
-                              </button>
+                              </PButton>
                             </div>
                           </div>
                         </td>
@@ -615,7 +608,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
             {!loading && total > 0 && (
               <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-4">
                 <div className="flex flex-1 justify-between sm:hidden">
-                  <button
+                  <PButton
                     onClick={() => {
                       if (currentPage > 1) {
                         const newPage = currentPage - 1;
@@ -624,11 +617,11 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                       }
                     }}
                     disabled={currentPage <= 1}
-                    className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400"
+                    variant="secondary"
                   >
                     上一页
-                  </button>
-                  <button
+                  </PButton>
+                  <PButton
                     onClick={() => {
                       if (currentPage < totalPages) {
                         const newPage = currentPage + 1;
@@ -637,10 +630,11 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                       }
                     }}
                     disabled={currentPage >= totalPages}
-                    className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400"
+                    variant="secondary"
+                    className="ml-3"
                   >
                     下一页
-                  </button>
+                  </PButton>
                 </div>
                 <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                   <div>
@@ -652,7 +646,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                   </div>
                   <div>
                     <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-                      <button
+                      <PButton
                         onClick={() => {
                           if (currentPage > 1) {
                             const newPage = currentPage - 1;
@@ -661,13 +655,15 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                           }
                         }}
                         disabled={currentPage <= 1}
-                        className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:bg-gray-100"
+                        variant="secondary"
+                        size="sm"
+                        className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:bg-gray-100"
                       >
                         <span className="sr-only">上一页</span>
                         <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                           <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
                         </svg>
-                      </button>
+                      </PButton>
                       
                       {/* 页码按钮 */}
                       {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -683,24 +679,22 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                         }
                         
                         return (
-                          <button
+                          <PButton
                             key={pageNum}
                             onClick={() => {
                               setCurrentPage(pageNum);
                               loadWallets(pageNum);
                             }}
-                            className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 ${
-                              currentPage === pageNum
-                                ? 'z-10 bg-indigo-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
-                                : 'text-gray-900'
-                            }`}
+                            variant={currentPage === pageNum ? 'primary' : 'secondary'}
+                            size="sm"
+                            className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 ${currentPage === pageNum ? '' : 'text-gray-900 hover:bg-gray-50'}`}
                           >
                             {pageNum}
-                          </button>
+                          </PButton>
                         );
                       })}
 
-                      <button
+                      <PButton
                         onClick={() => {
                           if (currentPage < totalPages) {
                             const newPage = currentPage + 1;
@@ -709,25 +703,27 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                           }
                         }}
                         disabled={currentPage >= totalPages}
-                        className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:bg-gray-100"
+                        variant="secondary"
+                        size="sm"
+                        className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:bg-gray-100"
                       >
                         <span className="sr-only">下一页</span>
                         <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                           <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
                         </svg>
-                      </button>
+                      </PButton>
                     </nav>
                   </div>
                 </div>
               </div>
             )}
-          </div>
+          </PCard>
         </div>
 
         {/* 创建钱包模态框 */}
         {createModalVisible && (
           <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
-            <div className="relative mx-auto border-0 w-full max-w-md shadow-2xl rounded-2xl bg-white">
+            <PCard variant="elevated" className="relative mx-auto border-0 w-full max-w-md rounded-2xl">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center">
@@ -736,17 +732,19 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900">创建钱包</h3>
                   </div>
-                  <button
+                  <PButton
                     onClick={() => {
                       setCreateModalVisible(false);
                       setCreateForm({ currency_code: '', initial_balance: 0, user_id: undefined, team_id: undefined });
                     }}
-                    className="text-gray-400 hover:text-gray-600 transition-colors duration-200 p-1 hover:bg-gray-100 rounded-lg"
+                    variant="secondary"
+                    size="sm"
+                    className="text-gray-600 p-1"
                   >
                     <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                  </button>
+                  </PButton>
                 </div>
                 
                 <form onSubmit={handleCreateWallet} className="space-y-4">
@@ -795,41 +793,33 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      用户/团队 ID *
-                    </label>
-                    <div className="relative">
-                      <span className="pointer-events-none absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                        <UsersIcon className="h-5 w-5" />
-                      </span>
-                      <input
-                        type="number"
-                        value={createForm.user_id || createForm.team_id || ''}
-                        onChange={(e) => {
-                          const value = e.target.value ? parseInt(e.target.value) : undefined;
-                          const walletType = document.querySelector('input[name="wallet_type"]:checked')?.getAttribute('value');
-                          if (walletType === 'user') {
-                            setCreateForm({ ...createForm, user_id: value, team_id: undefined });
-                          } else {
-                            setCreateForm({ ...createForm, team_id: value, user_id: undefined });
-                          }
-                        }}
-                        className="block w-full rounded-xl border-gray-200 bg-white/80 placeholder-gray-400 pl-10 pr-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 sm:text-sm"
-                        placeholder="输入用户或团队 ID"
-                        required
-                      />
-                    </div>
+                    <PInput
+                      type="number"
+                      label="用户/团队 ID *"
+                      value={createForm.user_id || createForm.team_id || ''}
+                      onChange={(e) => {
+                        const value = e.target.value ? parseInt(e.target.value) : undefined;
+                        const walletType = document.querySelector('input[name="wallet_type"]:checked')?.getAttribute('value');
+                        if (walletType === 'user') {
+                          setCreateForm({ ...createForm, user_id: value, team_id: undefined });
+                        } else {
+                          setCreateForm({ ...createForm, team_id: value, user_id: undefined });
+                        }
+                      }}
+                      placeholder="输入用户或团队 ID"
+                      required
+                      icon={<UsersIcon className="h-5 w-5" />}
+                      variant="rounded"
+                    />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      货币类型 *
-                    </label>
-                    <select
+                    <PSelect
+                      label="货币类型 *"
                       value={createForm.currency_code}
-                      onChange={(e) => setCreateForm({ ...createForm, currency_code: e.target.value })}
-                      className="block w-full rounded-xl border-gray-200 bg-white/80 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 sm:text-sm"
+                      onChange={(e) => setCreateForm({ ...createForm, currency_code: (e.target as HTMLSelectElement).value })}
                       required
+                      variant="rounded"
                     >
                       <option value="">选择货币</option>
                       {currencies.map(currency => (
@@ -837,60 +827,53 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                           {currency.code} - {currency.name}
                         </option>
                       ))}
-                    </select>
+                    </PSelect>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      初始余额
-                    </label>
-                    <div className="relative">
-                      <span className="pointer-events-none absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                        <CurrencyDollarIcon className="h-5 w-5" />
-                      </span>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={createForm.initial_balance}
-                        onChange={(e) => setCreateForm({ ...createForm, initial_balance: parseFloat(e.target.value) || 0 })}
-                        className="block w-full rounded-xl border-gray-200 bg-white/80 placeholder-gray-400 pl-10 pr-16 py-2 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 sm:text-sm"
-                        placeholder="0.00"
-                      />
-                      <span className="absolute inset-y-0 right-0 pr-3 flex items-center text-xs font-medium text-gray-500">
-                        {createForm.currency_code || 'CUR'}
-                      </span>
-                    </div>
+                    <PInput
+                      label="初始余额"
+                      type="number"
+                      step="0.01"
+                      value={createForm.initial_balance}
+                      onChange={(e) => setCreateForm({ ...createForm, initial_balance: parseFloat(e.target.value) || 0 })}
+                      placeholder="0.00"
+                      icon={<CurrencyDollarIcon className="h-5 w-5" />}
+                      variant="rounded"
+                    />
+                    <div className="mt-1 text-xs font-medium text-gray-500">{createForm.currency_code || 'CUR'}</div>
                   </div>
 
                   <div className="flex justify-end space-x-3 pt-4">
-                    <button
+                    <PButton
                       type="button"
                       onClick={() => {
                         setCreateModalVisible(false);
                         setCreateForm({ currency_code: '', initial_balance: 0, user_id: undefined, team_id: undefined });
                       }}
-                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                      variant="secondary"
                     >
                       取消
-                    </button>
-                    <button
+                    </PButton>
+                    <PButton
                       type="submit"
                       disabled={createLoading}
-                      className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                      loading={createLoading}
+                      variant="primary"
                     >
-                      {createLoading ? '创建中...' : '创建钱包'}
-                    </button>
+                      创建钱包
+                    </PButton>
                   </div>
                 </form>
               </div>
-            </div>
+            </PCard>
           </div>
         )}
 
         {/* 调整余额模态框 */}
         {adjustModalVisible && selectedWallet && (
           <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
-            <div className="relative mx-auto border-0 w-full max-w-md shadow-2xl rounded-2xl bg-white">
+            <PCard variant="elevated" className="relative mx-auto border-0 w-full max-w-md rounded-2xl">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center">
@@ -901,18 +884,20 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                       调整余额 - 钱包 #{selectedWallet.id}
                     </h3>
                   </div>
-                  <button
+                  <PButton
                     onClick={() => {
                       setAdjustModalVisible(false);
                       setAdjustForm({ amount: 0, reason: '' });
                       setSelectedWallet(null);
                     }}
-                    className="text-gray-400 hover:text-gray-600 transition-colors duration-200 p-1 hover:bg-gray-100 rounded-lg"
+                    variant="secondary"
+                    size="sm"
+                    className="text-gray-600 p-1"
                   >
                     <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                  </button>
+                  </PButton>
                 </div>
 
                 <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-200">
@@ -924,26 +909,17 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                 
                 <form onSubmit={handleAdjustBalance} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      调整金额 *
-                    </label>
-                    <div className="relative">
-                      <span className="pointer-events-none absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                        <CurrencyDollarIcon className="h-5 w-5" />
-                      </span>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={adjustForm.amount}
-                        onChange={(e) => setAdjustForm({ ...adjustForm, amount: parseFloat(e.target.value) || 0 })}
-                        className="block w-full rounded-xl border-gray-200 bg-white/80 placeholder-gray-400 pl-10 pr-16 py-2 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 sm:text-sm"
-                        placeholder="输入正数增加，负数减少"
-                        required
-                      />
-                      <span className="absolute inset-y-0 right-0 pr-3 flex items-center text-xs font-medium text-gray-500">
-                        {selectedWallet.currency.code}
-                      </span>
-                    </div>
+                    <PInput
+                      label="调整金额 *"
+                      type="number"
+                      step="0.01"
+                      value={adjustForm.amount}
+                      onChange={(e) => setAdjustForm({ ...adjustForm, amount: parseFloat(e.target.value) || 0 })}
+                      placeholder="输入正数增加，负数减少"
+                      required
+                      icon={<CurrencyDollarIcon className="h-5 w-5" />}
+                      variant="rounded"
+                    />
                     <p className="mt-1 text-xs text-gray-500">
                       输入正数增加余额，负数减少余额
                     </p>
@@ -964,28 +940,29 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                   </div>
 
                   <div className="flex justify-end space-x-3 pt-4">
-                    <button
+                    <PButton
                       type="button"
                       onClick={() => {
                         setAdjustModalVisible(false);
                         setAdjustForm({ amount: 0, reason: '' });
                         setSelectedWallet(null);
                       }}
-                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                      variant="secondary"
                     >
                       取消
-                    </button>
-                    <button
+                    </PButton>
+                    <PButton
                       type="submit"
                       disabled={adjustLoading}
-                      className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                      loading={adjustLoading}
+                      variant="primary"
                     >
-                      {adjustLoading ? '调整中...' : '确认调整'}
-                    </button>
+                      确认调整
+                    </PButton>
                   </div>
                 </form>
               </div>
-            </div>
+            </PCard>
           </div>
         )}
       </div>

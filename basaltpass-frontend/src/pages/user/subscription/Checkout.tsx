@@ -150,15 +150,13 @@ const SubscriptionCheckout: React.FC = () => {
       {/* 数量选择 */}
       {selectedPrice && (
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            数量
-          </label>
-          <input
+          <PInput
+            label="数量"
             type="number"
-            min="1"
+            min={1}
             value={quantity}
             onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-            className="w-24 p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            className="w-24"
           />
         </div>
       )}
@@ -170,27 +168,18 @@ const SubscriptionCheckout: React.FC = () => {
             优惠券代码（可选）
           </label>
           <div className="flex gap-2">
-            <input
-              type="text"
+            <PInput
               value={couponCode}
               onChange={(e) => setCouponCode(e.target.value)}
               onBlur={validateCoupon}
-              className={`flex-1 p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 ${
-                couponValid === false ? 'border-red-500' : 
-                couponValid === true ? 'border-green-500' : 'border-gray-300'
-              }`}
               placeholder="输入优惠券代码"
+              className="flex-1"
+              error={couponValid === false ? '优惠券无效或已过期' : undefined}
             />
-            <button
-              onClick={validateCoupon}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-blue-700"
-            >
+            <PButton onClick={validateCoupon} variant="primary">
               验证
-            </button>
+            </PButton>
           </div>
-          {couponValid === false && (
-            <p className="text-red-600 text-sm mt-1">优惠券无效或已过期</p>
-          )}
           {couponValid === true && (
             <p className="text-green-600 text-sm mt-1">优惠券有效</p>
           )}
@@ -207,13 +196,15 @@ const SubscriptionCheckout: React.FC = () => {
             </span>
           </div>
           
-          <button
+          <PButton
             onClick={handleCheckout}
             disabled={loading}
-            className="w-full bg-indigo-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+            loading={loading}
+            variant="primary"
+            fullWidth
           >
-            {loading ? '创建中...' : '创建订阅'}
-          </button>
+            创建订阅
+          </PButton>
         </div>
       )}
     </div>
@@ -250,12 +241,12 @@ const SubscriptionCheckout: React.FC = () => {
                 <p className="text-sm text-yellow-800 mb-3">
                   支付页面已在新窗口打开，请完成支付以激活订阅。
                 </p>
-                <button
+                <PButton
                   onClick={() => window.open(subscriptionAPI.getPaymentCheckoutUrl(checkoutResponse.payment_session.stripe_session_id), '_blank')}
-                  className="bg-yellow-600 text-white py-2 px-4 rounded-md hover:bg-yellow-700"
+                  variant="secondary"
                 >
                   重新打开支付页面
-                </button>
+                </PButton>
               </div>
             )}
 
@@ -283,22 +274,24 @@ const SubscriptionCheckout: React.FC = () => {
         )}
 
         <div className="mt-6 pt-6 border-t border-gray-200 flex gap-4">
-          <button
+          <PButton
             onClick={() => navigate('/subscriptions')}
-            className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700"
+            variant="primary"
+            className="flex-1"
           >
             查看我的订阅
-          </button>
-          <button
+          </PButton>
+          <PButton
             onClick={() => {
               setStep('select');
               setCheckoutResponse(null);
               setSelectedPrice(null);
             }}
-            className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700"
+            variant="secondary"
+            className="flex-1"
           >
             创建另一个订阅
-          </button>
+          </PButton>
         </div>
       </div>
     </div>

@@ -46,6 +46,9 @@ func RegisterUserRoutes(v1 fiber.Router) {
 	securityGroup.Post("/phone/verify", userSecurity.VerifyPhoneHandler)
 	securityGroup.Post("/phone/resend", userSecurity.SendPhoneVerificationHandler)
 
+	// 登录历史（需要认证）
+	securityGroup.Get("/login-history", userSecurity.GetLoginHistoryHandler)
+
 	// 通知路由
 	notifGroup := v1.Group("/notifications", middleware.JWTMiddleware())
 	notifGroup.Get("/", userNotif.ListHandler)

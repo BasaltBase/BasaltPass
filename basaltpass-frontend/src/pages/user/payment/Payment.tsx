@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { paymentAPI, CreatePaymentIntentRequest, PaymentIntent, MockStripeResponse } from '@api/subscription/payment/payment';
 import { getBalance } from '@api/user/wallet';
-import { PSelect } from '../../../components';
+import { PSelect, PInput, PButton } from '../../../components';
 
 const Payment: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -114,17 +114,14 @@ const Payment: React.FC = () => {
         {/* 创建支付意图表单 */}
         <form onSubmit={handleCreatePaymentIntent} className="space-y-4 mb-6">
           <div>
-            <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-1">
-              充值金额
-            </label>
-            <input
+            <PInput
               type="number"
               id="amount"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               step="0.01"
               min="0.01"
-              className="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              label="充值金额"
               placeholder="请输入充值金额"
               required
             />
@@ -144,26 +141,24 @@ const Payment: React.FC = () => {
           </div>
 
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-              备注（可选）
-            </label>
-            <input
+            <PInput
               type="text"
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              label="备注（可选）"
               placeholder="请输入备注信息"
             />
           </div>
 
-          <button
+          <PButton
             type="submit"
-            disabled={loading || !amount}
-            className="w-full bg-indigo-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+            disabled={!amount}
+            loading={loading}
+            fullWidth
           >
-            {loading ? '创建中...' : '创建支付意图'}
-          </button>
+            创建支付意图
+          </PButton>
         </form>
 
         {/* 支付意图信息 */}
@@ -178,13 +173,13 @@ const Payment: React.FC = () => {
               <p><strong>创建时间:</strong> {new Date(paymentIntent.CreatedAt).toLocaleString()}</p>
             </div>
             
-            <button
+            <PButton
               onClick={handleCreatePaymentSession}
-              disabled={loading}
-              className="mt-4 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+              loading={loading}
+              className="mt-4"
             >
-              {loading ? '创建中...' : '创建支付会话'}
-            </button>
+              创建支付会话
+            </PButton>
           </div>
         )}
 
@@ -213,12 +208,12 @@ const Payment: React.FC = () => {
 
         {/* 返回按钮 */}
         <div className="mt-6 pt-6 border-t border-gray-200">
-          <button
+          <PButton
+            variant="ghost"
             onClick={() => navigate('/wallet')}
-            className="text-blue-600 hover:text-blue-800 transition-colors"
           >
             ← 返回钱包
-          </button>
+          </PButton>
         </div>
       </div>
     </div>

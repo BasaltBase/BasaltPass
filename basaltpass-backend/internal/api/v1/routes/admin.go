@@ -143,6 +143,8 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 
 	// 货币
 	adminAliasGroup.Get("/currencies", walletHandler.GetCurrencies)
+	// 初始化货币（按需/默认集）
+	adminAliasGroup.Post("/currencies/init", walletHandler.InitCurrencies)
 
 	// 设置
 	aliasSettings := adminAliasGroup.Group("/settings")
@@ -261,6 +263,8 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 
 	// 货币管理
 	adminGroup.Get("/currencies", walletHandler.GetCurrencies) // /tenant/currencies
+	// 初始化货币（按需/默认集）
+	adminGroup.Post("/currencies/init", walletHandler.InitCurrencies)
 
 	// 邀请管理
 	adminInvitationGroup := adminGroup.Group("/invitations")

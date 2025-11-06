@@ -22,4 +22,9 @@ func RegisterS2SRoutes(v1 fiber.Router) {
 
 	// 钱包数据（需要 currency 参数）
 	group.Get("/users/:id/wallets", s2sHandler.GetUserWalletHandler)
+
+	// 用户消息（通知）与商品拥有
+	group.Get("/users/:id/messages", s2sHandler.GetUserMessagesHandler)
+	group.Get("/users/:id/products", s2sHandler.GetUserPurchasedProductsHandler)
+	group.Get("/users/:id/products/:product_id/ownership", s2sHandler.CheckUserProductOwnershipHandler)
 }

@@ -28,7 +28,8 @@ import {
   UserRole
 } from '@api/tenant/tenantRole';
 import TenantLayout from '@components/TenantLayout';
-import { PCheckbox, PInput, PButton } from '../../../components';
+import { PCheckbox, PInput, PButton, PTextarea } from '../../../components';
+import PTable, { PTableColumn } from '../../../components/PTable';
 
 const TenantRoleManagement: React.FC = () => {
   const [roles, setRoles] = useState<Role[]>([]);
@@ -37,7 +38,7 @@ const TenantRoleManagement: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [userRoleModalVisible, setUserRoleModalVisible] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
-  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  // 删除确认改为统一使用确认框，无需内联二次确认状态
   const [selectedUser, setSelectedUser] = useState<TenantUser | null>(null);
   const [userRoles, setUserRoles] = useState<UserRole | null>(null);
   const [selectedRoleIds, setSelectedRoleIds] = useState<number[]>([]);
@@ -168,7 +169,6 @@ const TenantRoleManagement: React.FC = () => {
     try {
       await deleteTenantRole(id);
       showMessage('success', '删除成功');
-      setDeleteConfirm(null);
       fetchRoles();
     } catch (error: any) {
       showMessage('error', error.response?.data?.error || '删除失败');
@@ -258,36 +258,21 @@ const TenantRoleManagement: React.FC = () => {
             {message.type === 'success' && <CheckIcon className="w-5 h-5" />}
             {message.type === 'error' && <ExclamationTriangleIcon className="w-5 h-5" />}
             <span>{message.text}</span>
-            <button 
-              onClick={() => setMessage(prev => ({ ...prev, visible: false }))}
-              className="ml-2 hover:opacity-75"
-            >
+            <PButton variant="ghost" size="sm" onClick={() => setMessage(prev => ({ ...prev, visible: false }))} className="ml-2">
               <XMarkIcon className="w-4 h-4" />
-            </button>
+            </PButton>
           </div>
         )}
 
-        {/* 页面标题 */}
+        {/* 页面标题与操作 */}
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center">
             <ShieldCheckIcon className="w-8 h-8 text-blue-600 mr-3" />
             <h1 className="text-2xl font-bold text-gray-900">角色权限管理</h1>
           </div>
           <div className="flex space-x-3">
-            <button
-              onClick={() => setUserRoleModalVisible(true)}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
-            >
-              <UsersIcon className="w-5 h-5" />
-              <span>用户角色分配</span>
-            </button>
-            <button
-              onClick={() => setModalVisible(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
-            >
-              <PlusIcon className="w-5 h-5" />
-              <span>创建角色</span>
-            </button>
+            <PButton onClick={() => setUserRoleModalVisible(true)} leftIcon={<UsersIcon className="w-5 h-5" />}>用户角色分配</PButton>
+            <PButton onClick={() => setModalVisible(true)} leftIcon={<PlusIcon className="w-5 h-5" />}>创建角色</PButton>
           </div>
         </div>
 
@@ -296,13 +281,12 @@ const TenantRoleManagement: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
+                <PInput
                   type="text"
                   placeholder="搜索角色名称、代码或描述..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  icon={<MagnifyingGlassIcon className="w-5 h-5" />}
                 />
               </div>
             </div>
@@ -339,96 +323,77 @@ const TenantRoleManagement: React.FC = () => {
               <p>暂无角色记录</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">角色信息</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">类型</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">应用范围</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户数量</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">创建时间</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {roles.map((role) => (
-                    <tr key={role.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">{role.name}</div>
-                          <div className="text-sm text-gray-500">{role.code}</div>
-                          {role.description && (
-                            <div className="text-xs text-gray-400 mt-1">{role.description}</div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getRoleTypeStyle(role.is_system)}`}>
-                          {getRoleTypeText(role.is_system)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {role.app_name ? (
-                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
-                            {role.app_name}
-                          </span>
-                        ) : (
-                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800 border border-gray-200">
-                            租户级
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {role.user_count}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(role.created_at).toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {deleteConfirm === role.id ? (
-                          <div className="flex items-center space-x-2">
-                            <button
-                              onClick={() => handleDelete(role.id)}
-                              className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs transition-colors"
-                            >
-                              确认删除
-                            </button>
-                            <button
-                              onClick={() => setDeleteConfirm(null)}
-                              className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs transition-colors"
-                            >
-                              取消
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center space-x-2">
-                            {!role.is_system && (
-                              <>
-                                <button
-                                  onClick={() => handleEdit(role)}
-                                  className="text-blue-600 hover:text-blue-800 p-1 transition-colors"
-                                  title="编辑角色"
-                                >
-                                  <PencilIcon className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => setDeleteConfirm(role.id)}
-                                  className="text-red-600 hover:text-red-800 p-1 transition-colors"
-                                  title="删除角色"
-                                >
-                                  <TrashIcon className="w-4 h-4" />
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <PTable
+              columns={[
+                {
+                  key: 'info',
+                  title: '角色信息',
+                  render: (role: Role) => (
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">{role.name}</div>
+                      <div className="text-sm text-gray-500">{role.code}</div>
+                      {role.description && (
+                        <div className="text-xs text-gray-400 mt-1">{role.description}</div>
+                      )}
+                    </div>
+                  )
+                },
+                {
+                  key: 'type',
+                  title: '类型',
+                  render: (role: Role) => (
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getRoleTypeStyle(role.is_system)}`}>
+                      {getRoleTypeText(role.is_system)}
+                    </span>
+                  )
+                },
+                {
+                  key: 'scope',
+                  title: '应用范围',
+                  render: (role: Role) => (
+                    role.app_name ? (
+                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
+                        {role.app_name}
+                      </span>
+                    ) : (
+                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800 border border-gray-200">
+                        租户级
+                      </span>
+                    )
+                  )
+                },
+                { key: 'user_count', title: '用户数量', dataIndex: 'user_count' },
+                { key: 'created_at', title: '创建时间', dataIndex: 'created_at', sortable: true, sorter: (a: Role, b: Role) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime() },
+                {
+                  key: 'actions',
+                  title: '操作',
+                  align: 'right',
+                  render: (role: Role) => (
+                    <div className="flex items-center justify-end space-x-2">
+                      {!role.is_system && (
+                        <>
+                          <PButton variant="ghost" size="sm" onClick={() => handleEdit(role)} title="编辑角色" className="text-blue-600 hover:text-blue-800">
+                            <PencilIcon className="w-4 h-4" />
+                          </PButton>
+                          <PButton
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => { if (window.confirm('确认删除该角色？')) handleDelete(role.id); }}
+                            title="删除角色"
+                            className="text-red-600 hover:text-red-800"
+                          >
+                            <TrashIcon className="w-4 h-4" />
+                          </PButton>
+                        </>
+                      )}
+                    </div>
+                  )
+                },
+              ]}
+              data={roles}
+              rowKey={(r) => String(r.id)}
+              defaultSort={{ key: 'created_at', order: 'desc' }}
+            />
           )}
 
           {/* 分页 */}
@@ -439,25 +404,29 @@ const TenantRoleManagement: React.FC = () => {
                   显示第 {((pagination.current - 1) * pagination.pageSize) + 1} - {Math.min(pagination.current * pagination.pageSize, pagination.total)} 条，共 {pagination.total} 条
                 </div>
                 <div className="flex items-center space-x-2">
-                  <button
+                  <PButton
+                    variant="secondary"
+                    size="sm"
                     onClick={() => handlePageChange(pagination.current - 1)}
                     disabled={pagination.current <= 1}
-                    className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    className="rounded-lg"
                   >
                     <ChevronLeftIcon className="w-4 h-4" />
-                  </button>
+                  </PButton>
                   
                   <span className="px-3 py-1 text-sm">
                     第 {pagination.current} 页，共 {Math.ceil(pagination.total / pagination.pageSize)} 页
                   </span>
                   
-                  <button
+                  <PButton
+                    variant="secondary"
+                    size="sm"
                     onClick={() => handlePageChange(pagination.current + 1)}
                     disabled={pagination.current >= Math.ceil(pagination.total / pagination.pageSize)}
-                    className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    className="rounded-lg"
                   >
                     <ChevronRightIcon className="w-4 h-4" />
-                  </button>
+                  </PButton>
                 </div>
               </div>
             </div>
@@ -490,13 +459,12 @@ const TenantRoleManagement: React.FC = () => {
                         <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-1">
                           角色代码 <span className="text-red-500">*</span>
                         </label>
-                        <input
+                        <PInput
                           type="text"
                           id="code"
                           value={formData.code}
                           onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                           placeholder="如：admin、user、viewer等"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           required
                         />
                       </div>
@@ -506,13 +474,12 @@ const TenantRoleManagement: React.FC = () => {
                         <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                           角色名称 <span className="text-red-500">*</span>
                         </label>
-                        <input
+                        <PInput
                           type="text"
                           id="name"
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                           placeholder="请输入角色名称"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           required
                         />
                       </div>
@@ -522,27 +489,23 @@ const TenantRoleManagement: React.FC = () => {
                         <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
                           角色描述
                         </label>
-                        <textarea
+                        <PTextarea
                           id="description"
                           rows={3}
                           value={formData.description}
                           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                           placeholder="请输入角色描述"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
                     </div>
                   </div>
-
                   <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button
-                      type="submit"
-                      className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm transition-colors"
-                    >
+                    <PButton type="submit">
                       {editingRole ? '更新角色' : '创建角色'}
-                    </button>
-                    <button
+                    </PButton>
+                    <PButton
                       type="button"
+                      variant="secondary"
                       onClick={() => {
                         setModalVisible(false);
                         setEditingRole(null);
@@ -553,10 +516,10 @@ const TenantRoleManagement: React.FC = () => {
                           app_id: undefined,
                         });
                       }}
-                      className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors"
+                      className="sm:ml-3 sm:mt-0 mt-3"
                     >
                       取消
-                    </button>
+                    </PButton>
                   </div>
                 </form>
               </div>
@@ -596,12 +559,13 @@ const TenantRoleManagement: React.FC = () => {
                         <h4 className="font-medium text-gray-900 mb-3">选择用户</h4>
                         <div className="relative">
                           <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                          <input
+                          <PInput
                             type="text"
                             placeholder="搜索用户..."
                             value={userSearchTerm}
                             onChange={(e) => setUserSearchTerm(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="pl-9"
+                            size="sm"
                           />
                         </div>
                       </div>
@@ -636,21 +600,25 @@ const TenantRoleManagement: React.FC = () => {
                           <div className="flex items-center justify-between text-xs text-gray-600">
                             <span>共 {userPagination.total} 个用户</span>
                             <div className="flex items-center space-x-1">
-                              <button
+                              <PButton
+                                variant="secondary"
+                                size="sm"
                                 onClick={() => handleUserPageChange(userPagination.current - 1)}
                                 disabled={userPagination.current <= 1}
-                                className="p-1 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200"
+                                className="rounded"
                               >
-                                <ChevronLeftIcon className="w-3 h-3" />
-                              </button>
+                                <ChevronLeftIcon className="w-4 h-4" />
+                              </PButton>
                               <span>{userPagination.current}/{Math.ceil(userPagination.total / userPagination.pageSize)}</span>
-                              <button
+                              <PButton
+                                variant="secondary"
+                                size="sm"
                                 onClick={() => handleUserPageChange(userPagination.current + 1)}
                                 disabled={userPagination.current >= Math.ceil(userPagination.total / userPagination.pageSize)}
-                                className="p-1 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200"
+                                className="rounded"
                               >
-                                <ChevronRightIcon className="w-3 h-3" />
-                              </button>
+                                <ChevronRightIcon className="w-4 h-4" />
+                              </PButton>
                             </div>
                           </div>
                         </div>
@@ -697,12 +665,9 @@ const TenantRoleManagement: React.FC = () => {
                               </div>
                             ))}
                             <div className="pt-4 border-t">
-                              <button
-                                onClick={handleAssignRoles}
-                                className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
-                              >
+                              <PButton onClick={handleAssignRoles} className="w-full">
                                 分配角色
-                              </button>
+                              </PButton>
                             </div>
                           </div>
                         ) : (

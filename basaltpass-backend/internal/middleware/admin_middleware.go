@@ -17,7 +17,7 @@ import (
 *
  */
 
-// AdminMiddleware allows only users with role 'tenant'.
+// AdminMiddleware allows only super admins or users who are tenant owners/admins in any tenant.
 func AdminMiddleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		uidVal := c.Locals("userID")
@@ -34,14 +34,16 @@ func AdminMiddleware() fiber.Handler {
 			}
 		}
 
-		var count int64
-		common.DB().Model(&model.UserRole{}).
-			Joins("JOIN roles ON roles.id = user_roles.role_id AND roles.code = ?", "tenant").
-			Where("user_roles.user_id = ?", uid).
-			Count(&count)
-		if count == 0 {
-			fmt.Printf("[AdminMiddleware] user %d forbidden: missing role 'tenant'\n", uid)
-			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "tenant role required"})
+		// Allow tenant owners/admins (role = owner or tenant) as admins for tenant-scoped admin areas
+		var taCount int64
+		if err := common.DB().Model(&model.TenantAdmin{}).
+			Where("user_id = ? AND role IN ?", uid, []model.TenantRole{model.TenantRoleOwner, model.TenantRoleAdmin}).
+			Count(&taCount).Error; err != nil {
+			fmt.Printf("[AdminMiddleware] tenant admin check error for user %d: %v\n", uid, err)
+		}
+		if taCount == 0 {
+			fmt.Printf("[AdminMiddleware] user %d forbidden: not super admin and no tenant admin role\n", uid)
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "admin access required"})
 		}
 		return c.Next()
 	}

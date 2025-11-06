@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import Layout from '../../components/Layout'
-import { PSelect, PCard } from '../../components'
+import { PSelect, PCard, PToggle, PButton } from '../../components'
 import { 
   UserIcon, 
   BellIcon, 
@@ -93,19 +93,11 @@ export default function Settings() {
                     <p className="text-sm font-medium text-gray-900">邮件通知</p>
                     <p className="text-sm text-gray-500">接收重要更新和交易通知</p>
                   </div>
-                  <button
-                    type="button"
-                    className={`${
-                      notifications.email ? 'bg-indigo-600' : 'bg-gray-200'
-                    } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
-                    onClick={() => handleNotificationChange('email')}
-                  >
-                    <span
-                      className={`${
-                        notifications.email ? 'translate-x-5' : 'translate-x-0'
-                      } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
-                    />
-                  </button>
+                  <PToggle
+                    checked={notifications.email}
+                    onChange={() => handleNotificationChange('email')}
+                    aria-label="邮件通知"
+                  />
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -113,19 +105,11 @@ export default function Settings() {
                     <p className="text-sm font-medium text-gray-900">短信通知</p>
                     <p className="text-sm text-gray-500">接收安全验证和紧急通知</p>
                   </div>
-                  <button
-                    type="button"
-                    className={`${
-                      notifications.sms ? 'bg-indigo-600' : 'bg-gray-200'
-                    } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
-                    onClick={() => handleNotificationChange('sms')}
-                  >
-                    <span
-                      className={`${
-                        notifications.sms ? 'translate-x-5' : 'translate-x-0'
-                      } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
-                    />
-                  </button>
+                  <PToggle
+                    checked={notifications.sms}
+                    onChange={() => handleNotificationChange('sms')}
+                    aria-label="短信通知"
+                  />
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -133,19 +117,11 @@ export default function Settings() {
                     <p className="text-sm font-medium text-gray-900">推送通知</p>
                     <p className="text-sm text-gray-500">接收实时交易和系统通知</p>
                   </div>
-                  <button
-                    type="button"
-                    className={`${
-                      notifications.push ? 'bg-indigo-600' : 'bg-gray-200'
-                    } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
-                    onClick={() => handleNotificationChange('push')}
-                  >
-                    <span
-                      className={`${
-                        notifications.push ? 'translate-x-5' : 'translate-x-0'
-                      } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
-                    />
-                  </button>
+                  <PToggle
+                    checked={notifications.push}
+                    onChange={() => handleNotificationChange('push')}
+                    aria-label="推送通知"
+                  />
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -153,19 +129,11 @@ export default function Settings() {
                     <p className="text-sm font-medium text-gray-900">安全通知</p>
                     <p className="text-sm text-gray-500">接收登录和安全事件通知</p>
                   </div>
-                  <button
-                    type="button"
-                    className={`${
-                      notifications.security ? 'bg-indigo-600' : 'bg-gray-200'
-                    } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
-                    onClick={() => handleNotificationChange('security')}
-                  >
-                    <span
-                      className={`${
-                        notifications.security ? 'translate-x-5' : 'translate-x-0'
-                      } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
-                    />
-                  </button>
+                  <PToggle
+                    checked={notifications.security}
+                    onChange={() => handleNotificationChange('security')}
+                    aria-label="安全通知"
+                  />
                 </div>
               </div>
           </PCard>
@@ -173,12 +141,7 @@ export default function Settings() {
 
         {/* 保存按钮 */}
         <div className="flex justify-end">
-          <button
-            type="button"
-            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            保存设置
-          </button>
+          <PButton type="button" variant="primary">保存设置</PButton>
         </div>
       </div>
     </Layout>

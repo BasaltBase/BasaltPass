@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import client from '../../api/client'
 import { Link } from 'react-router-dom'
-import { ChevronRightIcon } from '@heroicons/react/24/outline'
+import { ArrowPathIcon, ChevronRightIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 import AdminLayout from '../../components/AdminLayout'
+import PTable, { PTableColumn } from '@components/PTable'
+import PInput from '@components/PInput'
+import PButton from '@components/PButton'
 
 interface Log {
   ID: number
@@ -19,14 +22,45 @@ interface Log {
 
 export default function Logs() {
   const [logs, setLogs] = useState<Log[]>([])
+  const [loading, setLoading] = useState(false)
+  const [keyword, setKeyword] = useState('')
 
-  const load = () => {
-    client.get<Log[]>('/api/v1/admin/logs').then((r) => setLogs(r.data))
+  const load = async () => {
+    setLoading(true)
+    try {
+      const r = await client.get<Log[]>('/api/v1/admin/logs')
+      setLogs(r.data)
+    } finally { setLoading(false) }
   }
-  useEffect(load, [])
+  useEffect(() => { load() }, [])
+
+  const filtered = useMemo(() => {
+    if (!keyword) return logs
+    const kw = keyword.toLowerCase().trim()
+    return logs.filter(l =>
+      String(l.ID).includes(kw) ||
+      String(l.UserID).includes(kw) ||
+      (l.Action || '').toLowerCase().includes(kw) ||
+      (l.IP || '').toLowerCase().includes(kw) ||
+      (l.Data || '').toLowerCase().includes(kw)
+    )
+  }, [logs, keyword])
+
+  const columns: PTableColumn<Log>[] = [
+    { key: 'id', title: 'ID', dataIndex: 'ID', sortable: true, align: 'center' },
+    { key: 'user', title: '用户ID', sortable: true, align: 'center', sorter: (a,b)=> a.UserID - b.UserID, render: (row)=> row.UserID },
+    { key: 'action', title: '操作', align: 'left', render: (row)=> row.Action },
+    { key: 'resource', title: '资源', align: 'left', render: (row)=> (row.Data?.slice(0,50) || '') },
+    { key: 'ip', title: 'IP地址', align: 'center', render: (row)=> row.IP },
+    { key: 'created_at', title: '时间', sortable: true, render: (row)=> new Date(row.CreatedAt).toLocaleString() },
+  ]
 
   return (
-    <AdminLayout title="操作日志">
+    <AdminLayout title="操作日志" actions={
+      <PButton variant="ghost" size="sm" leftIcon={<ArrowPathIcon className="h-4 w-4" />} onClick={load} disabled={loading}>
+        刷新
+      </PButton>
+    }>
       <div className="space-y-6">
         {/* 面包屑导航 */}
         <nav className="flex" aria-label="Breadcrumb">
@@ -60,39 +94,20 @@ export default function Logs() {
           </p>
         </div>
 
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">操作日志</h3>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">资源</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP地址</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">时间</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {logs.map((log) => (
-                  <tr key={log.ID} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{log.ID}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{log.UserID}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{log.Action}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{log.Data?.slice(0,50)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{log.IP}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {new Date(log.CreatedAt).toLocaleString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-medium text-gray-900">操作日志</h3>
+          <div className="relative w-72">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <PInput placeholder="搜索 ID/用户/操作/IP/资源" value={keyword} onChange={(e)=>setKeyword(e.target.value)} className="pl-9" />
           </div>
         </div>
+        <PTable
+          columns={columns}
+          data={filtered}
+          rowKey={(row)=> row.ID}
+          loading={loading}
+          defaultSort={{ key: 'created_at', order: 'desc' }}
+        />
       </div>
     </AdminLayout>
   )

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import Layout from '../../../components/Layout';
 import { PCard, PButton } from '../../../components';
+import PTable, { PTableColumn, PTableAction } from '../../../components/PTable';
 import { teamApi } from '@api/user/team';
 
 interface TeamMember {
@@ -137,75 +138,53 @@ const TeamMembers: React.FC = () => {
             </div>
           </div>
           <div className="overflow-x-auto">
-            {members.length === 0 ? (
-              <div className="text-center py-12">
-                <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                <h3 className="mt-2 text-sm font-medium text-gray-900">暂无成员</h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  团队成员将显示在这里
-                </p>
-              </div>
-            ) : (
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">角色</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">加入时间</th>
-                    {canManageMembers && (
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
-                    )}
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {members.map((member) => (
-                    <tr key={member.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10">
-                            <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                              <span className="text-sm font-medium text-gray-700">
-                                {member.user.nickname?.charAt(0) || member.user.email.charAt(0).toUpperCase()}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {member.user.nickname || '未设置昵称'}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {member.user.email}
-                            </div>
-                          </div>
+            {(() => {
+              const columns: PTableColumn<TeamMember>[] = [
+                {
+                  key: 'user',
+                  title: '用户',
+                  render: (member) => (
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 h-10 w-10">
+                        <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                          <span className="text-sm font-medium text-gray-700">
+                            {member.user.nickname?.charAt(0) || member.user.email.charAt(0).toUpperCase()}
+                          </span>
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getRoleBadge(member.role)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {new Date(member.joined_at).toLocaleDateString()}
-                      </td>
-                      {canManageMembers && (
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <div className="flex space-x-2">
-                            <button className="text-blue-600 hover:text-blue-900">
-                              编辑角色
-                            </button>
-                            {member.role !== 'owner' && (
-                              <button className="text-red-600 hover:text-red-900">
-                                移除
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+                      </div>
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900">
+                          {member.user.nickname || '未设置昵称'}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {member.user.email}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                },
+                { key: 'role', title: '角色', render: (m) => getRoleBadge(m.role) },
+                { key: 'joined_at', title: '加入时间', dataIndex: 'joined_at', sortable: true, sorter: (a, b) => new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime() },
+              ];
+
+              const actions: PTableAction<TeamMember>[] = canManageMembers
+                ? [
+                    { key: 'edit', label: '编辑角色', variant: 'secondary', size: 'sm', onClick: () => {/* TODO: open role modal */} },
+                    { key: 'remove', label: '移除', variant: 'danger', size: 'sm', onClick: () => {/* TODO: remove member */} },
+                  ]
+                : [];
+
+              return (
+                <PTable
+                  columns={columns}
+                  data={members}
+                  rowKey={(row) => row.id}
+                  actions={actions}
+                  emptyText="暂无成员"
+                  striped
+                />
+              );
+            })()}
           </div>
         </div>
       </div>

@@ -73,6 +73,53 @@ go build cmd/basaltpass/main.go
 
 - S2S 服务间 API（机器可消费）：见 `docs/S2S_API.md`
 
+### 系统设置（可视化与接口）
+
+后端内置了系统设置表 `system_settings`，用于以键值对的形式存储可运行时修改的配置，值以 JSON 字符串存储。服务启动时会自动迁移并注入默认设置，并加载到内存缓存。
+
+- 默认包含的键：
+  - `general.site_name`（系统名称，默认：`BasaltPass`）
+
+- 管理端接口：
+  - `GET /api/v1/admin/settings` 列出全部设置（可用 `?category=general` 过滤）
+  - `GET /api/v1/admin/settings/:key` 按 key 获取
+  - `POST /api/v1/admin/settings` 新增/更新单个
+  - `PUT /api/v1/admin/settings/bulk` 批量保存
+
+前端管理页面位于 `/admin/settings`。在“通用”分类中可直接修改“系统名称”，保存后立即生效。
+
+### 管理员：初始化货币
+
+接口：
+
+- POST /api/v1/admin/currencies/init
+- POST /api/v1/tenant/currencies/init（等价别名）
+
+请求体：
+
+```
+{
+  "codes": ["USD", "CNY", "EUR"] // 可选；为空时将初始化内置默认集（幂等）
+}
+```
+
+响应：
+
+```
+{
+  "message": "Currencies initialized",
+  "created": 2,           // 新增的币种数量
+  "skipped": 1,           // 已存在而跳过的数量
+  "requested": 3          // 请求的代码总数
+}
+```
+
+说明：
+
+- 该接口需要管理员权限（JWT）。
+- 代码大小写不敏感，内部会统一转为大写。
+- 未传 codes 或传空数组时，将按服务内置默认目录进行初始化（多次调用幂等）。
+
 ### 健康检查
 
 ```

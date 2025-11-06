@@ -487,7 +487,11 @@ const CreateCouponModal: React.FC<{
         duration: formData.duration as 'once' | 'repeating' | 'forever',
         duration_in_cycles: formData.duration_in_cycles ? parseInt(formData.duration_in_cycles) : undefined,
         max_redemptions: formData.max_redemptions ? parseInt(formData.max_redemptions) : undefined,
-        expires_at: formData.expires_at || undefined,
+        // 后端期望 ISO 8601（RFC3339）时间字符串，表单为日期，需转换
+        // 约定使用该日 23:59:59Z 作为过期时间，避免时区造成的日期偏移
+        expires_at: formData.expires_at
+          ? new Date(`${formData.expires_at}T23:59:59Z`).toISOString()
+          : undefined,
         metadata: {
           description: formData.description
         }

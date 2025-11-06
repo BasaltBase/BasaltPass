@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import AdminLayout from '@components/AdminLayout'
 import { PButton, PInput, PSelect } from '@components/index'
+import PTable, { PTableColumn } from '@components/PTable'
 import { adminInvitationApi, AdminInvitationBrief } from '@api/admin/invitation'
 import { adminTeamApi } from '@api/admin/team'
 import { FunnelIcon, PlusIcon, ArrowPathIcon, TrashIcon } from '@heroicons/react/24/outline'
@@ -57,6 +58,32 @@ export default function AdminInvitationsPage() {
     load()
   }
 
+  const columns: PTableColumn<AdminInvitationBrief>[] = [
+    { key: 'id', title: 'ID', dataIndex: 'id', sortable: true, align: 'center' },
+    { key: 'team', title: '团队', align: 'left', render: (inv) => `${inv.team_name}#${inv.team_id}` },
+    { key: 'inviter', title: '邀请人', align: 'center', render: (inv) => inv.inviter_id },
+    { key: 'invitee', title: '被邀请人', align: 'center', render: (inv) => inv.invitee_id },
+    {
+      key: 'status', title: '状态', align: 'center', render: (inv) => (
+        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${inv.status==='pending'?'bg-yellow-100 text-yellow-800':inv.status==='accepted'?'bg-green-100 text-green-800':inv.status==='rejected'?'bg-red-100 text-red-800':'bg-gray-100 text-gray-600'}`}>{inv.status}</span>
+      )
+    },
+    { key: 'remark', title: '备注', className: 'max-w-xs truncate', render: (inv) => inv.remark || '' },
+    { key: 'created_at', title: '创建时间', sortable: true, render: (inv) => new Date(inv.created_at).toLocaleString() },
+    {
+      key: 'actions', title: '操作', align: 'right', render: (inv) => (
+        <div className='flex items-center justify-end space-x-2'>
+          {inv.status==='pending' && <>
+            <PButton size='sm' variant='secondary' onClick={()=>updateStatus(inv,'accepted')}>接受</PButton>
+            <PButton size='sm' variant='ghost' onClick={()=>updateStatus(inv,'rejected')}>拒绝</PButton>
+            <PButton size='sm' variant='ghost' onClick={()=>updateStatus(inv,'revoked')}>撤回</PButton>
+          </>}
+          <PButton size='sm' variant='danger' leftIcon={<TrashIcon className='h-4 w-4'/>} onClick={()=>removeInvitation(inv)}/>
+        </div>
+      )
+    },
+  ]
+
   return (
     <AdminLayout title="邀请管理" actions={<PButton size='sm' leftIcon={<PlusIcon className='h-4 w-4'/>} onClick={()=>setShowCreate(true)}>新建邀请</PButton>}>
       <div className='space-y-6'>
@@ -79,55 +106,17 @@ export default function AdminInvitationsPage() {
           </div>
           <PButton variant='ghost' size='sm' leftIcon={<FunnelIcon className='h-4 w-4'/>}>筛选</PButton>
         </div>
-        <div className='bg-white shadow rounded-lg overflow-hidden'>
-          <table className='min-w-full divide-y divide-gray-200'>
-            <thead className='bg-gray-50'>
-              <tr>
-                <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>ID</th>
-                <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>团队</th>
-                <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>邀请人</th>
-                <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>被邀请人</th>
-                <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>状态</th>
-                <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>备注</th>
-                <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>创建时间</th>
-                <th className='px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase'>操作</th>
-              </tr>
-            </thead>
-            <tbody className='divide-y divide-gray-100 bg-white text-sm'>
-              {list.map(inv => (
-                <tr key={inv.id} className='hover:bg-gray-50'>
-                  <td className='px-4 py-2'>{inv.id}</td>
-                  <td className='px-4 py-2'>{inv.team_name}#{inv.team_id}</td>
-                  <td className='px-4 py-2'>{inv.inviter_id}</td>
-                  <td className='px-4 py-2'>{inv.invitee_id}</td>
-                  <td className='px-4 py-2'>
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${inv.status==='pending'?'bg-yellow-100 text-yellow-800':inv.status==='accepted'?'bg-green-100 text-green-800':inv.status==='rejected'?'bg-red-100 text-red-800':'bg-gray-100 text-gray-600'}`}>{inv.status}</span>
-                  </td>
-                  <td className='px-4 py-2 max-w-xs truncate'>{inv.remark}</td>
-                  <td className='px-4 py-2'>{new Date(inv.created_at).toLocaleString()}</td>
-                  <td className='px-4 py-2 text-right space-x-2'>
-                    {inv.status==='pending' && <>
-                      <PButton size='sm' variant='secondary' onClick={()=>updateStatus(inv,'accepted')}>接受</PButton>
-                      <PButton size='sm' variant='ghost' onClick={()=>updateStatus(inv,'rejected')}>拒绝</PButton>
-                      <PButton size='sm' variant='ghost' onClick={()=>updateStatus(inv,'revoked')}>撤回</PButton>
-                    </>}
-                    <PButton size='sm' variant='danger' leftIcon={<TrashIcon className='h-4 w-4'/>} onClick={()=>removeInvitation(inv)}/>
-                  </td>
-                </tr>
-              ))}
-              {!loading && list.length===0 && (
-                <tr><td colSpan={8} className='px-4 py-8 text-center text-gray-500'>暂无数据</td></tr>
-              )}
-              {loading && (
-                <tr><td colSpan={8} className='px-4 py-8 text-center text-gray-400 animate-pulse flex items-center justify-center space-x-2'><ArrowPathIcon className='h-5 w-5 animate-spin'/> <span>加载中</span></td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <PTable
+          columns={columns}
+          data={list}
+          rowKey={(row)=> row.id}
+          loading={loading}
+          defaultSort={{ key: 'created_at', order: 'desc' }}
+        />
         {totalPages>1 && (
           <div className='flex space-x-2'>
             {Array.from({length: totalPages}, (_,i)=>i+1).map(p=> (
-              <button key={p} onClick={()=>setPage(p)} className={`px-3 py-1 rounded-md text-sm ${p===page? 'bg-indigo-600 text-white':'bg-white border text-gray-600'}`}>{p}</button>
+              <PButton key={p} size='sm' variant={p===page ? 'primary' : 'secondary'} onClick={()=>setPage(p)}>{p}</PButton>
             ))}
           </div>) }
       </div>

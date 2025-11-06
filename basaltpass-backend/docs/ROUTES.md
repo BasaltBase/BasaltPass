@@ -53,6 +53,7 @@
 | PUT | /api/v1/admin/coupons/:code |
 | GET | /api/v1/admin/currencies |
 | HEAD | /api/v1/admin/currencies |
+| POST | /api/v1/admin/currencies/init |
 | GET | /api/v1/admin/dashboard/activities |
 | HEAD | /api/v1/admin/dashboard/activities |
 | GET | /api/v1/admin/dashboard/stats |
@@ -328,8 +329,14 @@
 | TRACE | /api/v1/s2s |
 | GET | /api/v1/s2s/users/:id |
 | HEAD | /api/v1/s2s/users/:id |
+| GET | /api/v1/s2s/users/:id/messages |
+| HEAD | /api/v1/s2s/users/:id/messages |
 | GET | /api/v1/s2s/users/:id/permissions |
 | HEAD | /api/v1/s2s/users/:id/permissions |
+| GET | /api/v1/s2s/users/:id/products |
+| HEAD | /api/v1/s2s/users/:id/products |
+| GET | /api/v1/s2s/users/:id/products/:product_id/ownership |
+| HEAD | /api/v1/s2s/users/:id/products/:product_id/ownership |
 | GET | /api/v1/s2s/users/:id/roles |
 | HEAD | /api/v1/s2s/users/:id/roles |
 | GET | /api/v1/s2s/users/:id/wallets |
@@ -349,6 +356,8 @@
 | PUT | /api/v1/security/contact |
 | POST | /api/v1/security/email/resend |
 | POST | /api/v1/security/email/verify |
+| GET | /api/v1/security/login-history |
+| HEAD | /api/v1/security/login-history |
 | POST | /api/v1/security/password/change |
 | POST | /api/v1/security/phone/resend |
 | POST | /api/v1/security/phone/verify |
@@ -478,6 +487,7 @@
 | PUT | /api/v1/tenant/coupons/:code |
 | GET | /api/v1/tenant/currencies |
 | HEAD | /api/v1/tenant/currencies |
+| POST | /api/v1/tenant/currencies/init |
 | GET | /api/v1/tenant/dashboard/activities |
 | HEAD | /api/v1/tenant/dashboard/activities |
 | GET | /api/v1/tenant/dashboard/stats |

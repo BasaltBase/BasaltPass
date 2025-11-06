@@ -15,6 +15,7 @@ import {
   listTenantUserSubscriptions,
   getTenantUserSubscription,
 } from '@api/tenant/subscription'
+import { PInput, PSelect, PButton, PTextarea } from '../../../components'
 
 export default function TenantSubscriptions() {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
@@ -160,24 +161,17 @@ export default function TenantSubscriptions() {
         <div className="bg-white p-4 rounded-lg shadow">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="搜索订阅ID、客户ID或产品名称..."
-                />
-              </div>
+              <PInput
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="搜索订阅ID、客户ID或产品名称..."
+                icon={<MagnifyingGlassIcon className="h-5 w-5" />}
+              />
             </div>
             <div className="sm:w-48">
-              <select
+              <PSelect
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="block w-full py-2 pl-3 pr-10 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md"
               >
                 <option value="">所有状态</option>
                 <option value="active">活跃</option>
@@ -185,19 +179,19 @@ export default function TenantSubscriptions() {
                 <option value="paused">已暂停</option>
                 <option value="past_due">逾期</option>
                 <option value="unpaid">未支付</option>
-              </select>
+              </PSelect>
             </div>
             {(searchTerm || statusFilter) && (
-              <button
+              <PButton
                 onClick={() => {
                   setSearchTerm('')
                   setStatusFilter('')
                 }}
-                className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm leading-4 font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                variant="secondary"
+                size="sm"
               >
-                <XMarkIcon className="h-4 w-4 mr-1" />
                 清除
-              </button>
+              </PButton>
             )}
           </div>
         </div>
@@ -246,12 +240,13 @@ export default function TenantSubscriptions() {
                       </div>
                       <div className="flex items-center space-x-2">
                         {subscription.Status === 'active' && (
-                          <button
+                          <PButton
                             onClick={() => handleCancelClick(subscription)}
-                            className="text-red-600 hover:text-red-900 text-sm font-medium"
+                            variant="danger"
+                            size="sm"
                           >
                             取消订阅
-                          </button>
+                          </PButton>
                         )}
                         <Link
                           to={`/tenant/subscriptions/detail/${subscription.ID}`}
@@ -312,34 +307,33 @@ export default function TenantSubscriptions() {
                     <label className="block text-sm font-medium text-gray-700 mb-2 text-left">
                       取消原因 (可选)
                     </label>
-                    <textarea
+                    <PTextarea
                       value={cancelReason}
                       onChange={(e) => setCancelReason(e.target.value)}
                       rows={3}
-                      className="block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
                       placeholder="请输入取消原因..."
                     />
                   </div>
                 </div>
                 <div className="flex justify-center space-x-3 mt-6">
-                  <button
+                  <PButton
                     onClick={() => {
                       setShowCancelModal(false)
                       setCancelTarget(null)
                       setCancelReason('')
                     }}
                     disabled={cancelling}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 disabled:opacity-50"
+                    variant="secondary"
                   >
                     取消
-                  </button>
-                  <button
+                  </PButton>
+                  <PButton
                     onClick={handleCancelConfirm}
-                    disabled={cancelling}
-                    className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 disabled:opacity-50"
+                    loading={cancelling}
+                    variant="danger"
                   >
-                    {cancelling ? '取消中...' : '确认取消'}
-                  </button>
+                    确认取消
+                  </PButton>
                 </div>
               </div>
             </div>

@@ -16,6 +16,10 @@ import {
   CreateTenantPriceRequest,
   UpdateTenantPriceRequest,
 } from '@api/tenant/subscription'
+import PInput from '@components/PInput'
+import PSelect from '@components/PSelect'
+import PButton from '@components/PButton'
+import PTable, { PTableColumn, PTableAction } from '@components/PTable'
 
 export default function TenantPrices() {
   const [searchParams] = useSearchParams()
@@ -186,71 +190,42 @@ export default function TenantPrices() {
               </h2>
             </div>
             <div className="mt-5 flex lg:mt-0 lg:ml-4">
-              <button
-                type="button"
-                onClick={() => setShowModal(true)}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
-                创建定价
-              </button>
+              <PButton type="button" onClick={() => setShowModal(true)} leftIcon={<PlusIcon className="h-5 w-5" />}>创建定价</PButton>
             </div>
           </div>
 
-          {/* 定价列表 */}
+          {/* 定价列表（统一表格组件） */}
           <div className="mt-8">
-            <div className="bg-white shadow overflow-hidden sm:rounded-md">
-              <ul className="divide-y divide-gray-200">
-                {prices.length === 0 ? (
-                  <li className="px-6 py-8 text-center text-gray-500">
-                    暂无定价数据
-                  </li>
-                ) : (
-                  prices.map((price) => (
-                    <li key={price.ID} className="px-6 py-4 hover:bg-gray-50">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center">
-                            <div className="flex-1">
-                              <p className="text-lg font-medium text-gray-900">
-                                {formatPrice(price.AmountCents, price.Currency)}
-                              </p>
-                              <div className="mt-2 flex items-center text-sm text-gray-500 space-x-4">
-                                <span>套餐: {getPlanName(price.PlanID)}</span>
-                                <span>计费周期: {formatBillingPeriod(price.BillingPeriod, price.BillingInterval)}</span>
-                                <span>使用类型: {price.UsageType}</span>
-                                {price.TrialDays && (
-                                  <span>试用期: {price.TrialDays}天</span>
-                                )}
-                              </div>
-                              <div className="mt-2 text-sm text-gray-600">
-                                创建时间: {new Date(price.CreatedAt).toLocaleString('zh-CN')}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => handleEdit(price)}
-                            className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md"
-                            title="编辑"
-                          >
-                            <PencilIcon className="h-5 w-5" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteClick(price)}
-                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md"
-                            title="删除"
-                          >
-                            <TrashIcon className="h-5 w-5" />
-                          </button>
-                        </div>
-                      </div>
-                    </li>
-                  ))
-                )}
-              </ul>
-            </div>
+            {(() => {
+              const columns: PTableColumn<TenantPrice>[] = [
+                { key: 'plan', title: '套餐', render: (row) => getPlanName(row.PlanID) },
+                { key: 'amount', title: '价格', render: (row) => formatPrice(row.AmountCents, row.Currency) },
+                { key: 'billing', title: '计费周期', render: (row) => formatBillingPeriod(row.BillingPeriod, row.BillingInterval) },
+                { key: 'usage', title: '使用类型', dataIndex: 'UsageType' as any },
+                { key: 'trial', title: '试用期', render: (row) => (row.TrialDays ? `${row.TrialDays} 天` : '-') },
+                { key: 'created', title: '创建时间', render: (row) => new Date(row.CreatedAt).toLocaleString('zh-CN') },
+              ];
+
+              const actions: PTableAction<TenantPrice>[] = [
+                { key: 'edit', label: '编辑', icon: <PencilIcon className="h-4 w-4" />, variant: 'secondary', size: 'sm', onClick: (row) => handleEdit(row) },
+                { key: 'delete', label: '删除', icon: <TrashIcon className="h-4 w-4" />, variant: 'danger', size: 'sm', confirm: '确定要删除该定价吗？', onClick: (row) => handleDeleteClick(row) },
+              ];
+
+              return (
+                <PTable
+                  columns={columns}
+                  data={prices}
+                  rowKey={(row) => row.ID}
+                  actions={actions}
+                  emptyText="暂无定价数据"
+                  emptyContent={
+                    <PButton type="button" onClick={() => setShowModal(true)} leftIcon={<PlusIcon className="h-5 w-5" />}>创建定价</PButton>
+                  }
+                  striped
+                  size="md"
+                />
+              )
+            })()}
           </div>
         </div>
       </div>
@@ -263,111 +238,81 @@ export default function TenantPrices() {
               {editingPrice ? '编辑定价' : '创建定价'}
             </h3>
             <form onSubmit={handleSubmit} className="space-y-4">
+              <PSelect
+                label="套餐"
+                value={formData.plan_id}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, plan_id: parseInt(e.target.value) })}
+                required
+                disabled={!!editingPrice}
+              >
+                <option value="">请选择套餐</option>
+                {plans.map((plan) => (
+                  <option key={plan.ID} value={plan.ID}>
+                    {plan.DisplayName}
+                  </option>
+                ))}
+              </PSelect>
+              <PSelect
+                label="货币"
+                value={formData.currency}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, currency: e.target.value })}
+                required
+              >
+                <option value="CNY">人民币 (CNY)</option>
+                <option value="USD">美元 (USD)</option>
+                <option value="EUR">欧元 (EUR)</option>
+              </PSelect>
               <div>
-                <label className="block text-sm font-medium text-gray-700">套餐</label>
-                <select
-                  value={formData.plan_id}
-                  onChange={(e) => setFormData({...formData, plan_id: parseInt(e.target.value)})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  required
-                  disabled={!!editingPrice}
-                >
-                  <option value="">请选择套餐</option>
-                  {plans.map((plan) => (
-                    <option key={plan.ID} value={plan.ID}>
-                      {plan.DisplayName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">货币</label>
-                <select
-                  value={formData.currency}
-                  onChange={(e) => setFormData({...formData, currency: e.target.value})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  required
-                >
-                  <option value="CNY">人民币 (CNY)</option>
-                  <option value="USD">美元 (USD)</option>
-                  <option value="EUR">欧元 (EUR)</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">价格（分）</label>
-                <input
+                <PInput
+                  label="价格（分）"
                   type="number"
                   value={formData.amount_cents}
-                  onChange={(e) => setFormData({...formData, amount_cents: parseInt(e.target.value)})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  min="0"
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, amount_cents: parseInt(e.target.value) })}
+                  min={0}
                   required
                 />
                 <p className="mt-1 text-sm text-gray-500">
                   当前价格: {formatPrice(formData.amount_cents, formData.currency)}
                 </p>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">计费周期</label>
-                <select
-                  value={formData.billing_period}
-                  onChange={(e) => setFormData({...formData, billing_period: e.target.value})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  required
-                >
-                  <option value="day">天</option>
-                  <option value="week">周</option>
-                  <option value="month">月</option>
-                  <option value="year">年</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">计费间隔</label>
-                <input
-                  type="number"
-                  value={formData.billing_interval}
-                  onChange={(e) => setFormData({...formData, billing_interval: parseInt(e.target.value)})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  min="1"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">试用天数（可选）</label>
-                <input
-                  type="number"
-                  value={formData.trial_days || ''}
-                  onChange={(e) => setFormData({...formData, trial_days: e.target.value ? parseInt(e.target.value) : undefined})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  min="0"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">使用类型</label>
-                <select
-                  value={formData.usage_type}
-                  onChange={(e) => setFormData({...formData, usage_type: e.target.value})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  required
-                >
-                  <option value="licensed">许可</option>
-                  <option value="metered">计量</option>
-                </select>
-              </div>
+              <PSelect
+                label="计费周期"
+                value={formData.billing_period}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, billing_period: e.target.value })}
+                required
+              >
+                <option value="day">天</option>
+                <option value="week">周</option>
+                <option value="month">月</option>
+                <option value="year">年</option>
+              </PSelect>
+              <PInput
+                label="计费间隔"
+                type="number"
+                value={formData.billing_interval}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, billing_interval: parseInt(e.target.value) })}
+                min={1}
+                required
+              />
+              <PInput
+                label="试用天数（可选）"
+                type="number"
+                value={formData.trial_days || ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, trial_days: e.target.value ? parseInt(e.target.value) : undefined })}
+                min={0}
+              />
+              <PSelect
+                label="使用类型"
+                value={formData.usage_type}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, usage_type: e.target.value })}
+                required
+              >
+                <option value="licensed">许可</option>
+                <option value="metered">计量</option>
+              </PSelect>
               <div className="flex justify-end space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={handleCancel}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-                >
-                  取消
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
-                >
-                  {editingPrice ? '更新' : '创建'}
-                </button>
+                <PButton type="button" variant="secondary" onClick={handleCancel}>取消</PButton>
+                <PButton type="submit">{editingPrice ? '更新' : '创建'}</PButton>
               </div>
             </form>
           </div>
@@ -386,20 +331,22 @@ export default function TenantPrices() {
               确定要删除定价 "{formatPrice(deleteTarget.AmountCents, deleteTarget.Currency)}" 吗？此操作无法撤销。
             </p>
             <div className="flex justify-center space-x-3">
-              <button
+              <PButton
+                type="button"
+                variant="secondary"
                 onClick={() => setShowDeleteModal(false)}
-                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
                 disabled={deleting}
               >
                 取消
-              </button>
-              <button
+              </PButton>
+              <PButton
+                type="button"
+                variant="danger"
                 onClick={handleDeleteConfirm}
-                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50"
                 disabled={deleting}
               >
                 {deleting ? '删除中...' : '确认删除'}
-              </button>
+              </PButton>
             </div>
           </div>
         </div>

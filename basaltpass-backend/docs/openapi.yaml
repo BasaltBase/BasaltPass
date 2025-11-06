@@ -318,6 +318,129 @@ paths:
         '403': { description: Insufficient scope }
         '500': { description: Server error }
 
+  /api/v1/s2s/users/{id}/messages:
+    get:
+      summary: List user messages/notifications (S2S)
+      description: Returns paginated messages; broadcasts (receiver_id=0) included. Optional status=unread|all
+      security:
+        - ClientID: []
+          ClientSecret: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: status
+          in: query
+          required: false
+          schema: { type: string, enum: [unread, all], default: all }
+        - name: page
+          in: query
+          required: false
+          schema: { type: integer, default: 1 }
+        - name: page_size
+          in: query
+          required: false
+          schema: { type: integer, default: 20 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      messages:
+                        type: array
+                        items: { $ref: '#/components/schemas/S2SMessage' }
+                      total: { type: integer }
+                      page: { type: integer }
+                      page_size: { type: integer }
+                  error:
+                    oneOf:
+                      - type: 'null'
+                      - $ref: '#/components/schemas/ErrorObject'
+                  request_id: { type: string }
+        '400': { description: Invalid parameter }
+        '401': { description: Invalid client }
+        '403': { description: Insufficient scope }
+        '500': { description: Server error }
+
+  /api/v1/s2s/users/{id}/products:
+    get:
+      summary: List user owned products (S2S)
+      description: Returns products that user owns via active subscriptions or paid orders.
+      security:
+        - ClientID: []
+          ClientSecret: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      products:
+                        type: array
+                        items: { $ref: '#/components/schemas/S2SProduct' }
+                  error:
+                    oneOf:
+                      - type: 'null'
+                      - $ref: '#/components/schemas/ErrorObject'
+                  request_id: { type: string }
+        '400': { description: Invalid parameter }
+        '401': { description: Invalid client }
+        '403': { description: Insufficient scope }
+        '500': { description: Server error }
+
+  /api/v1/s2s/users/{id}/products/{product_id}/ownership:
+    get:
+      summary: Check user product ownership (S2S)
+      description: Returns whether user owns the product via active subscription or paid order.
+      security:
+        - ClientID: []
+          ClientSecret: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: product_id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/S2SOwnership'
+                  error:
+                    oneOf:
+                      - type: 'null'
+                      - $ref: '#/components/schemas/ErrorObject'
+                  request_id: { type: string }
+        '400': { description: Invalid parameter }
+        '401': { description: Invalid client }
+        '403': { description: Insufficient scope }
+        '500': { description: Server error }
+
 components:
   securitySchemes:
     ClientID:
@@ -374,3 +497,33 @@ components:
         transactions:
           type: array
           items: { $ref: '#/components/schemas/S2SWalletTx' }
+    S2SMessage:
+      type: object
+      properties:
+        id: { type: integer }
+        app_id: { type: integer }
+        title: { type: string }
+        content: { type: string }
+        type: { type: string }
+        sender_id: { type: integer, nullable: true }
+        sender_name: { type: string }
+        receiver_id: { type: integer }
+        is_read: { type: boolean }
+        read_at: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+    S2SProduct:
+      type: object
+      properties:
+        id: { type: integer }
+        code: { type: string }
+        name: { type: string }
+        description: { type: string }
+        effective_at: { type: string, format: date-time, nullable: true }
+        deprecated_at: { type: string, format: date-time, nullable: true }
+    S2SOwnership:
+      type: object
+      properties:
+        has_ownership: { type: boolean }
+        via:
+          type: array
+          items: { type: string, enum: [subscription, order] }

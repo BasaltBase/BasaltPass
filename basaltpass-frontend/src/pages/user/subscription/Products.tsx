@@ -123,23 +123,6 @@ export default function ProductsPage() {
   return (
     <Layout>
       <div className="space-y-6">
-        {/* 面包屑导航 */}
-        <nav className="flex" aria-label="Breadcrumb">
-          <ol className="flex items-center space-x-4">
-            <li>
-              <Link to="/dashboard" className="text-gray-400 hover:text-gray-500">
-                仪表板
-              </Link>
-            </li>
-            <li>
-              <div className="flex items-center">
-                <ChevronRightIcon className="flex-shrink-0 h-5 w-5 text-gray-400" />
-                <span className="ml-4 text-sm font-medium text-gray-500">产品与套餐</span>
-              </div>
-            </li>
-          </ol>
-        </nav>
-
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-semibold text-gray-900">产品与套餐</h1>

@@ -12,6 +12,10 @@ import {
   TenantInvoice,
   CreateTenantInvoiceRequest,
 } from '@api/tenant/subscription'
+import PInput from '@components/PInput'
+import PSelect from '@components/PSelect'
+import PButton from '@components/PButton'
+import PTable, { PTableColumn } from '@components/PTable'
 
 export default function TenantInvoices() {
   const [searchParams] = useSearchParams()
@@ -147,68 +151,69 @@ export default function TenantInvoices() {
               </h2>
             </div>
             <div className="mt-5 flex lg:mt-0 lg:ml-4">
-              <button
+              <PButton
                 type="button"
                 onClick={() => setShowModal(true)}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                leftIcon={<PlusIcon className="h-5 w-5" />}
               >
-                <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
                 创建账单
-              </button>
+              </PButton>
             </div>
           </div>
 
-          {/* 账单列表 */}
+          {/* 账单列表（统一表格组件） */}
           <div className="mt-8">
-            <div className="bg-white shadow overflow-hidden sm:rounded-md">
-              <ul className="divide-y divide-gray-200">
-                {invoices.length === 0 ? (
-                  <li className="px-6 py-8 text-center text-gray-500">
-                    暂无账单数据
-                  </li>
-                ) : (
-                  invoices.map((invoice) => (
-                    <li key={invoice.id} className="px-6 py-4 hover:bg-gray-50">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center">
-                            <DocumentTextIcon className="h-10 w-10 text-gray-400 mr-3" />
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-3">
-                                <p className="text-lg font-medium text-gray-900">
-                                  账单 #{invoice.id}
-                                </p>
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(invoice.status)}`}>
-                                  {getStatusText(invoice.status)}
-                                </span>
-                              </div>
-                              <div className="mt-2 flex items-center text-sm text-gray-500 space-x-4">
-                                <span>客户ID: {invoice.user_id}</span>
-                                <span>总金额: {formatPrice(invoice.total_cents, invoice.currency)}</span>
-                                {invoice.subscription_id && (
-                                  <span>订阅ID: {invoice.subscription_id}</span>
-                                )}
-                              </div>
-                              <div className="mt-2 text-sm text-gray-600">
-                                <div className="flex items-center space-x-4">
-                                  <span>创建时间: {new Date(invoice.created_at).toLocaleString('zh-CN')}</span>
-                                  {invoice.due_at && (
-                                    <span>到期时间: {new Date(invoice.due_at).toLocaleString('zh-CN')}</span>
-                                  )}
-                                  {invoice.paid_at && (
-                                    <span>支付时间: {new Date(invoice.paid_at).toLocaleString('zh-CN')}</span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </li>
-                  ))
-                )}
-              </ul>
-            </div>
+            {(() => {
+              const columns: PTableColumn<TenantInvoice>[] = [
+                {
+                  key: 'invoice',
+                  title: '账单',
+                  render: (row) => (
+                    <div className="flex items-center">
+                      <DocumentTextIcon className="h-5 w-5 text-gray-400" />
+                      <span className="ml-2 font-medium">#{row.id}</span>
+                    </div>
+                  )
+                },
+                { key: 'user', title: '客户ID', dataIndex: 'user_id' as any },
+                {
+                  key: 'amount',
+                  title: '总金额',
+                  render: (row) => formatPrice(row.total_cents, row.currency)
+                },
+                {
+                  key: 'subscription',
+                  title: '订阅ID',
+                  render: (row) => row.subscription_id ? String(row.subscription_id) : '-'
+                },
+                {
+                  key: 'status',
+                  title: '状态',
+                  render: (row) => (
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(row.status)}`}>
+                      {getStatusText(row.status)}
+                    </span>
+                  )
+                },
+                { key: 'created', title: '创建时间', render: (row) => new Date(row.created_at).toLocaleString('zh-CN') },
+                { key: 'due', title: '到期时间', render: (row) => row.due_at ? new Date(row.due_at).toLocaleString('zh-CN') : '-' },
+                { key: 'paid', title: '支付时间', render: (row) => row.paid_at ? new Date(row.paid_at).toLocaleString('zh-CN') : '-' },
+              ];
+
+              return (
+                <PTable
+                  columns={columns}
+                  data={invoices}
+                  rowKey={(row) => row.id}
+                  emptyText="暂无账单数据"
+                  emptyContent={
+                    <PButton type="button" onClick={() => setShowModal(true)} leftIcon={<PlusIcon className="h-5 w-5" />}>创建账单</PButton>
+                  }
+                  striped
+                  size="md"
+                />
+              );
+            })()}
           </div>
         </div>
       </div>
@@ -221,77 +226,73 @@ export default function TenantInvoices() {
               创建账单
             </h3>
             <form onSubmit={handleSubmit} className="space-y-4">
+              <PInput
+                label="客户ID"
+                type="number"
+                value={formData.user_id || ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({
+                  ...formData,
+                  user_id: parseInt(e.target.value) || 0,
+                })}
+                min={1}
+                required
+              />
+              <PInput
+                label="订阅ID（可选）"
+                type="number"
+                value={formData.subscription_id ?? ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({
+                  ...formData,
+                  subscription_id: e.target.value
+                    ? parseInt(e.target.value)
+                    : undefined,
+                })}
+                min={1}
+              />
+              <PSelect
+                label="货币"
+                value={formData.currency}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, currency: e.target.value })}
+                required
+              >
+                <option value="CNY">人民币 (CNY)</option>
+                <option value="USD">美元 (USD)</option>
+                <option value="EUR">欧元 (EUR)</option>
+              </PSelect>
               <div>
-                <label className="block text-sm font-medium text-gray-700">客户ID</label>
-                <input
-                  type="number"
-                  value={formData.user_id || ''}
-                  onChange={(e) => setFormData({...formData, user_id: parseInt(e.target.value) || 0})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  min="1"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">订阅ID（可选）</label>
-                <input
-                  type="number"
-                  value={formData.subscription_id || ''}
-                  onChange={(e) => setFormData({...formData, subscription_id: e.target.value ? parseInt(e.target.value) : undefined})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  min="1"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">货币</label>
-                <select
-                  value={formData.currency}
-                  onChange={(e) => setFormData({...formData, currency: e.target.value})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  required
-                >
-                  <option value="CNY">人民币 (CNY)</option>
-                  <option value="USD">美元 (USD)</option>
-                  <option value="EUR">欧元 (EUR)</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">总金额（分）</label>
-                <input
+                <PInput
+                  label="总金额（分）"
                   type="number"
                   value={formData.total_cents}
-                  onChange={(e) => setFormData({...formData, total_cents: parseInt(e.target.value) || 0})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  min="0"
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({
+                    ...formData,
+                    total_cents: parseInt(e.target.value) || 0,
+                  })}
+                  min={0}
                   required
                 />
                 <p className="mt-1 text-sm text-gray-500">
                   当前金额: {formatPrice(formData.total_cents, formData.currency)}
                 </p>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">到期时间（可选）</label>
-                <input
-                  type="datetime-local"
-                  value={formData.due_at || ''}
-                  onChange={(e) => setFormData({...formData, due_at: e.target.value || undefined})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
+              <PInput
+                label="到期时间（可选）"
+                type="datetime-local"
+                value={formData.due_at || ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({
+                  ...formData,
+                  due_at: e.target.value || undefined,
+                })}
+              />
               <div className="flex justify-end space-x-3 pt-4">
-                <button
+                <PButton
                   type="button"
+                  variant="secondary"
                   onClick={handleCancel}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
                 >
                   取消
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
-                >
-                  创建
-                </button>
+                </PButton>
+                <PButton type="submit">创建</PButton>
               </div>
             </form>
           </div>

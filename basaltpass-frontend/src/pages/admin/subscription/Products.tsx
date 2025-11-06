@@ -2,9 +2,15 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { adminListProducts, adminCreateProduct, adminUpdateProduct, adminDeleteProduct } from '@api/subscription/subscription'
 import { Product } from '../../../types/subscription'
 import { Link } from 'react-router-dom'
-import { ChevronRightIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
+import { ChevronRightIcon, ExclamationTriangleIcon, PencilIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline'
 import AdminLayout from '../../../components/AdminLayout'
 import { adminTenantApi, AdminTenantResponse } from '@api/admin/tenant'
+import PSelect from '@components/PSelect'
+import PButton from '@components/PButton'
+import PInput from '@components/PInput'
+import PTextarea from '@components/PTextarea'
+import PCheckbox from '@components/PCheckbox'
+import PTable, { PTableColumn, PTableAction } from '@components/PTable'
 
 export default function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([])
@@ -202,100 +208,70 @@ export default function AdminProducts() {
           <h1 className="text-2xl font-semibold text-gray-900">产品管理</h1>
           <div className="flex items-center space-x-3">
             {/* 新增：租户筛选 */}
-            <select
+            <PSelect
               value={selectedTenantId}
-              onChange={(e) => setSelectedTenantId(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedTenantId(e.target.value)}
             >
               <option value="">全部租户</option>
               {tenants.map(t => (
                 <option key={t.id} value={t.id}>{t.name} ({t.code})</option>
               ))}
-            </select>
-            <button
-              onClick={() => setShowModal(true)}
-              className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-            >
-              新建产品
-            </button>
+            </PSelect>
+            <PButton type="button" onClick={() => setShowModal(true)} leftIcon={<PlusIcon className="h-5 w-5" />}>新建产品</PButton>
           </div>
         </div>
+        {/* 产品列表（统一表格组件） */}
+        {(() => {
+          const columns: PTableColumn<Product>[] = [
+            { key: 'name', title: '名称', dataIndex: 'Name' as any },
+            { key: 'code', title: '代码', dataIndex: 'Code' as any },
+            { key: 'desc', title: '描述', render: (row) => row.Description || '-' },
+            { key: 'tenant', title: '租户', render: (row) => renderTenantInfo(row.TenantID as unknown as number) },
+          ]
 
-        <div className="bg-white shadow overflow-hidden sm:rounded-md">
-          <ul className="divide-y divide-gray-200">
-            {products && products.length > 0 ? (
-              products.map((product) => (
-                <li key={product.ID}>
-                  <div className="px-4 py-4 flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center">
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-indigo-600 truncate">
-                            {product.Name}
-                          </p>
-                          <p className="mt-1 text-sm text-gray-500">
-                            代码: {product.Code}
-                          </p>
-                          {product.Description && (
-                            <p className="mt-1 text-sm text-gray-500">
-                              {product.Description}
-                            </p>
-                          )}
-                          {/* 新增：租户信息 */}
-                          <p className="mt-1 text-xs text-gray-500">
-                            {renderTenantInfo(product.TenantID as unknown as number)}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleEdit(product)}
-                        className="text-indigo-600 hover:text-indigo-900 text-sm"
-                      >
-                        编辑
-                      </button>
-                      <button
-                        onClick={() => handleDeleteClick(product)}
-                        className="text-red-600 hover:text-red-900 text-sm"
-                      >
-                        删除
-                      </button>
-                    </div>
-                  </div>
-                </li>
-              ))
-            ) : (
-              <li className="px-4 py-8 text-center text-gray-500">
-                暂无产品数据
-              </li>
-            )}
-          </ul>
-        </div>
+          const actions: PTableAction<Product>[] = [
+            { key: 'edit', label: '编辑', icon: <PencilIcon className="h-4 w-4" />, variant: 'secondary', size: 'sm', onClick: (row) => handleEdit(row) },
+            { key: 'delete', label: '删除', icon: <TrashIcon className="h-4 w-4" />, variant: 'danger', size: 'sm', confirm: '确定要删除该产品吗？此操作无法撤销。', onClick: (row) => handleDeleteClick(row) },
+          ]
+
+          return (
+            <PTable
+              columns={columns}
+              data={products}
+              rowKey={(row) => row.ID}
+              actions={actions}
+              emptyText="暂无产品数据"
+              striped
+            />
+          )
+        })()}
 
         {/* 分页控件 */}
         <div className="flex items-center justify-between py-3">
           <div className="text-sm text-gray-600">共 {total} 条 · 第 {page} / {totalPages} 页</div>
           <div className="flex items-center space-x-2">
-            <button
-              className="px-3 py-1 border rounded disabled:opacity-50"
+            <PButton
+              type="button"
+              variant="secondary"
+              size="sm"
               disabled={page <= 1}
               onClick={() => setPage(p => Math.max(1, p - 1))}
-            >上一页</button>
-            <button
-              className="px-3 py-1 border rounded disabled:opacity-50"
+            >上一页</PButton>
+            <PButton
+              type="button"
+              variant="secondary"
+              size="sm"
               disabled={page >= totalPages}
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-            >下一页</button>
-            <select
-              className="ml-2 px-2 py-1 border rounded"
+            >下一页</PButton>
+            <PSelect
               value={pageSize}
-              onChange={(e) => { setPageSize(parseInt(e.target.value)); setPage(1) }}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => { setPageSize(parseInt(e.target.value)); setPage(1) }}
             >
               <option value={10}>每页 10</option>
               <option value={20}>每页 20</option>
               <option value={50}>每页 50</option>
-            </select>
+            </PSelect>
           </div>
         </div>
 
@@ -311,24 +287,22 @@ export default function AdminProducts() {
                 <div className="grid grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">产品代码</label>
-                    <input
+                    <PInput
                       type="text"
                       required
                       disabled={!!editingProduct}
                       value={formData.code}
-                      onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                      className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:text-gray-500"
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, code: e.target.value })}
                       placeholder="请输入产品代码"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">产品名称</label>
-                    <input
+                    <PInput
                       type="text"
                       required
                       value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, name: e.target.value })}
                       placeholder="请输入产品名称"
                     />
                   </div>
@@ -337,10 +311,9 @@ export default function AdminProducts() {
                 {/* 第二行：产品描述（全宽） */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">产品描述</label>
-                  <textarea
+                  <PTextarea
                     value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, description: e.target.value })}
                     rows={4}
                     placeholder="请输入产品描述"
                   />
@@ -348,36 +321,30 @@ export default function AdminProducts() {
 
                 {/* 第三行：激活状态 */}
                 <div className="flex items-center">
-                  <input
-                    type="checkbox"
+                  <PCheckbox
                     checked={formData.is_active}
-                    onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                  />
-                  <label className="ml-2 block text-sm text-gray-900">
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, is_active: e.target.checked })}
+                  >
                     激活状态
-                  </label>
+                  </PCheckbox>
                 </div>
 
                 {/* 按钮区域 */}
                 <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
-                  <button
+                  <PButton
                     type="button"
+                    variant="secondary"
                     onClick={() => {
                       setShowModal(false)
                       setEditingProduct(null)
                       setFormData({ code: '', name: '', description: '', is_active: true })
                     }}
-                    className="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                   >
                     取消
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-6 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  >
+                  </PButton>
+                  <PButton type="submit">
                     {editingProduct ? '更新' : '创建'}
-                  </button>
+                  </PButton>
                 </div>
               </form>
             </div>
@@ -418,20 +385,22 @@ export default function AdminProducts() {
                 </p>
               </div>
               <div className="flex justify-center space-x-3 mt-4">
-                <button
+                <PButton
+                  type="button"
+                  variant="secondary"
                   onClick={handleDeleteCancel}
                   disabled={deleting}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 text-base font-medium rounded-md shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-50"
                 >
                   取消
-                </button>
-                <button
+                </PButton>
+                <PButton
+                  type="button"
+                  variant="danger"
                   onClick={handleDeleteConfirm}
                   disabled={deleting}
-                  className="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50"
                 >
                   {deleting ? '删除中...' : '确认删除'}
-                </button>
+                </PButton>
               </div>
             </div>
           </div>

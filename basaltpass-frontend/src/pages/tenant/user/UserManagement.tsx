@@ -21,7 +21,8 @@ import {
   ChevronRightIcon
 } from '@heroicons/react/24/outline'
 import TenantLayout from '@components/TenantLayout'
-import { PInput, PSelect, PButton } from '../../../components'
+import { PInput, PSelect, PButton, PTextarea } from '../../../components'
+import PTable, { PTableColumn } from '../../../components/PTable'
 import { tenantAppApi } from '@api/tenant/tenantApp'
 import { appUserApi, type AppUserStats } from '@api/tenant/appUser'
 import { 
@@ -387,15 +388,15 @@ export default function TenantUserManagement() {
             <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-red-500" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">{error}</h3>
             <div className="mt-6">
-              <button
+              <PButton
                 onClick={() => {
                   setError('')
                   fetchAppsWithUserStats()
                 }}
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                size="sm"
               >
                 重试
-              </button>
+              </PButton>
             </div>
           </div>
         </div>
@@ -438,13 +439,7 @@ export default function TenantUserManagement() {
           </div>
           {activeTab === 'users' && (
             <div className="flex space-x-3">
-              <button
-                onClick={() => setShowInviteModal(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
-              >
-                <UserPlusIcon className="w-5 h-5" />
-                <span>邀请用户</span>
-              </button>
+              <PButton onClick={() => setShowInviteModal(true)} leftIcon={<UserPlusIcon className="w-5 h-5" />}>邀请用户</PButton>
             </div>
           )}
         </div>
@@ -634,12 +629,12 @@ export default function TenantUserManagement() {
             <div className="flex-1">
               <div className="relative">
                 <MagnifyingGlassIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                <input
+                <PInput
                   type="text"
                   placeholder={activeTab === 'users' ? "搜索用户邮箱或昵称..." : "搜索应用名称或描述..."}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  icon={<MagnifyingGlassIcon className="h-5 w-5" />}
                 />
               </div>
             </div>
@@ -720,118 +715,112 @@ export default function TenantUserManagement() {
                 </div>
               ) : (
                 <>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            用户
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            应用数
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            角色
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            状态
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            最后登录
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            加入时间
-                          </th>
-                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            操作
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {filteredTenantUsers.map((user) => (
-                          <tr key={user.id} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex items-center">
-                                {user.avatar ? (
-                                  <img
-                                    className="h-10 w-10 rounded-full object-cover"
-                                    src={user.avatar}
-                                    alt={user.nickname}
-                                  />
-                                ) : (
-                                  <div className="h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center">
-                                    <UsersIcon className="h-6 w-6 text-gray-400" />
-                                  </div>
-                                )}
-                                <div className="ml-4">
-                                  <div className="text-sm font-medium text-gray-900">
-                                    {user.nickname}
-                                  </div>
-                                  <div className="text-sm text-gray-500">
-                                    {user.email}
-                                  </div>
-                                </div>
+                  <PTable
+                    columns={[
+                      {
+                        key: 'user',
+                        title: '用户',
+                        render: (user: TenantUser) => (
+                          <div className="flex items-center">
+                            {user.avatar ? (
+                              <img className="h-10 w-10 rounded-full object-cover" src={user.avatar} alt={user.nickname} />
+                            ) : (
+                              <div className="h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center">
+                                <UsersIcon className="h-6 w-6 text-gray-400" />
                               </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                              {user.app_count ?? 0}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex items-center gap-2">
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
-                                  {getRoleText(user.role)}
-                                </span>
-                                {!user.is_tenant_admin && (
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                                    应用用户
-                                  </span>
-                                )}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(user.status)}`}>
-                                {getStatusText(user.status)}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {user.last_login_at ? new Date(user.last_login_at).toLocaleDateString() : (user.last_active_at ? new Date(user.last_active_at).toLocaleDateString() : 'N/A')}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {new Date(user.created_at).toLocaleDateString()}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                              <div className="flex items-center justify-end space-x-2">
-                                {user.is_tenant_admin && user.role !== 'owner' && (
-                                  <>
-                                    <button
-                                      onClick={() => handleEditUser(user)}
-                                      className="text-blue-600 hover:text-blue-800"
-                                    >
-                                      <PencilIcon className="h-4 w-4" />
-                                    </button>
-                                    <button
-                                      onClick={() => handleRemoveUser(user)}
-                                      className="text-red-600 hover:text-red-800"
-                                    >
-                                      <TrashIcon className="h-4 w-4" />
-                                    </button>
-                                  </>
-                                )}
-                                {user.is_tenant_admin && user.status === 'inactive' && (
-                                  <button
-                                    onClick={() => handleResendInvitation(user)}
-                                    className="text-green-600 hover:text-green-800"
-                                  >
-                                    <EnvelopeIcon className="h-4 w-4" />
-                                  </button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                            )}
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">{user.nickname}</div>
+                              <div className="text-sm text-gray-500">{user.email}</div>
+                            </div>
+                          </div>
+                        )
+                      },
+                      { key: 'app_count', title: '应用数', render: (u: TenantUser) => <span className="text-sm text-gray-700">{u.app_count ?? 0}</span> },
+                      {
+                        key: 'role',
+                        title: '角色',
+                        render: (user: TenantUser) => (
+                          <div className="flex items-center gap-2">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
+                              {getRoleText(user.role)}
+                            </span>
+                            {!user.is_tenant_admin && (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">应用用户</span>
+                            )}
+                          </div>
+                        )
+                      },
+                      {
+                        key: 'status',
+                        title: '状态',
+                        render: (user: TenantUser) => (
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(user.status)}`}>
+                            {getStatusText(user.status)}
+                          </span>
+                        )
+                      },
+                      {
+                        key: 'last_login',
+                        title: '最后登录',
+                        render: (user: TenantUser) => (
+                          <span className="text-sm text-gray-500">
+                            {user.last_login_at
+                              ? new Date(user.last_login_at).toLocaleDateString()
+                              : user.last_active_at
+                              ? new Date(user.last_active_at).toLocaleDateString()
+                              : 'N/A'}
+                          </span>
+                        )
+                      },
+                      { key: 'created_at', title: '加入时间', dataIndex: 'created_at', sortable: true, sorter: (a: TenantUser, b: TenantUser) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime() },
+                      {
+                        key: 'actions',
+                        title: '操作',
+                        align: 'right',
+                        render: (user: TenantUser) => (
+                          <div className="flex items-center justify-end space-x-2">
+                            {user.is_tenant_admin && user.role !== 'owner' && (
+                              <>
+                                <PButton
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleEditUser(user)}
+                                  className="text-blue-600 hover:text-blue-800"
+                                  title="编辑用户"
+                                >
+                                  <PencilIcon className="h-4 w-4" />
+                                </PButton>
+                                <PButton
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleRemoveUser(user)}
+                                  className="text-red-600 hover:text-red-800"
+                                  title="移除用户"
+                                >
+                                  <TrashIcon className="h-4 w-4" />
+                                </PButton>
+                              </>
+                            )}
+                            {user.is_tenant_admin && user.status === 'inactive' && (
+                              <PButton
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleResendInvitation(user)}
+                                className="text-green-600 hover:text-green-800"
+                                title="重新发送邀请"
+                              >
+                                <EnvelopeIcon className="h-4 w-4" />
+                              </PButton>
+                            )}
+                          </div>
+                        )
+                      },
+                    ]}
+                    data={filteredTenantUsers}
+                    rowKey={(row) => row.id}
+                    defaultSort={{ key: 'created_at', order: 'desc' }}
+                  />
 
                   {/* 分页 */}
                   {filteredTenantUsers.length > 0 && (
@@ -897,93 +886,84 @@ export default function TenantUserManagement() {
                   )}
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          应用
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          状态
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          总用户数
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          活跃用户
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          新用户
-                        </th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          操作
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {filteredApps.map((app) => (
-                        <tr key={app.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              {app.logo_url ? (
-                                <img
-                                  className="h-10 w-10 rounded-lg object-cover"
-                                  src={app.logo_url}
-                                  alt={app.name}
-                                />
-                              ) : (
-                                <div className="h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                  <CubeIcon className="h-6 w-6 text-blue-600" />
-                                </div>
-                              )}
-                              <div className="ml-4">
-                                <div className="text-sm font-medium text-gray-900">
-                                  {app.name}
-                                </div>
-                                <div className="text-sm text-gray-500 max-w-xs truncate">
-                                  {app.description}
-                                </div>
-                              </div>
+                <PTable
+                  columns={[
+                    {
+                      key: 'app',
+                      title: '应用',
+                      render: (app: AppWithUserStats) => (
+                        <div className="flex items-center">
+                          {app.logo_url ? (
+                            <img className="h-10 w-10 rounded-lg object-cover" src={app.logo_url} alt={app.name} />
+                          ) : (
+                            <div className="h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                              <CubeIcon className="h-6 w-6 text-blue-600" />
                             </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(app.status)}`}>
-                              {getStatusText(app.status)}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            <div className="flex items-center">
-                              <UsersIcon className="h-4 w-4 text-gray-400 mr-1" />
-                              {app.userStats.total_users}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            <div className="flex items-center">
-                              <CheckCircleIcon className="h-4 w-4 text-green-400 mr-1" />
-                              {app.userStats.active_users}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            <div className="flex items-center">
-                              <ClockIcon className="h-4 w-4 text-yellow-400 mr-1" />
-                              {app.userStats.new_users}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <Link
-                              to={`/tenant/apps/${app.id}/users`}
-                              className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200"
-                            >
-                              <EyeIcon className="h-4 w-4 mr-1" />
-                              管理用户
-                            </Link>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                          )}
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">{app.name}</div>
+                            <div className="text-sm text-gray-500 max-w-xs truncate">{app.description}</div>
+                          </div>
+                        </div>
+                      )
+                    },
+                    {
+                      key: 'status',
+                      title: '状态',
+                      render: (app: AppWithUserStats) => (
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(app.status)}`}>
+                          {getStatusText(app.status)}
+                        </span>
+                      )
+                    },
+                    {
+                      key: 'total_users',
+                      title: '总用户数',
+                      render: (app: AppWithUserStats) => (
+                        <div className="flex items-center text-sm text-gray-900">
+                          <UsersIcon className="h-4 w-4 text-gray-400 mr-1" />
+                          {app.userStats.total_users}
+                        </div>
+                      )
+                    },
+                    {
+                      key: 'active_users',
+                      title: '活跃用户',
+                      render: (app: AppWithUserStats) => (
+                        <div className="flex items-center text-sm text-gray-900">
+                          <CheckCircleIcon className="h-4 w-4 text-green-400 mr-1" />
+                          {app.userStats.active_users}
+                        </div>
+                      )
+                    },
+                    {
+                      key: 'new_users',
+                      title: '新用户',
+                      render: (app: AppWithUserStats) => (
+                        <div className="flex items-center text-sm text-gray-900">
+                          <ClockIcon className="h-4 w-4 text-yellow-400 mr-1" />
+                          {app.userStats.new_users}
+                        </div>
+                      )
+                    },
+                    {
+                      key: 'actions',
+                      title: '操作',
+                      align: 'right',
+                      render: (app: AppWithUserStats) => (
+                        <Link
+                          to={`/tenant/apps/${app.id}/users`}
+                          className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200"
+                        >
+                          <EyeIcon className="h-4 w-4 mr-1" />
+                          管理用户
+                        </Link>
+                      )
+                    },
+                  ]}
+                  data={filteredApps}
+                  rowKey={(row) => row.id}
+                />
               )}
             </div>
           </div>
@@ -1043,12 +1023,11 @@ const InviteUserModal: React.FC<{
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 邮箱地址 *
               </label>
-              <input
+              <PInput
                 type="email"
                 required
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="user@example.com"
               />
             </div>
@@ -1065,34 +1044,27 @@ const InviteUserModal: React.FC<{
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                邀请消息（可选）
-              </label>
-              <textarea
+              <PTextarea
                 value={formData.message || ''}
                 onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                 rows={3}
-                className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="欢迎加入我们的团队..."
+                label="邀请消息（可选）"
               />
             </div>
 
             <div className="flex justify-end space-x-3 pt-4">
-              <button
+              <PButton
                 type="button"
                 onClick={onClose}
                 disabled={submitting}
-                className="px-4 py-2 bg-gray-300 text-gray-700 text-base font-medium rounded-md shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-50"
+                variant="secondary"
               >
                 取消
-              </button>
-              <button
-                type="submit"
-                disabled={submitting}
-                className="px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-              >
-                {submitting ? '发送中...' : '发送邀请'}
-              </button>
+              </PButton>
+              <PButton type="submit" loading={submitting}>
+                发送邀请
+              </PButton>
             </div>
           </form>
         </div>
@@ -1129,12 +1101,7 @@ const EditUserModal: React.FC<{
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 用户邮箱
               </label>
-              <input
-                type="email"
-                value={user.email}
-                disabled
-                className="block w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-100 text-gray-500"
-              />
+              <PInput type="email" value={user.email} disabled />
             </div>
 
             <div>
@@ -1161,21 +1128,17 @@ const EditUserModal: React.FC<{
             </div>
 
             <div className="flex justify-end space-x-3 pt-4">
-              <button
+              <PButton
                 type="button"
                 onClick={onClose}
                 disabled={submitting}
-                className="px-4 py-2 bg-gray-300 text-gray-700 text-base font-medium rounded-md shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-50"
+                variant="secondary"
               >
                 取消
-              </button>
-              <button
-                type="submit"
-                disabled={submitting}
-                className="px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-              >
-                {submitting ? '更新中...' : '更新'}
-              </button>
+              </PButton>
+              <PButton type="submit" loading={submitting}>
+                更新
+              </PButton>
             </div>
           </form>
         </div>

@@ -3,6 +3,7 @@ package currency
 import (
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
+	"strings"
 )
 
 // GetAllCurrencies returns all active currencies
@@ -134,4 +135,58 @@ func InitDefaultCurrencies() error {
 	}
 
 	return nil
+}
+
+// predefinedCurrencyCatalog 提供一份可初始化的货币目录（代码 -> Currency 模板）
+func predefinedCurrencyCatalog() map[string]model.Currency {
+	return map[string]model.Currency{
+		"USD":    {Code: "USD", Name: "US Dollar", NameCN: "美元", Symbol: "$", DecimalPlaces: 2, Type: "fiat", IsActive: true, SortOrder: 1, Description: "United States Dollar"},
+		"CNY":    {Code: "CNY", Name: "Chinese Yuan", NameCN: "人民币", Symbol: "¥", DecimalPlaces: 2, Type: "fiat", IsActive: true, SortOrder: 2, Description: "Chinese Yuan Renminbi"},
+		"EUR":    {Code: "EUR", Name: "Euro", NameCN: "欧元", Symbol: "€", DecimalPlaces: 2, Type: "fiat", IsActive: true, SortOrder: 3, Description: "European Euro"},
+		"GBP":    {Code: "GBP", Name: "British Pound", NameCN: "英镑", Symbol: "£", DecimalPlaces: 2, Type: "fiat", IsActive: true, SortOrder: 4, Description: "Great Britain Pound"},
+		"JPY":    {Code: "JPY", Name: "Japanese Yen", NameCN: "日元", Symbol: "¥", DecimalPlaces: 0, Type: "fiat", IsActive: true, SortOrder: 5, Description: "Japanese Yen"},
+		"KRW":    {Code: "KRW", Name: "Korean Won", NameCN: "韩元", Symbol: "₩", DecimalPlaces: 0, Type: "fiat", IsActive: true, SortOrder: 6, Description: "Korean Won"},
+		"HKD":    {Code: "HKD", Name: "Hong Kong Dollar", NameCN: "港币", Symbol: "$", DecimalPlaces: 2, Type: "fiat", IsActive: true, SortOrder: 7, Description: "Hong Kong Dollar"},
+		"INR":    {Code: "INR", Name: "Indian Rupee", NameCN: "印度卢比", Symbol: "₹", DecimalPlaces: 2, Type: "fiat", IsActive: true, SortOrder: 8, Description: "Indian Rupee"},
+		"AUD":    {Code: "AUD", Name: "Australian Dollar", NameCN: "澳元", Symbol: "$", DecimalPlaces: 2, Type: "fiat", IsActive: true, SortOrder: 9, Description: "Australian Dollar"},
+		"CAD":    {Code: "CAD", Name: "Canadian Dollar", NameCN: "加元", Symbol: "$", DecimalPlaces: 2, Type: "fiat", IsActive: true, SortOrder: 10, Description: "Canadian Dollar"},
+		"BTC":    {Code: "BTC", Name: "Bitcoin", NameCN: "比特币", Symbol: "₿", DecimalPlaces: 8, Type: "crypto", IsActive: true, SortOrder: 50, Description: "Bitcoin cryptocurrency"},
+		"ETH":    {Code: "ETH", Name: "Ethereum", NameCN: "以太坊", Symbol: "Ξ", DecimalPlaces: 18, Type: "crypto", IsActive: true, SortOrder: 51, Description: "Ethereum cryptocurrency"},
+		"POINTS": {Code: "POINTS", Name: "System Points", NameCN: "系统积分", Symbol: "P", DecimalPlaces: 0, Type: "points", IsActive: true, SortOrder: 90, Description: "System reward points"},
+	}
+}
+
+// InitCurrenciesByCodes 根据管理员选择的代码列表初始化货币。如果已存在则跳过。
+func InitCurrenciesByCodes(codes []string) (created int, skipped int, err error) {
+	db := common.DB()
+	catalog := predefinedCurrencyCatalog()
+
+	for _, raw := range codes {
+		code := raw
+		if code == "" {
+			continue
+		}
+		// 统一为大写
+		if code != strings.ToUpper(code) {
+			code = strings.ToUpper(code)
+		}
+		tpl, ok := catalog[code]
+		if !ok {
+			// 对未收录的代码，按最小模板创建（可后续在后台编辑完善）
+			tpl = model.Currency{Code: code, Name: code, NameCN: code, Symbol: code, DecimalPlaces: 2, Type: "fiat", IsActive: true}
+		}
+		var cnt int64
+		if err2 := db.Model(&model.Currency{}).Where("code = ?", code).Count(&cnt).Error; err2 != nil {
+			return created, skipped, err2
+		}
+		if cnt > 0 {
+			skipped++
+			continue
+		}
+		if err2 := db.Create(&tpl).Error; err2 != nil {
+			return created, skipped, err2
+		}
+		created++
+	}
+	return created, skipped, nil
 }

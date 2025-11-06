@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import AdminLayout from '@components/AdminLayout'
+import PInput from '@components/PInput'
+import PTextarea from '@components/PTextarea'
+import PCheckbox from '@components/PCheckbox'
+import PButton from '@components/PButton'
 import axios from 'axios'
 
 interface SettingDTO {
@@ -68,35 +72,32 @@ export default function AdminSettingsPage() {
     // 简单根据 key 提供不同控件（可继续丰富）
     if (s.key === 'auth.enable_register' || s.key === 'security.enforce_2fa') {
       return (
-        <label className="inline-flex items-center">
-          <input type="checkbox" checked={!!value} onChange={e => onChange(e.target.checked)} className="form-checkbox h-4 w-4 text-indigo-600" />
-          <span className="ml-2 text-sm text-gray-700">启用</span>
-        </label>
+        <PCheckbox variant="switch" checked={!!value} onChange={e => onChange((e.target as HTMLInputElement).checked)} label="启用" />
       )
     }
 
     if (typeof value === 'number') {
       return (
-        <input type="number" value={value} onChange={e => onChange(Number(e.target.value))} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+        <PInput type="number" value={value} onChange={e => onChange(Number(e.target.value))} />
       )
     }
 
     if (Array.isArray(value)) {
       return (
-        <textarea value={value.join('\n')} onChange={e => onChange(e.target.value.split('\n').filter(Boolean))} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" rows={4} />
+        <PTextarea value={value.join('\n')} onChange={e => onChange((e.target as HTMLTextAreaElement).value.split('\n').filter(Boolean))} rows={4} />
       )
     }
 
     if (typeof value === 'object' && value !== null) {
       return (
-        <textarea value={JSON.stringify(value, null, 2)} onChange={e => {
-          try { onChange(JSON.parse(e.target.value)) } catch { /* ignore */ }
-        }} className="mt-1 block w-full font-mono text-xs rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" rows={6} />
+        <PTextarea value={JSON.stringify(value, null, 2)} onChange={e => {
+          try { onChange(JSON.parse((e.target as HTMLTextAreaElement).value)) } catch { /* ignore */ }
+        }} className="font-mono text-xs" rows={6} />
       )
     }
 
     return (
-      <input type="text" value={value ?? ''} onChange={e => onChange(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+      <PInput type="text" value={value ?? ''} onChange={e => onChange(e.target.value)} />
     )
   }
 
@@ -123,9 +124,9 @@ export default function AdminSettingsPage() {
                 <h2 className="text-lg font-semibold text-gray-900">{categories.find(c => c.key === activeCategory)?.name}</h2>
                 <p className="text-sm text-gray-500">编辑系统运行时参数与默认行为</p>
               </div>
-              <button onClick={save} disabled={saving} className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-60">
-                {saving ? '保存中...' : '保存'}
-              </button>
+              <PButton onClick={save} loading={saving}>
+                保存
+              </PButton>
             </div>
 
             {loading ? (

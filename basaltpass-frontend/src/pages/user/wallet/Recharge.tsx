@@ -4,7 +4,7 @@ import { Currency } from '@api/user/currency'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../../../components/Layout'
 import CurrencySelector from '../../../components/CurrencySelector'
-import { PInput } from '../../../components'
+import { PInput, PButton } from '../../../components'
 import { 
   ArrowUpIcon,
   CreditCardIcon,
@@ -137,12 +137,15 @@ export default function Recharge() {
       <div className="space-y-6">
         {/* 页面标题 */}
         <div className="flex items-center">
-          <button 
+          <PButton 
             onClick={() => navigate('/wallet')}
-            className="mr-4 p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+            variant="ghost"
+            size="sm"
+            className="mr-2"
+            leftIcon={<ArrowLeftIcon className="h-5 w-5" />}
           >
-            <ArrowLeftIcon className="h-5 w-5" />
-          </button>
+            返回
+          </PButton>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">充值钱包</h1>
             <p className="mt-1 text-sm text-gray-500">
@@ -210,18 +213,15 @@ export default function Recharge() {
                     </label>
                     <div className="grid grid-cols-3 gap-2">
                       {getQuickAmounts(selectedCurrency).map((value) => (
-                        <button
+                        <PButton
                           key={value}
                           type="button"
                           onClick={() => handleQuickAmount(value)}
-                          className={`px-3 py-2 text-sm font-medium rounded-md border transition-colors ${
-                            amount === value.toString()
-                              ? 'border-blue-500 bg-blue-50 text-blue-700'
-                              : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                          }`}
+                          variant={amount === value.toString() ? 'primary' : 'secondary'}
+                          size="sm"
                         >
                           {selectedCurrency.symbol}{formatAmount(value, selectedCurrency)}
-                        </button>
+                        </PButton>
                       ))}
                     </div>
                   </div>
@@ -263,23 +263,14 @@ export default function Recharge() {
                 </div>
 
                 {/* 提交按钮 */}
-                <button
+                <PButton
                   type="submit"
-                  disabled={isLoading || !amount || parseFloat(amount) <= 0 || !selectedCurrency}
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!amount || parseFloat(amount) <= 0 || !selectedCurrency}
+                  loading={isLoading}
+                  fullWidth
                 >
-                  {isLoading ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      处理中...
-                    </>
-                  ) : (
-                    `充值 ${selectedCurrency?.symbol || ''}${amount || '0.00'} ${selectedCurrency?.code || ''}`
-                  )}
-                </button>
+                  {`充值 ${selectedCurrency?.symbol || ''}${amount || '0.00'} ${selectedCurrency?.code || ''}`}
+                </PButton>
               </form>
             </div>
           </div>

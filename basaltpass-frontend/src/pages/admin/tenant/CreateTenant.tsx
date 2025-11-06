@@ -10,7 +10,7 @@ import {
   UserIcon
 } from '@heroicons/react/24/outline'
 import AdminLayout from '@components/AdminLayout'
-import { EntitySearchSelect, BaseEntityItem } from '../../../components'
+import { EntitySearchSelect, BaseEntityItem, PInput, PSelect, PTextarea, PButton } from '../../../components'
 import { adminTenantApi, AdminCreateTenantRequest, TenantSettings } from '@api/admin/tenant'
 
 const CreateTenant: React.FC = () => {
@@ -193,53 +193,31 @@ const CreateTenant: React.FC = () => {
 
               {/* 租户名称 */}
               <div className="space-y-2">
-                <label htmlFor="name" className="flex items-center text-sm font-semibold text-gray-700">
-                  <BuildingOfficeIcon className="h-5 w-5 mr-2 text-indigo-500" />
-                  租户名称 <span className="text-red-500 ml-1">*</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className="block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300"
-                    placeholder="输入租户名称"
-                    required
-                  />
-                </div>
+                <PInput
+                  label={<span className="flex items-center"><BuildingOfficeIcon className="h-5 w-5 mr-2 text-indigo-500" />租户名称<span className="text-red-500 ml-1">*</span></span>}
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  placeholder="输入租户名称"
+                  required
+                />
                 <p className="text-xs text-gray-500">租户的显示名称，用于在平台中标识该组织</p>
               </div>
 
               {/* 租户代码 */}
               <div className="space-y-2">
-                <label htmlFor="code" className="flex items-center text-sm font-semibold text-gray-700">
-                  <DocumentTextIcon className="h-5 w-5 mr-2 text-indigo-500" />
-                  租户代码 <span className="text-red-500 ml-1">*</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    id="code"
-                    name="code"
-                    value={formData.code}
-                    onChange={handleInputChange}
-                    className={`block w-full px-4 py-3 border rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300 ${
-                      codeError ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500'
-                    }`}
-                    placeholder="tenant-code"
-                    required
-                  />
-                  {codeError && (
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                      <ExclamationTriangleIcon className="h-5 w-5 text-red-400" />
-                    </div>
-                  )}
-                </div>
-                {codeError ? (
-                  <p className="text-xs text-red-500">{codeError}</p>
-                ) : (
+                <PInput
+                  label={<span className="flex items-center"><DocumentTextIcon className="h-5 w-5 mr-2 text-indigo-500" />租户代码<span className="text-red-500 ml-1">*</span></span>}
+                  id="code"
+                  name="code"
+                  value={formData.code}
+                  onChange={handleInputChange}
+                  placeholder="tenant-code"
+                  required
+                  error={codeError || undefined}
+                />
+                {!codeError && (
                   <p className="text-xs text-gray-500">租户的唯一标识符，只能包含字母和数字</p>
                 )}
               </div>
@@ -270,13 +248,12 @@ const CreateTenant: React.FC = () => {
                     <p className="text-sm text-yellow-800 mb-2">
                       如果找不到用户，您也可以直接输入邮箱地址：
                     </p>
-                    <input
+                    <PInput
                       type="email"
                       id="owner_email"
                       name="owner_email"
                       value={formData.owner_email}
                       onChange={handleInputChange}
-                      className="block w-full px-3 py-2 border border-yellow-300 rounded-md shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white"
                       placeholder="admin@example.com"
                     />
                     <p className="text-xs text-yellow-600 mt-1">该邮箱必须对应平台中的现有用户</p>
@@ -286,17 +263,13 @@ const CreateTenant: React.FC = () => {
 
               {/* 描述 */}
               <div className="space-y-2">
-                <label htmlFor="description" className="flex items-center text-sm font-semibold text-gray-700">
-                  <DocumentTextIcon className="h-5 w-5 mr-2 text-indigo-500" />
-                  描述 (可选)
-                </label>
-                <textarea
+                <PTextarea
+                  label={<span className="flex items-center"><DocumentTextIcon className="h-5 w-5 mr-2 text-indigo-500" />描述 (可选)</span>}
                   id="description"
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
                   rows={3}
-                  className="block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300"
                   placeholder="描述该租户的用途或特点..."
                 />
                 <p className="text-xs text-gray-500">租户的详细描述信息</p>
@@ -313,15 +286,12 @@ const CreateTenant: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="plan" className="text-sm font-semibold text-gray-700">
-                  选择套餐 <span className="text-red-500 ml-1">*</span>
-                </label>
-                <select
+                <PSelect
+                  label={<span>选择套餐 <span className="text-red-500 ml-1">*</span></span>}
                   id="plan"
                   name="plan"
                   value={formData.plan}
                   onChange={handleInputChange}
-                  className="block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-900 bg-white hover:border-gray-300"
                   required
                 >
                   {planOptions.map((option) => (
@@ -329,7 +299,7 @@ const CreateTenant: React.FC = () => {
                       {option.label} - {option.description}
                     </option>
                   ))}
-                </select>
+                </PSelect>
                 <div className="flex items-center mt-2">
                   <span className="text-sm text-gray-500 mr-2">当前选择:</span>
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPlanBadgeColor(formData.plan)}`}>
@@ -365,30 +335,20 @@ const CreateTenant: React.FC = () => {
 
             {/* 操作按钮 */}
             <div className="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
-              <button
+              <PButton
                 type="button"
+                variant="secondary"
                 onClick={handleCancel}
-                className="px-6 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
               >
                 取消
-              </button>
-              <button
+              </PButton>
+              <PButton
                 type="submit"
-                disabled={loading || !!codeError}
-                className="px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center"
+                loading={loading || !!codeError}
+                leftIcon={<BuildingOfficeIcon className="h-4 w-4" />}
               >
-                {loading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    创建中...
-                  </>
-                ) : (
-                  <>
-                    <BuildingOfficeIcon className="h-4 w-4 mr-2" />
-                    创建租户
-                  </>
-                )}
-              </button>
+                创建租户
+              </PButton>
             </div>
           </form>
         </div>

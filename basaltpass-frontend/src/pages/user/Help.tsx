@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import Layout from '../../components/Layout'
+import { PInput, PButton } from '../../components'
 import { 
   QuestionMarkCircleIcon,
   ChatBubbleLeftRightIcon,
@@ -254,16 +255,14 @@ export default function Help() {
               <h3 className="text-xl font-semibold text-gray-900">搜索帮助</h3>
             </div>
             <div className="max-w-2xl mx-auto">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="搜索问题或关键词..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="block w-full pl-12 pr-4 py-4 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
-                />
-                <MagnifyingGlassIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-              </div>
+              <PInput
+                placeholder="搜索问题或关键词..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                size="lg"
+                icon={<MagnifyingGlassIcon className="h-5 w-5" />}
+                variant="rounded"
+              />
             </div>
           </div>
         </div>
@@ -274,17 +273,15 @@ export default function Help() {
             <h3 className="text-lg font-semibold text-gray-900 mb-4">按分类浏览</h3>
             <div className="flex flex-wrap gap-3">
               {faqCategories.map((category) => (
-                <button
+                <PButton
                   key={category.id}
                   onClick={() => setSelectedCategory(category.id)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${
-                    selectedCategory === category.id
-                      ? category.color
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
+                  variant={selectedCategory === category.id ? 'primary' : 'secondary'}
+                  size="sm"
+                  className="rounded-full"
                 >
                   {category.name}
-                </button>
+                </PButton>
               ))}
             </div>
           </div>
@@ -298,13 +295,14 @@ export default function Help() {
                 常见问题 ({filteredFaqs.length})
               </h3>
               {searchQuery && (
-                <button
+                <PButton
                   onClick={() => setSearchQuery('')}
-                  className="text-sm text-gray-500 hover:text-gray-700 flex items-center"
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-600"
                 >
-                  <XMarkIcon className="h-4 w-4 mr-1" />
                   清除搜索
-                </button>
+                </PButton>
               )}
             </div>
             
@@ -318,9 +316,10 @@ export default function Help() {
               <div className="space-y-4">
                 {filteredFaqs.map((faq) => (
                   <div key={faq.id} className="border border-gray-200 rounded-xl overflow-hidden">
-                    <button
-                      className="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition-colors duration-200"
+                    <PButton
                       onClick={() => toggleFaq(faq.id)}
+                      variant="secondary"
+                      className="w-full justify-between text-left px-6 py-4"
                     >
                       <div className="flex items-start space-x-4">
                         <span className="text-2xl">❓</span>
@@ -340,14 +339,8 @@ export default function Help() {
                           </div>
                         </div>
                       </div>
-                      <span className="ml-6 flex-shrink-0">
-                        <svg
-                          className={`h-5 w-5 text-gray-500 transform transition-transform duration-200 ${
-                            openFaq === faq.id ? 'rotate-180' : ''
-                          }`}
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
+                      <span className={`ml-6 flex-shrink-0 transform transition-transform duration-200 ${openFaq === faq.id ? 'rotate-180' : ''}`}>
+                        <svg className="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
                           <path
                             fillRule="evenodd"
                             d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
@@ -355,7 +348,7 @@ export default function Help() {
                           />
                         </svg>
                       </span>
-                    </button>
+                    </PButton>
                     {openFaq === faq.id && (
                       <div className="px-6 pb-4 bg-gray-50">
                         <div className="pt-4">
@@ -364,20 +357,24 @@ export default function Help() {
                           {!feedbackSubmitted.has(faq.id) ? (
                             <div className="flex items-center space-x-4">
                               <span className="text-sm text-gray-600">这个回答对您有帮助吗？</span>
-                                                             <button
-                                 onClick={() => handleFeedback(faq.id, true)}
-                                 className="flex items-center space-x-1 text-sm text-green-600 hover:text-green-700"
-                               >
-                                 <HandThumbUpIcon className="h-4 w-4" />
-                                 <span>有帮助</span>
-                               </button>
-                               <button
-                                 onClick={() => handleFeedback(faq.id, false)}
-                                 className="flex items-center space-x-1 text-sm text-red-600 hover:text-red-700"
-                               >
-                                 <HandThumbDownIcon className="h-4 w-4" />
-                                 <span>没帮助</span>
-                               </button>
+                              <PButton
+                                onClick={() => handleFeedback(faq.id, true)}
+                                variant="ghost"
+                                size="sm"
+                                leftIcon={<HandThumbUpIcon className="h-4 w-4" />}
+                                className="text-green-600"
+                              >
+                                有帮助
+                              </PButton>
+                              <PButton
+                                onClick={() => handleFeedback(faq.id, false)}
+                                variant="ghost"
+                                size="sm"
+                                leftIcon={<HandThumbDownIcon className="h-4 w-4" />}
+                                className="text-red-600"
+                              >
+                                没帮助
+                              </PButton>
                             </div>
                           ) : (
                             <div className="flex items-center text-sm text-green-600">
@@ -538,12 +535,8 @@ export default function Help() {
             如果您没有找到需要的答案，或者有其他建议，请随时联系我们。您的反馈帮助我们提供更好的服务。
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors duration-200">
-              提交反馈
-            </button>
-            <button className="bg-white text-blue-600 px-6 py-3 rounded-lg font-medium border border-blue-200 hover:bg-blue-50 transition-colors duration-200">
-              建议新功能
-            </button>
+            <PButton size="lg">提交反馈</PButton>
+            <PButton variant="secondary" size="lg">建议新功能</PButton>
           </div>
         </div>
       </div>

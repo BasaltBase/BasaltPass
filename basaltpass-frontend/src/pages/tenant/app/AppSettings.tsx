@@ -10,6 +10,10 @@ import {
   Cog6ToothIcon
 } from '@heroicons/react/24/outline'
 import TenantLayout from '@components/TenantLayout'
+import PInput from '@components/PInput'
+import PTextarea from '@components/PTextarea'
+import PSelect from '@components/PSelect'
+import PButton from '@components/PButton'
 import { tenantAppApi, TenantApp, UpdateTenantAppRequest } from '@api/tenant/tenantApp'
 
 export default function AppSettings() {
@@ -196,12 +200,7 @@ export default function AppSettings() {
             <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-red-500" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">{error}</h3>
             <div className="mt-6">
-              <button
-                onClick={fetchAppDetail}
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-              >
-                重试
-              </button>
+              <PButton onClick={fetchAppDetail}>重试</PButton>
             </div>
           </div>
         </div>
@@ -217,11 +216,8 @@ export default function AppSettings() {
             <Cog6ToothIcon className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">应用不存在</h3>
             <div className="mt-6">
-              <Link
-                to="/tenant/apps"
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-              >
-                返回应用列表
+              <Link to="/tenant/apps">
+                <PButton>返回应用列表</PButton>
               </Link>
             </div>
           </div>
@@ -278,40 +274,31 @@ export default function AppSettings() {
               <h2 className="text-lg font-medium text-gray-900 mb-4">基本信息</h2>
               
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">应用名称</label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => handleInputChange('name', e.target.value)}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="输入应用名称"
-                  />
-                </div>
+                <PInput
+                  label="应用名称"
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => handleInputChange('name', (e.target as HTMLInputElement).value)}
+                  placeholder="输入应用名称"
+                />
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">应用描述</label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) => handleInputChange('description', e.target.value)}
-                    rows={3}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="输入应用描述"
-                  />
-                </div>
+                <PTextarea
+                  label="应用描述"
+                  value={formData.description}
+                  onChange={(e) => handleInputChange('description', (e.target as HTMLTextAreaElement).value)}
+                  rows={3}
+                  placeholder="输入应用描述"
+                />
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">状态</label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) => handleInputChange('status', e.target.value)}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="active">活跃</option>
-                    <option value="inactive">停用</option>
-                    <option value="pending">待激活</option>
-                  </select>
-                </div>
+                <PSelect
+                  label="状态"
+                  value={formData.status}
+                  onChange={(e) => handleInputChange('status', (e.target as HTMLSelectElement).value)}
+                >
+                  <option value="active">活跃</option>
+                  <option value="inactive">停用</option>
+                  <option value="pending">待激活</option>
+                </PSelect>
               </div>
             </div>
 
@@ -320,49 +307,37 @@ export default function AppSettings() {
               <h2 className="text-lg font-medium text-gray-900 mb-4">URL配置</h2>
               
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Logo URL</label>
-                  <input
-                    type="url"
-                    value={formData.logo_url}
-                    onChange={(e) => handleInputChange('logo_url', e.target.value)}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="https://example.com/logo.png"
-                  />
-                </div>
+                <PInput
+                  label="Logo URL"
+                  type="url"
+                  value={formData.logo_url}
+                  onChange={(e) => handleInputChange('logo_url', (e.target as HTMLInputElement).value)}
+                  placeholder="https://example.com/logo.png"
+                />
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">主页URL</label>
-                  <input
-                    type="url"
-                    value={formData.homepage_url}
-                    onChange={(e) => handleInputChange('homepage_url', e.target.value)}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="https://example.com"
-                  />
-                </div>
+                <PInput
+                  label="主页URL"
+                  type="url"
+                  value={formData.homepage_url}
+                  onChange={(e) => handleInputChange('homepage_url', (e.target as HTMLInputElement).value)}
+                  placeholder="https://example.com"
+                />
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">隐私政策URL</label>
-                  <input
-                    type="url"
-                    value={formData.privacy_policy_url}
-                    onChange={(e) => handleInputChange('privacy_policy_url', e.target.value)}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="https://example.com/privacy"
-                  />
-                </div>
+                <PInput
+                  label="隐私政策URL"
+                  type="url"
+                  value={formData.privacy_policy_url}
+                  onChange={(e) => handleInputChange('privacy_policy_url', (e.target as HTMLInputElement).value)}
+                  placeholder="https://example.com/privacy"
+                />
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">服务条款URL</label>
-                  <input
-                    type="url"
-                    value={formData.terms_of_service_url}
-                    onChange={(e) => handleInputChange('terms_of_service_url', e.target.value)}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="https://example.com/terms"
-                  />
-                </div>
+                <PInput
+                  label="服务条款URL"
+                  type="url"
+                  value={formData.terms_of_service_url}
+                  onChange={(e) => handleInputChange('terms_of_service_url', (e.target as HTMLInputElement).value)}
+                  placeholder="https://example.com/terms"
+                />
               </div>
             </div>
 
@@ -370,32 +345,26 @@ export default function AppSettings() {
             <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-medium text-gray-900">OAuth回调地址</h2>
-                <button
-                  onClick={addCallbackUrl}
-                  className="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50"
-                >
-                  <PlusIcon className="w-4 h-4 mr-1" />
-                  添加
-                </button>
+                <PButton variant="secondary" size="sm" onClick={addCallbackUrl} leftIcon={<PlusIcon className="w-4 h-4" />}>添加</PButton>
               </div>
               
               <div className="space-y-3">
                 {formData.callback_urls.map((url, index) => (
                   <div key={index} className="flex items-center space-x-2">
-                    <input
+                    <PInput
                       type="url"
                       value={url}
-                      onChange={(e) => handleCallbackUrlChange(index, e.target.value)}
-                      className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                      onChange={(e) => handleCallbackUrlChange(index, (e.target as HTMLInputElement).value)}
                       placeholder="https://example.com/callback"
                     />
                     {formData.callback_urls.length > 1 && (
-                      <button
+                      <PButton 
+                        variant="secondary" 
+                        size="sm" 
                         onClick={() => removeCallbackUrl(index)}
-                        className="p-2 text-red-500 hover:text-red-700"
-                      >
-                        <XMarkIcon className="w-4 h-4" />
-                      </button>
+                        aria-label="移除"
+                        leftIcon={<XMarkIcon className="w-4 h-4" />}
+                      >移除</PButton>
                     )}
                   </div>
                 ))}
@@ -409,29 +378,19 @@ export default function AppSettings() {
             <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
               <h3 className="text-lg font-medium text-gray-900 mb-4">操作</h3>
               <div className="space-y-3">
-                <button
+                <PButton
                   onClick={handleSave}
-                  disabled={saving}
-                  className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  loading={saving}
+                  fullWidth
+                  leftIcon={!saving ? <CheckIcon className="w-4 h-4" /> : undefined}
                 >
-                  {saving ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      保存中...
-                    </>
-                  ) : (
-                    <>
-                      <CheckIcon className="w-4 h-4 mr-2" />
-                      保存设置
-                    </>
-                  )}
-                </button>
+                  {saving ? '保存中...' : '保存设置'}
+                </PButton>
                 
-                <Link
-                  to={`/tenant/apps/${app.id}`}
-                  className="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                >
-                  取消
+                <Link to={`/tenant/apps/${app.id}`}>
+                  <PButton variant="secondary" fullWidth>
+                    取消
+                  </PButton>
                 </Link>
               </div>
             </div>
@@ -461,13 +420,14 @@ export default function AppSettings() {
               <p className="text-sm text-gray-600 mb-4">
                 删除应用将永久移除所有相关数据，此操作不可撤销。
               </p>
-              <button
+              <PButton
+                variant="danger"
                 onClick={() => setShowDeleteConfirm(true)}
-                className="w-full inline-flex justify-center items-center px-4 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50"
+                fullWidth
+                leftIcon={<TrashIcon className="w-4 h-4" />}
               >
-                <TrashIcon className="w-4 h-4 mr-2" />
                 删除应用
-              </button>
+              </PButton>
             </div>
           </div>
         </div>
@@ -489,31 +449,34 @@ export default function AppSettings() {
                 请输入应用名称 <strong>{app.name}</strong> 以确认删除：
               </p>
               
-              <input
-                type="text"
-                value={deleteConfirmText}
-                onChange={(e) => setDeleteConfirmText(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 mb-4 focus:ring-red-500 focus:border-red-500"
-                placeholder="输入应用名称"
-              />
+              <div className="mb-4">
+                <PInput
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText((e.target as HTMLInputElement).value)}
+                  placeholder="输入应用名称"
+                />
+              </div>
               
               <div className="flex space-x-3">
-                <button
+                <PButton
+                  variant="danger"
                   onClick={handleDelete}
                   disabled={deleteConfirmText !== app.name}
-                  className="flex-1 inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1"
                 >
                   确认删除
-                </button>
-                <button
+                </PButton>
+                <PButton
+                  variant="secondary"
                   onClick={() => {
                     setShowDeleteConfirm(false)
                     setDeleteConfirmText('')
                   }}
-                  className="flex-1 inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                  className="flex-1"
                 >
                   取消
-                </button>
+                </PButton>
               </div>
             </div>
           </div>

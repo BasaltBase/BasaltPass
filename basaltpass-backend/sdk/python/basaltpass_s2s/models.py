@@ -36,3 +36,26 @@ class S2SUserWallet:
     balance: int
     wallet_id: int
     transactions: List[S2SWalletTx]
+
+@dataclass
+class S2SMessage:
+    id: int
+    app_id: int
+    title: str
+    content: str
+    type: str
+    sender_id: Optional[int]
+    sender_name: str
+    receiver_id: int
+    is_read: bool
+    read_at: Optional[str]
+    created_at: str
+
+@dataclass
+class S2SProduct:
+    id: int
+    code: str
+    name: str
+    description: Optional[str] = None
+    effective_at: Optional[str] = None
+    deprecated_at: Optional[str] = None

@@ -47,6 +47,14 @@ client.interceptors.response.use(
     const originalRequest = error.config
 
     if (error.response?.status === 401 && !originalRequest._retry) {
+      const url: string = originalRequest?.url || ''
+      // 跳过认证相关接口的刷新逻辑，直接把错误抛给调用方（避免死循环/卡住登录）
+      const isAuthEndpoint = url.includes('/api/v1/auth/login')
+        || url.includes('/api/v1/auth/verify-2fa')
+        || url.includes('/api/v1/auth/refresh')
+      if (isAuthEndpoint) {
+        return Promise.reject(error)
+      }
       if (isRefreshing) {
         // 如果正在刷新token，将请求加入队列
         return new Promise((resolve, reject) => {

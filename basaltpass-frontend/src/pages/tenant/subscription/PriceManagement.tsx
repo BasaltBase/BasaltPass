@@ -11,6 +11,11 @@ import {
   ClockIcon
 } from '@heroicons/react/24/outline';
 import * as tenantSubscriptionAPI from '@api/tenant/subscription';
+import PInput from '@components/PInput';
+import PSelect from '@components/PSelect';
+import PButton from '@components/PButton';
+import PTextarea from '@components/PTextarea';
+import PTable, { PTableColumn, PTableAction } from '@components/PTable';
 
 interface PriceManagementProps {}
 
@@ -132,162 +137,73 @@ const PriceManagement: React.FC<PriceManagementProps> = () => {
             </p>
           </div>
           <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-            <button
-              type="button"
-              onClick={handleCreatePrice}
-              className="inline-flex items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:w-auto"
-            >
-              <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
-              创建定价
-            </button>
+            <PButton type="button" onClick={handleCreatePrice} leftIcon={<PlusIcon className="h-5 w-5" />}>创建定价</PButton>
           </div>
         </div>
 
         {/* 筛选和搜索栏 */}
         <div className="bg-white shadow rounded-lg p-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                placeholder="搜索套餐名称..."
-              />
-            </div>
-            <div>
-              <select
-                value={selectedPlan}
-                onChange={(e) => setSelectedPlan(e.target.value)}
-                className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              >
-                <option value="all">所有套餐</option>
-                {plans.map((plan) => (
-                  <option key={plan.ID} value={plan.ID.toString()}>
-                    {plan.DisplayName}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <select
-                value={selectedCurrency}
-                onChange={(e) => setSelectedCurrency(e.target.value)}
-                className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              >
-                <option value="all">所有币种</option>
-                <option value="CNY">人民币 (CNY)</option>
-                <option value="USD">美元 (USD)</option>
-                <option value="EUR">欧元 (EUR)</option>
-              </select>
-            </div>
+            <PInput
+              icon={<MagnifyingGlassIcon className="h-5 w-5" />}
+              type="text"
+              value={searchTerm}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+              placeholder="搜索套餐名称..."
+            />
+            <PSelect
+              value={selectedPlan}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedPlan(e.target.value)}
+            >
+              <option value="all">所有套餐</option>
+              {plans.map((plan) => (
+                <option key={plan.ID} value={plan.ID.toString()}>
+                  {plan.DisplayName}
+                </option>
+              ))}
+            </PSelect>
+            <PSelect
+              value={selectedCurrency}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedCurrency(e.target.value)}
+            >
+              <option value="all">所有币种</option>
+              <option value="CNY">人民币 (CNY)</option>
+              <option value="USD">美元 (USD)</option>
+              <option value="EUR">欧元 (EUR)</option>
+            </PSelect>
           </div>
         </div>
 
-        {/* 定价列表 */}
-        {filteredPrices.length === 0 ? (
-          <div className="text-center py-12 bg-white shadow rounded-lg">
-            <CurrencyDollarIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">暂无定价</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              开始为套餐创建定价方案。
-            </p>
-            <div className="mt-6">
-              <button
-                type="button"
-                onClick={handleCreatePrice}
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
-                创建定价
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredPrices.map((price) => (
-              <div
-                key={price.ID}
-                className="bg-white overflow-hidden shadow rounded-lg border"
-              >
-                <div className="p-5">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0">
-                      <CurrencyDollarIcon className="h-6 w-6 text-green-600" />
-                    </div>
-                    <div className="ml-5 w-0 flex-1">
-                      <dl>
-                        <dt className="text-sm font-medium text-gray-500 truncate">
-                          {getPlanName(price.PlanID)}
-                        </dt>
-                        <dd>
-                          <div className="text-lg font-medium text-gray-900">
-                            {formatPrice(price.AmountCents, price.Currency)}
-                          </div>
-                        </dd>
-                      </dl>
-                    </div>
-                  </div>
+        {/* 定价列表（统一表格组件） */}
+        {(() => {
+          const columns: PTableColumn<tenantSubscriptionAPI.TenantPrice>[] = [
+            { key: 'plan', title: '套餐', render: (row) => getPlanName(row.PlanID) },
+            { key: 'amount', title: '价格', render: (row) => formatPrice(row.AmountCents, row.Currency) },
+            { key: 'billing', title: '计费周期', render: (row) => formatBillingPeriod(row.BillingPeriod, row.BillingInterval) },
+            { key: 'usage', title: '使用类型', render: (row) => getUsageTypeText(row.UsageType) },
+            { key: 'trial', title: '试用期', render: (row) => (row.TrialDays ? `${row.TrialDays} 天` : '-') },
+            { key: 'created', title: '创建时间', render: (row) => new Date(row.CreatedAt).toLocaleDateString() },
+            { key: 'deprecated', title: '状态', render: (row) => row.DeprecatedAt ? (<span className="inline-flex items-center text-red-600"><XCircleIcon className="h-4 w-4 mr-1" />已废弃</span>) : (<span className="text-gray-600">正常</span>) },
+          ];
 
-                  <div className="mt-4 space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">计费周期：</span>
-                      <span className="font-medium">
-                        {formatBillingPeriod(price.BillingPeriod, price.BillingInterval)}
-                      </span>
-                    </div>
+          const actions: PTableAction<tenantSubscriptionAPI.TenantPrice>[] = [
+            { key: 'edit', label: '编辑', icon: <PencilIcon className="h-4 w-4" />, variant: 'secondary', size: 'sm', onClick: (row) => handleEditPrice(row) },
+            { key: 'delete', label: '删除', icon: <TrashIcon className="h-4 w-4" />, variant: 'danger', size: 'sm', confirm: '确定要删除该定价吗？', onClick: (row) => handleDeletePrice(row.ID, getPlanName(row.PlanID)) },
+          ];
 
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">使用类型：</span>
-                      <span className="font-medium">{getUsageTypeText(price.UsageType)}</span>
-                    </div>
-
-                    {price.TrialDays && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">试用期：</span>
-                        <span className="font-medium">{price.TrialDays} 天</span>
-                      </div>
-                    )}
-
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">创建时间：</span>
-                      <span className="font-medium">
-                        {new Date(price.CreatedAt).toLocaleDateString()}
-                      </span>
-                    </div>
-
-                    {price.DeprecatedAt && (
-                      <div className="flex items-center mt-2">
-                        <XCircleIcon className="h-4 w-4 text-red-500" />
-                        <span className="ml-1 text-sm text-red-600">已废弃</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="mt-4 flex space-x-2">
-                    <button
-                      onClick={() => handleEditPrice(price)}
-                      className="flex-1 inline-flex justify-center items-center px-3 py-1 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    >
-                      <PencilIcon className="h-4 w-4 mr-1" />
-                      编辑
-                    </button>
-                    <button
-                      onClick={() => handleDeletePrice(price.ID, getPlanName(price.PlanID))}
-                      className="flex-1 inline-flex justify-center items-center px-3 py-1 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                    >
-                      <TrashIcon className="h-4 w-4 mr-1" />
-                      删除
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+          return (
+            <PTable
+              columns={columns}
+              data={filteredPrices}
+              rowKey={(row) => row.ID}
+              actions={actions}
+              emptyText="暂无定价"
+              emptyContent={<PButton type="button" onClick={handleCreatePrice} leftIcon={<PlusIcon className="h-5 w-5" />}>创建定价</PButton>}
+              striped
+              size="md"
+            />
+          );
+        })()}
       </div>
 
       {/* 创建/编辑定价模态框 */}
@@ -385,12 +301,11 @@ const CreatePriceModal: React.FC<{
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   所属套餐 *
                 </label>
-                <select
+                <PSelect
                   required
-                  disabled={!!price} // 编辑时不允许修改套餐
+                  disabled={!!price}
                   value={formData.plan_id}
-                  onChange={(e) => setFormData({ ...formData, plan_id: e.target.value })}
-                  className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, plan_id: e.target.value })}
                 >
                   <option value="">选择套餐</option>
                   {plans.map((plan) => (
@@ -398,23 +313,22 @@ const CreatePriceModal: React.FC<{
                       {plan.DisplayName}
                     </option>
                   ))}
-                </select>
+                </PSelect>
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   币种 *
                 </label>
-                <select
+                <PSelect
                   required
                   value={formData.currency}
-                  onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                  className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, currency: e.target.value })}
                 >
                   <option value="CNY">人民币 (CNY)</option>
                   <option value="USD">美元 (USD)</option>
                   <option value="EUR">欧元 (EUR)</option>
-                </select>
+                </PSelect>
               </div>
             </div>
 
@@ -423,14 +337,13 @@ const CreatePriceModal: React.FC<{
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   价格 *
                 </label>
-                <input
+                <PInput
                   type="number"
-                  step="0.01"
-                  min="0"
+                  step={0.01 as unknown as string}
+                  min={0}
                   required
                   value={formData.amount_cents}
-                  onChange={(e) => setFormData({ ...formData, amount_cents: e.target.value })}
-                  className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, amount_cents: e.target.value })}
                   placeholder="输入价格 (元)"
                 />
               </div>
@@ -439,18 +352,17 @@ const CreatePriceModal: React.FC<{
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   计费周期 *
                 </label>
-                <select
+                <PSelect
                   required
-                  disabled={!!price} // 编辑时不允许修改计费周期
+                  disabled={!!price}
                   value={formData.billing_period}
-                  onChange={(e) => setFormData({ ...formData, billing_period: e.target.value })}
-                  className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, billing_period: e.target.value })}
                 >
                   <option value="day">天</option>
                   <option value="week">周</option>
                   <option value="month">月</option>
                   <option value="year">年</option>
-                </select>
+                </PSelect>
               </div>
             </div>
 
@@ -459,14 +371,13 @@ const CreatePriceModal: React.FC<{
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   计费间隔 *
                 </label>
-                <input
+                <PInput
                   type="number"
-                  min="1"
+                  min={1}
                   required
-                  disabled={!!price} // 编辑时不允许修改计费间隔
+                  disabled={!!price}
                   value={formData.billing_interval}
-                  onChange={(e) => setFormData({ ...formData, billing_interval: parseInt(e.target.value) })}
-                  className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, billing_interval: parseInt(e.target.value) })}
                   placeholder="间隔数量"
                 />
               </div>
@@ -475,17 +386,16 @@ const CreatePriceModal: React.FC<{
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   使用类型 *
                 </label>
-                <select
+                <PSelect
                   required
-                  disabled={!!price} // 编辑时不允许修改使用类型
+                  disabled={!!price}
                   value={formData.usage_type}
-                  onChange={(e) => setFormData({ ...formData, usage_type: e.target.value })}
-                  className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, usage_type: e.target.value })}
                 >
                   <option value="license">按许可证</option>
                   <option value="metered">按使用量</option>
                   <option value="tiered">分层计费</option>
-                </select>
+                </PSelect>
               </div>
             </div>
 
@@ -493,12 +403,11 @@ const CreatePriceModal: React.FC<{
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 试用天数
               </label>
-              <input
+              <PInput
                 type="number"
-                min="0"
+                min={0}
                 value={formData.trial_days}
-                onChange={(e) => setFormData({ ...formData, trial_days: e.target.value })}
-                className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, trial_days: e.target.value })}
                 placeholder="留空表示无试用期"
               />
             </div>
@@ -507,11 +416,10 @@ const CreatePriceModal: React.FC<{
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 元数据 (JSON格式)
               </label>
-              <textarea
+              <PTextarea
                 rows={4}
                 value={formData.metadata}
-                onChange={(e) => setFormData({ ...formData, metadata: e.target.value })}
-                className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, metadata: e.target.value })}
                 placeholder='{"description": "定价描述"}'
               />
               <p className="mt-1 text-sm text-gray-500">
@@ -520,21 +428,8 @@ const CreatePriceModal: React.FC<{
             </div>
 
             <div className="flex justify-end space-x-3 pt-4">
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={submitting}
-                className="px-4 py-2 bg-gray-300 text-gray-700 text-base font-medium rounded-md shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-50"
-              >
-                取消
-              </button>
-              <button
-                type="submit"
-                disabled={submitting}
-                className="px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-              >
-                {submitting ? '保存中...' : (price ? '更新' : '创建')}
-              </button>
+              <PButton type="button" variant="secondary" onClick={onClose} disabled={submitting}>取消</PButton>
+              <PButton type="submit" loading={submitting}>{submitting ? '保存中...' : (price ? '更新' : '创建')}</PButton>
             </div>
           </form>
         </div>

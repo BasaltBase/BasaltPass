@@ -19,6 +19,8 @@ import {
 } from '@heroicons/react/24/outline'
 import AdminLayout from '@components/AdminLayout'
 import { PInput, PButton, PCheckbox } from '../../../components'
+import PTable, { PTableColumn } from '@components/PTable'
+import PSelect from '@components/PSelect'
 
 export default function Users() {
   const [users, setUsers] = useState<AdminUser[]>([])
@@ -303,174 +305,133 @@ export default function Users() {
               {/* 状态筛选 */}
               <div className="flex items-center gap-2">
                 <FunnelIcon className="h-5 w-5 text-gray-400" />
-                <select
+                <PSelect
                   value={params.status}
-                  onChange={(e) => handleStatusFilter(e.target.value as UserListParams['status'])}
-                  className="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleStatusFilter(e.target.value as UserListParams['status'])}
                 >
                   <option value="all">全部状态</option>
                   <option value="active">活跃用户</option>
                   <option value="banned">已封禁</option>
                   <option value="verified">已验证</option>
                   <option value="unverified">未验证</option>
-                </select>
+                </PSelect>
               </div>
             </div>
           </div>
 
           {/* 用户列表 */}
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    用户
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    联系方式
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    状态
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    租户
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    注册时间
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    操作
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {loading ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
-                      加载中...
-                    </td>
-                  </tr>
-                ) : users.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
-                      暂无数据
-                    </td>
-                  </tr>
-                ) : (
-                  users.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          {user.avatar_url ? (
-                            <img
-                              className="h-10 w-10 rounded-full object-cover"
-                              src={user.avatar_url}
-                              alt={user.nickname}
-                            />
-                          ) : (
-                            <div className="h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center">
-                              <UsersIcon className="h-6 w-6 text-gray-400" />
-                            </div>
-                          )}
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {user.nickname || '未设置昵称'}
-                            </div>
-                            <div className="text-sm text-gray-500">ID: {user.id}</div>
-                          </div>
+            {(() => {
+              const columns: PTableColumn<AdminUser>[] = [
+                {
+                  key: 'user',
+                  title: '用户',
+                  render: (user) => (
+                    <div className="flex items-center">
+                      {user.avatar_url ? (
+                        <img className="h-10 w-10 rounded-full object-cover" src={user.avatar_url} alt={user.nickname} />
+                      ) : (
+                        <div className="h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center">
+                          <UsersIcon className="h-6 w-6 text-gray-400" />
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{user.email}</div>
-                        {user.phone && (
-                          <div className="text-sm text-gray-500">{user.phone}</div>
+                      )}
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900">{user.nickname || '未设置昵称'}</div>
+                        <div className="text-sm text-gray-500">ID: {user.id}</div>
+                      </div>
+                    </div>
+                  )
+                },
+                {
+                  key: 'contact',
+                  title: '联系方式',
+                  render: (user) => (
+                    <div>
+                      <div className="text-sm text-gray-900">{user.email}</div>
+                      {user.phone && <div className="text-sm text-gray-500">{user.phone}</div>}
+                    </div>
+                  )
+                },
+                {
+                  key: 'status',
+                  title: '状态',
+                  render: (user) => (
+                    <div className="flex flex-col gap-1">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusStyle(user)}`}>
+                        {getStatusText(user)}
+                      </span>
+                      <div className="flex gap-1">
+                        {user.email_verified && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">邮箱已验证</span>
                         )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex flex-col gap-1">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusStyle(user)}`}>
-                            {getStatusText(user)}
-                          </span>
-                          <div className="flex gap-1">
-                            {user.email_verified && (
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                                邮箱已验证
-                              </span>
-                            )}
-                            {user.two_fa_enabled && (
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                                2FA
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {user.tenant_memberships.length > 0 ? (
-                            <div className="space-y-1">
-                              {user.tenant_memberships.slice(0, 2).map((membership) => (
-                                <div key={membership.tenant_id} className="flex items-center gap-2">
-                                  <span className="text-xs bg-gray-100 px-2 py-1 rounded">
-                                    {membership.tenant_name}
-                                  </span>
-                                  <span className="text-xs text-gray-500">
-                                    ({membership.role})
-                                  </span>
-                                </div>
-                              ))}
-                              {user.tenant_memberships.length > 2 && (
-                                <div className="text-xs text-gray-500">
-                                  +{user.tenant_memberships.length - 2} 更多
-                                </div>
-                              )}
+                        {user.two_fa_enabled && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">2FA</span>
+                        )}
+                      </div>
+                    </div>
+                  )
+                },
+                {
+                  key: 'tenants',
+                  title: '租户',
+                  render: (user) => (
+                    <div className="text-sm text-gray-900">
+                      {user.tenant_memberships.length > 0 ? (
+                        <div className="space-y-1">
+                          {user.tenant_memberships.slice(0, 2).map((m) => (
+                            <div key={m.tenant_id} className="flex items-center gap-2">
+                              <span className="text-xs bg-gray-100 px-2 py-1 rounded">{m.tenant_name}</span>
+                              <span className="text-xs text-gray-500">({m.role})</span>
                             </div>
-                          ) : (
-                            <span className="text-sm text-gray-500">无租户</span>
+                          ))}
+                          {user.tenant_memberships.length > 2 && (
+                            <div className="text-xs text-gray-500">+{user.tenant_memberships.length - 2} 更多</div>
                           )}
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(user.created_at)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center justify-end space-x-2">
-                          <Link
-                            to={`/admin/users/${user.id}`}
-                            className="text-blue-600 hover:text-blue-800"
-                            title="查看详情"
-                          >
-                            <EyeIcon className="h-4 w-4" />
-                          </Link>
-                          <PButton
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleBanUser(user)}
-                            className={user.banned ? "text-green-600 hover:text-green-800" : "text-red-600 hover:text-red-800"}
-                            title={user.banned ? "解封用户" : "封禁用户"}
-                          >
-                            {user.banned ? (
-                              <ShieldCheckIcon className="h-4 w-4" />
-                            ) : (
-                              <ShieldExclamationIcon className="h-4 w-4" />
-                            )}
-                          </PButton>
-                          <PButton
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteUser(user)}
-                            className="text-red-600 hover:text-red-800"
-                            title="删除用户"
-                          >
-                            <TrashIcon className="h-4 w-4" />
-                          </PButton>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                      ) : (
+                        <span className="text-sm text-gray-500">无租户</span>
+                      )}
+                    </div>
+                  )
+                },
+                { key: 'created_at', title: '注册时间', dataIndex: 'created_at', sortable: true, sorter: (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime() },
+                {
+                  key: 'actions',
+                  title: '操作',
+                  align: 'right',
+                  render: (user) => (
+                    <div className="flex items-center justify-end space-x-2">
+                      <Link to={`/admin/users/${user.id}`} className="text-blue-600 hover:text-blue-800" title="查看详情">
+                        <EyeIcon className="h-4 w-4" />
+                      </Link>
+                      <PButton
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleBanUser(user)}
+                        className={user.banned ? 'text-green-600 hover:text-green-800' : 'text-red-600 hover:text-red-800'}
+                        title={user.banned ? '解封用户' : '封禁用户'}
+                      >
+                        {user.banned ? <ShieldCheckIcon className="h-4 w-4" /> : <ShieldExclamationIcon className="h-4 w-4" />}
+                      </PButton>
+                      <PButton variant="ghost" size="sm" onClick={() => handleDeleteUser(user)} className="text-red-600 hover:text-red-800" title="删除用户">
+                        <TrashIcon className="h-4 w-4" />
+                      </PButton>
+                    </div>
+                  )
+                },
+              ]
+
+              return (
+                <PTable
+                  columns={columns}
+                  data={users}
+                  rowKey={(row) => row.id}
+                  loading={loading}
+                  emptyText="暂无数据"
+                  defaultSort={{ key: 'created_at', order: 'desc' }}
+                />
+              )
+            })()}
           </div>
 
           {/* 分页 */}

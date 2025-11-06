@@ -5,6 +5,7 @@ import { listPermissions, getRolePermissions, setRolePermissions, type Permissio
 import { Link } from 'react-router-dom'
 import AdminLayout from '@components/AdminLayout'
 import { PCheckbox, PButton, PInput } from '../../../components'
+import PTable, { PTableColumn } from '@components/PTable'
 
 interface RawRole {
   ID: number
@@ -144,27 +145,31 @@ export default function Roles() {
             <h3 className="text-lg font-medium text-gray-900">角色列表</h3>
           </div>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">名称</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">描述</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {roles.map((r) => (
-                  <tr key={r.ID} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{r.ID}</td>
-          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{r.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{r.description}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                      <PButton variant="secondary" size="sm" onClick={() => openAssign(r)}>分配权限</PButton>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            {(() => {
+              const columns: PTableColumn<Role>[] = [
+                { key: 'id', title: 'ID', dataIndex: 'ID', sortable: true },
+                { key: 'name', title: '名称', dataIndex: 'name', sortable: true },
+                { key: 'description', title: '描述', dataIndex: 'description' },
+                {
+                  key: 'actions',
+                  title: '操作',
+                  align: 'right',
+                  render: (r) => (
+                    <PButton variant="secondary" size="sm" onClick={() => openAssign(r)}>分配权限</PButton>
+                  )
+                }
+              ]
+
+              return (
+                <PTable
+                  columns={columns}
+                  data={roles}
+                  rowKey={(row) => row.ID}
+                  emptyText="暂无角色"
+                  defaultSort={{ key: 'id', order: 'asc' }}
+                />
+              )
+            })()}
           </div>
         </div>
 

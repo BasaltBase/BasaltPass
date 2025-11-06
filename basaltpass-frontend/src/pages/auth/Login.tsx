@@ -49,8 +49,23 @@ function Login() {
         setError('未知的登录响应')
       }
     } catch (err: any) {
-      const message = err.response?.data?.error || err.message || '登录失败，请检查您的凭据'
-      setError(message)
+      const raw = err?.response?.data?.error || err?.response?.data?.message || err?.message || ''
+      const msg = typeof raw === 'string' ? raw.toLowerCase() : ''
+      if (msg.includes('invalid credentials')) {
+        // 指定错误提示，并重置到初始状态
+        setError('邮箱或手机号或密码错误')
+        // 重置所有与登录流程相关的状态
+        setStep(1)
+        // 保留邮箱/手机号，便于用户仅重新输入密码
+        setPassword('')
+        setUserId(null)
+        setTwoFAType('')
+        setAvailable2FAMethods([])
+        setTwoFACode('')
+        setEmailCode('')
+      } else {
+        setError(raw || '登录失败，请检查您的凭据')
+      }
     } finally {
       setIsLoading(false)
     }

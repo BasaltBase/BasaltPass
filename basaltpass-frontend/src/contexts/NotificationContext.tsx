@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { notificationApi, TenantNotification } from '@api/tenant/tenantNotification'
+import { useAuth } from './AuthContext'
 
 interface NotificationContextType {
   notifications: TenantNotification[]
@@ -30,9 +31,12 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   const [notifications, setNotifications] = useState<TenantNotification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(false)
+  const { isAuthenticated, isLoading: authLoading } = useAuth()
 
   const loadNotifications = async () => {
     try {
+      // 未登录直接跳过
+      if (!isAuthenticated) return
       setLoading(true)
       const response = await notificationApi.getUserNotifications()
       setNotifications(response.data.data)
@@ -45,6 +49,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
   const refreshUnreadCount = async () => {
     try {
+      // 未登录直接跳过
+      if (!isAuthenticated) return
       const response = await notificationApi.getUnreadCount()
       setUnreadCount(response.data.count)
     } catch (error) {
@@ -90,16 +96,29 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     }
   }
 
+  // 当认证完成且已登录时再拉取通知
   useEffect(() => {
-    loadNotifications()
-    refreshUnreadCount()
-  }, [])
+    if (!authLoading && isAuthenticated) {
+      loadNotifications()
+      refreshUnreadCount()
+    }
+  }, [authLoading, isAuthenticated])
+
+  // 未登录时清空缓存数据，避免上一位用户数据泄露
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setNotifications([])
+      setUnreadCount(0)
+    }
+  }, [isAuthenticated])
 
   // 定期刷新未读数量（每30秒）
   useEffect(() => {
+    // 仅登录状态下才轮询未读数
+    if (!isAuthenticated) return
     const interval = setInterval(refreshUnreadCount, 30000)
     return () => clearInterval(interval)
-  }, [])
+  }, [isAuthenticated])
 
   const value: NotificationContextType = {
     notifications,

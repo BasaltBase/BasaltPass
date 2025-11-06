@@ -12,6 +12,11 @@ import {
   Cog6ToothIcon
 } from '@heroicons/react/24/outline';
 import * as tenantSubscriptionAPI from '@api/tenant/subscription';
+import PInput from '@components/PInput';
+import PSelect from '@components/PSelect';
+import PButton from '@components/PButton';
+import PTextarea from '@components/PTextarea';
+import PTable, { PTableColumn, PTableAction } from '@components/PTable';
 
 interface PlanManagementProps {}
 
@@ -103,128 +108,101 @@ const PlanManagement: React.FC<PlanManagementProps> = () => {
             </p>
           </div>
           <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-            <button
-              type="button"
-              onClick={handleCreatePlan}
-              className="inline-flex items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:w-auto"
-            >
-              <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
-              创建套餐
-            </button>
+            <PButton type="button" onClick={handleCreatePlan} leftIcon={<PlusIcon className="h-5 w-5" />}>创建套餐</PButton>
           </div>
         </div>
 
         {/* 筛选和搜索栏 */}
         <div className="bg-white shadow rounded-lg p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                placeholder="搜索套餐名称或代码..."
-              />
-            </div>
-            <div>
-              <select
-                value={selectedProduct}
-                onChange={(e) => setSelectedProduct(e.target.value)}
-                className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              >
-                <option value="all">所有产品</option>
-                {products.map((product) => (
-                  <option key={product.ID} value={product.ID.toString()}>
-                    {product.Name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <PInput
+              icon={<MagnifyingGlassIcon className="h-5 w-5" />}
+              type="text"
+              value={searchTerm}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+              placeholder="搜索套餐名称或代码..."
+            />
+            <PSelect
+              value={selectedProduct}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedProduct(e.target.value)}
+            >
+              <option value="all">所有产品</option>
+              {products.map((product) => (
+                <option key={product.ID} value={product.ID.toString()}>
+                  {product.Name}
+                </option>
+              ))}
+            </PSelect>
           </div>
         </div>
 
-        {/* 套餐列表 */}
-        {filteredPlans.length === 0 ? (
-          <div className="text-center py-12 bg-white shadow rounded-lg">
-            <RocketLaunchIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">暂无套餐</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              开始创建第一个订阅套餐。
-            </p>
-            <div className="mt-6">
-              <button
-                type="button"
-                onClick={handleCreatePlan}
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
-                创建套餐
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-white shadow overflow-hidden sm:rounded-md">
-            <ul className="divide-y divide-gray-200">
-              {filteredPlans.map((plan) => (
-                <li key={plan.ID}>
-                  <div className="px-4 py-4 flex items-center justify-between">
-                    <div className="flex items-center flex-1">
-                      <div className="flex-shrink-0">
-                        <RocketLaunchIcon className="h-8 w-8 text-blue-600" />
-                      </div>
-                      <div className="ml-4 flex-1">
-                        <div className="flex items-center">
-                          <p className="text-sm font-medium text-blue-600 truncate">
-                            {plan.DisplayName}
-                          </p>
-                          <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            v{plan.PlanVersion}
-                          </span>
-                        </div>
-                        <div className="mt-1 flex items-center text-sm text-gray-500">
-                          <span>产品: {getProductName(plan.ProductID)}</span>
-                          <span className="mx-2">•</span>
-                          <span>代码: {plan.Code}</span>
-                          {plan.Features && plan.Features.length > 0 && (
-                            <>
-                              <span className="mx-2">•</span>
-                              <span>{plan.Features.length} 个功能</span>
-                            </>
-                          )}
-                          {plan.Prices && plan.Prices.length > 0 && (
-                            <>
-                              <span className="mx-2">•</span>
-                              <span>{plan.Prices.length} 个定价方案</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => handleEditPlan(plan)}
-                        className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                      >
-                        <PencilIcon className="h-4 w-4 mr-1" />
-                        编辑
-                      </button>
-                      <button
-                        onClick={() => handleDeletePlan(plan.ID, plan.DisplayName)}
-                        className="inline-flex items-center px-3 py-1 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                      >
-                        <TrashIcon className="h-4 w-4 mr-1" />
-                        删除
-                      </button>
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        {/* 套餐列表（统一表格组件） */}
+        {(() => {
+          const columns: PTableColumn<tenantSubscriptionAPI.TenantPlan>[] = [
+            {
+              key: 'name',
+              title: '套餐',
+              render: (row) => (
+                <div className="flex items-center">
+                  <RocketLaunchIcon className="h-5 w-5 text-blue-600" />
+                  <span className="ml-2 text-blue-600 font-medium">{row.DisplayName}</span>
+                  <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">v{row.PlanVersion}</span>
+                </div>
+              )
+            },
+            {
+              key: 'product',
+              title: '产品',
+              render: (row) => <span className="text-gray-700">{getProductName(row.ProductID)}</span>
+            },
+            { key: 'code', title: '代码', dataIndex: 'Code' as any },
+            {
+              key: 'features',
+              title: '功能数',
+              render: (row) => <span>{row.Features?.length || 0}</span>
+            },
+            {
+              key: 'prices',
+              title: '定价数',
+              render: (row) => <span>{row.Prices?.length || 0}</span>
+            }
+          ];
+
+          const actions: PTableAction<tenantSubscriptionAPI.TenantPlan>[] = [
+            {
+              key: 'edit',
+              label: '编辑',
+              icon: <PencilIcon className="h-4 w-4" />,
+              variant: 'secondary',
+              size: 'sm',
+              onClick: (row) => handleEditPlan(row)
+            },
+            {
+              key: 'delete',
+              label: '删除',
+              icon: <TrashIcon className="h-4 w-4" />,
+              variant: 'danger',
+              size: 'sm',
+              confirm: '确定要删除该套餐吗？这将同时删除相关的定价配置。',
+              onClick: (row) => handleDeletePlan(row.ID, row.DisplayName)
+            }
+          ];
+
+          return (
+            <PTable
+              columns={columns}
+              data={filteredPlans}
+              rowKey={(row) => row.ID}
+              actions={actions}
+              emptyText="暂无套餐"
+              emptyContent={
+                <PButton type="button" onClick={handleCreatePlan} leftIcon={<PlusIcon className="h-5 w-5" />}>创建套餐</PButton>
+              }
+              striped
+              size="md"
+            />
+          );
+        })()}
       </div>
 
       {/* 创建/编辑套餐模态框 */}
@@ -314,12 +292,11 @@ const CreatePlanModal: React.FC<{
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   所属产品 *
                 </label>
-                <select
+                <PSelect
                   required
-                  disabled={!!plan} // 编辑时不允许修改产品
+                  disabled={!!plan}
                   value={formData.product_id}
-                  onChange={(e) => setFormData({ ...formData, product_id: e.target.value })}
-                  className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, product_id: e.target.value })}
                 >
                   <option value="">选择产品</option>
                   {products.map((product) => (
@@ -327,20 +304,19 @@ const CreatePlanModal: React.FC<{
                       {product.Name}
                     </option>
                   ))}
-                </select>
+                </PSelect>
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   套餐代码 *
                 </label>
-                <input
+                <PInput
                   type="text"
                   required
-                  disabled={!!plan} // 编辑时不允许修改代码
+                  disabled={!!plan}
                   value={formData.code}
-                  onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                  className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, code: e.target.value })}
                   placeholder="输入套餐代码"
                 />
               </div>
@@ -351,12 +327,11 @@ const CreatePlanModal: React.FC<{
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   套餐名称 *
                 </label>
-                <input
+                <PInput
                   type="text"
                   required
                   value={formData.display_name}
-                  onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
-                  className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, display_name: e.target.value })}
                   placeholder="输入套餐名称"
                 />
               </div>
@@ -365,14 +340,13 @@ const CreatePlanModal: React.FC<{
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   版本号 *
                 </label>
-                <input
+                <PInput
                   type="number"
-                  min="1"
+                  min={1}
                   required
-                  disabled={!!plan} // 编辑时不允许修改版本号
+                  disabled={!!plan}
                   value={formData.plan_version}
-                  onChange={(e) => setFormData({ ...formData, plan_version: parseInt(e.target.value) })}
-                  className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, plan_version: parseInt(e.target.value) || 1 })}
                 />
               </div>
             </div>
@@ -381,12 +355,12 @@ const CreatePlanModal: React.FC<{
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 元数据 (JSON格式)
               </label>
-              <textarea
+              <PTextarea
                 rows={6}
                 value={formData.metadata}
-                onChange={(e) => setFormData({ ...formData, metadata: e.target.value })}
-                className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, metadata: e.target.value })}
                 placeholder='{"description": "套餐描述", "features": []}'
+                className="font-mono text-sm"
               />
               <p className="mt-1 text-sm text-gray-500">
                 请输入有效的JSON格式数据
@@ -394,21 +368,12 @@ const CreatePlanModal: React.FC<{
             </div>
 
             <div className="flex justify-end space-x-3 pt-4">
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={submitting}
-                className="px-4 py-2 bg-gray-300 text-gray-700 text-base font-medium rounded-md shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-50"
-              >
+              <PButton type="button" variant="secondary" onClick={onClose} disabled={submitting}>
                 取消
-              </button>
-              <button
-                type="submit"
-                disabled={submitting}
-                className="px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-              >
-                {submitting ? '保存中...' : (plan ? '更新' : '创建')}
-              </button>
+              </PButton>
+              <PButton type="submit" loading={submitting}>
+                {plan ? '更新' : '创建'}
+              </PButton>
             </div>
           </form>
         </div>

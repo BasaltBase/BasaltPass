@@ -230,3 +230,7 @@ client_secret: your_client_secret
 ## 变更日志
 
 - 2025-11-04：首版发布，提供用户信息、角色/权限、钱包查询能力。
+- 2025-11-04：新增消息与商品能力：
+  - GET /api/v1/s2s/users/{id}/messages 支持分页与未读筛选
+  - GET /api/v1/s2s/users/{id}/products 列出通过订阅或订单拥有的产品
+  - GET /api/v1/s2s/users/{id}/products/{product_id}/ownership 检查是否拥有并返回来源类型

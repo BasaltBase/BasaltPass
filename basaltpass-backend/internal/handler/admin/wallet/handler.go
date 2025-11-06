@@ -418,3 +418,31 @@ func (h *AdminWalletHandler) GetCurrencies(c *fiber.Ctx) error {
 		"data": currencies,
 	})
 }
+
+// InitCurrencies POST /tenant/currencies/init - Initialize currencies by admin-selected list
+func (h *AdminWalletHandler) InitCurrencies(c *fiber.Ctx) error {
+	var req struct {
+		Codes []string `json:"codes"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+	}
+	if len(req.Codes) == 0 {
+		// 如果未提供列表，则初始化内置默认集（幂等）
+		if err := currency.InitDefaultCurrencies(); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		}
+		return c.JSON(fiber.Map{"message": "Initialized with default currency set"})
+	}
+
+	created, skipped, err := currency.InitCurrenciesByCodes(req.Codes)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{
+		"message":   "Currencies initialized",
+		"created":   created,
+		"skipped":   skipped,
+		"requested": len(req.Codes),
+	})
+}

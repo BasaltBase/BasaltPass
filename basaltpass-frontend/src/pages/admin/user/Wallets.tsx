@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import client from '@api/client'
 import { Link } from 'react-router-dom'
-import { ChevronRightIcon } from '@heroicons/react/24/outline'
+import { ArrowPathIcon, ChevronRightIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 import AdminLayout from '@components/AdminLayout'
+import PTable, { PTableColumn } from '@components/PTable'
+import PInput from '@components/PInput'
+import PButton from '@components/PButton'
 
 interface WalletTx {
   ID: number
@@ -22,14 +25,63 @@ interface WalletTx {
 
 export default function Wallets() {
   const [txs, setTxs] = useState<WalletTx[]>([])
+  const [loading, setLoading] = useState(false)
+  const [keyword, setKeyword] = useState('')
 
-  const load = () => {
-    client.get<WalletTx[]>('/api/v1/admin/wallets').then((r) => setTxs(r.data))
+  const load = async () => {
+    setLoading(true)
+    try {
+      const r = await client.get<WalletTx[]>('/api/v1/admin/wallets')
+      setTxs(r.data)
+    } finally {
+      setLoading(false)
+    }
   }
-  useEffect(load, [])
+  useEffect(() => { load() }, [])
+
+  const filtered = useMemo(() => {
+    if (!keyword) return txs
+    const kw = keyword.toLowerCase().trim()
+    return txs.filter(t =>
+      String(t.ID).includes(kw) ||
+      String(t.Wallet?.UserID ?? '').includes(kw) ||
+      String(t.Wallet?.Currency ?? '').toLowerCase().includes(kw)
+    )
+  }, [txs, keyword])
+
+  const columns: PTableColumn<WalletTx>[] = [
+    { key: 'id', title: 'ID', dataIndex: 'ID', sortable: true, align: 'center' },
+    {
+      key: 'user',
+      title: '用户ID',
+      sortable: true,
+      align: 'center',
+      sorter: (a, b) => (a.Wallet?.UserID || 0) - (b.Wallet?.UserID || 0),
+      render: (row) => row.Wallet?.UserID ?? '-'
+    },
+    {
+      key: 'amount',
+      title: '余额',
+      sortable: true,
+      align: 'right',
+      sorter: (a, b) => a.Amount - b.Amount,
+      render: (row) => (row.Amount / 100).toFixed(2)
+    },
+    {
+      key: 'currency',
+      title: '货币',
+      sortable: true,
+      align: 'center',
+      render: (row) => row.Wallet?.Currency || '-'
+    },
+  ]
 
   return (
-    <AdminLayout title="钱包管理">
+    <AdminLayout title="钱包管理" actions={
+      <PButton variant="ghost" size="sm" leftIcon={<ArrowPathIcon className="h-4 w-4" />} onClick={load} disabled={loading}>
+        刷新
+      </PButton>
+    }>
       <div className="space-y-6">
         {/* 面包屑导航 */}
         <nav className="flex" aria-label="Breadcrumb">
@@ -63,33 +115,22 @@ export default function Wallets() {
           </p>
         </div>
 
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">钱包列表</h3>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">余额</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">货币</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {txs.map((t) => (
-                  <tr key={t.ID} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{t.ID}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{t.Wallet?.UserID ?? '-'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{(t.Amount / 100).toFixed(2)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{t.Wallet?.Currency || '-'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-medium text-gray-900">钱包列表</h3>
+          <div className="relative w-64">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <PInput placeholder="搜索 ID / 用户ID / 货币" value={keyword} onChange={(e)=>setKeyword(e.target.value)} className="pl-9" />
           </div>
         </div>
+
+        <PTable
+          columns={columns}
+          data={filtered}
+          rowKey={(row) => row.ID}
+          loading={loading}
+          emptyText={keyword ? '无匹配数据' : '暂无数据'}
+          defaultSort={{ key: 'id', order: 'desc' }}
+        />
       </div>
     </AdminLayout>
   )

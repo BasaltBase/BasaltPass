@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Layout from '../../../components/Layout'
+import { PButton } from '../../../components'
 import { invitationApi, Invitation } from '@api/user/invitation'
 import { CheckIcon, XMarkIcon, ClockIcon, UserGroupIcon, EnvelopeIcon, CalendarIcon, UserIcon, ArrowLeftIcon } from '@heroicons/react/24/outline'
 import { useAuth } from '../../../contexts/AuthContext'
@@ -226,30 +227,19 @@ const Inbox: React.FC = () => {
                     {/* 操作按钮 */}
                     {inv.status === 'pending' && (
                       <div className="flex items-center space-x-3 ml-6">
-                        <button
+                        <PButton
                           onClick={() => handleAction(inv, 'accept')}
-                          disabled={actionLoading === inv.id}
-                          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 transition-all duration-200 shadow-sm"
+                          loading={actionLoading === inv.id}
                         >
-                          {actionLoading === inv.id ? (
-                            <div className="animate-spin rounded-full h-4 w-4 border-b border-white mr-2" />
-                          ) : (
-                            <CheckIcon className="h-4 w-4 mr-2" />
-                          )}
                           接受邀请
-                        </button>
-                        <button
+                        </PButton>
+                        <PButton
+                          variant="secondary"
                           onClick={() => handleAction(inv, 'reject')}
-                          disabled={actionLoading === inv.id}
-                          className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 transition-all duration-200 shadow-sm"
+                          loading={actionLoading === inv.id}
                         >
-                          {actionLoading === inv.id ? (
-                            <div className="animate-spin rounded-full h-4 w-4 border-b border-gray-400 mr-2" />
-                          ) : (
-                            <XMarkIcon className="h-4 w-4 mr-2" />
-                          )}
                           拒绝
-                        </button>
+                        </PButton>
                       </div>
                     )}
                   </div>
@@ -271,43 +261,36 @@ const Inbox: React.FC = () => {
                 条，共 <span className="font-semibold text-gray-900">{invitations.length}</span> 条
               </div>
               <nav className="flex items-center space-x-2">
-                <button
+                <PButton
                   onClick={() => load(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                  variant="secondary"
+                  size="sm"
                 >
-                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
                   上一页
-                </button>
+                </PButton>
                 
                 <div className="flex items-center space-x-1">
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                    <button
+                    <PButton
                       key={page}
                       onClick={() => load(page)}
-                      className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
-                        page === currentPage
-                          ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg'
-                          : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
-                      }`}
+                      variant={page === currentPage ? 'primary' : 'secondary'}
+                      size="sm"
                     >
                       {page}
-                    </button>
+                    </PButton>
                   ))}
                 </div>
                 
-                <button
+                <PButton
                   onClick={() => load(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                  variant="secondary"
+                  size="sm"
                 >
                   下一页
-                  <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
+                </PButton>
               </nav>
             </div>
           </div>

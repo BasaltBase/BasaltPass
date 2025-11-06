@@ -27,7 +27,7 @@ import {
   LockClosedIcon,
   FingerPrintIcon
 } from '@heroicons/react/24/outline'
-import { PInput, PButton } from '../../../components'
+import { PInput, PButton, PCard } from '../../../components'
 
 export default function SecuritySettings() {
   const navigate = useNavigate()
@@ -562,8 +562,24 @@ export default function SecuritySettings() {
           </div>
 
           <div className="mt-8">
-            <Link to="/security/login-history" className="inline-block px-4 py-2 bg-indigo-600 text-white rounded hover:bg-blue-700 transition">
-              查看登录历史
+            <Link to="/security/login-history" className="block">
+              <PCard variant="bordered" hoverable className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 rounded-lg bg-indigo-50 text-indigo-600">
+                    {/* 使用图标增强可视性 */}
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6">
+                      <path fillRule="evenodd" d="M12 2.25a9.75 9.75 0 1 0 9.75 9.75A9.761 9.761 0 0 0 12 2.25Zm.75 5.25a.75.75 0 0 0-1.5 0v4.5c0 .199.079.39.22.53l3 3a.75.75 0 1 0 1.06-1.06l-2.78-2.78V7.5Z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-base font-medium text-gray-900">登录历史</h3>
+                    <p className="mt-1 text-sm text-gray-500">查看最近的登录活动，保障账户安全</p>
+                  </div>
+                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5 text-gray-400">
+                  <path fillRule="evenodd" d="M8.47 4.47a.75.75 0 0 1 1.06 0l6 6a.75.75 0 0 1 0 1.06l-6 6a.75.75 0 1 1-1.06-1.06L13.94 12 8.47 6.53a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
+                </svg>
+              </PCard>
             </Link>
           </div>
         </div>

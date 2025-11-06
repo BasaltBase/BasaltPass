@@ -11,6 +11,7 @@ import {
   ArrowLeftIcon
 } from '@heroicons/react/24/outline'
 import AdminLayout from '@components/AdminLayout'
+import { PInput, PSelect, PTextarea, PCheckbox, PButton } from '../../../components'
 import { adminTenantApi, AdminTenantDetailResponse, AdminUpdateTenantRequest, TenantSettings } from '@api/admin/tenant'
 
 const EditTenant: React.FC = () => {
@@ -166,12 +167,9 @@ const EditTenant: React.FC = () => {
           <h3 className="mt-2 text-sm font-medium text-gray-900">租户不存在</h3>
           <p className="mt-1 text-sm text-gray-500">请检查租户ID是否正确</p>
           <div className="mt-6">
-            <button
-              onClick={() => navigate('/admin/tenants')}
-              className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-            >
+            <PButton onClick={() => navigate('/admin/tenants')}>
               返回租户列表
-            </button>
+            </PButton>
           </div>
         </div>
       </AdminLayout>
@@ -202,12 +200,15 @@ const EditTenant: React.FC = () => {
         <div className="lg:flex lg:items-center lg:justify-between">
           <div className="flex-1 min-w-0">
             <div className="flex items-center">
-              <button
+              <PButton
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="mr-2 text-gray-500 hover:text-gray-700"
                 onClick={() => navigate(`/admin/tenants/${id}`)}
-                className="mr-4 p-2 text-gray-400 hover:text-gray-500"
               >
                 <ArrowLeftIcon className="h-5 w-5" />
-              </button>
+              </PButton>
               <BuildingOfficeIcon className="h-8 w-8 mr-3 text-indigo-600" />
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">
@@ -237,67 +238,62 @@ const EditTenant: React.FC = () => {
               
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">租户名称</label>
-                  <input
+                  <PInput
+                    label="租户名称"
                     type="text"
                     name="name"
                     value={formData.name}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">租户代码</label>
-                  <input
+                  <PInput
+                    label="租户代码"
                     type="text"
                     value={tenant.code}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 bg-gray-50 text-gray-500 sm:text-sm"
                     disabled
                   />
                   <p className="mt-1 text-xs text-gray-500">租户代码创建后不可修改</p>
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700">描述</label>
-                  <textarea
+                  <PTextarea
+                    label="描述"
                     name="description"
                     value={formData.description}
                     onChange={handleInputChange}
                     rows={3}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                     placeholder="租户描述信息..."
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">套餐</label>
-                  <select
+                  <PSelect
+                    label="套餐"
                     name="plan"
                     value={formData.plan}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   >
                     <option value="free">免费版</option>
                     <option value="basic">基础版</option>
                     <option value="premium">高级版</option>
                     <option value="enterprise">企业版</option>
-                  </select>
+                  </PSelect>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">状态</label>
-                  <select
+                  <PSelect
+                    label="状态"
                     name="status"
                     value={formData.status}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   >
                     <option value="active">活跃</option>
                     <option value="suspended">暂停</option>
                     <option value="deleted">删除</option>
-                  </select>
+                  </PSelect>
                 </div>
               </div>
             </div>
@@ -312,85 +308,72 @@ const EditTenant: React.FC = () => {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">最大用户数</label>
-                    <input
+                    <PInput
+                      label="最大用户数"
                       type="number"
                       value={formData.settings?.max_users || 0}
                       onChange={(e) => handleSettingChange('max_users', parseInt(e.target.value) || 0)}
-                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                      min="0"
+                      min={0}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">最大应用数</label>
-                    <input
+                    <PInput
+                      label="最大应用数"
                       type="number"
                       value={formData.settings?.max_apps || 0}
                       onChange={(e) => handleSettingChange('max_apps', parseInt(e.target.value) || 0)}
-                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                      min="0"
+                      min={0}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">最大存储 (MB)</label>
-                    <input
+                    <PInput
+                      label="最大存储 (MB)"
                       type="number"
                       value={formData.settings?.max_storage || 0}
                       onChange={(e) => handleSettingChange('max_storage', parseInt(e.target.value) || 0)}
-                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                      min="0"
+                      min={0}
                     />
                   </div>
                 </div>
-                
-                <div className="space-y-2">
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.settings?.enable_api || false}
-                      onChange={(e) => handleSettingChange('enable_api', e.target.checked)}
-                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                    />
-                    <label className="ml-2 block text-sm text-gray-900">启用 API 功能</label>
-                  </div>
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.settings?.enable_sso || false}
-                      onChange={(e) => handleSettingChange('enable_sso', e.target.checked)}
-                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                    />
-                    <label className="ml-2 block text-sm text-gray-900">启用 SSO 单点登录</label>
-                  </div>
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.settings?.enable_audit || false}
-                      onChange={(e) => handleSettingChange('enable_audit', e.target.checked)}
-                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                    />
-                    <label className="ml-2 block text-sm text-gray-900">启用审计日志</label>
-                  </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <PCheckbox
+                    variant="switch"
+                    label="启用 API 功能"
+                    checked={formData.settings?.enable_api || false}
+                    onChange={(e) => handleSettingChange('enable_api', (e.target as HTMLInputElement).checked)}
+                  />
+                  <PCheckbox
+                    variant="switch"
+                    label="启用 SSO 单点登录"
+                    checked={formData.settings?.enable_sso || false}
+                    onChange={(e) => handleSettingChange('enable_sso', (e.target as HTMLInputElement).checked)}
+                  />
+                  <PCheckbox
+                    variant="switch"
+                    label="启用审计日志"
+                    checked={formData.settings?.enable_audit || false}
+                    onChange={(e) => handleSettingChange('enable_audit', (e.target as HTMLInputElement).checked)}
+                  />
                 </div>
               </div>
             </div>
 
             {/* 表单按钮 */}
             <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
-              <button
+              <PButton
                 type="button"
+                variant="secondary"
                 onClick={handleCancel}
-                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
                 取消
-              </button>
-              <button
+              </PButton>
+              <PButton
                 type="submit"
-                disabled={saving}
-                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                loading={saving}
               >
-                {saving ? '保存中...' : '保存更改'}
-              </button>
+                保存更改
+              </PButton>
             </div>
           </form>
         </div>

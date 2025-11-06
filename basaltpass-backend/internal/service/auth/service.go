@@ -104,21 +104,36 @@ func (s Service) LoginV2(req LoginRequest) (LoginResult, error) {
 	var availableMethods []string
 	var defaultMethod string
 
-	if user.TwoFAEnabled && user.TOTPSecret != "" {
-		availableMethods = append(availableMethods, "totp")
-		defaultMethod = "totp"
-	}
-	if len(user.Passkeys) > 0 {
-		availableMethods = append(availableMethods, "passkey")
-		if defaultMethod == "" {
-			defaultMethod = "passkey"
+	// 是否具备强二次验证方式（TOTP 或 Passkey）
+	hasStrong2FA := (user.TwoFAEnabled && user.TOTPSecret != "") || len(user.Passkeys) > 0
+
+	if hasStrong2FA {
+		// 已开启强二次验证时，仅要求这些方式，不再因为未验证邮箱/手机号而拦截登录
+		if user.TwoFAEnabled && user.TOTPSecret != "" {
+			availableMethods = append(availableMethods, "totp")
+			defaultMethod = "totp"
 		}
-	}
-	if !user.EmailVerified {
-		availableMethods = append(availableMethods, "email")
-		if defaultMethod == "" {
-			defaultMethod = "email"
+		if len(user.Passkeys) > 0 {
+			availableMethods = append(availableMethods, "passkey")
+			if defaultMethod == "" {
+				defaultMethod = "passkey"
+			}
 		}
+	} else {
+		// 未开启强二次验证时，作为兜底：未验证邮箱（或未来支持的手机号）需要做验证
+		if !user.EmailVerified {
+			availableMethods = append(availableMethods, "email")
+			if defaultMethod == "" {
+				defaultMethod = "email"
+			}
+		}
+		// 如需支持手机号，可按需启用以下逻辑（目前未在 Verify2FA 中实现 phone 分支）
+		// if !user.PhoneVerified && user.Phone != "" {
+		//     availableMethods = append(availableMethods, "phone")
+		//     if defaultMethod == "" {
+		//         defaultMethod = "phone"
+		//     }
+		// }
 	}
 
 	// 如果有2FA方式，返回需要验证

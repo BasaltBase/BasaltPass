@@ -11,7 +11,12 @@ import {
   TagIcon,
   LockClosedIcon
 } from '@heroicons/react/24/outline'
-import TenantLayout from '../../../components/TenantLayout'
+import TenantLayout from '@components/TenantLayout'
+import PInput from '@components/PInput'
+import PSelect from '@components/PSelect'
+import PTextarea from '@components/PTextarea'
+import PButton from '@components/PButton'
+import PTable, { type PTableColumn, type PTableAction } from '@components/PTable'
 import { tenantAppApi } from '@api/tenant/tenantApp'
 import userPermissionsApi, { type Permission } from '@api/tenant/appPermissions'
 
@@ -195,15 +200,7 @@ export default function AppPermissionManagement() {
             <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-red-500" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">{error}</h3>
             <div className="mt-6">
-              <button
-                onClick={() => {
-                  setError('')
-                  fetchPermissions()
-                }}
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-              >
-                重试
-              </button>
+              <PButton onClick={() => { setError(''); fetchPermissions(); }}>重试</PButton>
             </div>
           </div>
         </div>
@@ -226,25 +223,13 @@ export default function AppPermissionManagement() {
             </p>
           </div>
           <div className="flex space-x-3">
-            <button
-              onClick={() => navigate(`/tenant/apps/${appId}/roles`)}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-            >
+            <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/roles`)}>
               角色管理
-            </button>
-            <button
-              onClick={() => navigate(`/tenant/apps/${appId}/users`)}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-            >
+            </PButton>
+            <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/users`)}>
               用户管理
-            </button>
-            <button
-              onClick={handleCreatePermission}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-            >
-              <PlusIcon className="h-4 w-4 mr-2" />
-              创建权限
-            </button>
+            </PButton>
+            <PButton onClick={handleCreatePermission} leftIcon={<PlusIcon className="h-4 w-4" />}>创建权限</PButton>
           </div>
         </div>
 
@@ -252,114 +237,96 @@ export default function AppPermissionManagement() {
         <div className="bg-white shadow rounded-lg p-6">
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1">
-              <div className="relative">
-                <MagnifyingGlassIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="搜索权限名称、代码或描述..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
+              <PInput
+                placeholder="搜索权限名称、代码或描述..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm((e.target as HTMLInputElement).value)}
+                icon={<MagnifyingGlassIcon className="h-5 w-5" />}
+              />
             </div>
             <div className="lg:w-64">
-              <select
+              <PSelect
                 value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                onChange={(e) => setSelectedCategory((e.target as HTMLSelectElement).value)}
               >
                 <option value="">所有分类</option>
                 {getCategories().map(category => (
                   <option key={category} value={category}>{category}</option>
                 ))}
-              </select>
+              </PSelect>
             </div>
           </div>
         </div>
 
-        {/* 权限列表 */}
-        <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg leading-6 font-medium text-gray-900">
-                权限列表 ({filteredPermissions.length} 个权限)
-              </h3>
-            </div>
-
-            {filteredPermissions.length === 0 ? (
-              <div className="text-center py-12">
-                <KeyIcon className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-medium text-gray-900">暂无权限</h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  {searchTerm || selectedCategory ? '未找到匹配的权限' : '还没有创建任何权限'}
-                </p>
-                {!searchTerm && !selectedCategory && (
-                  <div className="mt-6">
-                    <button
-                      onClick={handleCreatePermission}
-                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-                    >
-                      <PlusIcon className="h-4 w-4 mr-2" />
-                      创建权限
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-8">
-                {Object.entries(getPermissionsByCategory()).map(([category, categoryPermissions]) => (
-                  <div key={category}>
-                    <div className="flex items-center mb-4">
-                      <TagIcon className="h-5 w-5 text-indigo-600 mr-2" />
-                      <h4 className="text-lg font-medium text-gray-900">{category}</h4>
-                      <span className="ml-2 px-2 py-1 text-xs bg-indigo-100 text-indigo-800 rounded-full">
-                        {categoryPermissions.length} 个权限
-                      </span>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                      {categoryPermissions.map((permission) => (
-                        <div key={permission.id} className="bg-gray-50 rounded-lg p-4 border">
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center">
-                              <LockClosedIcon className="h-6 w-6 text-blue-600 mr-2" />
-                              <div>
-                                <h5 className="text-sm font-medium text-gray-900">{permission.name}</h5>
-                                <p className="text-xs text-gray-500">代码: {permission.code}</p>
-                              </div>
-                            </div>
-                            <div className="flex space-x-1">
-                              <button
-                                onClick={() => handleEditPermission(permission)}
-                                className="text-blue-600 hover:text-blue-800"
-                              >
-                                <PencilIcon className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => handleDeletePermission(permission)}
-                                className="text-red-600 hover:text-red-800"
-                              >
-                                <TrashIcon className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </div>
-
-                          {permission.description && (
-                            <p className="text-sm text-gray-600 mb-3">{permission.description}</p>
-                          )}
-
-                          <div className="text-xs text-gray-500">
-                            创建时间: {new Date(permission.created_at).toLocaleDateString()}
-                          </div>
-                        </div>
-                      ))}
+        {/* 权限列表（统一 PTable）*/}
+        <div>
+          <PTable<Permission>
+            data={filteredPermissions}
+            rowKey={(row) => String(row.id)}
+            loading={loading}
+            emptyText={searchTerm || selectedCategory ? '未找到匹配的权限' : '还没有创建任何权限'}
+            emptyContent={!searchTerm && !selectedCategory ? (
+              <PButton onClick={handleCreatePermission} leftIcon={<PlusIcon className="h-4 w-4" />}>创建权限</PButton>
+            ) : undefined}
+            size="md"
+            striped
+            defaultSort={{ key: 'name', order: 'asc' }}
+            columns={[
+              {
+                key: 'name',
+                title: '权限名称',
+                dataIndex: 'name',
+                sortable: true,
+                render: (row) => (
+                  <div className="flex items-center">
+                    <LockClosedIcon className="h-5 w-5 text-blue-600 mr-2" />
+                    <div>
+                      <div className="font-medium text-gray-900">{row.name}</div>
+                      <div className="text-xs text-gray-500">{row.code}</div>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+                )
+              },
+              {
+                key: 'category',
+                title: '分类',
+                dataIndex: 'category',
+                sortable: true,
+              },
+              {
+                key: 'description',
+                title: '描述',
+                dataIndex: 'description',
+                className: 'max-w-xl truncate',
+              },
+              {
+                key: 'created_at',
+                title: '创建时间',
+                dataIndex: 'created_at',
+                align: 'right',
+                sortable: true,
+                sorter: (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+                render: (row) => new Date(row.created_at).toLocaleString()
+              }
+            ]}
+            actions={[
+              {
+                key: 'edit',
+                label: '编辑',
+                icon: <PencilIcon className="h-4 w-4" />,
+                variant: 'secondary',
+                onClick: (row) => handleEditPermission(row)
+              },
+              {
+                key: 'delete',
+                label: '删除',
+                icon: <TrashIcon className="h-4 w-4" />,
+                variant: 'danger',
+                confirm: '确定要删除该权限吗？这将影响拥有此权限的用户和角色。',
+                onClick: (row) => handleDeletePermission(row)
+              }
+            ]}
+          />
         </div>
       </div>
 
@@ -418,41 +385,32 @@ const PermissionModal: React.FC<{
         <div className="mt-3">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-medium text-gray-900">{title}</h3>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
-            >
+            <PButton variant="ghost" onClick={onClose}>
               <XMarkIcon className="h-6 w-6" />
-            </button>
+            </PButton>
           </div>
 
           <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  权限代码 *
-                </label>
-                <input
+                <PInput
+                  label="权限代码 *"
                   type="text"
                   required
                   value={formData.code}
-                  onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, code: (e.target as HTMLInputElement).value })}
                   disabled={isEdit}
-                  className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
                   placeholder="例如: user.create, content.edit"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  权限名称 *
-                </label>
-                <input
+                <PInput
+                  label="权限名称 *"
                   type="text"
                   required
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                  onChange={(e) => setFormData({ ...formData, name: (e.target as HTMLInputElement).value })}
                   placeholder="例如: 创建用户, 编辑内容"
                 />
               </div>
@@ -463,55 +421,49 @@ const PermissionModal: React.FC<{
                 权限分类 *
               </label>
               <div className="flex space-x-2">
-                <select
+                <PSelect
                   value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                  onChange={(e) => setFormData({ ...formData, category: (e.target as HTMLSelectElement).value })}
                 >
                   <option value="">选择分类</option>
                   {commonCategories.map(category => (
                     <option key={category} value={category}>{category}</option>
                   ))}
-                </select>
-                <input
+                </PSelect>
+                <PInput
                   type="text"
                   value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, category: (e.target as HTMLInputElement).value })}
                   placeholder="或输入自定义分类"
-                  className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                权限描述
-              </label>
-              <textarea
+              <PTextarea
+                label="权限描述"
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, description: (e.target as HTMLTextAreaElement).value })}
                 rows={3}
-                className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="描述该权限的作用和适用场景"
               />
             </div>
 
             <div className="flex justify-end space-x-3">
-              <button
+              <PButton
                 type="button"
+                variant="secondary"
                 onClick={onClose}
                 disabled={submitting}
-                className="px-4 py-2 bg-gray-300 text-gray-700 text-base font-medium rounded-md shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-50"
               >
                 取消
-              </button>
-              <button
+              </PButton>
+              <PButton
                 type="submit"
-                disabled={submitting}
-                className="px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                loading={submitting}
               >
-                {submitting ? '保存中...' : (isEdit ? '更新' : '创建')}
-              </button>
+                {isEdit ? '更新' : '创建'}
+              </PButton>
             </div>
           </form>
         </div>

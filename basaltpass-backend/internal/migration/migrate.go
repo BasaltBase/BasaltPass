@@ -788,7 +788,7 @@ func seedDefaultSystemSettings() {
 		Val            interface{}
 	}
 	defaults := []item{
-		{Key: "general.site_name", Cat: "general", Desc: "站点名称", Val: "BasaltPass"},
+		{Key: "general.site_name", Cat: "general", Desc: "系统名称", Val: "BasaltPass"},
 		{Key: "auth.enable_register", Cat: "auth", Desc: "允许新用户注册", Val: true},
 		{Key: "security.enforce_2fa", Cat: "security", Desc: "是否强制启用 2FA", Val: false},
 		{Key: "cors.allow_origins", Cat: "cors", Desc: "允许的跨域来源列表", Val: []string{"http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000"}},
