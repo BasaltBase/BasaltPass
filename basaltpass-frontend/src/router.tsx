@@ -1,6 +1,8 @@
 import { Routes, Route } from 'react-router-dom'
 import ProtectedRoute from '@components/ProtectedRoute'
 import PublicRoute from '@components/PublicRoute'
+import AdminRoute from '@components/AdminRoute'
+import TenantRoute from '@components/TenantRoute'
 import Login from '@pages/auth/Login'
 import Register from '@pages/auth/Register'
 import Profile from '@pages/user/profile/Index'
@@ -74,6 +76,7 @@ import TenantRoleManagement from '@pages/tenant/user/RoleManagement'
 import TenantSubscriptionDashboard from '@pages/tenant/subscription/Dashboard'
 import TenantProducts from '@pages/tenant/subscription/Products'
 import TenantSubscriptions from '@pages/tenant/subscription/Subscriptions'
+import TenantSubscriptionDetail from '@pages/tenant/subscription/SubscriptionDetail'
 import TenantPlans from '@pages/tenant/subscription/Plans'
 import TenantPrices from '@pages/tenant/subscription/Prices'
 import TenantCoupons from '@pages/tenant/subscription/Coupons'
@@ -256,264 +259,269 @@ export default function AppRouter() {
       
       {/* 管理员页面 - 需要认证保护 */}
       <Route path="/admin/dashboard" element={
-        <ProtectedRoute>
+        <AdminRoute>
           <AdminDashboard />
-        </ProtectedRoute>
+        </AdminRoute>
       } />
       <Route path="/admin/apps" element={
-        <ProtectedRoute>
+        <AdminRoute>
           <AppList />
-        </ProtectedRoute>
+        </AdminRoute>
       } />
       <Route path="/admin/apps/new" element={
-        <ProtectedRoute>
+        <AdminRoute>
           <CreateApp />
-        </ProtectedRoute>
+        </AdminRoute>
       } />
       <Route path="/admin/users" element={
-        <ProtectedRoute>
+        <AdminRoute>
           <Users />
-        </ProtectedRoute>
+        </AdminRoute>
       } />
       <Route path="/admin/users/:id" element={
-        <ProtectedRoute>
+        <AdminRoute>
           <UserDetail />
-        </ProtectedRoute>
+        </AdminRoute>
       } />
       <Route path="/admin/roles" element={
-        <ProtectedRoute>
+        <AdminRoute>
           <Roles />
-        </ProtectedRoute>
+        </AdminRoute>
       } />
       <Route path="/admin/permissions" element={
-        <ProtectedRoute>
+        <AdminRoute>
           <AdminPermissions />
-        </ProtectedRoute>
+        </AdminRoute>
       } />
       <Route path="/admin/teams" element={
-        <ProtectedRoute>
+        <AdminRoute>
           <AdminTeamsPage />
-        </ProtectedRoute>
+        </AdminRoute>
       } />
       <Route path="/admin/invitations" element={
-        <ProtectedRoute>
+        <AdminRoute>
           <AdminInvitationsPage />
-        </ProtectedRoute>
+        </AdminRoute>
       } />
       <Route path="/admin/wallets" element={
-        <ProtectedRoute>
+        <AdminRoute>
           <WalletManagement />
-        </ProtectedRoute>
+        </AdminRoute>
       } />
       <Route path="/admin/wallets/legacy" element={
-        <ProtectedRoute>
+        <AdminRoute>
           <WalletsAdmin />
-        </ProtectedRoute>
+        </AdminRoute>
       } />
       <Route path="/admin/logs" element={
-        <ProtectedRoute>
+        <AdminRoute>
           <Logs />
-        </ProtectedRoute>
+        </AdminRoute>
       } />
       <Route path="/admin/subscriptions" element={
-        <ProtectedRoute>
+        <AdminRoute>
           <AdminSubscriptions />
-        </ProtectedRoute>
+        </AdminRoute>
       } />
       <Route path="/admin/products" element={
-        <ProtectedRoute>
+        <AdminRoute>
           <AdminProducts />
-        </ProtectedRoute>
+        </AdminRoute>
       } />
       <Route path="/admin/plans" element={
-        <ProtectedRoute>
+        <AdminRoute>
           <AdminPlans />
-        </ProtectedRoute>
+        </AdminRoute>
       } />
       <Route path="/admin/prices" element={
-        <ProtectedRoute>
+        <AdminRoute>
           <AdminPrices />
-        </ProtectedRoute>
+        </AdminRoute>
       } />
       <Route path="/admin/coupons" element={
-        <ProtectedRoute>
+        <AdminRoute>
           <AdminCoupons />
-        </ProtectedRoute>
+        </AdminRoute>
       } />
       <Route path="/admin/notifications" element={
-        <ProtectedRoute>
+        <AdminRoute>
           <AdminNotifications />
-        </ProtectedRoute>
+        </AdminRoute>
       } />
       <Route path="/admin/oauth-clients" element={
-        <ProtectedRoute>
+        <AdminRoute>
           <OAuthClients />
-        </ProtectedRoute>
+        </AdminRoute>
       } />
       <Route path="/admin/oauth-clients/:id/config" element={
-        <ProtectedRoute>
+        <AdminRoute>
           <OAuthClientConfig />
-        </ProtectedRoute>
+        </AdminRoute>
       } />
       <Route path="/admin/tenants" element={
-        <ProtectedRoute>
+        <AdminRoute>
           <TenantList />
-        </ProtectedRoute>
+        </AdminRoute>
       } />
       <Route path="/admin/tenants/new" element={
-        <ProtectedRoute>
+        <AdminRoute>
           <CreateTenant />
-        </ProtectedRoute>
+        </AdminRoute>
       } />
       <Route path="/admin/tenants/:id" element={
-        <ProtectedRoute>
+        <AdminRoute>
           <TenantDetail />
-        </ProtectedRoute>
+        </AdminRoute>
       } />
       <Route path="/admin/tenants/:id/edit" element={
-        <ProtectedRoute>
+        <AdminRoute>
           <EditTenant />
-        </ProtectedRoute>
+        </AdminRoute>
       } />
       <Route path="/admin/tenants/:id/users" element={
-        <ProtectedRoute>
+        <AdminRoute>
           <TenantUsers />
-        </ProtectedRoute>
+        </AdminRoute>
       } />
       <Route path="/admin/settings" element={
-        <ProtectedRoute>
+        <AdminRoute>
           <AdminSettingsPage />
-        </ProtectedRoute>
+        </AdminRoute>
       } />
       
       {/* 租户管理页面 - 需要认证保护 */}
       <Route path="/tenant/dashboard" element={
-        <ProtectedRoute>
+        <TenantRoute>
           <TenantDashboard />
-        </ProtectedRoute>
+        </TenantRoute>
       } />
       <Route path="/tenant/info" element={
-        <ProtectedRoute>
+        <TenantRoute>
           <TenantInfo />
-        </ProtectedRoute>
+        </TenantRoute>
       } />
       <Route path="/tenant/apps" element={
-        <ProtectedRoute>
+        <TenantRoute>
           <TenantApps />
-        </ProtectedRoute>
+        </TenantRoute>
       } />
       <Route path="/tenant/apps/new" element={
-        <ProtectedRoute>
+        <TenantRoute>
           <CreateApp />
-        </ProtectedRoute>
+        </TenantRoute>
       } />
       <Route path="/tenant/apps/:id" element={
-        <ProtectedRoute>
+        <TenantRoute>
           <AppDetail />
-        </ProtectedRoute>
+        </TenantRoute>
       } />
       <Route path="/tenant/apps/:id/settings" element={
-        <ProtectedRoute>
+        <TenantRoute>
           <AppSettings />
-        </ProtectedRoute>
+        </TenantRoute>
       } />
       <Route path="/tenant/apps/:id/stats" element={
-        <ProtectedRoute>
+        <TenantRoute>
           <AppStats />
-        </ProtectedRoute>
+        </TenantRoute>
       } />
       <Route path="/tenant/oauth/clients" element={
-        <ProtectedRoute>
+        <TenantRoute>
           <TenantOAuthClients />
-        </ProtectedRoute>
+        </TenantRoute>
       } />
       <Route path="/tenant/users" element={
-        <ProtectedRoute>
+        <TenantRoute>
           <TenantUserManagement />
-        </ProtectedRoute>
+        </TenantRoute>
       } />
       <Route path="/tenant/notifications" element={
-        <ProtectedRoute>
+        <TenantRoute>
           <TenantNotifications />
-        </ProtectedRoute>
+        </TenantRoute>
       } />
       <Route path="/tenant/roles" element={
-        <ProtectedRoute>
+        <TenantRoute>
           <TenantRoleManagement />
-        </ProtectedRoute>
+        </TenantRoute>
       } />
       
       {/* 租户订阅管理页面 */}
       <Route path="/tenant/subscriptions" element={
-        <ProtectedRoute>
+        <TenantRoute>
           <TenantSubscriptionDashboard />
-        </ProtectedRoute>
+        </TenantRoute>
       } />
       <Route path="/tenant/subscriptions/products" element={
-        <ProtectedRoute>
+        <TenantRoute>
           <TenantProducts />
-        </ProtectedRoute>
+        </TenantRoute>
       } />
       <Route path="/tenant/subscriptions/plans" element={
-        <ProtectedRoute>
+        <TenantRoute>
           <TenantPlans />
-        </ProtectedRoute>
+        </TenantRoute>
       } />
       <Route path="/tenant/subscriptions/prices" element={
-        <ProtectedRoute>
+        <TenantRoute>
           <TenantPrices />
-        </ProtectedRoute>
+        </TenantRoute>
       } />
       <Route path="/tenant/subscriptions/subscriptions" element={
-        <ProtectedRoute>
+        <TenantRoute>
           <TenantSubscriptions />
-        </ProtectedRoute>
+        </TenantRoute>
+      } />
+      <Route path="/tenant/subscriptions/detail/:id" element={
+        <TenantRoute>
+          <TenantSubscriptionDetail />
+        </TenantRoute>
       } />
       <Route path="/tenant/subscriptions/coupons" element={
-        <ProtectedRoute>
+        <TenantRoute>
           <TenantCoupons />
-        </ProtectedRoute>
+        </TenantRoute>
       } />
       <Route path="/tenant/subscriptions/invoices" element={
-        <ProtectedRoute>
+        <TenantRoute>
           <TenantInvoices />
-        </ProtectedRoute>
+        </TenantRoute>
       } />
       <Route path="/tenant/subscription-status" element={
-        <ProtectedRoute>
+        <TenantRoute>
           <SubscriptionStatusManagement />
-        </ProtectedRoute>
+        </TenantRoute>
       } />
       <Route path="/tenant/coupons" element={
-        <ProtectedRoute>
+        <TenantRoute>
           <CouponManagement />
-        </ProtectedRoute>
+        </TenantRoute>
       } />
       <Route path="/tenant/plans" element={
-        <ProtectedRoute>
+        <TenantRoute>
           <PlanManagement />
-        </ProtectedRoute>
+        </TenantRoute>
       } />
       <Route path="/tenant/prices" element={
-        <ProtectedRoute>
+        <TenantRoute>
           <PriceManagement />
-        </ProtectedRoute>
+        </TenantRoute>
       } />
       
       <Route path="/tenant/apps/:id/users" element={
-        <ProtectedRoute>
+        <TenantRoute>
           <AppUserManagement />
-        </ProtectedRoute>
+        </TenantRoute>
       } />
       <Route path="/tenant/apps/:id/roles" element={
-        <ProtectedRoute>
+        <TenantRoute>
           <AppRoleManagement />
-        </ProtectedRoute>
+        </TenantRoute>
       } />
       <Route path="/tenant/apps/:id/permissions" element={
-        <ProtectedRoute>
+        <TenantRoute>
           <AppPermissionManagement />
-        </ProtectedRoute>
+        </TenantRoute>
       } />
       
       {/* 默认重定向 - 需要认证保护 */}

@@ -7,6 +7,10 @@ type ProfileResponse struct {
 	Phone     string `json:"phone"`
 	Nickname  string `json:"nickname"`
 	AvatarURL string `json:"avatar_url"`
+	IsSuperAdmin bool   `json:"is_super_admin"`
+	HasTenant    bool   `json:"has_tenant"`
+	TenantID     *uint  `json:"tenant_id,omitempty"`
+	TenantRole   string `json:"tenant_role,omitempty"`
 }
 
 // UpdateProfileRequest defines fields that can be updated.

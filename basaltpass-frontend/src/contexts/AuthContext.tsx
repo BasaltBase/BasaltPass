@@ -10,10 +10,26 @@ interface User {
   phone?: string
   nickname?: string
   avatar_url?: string
+
+  // capability flags (from backend profile)
+  is_super_admin?: boolean
+  has_tenant?: boolean
+  tenant_id?: number
+  tenant_role?: string
+}
+
+interface UserTenant {
+  id: number
+  name?: string
+  role?: string
+  status?: string
 }
 
 interface AuthContextType {
   user: User | null
+  tenants: UserTenant[]
+  canAccessAdmin: boolean
+  canAccessTenant: boolean
   isAuthenticated: boolean
   isLoading: boolean
   login: (token: string) => Promise<void>
@@ -29,6 +45,7 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null)
+  const [tenants, setTenants] = useState<UserTenant[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [hasChecked, setHasChecked] = useState(false)
   const navigate = useNavigate()
@@ -40,6 +57,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!token) {
       debugAuth.log('No token found, setting unauthenticated')
       setUser(null)
+      setTenants([])
       setIsLoading(false)
       setHasChecked(true)
       return
@@ -62,12 +80,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
         debugAuth.log('Invalid response structure', response)
         throw new Error('Invalid response structure')
       }
+
+    // Load tenant associations (best-effort)
+    try {
+    const tenantsRes = await client.get('/api/v1/user/tenants')
+    setTenants(tenantsRes.data?.data || [])
+    } catch (e) {
+    setTenants([])
+    }
     } catch (error: any) {
       debugAuth.log('Token validation failed', error.response?.status)
       if (error.response?.status === 401) {
         debugAuth.log('Clearing invalid token')
         clearAccessToken()
         setUser(null)
+		setTenants([])
       } else {
         // 对于其他错误（如网络错误、服务器错误等），保持当前状态
         // 不要立即设置为未认证，因为这可能是临时错误
@@ -96,10 +123,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       debugAuth.log('Login completed, user set', profileData)
       setUser(profileData)
+
+    // Load tenant associations (best-effort)
+    try {
+    const tenantsRes = await client.get('/api/v1/user/tenants')
+    setTenants(tenantsRes.data?.data || [])
+    } catch (e) {
+    setTenants([])
+    }
     } catch (error) {
       debugAuth.log('Failed to fetch profile after login', error)
       clearAccessToken()
       setUser(null)
+	  setTenants([])
       throw error
     } finally {
       setIsLoading(false)
@@ -111,6 +147,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     debugAuth.log('Logout called')
     clearAccessToken()
     setUser(null)
+    setTenants([])
     setIsLoading(false)
     setHasChecked(true)
     navigate('/login', { replace: true })
@@ -129,6 +166,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const value: AuthContextType = {
     user,
+    tenants,
+    canAccessAdmin: !!user?.is_super_admin,
+    canAccessTenant: !!user?.has_tenant || tenants.length > 0,
     isAuthenticated: !!user,
     isLoading,
     login,

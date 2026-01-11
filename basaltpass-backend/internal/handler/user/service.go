@@ -16,12 +16,31 @@ func (s Service) GetProfile(userID uint) (ProfileResponse, error) {
 	if err := common.DB().First(&u, userID).Error; err != nil {
 		return ProfileResponse{}, err
 	}
+
+	isSuperAdmin := u.IsSuperAdmin()
+
+	var (
+		hasTenant  bool
+		tenantID   *uint
+		tenantRole string
+	)
+	var ta model.TenantAdmin
+	if err := common.DB().Where("user_id = ?", userID).Order("created_at ASC").First(&ta).Error; err == nil {
+		hasTenant = true
+		tenantID = &ta.TenantID
+		tenantRole = string(ta.Role)
+	}
+
 	return ProfileResponse{
 		ID:        u.ID,
 		Email:     u.Email,
 		Phone:     u.Phone,
 		Nickname:  u.Nickname,
 		AvatarURL: u.AvatarURL,
+		IsSuperAdmin: isSuperAdmin,
+		HasTenant:    hasTenant,
+		TenantID:     tenantID,
+		TenantRole:   tenantRole,
 	}, nil
 }
 

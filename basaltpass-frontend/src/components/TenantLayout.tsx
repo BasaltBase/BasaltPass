@@ -14,7 +14,7 @@ interface TenantLayoutProps {
 }
 
 export default function TenantLayout({ children, title, actions }: TenantLayoutProps) {
-  const { user, logout } = useAuth()
+  const { user, logout, canAccessAdmin } = useAuth()
   const location = useLocation()
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
 
@@ -62,7 +62,7 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
               {actions}
               
               {/* 管理系统切换按钮 - 切换到管理员面板 */}
-              {isTenantPath && (
+              {isTenantPath && canAccessAdmin && (
                 <Link
                   to="/admin/dashboard"
                   className="relative rounded-md bg-indigo-50 px-3 py-2 text-indigo-600 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200"
