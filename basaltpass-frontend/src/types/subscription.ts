@@ -24,8 +24,20 @@ export interface Plan {
   IsActive?: boolean
   Metadata?: Record<string, any>
   Prices?: Price[]
+  Features?: PlanFeature[]
   CreatedAt?: string
   UpdatedAt?: string
+}
+
+export interface PlanFeature {
+  ID: number
+  PlanID: number
+  FeatureKey: string
+  ValueNumeric?: number
+  ValueText?: string
+  Unit?: string
+  IsUnlimited: boolean
+  Metadata?: Record<string, any>
 }
 
 export interface Product {

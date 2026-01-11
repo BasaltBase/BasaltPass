@@ -168,6 +168,30 @@ export default function ProductsPage() {
                             <SparklesIcon className="h-5 w-5 text-indigo-600" />
                           </div>
                           
+                          {plan.Features && plan.Features.length > 0 && (
+                            <ul className="mb-4 space-y-2">
+                              {plan.Features.map(feature => (
+                                <li key={feature.ID} className="flex items-center text-sm text-gray-600">
+                                  <svg className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                  </svg>
+                                  <span>
+                                    <span className="font-medium">{feature.FeatureKey}</span>
+                                    {feature.IsUnlimited ? (
+                                      <span className="ml-1 text-gray-500">(无限制)</span>
+                                    ) : (
+                                      <>
+                                        {feature.ValueText && <span className="ml-1">: {feature.ValueText}</span>}
+                                        {feature.ValueNumeric !== undefined && <span className="ml-1">: {feature.ValueNumeric}</span>}
+                                        {feature.Unit && <span className="ml-1">{feature.Unit}</span>}
+                                      </>
+                                    )}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+
                           {plan.Prices && plan.Prices.length > 0 ? (
                             <div className="space-y-2">
                               <h5 className="text-sm font-medium text-gray-700 mb-2">可选价格:</h5>

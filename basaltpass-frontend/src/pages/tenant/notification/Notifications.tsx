@@ -17,8 +17,6 @@ import {
   TenantUser,
   tenantNotificationApi
 } from '@api/tenant/notification';
-import { tenantNotificationApi as notificationApi } from '@api/tenant/tenantNotification';
-import client from '@api/client';
 import TenantLayout from '@components/TenantLayout';
 
 const TenantNotifications: React.FC = () => {
@@ -110,7 +108,7 @@ const TenantNotifications: React.FC = () => {
 
     setIsSearching(true);
     try {
-      const response = await notificationApi.searchTenantUsers(searchTerm);
+      const response = await tenantNotificationApi.searchTenantUsers(searchTerm);
       setSearchResults(response.data.data || []);
       setShowSearchResults(true);
     } catch (error: any) {
@@ -170,8 +168,6 @@ const TenantNotifications: React.FC = () => {
   useEffect(() => {
     fetchNotifications();
     fetchUsers();
-    // 添加调试信息
-    debugUserTenant();
   }, []);
 
   // 搜索防抖效果
@@ -187,16 +183,6 @@ const TenantNotifications: React.FC = () => {
       setShowSearchResults(false);
     }
   }, [searchTerm]);
-
-  // 调试用户租户状态
-  const debugUserTenant = async () => {
-    try {
-      const response = await client.get('/api/v1/debug/user-tenant');
-      console.log('用户租户调试信息:', response.data);
-    } catch (error) {
-      console.error('获取调试信息失败:', error);
-    }
-  };
 
   // 创建通知
   const handleCreate = async (e: React.FormEvent) => {

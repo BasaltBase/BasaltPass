@@ -53,8 +53,8 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 	tenantNotifGroup.Get("/:id", tenantNotif.TenantGetNotificationHandler)
 	tenantNotifGroup.Put("/:id", tenantNotif.TenantUpdateNotificationHandler)
 	tenantNotifGroup.Delete("/:id", tenantNotif.TenantDeleteHandler)
-	tenantNotifGroup.Get("/users", tenantNotif.TenantListHandler) // 简化：如需单独接口可再拆
-	tenantNotifGroup.Get("/users/search", tenantNotif.TenantListHandler)
+	tenantNotifGroup.Get("/users", tenantNotif.TenantListUsersHandler)
+	tenantNotifGroup.Get("/users/search", tenantNotif.TenantSearchUsersHandler)
 
 	// 租户OAuth客户端管理路由
 	tenantOAuthGroup := tenantGroup.Group("/oauth/clients")

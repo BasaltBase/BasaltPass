@@ -1,8 +1,8 @@
-FROM node:18-alpine AS builder
+FROM node:18-bullseye-slim AS builder
 WORKDIR /app
 COPY basaltpass-frontend/package.json ./
 COPY basaltpass-frontend/package-lock.json ./
-RUN npm ci --omit=dev
+RUN npm ci
 COPY basaltpass-frontend/ ./
 RUN npm run build
 

@@ -104,6 +104,13 @@ export const tenantNotificationApi = {
     return client.get<{ data: TenantUser[] }>('/api/v1/tenant/notifications/users', { params })
   },
 
+  // 搜索用户（邮箱、昵称、手机号）
+  searchTenantUsers: (search: string) => {
+    return client.get<{ data: TenantUser[] }>('/api/v1/tenant/notifications/users/search', {
+      params: { search },
+    })
+  },
+
   // 获取租户的应用列表（用于选择发送应用）
   getTenantApps: () => {
     return client.get('/api/v1/tenant/apps')
