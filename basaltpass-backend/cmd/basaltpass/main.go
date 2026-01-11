@@ -1,11 +1,12 @@
 package main
 
 import (
-	"basaltpass-backend/internal/api/v1"
+	v1 "basaltpass-backend/internal/api/v1"
 	"basaltpass-backend/internal/handler/public/subscription"
 	userTeam "basaltpass-backend/internal/handler/user/team"
 	common2 "basaltpass-backend/internal/middleware"
 	"basaltpass-backend/internal/migration"
+	usersettings "basaltpass-backend/internal/service/settings"
 	"log"
 
 	"basaltpass-backend/internal/common"
@@ -26,6 +27,11 @@ func main() {
 
 	// Print current environment
 	log.Printf("[main][info] Environment: %s (develop=%v, staging=%v, production=%v)", config.Get().Env, config.IsDevelop(), config.IsStaging(), config.IsProduction())
+
+	// Load file-based system settings into cache
+	if err := usersettings.Reload(); err != nil {
+		log.Printf("[main][warn] settings reload failed: %v", err)
+	}
 
 	app := fiber.New(fiber.Config{
 		ErrorHandler: common2.ErrorHandler,

@@ -121,7 +121,7 @@ const AdminNotifications: React.FC = () => {
   }
 
   return (
-    <AdminLayout title="通知管理">
+    <AdminLayout title="通知中心">
       <div className="space-y-6">
         {/* 面包屑导航 */}
         <nav className="flex" aria-label="Breadcrumb">
@@ -134,7 +134,7 @@ const AdminNotifications: React.FC = () => {
             <li>
               <div className="flex items-center">
                 <ChevronRightIcon className="flex-shrink-0 h-5 w-5 text-gray-400" />
-                <span className="ml-4 text-sm font-medium text-gray-500">通知管理</span>
+                <span className="ml-4 text-sm font-medium text-gray-500">通知中心</span>
               </div>
             </li>
           </ol>
@@ -142,10 +142,8 @@ const AdminNotifications: React.FC = () => {
 
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">通知管理</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              管理系统通知和消息
-            </p>
+            <h1 className="text-2xl font-bold text-gray-900">通知中心</h1>
+            <p className="mt-1 text-sm text-gray-500">统一管理站内通知</p>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
@@ -154,6 +152,20 @@ const AdminNotifications: React.FC = () => {
             <PlusIcon className="h-4 w-4 mr-2" />
             发送通知
           </button>
+        </div>
+
+        {/* 栏目切换 */}
+        <div className="bg-white shadow rounded-lg">
+          <div className="px-6 pt-4">
+            <div className="flex space-x-6 border-b border-gray-200">
+              <button
+                className="-mb-px px-1 pb-3 text-sm font-medium border-b-2 border-indigo-600 text-indigo-700"
+                aria-current="page"
+              >
+                全局通知
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* 通知列表 */}

@@ -73,20 +73,27 @@ go build cmd/basaltpass/main.go
 
 - S2S 服务间 API（机器可消费）：见 `docs/S2S_API.md`
 
-### 系统设置（可视化与接口）
+### 系统设置（文件存储 + 接口）
 
-后端内置了系统设置表 `system_settings`，用于以键值对的形式存储可运行时修改的配置，值以 JSON 字符串存储。服务启动时会自动迁移并注入默认设置，并加载到内存缓存。
+系统设置已从数据库迁移为“配置文件”存储，默认路径为 `basaltpass-backend/config/settings.yaml`（可用环境变量 `BASALTPASS_SETTINGS_FILE` 覆盖）。
 
+- 服务启动时会读取并缓存该文件中的设置；若文件不存在，将自动生成并写入一组默认值。
 - 默认包含的键：
   - `general.site_name`（系统名称，默认：`BasaltPass`）
+  - `auth.enable_register`（允许新用户注册，默认：`true`）
+  - `security.enforce_2fa`（是否强制 2FA，默认：`false`）
+  - `cors.allow_origins`（允许的跨域来源列表）
+  - `billing.currency_default`（默认货币，默认：`CNY`）
+  - `oauth.allowed_redirect_hosts`（允许的 OAuth 回调主机名）
 
-- 管理端接口：
-  - `GET /api/v1/admin/settings` 列出全部设置（可用 `?category=general` 过滤）
-  - `GET /api/v1/admin/settings/:key` 按 key 获取
-  - `POST /api/v1/admin/settings` 新增/更新单个
-  - `PUT /api/v1/admin/settings/bulk` 批量保存
+管理端接口保持不变，操作将直接读写该配置文件：
 
-前端管理页面位于 `/admin/settings`。在“通用”分类中可直接修改“系统名称”，保存后立即生效。
+- `GET /api/v1/admin/settings` 列出全部设置（可用 `?category=general` 过滤）
+- `GET /api/v1/admin/settings/:key` 按 key 获取
+- `POST /api/v1/admin/settings` 新增/更新单个
+- `PUT /api/v1/admin/settings/bulk` 批量保存
+
+前端管理页面位于 `/admin/settings`。在“通用”分类中可直接修改“系统名称”，保存后立即写入 `settings.yaml` 并立即生效。
 
 ### 管理员：初始化货币
 

@@ -3,10 +3,8 @@ package migration
 import (
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/config"
-	"basaltpass-backend/internal/handler/user/settings"
 	"basaltpass-backend/internal/model"
 	"basaltpass-backend/internal/service/currency"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -101,7 +99,6 @@ func RunMigrations() {
 		&model.AppRole{},
 		&model.AppUserPermission{},
 		&model.AppUserRole{},
-		&model.SystemSetting{},
 	)
 	if err != nil {
 		log.Fatalf("[Error][RunMigrations] auto migration failed: %v", err)
@@ -120,11 +117,8 @@ func RunMigrations() {
 	assignPermissionsToPredefinedRoles()
 	assignPermissionsToAdminRole()
 
-	// 种子化默认系统设置并加载到内存缓存
-	seedDefaultSystemSettings()
-	if err := settings.Reload(); err != nil {
-		log.Printf("[Migration] Failed to load settings cache: %v", err)
-	}
+	// 删除遗留的 system_settings 表（如果存在），系统设置已迁移至文件
+	dropLegacySystemSettingsTable()
 } // handleSpecialMigrations 处理特殊的迁移情况
 func handleSpecialMigrations() {
 	db := common.DB()
@@ -256,6 +250,20 @@ func handleSpecialMigrations() {
 		}
 
 		log.Println("[Migration] Successfully migrated roles table with tenant_id")
+	}
+}
+
+// dropLegacySystemSettingsTable removes the legacy DB table for system settings
+// now that settings are stored in a file.
+func dropLegacySystemSettingsTable() {
+	db := common.DB()
+	if db.Migrator().HasTable("system_settings") {
+		log.Println("[Migration] Dropping legacy table system_settings ...")
+		if err := db.Exec("DROP TABLE IF EXISTS system_settings").Error; err != nil {
+			log.Printf("[Migration] Failed to drop legacy system_settings: %v", err)
+		} else {
+			log.Println("[Migration] Dropped legacy system_settings table")
+		}
 	}
 }
 
@@ -780,38 +788,7 @@ func assignPermissionsToPredefinedRoles() {
 	}
 }
 
-// seedDefaultSystemSettings 初始化默认系统设置（幂等）
-func seedDefaultSystemSettings() {
-	db := common.DB()
-	type item struct {
-		Key, Cat, Desc string
-		Val            interface{}
-	}
-	defaults := []item{
-		{Key: "general.site_name", Cat: "general", Desc: "系统名称", Val: "BasaltPass"},
-		{Key: "auth.enable_register", Cat: "auth", Desc: "允许新用户注册", Val: true},
-		{Key: "security.enforce_2fa", Cat: "security", Desc: "是否强制启用 2FA", Val: false},
-		{Key: "cors.allow_origins", Cat: "cors", Desc: "允许的跨域来源列表", Val: []string{"http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000"}},
-		{Key: "billing.currency_default", Cat: "billing", Desc: "默认货币", Val: "CNY"},
-		{Key: "oauth.allowed_redirect_hosts", Cat: "oauth", Desc: "允许的 OAuth 回调主机名", Val: []string{"localhost"}},
-	}
-
-	for _, d := range defaults {
-		var cnt int64
-		if err := db.Model(&model.SystemSetting{}).Where("key = ?", d.Key).Count(&cnt).Error; err != nil {
-			log.Printf("[Migration] check setting %s failed: %v", d.Key, err)
-			continue
-		}
-		if cnt > 0 {
-			continue
-		}
-		b, _ := json.Marshal(d.Val)
-		s := model.SystemSetting{Key: d.Key, Value: string(b), Category: d.Cat, Description: d.Desc}
-		if err := db.Create(&s).Error; err != nil {
-			log.Printf("[Migration] create setting %s failed: %v", d.Key, err)
-		}
-	}
-}
+// (legacy) seedDefaultSystemSettings removed - settings are now stored in file.
 
 // seedDevData 在开发环境为全新库注入模拟数据
 func seedDevData() error {

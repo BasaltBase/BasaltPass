@@ -1,0 +1,139 @@
+# File-based system settings for BasaltPass backend
+# Copy to config/settings.yaml and modify as needed.
+settings:
+  general.site_name:
+    value: "BasaltPass"
+    category: "general"
+    description: "系统名称"
+  general.theme:
+    value: "light"
+    category: "general"
+    description: "默认主题（light/dark/system）"
+  general.locale:
+    value: "zh-CN"
+    category: "general"
+    description: "默认语言/区域"
+  general.timezone:
+    value: "Asia/Shanghai"
+    category: "general"
+    description: "默认时区"
+  auth.enable_register:
+    value: true
+    category: "auth"
+    description: "允许新用户注册"
+  security.enforce_2fa:
+    value: false
+    category: "security"
+    description: "是否强制启用 2FA"
+  cors.allow_origins:
+    value:
+      - "http://localhost:5173"
+      - "http://127.0.0.1:5173"
+      - "http://localhost:3000"
+    category: "cors"
+    description: "允许的跨域来源列表"
+  billing.currency_default:
+    value: "CNY"
+    category: "billing"
+    description: "默认货币"
+  logging.level:
+    value: "info"
+    category: "logging"
+    description: "日志级别（debug/info/warn/error）"
+  logging.retention_days:
+    value: 14
+    category: "logging"
+    description: "应用日志保留天数"
+  session.same_site:
+    value: "Lax"
+    category: "session"
+    description: "Cookie SameSite 策略（Lax/Strict/None）"
+  uploads.storage:
+    value: "local"
+    category: "uploads"
+    description: "文件存储类型（local/s3/azure/gcs）"
+  storage.s3.enabled:
+    value: false
+    category: "storage"
+    description: "是否启用 S3 兼容存储"
+  storage.s3.endpoint:
+    value: ""
+    category: "storage"
+    description: "S3 Endpoint"
+  storage.s3.bucket:
+    value: ""
+    category: "storage"
+    description: "S3 Bucket"
+  storage.s3.region:
+    value: ""
+    category: "storage"
+    description: "S3 区域"
+  storage.s3.access_key_id:
+    value: ""
+    category: "storage"
+    description: "S3 Access Key ID"
+  storage.s3.secret_access_key:
+    value: ""
+    category: "storage"
+    description: "S3 Secret Access Key"
+  cache.redis.enabled:
+    value: false
+    category: "cache"
+    description: "是否启用 Redis 缓存"
+  cache.redis.addr:
+    value: "127.0.0.1:6379"
+    category: "cache"
+    description: "Redis 地址"
+  cache.redis.password:
+    value: ""
+    category: "cache"
+    description: "Redis 密码"
+  cache.redis.db:
+    value: 0
+    category: "cache"
+    description: "Redis 数据库索引"
+  analytics.enabled:
+    value: false
+    category: "analytics"
+    description: "是否启用统计分析"
+  analytics.provider:
+    value: "none"
+    category: "analytics"
+    description: "统计服务提供方（none/umami/ga4/plausible）"
+  captcha.enabled:
+    value: false
+    category: "captcha"
+    description: "是否启用验证码"
+  captcha.provider:
+    value: "none"
+    category: "captcha"
+    description: "验证码提供方（none/recaptcha/hcaptcha）"
+  jwt.algorithm:
+    value: "HS256"
+    category: "jwt"
+    description: "JWT 签名算法（HS256/RS256/ES256）"
+  jwt.audience:
+    value: ""
+    category: "jwt"
+    description: "JWT 受众（aud）"
+  maintenance.enabled:
+    value: false
+    category: "maintenance"
+    description: "维护模式：启用后仅管理员可访问"
+  features.registration_invite_only:
+    value: false
+    category: "features"
+    description: "仅限邀请注册"
+  audit.retention_days:
+    value: 90
+    category: "audit"
+    description: "审计日志保留天数"
+  pagination.default_page_size:
+    value: 20
+    category: "pagination"
+    description: "默认分页大小"
+  oauth.allowed_redirect_hosts:
+    value:
+      - "localhost"
+    category: "oauth"
+    description: "允许的 OAuth 回调主机名"

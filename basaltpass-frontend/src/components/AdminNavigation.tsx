@@ -34,6 +34,11 @@ const navigation: NavigationItem[] = [
     icon: BuildingOfficeIcon,
   },
   {
+    name: '通知管理',
+    href: '/admin/notifications',
+    icon: BellIcon,
+  },
+  {
     name: '用户管理',
     icon: UsersIcon,
     children: [
@@ -54,6 +59,14 @@ const navigation: NavigationItem[] = [
     children: [
       { name: '租户管理', href: '/admin/tenants', icon: BuildingOfficeIcon },
       { name: 'OAuth客户端', href: '/admin/oauth-clients', icon: KeyIcon },
+    ]
+  },
+  {
+    name: '系统角色与权限',
+    icon: KeyIcon,
+    children: [
+      { name: '角色管理', href: '/admin/roles', icon: KeyIcon },
+      { name: '权限管理', href: '/admin/permissions', icon: KeyIcon },
     ]
   },
   {
@@ -79,9 +92,6 @@ const navigation: NavigationItem[] = [
     icon: Cog6ToothIcon,
     children: [
   { name: '系统设置', href: '/admin/settings', icon: Cog6ToothIcon },
-      { name: '系统角色管理', href: '/admin/roles', icon: KeyIcon },
-      { name: '系统权限管理', href: '/admin/permissions', icon: KeyIcon },
-      { name: '通知管理', href: '/admin/notifications', icon: BellIcon },
       { name: '审计日志', href: '/admin/logs', icon: DocumentTextIcon },
     ]
   },
