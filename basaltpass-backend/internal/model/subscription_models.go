@@ -40,13 +40,16 @@ type Product struct {
 	Code         string  `gorm:"uniqueIndex;size:64;not null"`
 	Name         string  `gorm:"size:255;not null"`
 	Description  string  `gorm:"type:text"`
-	Metadata     JSONB   `gorm:"type:jsonb"`
+	IsActive     bool    `gorm:"not null;default:true"`
+	CategoryID   *uint   `gorm:"index"`
+	Metadata     JSONB   `gorm:"type:json"`
 	EffectiveAt  *time.Time
 	DeprecatedAt *time.Time
-	DeletedAt    gorm.DeletedAt `gorm:"index"`
 
 	// 关联
-	Plans []Plan `gorm:"foreignKey:ProductID"`
+	Category *ProductCategory `gorm:"foreignKey:CategoryID"`
+	Tags     []ProductTag     `gorm:"many2many:product_tag_links"`
+	Plans    []Plan           `gorm:"foreignKey:ProductID"`
 }
 
 // Plan 套餐模型
@@ -57,10 +60,9 @@ type Plan struct {
 	Code         string  `gorm:"size:64;not null"`
 	DisplayName  string  `gorm:"size:255;not null"`
 	PlanVersion  int     `gorm:"not null;default:1"`
-	Metadata     JSONB   `gorm:"type:jsonb"`
+	Metadata     JSONB   `gorm:"type:json"`
 	EffectiveAt  *time.Time
 	DeprecatedAt *time.Time
-	DeletedAt    gorm.DeletedAt `gorm:"index"`
 
 	// 关联
 	Product  Product       `gorm:"foreignKey:ProductID"`
@@ -77,7 +79,7 @@ type PlanFeature struct {
 	ValueText    *string `gorm:"size:255"`
 	Unit         *string `gorm:"size:32"`
 	IsUnlimited  bool    `gorm:"not null;default:false"`
-	Metadata     JSONB   `gorm:"type:jsonb"`
+	Metadata     JSONB   `gorm:"type:json"`
 
 	// 关联
 	Plan Plan `gorm:"foreignKey:PlanID"`
@@ -116,10 +118,10 @@ type Price struct {
 	BillingInterval int           `gorm:"not null;default:1"`
 	TrialDays       *int
 	UsageType       UsageType `gorm:"size:20;not null"`
-	BillingScheme   JSONB     `gorm:"type:jsonb"` // 分级/包年策略等
+	BillingScheme   JSONB     `gorm:"type:json"` // 分级/包年策略等
 	EffectiveAt     *time.Time
 	DeprecatedAt    *time.Time
-	Metadata        JSONB `gorm:"type:jsonb"`
+	Metadata        JSONB `gorm:"type:json"`
 
 	// 关联
 	Plan                   Plan               `gorm:"foreignKey:PlanID"`
@@ -160,7 +162,7 @@ type Coupon struct {
 	RedeemedCount    int `gorm:"not null;default:0"`
 	ExpiresAt        *time.Time
 	IsActive         bool  `gorm:"not null;default:true"`
-	Metadata         JSONB `gorm:"type:jsonb"`
+	Metadata         JSONB `gorm:"type:json"`
 
 	// 关联
 	Subscriptions []Subscription `gorm:"foreignKey:CouponID"`
@@ -195,7 +197,7 @@ type Subscription struct {
 	CancelAt              *time.Time
 	CanceledAt            *time.Time
 	GatewaySubscriptionID *string `gorm:"size:128"`
-	Metadata              JSONB   `gorm:"type:jsonb"`
+	Metadata              JSONB   `gorm:"type:json"`
 
 	// 关联
 	User         User                `gorm:"foreignKey:UserID"`
@@ -232,7 +234,7 @@ type SubscriptionItem struct {
 	Quantity         float64          `gorm:"not null;default:1"`
 	Metering         Metering         `gorm:"size:20;not null"`
 	UsageAggregation UsageAggregation `gorm:"size:30;not null;default:'sum'"`
-	Metadata         JSONB            `gorm:"type:jsonb"`
+	Metadata         JSONB            `gorm:"type:json"`
 
 	// 关联
 	Subscription Subscription  `gorm:"foreignKey:SubscriptionID"`
@@ -258,7 +260,7 @@ type SubscriptionEvent struct {
 	gorm.Model
 	SubscriptionID uint   `gorm:"not null;index"`
 	EventType      string `gorm:"size:64;not null"`
-	Data           JSONB  `gorm:"type:jsonb"`
+	Data           JSONB  `gorm:"type:json"`
 
 	// 关联
 	Subscription Subscription `gorm:"foreignKey:SubscriptionID"`
@@ -289,7 +291,7 @@ type Invoice struct {
 	DueAt          *time.Time
 	PostedAt       *time.Time
 	PaidAt         *time.Time
-	Metadata       JSONB `gorm:"type:jsonb"`
+	Metadata       JSONB `gorm:"type:json"`
 
 	// 关联
 	User         User          `gorm:"foreignKey:UserID"`
@@ -306,7 +308,7 @@ type InvoiceItem struct {
 	Description *string `gorm:"size:255"`
 	Quantity    float64 `gorm:"not null;default:1"`
 	AmountCents int64   `gorm:"not null"`
-	Metadata    JSONB   `gorm:"type:jsonb"`
+	Metadata    JSONB   `gorm:"type:json"`
 
 	// 关联
 	Invoice Invoice `gorm:"foreignKey:InvoiceID"`
@@ -335,7 +337,7 @@ type Payment struct {
 	Gateway                *string       `gorm:"size:64"` // stripe/alipay/...
 	GatewayPaymentIntentID *string       `gorm:"size:128"`
 	IdempotencyKey         *string       `gorm:"uniqueIndex;size:128"`
-	Metadata               JSONB         `gorm:"type:jsonb"`
+	Metadata               JSONB         `gorm:"type:json"`
 
 	// 关联
 	Invoice Invoice `gorm:"foreignKey:InvoiceID"`

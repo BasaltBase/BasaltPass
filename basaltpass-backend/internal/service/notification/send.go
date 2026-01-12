@@ -19,7 +19,7 @@ func Send(appName, title, content, nType string, senderID *uint, senderName stri
 	now := time.Now()
 	notifs := make([]model.Notification, 0, len(receiverIDs))
 	for _, rid := range receiverIDs {
-		notifs = append(notifs, model.Notification{AppID: app.ID, Title: title, Content: content, Type: nType, SenderID: senderID, SenderName: senderName, ReceiverID: rid, CreatedAt: now})
+		notifs = append(notifs, model.Notification{AppID: &app.ID, Title: title, Content: content, Type: nType, SenderID: senderID, SenderName: senderName, ReceiverID: rid, CreatedAt: now})
 	}
 	return db.Create(&notifs).Error
 }

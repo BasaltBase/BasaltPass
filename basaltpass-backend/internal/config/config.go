@@ -80,6 +80,7 @@ func Load(path string) (*Config, error) {
 	v.SetDefault("seeding.enabled", false)
 	v.SetDefault("database.driver", "sqlite")
 	v.SetDefault("database.path", "basaltpass.db")
+	v.SetDefault("database.dsn", "") // 显式设置默认值，以确保 Viper 能从环境变量 BASALTPASS_DATABASE_DSN Unmarshal
 	v.SetDefault("cors.allow_origins", []string{
 		"http://localhost:5173",
 		"http://127.0.0.1:5173",

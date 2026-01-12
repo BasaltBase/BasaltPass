@@ -14,8 +14,8 @@ import (
 
 type Notification struct {
 	ID         uint           `gorm:"primaryKey" json:"id"`
-	AppID      uint           `gorm:"index;not null" json:"app_id"`
-	App        SystemApp      `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"app"`
+	AppID      *uint          `gorm:"index" json:"app_id"`
+	App        *SystemApp     `gorm:"foreignKey:AppID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"app"`
 	Title      string         `gorm:"size:128;not null" json:"title"`
 	Content    string         `gorm:"type:text;not null" json:"content"`
 	Type       string         `gorm:"size:16;not null;default:'info'" json:"type"`

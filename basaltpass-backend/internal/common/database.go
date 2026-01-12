@@ -13,6 +13,7 @@ import (
 
 	"basaltpass-backend/internal/config"
 
+	"gorm.io/driver/mysql"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -32,19 +33,40 @@ func DB() *gorm.DB {
 		driver := cfg.Database.Driver
 
 		switch driver {
+		case "mysql":
+			dsn := cfg.Database.DSN
+			log.Printf("Database (mysql) DSN: %s", dsn)
+			db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
+				DisableForeignKeyConstraintWhenMigrating: true, // 防止复杂的循环依赖导致迁移失败
+			})
 		case "sqlite", "sqlite3", "":
-			// Prefer DSN when provided; else build from path relative to CWD
+			// Prefer DSN when provided; else build from path relative to Project Root (if found) or CWD
 			dsn := cfg.Database.DSN
 			if dsn == "" {
 				wd, err := os.Getwd()
 				if err != nil {
 					log.Fatalf("failed to get working directory: %v", err)
 				}
+
+				// Attempt to find project root by looking for go.mod
+				projectRoot := wd
+				for {
+					if _, err := os.Stat(filepath.Join(projectRoot, "go.mod")); err == nil {
+						break
+					}
+					parent := filepath.Dir(projectRoot)
+					if parent == projectRoot {
+						projectRoot = wd // fallback to original wd if not found
+						break
+					}
+					projectRoot = parent
+				}
+
 				dbPath := cfg.Database.Path
 				if dbPath == "" {
 					dbPath = "basaltpass.db"
 				}
-				dsn = filepath.Join(wd, dbPath)
+				dsn = filepath.Join(projectRoot, dbPath)
 			}
 			log.Printf("Database (sqlite) DSN: %s", dsn)
 			db, err = gorm.Open(sqlite.Open(dsn), &gorm.Config{})

@@ -13,13 +13,13 @@ import (
 // OAuthClient 表示一个OAuth2客户端（业务应用）
 type OAuthClient struct {
 	gorm.Model
-	AppID        uint   `gorm:"not null;index" json:"app_id"`                                            // 关联的应用ID
-	ClientID     string `gorm:"size:64;uniqueIndex;not null" json:"client_id"`                           // 客户端ID
-	ClientSecret string `gorm:"size:128;not null" json:"-"`                                              // 客户端密钥（不返回给前端）
-	RedirectURIs string `gorm:"type:text;not null" json:"redirect_uris"`                                 // 允许的重定向URI列表（用逗号分隔）
-	Scopes       string `gorm:"type:text" json:"scopes"`                                                 // 允许的权限范围（用逗号分隔）
-	GrantTypes   string `gorm:"type:text;default:'authorization_code,refresh_token'" json:"grant_types"` // 支持的授权类型
-	IsActive     bool   `gorm:"default:true" json:"is_active"`                                           // 是否激活
+	AppID        uint   `gorm:"not null;index" json:"app_id"`                                           // 关联的应用ID
+	ClientID     string `gorm:"size:64;uniqueIndex;not null" json:"client_id"`                          // 客户端ID
+	ClientSecret string `gorm:"size:128;not null" json:"-"`                                             // 客户端密钥（不返回给前端）
+	RedirectURIs string `gorm:"type:text;not null" json:"redirect_uris"`                                // 允许的重定向URI列表（用逗号分隔）
+	Scopes       string `gorm:"type:text" json:"scopes"`                                                // 允许的权限范围（用逗号分隔）
+	GrantTypes   string `gorm:"size:255;default:'authorization_code,refresh_token'" json:"grant_types"` // 支持的授权类型
+	IsActive     bool   `gorm:"default:true" json:"is_active"`                                          // 是否激活
 
 	// 应用配置
 	AllowedOrigins string `gorm:"type:text" json:"allowed_origins"` // 允许的CORS源（用逗号分隔）

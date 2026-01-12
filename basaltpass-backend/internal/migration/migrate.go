@@ -73,11 +73,15 @@ func RunMigrations() {
 		&model.RolePermission{},
 
 		// 订阅系统模型
+		&model.ProductCategory{},
+		&model.ProductTag{},
+		&model.PriceTemplate{},
 		&model.Product{},
 		&model.Plan{},
 		&model.PlanFeature{},
 		&model.Price{},
 		&model.Coupon{},
+		&model.CouponRedemption{},
 		&model.Subscription{},
 		&model.SubscriptionItem{},
 		&model.UsageRecord{},

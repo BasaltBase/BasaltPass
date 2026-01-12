@@ -33,7 +33,7 @@ type Tenant struct {
 	Description string       `gorm:"size:500" json:"description"`
 	Status      TenantStatus `gorm:"type:varchar(20);default:active" json:"status"`
 	Plan        TenantPlan   `gorm:"type:varchar(20);default:free" json:"plan"`
-	Metadata    JSONMap      `gorm:"type:jsonb" json:"metadata,omitempty"`
+	Metadata    JSONMap      `gorm:"type:json" json:"metadata,omitempty"`
 	CreatedAt   time.Time    `json:"created_at"`
 	UpdatedAt   time.Time    `json:"updated_at"`
 
@@ -94,7 +94,7 @@ type AppUser struct {
 	BannedUntil    *time.Time    `json:"banned_until,omitempty"`                        // 封禁截止时间（可选，空表示永久）
 
 	// 元数据
-	Metadata JSONMap `gorm:"type:jsonb" json:"metadata,omitempty"`
+	Metadata JSONMap `gorm:"type:json" json:"metadata,omitempty"`
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`

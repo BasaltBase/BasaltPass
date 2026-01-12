@@ -52,6 +52,9 @@ func main() {
 	// 初始化租户订阅处理器
 	subscription.InitTenantHandler(common.DB())
 
+	// 初始化租户目录/定价模板处理器（分类/标签/price templates）
+	subscription.InitTenantCatalogHandler(common.DB())
+
 	// Register API routes
 	v1.RegisterRoutes(app)
 

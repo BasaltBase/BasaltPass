@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"basaltpass-backend/internal/config"
 	security "basaltpass-backend/internal/handler/user/security"
 	auth2 "basaltpass-backend/internal/service/auth"
 	"log"
@@ -42,16 +43,30 @@ func LoginHandler(c *fiber.Ctx) error {
 		})
 	}
 	// Set refresh token as HttpOnly cookie
+	isProd := config.IsProduction()
 	c.Cookie(&fiber.Cookie{
 		Name:     "refresh_token",
 		Value:    result.TokenPair.RefreshToken,
 		HTTPOnly: true,
-		Secure:   false, // 在开发环境中设置为false，生产环境应该为true
+		Secure:   isProd,
 		SameSite: "Lax",
 		Path:     "/",
 		MaxAge:   7 * 24 * 60 * 60, // 7天
 		Domain:   "",               // 空字符串表示当前域
 	})
+
+	// 同时设置 access_token cookie 以提供更安全的存储选项
+	c.Cookie(&fiber.Cookie{
+		Name:     "access_token",
+		Value:    result.TokenPair.AccessToken,
+		HTTPOnly: true,
+		Secure:   isProd,
+		SameSite: "Lax",
+		Path:     "/",
+		MaxAge:   15 * 60, // 15分钟
+		Domain:   "",
+	})
+
 	if err := security.RecordLoginSuccess(result.UserID, c.IP(), c.Get("User-Agent")); err != nil {
 		log.Printf("failed to record login history: %v", err)
 	}
@@ -69,16 +84,30 @@ func RefreshHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": err.Error()})
 	}
 	// update refresh token cookie
+	isProd := config.IsProduction()
 	c.Cookie(&fiber.Cookie{
 		Name:     "refresh_token",
 		Value:    tokens.RefreshToken,
 		HTTPOnly: true,
-		Secure:   false, // 在开发环境中设置为false，生产环境应该为true
+		Secure:   isProd,
 		SameSite: "Lax",
 		Path:     "/",
 		MaxAge:   7 * 24 * 60 * 60, // 7天
 		Domain:   "",               // 空字符串表示当前域
 	})
+
+	// 更新 access_token cookie
+	c.Cookie(&fiber.Cookie{
+		Name:     "access_token",
+		Value:    tokens.AccessToken,
+		HTTPOnly: true,
+		Secure:   isProd,
+		SameSite: "Lax",
+		Path:     "/",
+		MaxAge:   15 * 60, // 15分钟
+		Domain:   "",
+	})
+
 	return c.JSON(fiber.Map{"access_token": tokens.AccessToken})
 }
 

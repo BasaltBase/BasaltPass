@@ -9,6 +9,7 @@ import (
 	"basaltpass-backend/internal/handler/tenant/app"
 	tenantNotif "basaltpass-backend/internal/handler/tenant/notification"
 	"basaltpass-backend/internal/middleware"
+
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -114,6 +115,24 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 
 	// 租户统计查看
 	tenantSubscriptionMgmtGroup.Get("/stats", subscription.GetTenantSubscriptionStatsHandler)
+
+	// 产品分类管理
+	tenantSubscriptionMgmtGroup.Get("/categories", subscription.ListTenantCategoriesHandler)
+	tenantSubscriptionMgmtGroup.Post("/categories", subscription.CreateTenantCategoryHandler)
+	tenantSubscriptionMgmtGroup.Put("/categories/:id", subscription.UpdateTenantCategoryHandler)
+	tenantSubscriptionMgmtGroup.Delete("/categories/:id", subscription.DeleteTenantCategoryHandler)
+
+	// 产品标签管理
+	tenantSubscriptionMgmtGroup.Get("/tags", subscription.ListTenantTagsHandler)
+	tenantSubscriptionMgmtGroup.Post("/tags", subscription.CreateTenantTagHandler)
+	tenantSubscriptionMgmtGroup.Put("/tags/:id", subscription.UpdateTenantTagHandler)
+	tenantSubscriptionMgmtGroup.Delete("/tags/:id", subscription.DeleteTenantTagHandler)
+
+	// 定价模板管理
+	tenantSubscriptionMgmtGroup.Get("/price-templates", subscription.ListTenantPriceTemplatesHandler)
+	tenantSubscriptionMgmtGroup.Post("/price-templates", subscription.CreateTenantPriceTemplateHandler)
+	tenantSubscriptionMgmtGroup.Put("/price-templates/:id", subscription.UpdateTenantPriceTemplateHandler)
+	tenantSubscriptionMgmtGroup.Delete("/price-templates/:id", subscription.DeleteTenantPriceTemplateHandler)
 
 	// 租户应用管理路由
 	tenantAppGroup := tenantGroup.Group("/apps")

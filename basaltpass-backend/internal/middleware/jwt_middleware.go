@@ -17,15 +17,31 @@ import (
 // JWTMiddleware validates JWT from Authorization header and stores user ID in context.
 func JWTMiddleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		var tokenStr string
+
+		// 1. Try Authorization header
 		authHeader := c.Get("Authorization")
-		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+		if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
+			tokenStr = strings.TrimPrefix(authHeader, "Bearer ")
+		}
+
+		// Security Hardening: Disabled Cookie fallback to prevent CSRF.
+		// All clients (SDKs and Frontend) must use Authorization Header.
+		// if tokenStr == "" {
+		// 	tokenStr = c.Cookies("access_token")
+		// }
+
+		if tokenStr == "" {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "[Basalt Auth] missing token"})
 		}
-		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 
 		// Parse and validate token
 		token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
-			secret := getJWTSecret() // get from env/config
+			// Validate the alg is what you expect:
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, jwt.ErrTokenSignatureInvalid
+			}
+			secret := getJWTSecret()
 			return []byte(secret), nil
 		})
 

@@ -32,11 +32,11 @@ func (s Service) GetProfile(userID uint) (ProfileResponse, error) {
 	}
 
 	return ProfileResponse{
-		ID:        u.ID,
-		Email:     u.Email,
-		Phone:     u.Phone,
-		Nickname:  u.Nickname,
-		AvatarURL: u.AvatarURL,
+		ID:           u.ID,
+		Email:        u.Email,
+		Phone:        u.Phone,
+		Nickname:     u.Nickname,
+		AvatarURL:    u.AvatarURL,
 		IsSuperAdmin: isSuperAdmin,
 		HasTenant:    hasTenant,
 		TenantID:     tenantID,

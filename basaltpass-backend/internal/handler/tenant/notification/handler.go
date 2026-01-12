@@ -4,8 +4,8 @@ import (
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
 	notif "basaltpass-backend/internal/service/notification"
-	"strings"
 	"strconv"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -248,8 +248,12 @@ func TenantGetNotificationStatsHandler(c *fiber.Ctx) error {
 
 	var total, read int64
 	base := db.Model(&model.Notification{}).Where("sender_id IN ?", adminIDs).Where("receiver_id IN ?", tenantUserIDs)
-	base.Count(&total)
-	base.Where("is_read = ?", true).Count(&read)
+	if err := base.Count(&total).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	if err := base.Where("is_read = ?", true).Count(&read).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
 	unread := total - read
 	var typeStats []struct {
 		Type  string
@@ -260,7 +264,11 @@ func TenantGetNotificationStatsHandler(c *fiber.Ctx) error {
 	for _, s := range typeStats {
 		m[s.Type] = s.Count
 	}
-	return c.JSON(fiber.Map{"data": fiber.Map{"total_sent": total, "total_read": read, "total_unread": unread, "read_rate": (float64(read) / float64(total)) * 100, "type_stats": m}})
+	readRate := 0.0
+	if total > 0 {
+		readRate = (float64(read) / float64(total)) * 100
+	}
+	return c.JSON(fiber.Map{"data": fiber.Map{"total_sent": total, "total_read": read, "total_unread": unread, "read_rate": readRate, "type_stats": m}})
 }
 
 // TenantListUsersHandler GET /tenant/notifications/users

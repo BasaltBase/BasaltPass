@@ -587,6 +587,11 @@
 | GET | /api/v1/tenant/settings/:key |
 | HEAD | /api/v1/tenant/settings/:key |
 | PUT | /api/v1/tenant/settings/bulk |
+| GET | /api/v1/tenant/subscription/categories |
+| HEAD | /api/v1/tenant/subscription/categories |
+| POST | /api/v1/tenant/subscription/categories |
+| DELETE | /api/v1/tenant/subscription/categories/:id |
+| PUT | /api/v1/tenant/subscription/categories/:id |
 | GET | /api/v1/tenant/subscription/coupons/ |
 | HEAD | /api/v1/tenant/subscription/coupons/ |
 | POST | /api/v1/tenant/subscription/coupons/ |
@@ -606,6 +611,11 @@
 | GET | /api/v1/tenant/subscription/plans/:id |
 | HEAD | /api/v1/tenant/subscription/plans/:id |
 | PUT | /api/v1/tenant/subscription/plans/:id |
+| GET | /api/v1/tenant/subscription/price-templates |
+| HEAD | /api/v1/tenant/subscription/price-templates |
+| POST | /api/v1/tenant/subscription/price-templates |
+| DELETE | /api/v1/tenant/subscription/price-templates/:id |
+| PUT | /api/v1/tenant/subscription/price-templates/:id |
 | GET | /api/v1/tenant/subscription/prices/ |
 | HEAD | /api/v1/tenant/subscription/prices/ |
 | POST | /api/v1/tenant/subscription/prices/ |
@@ -628,6 +638,11 @@
 | GET | /api/v1/tenant/subscription/subscriptions/:id |
 | HEAD | /api/v1/tenant/subscription/subscriptions/:id |
 | POST | /api/v1/tenant/subscription/subscriptions/:id/cancel |
+| GET | /api/v1/tenant/subscription/tags |
+| HEAD | /api/v1/tenant/subscription/tags |
+| POST | /api/v1/tenant/subscription/tags |
+| DELETE | /api/v1/tenant/subscription/tags/:id |
+| PUT | /api/v1/tenant/subscription/tags/:id |
 | GET | /api/v1/tenant/subscriptions/ |
 | GET | /api/v1/tenant/subscriptions/ |
 | HEAD | /api/v1/tenant/subscriptions/ |

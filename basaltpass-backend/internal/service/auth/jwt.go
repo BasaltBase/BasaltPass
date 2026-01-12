@@ -10,7 +10,18 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwtSecret = []byte(getEnv("JWT_SECRET", "supersecret"))
+var jwtSecret = []byte(mustGetEnv("JWT_SECRET"))
+
+func mustGetEnv(key string) string {
+	v := os.Getenv(key)
+	if v == "" {
+		if os.Getenv("BASALTPASS_DYNO_MODE") == "test" {
+			return "test-secret" // Allow test mode
+		}
+		panic("environment variable " + key + " is required")
+	}
+	return v
+}
 
 func getEnv(key, def string) string {
 	if v := os.Getenv(key); v != "" {

@@ -18,6 +18,11 @@ func NewTenantHandler(db *gorm.DB) *TenantHandler {
 	return &TenantHandler{db: db}
 }
 
+// NewTenantCatalogHandler 复用同一 DB 实例创建目录管理 handler
+func (h *TenantHandler) NewTenantCatalogHandler() *TenantCatalogHandler {
+	return NewTenantCatalogHandler(h.db)
+}
+
 // getTenantService 获取租户服务实例
 func (h *TenantHandler) getTenantService(c *fiber.Ctx) *TenantService {
 	// 从中间件获取租户ID

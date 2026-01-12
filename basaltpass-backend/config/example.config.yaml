@@ -14,11 +14,12 @@ server:
   address: ":8080"
 
 database:
-  # 仅内置 sqlite，可选：sqlite
+  # 仅内置 sqlite，可选：sqlite, mysql
   driver: "sqlite"
   # sqlite 数据库存放路径（相对当前工作目录）
   path: "basaltpass.db"
   # dsn 优先级高于 path；留空则使用 path
+  # MySQL DSN 示例: "user:password@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local"
   dsn: ""
 
 cors:

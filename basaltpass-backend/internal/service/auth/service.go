@@ -52,6 +52,12 @@ func (s Service) Register(req RegisterRequest) (*model.User, error) {
 		Nickname:     "New User",
 	}
 
+	// 利用数据库唯一约束防止并发注册导致产生多个超级管理员
+	if isFirstUser {
+		t := true
+		user.IsSystemAdmin = &t
+	}
+
 	if err := tx.Create(user).Error; err != nil {
 		tx.Rollback()
 		return nil, err
@@ -93,11 +99,13 @@ func (s Service) LoginV2(req LoginRequest) (LoginResult, error) {
 	var user model.User
 	db := common.DB()
 	if err := db.Preload("Passkeys").Where("email = ? OR phone = ?", req.EmailOrPhone, req.EmailOrPhone).First(&user).Error; err != nil {
-		return LoginResult{}, errors.New("user not found")
+		// return LoginResult{}, errors.New("user not found")
+		// 为防止用户枚举，统一返回无效凭证错误
+		return LoginResult{}, errors.New("invalid email or password")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
-		return LoginResult{}, errors.New("invalid credentials")
+		return LoginResult{}, errors.New("invalid email or password")
 	}
 
 	// 收集用户可用的所有2FA方式

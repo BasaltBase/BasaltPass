@@ -28,26 +28,54 @@ func NewTenantService(db *gorm.DB, tenantID *uint64) *TenantService {
 
 // CreateProduct 创建产品
 func (s *TenantService) CreateProduct(req *CreateProductRequest) (*model.Product, error) {
+	isActive := true
+	if req.IsActive != nil {
+		isActive = *req.IsActive
+	}
+
 	product := &model.Product{
 		TenantID:    s.tenantID,
 		Code:        req.Code,
 		Name:        req.Name,
 		Description: req.Description,
+		IsActive:    isActive,
+		CategoryID:  req.CategoryID,
 		Metadata:    model.JSONB(req.Metadata),
 		EffectiveAt: req.EffectiveAt,
 	}
 
-	if err := s.db.Create(product).Error; err != nil {
-		return nil, fmt.Errorf("创建产品失败: %w", err)
+	if err := s.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(product).Error; err != nil {
+			return fmt.Errorf("创建产品失败: %w", err)
+		}
+
+		if len(req.TagIDs) > 0 {
+			var tags []model.ProductTag
+			tagQuery := tx.Where("id IN ?", req.TagIDs)
+			if s.tenantID != nil {
+				tagQuery = tagQuery.Where("tenant_id = ?", *s.tenantID)
+			}
+			if err := tagQuery.Find(&tags).Error; err != nil {
+				return fmt.Errorf("查询标签失败: %w", err)
+			}
+			if err := tx.Model(product).Association("Tags").Replace(tags); err != nil {
+				return fmt.Errorf("绑定标签失败: %w", err)
+			}
+		}
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 
+	// 回读关联
+	_ = s.db.Preload("Category").Preload("Tags").First(product, product.ID).Error
 	return product, nil
 }
 
 // GetProduct 获取产品详情
 func (s *TenantService) GetProduct(id uint) (*model.Product, error) {
 	var product model.Product
-	query := s.db.Preload("Plans.Features").Preload("Plans.Prices").
+	query := s.db.Preload("Category").Preload("Tags").Preload("Plans.Features").Preload("Plans.Prices").
 		Where("id = ?", id)
 
 	// 添加租户过滤
@@ -72,7 +100,7 @@ func (s *TenantService) ListProducts(req *ListProductsRequest) ([]*model.Product
 	var products []*model.Product
 	var total int64
 
-	query := s.db.Model(&model.Product{}).Preload("Plans").Preload("Plans.Features").Preload("Plans.Prices")
+	query := s.db.Model(&model.Product{}).Preload("Category").Preload("Tags").Preload("Plans").Preload("Plans.Features").Preload("Plans.Prices")
 
 	// 添加租户过滤
 	if s.tenantID != nil {
@@ -134,12 +162,46 @@ func (s *TenantService) UpdateProduct(id uint, req *UpdateProductRequest) (*mode
 	if req.Metadata != nil {
 		product.Metadata = model.JSONB(req.Metadata)
 	}
+	if req.IsActive != nil {
+		product.IsActive = *req.IsActive
+	}
+	if req.CategoryID != nil {
+		product.CategoryID = req.CategoryID
+	}
+	if req.DeprecatedAt != nil {
+		product.DeprecatedAt = req.DeprecatedAt
+	}
 	product.UpdatedAt = time.Now()
 
-	if err := s.db.Save(&product).Error; err != nil {
-		return nil, fmt.Errorf("更新产品失败: %w", err)
+	if err := s.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Save(&product).Error; err != nil {
+			return fmt.Errorf("更新产品失败: %w", err)
+		}
+		if req.TagIDs != nil {
+			if len(*req.TagIDs) == 0 {
+				if err := tx.Model(&product).Association("Tags").Clear(); err != nil {
+					return fmt.Errorf("清空标签失败: %w", err)
+				}
+			} else {
+				var tags []model.ProductTag
+				tagQuery := tx.Where("id IN ?", *req.TagIDs)
+				if s.tenantID != nil {
+					tagQuery = tagQuery.Where("tenant_id = ?", *s.tenantID)
+				}
+				if err := tagQuery.Find(&tags).Error; err != nil {
+					return fmt.Errorf("查询标签失败: %w", err)
+				}
+				if err := tx.Model(&product).Association("Tags").Replace(tags); err != nil {
+					return fmt.Errorf("绑定标签失败: %w", err)
+				}
+			}
+		}
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 
+	_ = s.db.Preload("Category").Preload("Tags").First(&product, product.ID).Error
 	return &product, nil
 }
 

@@ -17,6 +17,9 @@ type CreateProductRequest struct {
 	Code        string                 `json:"code" validate:"required,max=64"`
 	Name        string                 `json:"name" validate:"required,max=255"`
 	Description string                 `json:"description,omitempty"`
+	IsActive    *bool                  `json:"is_active,omitempty"`
+	CategoryID  *uint                  `json:"category_id,omitempty"`
+	TagIDs      []uint                 `json:"tag_ids,omitempty"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 	EffectiveAt *time.Time             `json:"effective_at,omitempty"`
 }
@@ -25,6 +28,9 @@ type CreateProductRequest struct {
 type UpdateProductRequest struct {
 	Name         *string                `json:"name,omitempty" validate:"omitempty,max=255"`
 	Description  *string                `json:"description,omitempty"`
+	IsActive     *bool                  `json:"is_active,omitempty"`
+	CategoryID   *uint                  `json:"category_id,omitempty"`
+	TagIDs       *[]uint                `json:"tag_ids,omitempty"`
 	Metadata     map[string]interface{} `json:"metadata,omitempty"`
 	DeprecatedAt *time.Time             `json:"deprecated_at,omitempty"`
 }
@@ -35,6 +41,9 @@ type ProductResponse struct {
 	Code         string                 `json:"code"`
 	Name         string                 `json:"name"`
 	Description  string                 `json:"description"`
+	IsActive     bool                   `json:"is_active"`
+	CategoryID   *uint                  `json:"category_id"`
+	Tags         []model.ProductTag     `json:"tags,omitempty"`
 	Metadata     map[string]interface{} `json:"metadata"`
 	EffectiveAt  *time.Time             `json:"effective_at"`
 	DeprecatedAt *time.Time             `json:"deprecated_at"`
@@ -73,9 +82,9 @@ type PlanResponse struct {
 	EffectiveAt  *time.Time             `json:"effective_at"`
 	DeprecatedAt *time.Time             `json:"deprecated_at"`
 	CreatedAt    time.Time              `json:"created_at"`
-	UpdatedAt    time.Time             `json:"updated_at"`
-	Features     []PlanFeatureResponse `json:"features,omitempty"`
-	Prices       []PriceResponse       `json:"prices,omitempty"`
+	UpdatedAt    time.Time              `json:"updated_at"`
+	Features     []PlanFeatureResponse  `json:"features,omitempty"`
+	Prices       []PriceResponse        `json:"prices,omitempty"`
 }
 
 // ========== 套餐功能相关 DTO ==========
