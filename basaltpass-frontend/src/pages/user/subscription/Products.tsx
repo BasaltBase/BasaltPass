@@ -8,6 +8,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import client from '../../../api/client'
 import { ChevronRightIcon, CreditCardIcon } from '@heroicons/react/24/outline'
 import { CubeIcon, WalletIcon, QuestionMarkCircleIcon, SparklesIcon, ArrowRightIcon } from '@heroicons/react/24/outline'
+import { getAccessToken } from '@utils/auth'
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
@@ -44,7 +45,7 @@ export default function ProductsPage() {
   
       
       // 检查是否有token
-      const token = localStorage.getItem('access_token')
+        const token = getAccessToken()
       if (!token) {
 
         navigate('/auth/login')

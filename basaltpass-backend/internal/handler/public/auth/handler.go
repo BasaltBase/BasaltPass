@@ -75,7 +75,17 @@ func LoginHandler(c *fiber.Ctx) error {
 
 // RefreshHandler handles POST /auth/refresh
 func RefreshHandler(c *fiber.Ctx) error {
-	rt := c.Cookies("refresh_token")
+	// Scope-aware refresh: for tenant/admin consoles, use dedicated refresh cookies.
+	scope := c.Get("X-Auth-Scope")
+	if scope == "" {
+		scope = "user"
+	}
+	cookieName := "refresh_token"
+	if scope != "user" {
+		cookieName = "refresh_token_" + scope
+	}
+
+	rt := c.Cookies(cookieName)
 	if rt == "" {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "missing refresh token"})
 	}
@@ -86,7 +96,7 @@ func RefreshHandler(c *fiber.Ctx) error {
 	// update refresh token cookie
 	isProd := config.IsProduction()
 	c.Cookie(&fiber.Cookie{
-		Name:     "refresh_token",
+		Name:     cookieName,
 		Value:    tokens.RefreshToken,
 		HTTPOnly: true,
 		Secure:   isProd,
@@ -96,9 +106,13 @@ func RefreshHandler(c *fiber.Ctx) error {
 		Domain:   "",               // 空字符串表示当前域
 	})
 
-	// 更新 access_token cookie
+	// 更新 access_token cookie（非鉴权来源，仅用于调试/兼容）
+	accessCookieName := "access_token"
+	if scope != "user" {
+		accessCookieName = "access_token_" + scope
+	}
 	c.Cookie(&fiber.Cookie{
-		Name:     "access_token",
+		Name:     accessCookieName,
 		Value:    tokens.AccessToken,
 		HTTPOnly: true,
 		Secure:   isProd,

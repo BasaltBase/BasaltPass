@@ -68,6 +68,13 @@ func JWTMiddleware() fiber.Handler {
 			}
 		}
 
+		// Store console scope in context if available
+		if scope, exists := claims["scp"]; exists {
+			if scopeStr, ok := scope.(string); ok {
+				c.Locals("scope", scopeStr)
+			}
+		}
+
 		// Store the full token for other middlewares
 		c.Locals("user", token)
 

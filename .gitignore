@@ -2,6 +2,10 @@
 basaltpass-frontend/node_modules/
 basaltpass-frontend/dist/
 
+basaltpass-frontend/apps/admin/node_modules
+basaltpass-frontend/apps/tenant/node_modules
+basaltpass-frontend/apps/user/node_modules
+
 # backend
 .env
 

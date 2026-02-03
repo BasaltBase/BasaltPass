@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
+import { getAccessToken } from '@utils/auth'
 import { ShieldCheckIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 
 interface ConsentPageData {
@@ -49,7 +50,7 @@ export default function OAuthConsent() {
         body: formData,
         credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+          'Authorization': `Bearer ${getAccessToken()}`
         }
       })
 
@@ -85,7 +86,7 @@ export default function OAuthConsent() {
         body: formData,
         credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+          'Authorization': `Bearer ${getAccessToken()}`
         }
       })
 

@@ -2,10 +2,21 @@
   "name": "basaltpass-frontend",
   "version": "0.1.0",
   "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "dev": "npm run dev:user",
+    "dev:user": "npm run -w @basaltpass/console-user dev",
+    "dev:tenant": "npm run -w @basaltpass/console-tenant dev",
+    "dev:admin": "npm run -w @basaltpass/console-admin dev",
+    "build": "npm run build:user && npm run build:tenant && npm run build:admin",
+    "build:user": "npm run -w @basaltpass/console-user build",
+    "build:tenant": "npm run -w @basaltpass/console-tenant build",
+    "build:admin": "npm run -w @basaltpass/console-admin build",
+    "preview:user": "npm run -w @basaltpass/console-user preview",
+    "preview:tenant": "npm run -w @basaltpass/console-tenant preview",
+    "preview:admin": "npm run -w @basaltpass/console-admin preview"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",

@@ -176,8 +176,13 @@ func (s Service) Refresh(refreshToken string) (TokenPair, error) {
 	if !ok {
 		return TokenPair{}, errors.New("invalid subject")
 	}
-	// 不信任令牌中携带的租户上下文，刷新时基于用户默认租户重新生成
-	return GenerateTokenPairWithTenant(uint(userIDFloat), 0)
+	// Preserve console scope, but do not trust tenant context from token.
+	scope := ConsoleScopeUser
+	if scp, ok := claims["scp"].(string); ok && scp != "" {
+		scope = scp
+	}
+	// Refresh: tenant context is re-derived from DB for non-admin scopes.
+	return GenerateTokenPairWithTenantAndScope(uint(userIDFloat), 0, scope)
 }
 
 // Verify2FA 校验二次验证信息，成功返回token

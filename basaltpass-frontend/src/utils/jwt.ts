@@ -1,3 +1,5 @@
+import { getAccessToken } from './auth'
+
 // JWT 解码工具函数
 export function decodeJWT(token: string): any {
   try {
@@ -13,9 +15,16 @@ export function decodeJWT(token: string): any {
   }
 }
 
+export function getScopeFromToken(): string | null {
+  const token = getAccessToken()
+  if (!token) return null
+  const decoded = decodeJWT(token)
+  return decoded?.scp || null
+}
+
 // 从 JWT token 中获取租户 ID
 export function getTenantIdFromToken(): string | null {
-  const token = localStorage.getItem('access_token');
+  const token = getAccessToken()
   if (!token) return null;
   
   const decoded = decodeJWT(token);

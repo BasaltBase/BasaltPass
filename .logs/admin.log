@@ -1,0 +1,11 @@
+nohup: ignoring input
+
+> @basaltpass/console-admin@0.1.0 dev
+> node ../../node_modules/vite/bin/vite.js --host 0.0.0.0 --port 5175
+
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+  VITE v5.4.19  ready in 392 ms
+
+  ➜  Local:   http://localhost:5175/
+  ➜  Network: http://172.17.0.2:5175/

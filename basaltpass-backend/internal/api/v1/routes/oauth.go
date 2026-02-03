@@ -46,6 +46,8 @@ func RegisterOAuthRoutes(v1 fiber.Router) {
 	authGroup.Post("/register", auth2.RegisterHandler)
 	authGroup.Post("/login", auth2.LoginHandler)
 	authGroup.Post("/refresh", auth2.RefreshHandler)
+	authGroup.Post("/console/authorize", middleware.JWTMiddleware(), auth2.ConsoleAuthorizeHandler)
+	authGroup.Post("/console/exchange", auth2.ConsoleExchangeHandler)
 	authGroup.Post("/password/reset-request", auth2.RequestResetHandler)
 	authGroup.Post("/password/reset", auth2.ResetPasswordHandler)
 	authGroup.Post("/verify-2fa", auth2.Verify2FAHandler)

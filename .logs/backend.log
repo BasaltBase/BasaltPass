@@ -1,0 +1,13 @@
+nohup: ignoring input
+2026/02/03 23:12:59 config not explicitly loaded; using defaults+env
+2026/02/03 23:12:59 loaded env from .env
+2026/02/03 23:12:59 loaded config from /workspaces/BasaltPass/basaltpass-backend/config/config.yaml
+2026/02/03 23:12:59 Database (sqlite) DSN: /workspaces/BasaltPass/basaltpass-backend/basaltpass.db
+2026/02/03 23:12:59 [main][info] Environment: develop (develop=true, staging=false, production=false)
+2026/02/03 23:12:59 [Migration] Successfully initialized default currencies
+2026/02/03 23:12:59 [Migration] No old currency fields found in wallets table, skipping migration
+2026/02/03 23:13:01 [Migration] Existing database detected, applying compatibility migrations...
+2026/02/03 23:13:02 [main][info] route map exported to docs/ROUTES.md
+2026/02/03 23:13:02 [main][info] Starting server on :8080
+2026/02/03 23:13:02 failed to listen: listen tcp4 :8080: bind: address already in use
+exit status 1

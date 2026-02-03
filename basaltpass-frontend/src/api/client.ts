@@ -1,6 +1,5 @@
 import axios from 'axios'
 import { getAccessToken, clearAccessToken } from '../utils/auth'
-import { getTenantIdFromToken } from '../utils/jwt'
 
 const client = axios.create({
   baseURL: import.meta.env.VITE_API_BASE || 'http://localhost:8080',
@@ -34,6 +33,11 @@ client.interceptors.request.use((config) => {
     config.headers = config.headers || {}
     config.headers.Authorization = `Bearer ${token}`
   }
+
+  // Scope header: user/tenant/admin (defaults to user)
+  config.headers = config.headers || {}
+  const scope = (import.meta as any).env?.VITE_AUTH_SCOPE || 'user'
+  ;(config.headers as any)['X-Auth-Scope'] = scope
   
   return config
 })

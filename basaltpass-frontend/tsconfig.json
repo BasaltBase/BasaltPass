@@ -26,5 +26,5 @@
       "@contexts/*": ["src/contexts/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src", "apps/*/src"]
 } 

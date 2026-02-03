@@ -50,12 +50,23 @@ func RegisterMiddlewares(app *fiber.App) {
 
 	// CORS configuration from config
 	c := config.Get().CORS
-	app.Use(cors.New(cors.Config{
-		AllowOrigins:     strings.Join(c.AllowOrigins, ","),
+	corsCfg := cors.Config{
 		AllowMethods:     strings.Join(c.AllowMethods, ","),
 		AllowHeaders:     strings.Join(c.AllowHeaders, ","),
 		AllowCredentials: c.AllowCredentials,
 		ExposeHeaders:    strings.Join(c.ExposeHeaders, ","),
 		MaxAge:           c.MaxAgeSeconds,
-	}))
+	}
+
+	// In develop, allow any Origin (useful for Dev Containers port-forwarding / tunnels)
+	// while still echoing back the requesting Origin (required when AllowCredentials=true).
+	if config.IsDevelop() {
+		corsCfg.AllowOriginsFunc = func(origin string) bool {
+			return origin != ""
+		}
+	} else {
+		corsCfg.AllowOrigins = strings.Join(c.AllowOrigins, ",")
+	}
+
+	app.Use(cors.New(corsCfg))
 }

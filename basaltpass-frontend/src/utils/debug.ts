@@ -1,3 +1,5 @@
+import { getAccessToken } from './auth'
+
 // 调试工具，用于输出认证状态信息
 export const debugAuth = {
   log: (message: string, data?: any) => {
@@ -12,8 +14,13 @@ export const debugAuth = {
         user: state.user,
         isAuthenticated: state.isAuthenticated,
         isLoading: state.isLoading,
-        hasToken: !!localStorage.getItem('access_token'),
-        tokenLength: localStorage.getItem('access_token')?.length || 0,
+        tokenInfo: (() => {
+          const t = getAccessToken()
+          return {
+            hasToken: !!t,
+            tokenLength: t?.length || 0,
+          }
+        })(),
         currentPath: window.location.pathname,
         timestamp: new Date().toISOString()
       })
@@ -25,4 +32,4 @@ export const debugAuth = {
       console.log(`[Auth Debug] Redirect: ${from} → ${to} (${reason}) at ${new Date().toISOString()}`)
     }
   }
-} 
+}

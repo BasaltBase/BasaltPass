@@ -52,6 +52,13 @@ func AdminMiddleware() fiber.Handler {
 // SuperAdminMiddleware 超级管理员(Basalt 方面)中间件
 func SuperAdminMiddleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		// Enforce console scope: global admin routes require an "admin" scoped token.
+		if scope, _ := c.Locals("scope").(string); scope != "admin" {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"error": "admin console scope required",
+			})
+		}
+
 		userID := c.Locals("userID")
 		if userID == nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{

@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getAccessToken, clearAccessToken } from '../utils/auth'
+import { getAccessToken, clearAccessToken, setAccessToken } from '../utils/auth'
 import { debugAuth } from '../utils/debug'
 import client from '../api/client'
+import { decodeJWT } from '../utils/jwt'
 
 interface User {
   id: number
@@ -50,12 +51,49 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [hasChecked, setHasChecked] = useState(false)
   const navigate = useNavigate()
 
+  const expectedScope = (import.meta as any).env?.VITE_AUTH_SCOPE || 'user'
+
+  const tokenMatchesScope = useCallback((token: string) => {
+    const decoded = decodeJWT(token)
+    const tokenScope: string = decoded?.scp || 'user'
+    return tokenScope === expectedScope
+  }, [expectedScope])
+
+  const tryRefresh = useCallback(async () => {
+    try {
+      const res = await client.post('/api/v1/auth/refresh')
+      const accessToken = res.data?.access_token
+      if (typeof accessToken === 'string' && accessToken.length > 0) {
+        setAccessToken(accessToken)
+        return accessToken as string
+      }
+    } catch (e) {
+      // ignore
+    }
+    return null
+  }, [])
+
   const checkAuth = useCallback(async () => {
     debugAuth.log('Starting auth check')
-    const token = getAccessToken()
+    let token = getAccessToken()
     
     if (!token) {
+      debugAuth.log('No token found, attempting refresh')
+      token = await tryRefresh()
+    }
+
+    if (!token) {
       debugAuth.log('No token found, setting unauthenticated')
+      setUser(null)
+      setTenants([])
+      setIsLoading(false)
+      setHasChecked(true)
+      return
+    }
+
+    if (!tokenMatchesScope(token)) {
+      debugAuth.log('Token scope mismatch, clearing token')
+      clearAccessToken()
       setUser(null)
       setTenants([])
       setIsLoading(false)
@@ -111,7 +149,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const login = useCallback(async (token: string) => {
     debugAuth.log('Login called with token', token.substring(0, 20) + '...')
-    localStorage.setItem('access_token', token)
+    if (!tokenMatchesScope(token)) {
+      throw new Error('Token scope mismatch')
+    }
+    setAccessToken(token)
     setIsLoading(true)
     try {
       const response = await client.get('/api/v1/user/profile')

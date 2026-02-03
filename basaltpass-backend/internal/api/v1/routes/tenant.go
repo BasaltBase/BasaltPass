@@ -20,7 +20,7 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 	 * 这些路由需要租户上下文，但不需要全局管理员权限
 	 * 所有租户管理员
 	 */
-	tenantGroup := v1.Group("/tenant", middleware.JWTMiddleware(), middleware.TenantMiddleware())
+	tenantGroup := v1.Group("/tenant", middleware.JWTMiddleware(), middleware.RequireConsoleScope("tenant"), middleware.TenantMiddleware())
 
 	// 租户信息管理
 	tenantGroup.Get("/info", tenant2.TenantGetInfoHandler)

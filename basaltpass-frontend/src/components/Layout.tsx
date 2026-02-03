@@ -21,6 +21,7 @@ import {
 import { PButton } from './index'
 import { useAuth } from '../contexts/AuthContext'
 import EnhancedNotificationIcon from './EnhancedNotificationIcon'
+import { authorizeConsole } from '../api/console'
 
 const navigation = [
   { name: '仪表板', href: '/dashboard', icon: HomeIcon },
@@ -44,7 +45,7 @@ export default function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const location = useLocation()
-  const { user, logout } = useAuth()
+  const { user, logout, canAccessTenant, canAccessAdmin } = useAuth()
 
   const handleLogout = () => {
     logout()
@@ -57,6 +58,29 @@ export default function Layout({ children }: LayoutProps) {
   }
 
   const isActive = (href: string) => location.pathname === href
+
+  const consoleUserUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || ''
+  const consoleTenantUrl = (import.meta as any).env?.VITE_CONSOLE_TENANT_URL || ''
+  const consoleAdminUrl = (import.meta as any).env?.VITE_CONSOLE_ADMIN_URL || ''
+
+  const joinUrl = (base: string, path: string) => {
+    const b = (base || '').replace(/\/+$/, '')
+    const p = (path || '').replace(/^\//, '')
+    if (!b) return '/' + p
+    return `${b}/${p}`
+  }
+
+  const switchToTenant = async () => {
+    const { code } = await authorizeConsole('tenant')
+    const url = joinUrl(consoleTenantUrl, `tenant/dashboard?code=${encodeURIComponent(code)}`)
+    window.location.href = url
+  }
+
+  const switchToAdmin = async () => {
+    const { code } = await authorizeConsole('admin')
+    const url = joinUrl(consoleAdminUrl, `admin/dashboard?code=${encodeURIComponent(code)}`)
+    window.location.href = url
+  }
 
   return (
     <div className="h-screen flex overflow-hidden bg-gray-100">
@@ -148,17 +172,31 @@ export default function Layout({ children }: LayoutProps) {
           <div className="flex items-center space-x-4">
             {/* 管理系统切换按钮 - 只在admin页面显示 */}
 
-              {/* 管理系统切换按钮 - 只在platform页面显示 */}
-                <Link
-                  to="/tenant/dashboard"
-                  className="relative rounded-md bg-purple-50 px-3 py-2 text-purple-600 hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors duration-200"
-                  title="切换到租户管理"
-                >
-                  <div className="flex items-center space-x-2">
-                    <ArrowsRightLeftIcon className="h-4 w-4" />
-                    <span className="text-sm font-medium">租户管理</span>
-                  </div>
-                </Link>
+            {canAccessTenant && (
+              <button
+                onClick={switchToTenant}
+                className="relative rounded-md bg-purple-50 px-3 py-2 text-purple-600 hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors duration-200"
+                title="切换到租户控制台（按需授权）"
+              >
+                <div className="flex items-center space-x-2">
+                  <ArrowsRightLeftIcon className="h-4 w-4" />
+                  <span className="text-sm font-medium">租户管理</span>
+                </div>
+              </button>
+            )}
+
+            {canAccessAdmin && (
+              <button
+                onClick={switchToAdmin}
+                className="relative rounded-md bg-indigo-50 px-3 py-2 text-indigo-600 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200"
+                title="切换到全局管理员控制台（按需授权）"
+              >
+                <div className="flex items-center space-x-2">
+                  <ArrowsRightLeftIcon className="h-4 w-4" />
+                  <span className="text-sm font-medium">管理员面板</span>
+                </div>
+              </button>
+            )}
               
             <EnhancedNotificationIcon viewAllPath="/notifications" />
             {/* 用户菜单 */}

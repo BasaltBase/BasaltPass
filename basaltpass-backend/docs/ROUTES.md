@@ -182,6 +182,8 @@
 | POST | /api/v1/admin/wallets/:id/unfreeze |
 | GET | /api/v1/admin/wallets/stats |
 | HEAD | /api/v1/admin/wallets/stats |
+| POST | /api/v1/auth/console/authorize |
+| POST | /api/v1/auth/console/exchange |
 | GET | /api/v1/auth/debug/cookies |
 | HEAD | /api/v1/auth/debug/cookies |
 | POST | /api/v1/auth/login |

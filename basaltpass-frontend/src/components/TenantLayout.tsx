@@ -6,6 +6,7 @@ import TenantNavigation from './TenantNavigation'
 import { useAuth } from '../contexts/AuthContext'
 import EnhancedNotificationIcon from './EnhancedNotificationIcon'
 import { PButton } from './index'
+import { authorizeConsole } from '../api/console'
 
 interface TenantLayoutProps {
   children: ReactNode
@@ -26,6 +27,25 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
   const isTenantPath = location.pathname.startsWith('/tenant')
   const isAdminPath = location.pathname.startsWith('/admin')
 
+  const consoleUserUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || ''
+  const consoleAdminUrl = (import.meta as any).env?.VITE_CONSOLE_ADMIN_URL || ''
+
+  const joinUrl = (base: string, path: string) => {
+    const b = (base || '').replace(/\/+$/, '')
+    const p = (path || '').replace(/^\//, '')
+    if (!b) return '/' + p
+    return `${b}/${p}`
+  }
+
+  const switchToAdmin = async () => {
+    const { code } = await authorizeConsole('admin')
+    window.location.href = joinUrl(consoleAdminUrl, `admin/dashboard?code=${encodeURIComponent(code)}`)
+  }
+
+  const switchToUser = () => {
+    window.location.href = joinUrl(consoleUserUrl, 'dashboard')
+  }
+
   const getUserInitial = () => {
     if (user?.nickname) {
       return user.nickname.charAt(0).toUpperCase()
@@ -43,7 +63,7 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 justify-between items-center">
             <div className="flex items-center">
-              <Link to="/dashboard" className="flex items-center">
+              <Link to="/tenant/dashboard" className="flex items-center">
                 <div className="h-8 w-8 bg-purple-600 rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-lg">T</span>
                 </div>
@@ -63,8 +83,8 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
               
               {/* 管理系统切换按钮 - 切换到管理员面板 */}
               {isTenantPath && canAccessAdmin && (
-                <Link
-                  to="/admin/dashboard"
+                <button
+                  onClick={switchToAdmin}
                   className="relative rounded-md bg-indigo-50 px-3 py-2 text-indigo-600 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200"
                   title="切换到管理员面板"
                 >
@@ -72,13 +92,13 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
                     <ArrowsRightLeftIcon className="h-4 w-4" />
                     <span className="text-sm font-medium">管理员面板</span>
                   </div>
-                </Link>
+                </button>
               )}
               
               {/* 管理系统切换按钮 - 切换到用户面板 */}
               {isTenantPath && (
-                <Link
-                  to="/dashboard"
+                <button
+                  onClick={switchToUser}
                   className="relative rounded-md bg-green-50 px-3 py-2 text-green-600 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors duration-200"
                   title="切换到用户面板"
                 >
@@ -86,7 +106,7 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
                     <ArrowsRightLeftIcon className="h-4 w-4" />
                     <span className="text-sm font-medium">用户面板</span>
                   </div>
-                </Link>
+                </button>
               )}
               
               {/* 通知：使用全局 NotificationProvider 的组件，跳转到租户通知页 */}
@@ -130,23 +150,23 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
                       </p>
                     </div>
                     
-                    <Link
-                      to="/tenant/profile"
+                    <a
+                      href={joinUrl(consoleUserUrl, 'profile')}
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       onClick={() => setIsUserMenuOpen(false)}
                     >
                       <UserIcon className="mr-3 h-4 w-4" />
                       个人资料
-                    </Link>
+                    </a>
                     
-                    <Link
-                      to="/tenant/settings"
+                    <a
+                      href={joinUrl(consoleUserUrl, 'settings')}
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       onClick={() => setIsUserMenuOpen(false)}
                     >
                       <Cog6ToothIcon className="mr-3 h-4 w-4" />
                       租户设置
-                    </Link>
+                    </a>
                     
                     <div className="border-t border-gray-200"></div>
                     
