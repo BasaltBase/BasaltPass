@@ -112,20 +112,58 @@ type TenantAdmin struct {
 type TenantRole string
 const (
     TenantRoleOwner  TenantRole = "owner"   // 所有者
-    TenantRoleAdmin  TenantRole = "tenant"  // 管理员
+    TenantRoleAdmin  TenantRole = "admin"   // 管理员
     TenantRoleMember TenantRole = "member"  // 普通成员
 )
 ```
 
-#### Role（租户级角色）
+#### TenantRbacRole（租户RBAC角色）
 ```go
-// 当 tenant_id != 0 且 app_id = NULL 时，表示租户级角色
-type Role struct {
-    TenantID    uint   `gorm:"not null"`    // 非0，表示属于某租户
-    AppID       *uint  // NULL表示租户级角色
+// 文件: basaltpass-backend/internal/model/tenant_rbac_role.go
+type TenantRbacRole struct {
+    ID          uint
     Code        string
     Name        string
-    IsSystem    bool
+    Description string
+    TenantID    uint       // 所属租户
+    IsSystem    bool       // 是否为系统角色
+    CreatedAt   time.Time
+    UpdatedAt   time.Time
+}
+
+type TenantUserRbacRole struct {
+    ID         uint
+    UserID     uint
+    TenantID   uint
+    RoleID     uint
+    AssignedAt time.Time
+    AssignedBy uint
+    ExpiresAt  *time.Time
+}
+```
+
+#### TenantRbacPermission（租户权限）
+```go
+// 文件: basaltpass-backend/internal/model/tenant_rbac_permission.go
+type TenantRbacPermission struct {
+    ID          uint
+    Code        string
+    Name        string
+    Description string
+    Category    string
+    TenantID    uint
+    CreatedAt   time.Time
+    UpdatedAt   time.Time
+}
+
+type TenantUserRbacPermission struct {
+    ID           uint
+    UserID       uint
+    TenantID     uint
+    PermissionID uint
+    GrantedAt    time.Time
+    GrantedBy    uint
+    ExpiresAt    *time.Time
 }
 ```
 
@@ -136,7 +174,7 @@ type Role struct {
 - 创建自定义角色
 - 定义角色权限
 - 为用户分配角色
-- 按应用划分权限
+- 独立的权限管理（不再依赖全局 permissions 表）
 
 ### 2.3 中间件
 
@@ -163,7 +201,7 @@ func TenantOwnerMiddleware() fiber.Handler {
 ```go
 // 允许租户所有者或管理员
 func TenantAdminMiddleware() fiber.Handler {
-    // 检查 TenantAdmin.Role in ("owner", "tenant")
+    // 检查 TenantAdmin.Role in ("owner", "admin")
 }
 ```
 
@@ -345,10 +383,15 @@ POST   /api/v1/tenant/apps/:app_id/permissions
 | 表名 | 用途 | 所属系统 |
 |------|------|---------|
 | `permissions` | 系统级权限定义 | 全局 |
-| `roles` | 角色（通过tenant_id区分全局/租户/应用） | 全局/租户/应用 |
-| `user_roles` | 用户-角色关联（全局角色） | 全局 |
-| `role_permissions` | 角色-权限关联 | 全局 |
+| `roles` | 全局角色（仅系统级） | 全局 |
+| `user_roles` | 用户-全局角色关联 | 全局 |
+| `role_permissions` | 全局角色-权限关联 | 全局 |
 | `tenant_admins` | 租户管理员关联 | 租户 |
+| `tenant_rbac_roles` | 租户RBAC角色定义 | 租户 |
+| `tenant_rbac_permissions` | 租户RBAC权限定义 | 租户 |
+| `tenant_user_rbac_roles` | 用户-租户角色关联 | 租户 |
+| `tenant_user_rbac_permissions` | 用户-租户权限关联 | 租户 |
+| `tenant_rbac_role_permissions` | 租户角色-权限关联 | 租户 |
 | `app_permissions` | 应用权限定义 | 应用 |
 | `app_roles` | 应用角色定义 | 应用 |
 | `app_user_permissions` | 用户-应用权限关联 | 应用 |

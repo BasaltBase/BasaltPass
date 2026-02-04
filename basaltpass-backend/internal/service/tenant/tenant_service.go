@@ -442,7 +442,7 @@ func (s *TenantService) getTenantQuota(tenantID uint) *TenantQuotaInfo {
 }
 
 func (s *TenantService) createDefaultRoles(tx *gorm.DB, tenantID uint) error {
-	defaultRoles := []model.Role{
+	defaultRoles := []model.TenantRbacRole{
 		{
 			TenantID:    tenantID,
 			Code:        "tenant_admin",

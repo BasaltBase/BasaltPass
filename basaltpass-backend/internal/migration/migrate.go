@@ -103,6 +103,13 @@ func RunMigrations() {
 		&model.AppRole{},
 		&model.AppUserPermission{},
 		&model.AppUserRole{},
+
+		// 租户RBAC权限系统模型
+		&model.TenantRbacPermission{},
+		&model.TenantRbacRole{},
+		&model.TenantUserRbacPermission{},
+		&model.TenantUserRbacRole{},
+		&model.TenantRbacRolePermission{},
 	)
 	if err != nil {
 		log.Fatalf("[Error][RunMigrations] auto migration failed: %v", err)
@@ -371,10 +378,10 @@ func createDefaultRoles() {
 		return
 	}
 
-	roles := []model.Role{
+	roles := []model.TenantRbacRole{
 		{
 			TenantID:    defaultTenant.ID,
-			Code:        "tenant",
+			Code:        "admin",
 			Name:        "Admin",
 			Description: "Basalt system tenant role",
 			IsSystem:    true,
@@ -390,7 +397,7 @@ func createDefaultRoles() {
 
 	for _, role := range roles {
 		var count int64
-		db.Model(&model.Role{}).Where("code = ? AND tenant_id = ?", role.Code, role.TenantID).Count(&count)
+		db.Model(&model.TenantRbacRole{}).Where("code = ? AND tenant_id = ?", role.Code, role.TenantID).Count(&count)
 		if count == 0 {
 			if err := db.Create(&role).Error; err != nil {
 				log.Printf("[Migration] Failed to create role %s: %v", role.Code, err)
@@ -622,7 +629,7 @@ func createAdditionalSystemRoles() {
 		}
 	}
 
-	roles := []model.Role{
+	roles := []model.TenantRbacRole{
 		{TenantID: tenant.ID, Code: "viewer", Name: "Viewer", Description: "System read-only role", IsSystem: true},
 		{TenantID: tenant.ID, Code: "user_manager", Name: "User Manager", Description: "Manage users", IsSystem: true},
 		{TenantID: tenant.ID, Code: "tenant_viewer", Name: "Tenant Viewer", Description: "View tenants and stats", IsSystem: true},
@@ -638,7 +645,7 @@ func createAdditionalSystemRoles() {
 
 	for _, r := range roles {
 		var cnt int64
-		if err := db.Model(&model.Role{}).Where("code = ? AND tenant_id = ?", r.Code, r.TenantID).Count(&cnt).Error; err != nil {
+		if err := db.Model(&model.TenantRbacRole{}).Where("code = ? AND tenant_id = ?", r.Code, r.TenantID).Count(&cnt).Error; err != nil {
 			log.Printf("[Migration] Failed to check role %s: %v", r.Code, err)
 			continue
 		}

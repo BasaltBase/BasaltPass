@@ -40,10 +40,10 @@ type Tenant struct {
 	// 关联
 	TenantAdmins []TenantAdmin `gorm:"foreignKey:TenantID" json:"tenant_admins,omitempty"`
 	Apps         []App         `gorm:"foreignKey:TenantID" json:"apps,omitempty"`
-	Roles        []Role        `gorm:"foreignKey:TenantID" json:"roles,omitempty"`
+	// Note: 租户RBAC角色现在在独立的 TenantRbacRole 模型中，不再通过这里关联
 }
 
-// TenantRole 租户角色类型
+// TenantRole 租户角色类型（用于表示租户管理员级别：owner/admin/member）
 type TenantRole string
 
 const (

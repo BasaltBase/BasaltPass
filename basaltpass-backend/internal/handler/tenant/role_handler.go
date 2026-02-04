@@ -2,6 +2,7 @@ package tenant
 
 import (
 	"strconv"
+	"time"
 
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
@@ -75,7 +76,7 @@ func CreateTenantRole(c *fiber.Ctx) error {
 	}
 
 	// 检查角色代码是否重复
-	var existingRole model.Role
+	var existingRole model.TenantRole
 	err := common.DB().Where("tenant_id = ? AND code = ?", tenantID, req.Code).First(&existingRole).Error
 	if err == nil {
 		return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "角色代码已存在"})
@@ -84,18 +85,8 @@ func CreateTenantRole(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "检查角色代码失败"})
 	}
 
-	// 如果指定了应用ID，检查应用是否属于当前租户
-	if req.AppID != nil {
-		var app model.App
-		err := common.DB().Where("id = ? AND tenant_id = ?", *req.AppID, tenantID).First(&app).Error
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "应用不存在或不属于当前租户"})
-		}
-	}
-
-	role := model.Role{
+	role := model.TenantRbacRole{
 		TenantID:    tenantID,
-		AppID:       req.AppID,
 		Code:        req.Code,
 		Name:        req.Name,
 		Description: req.Description,
@@ -122,21 +113,12 @@ func GetTenantRoles(c *fiber.Ctx) error {
 	// 解析查询参数
 	page, _ := strconv.Atoi(c.Query("page", "1"))
 	pageSize, _ := strconv.Atoi(c.Query("page_size", "20"))
-	appID := c.Query("app_id")
 	search := c.Query("search")
 
 	offset := (page - 1) * pageSize
 
 	// 构建查询
 	query := common.DB().Where("tenant_id = ?", tenantID)
-
-	if appID != "" {
-		if appID == "tenant" {
-			query = query.Where("app_id IS NULL")
-		} else {
-			query = query.Where("app_id = ?", appID)
-		}
-	}
 
 	if search != "" {
 		query = query.Where("(name LIKE ? OR code LIKE ? OR description LIKE ?)",
@@ -145,11 +127,11 @@ func GetTenantRoles(c *fiber.Ctx) error {
 
 	// 获取总数
 	var total int64
-	query.Model(&model.Role{}).Count(&total)
+	query.Model(&model.TenantRbacRole{}).Count(&total)
 
 	// 获取角色列表
-	var roles []model.Role
-	err := query.Preload("App").
+	var roles []model.TenantRbacRole
+	err := query.
 		Offset(offset).
 		Limit(pageSize).
 		Order("created_at DESC").
@@ -163,22 +145,18 @@ func GetTenantRoles(c *fiber.Ctx) error {
 	for _, role := range roles {
 		// 统计使用该角色的用户数量
 		var userCount int64
-		common.DB().Model(&model.UserRole{}).Where("role_id = ?", role.ID).Count(&userCount)
+		common.DB().Model(&model.TenantUserRbacRole{}).Where("role_id = ?", role.ID).Count(&userCount)
 
 		roleResp := RoleResponse{
 			ID:          role.ID,
 			Code:        role.Code,
 			Name:        role.Name,
 			Description: role.Description,
-			AppID:       role.AppID,
+			AppID:       nil,
 			IsSystem:    role.IsSystem,
 			UserCount:   userCount,
 			CreatedAt:   role.CreatedAt.Format("2006-01-02 15:04:05"),
 			UpdatedAt:   role.UpdatedAt.Format("2006-01-02 15:04:05"),
-		}
-
-		if role.App != nil {
-			roleResp.AppName = role.App.Name
 		}
 
 		roleResponses = append(roleResponses, roleResp)
@@ -231,7 +209,7 @@ func UpdateTenantRole(c *fiber.Ctx) error {
 
 	// 检查新的角色代码是否重复（排除自己）
 	if req.Code != role.Code {
-		var existingRole model.Role
+		var existingRole model.TenantRole
 		err := common.DB().Where("tenant_id = ? AND code = ? AND id != ?", tenantID, req.Code, roleID).First(&existingRole).Error
 		if err == nil {
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "角色代码已存在"})
@@ -241,20 +219,10 @@ func UpdateTenantRole(c *fiber.Ctx) error {
 		}
 	}
 
-	// 如果指定了应用ID，检查应用是否属于当前租户
-	if req.AppID != nil {
-		var app model.App
-		err := common.DB().Where("id = ? AND tenant_id = ?", *req.AppID, tenantID).First(&app).Error
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "应用不存在或不属于当前租户"})
-		}
-	}
-
 	// 更新角色
 	role.Code = req.Code
 	role.Name = req.Name
 	role.Description = req.Description
-	role.AppID = req.AppID
 
 	if err := common.DB().Save(&role).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "更新角色失败"})
@@ -296,7 +264,7 @@ func DeleteTenantRole(c *fiber.Ctx) error {
 
 	// 检查是否有用户正在使用该角色
 	var userCount int64
-	common.DB().Model(&model.UserRole{}).Where("role_id = ?", roleID).Count(&userCount)
+	common.DB().Model(&model.TenantUserRbacRole{}).Where("role_id = ?", roleID).Count(&userCount)
 	if userCount > 0 {
 		return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "该角色正在被用户使用，无法删除"})
 	}
@@ -310,7 +278,7 @@ func DeleteTenantRole(c *fiber.Ctx) error {
 	}()
 
 	// 删除角色权限关联
-	if err := tx.Where("role_id = ?", roleID).Delete(&model.RolePermission{}).Error; err != nil {
+	if err := tx.Where("role_id = ?", roleID).Delete(&model.TenantRbacRolePermission{}).Error; err != nil {
 		tx.Rollback()
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "删除角色权限关联失败"})
 	}
@@ -350,7 +318,7 @@ func AssignUserRoles(c *fiber.Ctx) error {
 
 	// 检查所有角色是否都属于当前租户
 	var roleCount int64
-	common.DB().Model(&model.Role{}).Where("id IN ? AND tenant_id = ?", req.RoleIDs, tenantID).Count(&roleCount)
+	common.DB().Model(&model.TenantRbacRole{}).Where("id IN ? AND tenant_id = ?", req.RoleIDs, tenantID).Count(&roleCount)
 	if int(roleCount) != len(req.RoleIDs) {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "存在不属于当前租户的角色"})
 	}
@@ -364,17 +332,21 @@ func AssignUserRoles(c *fiber.Ctx) error {
 	}()
 
 	// 删除用户的所有角色（仅限当前租户的角色）
-	if err := tx.Where("user_id = ? AND role_id IN (SELECT id FROM roles WHERE tenant_id = ?)",
-		req.UserID, tenantID).Delete(&model.UserRole{}).Error; err != nil {
+	if err := tx.Where("user_id = ? AND tenant_id = ?",
+		req.UserID, tenantID).Delete(&model.TenantUserRbacRole{}).Error; err != nil {
 		tx.Rollback()
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "删除用户原有角色失败"})
 	}
 
 	// 分配新角色
+	assignedBy := c.Locals("userID").(uint)
 	for _, roleID := range req.RoleIDs {
-		userRole := model.UserRole{
-			UserID: req.UserID,
-			RoleID: roleID,
+		userRole := model.TenantUserRbacRole{
+			UserID:     req.UserID,
+			TenantID:   tenantID,
+			RoleID:     roleID,
+			AssignedAt: time.Now(),
+			AssignedBy: assignedBy,
 		}
 		if err := tx.Create(&userRole).Error; err != nil {
 			tx.Rollback()
@@ -410,10 +382,9 @@ func GetUserRoles(c *fiber.Ctx) error {
 	}
 
 	// 获取用户的角色
-	var roles []model.Role
-	err = common.DB().Joins("JOIN user_roles ON roles.id = user_roles.role_id").
-		Where("user_roles.user_id = ? AND roles.tenant_id = ?", userID, tenantID).
-		Preload("App").
+	var roles []model.TenantRbacRole
+	err = common.DB().Joins("JOIN tenant_user_roles ON tenant_roles.id = tenant_user_roles.role_id").
+		Where("tenant_user_roles.user_id = ? AND tenant_user_roles.tenant_id = ?", userID, tenantID).
 		Find(&roles).Error
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "获取用户角色失败"})
@@ -427,14 +398,10 @@ func GetUserRoles(c *fiber.Ctx) error {
 			Code:        role.Code,
 			Name:        role.Name,
 			Description: role.Description,
-			AppID:       role.AppID,
+			AppID:       nil,
 			IsSystem:    role.IsSystem,
 			CreatedAt:   role.CreatedAt.Format("2006-01-02 15:04:05"),
 			UpdatedAt:   role.UpdatedAt.Format("2006-01-02 15:04:05"),
-		}
-
-		if role.App != nil {
-			roleResp.AppName = role.App.Name
 		}
 
 		roleResponses = append(roleResponses, roleResp)

@@ -4,6 +4,7 @@ import (
 	"basaltpass-backend/internal/handler/user/security"
 	"basaltpass-backend/internal/service/aduit"
 	"errors"
+	"time"
 
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
@@ -250,16 +251,16 @@ func (s Service) setupFirstUserAsGlobalAdmin(tx *gorm.DB, user *model.User) erro
 		return err
 	}
 
-	// 3. 获取或创建全局管理员角色
-	var adminRole model.Role
-	if err := tx.Where("code = ? AND tenant_id = ?", "tenant", defaultTenant.ID).First(&adminRole).Error; err != nil {
+	// 3. 获取或创建租户管理员角色（RBAC角色）
+	var adminRole model.TenantRbacRole
+	if err := tx.Where("code = ? AND tenant_id = ?", "admin", defaultTenant.ID).First(&adminRole).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			// 创建全局管理员角色
-			adminRole = model.Role{
+			// 创建租户管理员角色
+			adminRole = model.TenantRbacRole{
 				TenantID:    defaultTenant.ID,
-				Code:        "tenant",
-				Name:        "全局管理员",
-				Description: "系统全局管理员，拥有所有权限",
+				Code:        "admin",
+				Name:        "租户管理员",
+				Description: "租户管理员，拥有租户内所有权限",
 				IsSystem:    true,
 			}
 			if err := tx.Create(&adminRole).Error; err != nil {
@@ -270,10 +271,13 @@ func (s Service) setupFirstUserAsGlobalAdmin(tx *gorm.DB, user *model.User) erro
 		}
 	}
 
-	// 4. 创建用户-角色关联
-	userRole := model.UserRole{
-		UserID: user.ID,
-		RoleID: adminRole.ID,
+	// 4. 创建用户-角色关联（租户RBAC角色）
+	userRole := model.TenantUserRbacRole{
+		UserID:     user.ID,
+		TenantID:   defaultTenant.ID,
+		RoleID:     adminRole.ID,
+		AssignedAt: time.Now(),
+		AssignedBy: user.ID, // 第一个用户自己分配给自己
 	}
 	if err := tx.Create(&userRole).Error; err != nil {
 		return err
