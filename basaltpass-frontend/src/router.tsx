@@ -363,7 +363,7 @@ export default function AppRouter() {
           <TenantList />
         </AdminRoute>
       } />
-      <Route path="/admin/tenants/new" element={
+      <Route path="/admin/tenants/create" element={
         <AdminRoute>
           <CreateTenant />
         </AdminRoute>

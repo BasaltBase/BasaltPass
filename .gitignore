@@ -3,8 +3,11 @@ basaltpass-frontend/node_modules/
 basaltpass-frontend/dist/
 
 basaltpass-frontend/apps/admin/node_modules
+basaltpass-frontend/apps/admin/dist/
 basaltpass-frontend/apps/tenant/node_modules
+basaltpass-frontend/apps/tenant/dist/
 basaltpass-frontend/apps/user/node_modules
+basaltpass-frontend/apps/user/dist/
 
 # backend
 .env
@@ -29,3 +32,6 @@ basaltpass-backend/.idea/
 
 # config
 basaltpass-backend/config/config.yaml
+
+# local dev runtime (pids/logs)
+.basaltpass-dev/

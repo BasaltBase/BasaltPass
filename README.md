@@ -10,6 +10,19 @@ docker-compose up -d --build
 
 Default admin login: create via API then assign `admin` role. 
 
+## Local Dev (Dev Container / 非 Docker)
+
+在容器/本机直接跑前后端（后端 + 三个控制台）可以用一键脚本：
+
+```bash
+./scripts/dev.sh up
+./scripts/dev.sh status
+./scripts/dev.sh logs
+./scripts/dev.sh down
+```
+
+默认端口：后端 `8080`，user `5173`，tenant `5174`，admin `5175`。
+
 ## 配置约定（env vs config）
 
 - `.env`（项目根）：放置敏感/经常变动的变量，例如 `JWT_SECRET`、数据库密码、第三方 API Key；同时可用 `BASALTPASS_*` 覆盖配置（把点号改为下划线）。
