@@ -14,6 +14,11 @@ type ProductCategory struct {
 	Metadata     JSONB  `gorm:"type:json"`
 }
 
+// TableName 指定表名
+func (ProductCategory) TableName() string {
+	return "market_product_categories"
+}
+
 // ProductTag 产品标签（租户维度）
 type ProductTag struct {
 	gorm.Model
@@ -22,4 +27,9 @@ type ProductTag struct {
 	Slug     string `gorm:"size:64;not null;uniqueIndex:idx_product_tags_tenant_slug"`
 	Color    string `gorm:"size:16"`
 	Metadata JSONB  `gorm:"type:json"`
+}
+
+// TableName 指定表名
+func (ProductTag) TableName() string {
+	return "market_product_tags"
 }

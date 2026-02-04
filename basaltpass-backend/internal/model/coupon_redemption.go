@@ -18,3 +18,8 @@ type CouponRedemption struct {
 	DiscountAmount int64 `gorm:"not null;default:0"` // 分
 	Metadata       JSONB `gorm:"type:json"`
 }
+
+// TableName 指定表名
+func (CouponRedemption) TableName() string {
+	return "market_coupon_redemptions"
+}

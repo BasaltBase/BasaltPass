@@ -23,3 +23,8 @@ type PriceTemplate struct {
 	IsActive        bool  `gorm:"not null;default:true"`
 	Metadata        JSONB `gorm:"type:json"`
 }
+
+// TableName 指定表名
+func (PriceTemplate) TableName() string {
+	return "market_price_templates"
+}

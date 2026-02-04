@@ -22,5 +22,5 @@ type Currency struct {
 
 // TableName returns the table name for Currency model
 func (Currency) TableName() string {
-	return "currencies"
+	return "market_currencies"
 }

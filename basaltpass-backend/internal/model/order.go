@@ -43,3 +43,8 @@ type Order struct {
 	Subscription   *Subscription   `gorm:"foreignKey:SubscriptionID"`
 	PaymentSession *PaymentSession `gorm:"foreignKey:PaymentSessionID"`
 }
+
+// TableName 指定表名
+func (Order) TableName() string {
+	return "market_orders"
+}

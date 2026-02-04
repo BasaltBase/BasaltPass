@@ -43,6 +43,11 @@ type PaymentIntent struct {
 	PaymentSessions []PaymentSession `gorm:"foreignKey:PaymentIntentID"`
 }
 
+// TableName 指定表名
+func (PaymentIntent) TableName() string {
+	return "market_payment_intents"
+}
+
 // PaymentSessionStatus 支付会话状态
 type PaymentSessionStatus string
 
@@ -74,6 +79,11 @@ type PaymentSession struct {
 	PaymentIntent PaymentIntent `gorm:"foreignKey:PaymentIntentID"`
 }
 
+// TableName 指定表名
+func (PaymentSession) TableName() string {
+	return "market_payment_sessions"
+}
+
 // PaymentWebhookEvent 支付webhook事件
 type PaymentWebhookEvent struct {
 	gorm.Model
@@ -87,4 +97,9 @@ type PaymentWebhookEvent struct {
 	// 可关联到具体的支付意图
 	PaymentIntentID *uint
 	PaymentIntent   *PaymentIntent `gorm:"foreignKey:PaymentIntentID"`
+}
+
+// TableName 指定表名
+func (PaymentWebhookEvent) TableName() string {
+	return "market_payment_webhook_events"
 }

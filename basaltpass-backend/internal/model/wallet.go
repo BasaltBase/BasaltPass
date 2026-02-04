@@ -18,6 +18,11 @@ type Wallet struct {
 	Txns     []WalletTx
 }
 
+// TableName 指定表名
+func (Wallet) TableName() string {
+	return "market_wallets"
+}
+
 // WalletTx represents a transaction on a wallet.
 type WalletTx struct {
 	gorm.Model
@@ -27,4 +32,9 @@ type WalletTx struct {
 	Status    string `gorm:"size:32"`  // pending, success, fail
 	Reference string `gorm:"size:128"` // optional external ref
 	Wallet    Wallet `gorm:"foreignKey:WalletID"`
+}
+
+// TableName 指定表名
+func (WalletTx) TableName() string {
+	return "market_wallet_txes"
 }

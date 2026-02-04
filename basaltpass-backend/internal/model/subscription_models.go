@@ -48,8 +48,13 @@ type Product struct {
 
 	// 关联
 	Category *ProductCategory `gorm:"foreignKey:CategoryID"`
-	Tags     []ProductTag     `gorm:"many2many:product_tag_links"`
+	Tags     []ProductTag     `gorm:"many2many:market_product_tag_links"`
 	Plans    []Plan           `gorm:"foreignKey:ProductID"`
+}
+
+// TableName 指定表名
+func (Product) TableName() string {
+	return "market_products"
 }
 
 // Plan 套餐模型
@@ -70,6 +75,11 @@ type Plan struct {
 	Prices   []Price       `gorm:"foreignKey:PlanID"`
 }
 
+// TableName 指定表名
+func (Plan) TableName() string {
+	return "market_plans"
+}
+
 // PlanFeature 套餐功能特性
 type PlanFeature struct {
 	gorm.Model
@@ -83,6 +93,11 @@ type PlanFeature struct {
 
 	// 关联
 	Plan Plan `gorm:"foreignKey:PlanID"`
+}
+
+// TableName 指定表名
+func (PlanFeature) TableName() string {
+	return "market_plan_features"
 }
 
 // ========== 定价 ==========
@@ -131,6 +146,11 @@ type Price struct {
 	InvoiceItems           []InvoiceItem      `gorm:"foreignKey:PriceID"`
 }
 
+// TableName 指定表名
+func (Price) TableName() string {
+	return "market_prices"
+}
+
 // DiscountType 折扣类型枚举
 type DiscountType string
 
@@ -166,6 +186,11 @@ type Coupon struct {
 
 	// 关联
 	Subscriptions []Subscription `gorm:"foreignKey:CouponID"`
+}
+
+// TableName 指定表名
+func (Coupon) TableName() string {
+	return "market_coupons"
 }
 
 // ========== 订阅 ==========
@@ -209,6 +234,11 @@ type Subscription struct {
 	Invoices     []Invoice           `gorm:"foreignKey:SubscriptionID"`
 }
 
+// TableName 指定表名
+func (Subscription) TableName() string {
+	return "market_subscriptions"
+}
+
 // Metering 计量类型枚举
 type Metering string
 
@@ -242,6 +272,11 @@ type SubscriptionItem struct {
 	UsageRecords []UsageRecord `gorm:"foreignKey:SubscriptionItemID"`
 }
 
+// TableName 指定表名
+func (SubscriptionItem) TableName() string {
+	return "market_subscription_items"
+}
+
 // UsageRecord 使用记录（需要分区）
 type UsageRecord struct {
 	gorm.Model
@@ -255,6 +290,11 @@ type UsageRecord struct {
 	SubscriptionItem SubscriptionItem `gorm:"foreignKey:SubscriptionItemID"`
 }
 
+// TableName 指定表名
+func (UsageRecord) TableName() string {
+	return "market_usage_records"
+}
+
 // SubscriptionEvent 订阅事件（需要分区）
 type SubscriptionEvent struct {
 	gorm.Model
@@ -264,6 +304,11 @@ type SubscriptionEvent struct {
 
 	// 关联
 	Subscription Subscription `gorm:"foreignKey:SubscriptionID"`
+}
+
+// TableName 指定表名
+func (SubscriptionEvent) TableName() string {
+	return "market_subscription_events"
 }
 
 // ========== 账单&支付 ==========
@@ -300,6 +345,11 @@ type Invoice struct {
 	Payments     []Payment     `gorm:"foreignKey:InvoiceID"`
 }
 
+// TableName 指定表名
+func (Invoice) TableName() string {
+	return "market_invoices"
+}
+
 // InvoiceItem 账单项目
 type InvoiceItem struct {
 	gorm.Model
@@ -313,6 +363,11 @@ type InvoiceItem struct {
 	// 关联
 	Invoice Invoice `gorm:"foreignKey:InvoiceID"`
 	Price   *Price  `gorm:"foreignKey:PriceID"`
+}
+
+// TableName 指定表名
+func (InvoiceItem) TableName() string {
+	return "market_invoice_items"
 }
 
 // PaymentStatus 支付状态枚举
@@ -341,6 +396,11 @@ type Payment struct {
 
 	// 关联
 	Invoice Invoice `gorm:"foreignKey:InvoiceID"`
+}
+
+// TableName 指定表名
+func (Payment) TableName() string {
+	return "market_payments"
 }
 
 // 添加复合索引

@@ -63,11 +63,11 @@ func GetUserPurchasedProductsHandler(c *fiber.Ctx) error {
 	// 通过订阅获取产品
 	type pidRow struct{ ID uint }
 	var subRows []pidRow
-	if err := db.Table("subscriptions s").
+	if err := db.Table("market_subscriptions s").
 		Select("p.id as id").
-		Joins("JOIN prices pr ON s.current_price_id = pr.id").
-		Joins("JOIN plans pl ON pr.plan_id = pl.id").
-		Joins("JOIN products p ON pl.product_id = p.id").
+		Joins("JOIN market_prices pr ON s.current_price_id = pr.id").
+		Joins("JOIN market_plans pl ON pr.plan_id = pl.id").
+		Joins("JOIN market_products p ON pl.product_id = p.id").
 		Where("s.user_id = ? AND s.status IN ?", uint(uid64), []string{"trialing", "active"}).
 		Group("p.id").
 		Scan(&subRows).Error; err != nil {
@@ -81,9 +81,9 @@ func GetUserPurchasedProductsHandler(c *fiber.Ctx) error {
 	var ordRows []pidRow
 	if err := db.Table("orders o").
 		Select("p.id as id").
-		Joins("JOIN prices pr ON o.price_id = pr.id").
-		Joins("JOIN plans pl ON pr.plan_id = pl.id").
-		Joins("JOIN products p ON pl.product_id = p.id").
+		Joins("JOIN market_prices pr ON o.price_id = pr.id").
+		Joins("JOIN market_plans pl ON pr.plan_id = pl.id").
+		Joins("JOIN market_products p ON pl.product_id = p.id").
 		Where("o.user_id = ? AND o.status = ?", uint(uid64), "paid").
 		Group("p.id").
 		Scan(&ordRows).Error; err != nil {
@@ -124,10 +124,10 @@ func CheckUserProductOwnershipHandler(c *fiber.Ctx) error {
 	db := common.DB()
 	var count int64
 	// 订阅路径
-	if err := db.Table("subscriptions s").
-		Joins("JOIN prices pr ON s.current_price_id = pr.id").
-		Joins("JOIN plans pl ON pr.plan_id = pl.id").
-		Joins("JOIN products p ON pl.product_id = p.id").
+	if err := db.Table("market_subscriptions s").
+		Joins("JOIN market_prices pr ON s.current_price_id = pr.id").
+		Joins("JOIN market_plans pl ON pr.plan_id = pl.id").
+		Joins("JOIN market_products p ON pl.product_id = p.id").
 		Where("s.user_id = ? AND s.status IN ? AND p.id = ?", uint(uid64), []string{"trialing", "active"}, uint(pid64)).
 		Count(&count).Error; err != nil {
 		return unifiedResponse(c, fiber.StatusInternalServerError, nil, fiber.Map{"code": "server_error", "message": err.Error()})
@@ -141,9 +141,9 @@ func CheckUserProductOwnershipHandler(c *fiber.Ctx) error {
 	// 订单路径
 	count = 0
 	if err := db.Table("orders o").
-		Joins("JOIN prices pr ON o.price_id = pr.id").
-		Joins("JOIN plans pl ON pr.plan_id = pl.id").
-		Joins("JOIN products p ON pl.product_id = p.id").
+		Joins("JOIN market_prices pr ON o.price_id = pr.id").
+		Joins("JOIN market_plans pl ON pr.plan_id = pl.id").
+		Joins("JOIN market_products p ON pl.product_id = p.id").
 		Where("o.user_id = ? AND o.status = ? AND p.id = ?", uint(uid64), "paid", uint(pid64)).
 		Count(&count).Error; err != nil {
 		return unifiedResponse(c, fiber.StatusInternalServerError, nil, fiber.Map{"code": "server_error", "message": err.Error()})
