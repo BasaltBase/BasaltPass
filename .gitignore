@@ -35,3 +35,6 @@ basaltpass-backend/config/config.yaml
 
 # local dev runtime (pids/logs)
 .basaltpass-dev/
+
+# log
+.logs
