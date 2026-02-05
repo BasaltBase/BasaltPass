@@ -79,7 +79,7 @@ func GetUserPurchasedProductsHandler(c *fiber.Ctx) error {
 
 	// 通过已支付订单获取产品
 	var ordRows []pidRow
-	if err := db.Table("orders o").
+	if err := db.Table("market_orders o").
 		Select("p.id as id").
 		Joins("JOIN market_prices pr ON o.price_id = pr.id").
 		Joins("JOIN market_plans pl ON pr.plan_id = pl.id").
@@ -140,7 +140,7 @@ func CheckUserProductOwnershipHandler(c *fiber.Ctx) error {
 
 	// 订单路径
 	count = 0
-	if err := db.Table("orders o").
+	if err := db.Table("market_orders o").
 		Joins("JOIN market_prices pr ON o.price_id = pr.id").
 		Joins("JOIN market_plans pl ON pr.plan_id = pl.id").
 		Joins("JOIN market_products p ON pl.product_id = p.id").

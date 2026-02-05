@@ -2,6 +2,7 @@ package routes
 
 import (
 	admin2 "basaltpass-backend/internal/handler/admin"
+	adminEmail "basaltpass-backend/internal/handler/admin/email"
 	adminInvitation "basaltpass-backend/internal/handler/admin/invitation"
 	adminNotification "basaltpass-backend/internal/handler/admin/notification"
 	adminSettings "basaltpass-backend/internal/handler/admin/settings"
@@ -375,4 +376,9 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 	adminSubscriptionsGroup.Get("/", subscription.AdminListSubscriptionsHandler)            // /tenant/subscriptions
 	adminSubscriptionsGroup.Get("/:id", subscription.AdminGetSubscriptionHandler)           // /tenant/subscriptions/:id
 	adminSubscriptionsGroup.Put("/:id/cancel", subscription.AdminCancelSubscriptionHandler) // /tenant/subscriptions/:id/cancel
+
+	// 邮件管理
+	emailGroup := adminAliasGroup.Group("/email")
+	emailGroup.Get("/config", adminEmail.GetEmailConfigHandler)
+	emailGroup.Post("/send-test", adminEmail.SendTestEmailHandler)
 }

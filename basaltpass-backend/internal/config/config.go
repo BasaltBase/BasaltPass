@@ -36,6 +36,34 @@ type Config struct {
 		ExposeHeaders    []string `mapstructure:"expose_headers"`
 		MaxAgeSeconds    int      `mapstructure:"max_age_seconds"`
 	} `mapstructure:"cors"`
+
+	Email struct {
+		Provider string `mapstructure:"provider"`
+		SMTP     struct {
+			Host     string `mapstructure:"host"`
+			Port     int    `mapstructure:"port"`
+			Username string `mapstructure:"username"`
+			Password string `mapstructure:"password"`
+			UseTLS   bool   `mapstructure:"use_tls"`
+			UseSSL   bool   `mapstructure:"use_ssl"`
+		} `mapstructure:"smtp"`
+		AWSSES struct {
+			Region           string `mapstructure:"region"`
+			AccessKeyID      string `mapstructure:"access_key_id"`
+			SecretAccessKey  string `mapstructure:"secret_access_key"`
+			ConfigurationSet string `mapstructure:"configuration_set"`
+		} `mapstructure:"aws_ses"`
+		Brevo struct {
+			APIKey  string `mapstructure:"api_key"`
+			BaseURL string `mapstructure:"base_url"`
+		} `mapstructure:"brevo"`
+		Mailgun struct {
+			Domain  string `mapstructure:"domain"`
+			APIKey  string `mapstructure:"api_key"`
+			BaseURL string `mapstructure:"base_url"`
+		} `mapstructure:"mailgun"`
+	} `mapstructure:"email"`
+
 	Seeding struct {
 		// Enabled controls whether to auto-inject demo data on first run (empty DB)
 		Enabled bool `mapstructure:"enabled"`
@@ -97,6 +125,12 @@ func Load(path string) (*Config, error) {
 		"Cache-Control", "Content-Language", "Content-Type", "Expires", "Last-Modified", "Pragma",
 	})
 	v.SetDefault("cors.max_age_seconds", 86400)
+
+	// Email defaults
+	v.SetDefault("email.provider", "smtp")
+	v.SetDefault("email.smtp.port", 587)
+	v.SetDefault("email.smtp.use_tls", true)
+	v.SetDefault("email.smtp.use_ssl", false)
 
 	// Environment variables
 	v.SetEnvPrefix("basaltpass")

@@ -87,6 +87,11 @@ const PTable = <T extends unknown>({
   const currentSort = sortState ?? innerSort;
 
   const sortedData = useMemo(() => {
+    // 安全检查：确保 data 是数组
+    if (!Array.isArray(data)) {
+      console.warn('PTable: data prop is not an array:', data)
+      return []
+    }
     if (!currentSort) return data;
     const col = columns.find(c => c.key === currentSort.key);
     if (!col || !col.sortable) return data;

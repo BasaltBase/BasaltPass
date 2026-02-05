@@ -410,74 +410,94 @@ func (s *AppService) GetAppStats(tenantID, appID uint, period string) (*Detailed
 		Period: period,
 	}
 
-	// 模拟统计数据（实际项目中应该从真实数据计算）
+	// 根据period计算日期范围
+	now := time.Now()
+	var startDate time.Time
+	var days int
+
 	switch period {
 	case "7d":
-		stats.TotalUsers = 1250
-		stats.ActiveUsers = 890
-		stats.NewUsers = 75
-		stats.ReturningUsers = 815
-		stats.RequestsToday = 2340
-		stats.RequestsThisWeek = 15680
-		stats.RequestsThisMonth = 15680
+		days = 7
+		startDate = now.AddDate(0, 0, -7)
 	case "30d":
-		stats.TotalUsers = 3420
-		stats.ActiveUsers = 2180
-		stats.NewUsers = 320
-		stats.ReturningUsers = 1860
-		stats.RequestsToday = 2340
-		stats.RequestsThisWeek = 15680
-		stats.RequestsThisMonth = 67890
+		days = 30
+		startDate = now.AddDate(0, 0, -30)
 	case "90d":
-		stats.TotalUsers = 8750
-		stats.ActiveUsers = 4230
-		stats.NewUsers = 890
-		stats.ReturningUsers = 3340
-		stats.RequestsToday = 2340
-		stats.RequestsThisWeek = 15680
-		stats.RequestsThisMonth = 67890
+		days = 90
+		startDate = now.AddDate(0, 0, -90)
 	default:
-		stats.TotalUsers = 3420
-		stats.ActiveUsers = 2180
-		stats.NewUsers = 320
-		stats.ReturningUsers = 1860
-		stats.RequestsToday = 2340
-		stats.RequestsThisWeek = 15680
-		stats.RequestsThisMonth = 67890
+		days = 30
+		startDate = now.AddDate(0, 0, -30)
 	}
 
-	stats.ConversionRate = 0.125
-	stats.AvgSessionDuration = 420 // 7分钟
+	// 获取总用户数
+	var totalUsers int64
+	s.db.Model(&model.AppUser{}).Where("app_id = ?", appID).Count(&totalUsers)
+	stats.TotalUsers = int(totalUsers)
 
-	// 模拟热门页面数据
-	stats.TopPages = []PageStats{
-		{Path: "/", Views: 12450, UniqueVisitors: 8920},
-		{Path: "/dashboard", Views: 8760, UniqueVisitors: 6540},
-		{Path: "/profile", Views: 5430, UniqueVisitors: 4230},
-		{Path: "/settings", Views: 3210, UniqueVisitors: 2890},
-		{Path: "/help", Views: 1890, UniqueVisitors: 1650},
+	// 获取指定时间段内的新用户数
+	var newUsers int64
+	s.db.Model(&model.AppUser{}).
+		Where("app_id = ? AND first_authorized_at >= ?", appID, startDate).
+		Count(&newUsers)
+	stats.NewUsers = int(newUsers)
+
+	// 获取活跃用户数（在时间段内有活动）
+	var activeUsers int64
+	s.db.Model(&model.AppUser{}).
+		Where("app_id = ? AND last_active_at >= ?", appID, startDate).
+		Count(&activeUsers)
+	stats.ActiveUsers = int(activeUsers)
+
+	// 回访用户 = 总用户 - 新用户
+	stats.ReturningUsers = stats.TotalUsers - stats.NewUsers
+
+	// 注意：以下统计数据需要有相应的日志表才能获取真实数据
+	// 如果没有相关表，设置为0或使用其他默认值
+	stats.RequestsToday = 0
+	stats.RequestsThisWeek = 0
+	stats.RequestsThisMonth = 0
+	stats.ConversionRate = 0.0
+	stats.AvgSessionDuration = 0
+
+	// 初始化数组
+	stats.TopPages = []PageStats{}
+	stats.UserGrowth = []UserGrowthStats{}
+	stats.RequestTimeline = []RequestTimelineStats{}
+
+	// 获取用户增长趋势数据
+	type DailyStats struct {
+		Date     string
+		NewUsers int64
 	}
 
-	// 模拟用户增长数据
-	stats.UserGrowth = []UserGrowthStats{
-		{Date: "2025-07-24", NewUsers: 45, TotalUsers: 3220},
-		{Date: "2025-07-25", NewUsers: 52, TotalUsers: 3272},
-		{Date: "2025-07-26", NewUsers: 38, TotalUsers: 3310},
-		{Date: "2025-07-27", NewUsers: 61, TotalUsers: 3371},
-		{Date: "2025-07-28", NewUsers: 33, TotalUsers: 3404},
-		{Date: "2025-07-29", NewUsers: 42, TotalUsers: 3446},
-		{Date: "2025-07-30", NewUsers: 28, TotalUsers: 3474},
+	var dailyNewUsers []DailyStats
+	s.db.Model(&model.AppUser{}).
+		Select("DATE(first_authorized_at) as date, COUNT(*) as new_users").
+		Where("app_id = ? AND first_authorized_at >= ?", appID, startDate).
+		Group("DATE(first_authorized_at)").
+		Order("date ASC").
+		Scan(&dailyNewUsers)
+
+	// 生成每天的数据
+	runningTotal := stats.TotalUsers - stats.NewUsers // 从期初用户数开始
+	dateMap := make(map[string]int64)
+	for _, daily := range dailyNewUsers {
+		dateMap[daily.Date] = daily.NewUsers
 	}
 
-	// 模拟请求时间线数据
-	stats.RequestTimeline = []RequestTimelineStats{
-		{Date: "2025-07-24", Requests: 9840},
-		{Date: "2025-07-25", Requests: 10230},
-		{Date: "2025-07-26", Requests: 8750},
-		{Date: "2025-07-27", Requests: 11450},
-		{Date: "2025-07-28", Requests: 9200},
-		{Date: "2025-07-29", Requests: 10780},
-		{Date: "2025-07-30", Requests: 8920},
+	// 填充所有日期
+	for i := 0; i < days; i++ {
+		date := startDate.AddDate(0, 0, i)
+		dateStr := date.Format("2006-01-02")
+		newUsersCount := int(dateMap[dateStr])
+		runningTotal += newUsersCount
+
+		stats.UserGrowth = append(stats.UserGrowth, UserGrowthStats{
+			Date:       dateStr,
+			NewUsers:   newUsersCount,
+			TotalUsers: runningTotal,
+		})
 	}
 
 	return stats, nil

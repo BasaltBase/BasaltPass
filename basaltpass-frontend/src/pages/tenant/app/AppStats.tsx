@@ -83,7 +83,10 @@ export default function AppStats() {
     }
   }
 
-  const formatNumber = (num: number) => {
+  const formatNumber = (num: number | null | undefined) => {
+    if (num === null || num === undefined || num === 0) {
+      return '--'
+    }
     if (num >= 1000000) {
       return (num / 1000000).toFixed(1) + 'M'
     } else if (num >= 1000) {
@@ -92,7 +95,10 @@ export default function AppStats() {
     return num.toString()
   }
 
-  const formatDuration = (seconds: number) => {
+  const formatDuration = (seconds: number | null | undefined) => {
+    if (seconds === null || seconds === undefined || seconds === 0) {
+      return '--'
+    }
     if (seconds < 60) {
       return `${seconds}秒`
     } else if (seconds < 3600) {
@@ -100,6 +106,13 @@ export default function AppStats() {
     } else {
       return `${Math.floor(seconds / 3600)}小时${Math.floor((seconds % 3600) / 60)}分`
     }
+  }
+
+  const formatPercentage = (value: number | null | undefined) => {
+    if (value === null || value === undefined || value === 0) {
+      return '--'
+    }
+    return (value * 100).toFixed(1) + '%'
   }
 
   const getPeriodText = (period: string) => {
@@ -225,8 +238,14 @@ export default function AppStats() {
                 <p className="text-sm font-medium text-gray-600">总用户数</p>
                 <p className="text-3xl font-bold text-gray-900">{formatNumber(stats.total_users)}</p>
                 <div className="flex items-center mt-2">
-                  <ArrowTrendingUpIcon className="w-4 h-4 text-green-500 mr-1" />
-                  <span className="text-sm text-green-600">+{stats.new_users} 新增</span>
+                  {stats.new_users > 0 ? (
+                    <>
+                      <ArrowTrendingUpIcon className="w-4 h-4 text-green-500 mr-1" />
+                      <span className="text-sm text-green-600">+{stats.new_users} 新增</span>
+                    </>
+                  ) : (
+                    <span className="text-sm text-gray-400">暂无新增</span>
+                  )}
                 </div>
               </div>
               <div className="p-3 bg-blue-100 rounded-lg">
@@ -243,7 +262,7 @@ export default function AppStats() {
                 <p className="text-3xl font-bold text-gray-900">{formatNumber(stats.active_users)}</p>
                 <div className="flex items-center mt-2">
                   <span className="text-sm text-gray-500">
-                    活跃率 {((stats.active_users / stats.total_users) * 100).toFixed(1)}%
+                    活跃率 {stats.total_users > 0 ? ((stats.active_users / stats.total_users) * 100).toFixed(1) + '%' : '--'}
                   </span>
                 </div>
               </div>
@@ -279,7 +298,7 @@ export default function AppStats() {
                 <p className="text-3xl font-bold text-gray-900">{formatDuration(stats.avg_session_duration)}</p>
                 <div className="flex items-center mt-2">
                   <span className="text-sm text-gray-500">
-                    转换率 {(stats.conversion_rate * 100).toFixed(1)}%
+                    转换率 {formatPercentage(stats.conversion_rate)}
                   </span>
                 </div>
               </div>
@@ -408,7 +427,7 @@ export default function AppStats() {
                     <div 
                       className="bg-green-500 h-2 rounded-full" 
                       style={{ 
-                        width: `${(stats.new_users / stats.total_users) * 100}%` 
+                        width: stats.total_users > 0 ? `${(stats.new_users / stats.total_users) * 100}%` : '0%'
                       }}
                     ></div>
                   </div>
@@ -425,7 +444,7 @@ export default function AppStats() {
                     <div 
                       className="bg-blue-500 h-2 rounded-full" 
                       style={{ 
-                        width: `${(stats.returning_users / stats.total_users) * 100}%` 
+                        width: stats.total_users > 0 ? `${(stats.returning_users / stats.total_users) * 100}%` : '0%'
                       }}
                     ></div>
                   </div>

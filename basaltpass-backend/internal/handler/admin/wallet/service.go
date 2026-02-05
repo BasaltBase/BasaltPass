@@ -353,11 +353,11 @@ func (s *AdminWalletService) GetWalletStats() (map[string]interface{}, error) {
 	}
 
 	var rawBalances []RawBalance
-	db.Table("wallets").
-		Select("currencies.code as currency_code, SUM(wallets.balance) as total_balance, currencies.decimal_places").
-		Joins("JOIN currencies ON wallets.currency_id = currencies.id").
-		Where("wallets.freeze = ?", 0).
-		Group("currencies.code, currencies.decimal_places").
+	db.Table("market_wallets").
+		Select("market_currencies.code as currency_code, SUM(market_wallets.balance) as total_balance, market_currencies.decimal_places").
+		Joins("JOIN market_currencies ON market_wallets.currency_id = market_currencies.id").
+		Where("market_wallets.freeze = ?", 0).
+		Group("market_currencies.code, market_currencies.decimal_places").
 		Scan(&rawBalances)
 
 	// Convert to decimal amounts

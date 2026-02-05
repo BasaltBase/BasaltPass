@@ -253,8 +253,8 @@ func (s *Service) DeletePlan(id uint) error {
 	// 检查是否有活跃的订阅
 	var activeSubCount int64
 	s.db.Model(&model.Subscription{}).
-		Joins("JOIN prices ON subscriptions.current_price_id = prices.id").
-		Where("prices.plan_id = ? AND subscriptions.status IN ?", id, []string{"trialing", "active"}).
+		Joins("JOIN market_prices ON market_subscriptions.current_price_id = market_prices.id").
+		Where("market_prices.plan_id = ? AND market_subscriptions.status IN ?", id, []string{"trialing", "active"}).
 		Count(&activeSubCount)
 	if activeSubCount > 0 {
 		return errors.New("无法删除套餐：存在活跃的订阅")

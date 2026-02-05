@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import client from '@api/client'
+import { adminWalletApi, type Wallet } from '@api/adminWallet'
 import { Link } from 'react-router-dom'
 import { ArrowPathIcon, ChevronRightIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 import AdminLayout from '@components/AdminLayout'
@@ -7,32 +7,25 @@ import PTable, { PTableColumn } from '@components/PTable'
 import PInput from '@components/PInput'
 import PButton from '@components/PButton'
 
-interface WalletTx {
-  ID: number
-  WalletID: number
-  Type: string
-  Amount: number
-  Status: string
-  CreatedAt: string
-  Wallet: {
-    ID: number
-    UserID?: number
-    TeamID?: number
-    Currency: string
-    Balance: number
-  }
-}
-
 export default function Wallets() {
-  const [txs, setTxs] = useState<WalletTx[]>([])
+  const [wallets, setWallets] = useState<Wallet[]>([])
   const [loading, setLoading] = useState(false)
   const [keyword, setKeyword] = useState('')
 
   const load = async () => {
     setLoading(true)
     try {
-      const r = await client.get<WalletTx[]>('/api/v1/admin/wallets')
-      setTxs(r.data)
+      const response = await adminWalletApi.getWallets()
+      // 确保响应数据是正确的格式
+      if (response && response.data && Array.isArray(response.data)) {
+        setWallets(response.data)
+      } else {
+        console.warn('API响应格式不正确:', response)
+        setWallets([])
+      }
+    } catch (error) {
+      console.error('加载钱包数据失败:', error)
+      setWallets([])
     } finally {
       setLoading(false)
     }
@@ -40,40 +33,49 @@ export default function Wallets() {
   useEffect(() => { load() }, [])
 
   const filtered = useMemo(() => {
-    if (!keyword) return txs
+    // 确保 wallets 是数组
+    if (!Array.isArray(wallets)) return []
+    if (!keyword) return wallets
     const kw = keyword.toLowerCase().trim()
-    return txs.filter(t =>
-      String(t.ID).includes(kw) ||
-      String(t.Wallet?.UserID ?? '').includes(kw) ||
-      String(t.Wallet?.Currency ?? '').toLowerCase().includes(kw)
+    return wallets.filter(wallet =>
+      String(wallet.id).includes(kw) ||
+      String(wallet.user_id ?? '').includes(kw) ||
+      String(wallet.currency?.code ?? '').toLowerCase().includes(kw)
     )
-  }, [txs, keyword])
+  }, [wallets, keyword])
 
-  const columns: PTableColumn<WalletTx>[] = [
-    { key: 'id', title: 'ID', dataIndex: 'ID', sortable: true, align: 'center' },
+  const columns: PTableColumn<Wallet>[] = [
+    { key: 'id', title: 'ID', dataIndex: 'id', sortable: true, align: 'center' },
     {
       key: 'user',
       title: '用户ID',
       sortable: true,
       align: 'center',
-      sorter: (a, b) => (a.Wallet?.UserID || 0) - (b.Wallet?.UserID || 0),
-      render: (row) => row.Wallet?.UserID ?? '-'
+      sorter: (a, b) => (a.user_id || 0) - (b.user_id || 0),
+      render: (row) => row.user_id ?? '-'
     },
     {
-      key: 'amount',
+      key: 'balance',
       title: '余额',
       sortable: true,
       align: 'right',
-      sorter: (a, b) => a.Amount - b.Amount,
-      render: (row) => (row.Amount / 100).toFixed(2)
+      sorter: (a, b) => a.balance - b.balance,
+      render: (row) => (row.balance / 100).toFixed(2)
     },
     {
       key: 'currency',
       title: '货币',
       sortable: true,
       align: 'center',
-      render: (row) => row.Wallet?.Currency || '-'
+      render: (row) => row.currency?.code || '-'
     },
+    {
+      key: 'status',
+      title: '状态',
+      sortable: true,
+      align: 'center',
+      render: (row) => row.status === 'active' ? '正常' : '冻结'
+    }
   ]
 
   return (
@@ -126,7 +128,7 @@ export default function Wallets() {
         <PTable
           columns={columns}
           data={filtered}
-          rowKey={(row) => row.ID}
+          rowKey={(row) => row.id}
           loading={loading}
           emptyText={keyword ? '无匹配数据' : '暂无数据'}
           defaultSort={{ key: 'id', order: 'desc' }}

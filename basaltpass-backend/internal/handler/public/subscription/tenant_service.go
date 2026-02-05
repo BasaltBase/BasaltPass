@@ -1082,14 +1082,14 @@ func (s *TenantService) GetTenantSubscriptionStats() (*TenantSubscriptionStats, 
 
 	revenueQuery := s.db.Model(&model.Subscription{}).
 		Select("COALESCE(SUM(p.amount_cents), 0) as revenue").
-		Joins("JOIN prices p ON subscriptions.current_price_id = p.id").
-		Where("subscriptions.status = ? AND p.billing_period = ?",
+		Joins("JOIN market_prices p ON market_subscriptions.current_price_id = p.id").
+		Where("market_subscriptions.status = ? AND p.billing_period = ?",
 			model.SubscriptionStatusActive, model.BillingPeriodMonth)
 
 	if s.tenantID != nil {
-		revenueQuery = revenueQuery.Where("subscriptions.tenant_id = ?", *s.tenantID)
+		revenueQuery = revenueQuery.Where("market_subscriptions.tenant_id = ?", *s.tenantID)
 	} else {
-		revenueQuery = revenueQuery.Where("subscriptions.tenant_id IS NULL")
+		revenueQuery = revenueQuery.Where("market_subscriptions.tenant_id IS NULL")
 	}
 
 	if err := revenueQuery.Find(&monthlyRevenue).Error; err != nil {

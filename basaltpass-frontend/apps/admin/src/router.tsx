@@ -34,6 +34,8 @@ import AdminNotifications from '../../../src/pages/admin/notification/Notificati
 import AdminTeamsPage from '../../../src/pages/admin/team/Teams'
 import AdminInvitationsPage from '../../../src/pages/admin/invitation/Invitations'
 
+import EmailTest from '../../../src/pages/admin/email/EmailTest'
+
 import NotFound from '../../../src/pages/NotFound'
 
 function Entry() {
@@ -102,6 +104,8 @@ export default function AppRouter() {
       <Route path="/admin/notifications" element={<AdminRoute><AdminNotifications /></AdminRoute>} />
       <Route path="/admin/teams" element={<AdminRoute><AdminTeamsPage /></AdminRoute>} />
       <Route path="/admin/invitations" element={<AdminRoute><AdminInvitationsPage /></AdminRoute>} />
+      
+      <Route path="/admin/email/test" element={<AdminRoute><EmailTest /></AdminRoute>} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>

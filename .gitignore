@@ -20,6 +20,7 @@ basaltpass-frontend/apps/user/dist/
 *.db
 basaltpass-backend/basaltpass.db
 basaltpass-backend/main.exe
+basaltpass-backend/email-test
 
 # development tools
 .vscode/
@@ -32,9 +33,10 @@ basaltpass-backend/.idea/
 
 # config
 basaltpass-backend/config/config.yaml
-
+basaltpass-backend/config.yaml
 # local dev runtime (pids/logs)
 .basaltpass-dev/
 
 # log
 .logs
+

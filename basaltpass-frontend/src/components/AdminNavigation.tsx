@@ -16,7 +16,8 @@ import {
   DocumentTextIcon,
   BellIcon,
   KeyIcon,
-  ShoppingCartIcon
+  ShoppingCartIcon,
+  EnvelopeIcon
 } from '@heroicons/react/24/outline'
 
 interface NavigationItem {
@@ -92,6 +93,7 @@ const navigation: NavigationItem[] = [
     icon: Cog6ToothIcon,
     children: [
   { name: '系统设置', href: '/admin/settings', icon: Cog6ToothIcon },
+      { name: '邮件中心', href: '/admin/email/test', icon: EnvelopeIcon },
       { name: '审计日志', href: '/admin/logs', icon: DocumentTextIcon },
     ]
   },

@@ -433,21 +433,21 @@ func createSubscriptionIndexes() {
 	// 检查数据库类型并创建相应的索引
 	// 注意：GORM 会自动创建大部分索引，这里只处理特殊的复合索引
 
-	// 为 subscriptions 表创建复合索引
-	db.Exec("CREATE INDEX IF NOT EXISTS idx_subscriptions_user_status ON subscriptions(user_id, status)")
-	db.Exec("CREATE INDEX IF NOT EXISTS idx_subscriptions_current_period_end ON subscriptions(current_period_end)")
+	// 为 market_subscriptions 表创建复合索引
+	db.Exec("CREATE INDEX IF NOT EXISTS idx_subscriptions_user_status ON market_subscriptions(user_id, status)")
+	db.Exec("CREATE INDEX IF NOT EXISTS idx_subscriptions_current_period_end ON market_subscriptions(current_period_end)")
 
-	// 为 usage_records 表创建复合索引
-	db.Exec("CREATE INDEX IF NOT EXISTS idx_usage_records_subscription_item_ts ON usage_records(subscription_item_id, ts)")
+	// 为 market_usage_records 表创建复合索引
+	db.Exec("CREATE INDEX IF NOT EXISTS idx_usage_records_subscription_item_ts ON market_usage_records(subscription_item_id, ts)")
 
-	// 为 subscription_events 表创建复合索引
-	db.Exec("CREATE INDEX IF NOT EXISTS idx_subscription_events_subscription_created ON subscription_events(subscription_id, created_at)")
+	// 为 market_subscription_events 表创建复合索引
+	db.Exec("CREATE INDEX IF NOT EXISTS idx_subscription_events_subscription_created ON market_subscription_events(subscription_id, created_at)")
 
-	// 为 plan_features 表创建唯一约束
-	db.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_plan_features_plan_key ON plan_features(plan_id, feature_key)")
+	// 为 market_plan_features 表创建唯一约束
+	db.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_plan_features_plan_key ON market_plan_features(plan_id, feature_key)")
 
-	// 为 plans 表创建唯一约束
-	db.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_plans_product_code_version ON plans(product_id, code, plan_version)")
+	// 为 market_plans 表创建唯一约束
+	db.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_plans_product_code_version ON market_plans(product_id, code, plan_version)")
 }
 
 // seedSystemPermissions 创建（若不存在）系统级权限清单

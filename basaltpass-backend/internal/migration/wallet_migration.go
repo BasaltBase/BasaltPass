@@ -12,8 +12,8 @@ import (
 func MigrateWalletCurrencyField() {
 	db := common.DB()
 
-	// 确保 currencies 表存在且有数据
-	if !db.Migrator().HasTable("currencies") {
+	// 确保 market_currencies 表存在且有数据
+	if !db.Migrator().HasTable("market_currencies") {
 		log.Println("[Migration] Currencies table doesn't exist, skipping wallet migration")
 		return
 	}
@@ -26,8 +26,8 @@ func MigrateWalletCurrencyField() {
 		return
 	}
 
-	// 检查 wallets 表是否存在
-	if !db.Migrator().HasTable("wallets") {
+	// 检查 market_wallets 表是否存在
+	if !db.Migrator().HasTable("market_wallets") {
 		log.Println("[Migration] Wallets table doesn't exist yet, skipping currency migration")
 		return
 	} // 检查是否存在旧的currency字段或currency_code字段
@@ -64,11 +64,11 @@ func MigrateWalletCurrencyField() {
 	// 构建查询SQL
 	var query string
 	if hasCurrency && hasCurrencyCode {
-		query = "SELECT id, currency, currency_code FROM wallets WHERE (currency IS NOT NULL AND currency != '') OR (currency_code IS NOT NULL AND currency_code != '')"
+		query = "SELECT id, currency, currency_code FROM market_wallets WHERE (currency IS NOT NULL AND currency != '') OR (currency_code IS NOT NULL AND currency_code != '')"
 	} else if hasCurrency {
-		query = "SELECT id, currency FROM wallets WHERE currency IS NOT NULL AND currency != ''"
+		query = "SELECT id, currency FROM market_wallets WHERE currency IS NOT NULL AND currency != ''"
 	} else {
-		query = "SELECT id, currency_code FROM wallets WHERE currency_code IS NOT NULL AND currency_code != ''"
+		query = "SELECT id, currency_code FROM market_wallets WHERE currency_code IS NOT NULL AND currency_code != ''"
 	}
 
 	if err := db.Raw(query).Scan(&wallets).Error; err != nil {
@@ -104,7 +104,7 @@ func MigrateWalletCurrencyField() {
 			}
 
 			if currencyID, exists := currencyMap[currencyCode]; exists {
-				if err := db.Exec("UPDATE wallets SET currency_id = ? WHERE id = ?", currencyID, wallet.ID).Error; err != nil {
+				if err := db.Exec("UPDATE market_wallets SET currency_id = ? WHERE id = ?", currencyID, wallet.ID).Error; err != nil {
 					log.Printf("[Migration] Failed to update wallet %d: %v", wallet.ID, err)
 				} else {
 					migrated++
@@ -112,7 +112,7 @@ func MigrateWalletCurrencyField() {
 			} else {
 				// 如果找不到对应的货币，使用默认货币（USD）
 				if defaultCurrencyID, exists := currencyMap["USD"]; exists {
-					if err := db.Exec("UPDATE wallets SET currency_id = ? WHERE id = ?", defaultCurrencyID, wallet.ID).Error; err != nil {
+					if err := db.Exec("UPDATE market_wallets SET currency_id = ? WHERE id = ?", defaultCurrencyID, wallet.ID).Error; err != nil {
 						log.Printf("[Migration] Failed to update wallet %d with default currency: %v", wallet.ID, err)
 					} else {
 						migrated++
@@ -128,7 +128,7 @@ func MigrateWalletCurrencyField() {
 	}
 
 	// 现在设置 currency_id 为 NOT NULL
-	if err := db.Exec("UPDATE wallets SET currency_id = (SELECT id FROM currencies WHERE code = 'USD' LIMIT 1) WHERE currency_id IS NULL").Error; err != nil {
+	if err := db.Exec("UPDATE market_wallets SET currency_id = (SELECT id FROM market_currencies WHERE code = 'USD' LIMIT 1) WHERE currency_id IS NULL").Error; err != nil {
 		log.Printf("[Migration] Failed to set default currency for null records: %v", err)
 	}
 

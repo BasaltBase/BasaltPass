@@ -129,6 +129,10 @@ func (s *AdminTenantService) CreateTenant(req admindto.AdminCreateTenantRequest)
 	if req.Name == "" || req.Code == "" {
 		return nil, errors.New("名称与代码必填")
 	}
+	if req.OwnerEmail == "" {
+		return nil, errors.New("租户所有者邮箱必填")
+	}
+
 	// 唯一性检查
 	var cnt int64
 	s.db.Model(&model.Tenant{}).Where("code = ?", req.Code).Count(&cnt)
@@ -140,10 +144,41 @@ func (s *AdminTenantService) CreateTenant(req admindto.AdminCreateTenantRequest)
 		return nil, errors.New("租户名称已存在")
 	}
 
-	tenant := &model.Tenant{Name: req.Name, Code: req.Code, Description: req.Description, Plan: model.TenantPlan(req.Plan)}
-	if err := s.db.Create(tenant).Error; err != nil {
+	// 查找所有者用户
+	var owner model.User
+	if err := s.db.Where("email = ?", req.OwnerEmail).First(&owner).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("所有者用户不存在: %s", req.OwnerEmail)
+		}
+		return nil, fmt.Errorf("查询用户失败: %w", err)
+	}
+
+	// 使用事务创建租户和绑定关系
+	var tenant *model.Tenant
+	err := s.db.Transaction(func(tx *gorm.DB) error {
+		// 创建租户
+		tenant = &model.Tenant{Name: req.Name, Code: req.Code, Description: req.Description, Plan: model.TenantPlan(req.Plan)}
+		if err := tx.Create(tenant).Error; err != nil {
+			return fmt.Errorf("创建租户失败: %w", err)
+		}
+
+		// 绑定所有者到tenant_admin表，角色为owner
+		tenantAdmin := &model.TenantAdmin{
+			UserID:   owner.ID,
+			TenantID: tenant.ID,
+			Role:     model.TenantRoleOwner,
+		}
+		if err := tx.Create(tenantAdmin).Error; err != nil {
+			return fmt.Errorf("绑定租户所有者失败: %w", err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
 		return nil, err
 	}
+
 	return tenant, nil
 }
 

@@ -58,6 +58,9 @@
 | HEAD | /api/v1/admin/dashboard/activities |
 | GET | /api/v1/admin/dashboard/stats |
 | HEAD | /api/v1/admin/dashboard/stats |
+| GET | /api/v1/admin/email/config |
+| HEAD | /api/v1/admin/email/config |
+| POST | /api/v1/admin/email/send-test |
 | GET | /api/v1/admin/invitations/ |
 | HEAD | /api/v1/admin/invitations/ |
 | POST | /api/v1/admin/invitations/ |

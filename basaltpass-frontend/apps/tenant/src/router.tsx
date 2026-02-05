@@ -4,6 +4,7 @@ import TenantRoute from '../../../src/components/TenantRoute'
 import TenantDashboard from '../../../src/pages/tenant/Dashboard'
 import TenantInfo from '../../../src/pages/tenant/TenantInfo'
 import TenantApps from '../../../src/pages/tenant/app/Apps'
+import CreateApp from '../../../src/pages/tenant/app/CreateApp'
 import AppDetail from '../../../src/pages/tenant/app/AppDetail'
 import AppSettings from '../../../src/pages/tenant/app/AppSettings'
 import AppStats from '../../../src/pages/tenant/app/AppStats'
@@ -62,6 +63,7 @@ export default function AppRouter() {
       <Route path="/tenant/dashboard" element={<TenantRoute><TenantDashboard /></TenantRoute>} />
       <Route path="/tenant/info" element={<TenantRoute><TenantInfo /></TenantRoute>} />
       <Route path="/tenant/apps" element={<TenantRoute><TenantApps /></TenantRoute>} />
+      <Route path="/tenant/apps/new" element={<TenantRoute><CreateApp /></TenantRoute>} />
       <Route path="/tenant/apps/:id" element={<TenantRoute><AppDetail /></TenantRoute>} />
       <Route path="/tenant/apps/:id/settings" element={<TenantRoute><AppSettings /></TenantRoute>} />
       <Route path="/tenant/apps/:id/stats" element={<TenantRoute><AppStats /></TenantRoute>} />
