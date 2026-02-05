@@ -145,7 +145,7 @@ settings:
         category: cors
         description: 严格模式（仅允许白名单域名）
     email.from_suffix:
-        value: example.com
+        value: mail.hollowdata.com
         category: email
         description: 发件人邮箱后缀（用于 no-reply@<suffix>）
     features.beta_features:
@@ -221,7 +221,7 @@ settings:
         category: logging
         description: 应用日志保留天数
     maintenance.enabled:
-        value: true
+        value: false
         category: maintenance
         description: 维护模式：启用后仅管理员可访问
     maintenance.message:
