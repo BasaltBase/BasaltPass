@@ -11,6 +11,15 @@
 | POST | / |
 | PUT | / |
 | TRACE | / |
+| CONNECT | /api/v1 |
+| DELETE | /api/v1 |
+| GET | /api/v1 |
+| HEAD | /api/v1 |
+| OPTIONS | /api/v1 |
+| PATCH | /api/v1 |
+| POST | /api/v1 |
+| PUT | /api/v1 |
+| TRACE | /api/v1 |
 | GET | /api/v1/.well-known/openid-configuration |
 | HEAD | /api/v1/.well-known/openid-configuration |
 | CONNECT | /api/v1/admin |

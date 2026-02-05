@@ -20,6 +20,7 @@ import AdminCoupons from '../../../src/pages/admin/subscription/Coupons'
 
 import AdminPermissions from '../../../src/pages/admin/rbac/Permissions'
 import AdminSettingsPage from '../../../src/pages/admin/settings/Index'
+import SettingsCategoryPage from '../../../src/pages/admin/settings/SettingsCategoryPage'
 
 import TenantList from '../../../src/pages/admin/tenant/TenantList'
 import CreateTenant from '../../../src/pages/admin/tenant/CreateTenant'
@@ -90,6 +91,7 @@ export default function AppRouter() {
       <Route path="/admin/coupons" element={<AdminRoute><AdminCoupons /></AdminRoute>} />
 
       <Route path="/admin/permissions" element={<AdminRoute><AdminPermissions /></AdminRoute>} />
+      <Route path="/admin/settings/:category" element={<AdminRoute><SettingsCategoryPage /></AdminRoute>} />
       <Route path="/admin/settings" element={<AdminRoute><AdminSettingsPage /></AdminRoute>} />
 
       <Route path="/admin/tenants" element={<AdminRoute><TenantList /></AdminRoute>} />

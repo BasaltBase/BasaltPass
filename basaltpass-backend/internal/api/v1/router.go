@@ -2,6 +2,7 @@ package v1
 
 import (
 	routes2 "basaltpass-backend/internal/api/v1/routes"
+	"basaltpass-backend/internal/middleware"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -11,6 +12,9 @@ func RegisterRoutes(app *fiber.App) {
 
 	// API v1 路由
 	v1 := app.Group("/api/v1")
+
+	// Apply maintenance mode check to all API routes
+	v1.Use(middleware.MaintenanceMiddleware())
 
 	// 注册公开路由（无需认证）
 	routes2.RegisterPublicRoutes(v1)

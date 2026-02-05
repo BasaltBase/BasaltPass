@@ -16,7 +16,7 @@ settings:
         category: audit
         description: 审计日志保留天数
     auth.enable_register:
-        value: true
+        value: false
         category: auth
         description: 允许新用户注册
     auth.password_policy.min_length:
@@ -144,6 +144,10 @@ settings:
         value: false
         category: cors
         description: 严格模式（仅允许白名单域名）
+    email.from_suffix:
+        value: example.com
+        category: email
+        description: 发件人邮箱后缀（用于 no-reply@<suffix>）
     features.beta_features:
         value: []
         category: features
@@ -217,7 +221,7 @@ settings:
         category: logging
         description: 应用日志保留天数
     maintenance.enabled:
-        value: false
+        value: true
         category: maintenance
         description: 维护模式：启用后仅管理员可访问
     maintenance.message:
@@ -328,10 +332,6 @@ settings:
         value: 587
         category: smtp
         description: SMTP 端口
-    email.from_suffix:
-        value: example.com
-        category: email
-        description: 发件人邮箱后缀（用于 no-reply@<suffix>）
     smtp.username:
         value: ""
         category: smtp

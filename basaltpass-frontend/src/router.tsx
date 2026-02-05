@@ -50,6 +50,7 @@ import AdminPrices from '@pages/admin/subscription/Prices'
 import AdminCoupons from '@pages/admin/subscription/Coupons'
 import AdminPermissions from '@pages/admin/rbac/Permissions'
 import AdminSettingsPage from '@pages/admin/settings/Index'
+import SettingsCategoryPage from '@pages/admin/settings/SettingsCategoryPage'
 import Payment from '@pages/user/payment/Payment'
 import SubscriptionCheckout from '@pages/user/subscription/Checkout'
 import OrderConfirm from '@pages/user/order/OrderConfirm'
@@ -391,13 +392,18 @@ export default function AppRouter() {
           <TenantUsers />
         </AdminRoute>
       } />
+      <Route path="/admin/settings/:category" element={
+        <AdminRoute>
+          <SettingsCategoryPage />
+        </AdminRoute>
+      } />
       <Route path="/admin/settings" element={
         <AdminRoute>
           <AdminSettingsPage />
         </AdminRoute>
       } />
       
-      {/* 租户管理页面 - 需要认证保护 */}
+      {/* 租户管理页面 - 需要认证保护 */
       <Route path="/tenant/dashboard" element={
         <TenantRoute>
           <TenantDashboard />

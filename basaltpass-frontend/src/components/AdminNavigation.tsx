@@ -92,16 +92,38 @@ const navigation: NavigationItem[] = [
     name: '系统管理',
     icon: Cog6ToothIcon,
     children: [
-  { name: '系统设置', href: '/admin/settings', icon: Cog6ToothIcon },
+      { name: '通用设置', href: '/admin/settings/general', icon: Cog6ToothIcon },
+      { name: '认证设置', href: '/admin/settings/auth', icon: KeyIcon },
+      { name: '安全设置', href: '/admin/settings/security', icon: KeyIcon },
+      { name: 'CORS设置', href: '/admin/settings/cors', icon: Cog6ToothIcon },
+      { name: 'OAuth设置', href: '/admin/settings/oauth', icon: KeyIcon },
+      { name: '邮件设置', href: '/admin/settings/email', icon: EnvelopeIcon },
+      { name: 'SMTP设置', href: '/admin/settings/smtp', icon: EnvelopeIcon },
       { name: '邮件中心', href: '/admin/email/test', icon: EnvelopeIcon },
+      { name: '日志设置', href: '/admin/settings/logging', icon: DocumentTextIcon },
       { name: '审计日志', href: '/admin/logs', icon: DocumentTextIcon },
+      { name: '会话设置', href: '/admin/settings/session', icon: Cog6ToothIcon },
+      { name: '外观品牌', href: '/admin/settings/ui', icon: Cog6ToothIcon },
+      { name: '上传设置', href: '/admin/settings/uploads', icon: Cog6ToothIcon },
+      { name: '通知设置', href: '/admin/settings/notifications', icon: BellIcon },
+      { name: 'JWT设置', href: '/admin/settings/jwt', icon: KeyIcon },
+      { name: '缓存设置', href: '/admin/settings/cache', icon: Cog6ToothIcon },
+      { name: '存储设置', href: '/admin/settings/storage', icon: Cog6ToothIcon },
+      { name: '计费订阅', href: '/admin/settings/billing', icon: CreditCardIcon },
+      { name: '特性开关', href: '/admin/settings/features', icon: Cog6ToothIcon },
+      { name: '维护模式', href: '/admin/settings/maintenance', icon: Cog6ToothIcon },
+      { name: '统计分析', href: '/admin/settings/analytics', icon: Cog6ToothIcon },
+      { name: '验证码', href: '/admin/settings/captcha', icon: Cog6ToothIcon },
+      { name: 'Webhooks', href: '/admin/settings/webhooks', icon: Cog6ToothIcon },
+      { name: '审计设置', href: '/admin/settings/audit', icon: DocumentTextIcon },
+      { name: '分页设置', href: '/admin/settings/pagination', icon: Cog6ToothIcon },
     ]
   },
 ]
 
 export default function AdminNavigation() {
   const location = useLocation()
-  const [expandedSections, setExpandedSections] = useState<string[]>(['用户管理', '平台管理', '订阅与支付'])
+  const [expandedSections, setExpandedSections] = useState<string[]>(['系统管理'])
 
   const toggleSection = (sectionName: string) => {
     setExpandedSections(prev => 
