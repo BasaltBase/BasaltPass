@@ -3,6 +3,7 @@ package auth
 import (
 	"basaltpass-backend/internal/handler/user/security"
 	"basaltpass-backend/internal/service/aduit"
+	"basaltpass-backend/internal/utils"
 	"errors"
 	"time"
 
@@ -24,6 +25,17 @@ func (s Service) Register(req RegisterRequest) (*model.User, error) {
 	}
 	if req.Password == "" {
 		return nil, errors.New("password required")
+	}
+
+	// 验证和标准化手机号为E.164格式
+	var normalizedPhone string
+	if req.Phone != "" {
+		phoneValidator := utils.NewPhoneValidator("+86") // 使用中国为默认国家
+		normalized, err := phoneValidator.NormalizeToE164(req.Phone)
+		if err != nil {
+			return nil, errors.New("手机号格式不正确: " + err.Error())
+		}
+		normalizedPhone = normalized
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
@@ -48,7 +60,7 @@ func (s Service) Register(req RegisterRequest) (*model.User, error) {
 
 	user := &model.User{
 		Email:        req.Email,
-		Phone:        req.Phone,
+		Phone:        normalizedPhone,
 		PasswordHash: string(hash),
 		Nickname:     "New User",
 	}

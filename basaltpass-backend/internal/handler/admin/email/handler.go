@@ -55,16 +55,6 @@ func SendTestEmailHandler(c *fiber.Ctx) error {
 		Subject:  req.Subject,
 	}
 
-	// Determine sender if not provided
-	if msg.From == "" {
-		if cfg.Email.Provider == "smtp" && cfg.Email.SMTP.Username != "" {
-			msg.From = cfg.Email.SMTP.Username
-		} else {
-			// Fallback standard email
-			msg.From = "noreply@basaltpass.com"
-		}
-	}
-
 	// If the user specificies a sender in the request (optional feature for future), we could use that.
 
 	if req.IsHTML {

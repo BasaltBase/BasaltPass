@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Layout from '../../../components/Layout'
+import PhoneInput from '../../../components/common/PhoneInput'
+import { formatPhoneForDisplay } from '../../../utils/phoneValidator'
 import { 
   getSecurityStatus, 
   SecurityStatus, 
-  changePassword, 
-  updateContact,
+  enhancedChangePassword,
+  startEmailChange,
+  generateDeviceFingerprint,
   disable2FA,
   resendEmailVerification,
   resendPhoneVerification
@@ -50,11 +53,11 @@ export default function SecuritySettings() {
     confirm: false
   })
   
-  // 联系方式修改相关
-  const [showContactForm, setShowContactForm] = useState(false)
-  const [contactForm, setContactForm] = useState({
-    email: '',
-    phone: ''
+  // 联系方式修改相关 -> 改为邮箱变更相关
+  const [showEmailChangeForm, setShowEmailChangeForm] = useState(false)
+  const [emailChangeForm, setEmailChangeForm] = useState({
+    new_email: '',
+    current_password: ''
   })
 
   useEffect(() => {
@@ -71,9 +74,9 @@ export default function SecuritySettings() {
       
       setSecurityStatus(statusRes.data)
       setPasskeys(Array.isArray(passkeysData) ? passkeysData : [])
-      setContactForm({
-        email: statusRes.data.email,
-        phone: statusRes.data.phone || ''
+      setEmailChangeForm({
+        new_email: '',
+        current_password: ''
       })
       setError('')
     } catch (err: any) {
@@ -118,8 +121,12 @@ export default function SecuritySettings() {
     }
 
     try {
-      await changePassword(passwordForm)
-      setSuccess('密码修改成功')
+      const deviceFingerprint = generateDeviceFingerprint()
+      await enhancedChangePassword({
+        ...passwordForm,
+        device_fingerprint: deviceFingerprint
+      })
+      setSuccess('密码修改成功，系统已发送安全通知到您的邮箱')
       setPasswordForm({ current_password: '', new_password: '', confirm_password: '' })
       setShowPasswordForm(false)
       await loadSecurityData()
@@ -128,16 +135,26 @@ export default function SecuritySettings() {
     }
   }
 
-  const handleContactUpdate = async (e: React.FormEvent) => {
+  const handleEmailChange = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    if (!emailChangeForm.new_email || !emailChangeForm.current_password) {
+      setError('请填写完整信息')
+      return
+    }
+    
+    if (emailChangeForm.new_email === securityStatus?.email) {
+      setError('新邮箱与当前邮箱相同')
+      return
+    }
+
     try {
-      await updateContact(contactForm)
-      setSuccess('联系方式更新成功')
-      setShowContactForm(false)
-      await loadSecurityData()
+      await startEmailChange(emailChangeForm.new_email, emailChangeForm.current_password)
+      setSuccess('邮箱变更请求已发送，请检查您的新邮箱和旧邮箱获取验证邮件')
+      setEmailChangeForm({ new_email: '', current_password: '' })
+      setShowEmailChangeForm(false)
     } catch (err: any) {
-      setError(err.response?.data?.error || '联系方式更新失败')
+      setError(err.response?.data?.error || '邮箱变更请求失败')
     }
   }
 
@@ -420,14 +437,14 @@ export default function SecuritySettings() {
             <div className="px-4 py-5 sm:p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg leading-6 font-medium text-gray-900">
-                  联系方式管理
+                  邮箱管理
                 </h3>
                 <button
-                  onClick={() => setShowContactForm(!showContactForm)}
+                  onClick={() => setShowEmailChangeForm(!showEmailChangeForm)}
                   className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
                   <CogIcon className="h-4 w-4 mr-1" />
-                  修改联系方式
+                  更换邮箱
                 </button>
               </div>
               
@@ -466,7 +483,7 @@ export default function SecuritySettings() {
                     <div className="flex items-center">
                       <DevicePhoneMobileIcon className="h-5 w-5 text-gray-400 mr-3" />
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{securityStatus.phone}</p>
+                        <p className="text-sm font-medium text-gray-900">{formatPhoneForDisplay(securityStatus.phone)}</p>
                         <p className="text-sm text-gray-500">
                           {securityStatus.phone_verified ? '已验证' : '未验证'}
                         </p>
@@ -491,36 +508,54 @@ export default function SecuritySettings() {
                 )}
               </div>
 
-              {/* 联系方式修改表单 */}
-              {showContactForm && (
-                <form onSubmit={handleContactUpdate} className="mt-6 bg-gray-50 p-4 rounded-lg space-y-4">
+              {/* 邮箱变更表单 */}
+              {showEmailChangeForm && (
+                <form onSubmit={handleEmailChange} className="mt-6 bg-gray-50 p-4 rounded-lg space-y-4">
+                  <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+                    <div className="flex">
+                      <div className="flex-shrink-0">
+                        <ShieldCheckIcon className="h-5 w-5 text-blue-400" />
+                      </div>
+                      <div className="ml-3">
+                        <h3 className="text-sm font-medium text-blue-800">邮箱变更流程</h3>
+                        <div className="mt-2 text-sm text-blue-700">
+                          <p>1. 我们将发送验证邮件到您的新邮箱</p>
+                          <p>2. 同时向您的当前邮箱发送通知</p>
+                          <p>3. 点击新邮箱中的确认链接完成变更</p>
+                          <p>4. 如有异常，可通过当前邮箱中的取消链接撤销操作</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                   <PInput
                     type="email"
-                    label="邮箱地址"
-                    value={contactForm.email}
-                    onChange={(e) => setContactForm({...contactForm, email: e.target.value})}
+                    label="新邮箱地址"
+                    value={emailChangeForm.new_email}
+                    onChange={(e) => setEmailChangeForm({...emailChangeForm, new_email: e.target.value})}
                     required
+                    placeholder="请输入新的邮箱地址"
                   />
                   <PInput
-                    type="tel"
-                    label="手机号码"
-                    value={contactForm.phone}
-                    onChange={(e) => setContactForm({...contactForm, phone: e.target.value})}
-                    placeholder="可选"
+                    type="password"
+                    label="当前密码"
+                    value={emailChangeForm.current_password}
+                    onChange={(e) => setEmailChangeForm({...emailChangeForm, current_password: e.target.value})}
+                    required
+                    placeholder="请输入当前密码以确认身份"
                   />
                   <div className="flex space-x-3">
                     <PButton
                       type="submit"
                       variant="primary"
                     >
-                      保存修改
+                      开始邮箱变更
                     </PButton>
                     <PButton
                       type="button"
                       variant="secondary"
                       onClick={() => {
-                        setShowContactForm(false)
-                        setContactForm({ email: securityStatus.email, phone: securityStatus.phone || '' })
+                        setShowEmailChangeForm(false)
+                        setEmailChangeForm({ new_email: '', current_password: '' })
                       }}
                     >
                       取消

@@ -5,6 +5,10 @@ settings:
     value: "BasaltPass"
     category: "general"
     description: "系统名称"
+  general.site_url:
+    value: "http://localhost:8080"
+    category: "general"
+    description: "站点 URL（用于邮件、回调等绝对链接）"
   general.theme:
     value: "light"
     category: "general"
@@ -44,6 +48,10 @@ settings:
     value: 14
     category: "logging"
     description: "应用日志保留天数"
+  email.from_suffix:
+    value: "example.com"
+    category: "email"
+    description: "发件人邮箱后缀（用于 no-reply@<suffix>）"
   session.same_site:
     value: "Lax"
     category: "session"

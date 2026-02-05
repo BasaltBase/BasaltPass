@@ -20,6 +20,9 @@ import Logs from '@pages/admin/Logs'
 import SecuritySettings from '@pages/user/security/SecuritySettings'
 import TwoFA from '@pages/user/security/TwoFA'
 import PasskeyManagement from '@pages/user/security/PasskeyManagement'
+import ResetPassword from '@pages/auth/ResetPassword'
+import EmailChangeConfirm from '@pages/auth/EmailChangeConfirm'
+import EmailChangeCancel from '@pages/auth/EmailChangeCancel'
 import Dashboard from '@pages/user/Dashboard'
 import Settings from '@pages/user/Settings'
 import Help from '@pages/user/Help'
@@ -104,6 +107,11 @@ export default function AppRouter() {
       } />
       <Route path="/oauth-success" element={<OauthSuccess />} />
       <Route path="/oauth-consent" element={<OAuthConsent />} />
+      
+      {/* 密码重置和邮箱变更 - 公开页面 */}
+      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/email-change/confirm" element={<EmailChangeConfirm />} />
+      <Route path="/email-change/cancel" element={<EmailChangeCancel />} />
       
       {/* 主应用页面 - 需要认证保护 */}
       <Route path="/dashboard" element={

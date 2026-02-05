@@ -36,8 +36,6 @@ func RegisterUserRoutes(v1 fiber.Router) {
 	// 安全设置路由
 	securityGroup := v1.Group("/security", middleware.JWTMiddleware())
 	securityGroup.Get("/status", userSecurity.GetSecurityStatusHandler)
-	securityGroup.Post("/password/change", userSecurity.ChangePasswordHandler)
-	securityGroup.Put("/contact", userSecurity.UpdateContactHandler)
 	securityGroup.Post("/2fa/setup", userSecurity.SetupHandler)
 	securityGroup.Post("/2fa/verify", userSecurity.VerifyHandler)
 	securityGroup.Post("/2fa/disable", userSecurity.Disable2FAHandler)
@@ -45,6 +43,12 @@ func RegisterUserRoutes(v1 fiber.Router) {
 	securityGroup.Post("/email/resend", userSecurity.SendEmailVerificationHandler)
 	securityGroup.Post("/phone/verify", userSecurity.VerifyPhoneHandler)
 	securityGroup.Post("/phone/resend", userSecurity.SendPhoneVerificationHandler)
+	securityGroup.Put("/contact", userSecurity.UpdateContactHandler)
+
+	// 新增安全功能 - 使用user前缀来区分用户认证的安全端点
+	userSecurityGroup := v1.Group("/user/security", middleware.JWTMiddleware())
+	userSecurityGroup.Post("/email/change", userSecurity.StartEmailChangeHandler)          // 开始邮箱变更
+	userSecurityGroup.Post("/password/change", userSecurity.EnhancedChangePasswordHandler) // 增强版密码修改
 
 	// 登录历史（需要认证）
 	securityGroup.Get("/login-history", userSecurity.GetLoginHistoryHandler)

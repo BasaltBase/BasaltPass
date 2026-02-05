@@ -11,17 +11,14 @@ import (
 
 var svc = auth2.Service{}
 
-// RegisterHandler handles POST /auth/register
+// RegisterHandler handles POST /auth/register (DEPRECATED - use /signup/start instead)
 func RegisterHandler(c *fiber.Ctx) error {
-	var req auth2.RegisterRequest
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
-	}
-	user, err := svc.Register(req)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
-	}
-	return c.JSON(fiber.Map{"id": user.ID})
+	// 旧的注册API已被弃用，重定向到新的验证码流程
+	return c.Status(fiber.StatusGone).JSON(fiber.Map{
+		"error":        "This registration endpoint has been deprecated. Please use the new verification-based registration flow.",
+		"message":      "请使用新的邮箱验证注册流程。访问 /register 页面进行注册。",
+		"new_endpoint": "/api/v1/signup/start",
+	})
 }
 
 // LoginHandler handles POST /auth/login

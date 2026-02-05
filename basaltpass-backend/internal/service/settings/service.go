@@ -108,12 +108,13 @@ func defaultItems() map[string]SettingItem {
 		"oauth.allowed_scopes":         {Value: []string{"openid", "profile", "email"}, Category: "oauth", Description: "允许的 OAuth Scope 列表"},
 
 		// SMTP/Email
-		"smtp.enabled":  {Value: false, Category: "smtp", Description: "是否开启邮件发送"},
-		"smtp.host":     {Value: "smtp.example.com", Category: "smtp", Description: "SMTP 服务器"},
-		"smtp.port":     {Value: 587, Category: "smtp", Description: "SMTP 端口"},
-		"smtp.username": {Value: "", Category: "smtp", Description: "SMTP 用户名"},
-		"smtp.password": {Value: "", Category: "smtp", Description: "SMTP 密码"},
-		"smtp.from":     {Value: "no-reply@example.com", Category: "smtp", Description: "发件人邮箱"},
+		"smtp.enabled":      {Value: false, Category: "smtp", Description: "是否开启邮件发送"},
+		"smtp.host":         {Value: "smtp.example.com", Category: "smtp", Description: "SMTP 服务器"},
+		"smtp.port":         {Value: 587, Category: "smtp", Description: "SMTP 端口"},
+		"smtp.username":     {Value: "", Category: "smtp", Description: "SMTP 用户名"},
+		"smtp.password":     {Value: "", Category: "smtp", Description: "SMTP 密码"},
+		"smtp.from":         {Value: "no-reply@example.com", Category: "smtp", Description: "发件人邮箱"},
+		"email.from_suffix": {Value: "example.com", Category: "email", Description: "发件人邮箱后缀（用于 no-reply@<suffix>）"},
 
 		// Logging
 		"logging.level":                  {Value: "info", Category: "logging", Description: "日志级别（debug/info/warn/error）"},

@@ -5,6 +5,8 @@ import (
 	"basaltpass-backend/internal/model"
 	"basaltpass-backend/internal/service/aduit"
 	notif "basaltpass-backend/internal/service/notification"
+	securityservice "basaltpass-backend/internal/service/security"
+	"basaltpass-backend/internal/utils"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -143,16 +145,23 @@ func UpdateContactHandler(c *fiber.Ctx) error {
 		aduit.LogAudit(uid, "修改邮箱", "", req.Email, c.IP(), c.Get("User-Agent"))
 	}
 
-	// Update phone if provided
+	// Update phone if provided with E.164 normalization
 	if req.Phone != user.Phone {
 		if req.Phone == "" {
 			updates["phone"] = nil
 			updates["phone_verified"] = false
+			aduit.LogAudit(uid, "删除手机号", "", "", c.IP(), c.Get("User-Agent"))
 		} else {
-			updates["phone"] = req.Phone
+			// 验证和标准化手机号为E.164格式
+			phoneValidator := utils.NewPhoneValidator("+86")
+			normalizedPhone, err := phoneValidator.NormalizeToE164(req.Phone)
+			if err != nil {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "手机号格式不正确: " + err.Error()})
+			}
+			updates["phone"] = normalizedPhone
 			updates["phone_verified"] = false // Reset verification status
+			aduit.LogAudit(uid, "修改手机号", "", normalizedPhone, c.IP(), c.Get("User-Agent"))
 		}
-		aduit.LogAudit(uid, "修改手机号", "", req.Phone, c.IP(), c.Get("User-Agent"))
 	}
 
 	if len(updates) > 0 {
@@ -371,4 +380,64 @@ func VerifyPhoneHandler(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "验证码错误"})
+}
+
+// 新增安全功能处理器
+
+// StartEmailChangeHandler 开始邮箱变更流程
+func StartEmailChangeHandler(c *fiber.Ctx) error {
+	uid := c.Locals("userID").(uint)
+
+	var req securityservice.EmailChangeRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "请求参数无效",
+		})
+	}
+
+	// 获取安全服务
+	securitySvc := securityservice.NewService(common.DB())
+
+	// 获取客户端信息
+	clientIP := c.IP()
+	deviceHash := c.Get("X-Device-Hash", "")
+
+	if err := securitySvc.StartEmailChange(uid, &req, clientIP, deviceHash); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "邮箱变更请求已发送，请检查新邮箱中的验证邮件",
+	})
+}
+
+// EnhancedChangePasswordHandler 增强版密码修改处理器
+func EnhancedChangePasswordHandler(c *fiber.Ctx) error {
+	uid := c.Locals("userID").(uint)
+
+	var req securityservice.PasswordChangeRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "请求参数无效",
+		})
+	}
+
+	// 获取安全服务
+	securitySvc := securityservice.NewService(common.DB())
+
+	// 获取客户端信息
+	clientIP := c.IP()
+	deviceHash := c.Get("X-Device-Hash", "")
+
+	if err := securitySvc.ChangePassword(uid, &req, clientIP, deviceHash); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "密码修改成功",
+	})
 }

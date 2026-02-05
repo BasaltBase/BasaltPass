@@ -328,6 +328,10 @@ settings:
         value: 587
         category: smtp
         description: SMTP 端口
+    email.from_suffix:
+        value: example.com
+        category: email
+        description: 发件人邮箱后缀（用于 no-reply@<suffix>）
     smtp.username:
         value: ""
         category: smtp

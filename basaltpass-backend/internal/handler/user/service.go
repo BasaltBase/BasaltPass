@@ -1,10 +1,10 @@
 package user
 
 import (
-	"errors"
-
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
+	"basaltpass-backend/internal/utils"
+	"errors"
 )
 
 // Service encapsulates user-related operations.
@@ -54,7 +54,19 @@ func (s Service) UpdateProfile(userID uint, req UpdateProfileRequest) error {
 		updates["email"] = *req.Email
 	}
 	if req.Phone != nil {
-		updates["phone"] = *req.Phone
+		// 验证和标准化手机号为E.164格式
+		if *req.Phone == "" {
+			updates["phone"] = nil
+			updates["phone_verified"] = false
+		} else {
+			phoneValidator := utils.NewPhoneValidator("+86")
+			normalizedPhone, err := phoneValidator.NormalizeToE164(*req.Phone)
+			if err != nil {
+				return errors.New("手机号格式不正确: " + err.Error())
+			}
+			updates["phone"] = normalizedPhone
+			updates["phone_verified"] = false // Reset verification when phone changes
+		}
 	}
 	if req.AvatarURL != nil {
 		updates["avatar_url"] = *req.AvatarURL

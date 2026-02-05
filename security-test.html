@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>安全功能测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .test-section h2 { color: #333; margin-top: 0; }
+        input, button { margin: 5px; padding: 8px; }
+        button { background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { margin-top: 10px; padding: 10px; border-radius: 4px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>BasaltPass 安全功能测试</h1>
+    
+    <div class="test-section">
+        <h2>密码重置测试</h2>
+        <input type="email" id="resetEmail" placeholder="输入邮箱地址" value="test@example.com">
+        <button onclick="testPasswordReset()">发起密码重置</button>
+        <div id="resetResult" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>邮箱变更测试</h2>
+        <input type="email" id="newEmail" placeholder="新邮箱地址" value="newemail@example.com">
+        <input type="password" id="currentPassword" placeholder="当前密码" value="password123">
+        <button onclick="testEmailChange()">发起邮箱变更</button>
+        <div id="emailChangeResult" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>增强密码修改测试</h2>
+        <input type="password" id="oldPassword" placeholder="旧密码" value="password123">
+        <input type="password" id="newPassword" placeholder="新密码" value="newpassword123">
+        <input type="password" id="confirmPassword" placeholder="确认新密码" value="newpassword123">
+        <button onclick="testPasswordChange()">修改密码</button>
+        <div id="passwordChangeResult" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>快速链接</h2>
+        <p>
+            <a href="http://localhost:5173/reset-password" target="_blank">密码重置页面</a><br>
+            <a href="http://localhost:5173/email-change/confirm?token=test123" target="_blank">邮箱变更确认页面 (测试token)</a><br>
+            <a href="http://localhost:5173/email-change/cancel?token=test123" target="_blank">邮箱变更取消页面 (测试token)</a><br>
+            <a href="http://localhost:5173/security" target="_blank">安全设置页面</a>
+        </p>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api/v1';
+        
+        async function makeRequest(url, method, data) {
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: data ? JSON.stringify(data) : undefined
+                });
+                
+                const result = await response.json();
+                return { success: response.ok, data: result, status: response.status };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+        
+        async function testPasswordReset() {
+            const email = document.getElementById('resetEmail').value;
+            const result = await makeRequest(`${API_BASE}/security/password/reset`, 'POST', { email });
+            
+            showResult('resetResult', result);
+        }
+        
+        async function testEmailChange() {
+            const newEmail = document.getElementById('newEmail').value;
+            const currentPassword = document.getElementById('currentPassword').value;
+            const result = await makeRequest(`${API_BASE}/user/security/email/change`, 'POST', {
+                new_email: newEmail,
+                current_password: currentPassword
+            });
+            
+            showResult('emailChangeResult', result);
+        }
+        
+        async function testPasswordChange() {
+            const deviceFingerprint = generateDeviceFingerprint();
+            const data = {
+                current_password: document.getElementById('oldPassword').value,
+                new_password: document.getElementById('newPassword').value,
+                confirm_password: document.getElementById('confirmPassword').value,
+                device_fingerprint: deviceFingerprint
+            };
+            
+            const result = await makeRequest(`${API_BASE}/user/security/password/change`, 'POST', data);
+            showResult('passwordChangeResult', result);
+        }
+        
+        function showResult(elementId, result) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            
+            if (result.success) {
+                element.className = 'result success';
+                element.innerHTML = `<strong>成功:</strong> ${JSON.stringify(result.data, null, 2)}`;
+            } else {
+                element.className = 'result error';
+                element.innerHTML = `<strong>错误:</strong> ${result.error || JSON.stringify(result.data, null, 2)}`;
+            }
+        }
+        
+        function generateDeviceFingerprint() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            if (ctx) {
+                ctx.textBaseline = 'top';
+                ctx.font = '14px Arial';
+                ctx.fillText('Device fingerprint', 2, 2);
+            }
+            
+            const fingerprint = [
+                navigator.userAgent,
+                navigator.language,
+                screen.width + 'x' + screen.height,
+                new Date().getTimezoneOffset(),
+                canvas.toDataURL(),
+                navigator.platform
+            ].join('|');
+            
+            let hash = 0;
+            for (let i = 0; i < fingerprint.length; i++) {
+                const char = fingerprint.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            
+            return Math.abs(hash).toString(16);
+        }
+    </script>
+</body>
+</html>

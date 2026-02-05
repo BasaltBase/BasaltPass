@@ -74,6 +74,7 @@ func (s *Service) GetConfig() *Config {
 
 // SendWithLogging sends an email and logs the operation
 func (s *Service) SendWithLogging(ctx context.Context, msg *Message, userID *uint, emailContext string) (*SendResult, error) {
+	ApplyDefaultSender(msg)
 	// Log the email send attempt
 	emailLog, err := s.logService.LogEmailSend(ctx, msg, s.sender.Provider(), userID, emailContext)
 	if err != nil {

@@ -3,6 +3,8 @@ import client from '../../../api/client'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../../../components/Layout'
 import { PCard, PButton, PInput } from '../../../components'
+import PhoneInput from '../../../components/common/PhoneInput'
+import { formatPhoneForDisplay } from '../../../utils/phoneValidator'
 import { 
   UserIcon, 
   EnvelopeIcon, 
@@ -215,29 +217,26 @@ function Profile() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="flex items-center text-sm font-semibold text-gray-700">
-                    <PhoneIcon className="h-5 w-5 mr-2 text-indigo-500" />
-                    手机号码
-                  </label>
                   {isEditing ? (
-                    <div className="relative">
-                      <input
-                        type="tel"
-                        value={editForm.phone}
-                        onChange={(e) => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
-                        className="block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300"
-                        placeholder="请输入手机号码"
-                      />
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                        <div className="h-5 w-5 text-gray-400">
-                          <PhoneIcon className="h-5 w-5" />
-                        </div>
-                      </div>
-                    </div>
+                    <PhoneInput
+                      label="手机号码"
+                      value={editForm.phone}
+                      onChange={(value, isValid) => {
+                        setEditForm(prev => ({ ...prev, phone: value }))
+                      }}
+                      placeholder="请输入手机号码"
+                      showValidation={true}
+                    />
                   ) : (
-                    <div className="px-4 py-3 bg-gray-50 rounded-lg border border-gray-100">
-                      <p className="text-sm text-gray-900">{profile.phone}</p>
-                    </div>
+                    <>
+                      <label className="flex items-center text-sm font-semibold text-gray-700">
+                        <PhoneIcon className="h-5 w-5 mr-2 text-indigo-500" />
+                        手机号码
+                      </label>
+                      <div className="px-4 py-3 bg-gray-50 rounded-lg border border-gray-100">
+                        <p className="text-sm text-gray-900">{formatPhoneForDisplay(profile.phone) || '未设置'}</p>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>

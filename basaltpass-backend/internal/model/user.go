@@ -3,6 +3,7 @@ package model
 import (
 	"basaltpass-backend/internal/common"
 	"encoding/base64"
+	"time"
 
 	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
@@ -22,6 +23,12 @@ type User struct {
 	EmailVerified bool `gorm:"default:false"`
 	PhoneVerified bool `gorm:"default:false"`
 	Banned        bool
+
+	// 安全相关字段
+	EmailVerifiedAt   *time.Time // 邮箱验证时间
+	PasswordChangedAt *time.Time // 密码修改时间
+	MFAEnabled        bool       `gorm:"default:false"` // 多因子认证启用状态
+	RiskFlags         uint32     `gorm:"default:0"`     // 风险标记位掩码
 
 	// IsSystemAdmin 标记是否为系统最高管理员（首位用户）
 	// 使用指针指针类型配合 uniqueIndex 实现：全表只能有一个 true，其他均为 NULL

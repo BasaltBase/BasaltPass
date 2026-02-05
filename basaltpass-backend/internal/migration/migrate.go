@@ -3,6 +3,7 @@ package migration
 import (
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/config"
+	"basaltpass-backend/internal/middleware/ratelimit"
 	"basaltpass-backend/internal/model"
 	"basaltpass-backend/internal/service/currency"
 	"errors"
@@ -59,6 +60,18 @@ func RunMigrations() {
 
 		// 邮件日志
 		&model.EmailLog{},
+
+		// 验证码注册系统
+		&model.PendingSignup{},
+		&model.VerificationChallenge{},
+
+		// 安全增强系统
+		&model.EmailChangeRequest{},
+		&model.PasswordResetToken{},
+		&model.SecurityOperation{},
+
+		// 速率限制系统
+		&ratelimit.RateLimitRecord{},
 
 		// 租户和应用模型
 		&model.Tenant{},

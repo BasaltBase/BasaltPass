@@ -7,6 +7,7 @@ import { PInput, PButton, PCheckbox } from '../../components'
 
 function Register() {
   const navigate = useNavigate()
+  const [step, setStep] = useState<'form' | 'verification' | 'complete'>('form')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
@@ -16,6 +17,13 @@ function Register() {
   const [agreeTerms, setAgreeTerms] = useState(false)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  
+  // 验证码相关状态
+  const [signupId, setSignupId] = useState('')
+  const [verificationCode, setVerificationCode] = useState('')
+  const [isVerifying, setIsVerifying] = useState(false)
+  const [isSendingCode, setIsSendingCode] = useState(false)
+  const [resendCooldown, setResendCooldown] = useState(0)
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -25,12 +33,32 @@ function Register() {
       return
     }
     
+    if (!agreeTerms) {
+      setError('请同意服务条款和隐私政策')
+      return
+    }
+    
     setIsLoading(true)
     setError('')
     
     try {
-      await client.post('/api/v1/auth/register', { email, phone, password })
-      navigate('/login')
+      // Step 1: 开始注册流程
+      const startResponse = await client.post('/api/v1/signup/start', { 
+        email, 
+        phone, 
+        username: email.split('@')[0], // 使用邮箱前缀作为默认用户名
+        password 
+      })
+      
+      setSignupId(startResponse.data.signup_id)
+      
+      // Step 2: 自动发送验证码
+      await client.post('/api/v1/signup/send_email_code', {
+        signup_id: startResponse.data.signup_id
+      })
+      
+      setStep('verification')
+      startResendCooldown()
     } catch (err: any) {
       setError(err.response?.data?.error || '注册失败，请检查您的信息')
     } finally {
@@ -38,6 +66,179 @@ function Register() {
     }
   }
 
+  const verifyCode = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!verificationCode) {
+      setError('请输入验证码')
+      return
+    }
+    
+    setIsVerifying(true)
+    setError('')
+    
+    try {
+      // 验证验证码
+      await client.post('/api/v1/signup/verify_email_code', {
+        signup_id: signupId,
+        code: verificationCode
+      })
+      
+      // 完成注册
+      await client.post('/api/v1/signup/complete', {
+        signup_id: signupId
+      })
+      
+      setStep('complete')
+    } catch (err: any) {
+      setError(err.response?.data?.error || '验证码错误，请重试')
+    } finally {
+      setIsVerifying(false)
+    }
+  }
+
+  const resendCode = async () => {
+    if (resendCooldown > 0) return
+    
+    setIsSendingCode(true)
+    setError('')
+    
+    try {
+      await client.post('/api/v1/signup/resend_email_code', {
+        signup_id: signupId
+      })
+      startResendCooldown()
+    } catch (err: any) {
+      setError(err.response?.data?.error || '重发验证码失败')
+    } finally {
+      setIsSendingCode(false)
+    }
+  }
+
+  const startResendCooldown = () => {
+    setResendCooldown(60)
+    const timer = setInterval(() => {
+      setResendCooldown(prev => {
+        if (prev <= 1) {
+          clearInterval(timer)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+  }
+
+  // 完成步骤的渲染
+  if (step === 'complete') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8">
+          <div className="text-center">
+            <div className="mx-auto h-12 w-12 bg-green-500 rounded-full flex items-center justify-center">
+              <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+              注册成功！
+            </h2>
+            <p className="mt-2 text-center text-sm text-gray-600">
+              您的账户已创建成功，现在可以登录了
+            </p>
+            <div className="mt-6">
+              <PButton
+                onClick={() => navigate('/login')}
+                variant="gradient"
+                fullWidth
+              >
+                前往登录
+              </PButton>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // 验证码步骤的渲染
+  if (step === 'verification') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8">
+          <div>
+            <div className="mx-auto h-12 w-12 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+              <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+              验证您的邮箱
+            </h2>
+            <p className="mt-2 text-center text-sm text-gray-600">
+              我们已向 <span className="font-medium text-gray-900">{email}</span> 发送了验证码
+            </p>
+          </div>
+          
+          <form className="mt-8 space-y-6" onSubmit={verifyCode}>
+            {error && (
+              <div className="rounded-md bg-red-50 p-4">
+                <div className="flex">
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-red-800">验证失败</h3>
+                    <div className="mt-2 text-sm text-red-700">{error}</div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <div>
+              <PInput
+                id="verificationCode"
+                name="verificationCode"
+                type="text"
+                required
+                label="验证码"
+                placeholder="请输入6位验证码"
+                value={verificationCode}
+                onChange={(e) => setVerificationCode(e.target.value)}
+                maxLength={6}
+              />
+            </div>
+
+            <div>
+              <PButton
+                type="submit"
+                disabled={isVerifying}
+                variant="gradient"
+                fullWidth
+                loading={isVerifying}
+              >
+                验证并完成注册
+              </PButton>
+            </div>
+
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={resendCode}
+                disabled={resendCooldown > 0 || isSendingCode}
+                className="text-sm text-blue-600 hover:text-blue-500 disabled:text-gray-400"
+              >
+                {resendCooldown > 0 
+                  ? `${resendCooldown}秒后可重新发送`
+                  : isSendingCode 
+                    ? '正在发送...'
+                    : '重新发送验证码'
+                }
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    )
+  }
+
+  // 默认注册表单步骤
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
@@ -86,8 +287,7 @@ function Register() {
               id="phone"
               name="phone"
               type="tel"
-              required
-              label="手机号码"
+              label="手机号码（可选）"
               placeholder="请输入手机号码"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
@@ -99,7 +299,7 @@ function Register() {
               type="password"
               required
               label="密码"
-              placeholder="请输入密码"
+              placeholder="请输入密码（至少6位）"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               showPassword={showPassword}
@@ -143,12 +343,12 @@ function Register() {
           <div>
             <PButton
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || !agreeTerms}
               variant="gradient"
               fullWidth
               loading={isLoading}
             >
-              创建账户
+              发送验证码
             </PButton>
           </div>
 
