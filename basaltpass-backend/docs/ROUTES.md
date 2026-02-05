@@ -60,7 +60,11 @@
 | HEAD | /api/v1/admin/dashboard/stats |
 | GET | /api/v1/admin/email/config |
 | HEAD | /api/v1/admin/email/config |
+| GET | /api/v1/admin/email/logs |
+| HEAD | /api/v1/admin/email/logs |
 | POST | /api/v1/admin/email/send-test |
+| GET | /api/v1/admin/email/stats |
+| HEAD | /api/v1/admin/email/stats |
 | GET | /api/v1/admin/invitations/ |
 | HEAD | /api/v1/admin/invitations/ |
 | POST | /api/v1/admin/invitations/ |

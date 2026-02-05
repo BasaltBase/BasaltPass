@@ -1,13 +1,15 @@
 package email
 
 import (
+	"context"
 	"fmt"
 )
 
 // Service provides email sending functionality
 type Service struct {
-	sender Sender
-	config *Config
+	sender     Sender
+	config     *Config
+	logService *LoggingService
 }
 
 // NewService creates a new email service based on the configuration
@@ -22,8 +24,9 @@ func NewService(config *Config) (*Service, error) {
 	}
 
 	return &Service{
-		sender: sender,
-		config: config,
+		sender:     sender,
+		config:     config,
+		logService: NewLoggingService(),
 	}, nil
 }
 
@@ -67,4 +70,29 @@ func (s *Service) GetSender() Sender {
 // GetConfig returns the email configuration
 func (s *Service) GetConfig() *Config {
 	return s.config
+}
+
+// SendWithLogging sends an email and logs the operation
+func (s *Service) SendWithLogging(ctx context.Context, msg *Message, userID *uint, emailContext string) (*SendResult, error) {
+	// Log the email send attempt
+	emailLog, err := s.logService.LogEmailSend(ctx, msg, s.sender.Provider(), userID, emailContext)
+	if err != nil {
+		return nil, fmt.Errorf("failed to log email send: %w", err)
+	}
+
+	// Send the email
+	result, sendErr := s.sender.Send(ctx, msg)
+
+	// Update the log with the result
+	if updateErr := s.logService.UpdateEmailSendStatus(ctx, emailLog.ID, result, sendErr); updateErr != nil {
+		// Don't fail the send operation if logging fails, but log the error
+		fmt.Printf("Warning: failed to update email log: %v\n", updateErr)
+	}
+
+	return result, sendErr
+}
+
+// GetLoggingService returns the logging service
+func (s *Service) GetLoggingService() *LoggingService {
+	return s.logService
 }

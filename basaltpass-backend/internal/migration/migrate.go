@@ -57,6 +57,9 @@ func RunMigrations() {
 		&model.Notification{},
 		&model.Invitation{},
 
+		// 邮件日志
+		&model.EmailLog{},
+
 		// 租户和应用模型
 		&model.Tenant{},
 		&model.TenantAdmin{}, // 租户管理员

@@ -381,4 +381,6 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 	emailGroup := adminAliasGroup.Group("/email")
 	emailGroup.Get("/config", adminEmail.GetEmailConfigHandler)
 	emailGroup.Post("/send-test", adminEmail.SendTestEmailHandler)
+	emailGroup.Get("/logs", adminEmail.GetEmailLogsHandler)
+	emailGroup.Get("/stats", adminEmail.GetEmailStatsHandler)
 }
