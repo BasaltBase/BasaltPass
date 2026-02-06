@@ -25,17 +25,17 @@ import { authorizeConsole } from '@api/console'
 import { ROUTES } from '@constants'
 
 const navigation = [
-  { name: '仪表板', href: '/dashboard', icon: HomeIcon },
-  { name: '个人资料', href: '/profile', icon: UserIcon },
-  { name: '团队', href: '/teams', icon: UserGroupIcon },
-  { name: '钱包', href: '/wallet', icon: WalletIcon },
-  { name: '我的订阅', href: '/subscriptions', icon: CreditCardIcon },
-  { name: '产品与套餐', href: '/products', icon: CubeIcon },
-  { name: '我的应用', href: '/my-apps', icon: CubeIcon },
-  { name: '安全', href: '/security', icon: ShieldCheckIcon },
-  { name: '设置', href: '/settings', icon: CogIcon },
-  { name: '帮助', href: '/help', icon: QuestionMarkCircleIcon },
-  { name: '关于', href: '/about', icon: InformationCircleIcon },
+  { name: '仪表板', href: ROUTES.user.dashboard, icon: HomeIcon },
+  { name: '个人资料', href: ROUTES.user.profile, icon: UserIcon },
+  { name: '团队', href: ROUTES.user.teams, icon: UserGroupIcon },
+  { name: '钱包', href: ROUTES.user.wallet, icon: WalletIcon },
+  { name: '我的订阅', href: ROUTES.user.subscriptions, icon: CreditCardIcon },
+  { name: '产品与套餐', href: ROUTES.user.products, icon: CubeIcon },
+  { name: '我的应用', href: ROUTES.user.myApps, icon: CubeIcon },
+  { name: '安全', href: ROUTES.user.security, icon: ShieldCheckIcon },
+  { name: '设置', href: ROUTES.user.settings, icon: CogIcon },
+  { name: '帮助', href: ROUTES.user.help, icon: QuestionMarkCircleIcon },
+  { name: '关于', href: ROUTES.user.about, icon: InformationCircleIcon },
 ]
 
 interface LayoutProps {
@@ -231,7 +231,7 @@ export default function Layout({ children }: LayoutProps) {
                     <p className="text-sm text-gray-500 truncate">{user?.email}</p>
                   </div>
                   <Link
-                    to="/profile"
+                    to={ROUTES.user.profile}
                     className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     onClick={() => setIsUserMenuOpen(false)}
                   >
@@ -239,7 +239,7 @@ export default function Layout({ children }: LayoutProps) {
                     个人资料
                   </Link>
                   <Link
-                    to="/settings"
+                    to={ROUTES.user.settings}
                     className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     onClick={() => setIsUserMenuOpen(false)}
                   >

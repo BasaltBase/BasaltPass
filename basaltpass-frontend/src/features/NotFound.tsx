@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { ROUTES } from '@constants'
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 
 export default function NotFound() {
@@ -14,7 +15,7 @@ export default function NotFound() {
         <ExclamationTriangleIcon className="h-20 w-20 text-blue-500 mb-4 animate-pulse" />
         <h1 className="text-9xl font-extrabold text-gray-900 mb-2">404</h1>
         <p className="text-3xl text-gray-700 mb-6">抱歉，您访问的页面不存在。</p>
-        <Link to="/" className="inline-block px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+        <Link to={ROUTES.user.dashboard} className="inline-block px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
           返回首页
         </Link>
       </div>

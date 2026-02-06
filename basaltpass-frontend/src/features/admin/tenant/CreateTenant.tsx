@@ -12,6 +12,7 @@ import {
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { EntitySearchSelect, BaseEntityItem, PInput, PSelect, PTextarea, PButton } from '@ui'
 import { adminTenantApi, AdminCreateTenantRequest, TenantSettings } from '@api/admin/tenant'
+import { ROUTES } from '@constants'
 
 const CreateTenant: React.FC = () => {
   const navigate = useNavigate()
@@ -113,7 +114,7 @@ const CreateTenant: React.FC = () => {
       await adminTenantApi.createTenant(requestData)
       
       // 创建成功后跳转到租户列表
-      navigate('/admin/tenants', { 
+      navigate(ROUTES.admin.tenants, { 
         state: { message: '租户创建成功！' }
       })
     } catch (err: any) {
@@ -125,7 +126,7 @@ const CreateTenant: React.FC = () => {
   }
 
   const handleCancel = () => {
-    navigate('/admin/tenants')
+    navigate(ROUTES.admin.tenants)
   }
 
   const planOptions = [

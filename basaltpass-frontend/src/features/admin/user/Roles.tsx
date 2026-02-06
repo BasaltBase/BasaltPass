@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom'
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { PCheckbox, PButton, PInput } from '@ui'
 import PTable, { PTableColumn } from '@ui/PTable'
+import { ROUTES } from '@constants'
 
 interface RawRole {
   ID: number
@@ -111,7 +112,7 @@ export default function Roles() {
         <nav className="flex" aria-label="Breadcrumb">
           <ol className="flex items-center space-x-4">
             <li>
-              <Link to="/dashboard" className="text-gray-400 hover:text-gray-500">
+              <Link to={ROUTES.admin.dashboard} className="text-gray-400 hover:text-gray-500">
                 仪表板
               </Link>
             </li>

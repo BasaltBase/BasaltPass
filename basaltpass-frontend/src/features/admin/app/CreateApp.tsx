@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeftIcon, RocketLaunchIcon, PlusIcon, TrashIcon, CubeIcon, KeyIcon, DocumentTextIcon } from '@heroicons/react/24/outline'
 import { tenantAppApi, CreateTenantAppRequest } from '@api/tenant/tenantApp'
 import TenantLayout from '@features/tenant/components/TenantLayout'
+import { ROUTES } from '@constants'
 
 export default function CreateApp() {
   const navigate = useNavigate()
@@ -107,7 +108,7 @@ export default function CreateApp() {
       }
 
       await tenantAppApi.createTenantApp(cleanedData)
-      navigate('/tenant/apps')
+      navigate(ROUTES.tenant.apps)
     } catch (error) {
       console.error('Failed to create app:', error)
       alert('创建应用失败，请重试')
@@ -150,7 +151,7 @@ export default function CreateApp() {
       <div className="space-y-6">
         {/* 面包屑导航 */}
         <button
-          onClick={() => navigate('/tenant/apps')}
+          onClick={() => navigate(ROUTES.tenant.apps)}
           className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors duration-200"
         >
           <ArrowLeftIcon className="h-4 w-4 mr-2" />
@@ -422,7 +423,7 @@ export default function CreateApp() {
             <div className="flex flex-col sm:flex-row sm:justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-6 border-t border-gray-200">
               <button
                 type="button"
-                onClick={() => navigate('/tenant/apps')}
+                onClick={() => navigate(ROUTES.tenant.apps)}
                 className="w-full sm:w-auto px-6 py-3 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
               >
                 取消

@@ -4,6 +4,7 @@ import Layout from '@features/user/components/Layout'
 import { PCard, PButton } from '@ui'
 import { getBalance } from '@api/user/wallet'
 import { getSecurityStatus, SecurityStatus } from '@api/user/security'
+import { ROUTES } from '@constants'
 import { 
   WalletIcon, 
   UserIcon, 
@@ -216,7 +217,7 @@ export default function Dashboard() {
           </h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
               <Link
-                to="/wallet/recharge"
+                to={ROUTES.user.walletRecharge}
                 className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
               >
                 <div className="flex-shrink-0">
@@ -230,7 +231,7 @@ export default function Dashboard() {
               </Link>
 
               <Link
-                to="/wallet/withdraw"
+                to={ROUTES.user.walletWithdraw}
                 className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
               >
                 <div className="flex-shrink-0">
@@ -244,7 +245,7 @@ export default function Dashboard() {
               </Link>
 
               <Link
-                to="/wallet/history"
+                to={ROUTES.user.walletHistory}
                 className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
               >
                 <div className="flex-shrink-0">
@@ -258,7 +259,7 @@ export default function Dashboard() {
               </Link>
 
               <Link
-                to="/security/2fa"
+                to={ROUTES.user.securityTwoFA}
                 className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
               >
                 <div className="flex-shrink-0">
@@ -272,7 +273,7 @@ export default function Dashboard() {
               </Link>
 
               <Link
-                to="/teams"
+                to={ROUTES.user.teams}
                 className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
               >
                 <div className="flex-shrink-0">
@@ -286,7 +287,7 @@ export default function Dashboard() {
               </Link>
 
               <Link
-                to="/subscriptions"
+                to={ROUTES.user.subscriptions}
                 className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
               >
                 <div className="flex-shrink-0">
@@ -300,7 +301,7 @@ export default function Dashboard() {
               </Link>
 
               <Link
-                to="/notifications"
+                to={ROUTES.user.notifications}
                 className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
               >
                 <div className="flex-shrink-0">
@@ -314,7 +315,7 @@ export default function Dashboard() {
               </Link>
 
               <Link
-                to="/profile"
+                to={ROUTES.user.profile}
                 className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
               >
                 <div className="flex-shrink-0">
@@ -328,7 +329,7 @@ export default function Dashboard() {
               </Link>
 
               <Link
-                to="/settings"
+                to={ROUTES.user.settings}
                 className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
               >
                 <div className="flex-shrink-0">
@@ -342,7 +343,7 @@ export default function Dashboard() {
               </Link>
 
               <Link
-                to="/help"
+                to={ROUTES.user.help}
                 className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
               >
                 <div className="flex-shrink-0">
@@ -364,7 +365,7 @@ export default function Dashboard() {
               最近交易
             </h3>
               <Link
-                to="/wallet/history"
+                to={ROUTES.user.walletHistory}
                 className="text-sm font-medium text-blue-600 hover:text-blue-500"
               >
                 查看全部

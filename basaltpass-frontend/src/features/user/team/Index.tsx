@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Layout from '@features/user/components/Layout';
 import { PCard, PButton } from '@ui';
 import { teamApi, UserTeamResponse } from '@api/user/team';
+import { ROUTES } from '@constants';
 
 const TeamIndex: React.FC = () => {
   const [teams, setTeams] = useState<UserTeamResponse[]>([]);
@@ -84,7 +85,7 @@ const TeamIndex: React.FC = () => {
             <p className="mt-1 text-sm text-gray-500">管理您创建和加入的团队</p>
           </div>
           <div className="flex space-x-3">
-            <Link to="/invitations/inbox">
+            <Link to={ROUTES.user.invitationsInbox}>
               <PButton variant="secondary">
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -92,7 +93,7 @@ const TeamIndex: React.FC = () => {
                 邀请收件箱
               </PButton>
             </Link>
-            <Link to="/teams/create">
+            <Link to={ROUTES.user.teamsCreate}>
               <PButton variant="primary">
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -111,7 +112,7 @@ const TeamIndex: React.FC = () => {
             <h3 className="mt-2 text-sm font-medium text-gray-900">暂无团队</h3>
             <p className="mt-1 text-sm text-gray-500">您还没有加入任何团队，或者创建一个新团队开始协作。</p>
             <div className="mt-6">
-              <Link to="/teams/create">
+              <Link to={ROUTES.user.teamsCreate}>
                 <PButton variant="primary">
                   <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />

@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom'
 import { ChevronRightIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { adminTenantApi, AdminTenantResponse } from '@api/admin/tenant'
+import useDebounce from '@hooks/useDebounce'
+import { ROUTES } from '@constants'
 
 interface Subscription {
   ID: number
@@ -40,6 +42,7 @@ export default function AdminSubscriptions() {
   const [cancelTarget, setCancelTarget] = useState<Subscription | null>(null)
   const [canceling, setCanceling] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const debouncedSearchTerm = useDebounce(searchTerm, 200)
   const [statusFilter, setStatusFilter] = useState('')
   // 新增：租户筛选
   const [tenants, setTenants] = useState<AdminTenantResponse[]>([])
@@ -185,11 +188,11 @@ export default function AdminSubscriptions() {
   }
 
   const filteredSubscriptions = subscriptions.filter(sub => {
-    const matchesSearch = searchTerm === '' || 
-      sub.ID.toString().includes(searchTerm) ||
-      sub.UserID.toString().includes(searchTerm) ||
-      sub.CurrentPrice?.Plan?.DisplayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sub.CurrentPrice?.Plan?.Product?.Name?.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = debouncedSearchTerm === '' || 
+      sub.ID.toString().includes(debouncedSearchTerm) ||
+      sub.UserID.toString().includes(debouncedSearchTerm) ||
+      sub.CurrentPrice?.Plan?.DisplayName?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+      sub.CurrentPrice?.Plan?.Product?.Name?.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
     
     const matchesStatus = statusFilter === '' || sub.Status === statusFilter
     
@@ -213,7 +216,7 @@ export default function AdminSubscriptions() {
         <nav className="flex" aria-label="Breadcrumb">
           <ol className="flex items-center space-x-4">
             <li>
-              <Link to="/dashboard" className="text-gray-400 hover:text-gray-500">
+              <Link to={ROUTES.admin.dashboard} className="text-gray-400 hover:text-gray-500">
                 仪表板
               </Link>
             </li>

@@ -9,6 +9,7 @@ import client from '@api/client'
 import { ChevronRightIcon, CreditCardIcon } from '@heroicons/react/24/outline'
 import { CubeIcon, WalletIcon, QuestionMarkCircleIcon, SparklesIcon, ArrowRightIcon } from '@heroicons/react/24/outline'
 import { getAccessToken } from '@utils/auth'
+import { ROUTES } from '@constants'
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
@@ -48,7 +49,7 @@ export default function ProductsPage() {
         const token = getAccessToken()
       if (!token) {
 
-        navigate('/auth/login')
+        navigate(ROUTES.user.login)
         return
       }
       
@@ -81,7 +82,7 @@ export default function ProductsPage() {
       // 如果是401错误，说明token无效，跳转到登录页面
       if (error.response?.status === 401) {
 
-        navigate('/auth/login')
+        navigate(ROUTES.user.login)
         return
       }
       
@@ -131,7 +132,7 @@ export default function ProductsPage() {
               浏览可用的产品和套餐，选择适合您需求的订阅方案
             </p>
           </div>
-          <Link to="/subscriptions">
+          <Link to={ROUTES.user.subscriptions}>
             <PButton variant="primary">
               <CreditCardIcon className="h-4 w-4 mr-2" />
               我的订阅
@@ -253,7 +254,7 @@ export default function ProductsPage() {
           <h3 className="text-lg font-medium text-gray-900 mb-4">相关链接</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Link
-              to="/subscriptions"
+              to={ROUTES.user.subscriptions}
               className="flex items-center p-3 bg-white rounded-md shadow-sm hover:shadow-md transition-shadow"
             >
               <CreditCardIcon className="h-5 w-5 text-indigo-600 mr-3" />
@@ -263,7 +264,7 @@ export default function ProductsPage() {
               </div>
             </Link>
             <Link
-              to="/wallet"
+              to={ROUTES.user.wallet}
               className="flex items-center p-3 bg-white rounded-md shadow-sm hover:shadow-md transition-shadow"
             >
               <WalletIcon className="h-5 w-5 text-green-600 mr-3" />
@@ -273,7 +274,7 @@ export default function ProductsPage() {
               </div>
             </Link>
             <Link
-              to="/help"
+              to={ROUTES.user.help}
               className="flex items-center p-3 bg-white rounded-md shadow-sm hover:shadow-md transition-shadow"
             >
               <QuestionMarkCircleIcon className="h-5 w-5 text-blue-600 mr-3" />

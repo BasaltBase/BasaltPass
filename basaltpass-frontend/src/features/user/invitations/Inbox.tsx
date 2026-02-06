@@ -5,6 +5,7 @@ import { PButton } from '@ui'
 import { invitationApi, Invitation } from '@api/user/invitation'
 import { CheckIcon, XMarkIcon, ClockIcon, UserGroupIcon, EnvelopeIcon, CalendarIcon, UserIcon, ArrowLeftIcon } from '@heroicons/react/24/outline'
 import { useAuth } from '@contexts/AuthContext'
+import { ROUTES } from '@constants'
 
 const Inbox: React.FC = () => {
   const { isAuthenticated, isLoading, user } = useAuth()
@@ -122,7 +123,7 @@ const Inbox: React.FC = () => {
         {/* 返回按钮 */}
         <div className="flex items-center">
           <Link
-            to="/teams"
+            to={ROUTES.user.teams}
             className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
           >
             <ArrowLeftIcon className="w-4 h-4 mr-2" />

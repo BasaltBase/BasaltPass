@@ -4,6 +4,7 @@ import { getCurrencies, Currency } from '@api/user/currency'
 import { Link } from 'react-router-dom'
 import Layout from '@features/user/components/Layout'
 import CurrencySelector from '@features/user/components/CurrencySelector'
+import { ROUTES } from '@constants'
 import { 
   WalletIcon, 
   ArrowUpIcon, 
@@ -231,7 +232,7 @@ export default function WalletIndex() {
             </h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <Link
-                to="/wallet/recharge"
+                to={ROUTES.user.walletRecharge}
                 className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-green-400 hover:bg-green-50 focus-within:ring-2 focus-within:ring-green-500 focus-within:ring-offset-2 transition-colors"
               >
                 <div className="flex-shrink-0">
@@ -247,7 +248,7 @@ export default function WalletIndex() {
               </Link>
 
               <Link
-                to="/wallet/withdraw"
+                to={ROUTES.user.walletWithdraw}
                 className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-red-400 hover:bg-red-50 focus-within:ring-2 focus-within:ring-red-500 focus-within:ring-offset-2 transition-colors"
               >
                 <div className="flex-shrink-0">
@@ -263,7 +264,7 @@ export default function WalletIndex() {
               </Link>
 
               <Link
-                to="/wallet/history"
+                to={ROUTES.user.walletHistory}
                 className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-blue-400 hover:bg-blue-50 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2 transition-colors"
               >
                 <div className="flex-shrink-0">
@@ -289,7 +290,7 @@ export default function WalletIndex() {
                 最近交易
               </h3>
               <Link
-                to="/wallet/history"
+                to={ROUTES.user.walletHistory}
                 className="text-sm font-medium text-blue-600 hover:text-blue-500"
               >
                 查看全部

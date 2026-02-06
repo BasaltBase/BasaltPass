@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import Layout from '@features/user/components/Layout'
 import CurrencySelector from '@features/user/components/CurrencySelector'
 import { PButton, PInput } from '@ui'
+import { ROUTES } from '@constants'
 import { 
   ArrowDownIcon,
   CreditCardIcon,
@@ -84,7 +85,7 @@ export default function Withdraw() {
       await withdraw(selectedCurrency.code, amountInSmallestUnit)
       setSuccess(true)
       setTimeout(() => {
-        navigate('/wallet')
+        navigate(ROUTES.user.wallet)
       }, 3000)
     } catch (e: any) {
       setError(e.response?.data?.error || '提现失败，请重试')
@@ -139,7 +140,7 @@ export default function Withdraw() {
           <PButton 
             variant="ghost"
             size="sm"
-            onClick={() => navigate('/wallet')}
+            onClick={() => navigate(ROUTES.user.wallet)}
             className="mr-4 p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
           >
             <ArrowLeftIcon className="h-5 w-5" />

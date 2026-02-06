@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import client from '@api/client'
+import { ROUTES } from '@constants'
 
 function EmailChangeCancel() {
   const [searchParams] = useSearchParams()
@@ -83,7 +84,7 @@ function EmailChangeCancel() {
               </div>
               <div className="mt-8">
                 <a
-                  href="/user/settings"
+                  href={ROUTES.user.settings}
                   className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
                   返回账户设置
@@ -129,13 +130,13 @@ function EmailChangeCancel() {
               </div>
               <div className="mt-8 space-y-4">
                 <a
-                  href="/user/settings"
+                  href={ROUTES.user.settings}
                   className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
                   返回账户设置
                 </a>
                 <a
-                  href="/login"
+                  href={ROUTES.user.login}
                   className="w-full flex justify-center py-2 px-4 border border-indigo-300 rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
                   返回登录

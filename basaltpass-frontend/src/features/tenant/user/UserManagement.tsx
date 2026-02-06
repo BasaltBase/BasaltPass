@@ -25,6 +25,8 @@ import { PInput, PSelect, PButton, PTextarea } from '@ui'
 import PTable, { PTableColumn } from '@ui/PTable'
 import { tenantAppApi } from '@api/tenant/tenantApp'
 import { appUserApi, type AppUserStats } from '@api/tenant/appUser'
+import useDebounce from '@hooks/useDebounce'
+import { ROUTES } from '@constants'
 import { 
   tenantUserManagementApi, 
   type TenantUser, 
@@ -54,6 +56,7 @@ export default function TenantUserManagement() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+  const debouncedSearchTerm = useDebounce(searchTerm, 200)
   const [statusFilter, setStatusFilter] = useState('')
   const [roleFilter, setRoleFilter] = useState('')
   const [activeTab, setActiveTab] = useState<'apps' | 'users'>('users')
@@ -108,7 +111,7 @@ export default function TenantUserManagement() {
     } else {
       fetchAppsWithUserStats()
     }
-  }, [activeTab, searchTerm, statusFilter, roleFilter])
+  }, [activeTab, debouncedSearchTerm, statusFilter, roleFilter])
 
   const fetchTenantUsers = async (page = 1, pageSize = 20) => {
     try {
@@ -116,7 +119,7 @@ export default function TenantUserManagement() {
       const response = await tenantUserManagementApi.getTenantUsers({
         page,
         limit: pageSize,
-        search: searchTerm,
+        search: debouncedSearchTerm,
         role: roleFilter,
         status: statusFilter
       })
@@ -249,9 +252,9 @@ export default function TenantUserManagement() {
   }
 
   const filteredApps = apps.filter(app => {
-    const matchesSearch = searchTerm === '' || 
-      app.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.description.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = debouncedSearchTerm === '' || 
+      app.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+      app.description.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
     
     const matchesStatus = statusFilter === '' || app.status === statusFilter
     
@@ -259,9 +262,9 @@ export default function TenantUserManagement() {
   })
 
   const filteredTenantUsers = tenantUsers.filter(user => {
-    const matchesSearch = searchTerm === '' || 
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.nickname.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = debouncedSearchTerm === '' || 
+      user.email.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+      user.nickname.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
     
     const matchesStatus = statusFilter === '' || user.status === statusFilter
     const matchesRole = roleFilter === '' || user.role === roleFilter
@@ -877,7 +880,7 @@ export default function TenantUserManagement() {
                   {!searchTerm && (
                     <div className="mt-6">
                       <Link
-                        to="/tenant/apps/new"
+                        to={ROUTES.tenant.appsNew}
                         className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
                       >
                         创建应用

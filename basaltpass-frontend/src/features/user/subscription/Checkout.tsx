@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '@features/user/components/Layout';
 import { PCard, PButton, PInput, PSelect } from '@ui';
 import { subscriptionAPI, Product, Price, CheckoutResponse } from '@api/subscription/subscription';
+import { ROUTES } from '@constants';
 
 const SubscriptionCheckout: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -275,7 +276,7 @@ const SubscriptionCheckout: React.FC = () => {
 
         <div className="mt-6 pt-6 border-t border-gray-200 flex gap-4">
           <PButton
-            onClick={() => navigate('/subscriptions')}
+            onClick={() => navigate(ROUTES.user.subscriptions)}
             variant="primary"
             className="flex-1"
           >

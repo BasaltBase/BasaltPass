@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { ROUTES } from '@constants'
 import client from '@api/client'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@contexts/AuthContext'
@@ -44,7 +45,7 @@ function Login() {
         setStep(2)
       } else if (res.data.access_token) {
         await login(res.data.access_token)
-        navigate('/dashboard')
+        navigate(ROUTES.user.dashboard)
       } else {
         setError('未知的登录响应')
       }
@@ -118,7 +119,7 @@ function Login() {
         try {
           const passkeyResult = await loginWithPasskeyFlow(identifier)
           await login(passkeyResult.access_token)
-          navigate('/dashboard')
+          navigate(ROUTES.user.dashboard)
           return // 直接返回，不需要调用verify-2fa API
         } catch (err: any) {
           setError(err.message || 'Passkey验证失败')
@@ -128,7 +129,7 @@ function Login() {
       }
       const res = await client.post('/api/v1/auth/verify-2fa', payload)
       await login(res.data.access_token)
-      navigate('/dashboard')
+      navigate(ROUTES.user.dashboard)
     } catch (err: any) {
       const message = err.response?.data?.error || err.message || '二次验证失败'
       setError(message)
@@ -319,7 +320,7 @@ function Login() {
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             或者{' '}
-            <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
+            <Link to={ROUTES.user.register} className="font-medium text-blue-600 hover:text-blue-500">
               创建新账户
             </Link>
           </p>

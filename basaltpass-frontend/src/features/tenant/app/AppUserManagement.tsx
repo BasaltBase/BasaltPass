@@ -21,6 +21,7 @@ import TenantLayout from '@features/tenant/components/TenantLayout'
 import { tenantAppApi } from '@api/tenant/tenantApp'
 import { appUserApi, type AppUser, type AppUsersResponse } from '@api/tenant/appUser'
 import { userPermissionsApi, type Permission, type Role, type UserPermission, type UserRole } from '@api/tenant/appPermissions'
+import useDebounce from '@hooks/useDebounce'
 
 export default function AppUserManagement() {
   const { id: appId } = useParams<{ id: string }>()
@@ -31,6 +32,7 @@ export default function AppUserManagement() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+  const debouncedSearchTerm = useDebounce(searchTerm, 200)
   const [statusFilter, setStatusFilter] = useState<string>('')
   const [currentPage, setCurrentPage] = useState(1)
   const [totalUsers, setTotalUsers] = useState(0)
@@ -327,9 +329,9 @@ export default function AppUserManagement() {
   }
 
   const filteredUsers = users.filter(user => 
-    searchTerm === '' || 
-    user.user_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (user.user_nickname && user.user_nickname.toLowerCase().includes(searchTerm.toLowerCase()))
+    debouncedSearchTerm === '' || 
+    user.user_email.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+    (user.user_nickname && user.user_nickname.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
   )
 
   const totalPages = Math.ceil(totalUsers / pageSize)

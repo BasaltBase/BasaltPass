@@ -5,6 +5,7 @@ import { listSubscriptions, cancelSubscription } from '@api/subscription/subscri
 import { SubscriptionResponse } from '@types/domain/subscription'
 import { Link } from 'react-router-dom'
 import { ChevronRightIcon, CubeIcon, WalletIcon, QuestionMarkCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
+import { ROUTES } from '@constants'
 
 export default function SubscriptionIndex() {
   const [subscriptions, setSubscriptions] = useState<SubscriptionResponse[]>([])
@@ -117,7 +118,7 @@ export default function SubscriptionIndex() {
               管理您的所有订阅，查看状态和账单信息
             </p>
           </div>
-          <Link to="/products">
+          <Link to={ROUTES.user.products}>
             <PButton variant="primary">
               <CubeIcon className="h-4 w-4 mr-2" />
               浏览产品
@@ -175,7 +176,7 @@ export default function SubscriptionIndex() {
           <h3 className="text-lg font-medium text-gray-900 mb-4">相关链接</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Link
-              to="/products"
+              to={ROUTES.user.products}
               className="flex items-center p-3 bg-white rounded-md shadow-sm hover:shadow-md transition-shadow"
             >
               <CubeIcon className="h-5 w-5 text-indigo-600 mr-3" />
@@ -185,7 +186,7 @@ export default function SubscriptionIndex() {
               </div>
             </Link>
             <Link
-              to="/wallet"
+              to={ROUTES.user.wallet}
               className="flex items-center p-3 bg-white rounded-md shadow-sm hover:shadow-md transition-shadow"
             >
               <WalletIcon className="h-5 w-5 text-green-600 mr-3" />
@@ -195,7 +196,7 @@ export default function SubscriptionIndex() {
               </div>
             </Link>
             <Link
-              to="/help"
+              to={ROUTES.user.help}
               className="flex items-center p-3 bg-white rounded-md shadow-sm hover:shadow-md transition-shadow"
             >
               <QuestionMarkCircleIcon className="h-5 w-5 text-blue-600 mr-3" />

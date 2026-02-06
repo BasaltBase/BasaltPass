@@ -16,6 +16,7 @@ import {
   RocketLaunchIcon,
   CurrencyDollarIcon
 } from '@heroicons/react/24/outline'
+import { ROUTES } from '@constants'
 
 interface NavigationItem {
   name: string
@@ -28,46 +29,46 @@ interface NavigationItem {
 const navigation: NavigationItem[] = [
   {
     name: '仪表板',
-    href: '/tenant/dashboard',
+    href: ROUTES.tenant.dashboard,
     icon: ChartBarIcon,
   },
   {
     name: '租户信息',
-    href: '/tenant/info',
+    href: ROUTES.tenant.info,
     icon: InformationCircleIcon,
   },
   {
     name: '应用管理',
     icon: CubeIcon,
     children: [
-      { name: '我的应用', href: '/tenant/apps', icon: CubeIcon },
-      { name: 'OAuth客户端', href: '/tenant/oauth/clients', icon: KeyIcon },
+      { name: '我的应用', href: ROUTES.tenant.apps, icon: CubeIcon },
+      { name: 'OAuth客户端', href: ROUTES.tenant.oauthClients, icon: KeyIcon },
     ]
   },
   {
     name: '用户管理',
     icon: UsersIcon,
     children: [
-      { name: '用户列表', href: '/tenant/users', icon: UsersIcon },
-      { name: '角色管理', href: '/tenant/roles', icon: KeyIcon },
-      { name: '权限管理', href: '/tenant/permissions', icon: KeyIcon },
+      { name: '用户列表', href: ROUTES.tenant.users, icon: UsersIcon },
+      { name: '角色管理', href: ROUTES.tenant.roles, icon: KeyIcon },
+      { name: '权限管理', href: ROUTES.tenant.permissions, icon: KeyIcon },
     ]
   },
   {
     name: '通知管理',
-    href: '/tenant/notifications',
+    href: ROUTES.tenant.notifications,
     icon: BellIcon,
   },
   {
     name: '订阅管理',
     icon: CreditCardIcon,
     children: [
-      { name: '订阅概览', href: '/tenant/subscriptions', icon: ChartBarIcon },
-      { name: '产品管理', href: '/tenant/subscriptions/products', icon: CubeIcon },
-      { name: '套餐管理', href: '/tenant/plans', icon: RocketLaunchIcon },
-      { name: '定价管理', href: '/tenant/prices', icon: CurrencyDollarIcon },
-      { name: '优惠券管理', href: '/tenant/coupons', icon: GiftIcon },
-      { name: '状态管理', href: '/tenant/subscription-status', icon: CreditCardIcon },
+      { name: '订阅概览', href: ROUTES.tenant.subscriptions, icon: ChartBarIcon },
+      { name: '产品管理', href: ROUTES.tenant.subscriptionProducts, icon: CubeIcon },
+      { name: '套餐管理', href: ROUTES.tenant.plans, icon: RocketLaunchIcon },
+      { name: '定价管理', href: ROUTES.tenant.prices, icon: CurrencyDollarIcon },
+      { name: '优惠券管理', href: ROUTES.tenant.coupons, icon: GiftIcon },
+      { name: '状态管理', href: ROUTES.tenant.subscriptionStatus, icon: CreditCardIcon },
     ]
   },
 ]

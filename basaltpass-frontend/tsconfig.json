@@ -29,6 +29,7 @@
       "@ui/*": ["src/shared/ui/*"],
       "@routes/*": ["src/shared/routes/*"],
       "@hooks/*": ["src/shared/hooks/*"],
+      "@constants": ["src/shared/constants/index.ts"],
       "@constants/*": ["src/shared/constants/*"]
     }
   },

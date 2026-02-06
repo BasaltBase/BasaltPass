@@ -2,6 +2,7 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import Layout from '@features/user/components/Layout'
 import { PCard, PButton } from '@ui'
+import { ROUTES } from '@constants'
 import { 
   ArrowLeftIcon, 
   CodeBracketIcon, 
@@ -73,7 +74,7 @@ const About: React.FC = () => {
       <div className="max-w-6xl mx-auto space-y-8">
         {/* 返回按钮 */}
         <div className="flex items-center">
-          <Link to="/dashboard">
+          <Link to={ROUTES.user.dashboard}>
             <PButton variant="secondary">
               <ArrowLeftIcon className="w-4 h-4 mr-2" />
               返回仪表板

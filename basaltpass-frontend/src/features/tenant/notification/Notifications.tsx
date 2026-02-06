@@ -18,6 +18,7 @@ import {
   tenantNotificationApi
 } from '@api/tenant/notification';
 import TenantLayout from '@features/tenant/components/TenantLayout';
+import useDebounce from '@hooks/useDebounce';
 
 const TenantNotifications: React.FC = () => {
   const [notifications, setNotifications] = useState<TenantNotification[]>([]);
@@ -33,6 +34,7 @@ const TenantNotifications: React.FC = () => {
 
   // 用户搜索相关状态
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [searchResults, setSearchResults] = useState<TenantUser[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
@@ -172,17 +174,13 @@ const TenantNotifications: React.FC = () => {
 
   // 搜索防抖效果
   useEffect(() => {
-    if (searchTerm.trim()) {
-      const timeoutId = setTimeout(() => {
-        searchUsers(searchTerm);
-      }, 300);
-      
-      return () => clearTimeout(timeoutId);
+    if (debouncedSearchTerm.trim()) {
+      searchUsers(debouncedSearchTerm);
     } else {
       setSearchResults([]);
       setShowSearchResults(false);
     }
-  }, [searchTerm]);
+  }, [debouncedSearchTerm]);
 
   // 创建通知
   const handleCreate = async (e: React.FormEvent) => {

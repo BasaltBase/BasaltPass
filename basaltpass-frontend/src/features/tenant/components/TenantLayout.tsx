@@ -64,7 +64,7 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 justify-between items-center">
             <div className="flex items-center">
-              <Link to="/tenant/dashboard" className="flex items-center">
+              <Link to={ROUTES.tenant.dashboard} className="flex items-center">
                 <div className="h-8 w-8 bg-purple-600 rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-lg">T</span>
                 </div>

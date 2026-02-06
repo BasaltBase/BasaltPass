@@ -17,6 +17,7 @@ import {
   CreateTenantCouponRequest,
   UpdateTenantCouponRequest,
 } from '@api/tenant/subscription'
+import { ROUTES } from '@constants'
 
 export default function TenantCoupons() {
   const [searchParams] = useSearchParams()
@@ -187,7 +188,7 @@ export default function TenantCoupons() {
               <nav className="flex" aria-label="Breadcrumb">
                 <ol className="flex items-center space-x-2">
                   <li>
-                    <Link to="/tenant/subscriptions" className="text-gray-400 hover:text-gray-500">
+                    <Link to={ROUTES.tenant.subscriptions} className="text-gray-400 hover:text-gray-500">
                       订阅管理
                     </Link>
                   </li>

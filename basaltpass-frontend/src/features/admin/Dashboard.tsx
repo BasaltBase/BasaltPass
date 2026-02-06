@@ -18,6 +18,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { getDashboardStats, getRecentActivities } from '@api/admin/admin'
 import AdminLayout from '@features/admin/components/AdminLayout'
+import { ROUTES } from '@constants'
 
 interface DashboardStats {
   totalUsers: number
@@ -443,7 +444,7 @@ export default function AdminDashboard() {
               </div>
               <div className="mt-6">
                 <Link
-                  to="/admin/logs"
+                  to={ROUTES.admin.logs}
                   className="text-sm text-indigo-600 hover:text-indigo-500 font-medium"
                 >
                   查看所有活动 →

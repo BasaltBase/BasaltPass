@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import Layout from '@features/user/components/Layout'
 import CurrencySelector from '@features/user/components/CurrencySelector'
 import { PInput, PButton } from '@ui'
+import { ROUTES } from '@constants'
 import { 
   ArrowUpIcon,
   CreditCardIcon,
@@ -99,7 +100,7 @@ export default function Recharge() {
       await recharge(selectedCurrency.code, amountInSmallestUnit)
       setSuccess(true)
       setTimeout(() => {
-        navigate('/wallet')
+        navigate(ROUTES.user.wallet)
       }, 2000)
     } catch (e: any) {
       setError(e.response?.data?.error || '充值失败，请重试')
@@ -138,7 +139,7 @@ export default function Recharge() {
         {/* 页面标题 */}
         <div className="flex items-center">
           <PButton 
-            onClick={() => navigate('/wallet')}
+            onClick={() => navigate(ROUTES.user.wallet)}
             variant="ghost"
             size="sm"
             className="mr-2"

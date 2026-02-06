@@ -17,6 +17,7 @@ import PSelect from '@ui/PSelect';
 import PButton from '@ui/PButton';
 import PTextarea from '@ui/PTextarea';
 import PTable, { PTableColumn, PTableAction } from '@ui/PTable';
+import useDebounce from '@hooks/useDebounce';
 
 interface PlanManagementProps {}
 
@@ -25,6 +26,7 @@ const PlanManagement: React.FC<PlanManagementProps> = () => {
   const [products, setProducts] = useState<tenantSubscriptionAPI.TenantProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 200);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingPlan, setEditingPlan] = useState<tenantSubscriptionAPI.TenantPlan | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<string>('all');
@@ -51,8 +53,8 @@ const PlanManagement: React.FC<PlanManagementProps> = () => {
   };
 
   const filteredPlans = plans.filter(plan => {
-    const matchesSearch = plan.DisplayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         plan.Code.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = plan.DisplayName.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+                         plan.Code.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
     const matchesProduct = selectedProduct === 'all' || plan.ProductID.toString() === selectedProduct;
     return matchesSearch && matchesProduct;
   });

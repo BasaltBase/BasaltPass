@@ -21,6 +21,7 @@ import {
   updateTenantCoupon, 
   deleteTenantCoupon 
 } from '@api/tenant/subscription';
+import useDebounce from '@hooks/useDebounce';
 
 interface CouponManagementProps {}
 
@@ -28,6 +29,7 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
   const [coupons, setCoupons] = useState<tenantSubscriptionAPI.TenantCoupon[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 200);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState<tenantSubscriptionAPI.TenantCoupon | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -55,8 +57,8 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
   };
 
   const filteredCoupons = coupons.filter(coupon => {
-    const matchesSearch = (coupon.Code || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (coupon.Name || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (coupon.Code || '').toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+                         (coupon.Name || '').toLowerCase().includes(debouncedSearchTerm.toLowerCase());
     
     const matchesStatus = filterStatus === 'all' || 
                          (filterStatus === 'active' && coupon.IsActive && !isExpired(coupon)) ||

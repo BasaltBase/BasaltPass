@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { ROUTES } from '@constants'
 import client from '@api/client'
 import { useNavigate } from 'react-router-dom'
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
@@ -147,7 +148,7 @@ function Register() {
             </p>
             <div className="mt-6">
               <PButton
-                onClick={() => navigate('/login')}
+                onClick={() => navigate(ROUTES.user.login)}
                 variant="gradient"
                 fullWidth
               >
@@ -253,7 +254,7 @@ function Register() {
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             或者{' '}
-            <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
+            <Link to={ROUTES.user.login} className="font-medium text-blue-600 hover:text-blue-500">
               登录现有账户
             </Link>
           </p>

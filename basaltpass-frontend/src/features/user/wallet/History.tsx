@@ -3,6 +3,8 @@ import { history } from '@api/user/wallet'
 import { Link } from 'react-router-dom'
 import Layout from '@features/user/components/Layout'
 import { PInput, PSelect } from '@ui'
+import useDebounce from '@hooks/useDebounce'
+import { ROUTES } from '@constants'
 import { 
   ClockIcon,
   ArrowUpIcon,
@@ -29,6 +31,7 @@ export default function History() {
   const [isLoading, setIsLoading] = useState(true)
   const [filter, setFilter] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
+  const debouncedSearchTerm = useDebounce(searchTerm, 200)
 
   useEffect(() => {
     history('USD').then((res) => {
@@ -77,9 +80,9 @@ export default function History() {
 
   const filteredTxs = txs.filter(tx => {
     const matchesFilter = filter === 'all' || tx.Type === filter
-    const matchesSearch = searchTerm === '' || 
-      tx.ID.toString().includes(searchTerm) ||
-      (tx.Status && tx.Status.toLowerCase().includes(searchTerm.toLowerCase()))
+    const matchesSearch = debouncedSearchTerm === '' || 
+      tx.ID.toString().includes(debouncedSearchTerm) ||
+      (tx.Status && tx.Status.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
     return matchesFilter && matchesSearch
   })
 
@@ -153,7 +156,7 @@ export default function History() {
         {/* 页面标题 */}
         <div className="flex items-center">
           <Link 
-            to="/wallet" 
+            to={ROUTES.user.wallet} 
             className="mr-4 p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
           >
             <ArrowLeftIcon className="h-5 w-5" />
@@ -343,7 +346,7 @@ export default function History() {
             </h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Link
-                to="/wallet/recharge"
+                to={ROUTES.user.walletRecharge}
                 className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-green-400 hover:bg-green-50 focus-within:ring-2 focus-within:ring-green-500 focus-within:ring-offset-2 transition-colors"
               >
                 <div className="flex-shrink-0">
@@ -359,7 +362,7 @@ export default function History() {
               </Link>
 
               <Link
-                to="/wallet/withdraw"
+                to={ROUTES.user.walletWithdraw}
                 className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-red-400 hover:bg-red-50 focus-within:ring-2 focus-within:ring-red-500 focus-within:ring-offset-2 transition-colors"
               >
                 <div className="flex-shrink-0">

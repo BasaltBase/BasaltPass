@@ -13,6 +13,7 @@ import {
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { PInput, PSelect, PTextarea, PCheckbox, PButton } from '@ui'
 import { adminTenantApi, AdminTenantDetailResponse, AdminUpdateTenantRequest, TenantSettings } from '@api/admin/tenant'
+import { ROUTES } from '@constants'
 
 const EditTenant: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -167,7 +168,7 @@ const EditTenant: React.FC = () => {
           <h3 className="mt-2 text-sm font-medium text-gray-900">租户不存在</h3>
           <p className="mt-1 text-sm text-gray-500">请检查租户ID是否正确</p>
           <div className="mt-6">
-            <PButton onClick={() => navigate('/admin/tenants')}>
+            <PButton onClick={() => navigate(ROUTES.admin.tenants)}>
               返回租户列表
             </PButton>
           </div>

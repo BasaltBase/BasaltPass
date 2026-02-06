@@ -21,6 +21,7 @@ import AdminLayout from '@features/admin/components/AdminLayout'
 import { PInput, PButton, PCheckbox } from '@ui'
 import PTable, { PTableColumn } from '@ui/PTable'
 import PSelect from '@ui/PSelect'
+import { ROUTES } from '@constants'
 
 export default function Users() {
   const [users, setUsers] = useState<AdminUser[]>([])
@@ -188,7 +189,7 @@ export default function Users() {
         <nav className="flex" aria-label="Breadcrumb">
           <ol className="flex items-center space-x-4">
             <li>
-              <Link to="/admin/dashboard" className="text-gray-400 hover:text-gray-500">
+              <Link to={ROUTES.admin.dashboard} className="text-gray-400 hover:text-gray-500">
                 仪表板
               </Link>
             </li>

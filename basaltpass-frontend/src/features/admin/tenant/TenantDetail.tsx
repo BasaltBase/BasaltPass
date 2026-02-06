@@ -16,6 +16,7 @@ import {
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { PInput, PSelect, PTextarea, PCheckbox, PButton } from '@ui'
 import { adminTenantApi, AdminTenantDetailResponse, AdminUpdateTenantRequest, TenantSettings } from '@api/admin/tenant'
+import { ROUTES } from '@constants'
 
 const TenantDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -131,7 +132,7 @@ const TenantDetail: React.FC = () => {
       await adminTenantApi.deleteTenant(parseInt(id))
       
       // 删除成功后跳转到列表页
-      navigate('/admin/tenants', { 
+      navigate(ROUTES.admin.tenants, { 
         state: { message: '租户删除成功！' }
       })
     } catch (err: any) {
@@ -202,7 +203,7 @@ const TenantDetail: React.FC = () => {
           <h3 className="mt-2 text-sm font-medium text-gray-900">租户不存在</h3>
           <p className="mt-1 text-sm text-gray-500">请检查租户ID是否正确</p>
           <div className="mt-6">
-            <PButton onClick={() => navigate('/admin/tenants')}>
+            <PButton onClick={() => navigate(ROUTES.admin.tenants)}>
               返回租户列表
             </PButton>
           </div>
@@ -223,9 +224,7 @@ const TenantDetail: React.FC = () => {
               </div>
               <div className="ml-3">
                 <h3 className="text-sm font-medium text-red-800">操作失败</h3>
-                <div className="mt-2 text-sm text-red-700">
-                  <p>{error}</p>
-                </div>
+                <div className="mt-1 text-sm text-red-700">{error}</div>
               </div>
             </div>
           </div>

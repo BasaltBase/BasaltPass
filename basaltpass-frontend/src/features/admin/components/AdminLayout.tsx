@@ -63,7 +63,7 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 justify-between items-center">
             <div className="flex items-center">
-              <Link to="/admin/dashboard" className="flex items-center">
+              <Link to={ROUTES.admin.dashboard} className="flex items-center">
                 <div className="h-8 w-8 bg-indigo-600 rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-lg">B</span>
                 </div>
@@ -159,7 +159,7 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
                     </a>
                     
                     <Link
-                      to="/admin/settings"
+                      to={ROUTES.admin.settings.general}
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       onClick={() => setIsUserMenuOpen(false)}
                     >

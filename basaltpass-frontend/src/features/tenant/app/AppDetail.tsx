@@ -19,6 +19,7 @@ import {
 } from '@heroicons/react/24/outline'
 import TenantLayout from '@features/tenant/components/TenantLayout'
 import { tenantAppApi, TenantApp } from '@api/tenant/tenantApp'
+import { ROUTES } from '@constants'
 
 export default function AppDetail() {
   const { id } = useParams<{ id: string }>()
@@ -129,7 +130,7 @@ export default function AppDetail() {
             <h3 className="mt-2 text-sm font-medium text-gray-900">应用不存在</h3>
             <div className="mt-6">
               <Link
-                to="/tenant/apps"
+                to={ROUTES.tenant.apps}
                 className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
               >
                 返回应用列表
@@ -146,7 +147,7 @@ export default function AppDetail() {
       <div className="space-y-6">
         {/* 面包屑导航 */}
         <button
-          onClick={() => navigate('/tenant/apps')}
+          onClick={() => navigate(ROUTES.tenant.apps)}
           className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-700"
         >
           <ArrowLeftIcon className="h-4 w-4 mr-2" />

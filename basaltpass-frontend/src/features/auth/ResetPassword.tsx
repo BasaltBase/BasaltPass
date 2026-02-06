@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import client from '@api/client'
 import { PInput, PButton } from '@ui'
+import { ROUTES } from '@constants'
 
 function ResetPassword() {
   const navigate = useNavigate()
@@ -48,7 +49,7 @@ function ResetPassword() {
         new_password: newPassword
       })
       setSuccess('密码重置成功！正在跳转到登录页面...')
-      setTimeout(() => navigate('/login'), 2000)
+      setTimeout(() => navigate(ROUTES.user.login), 2000)
     } catch (err: any) {
       setError(err.response?.data?.error || '重置失败')
     } finally {
@@ -115,7 +116,7 @@ function ResetPassword() {
               <div className="text-center">
                 <button
                   type="button"
-                  onClick={() => navigate('/login')}
+                  onClick={() => navigate(ROUTES.user.login)}
                   className="text-sm text-indigo-600 hover:text-indigo-500"
                 >
                   返回登录

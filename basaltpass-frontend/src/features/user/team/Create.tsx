@@ -4,6 +4,7 @@ import Layout from '@features/user/components/Layout';
 import { PCard, PButton, PInput } from '@ui';
 import { teamApi, CreateTeamRequest } from '@api/user/team';
 import { UserGroupIcon, DocumentTextIcon, PhotoIcon } from '@heroicons/react/24/outline';
+import { ROUTES } from '@constants';
 
 const CreateTeam: React.FC = () => {
   const navigate = useNavigate();
@@ -38,7 +39,7 @@ const CreateTeam: React.FC = () => {
       await teamApi.createTeam(formData);
       
       // 创建成功后跳转到团队列表
-      navigate('/teams', { 
+      navigate(ROUTES.user.teams, { 
         state: { message: '团队创建成功！' }
       });
     } catch (err: any) {
@@ -137,7 +138,7 @@ const CreateTeam: React.FC = () => {
               <PButton
                 type="button"
                 variant="secondary"
-                onClick={() => navigate('/teams')}
+                onClick={() => navigate(ROUTES.user.teams)}
                 size="lg"
               >
                 取消

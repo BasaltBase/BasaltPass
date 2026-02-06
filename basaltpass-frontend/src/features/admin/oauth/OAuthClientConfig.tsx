@@ -12,6 +12,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { appApi, OAuthClientInfo, CreateOAuthClientRequest, UpdateOAuthClientRequest } from '@api/admin/app'
 import AdminLayout from '@features/admin/components/AdminLayout'
+import { ROUTES } from '@constants'
 
 export default function OAuthClientConfig() {
   const { appId } = useParams<{ appId: string }>()
@@ -187,7 +188,7 @@ export default function OAuthClientConfig() {
       <div className="space-y-6">
         {/* 面包屑导航 */}
         <button
-          onClick={() => navigate('/admin/apps')}
+          onClick={() => navigate(ROUTES.admin.apps)}
           className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-700"
         >
           <ArrowLeftIcon className="h-4 w-4 mr-2" />
@@ -456,7 +457,7 @@ export default function OAuthClientConfig() {
               <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3">
                 <button
                   type="button"
-                  onClick={() => navigate('/admin/apps')}
+                  onClick={() => navigate(ROUTES.admin.apps)}
                   className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
                   取消

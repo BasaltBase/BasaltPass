@@ -19,6 +19,7 @@ import PButton from '@ui/PButton'
 import PTable, { type PTableColumn, type PTableAction } from '@ui/PTable'
 import { tenantAppApi } from '@api/tenant/tenantApp'
 import userPermissionsApi, { type Permission } from '@api/tenant/appPermissions'
+import useDebounce from '@hooks/useDebounce'
 
 export default function AppPermissionManagement() {
   const { id: appId } = useParams<{ id: string }>()
@@ -29,6 +30,7 @@ export default function AppPermissionManagement() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+  const debouncedSearchTerm = useDebounce(searchTerm, 200)
   const [selectedCategory, setSelectedCategory] = useState('')
   
   // 模态框状态
@@ -157,10 +159,10 @@ export default function AppPermissionManagement() {
 
   // 过滤权限
   const filteredPermissions = permissions.filter(permission => {
-    const matchesSearch = searchTerm === '' ||
-      permission.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      permission.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (permission.description && permission.description.toLowerCase().includes(searchTerm.toLowerCase()))
+    const matchesSearch = debouncedSearchTerm === '' ||
+      permission.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+      permission.code.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+      (permission.description && permission.description.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
       
     const matchesCategory = selectedCategory === '' || permission.category === selectedCategory
     

@@ -13,6 +13,7 @@ import {
 import TenantLayout from '@features/tenant/components/TenantLayout'
 import { tenantAppApi } from '@api/tenant/tenantApp'
 import { userPermissionsApi, type Permission, type Role } from '@api/tenant/appPermissions'
+import useDebounce from '@hooks/useDebounce'
 
 export default function AppRoleManagement() {
   const { id: appId } = useParams<{ id: string }>()
@@ -24,6 +25,7 @@ export default function AppRoleManagement() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+  const debouncedSearchTerm = useDebounce(searchTerm, 200)
   
   // 模态框状态
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -148,10 +150,10 @@ export default function AppRoleManagement() {
   }
 
   const filteredRoles = roles.filter(role =>
-    searchTerm === '' ||
-    role.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    role.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (role.description && role.description.toLowerCase().includes(searchTerm.toLowerCase()))
+    debouncedSearchTerm === '' ||
+    role.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+    role.code.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+    (role.description && role.description.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
   )
 
   const getPermissionsByCategory = () => {

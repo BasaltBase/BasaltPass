@@ -16,6 +16,7 @@ import PInput from '@ui/PInput'
 import PSelect from '@ui/PSelect'
 import PButton from '@ui/PButton'
 import PTable, { PTableColumn } from '@ui/PTable'
+import { ROUTES } from '@constants'
 
 export default function TenantInvoices() {
   const [searchParams] = useSearchParams()
@@ -134,7 +135,7 @@ export default function TenantInvoices() {
               <nav className="flex" aria-label="Breadcrumb">
                 <ol className="flex items-center space-x-2">
                   <li>
-                    <Link to="/tenant/subscriptions" className="text-gray-400 hover:text-gray-500">
+                    <Link to={ROUTES.tenant.subscriptions} className="text-gray-400 hover:text-gray-500">
                       订阅管理
                     </Link>
                   </li>

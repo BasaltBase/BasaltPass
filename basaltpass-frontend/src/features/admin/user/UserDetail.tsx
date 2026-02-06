@@ -22,6 +22,7 @@ import {
 } from '@heroicons/react/24/outline'
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { listRoles, type AdminRole } from '@api/admin/roles'
+import { ROUTES } from '@constants'
 
 export default function UserDetail() {
   const { id } = useParams<{ id: string }>()
@@ -104,7 +105,7 @@ export default function UserDetail() {
     
     try {
       await adminUserApi.deleteUser(user.id)
-      navigate('/admin/users')
+      navigate(ROUTES.admin.users)
     } catch (error) {
       console.error('删除用户失败:', error)
     }
@@ -151,14 +152,14 @@ export default function UserDetail() {
         <nav className="flex" aria-label="Breadcrumb">
           <ol className="flex items-center space-x-4">
             <li>
-              <Link to="/admin/dashboard" className="text-gray-400 hover:text-gray-500">
+              <Link to={ROUTES.admin.dashboard} className="text-gray-400 hover:text-gray-500">
                 仪表板
               </Link>
             </li>
             <li>
               <div className="flex items-center">
                 <ChevronRightIcon className="flex-shrink-0 h-5 w-5 text-gray-400" />
-                <Link to="/admin/users" className="ml-4 text-gray-400 hover:text-gray-500">
+                <Link to={ROUTES.admin.users} className="ml-4 text-gray-400 hover:text-gray-500">
                   用户管理
                 </Link>
               </div>

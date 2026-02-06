@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { paymentAPI, CreatePaymentIntentRequest, PaymentIntent, MockStripeResponse } from '@api/subscription/payment/payment';
 import { getBalance } from '@api/user/wallet';
 import { PSelect, PInput, PButton } from '@ui';
+import { ROUTES } from '@constants';
 
 const Payment: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -210,7 +211,7 @@ const Payment: React.FC = () => {
         <div className="mt-6 pt-6 border-t border-gray-200">
           <PButton
             variant="ghost"
-            onClick={() => navigate('/wallet')}
+            onClick={() => navigate(ROUTES.user.wallet)}
           >
             ← 返回钱包
           </PButton>

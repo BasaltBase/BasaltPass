@@ -3,6 +3,7 @@ import { setup2FA, verify2FA } from '@api/user/security'
 import { Link } from 'react-router-dom'
 import Layout from '@features/user/components/Layout'
 import { PInput, PButton } from '@ui'
+import { ROUTES } from '@constants'
 import { 
   ShieldCheckIcon,
   QrCodeIcon,
@@ -79,7 +80,7 @@ export default function TwoFA() {
           {/* 页面标题 */}
           <div className="flex items-center">
             <Link 
-              to="/security" 
+              to={ROUTES.user.security} 
               className="mr-4 p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
             >
               <ArrowLeftIcon className="h-5 w-5" />
@@ -131,7 +132,7 @@ export default function TwoFA() {
                 </p>
                 <div className="space-y-3">
                   <Link
-                    to="/security"
+                    to={ROUTES.user.security}
                     className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   >
                     返回安全设置

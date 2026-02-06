@@ -12,6 +12,7 @@ import {
 } from '@heroicons/react/24/outline'
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { Link } from 'react-router-dom'
+import { ROUTES } from '@constants'
 
 const AdminNotifications: React.FC = () => {
   const [notifications, setNotifications] = useState<TenantNotification[]>([])
@@ -127,7 +128,7 @@ const AdminNotifications: React.FC = () => {
         <nav className="flex" aria-label="Breadcrumb">
           <ol className="flex items-center space-x-4">
             <li>
-              <Link to="/dashboard" className="text-gray-400 hover:text-gray-500">
+              <Link to={ROUTES.admin.dashboard} className="text-gray-400 hover:text-gray-500">
                 仪表板
               </Link>
             </li>

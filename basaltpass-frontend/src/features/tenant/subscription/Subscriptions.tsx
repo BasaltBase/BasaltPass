@@ -16,11 +16,14 @@ import {
   getTenantUserSubscription,
 } from '@api/tenant/subscription'
 import { PInput, PSelect, PButton, PTextarea } from '@ui'
+import useDebounce from '@hooks/useDebounce'
+import { ROUTES } from '@constants'
 
 export default function TenantSubscriptions() {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const debouncedSearchTerm = useDebounce(searchTerm, 200)
   const [statusFilter, setStatusFilter] = useState<string>('')
   const [showCancelModal, setShowCancelModal] = useState(false)
   const [cancelTarget, setCancelTarget] = useState<Subscription | null>(null)
@@ -74,8 +77,8 @@ export default function TenantSubscriptions() {
   }
 
   const filteredSubscriptions = subscriptions.filter(subscription => {
-    if (!searchTerm) return true
-    const searchLower = searchTerm.toLowerCase()
+    if (!debouncedSearchTerm) return true
+    const searchLower = debouncedSearchTerm.toLowerCase()
     return (
       subscription.ID.toString().includes(searchLower) ||
       subscription.UserID.toString().includes(searchLower) ||
@@ -138,7 +141,7 @@ export default function TenantSubscriptions() {
           <ol className="inline-flex items-center space-x-1 md:space-x-3">
             <li className="inline-flex items-center">
               <Link
-                to="/tenant/subscriptions"
+                to={ROUTES.tenant.subscriptions}
                 className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600"
               >
                 订阅系统

@@ -19,6 +19,7 @@ import {
   ShoppingCartIcon,
   EnvelopeIcon
 } from '@heroicons/react/24/outline'
+import { ROUTES } from '@constants'
 
 interface NavigationItem {
   name: string
@@ -31,92 +32,92 @@ interface NavigationItem {
 const navigation: NavigationItem[] = [
   {
     name: '仪表板',
-    href: '/admin/dashboard',
+    href: ROUTES.admin.dashboard,
     icon: BuildingOfficeIcon,
   },
   {
     name: '通知管理',
-    href: '/admin/notifications',
+    href: ROUTES.admin.notifications,
     icon: BellIcon,
   },
   {
     name: '用户管理',
     icon: UsersIcon,
     children: [
-      { name: '用户列表', href: '/admin/users', icon: UsersIcon },
+      { name: '用户列表', href: ROUTES.admin.users, icon: UsersIcon },
     ]
   },
     {
     name: '协作管理',
     icon: UsersIcon,
     children: [
-      { name: '团队管理', href: '/admin/teams', icon: UsersIcon },
-      { name: '邀请管理', href: '/admin/invitations', icon: UserGroupIcon },
+      { name: '团队管理', href: ROUTES.admin.teams, icon: UsersIcon },
+      { name: '邀请管理', href: ROUTES.admin.invitations, icon: UserGroupIcon },
     ]
   },
   {
     name: '平台管理',
     icon: Cog6ToothIcon,
     children: [
-      { name: '租户管理', href: '/admin/tenants', icon: BuildingOfficeIcon },
-      { name: 'OAuth客户端', href: '/admin/oauth-clients', icon: KeyIcon },
+      { name: '租户管理', href: ROUTES.admin.tenants, icon: BuildingOfficeIcon },
+      { name: 'OAuth客户端', href: ROUTES.admin.oauthClients, icon: KeyIcon },
     ]
   },
   {
     name: '系统角色与权限',
     icon: KeyIcon,
     children: [
-      { name: '角色管理', href: '/admin/roles', icon: KeyIcon },
-      { name: '权限管理', href: '/admin/permissions', icon: KeyIcon },
+      { name: '角色管理', href: ROUTES.admin.roles, icon: KeyIcon },
+      { name: '权限管理', href: ROUTES.admin.permissions, icon: KeyIcon },
     ]
   },
   {
     name: '订阅与支付',
     icon: CreditCardIcon,
     children: [
-      { name: '订阅管理', href: '/admin/subscriptions', icon: CreditCardIcon },
-      { name: '产品管理', href: '/admin/products', icon: ShoppingCartIcon },
-      { name: '套餐管理', href: '/admin/plans', icon: GiftIcon },
-      { name: '定价管理', href: '/admin/prices', icon: CurrencyDollarIcon },
-      { name: '优惠券管理', href: '/admin/coupons', icon: TagIcon },
+      { name: '订阅管理', href: ROUTES.admin.subscriptions, icon: CreditCardIcon },
+      { name: '产品管理', href: ROUTES.admin.products, icon: ShoppingCartIcon },
+      { name: '套餐管理', href: ROUTES.admin.plans, icon: GiftIcon },
+      { name: '定价管理', href: ROUTES.admin.prices, icon: CurrencyDollarIcon },
+      { name: '优惠券管理', href: ROUTES.admin.coupons, icon: TagIcon },
     ]
   },
   {
     name: '钱包管理',
     icon: WalletIcon,
     children: [
-      { name: '钱包总览', href: '/admin/wallets', icon: WalletIcon },
+      { name: '钱包总览', href: ROUTES.admin.wallets, icon: WalletIcon },
     ]
   },
   {
     name: '系统管理',
     icon: Cog6ToothIcon,
     children: [
-      { name: '通用设置', href: '/admin/settings/general', icon: Cog6ToothIcon },
-      { name: '认证设置', href: '/admin/settings/auth', icon: KeyIcon },
-      { name: '安全设置', href: '/admin/settings/security', icon: KeyIcon },
-      { name: 'CORS设置', href: '/admin/settings/cors', icon: Cog6ToothIcon },
-      { name: 'OAuth设置', href: '/admin/settings/oauth', icon: KeyIcon },
-      { name: '邮件设置', href: '/admin/settings/email', icon: EnvelopeIcon },
-      { name: 'SMTP设置', href: '/admin/settings/smtp', icon: EnvelopeIcon },
-      { name: '邮件中心', href: '/admin/email/test', icon: EnvelopeIcon },
-      { name: '日志设置', href: '/admin/settings/logging', icon: DocumentTextIcon },
-      { name: '审计日志', href: '/admin/logs', icon: DocumentTextIcon },
-      { name: '会话设置', href: '/admin/settings/session', icon: Cog6ToothIcon },
-      { name: '外观品牌', href: '/admin/settings/ui', icon: Cog6ToothIcon },
-      { name: '上传设置', href: '/admin/settings/uploads', icon: Cog6ToothIcon },
-      { name: '通知设置', href: '/admin/settings/notifications', icon: BellIcon },
-      { name: 'JWT设置', href: '/admin/settings/jwt', icon: KeyIcon },
-      { name: '缓存设置', href: '/admin/settings/cache', icon: Cog6ToothIcon },
-      { name: '存储设置', href: '/admin/settings/storage', icon: Cog6ToothIcon },
-      { name: '计费订阅', href: '/admin/settings/billing', icon: CreditCardIcon },
-      { name: '特性开关', href: '/admin/settings/features', icon: Cog6ToothIcon },
-      { name: '维护模式', href: '/admin/settings/maintenance', icon: Cog6ToothIcon },
-      { name: '统计分析', href: '/admin/settings/analytics', icon: Cog6ToothIcon },
-      { name: '验证码', href: '/admin/settings/captcha', icon: Cog6ToothIcon },
-      { name: 'Webhooks', href: '/admin/settings/webhooks', icon: Cog6ToothIcon },
-      { name: '审计设置', href: '/admin/settings/audit', icon: DocumentTextIcon },
-      { name: '分页设置', href: '/admin/settings/pagination', icon: Cog6ToothIcon },
+      { name: '通用设置', href: ROUTES.admin.settings.general, icon: Cog6ToothIcon },
+      { name: '认证设置', href: ROUTES.admin.settings.auth, icon: KeyIcon },
+      { name: '安全设置', href: ROUTES.admin.settings.security, icon: KeyIcon },
+      { name: 'CORS设置', href: ROUTES.admin.settings.cors, icon: Cog6ToothIcon },
+      { name: 'OAuth设置', href: ROUTES.admin.settings.oauth, icon: KeyIcon },
+      { name: '邮件设置', href: ROUTES.admin.settings.email, icon: EnvelopeIcon },
+      { name: 'SMTP设置', href: ROUTES.admin.settings.smtp, icon: EnvelopeIcon },
+      { name: '邮件中心', href: ROUTES.admin.settings.emailTest, icon: EnvelopeIcon },
+      { name: '日志设置', href: ROUTES.admin.settings.logging, icon: DocumentTextIcon },
+      { name: '审计日志', href: ROUTES.admin.logs, icon: DocumentTextIcon },
+      { name: '会话设置', href: ROUTES.admin.settings.session, icon: Cog6ToothIcon },
+      { name: '外观品牌', href: ROUTES.admin.settings.ui, icon: Cog6ToothIcon },
+      { name: '上传设置', href: ROUTES.admin.settings.uploads, icon: Cog6ToothIcon },
+      { name: '通知设置', href: ROUTES.admin.settings.notifications, icon: BellIcon },
+      { name: 'JWT设置', href: ROUTES.admin.settings.jwt, icon: KeyIcon },
+      { name: '缓存设置', href: ROUTES.admin.settings.cache, icon: Cog6ToothIcon },
+      { name: '存储设置', href: ROUTES.admin.settings.storage, icon: Cog6ToothIcon },
+      { name: '计费订阅', href: ROUTES.admin.settings.billing, icon: CreditCardIcon },
+      { name: '特性开关', href: ROUTES.admin.settings.features, icon: Cog6ToothIcon },
+      { name: '维护模式', href: ROUTES.admin.settings.maintenance, icon: Cog6ToothIcon },
+      { name: '统计分析', href: ROUTES.admin.settings.analytics, icon: Cog6ToothIcon },
+      { name: '验证码', href: ROUTES.admin.settings.captcha, icon: Cog6ToothIcon },
+      { name: 'Webhooks', href: ROUTES.admin.settings.webhooks, icon: Cog6ToothIcon },
+      { name: '审计设置', href: ROUTES.admin.settings.audit, icon: DocumentTextIcon },
+      { name: '分页设置', href: ROUTES.admin.settings.pagination, icon: Cog6ToothIcon },
     ]
   },
 ]

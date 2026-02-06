@@ -6,6 +6,7 @@ import { paymentAPI } from '@api/subscription/payment/payment'
 import { OrderResponse } from '@api/subscription/payment/order'
 import { ChevronRightIcon, ClockIcon, CreditCardIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import { CheckCircleIcon, ShoppingCartIcon } from '@heroicons/react/24/solid'
+import { ROUTES } from '@constants'
 
 export default function OrderConfirmPage() {
   const { orderId } = useParams<{ orderId: string }>()
@@ -51,7 +52,7 @@ export default function OrderConfirmPage() {
     } catch (error: any) {
       console.error('获取订单失败:', error)
       if (error.response?.status === 404) {
-        navigate('/orders')
+        navigate(ROUTES.user.orders)
       }
     } finally {
       setLoading(false)
@@ -130,7 +131,7 @@ export default function OrderConfirmPage() {
           <p className="mt-1 text-sm text-gray-500">请检查订单链接是否正确。</p>
           <div className="mt-6">
             <Link
-              to="/products"
+              to={ROUTES.user.products}
               className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
             >
               返回产品页面
@@ -148,14 +149,14 @@ export default function OrderConfirmPage() {
         <nav className="flex" aria-label="Breadcrumb">
           <ol className="flex items-center space-x-4">
             <li>
-              <Link to="/dashboard" className="text-gray-400 hover:text-gray-500">
+              <Link to={ROUTES.user.dashboard} className="text-gray-400 hover:text-gray-500">
                 仪表板
               </Link>
             </li>
             <li>
               <div className="flex items-center">
                 <ChevronRightIcon className="flex-shrink-0 h-5 w-5 text-gray-400" />
-                <Link to="/products" className="ml-4 text-gray-400 hover:text-gray-500">
+                <Link to={ROUTES.user.products} className="ml-4 text-gray-400 hover:text-gray-500">
                   产品与套餐
                 </Link>
               </div>
@@ -313,7 +314,7 @@ export default function OrderConfirmPage() {
                 )}
                 
                 <Link
-                  to="/products"
+                  to={ROUTES.user.products}
                   className="inline-flex justify-center items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                 >
                   返回产品页面

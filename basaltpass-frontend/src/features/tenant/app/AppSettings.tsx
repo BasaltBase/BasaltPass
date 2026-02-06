@@ -15,6 +15,7 @@ import PTextarea from '@ui/PTextarea'
 import PSelect from '@ui/PSelect'
 import PButton from '@ui/PButton'
 import { tenantAppApi, TenantApp, UpdateTenantAppRequest } from '@api/tenant/tenantApp'
+import { ROUTES } from '@constants'
 
 export default function AppSettings() {
   const { id } = useParams<{ id: string }>()
@@ -146,7 +147,7 @@ export default function AppSettings() {
 
     try {
       await tenantAppApi.deleteTenantApp(id)
-      navigate('/tenant/apps')
+      navigate(ROUTES.tenant.apps)
     } catch (err: any) {
       console.error('删除失败:', err)
       alert(err.response?.data?.error || '删除失败')
@@ -216,7 +217,7 @@ export default function AppSettings() {
             <Cog6ToothIcon className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">应用不存在</h3>
             <div className="mt-6">
-              <Link to="/tenant/apps">
+              <Link to={ROUTES.tenant.apps}>
                 <PButton>返回应用列表</PButton>
               </Link>
             </div>
@@ -233,7 +234,7 @@ export default function AppSettings() {
         <div className="mb-6">
           <nav className="flex items-center space-x-4">
             <Link
-              to="/tenant/apps"
+              to={ROUTES.tenant.apps}
               className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700"
             >
               <ArrowLeftIcon className="w-4 h-4 mr-1" />

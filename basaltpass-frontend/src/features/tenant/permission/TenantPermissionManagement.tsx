@@ -17,6 +17,9 @@ import PSelect from '@ui/PSelect'
 import PTextarea from '@ui/PTextarea'
 import PButton from '@ui/PButton'
 import PTable, { type PTableColumn, type PTableAction } from '@ui/PTable'
+import useDebounce from '@hooks/useDebounce'
+import useLocalStorage from '@hooks/useLocalStorage'
+import usePagination from '@hooks/usePagination'
 import {
   getTenantPermissions,
   createTenantPermission,
@@ -26,6 +29,7 @@ import {
   type TenantPermission,
   type CreateTenantPermissionRequest
 } from '@api/tenant/tenantPermission'
+import { ROUTES } from '@constants'
 
 export default function TenantPermissionManagement() {
   const navigate = useNavigate()
@@ -35,14 +39,11 @@ export default function TenantPermissionManagement() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('')
-  
-  // 分页
-  const [pagination, setPagination] = useState({
-    current: 1,
-    pageSize: 20,
-    total: 0
-  })
+  const debouncedSearchTerm = useDebounce(searchTerm, 300)
+  const [selectedCategory, setSelectedCategory] = useLocalStorage<string>('tenant.permissions.selectedCategory', '')
+  const [pageSize] = useLocalStorage<number>('tenant.permissions.pageSize', 20)
+
+  const { pagination, setPage, setTotal, resetPage } = usePagination({ pageSize })
 
   // 模态框状态
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -61,7 +62,11 @@ export default function TenantPermissionManagement() {
   useEffect(() => {
     fetchPermissions()
     fetchCategories()
-  }, [pagination.current, pagination.pageSize, searchTerm, selectedCategory])
+  }, [pagination.current, pagination.pageSize, debouncedSearchTerm, selectedCategory])
+
+  useEffect(() => {
+    resetPage()
+  }, [debouncedSearchTerm, selectedCategory, resetPage])
 
   const fetchPermissions = async () => {
     try {
@@ -69,14 +74,11 @@ export default function TenantPermissionManagement() {
       const response = await getTenantPermissions({
         page: pagination.current,
         page_size: pagination.pageSize,
-        search: searchTerm,
+        search: debouncedSearchTerm,
         category: selectedCategory || undefined
       })
       setPermissions(response.data.data.permissions || [])
-      setPagination(prev => ({
-        ...prev,
-        total: response.data.data.pagination.total
-      }))
+      setTotal(response.data.data.pagination.total)
       setError('')
     } catch (err: any) {
       console.error('获取权限列表失败:', err)
@@ -251,7 +253,7 @@ export default function TenantPermissionManagement() {
             </p>
           </div>
           <div className="flex space-x-3">
-            <PButton variant="secondary" onClick={() => navigate('/tenant/roles')}>
+            <PButton variant="secondary" onClick={() => navigate(ROUTES.tenant.roles)}>
               <ShieldCheckIcon className="h-4 w-4 mr-2" />
               角色管理
             </PButton>
@@ -310,7 +312,7 @@ export default function TenantPermissionManagement() {
               current: pagination.current,
               pageSize: pagination.pageSize,
               total: pagination.total,
-              onChange: (page) => setPagination(prev => ({ ...prev, current: page }))
+              onChange: (page) => setPage(page)
             }}
           />
         </div>

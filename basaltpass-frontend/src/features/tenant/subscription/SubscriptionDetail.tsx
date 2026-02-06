@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import TenantLayout from '@features/tenant/components/TenantLayout'
 import { getTenantUserSubscription, Subscription, tenantSubscriptionAPI } from '@api/tenant/subscription'
+import { ROUTES } from '@constants/routes'
 
 function fmtDate(value?: string | null) {
   if (!value) return '-'
@@ -119,7 +120,7 @@ export default function TenantSubscriptionDetail() {
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-3">
-              <Link to="/tenant/subscriptions/subscriptions" className="text-sm text-gray-500 hover:text-gray-700">
+              <Link to={ROUTES.tenant.subscriptions} className="text-sm text-gray-500 hover:text-gray-700">
                 ← 返回订阅列表
               </Link>
               <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusClassName}`}>

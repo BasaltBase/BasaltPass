@@ -30,6 +30,7 @@ import {
 import TenantLayout from '@features/tenant/components/TenantLayout';
 import { PCheckbox, PInput, PButton, PTextarea } from '@ui';
 import PTable, { PTableColumn } from '@ui/PTable';
+import useDebounce from '@hooks/useDebounce';
 
 const TenantRoleManagement: React.FC = () => {
   const [roles, setRoles] = useState<Role[]>([]);
@@ -57,6 +58,8 @@ const TenantRoleManagement: React.FC = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [userSearchTerm, setUserSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 200);
+  const debouncedUserSearchTerm = useDebounce(userSearchTerm, 200);
   const [appFilter, setAppFilter] = useState('');
 
   // 表单数据
@@ -92,7 +95,7 @@ const TenantRoleManagement: React.FC = () => {
       const response = await getTenantRoles({ 
         page, 
         page_size: pageSize,
-        search: searchTerm,
+        search: debouncedSearchTerm,
         app_id: appFilter
       });
       setRoles(response.data.data.roles || []);
@@ -115,7 +118,7 @@ const TenantRoleManagement: React.FC = () => {
       const response = await getTenantUsersForRole({ 
         page, 
         page_size: pageSize,
-        search: userSearchTerm
+        search: debouncedUserSearchTerm
       });
       setUsers(response.data.data.users || []);
       setUserPagination({
@@ -131,13 +134,13 @@ const TenantRoleManagement: React.FC = () => {
 
   useEffect(() => {
     fetchRoles();
-  }, [searchTerm, appFilter]);
+  }, [debouncedSearchTerm, appFilter]);
 
   useEffect(() => {
     if (userRoleModalVisible) {
       fetchUsers();
     }
-  }, [userRoleModalVisible, userSearchTerm]);
+  }, [userRoleModalVisible, debouncedUserSearchTerm]);
 
   // 创建/更新角色
   const handleSubmit = async (e: React.FormEvent) => {

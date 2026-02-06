@@ -31,6 +31,7 @@ import {
   FingerPrintIcon
 } from '@heroicons/react/24/outline'
 import { PInput, PButton, PCard } from '@ui'
+import { ROUTES } from '@constants'
 
 export default function SecuritySettings() {
   const navigate = useNavigate()
@@ -382,7 +383,7 @@ export default function SecuritySettings() {
                     )}
                     {isPasskeySupported() && (
                       <Link
-                        to="/security/passkey"
+                        to={ROUTES.user.securityPasskey}
                         className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                       >
                         <CogIcon className="h-4 w-4 mr-1" />
@@ -419,7 +420,7 @@ export default function SecuritySettings() {
                       </button>
                     ) : (
                       <Link
-                        to="/security/2fa"
+                        to={ROUTES.user.securityTwoFA}
                         className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                       >
                         <PlusIcon className="h-4 w-4 mr-1" />
@@ -597,7 +598,7 @@ export default function SecuritySettings() {
           </div>
 
           <div className="mt-8">
-            <Link to="/security/login-history" className="block">
+            <Link to={ROUTES.user.securityLoginHistory} className="block">
               <PCard variant="bordered" hoverable className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <div className="p-3 rounded-lg bg-indigo-50 text-indigo-600">

@@ -4,6 +4,7 @@ import { Coupon } from '@types/domain/subscription'
 import { Link } from 'react-router-dom'
 import { ChevronRightIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import AdminLayout from '@features/admin/components/AdminLayout'
+import { ROUTES } from '@constants'
 
 export default function AdminCoupons() {
   const [coupons, setCoupons] = useState<Coupon[]>([])
@@ -165,14 +166,14 @@ export default function AdminCoupons() {
         <nav className="flex" aria-label="Breadcrumb">
           <ol className="flex items-center space-x-4">
             <li>
-              <Link to="/dashboard" className="text-gray-400 hover:text-gray-500">
+              <Link to={ROUTES.admin.dashboard} className="text-gray-400 hover:text-gray-500">
                 仪表板
               </Link>
             </li>
             <li>
               <div className="flex items-center">
                 <ChevronRightIcon className="flex-shrink-0 h-5 w-5 text-gray-400" />
-                <Link to="/admin/subscriptions" className="ml-4 text-gray-400 hover:text-gray-500">
+                <Link to={ROUTES.admin.subscriptions} className="ml-4 text-gray-400 hover:text-gray-500">
                   订阅管理
                 </Link>
               </div>

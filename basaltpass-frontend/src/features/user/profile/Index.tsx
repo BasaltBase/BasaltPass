@@ -5,6 +5,7 @@ import Layout from '@features/user/components/Layout'
 import { PCard, PButton, PInput } from '@ui'
 import PhoneInput from '@ui/common/PhoneInput'
 import { formatPhoneForDisplay } from '@utils/phoneValidator'
+import { ROUTES } from '@constants'
 import { 
   UserIcon, 
   EnvelopeIcon, 
@@ -47,7 +48,7 @@ function Profile() {
         setIsLoading(false)
       })
       .catch(() => {
-        navigate('/login')
+        navigate(ROUTES.user.login)
       })
   }, [navigate])
 

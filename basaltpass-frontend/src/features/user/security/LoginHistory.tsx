@@ -3,6 +3,7 @@ import Layout from '@features/user/components/Layout'
 import { Link } from 'react-router-dom'
 import { ArrowLeftIcon } from '@heroicons/react/24/outline'
 import client from '@api/client'
+import { ROUTES } from '@constants'
 
 interface LoginHistoryItem {
   id: number
@@ -140,7 +141,7 @@ export default function LoginHistory() {
         <div className="space-y-6">
           <div className="flex items-center">
             <Link
-              to="/security"
+              to={ROUTES.user.security}
               className="mr-4 p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
             >
               <ArrowLeftIcon className="h-5 w-5" />

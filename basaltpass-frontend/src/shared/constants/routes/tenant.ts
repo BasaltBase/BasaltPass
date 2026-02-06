@@ -1,0 +1,20 @@
+export const TENANT_ROUTES = {
+  root: '/tenant',
+  dashboard: '/tenant/dashboard',
+  info: '/tenant/info',
+  apps: '/tenant/apps',
+  appsNew: '/tenant/apps/new',
+  oauthClients: '/tenant/oauth/clients',
+  users: '/tenant/users',
+  roles: '/tenant/roles',
+  permissions: '/tenant/permissions',
+  notifications: '/tenant/notifications',
+  subscriptions: '/tenant/subscriptions',
+  subscriptionsList: '/tenant/subscriptions/subscriptions',
+  subscriptionProducts: '/tenant/subscriptions/products',
+  plans: '/tenant/plans',
+  prices: '/tenant/prices',
+  coupons: '/tenant/coupons',
+  invoices: '/tenant/invoices',
+  subscriptionStatus: '/tenant/subscription-status'
+} as const

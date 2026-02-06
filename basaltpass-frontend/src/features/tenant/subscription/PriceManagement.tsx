@@ -16,6 +16,7 @@ import PSelect from '@ui/PSelect';
 import PButton from '@ui/PButton';
 import PTextarea from '@ui/PTextarea';
 import PTable, { PTableColumn, PTableAction } from '@ui/PTable';
+import useDebounce from '@hooks/useDebounce';
 
 interface PriceManagementProps {}
 
@@ -24,6 +25,7 @@ const PriceManagement: React.FC<PriceManagementProps> = () => {
   const [plans, setPlans] = useState<tenantSubscriptionAPI.TenantPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 200);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingPrice, setEditingPrice] = useState<tenantSubscriptionAPI.TenantPrice | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<string>('all');
@@ -56,7 +58,7 @@ const PriceManagement: React.FC<PriceManagementProps> = () => {
   };
 
   const filteredPrices = prices.filter(price => {
-    const matchesSearch = getPlanName(price.PlanID).toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = getPlanName(price.PlanID).toLowerCase().includes(debouncedSearchTerm.toLowerCase());
     const matchesPlan = selectedPlan === 'all' || price.PlanID.toString() === selectedPlan;
     const matchesCurrency = selectedCurrency === 'all' || price.Currency === selectedCurrency;
     return matchesSearch && matchesPlan && matchesCurrency;

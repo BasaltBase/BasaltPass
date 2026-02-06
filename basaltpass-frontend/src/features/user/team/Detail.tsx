@@ -5,6 +5,7 @@ import { PCard, PButton } from '@ui';
 import { teamApi, TeamResponse } from '@api/user/team';
 import { invitationApi, Invitation } from '@api/user/invitation';
 import { XMarkIcon, ClockIcon } from '@heroicons/react/24/outline';
+import { ROUTES } from '@constants';
 
 const TeamDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -65,7 +66,7 @@ const TeamDetail: React.FC = () => {
 
     try {
       await teamApi.deleteTeam(team.id);
-      navigate('/teams', { 
+      navigate(ROUTES.user.teams, { 
         state: { message: '团队删除成功！' }
       });
     } catch (err: any) {
@@ -78,7 +79,7 @@ const TeamDetail: React.FC = () => {
 
     try {
       await teamApi.leaveTeam(team.id);
-      navigate('/teams', { 
+      navigate(ROUTES.user.teams, { 
         state: { message: '已成功离开团队！' }
       });
     } catch (err: any) {
@@ -168,7 +169,7 @@ const TeamDetail: React.FC = () => {
           <div className="flex items-center space-x-3">
             {team.user_role && getRoleBadge(team.user_role)}
             <Link
-              to="/teams"
+              to={ROUTES.user.teams}
               className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
             >
               返回列表

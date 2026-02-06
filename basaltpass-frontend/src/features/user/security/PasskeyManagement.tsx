@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { listPasskeys, createPasskey, deletePasskey, PasskeyInfo } from '@api/oauth/passkey'
 import { isPasskeySupported } from '@utils/webauthn'
 import Layout from '@features/user/components/Layout'
+import { ROUTES } from '@constants'
 import { 
   TrashIcon, 
   PlusIcon, 
@@ -107,7 +108,7 @@ function PasskeyManagement() {
             {/* 页面标题 */}
             <div className="flex items-center">
               <Link 
-                to="/security" 
+                to={ROUTES.user.security} 
                 className="mr-4 p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
               >
                 <ArrowLeftIcon className="h-5 w-5" />
@@ -148,7 +149,7 @@ function PasskeyManagement() {
           {/* 页面标题 */}
           <div className="flex items-center">
             <Link 
-              to="/security" 
+              to={ROUTES.user.security} 
               className="mr-4 p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
             >
               <ArrowLeftIcon className="h-5 w-5" />

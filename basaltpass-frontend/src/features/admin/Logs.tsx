@@ -6,6 +6,7 @@ import AdminLayout from '@features/admin/components/AdminLayout'
 import PTable, { PTableColumn } from '@ui/PTable'
 import PInput from '@ui/PInput'
 import PButton from '@ui/PButton'
+import { ROUTES } from '@constants'
 
 interface Log {
   ID: number
@@ -66,14 +67,14 @@ export default function Logs() {
         <nav className="flex" aria-label="Breadcrumb">
           <ol className="flex items-center space-x-4">
             <li>
-              <Link to="/dashboard" className="text-gray-400 hover:text-gray-500">
+              <Link to={ROUTES.admin.dashboard} className="text-gray-400 hover:text-gray-500">
                 仪表板
               </Link>
             </li>
             <li>
               <div className="flex items-center">
                 <ChevronRightIcon className="flex-shrink-0 h-5 w-5 text-gray-400" />
-                <Link to="/admin/subscriptions" className="ml-4 text-gray-400 hover:text-gray-500">
+                <Link to={ROUTES.admin.subscriptions} className="ml-4 text-gray-400 hover:text-gray-500">
                   订阅管理
                 </Link>
               </div>

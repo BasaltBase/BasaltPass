@@ -16,6 +16,7 @@ import {
   CreateTenantProductRequest,
   UpdateTenantProductRequest,
 } from '@api/tenant/subscription'
+import { ROUTES } from '@constants'
 
 export default function TenantProducts() {
   const [searchParams] = useSearchParams()
@@ -144,7 +145,7 @@ export default function TenantProducts() {
           <ol className="inline-flex items-center gap-1 md:gap-3">
             <li className="inline-flex items-center">
               <Link
-                to="/tenant/subscriptions"
+                to={ROUTES.tenant.subscriptions}
                 className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600"
               >
                 订阅系统
