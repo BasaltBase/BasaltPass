@@ -71,7 +71,9 @@ go build cmd/basaltpass/main.go
 
 ## API 接口
 
-- S2S 服务间 API（机器可消费）：见 `docs/S2S_API.md`
+- S2S 服务间 API（机器可消费）：见 `../docs/reference/s2s-api.md`
+
+更多文档入口：`../docs/README.md`
 
 ### 系统设置（文件存储 + 接口）
 

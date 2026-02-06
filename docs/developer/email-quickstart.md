@@ -57,7 +57,7 @@ export BASALTPASS_EMAIL_AWS_SES_SECRET_ACCESS_KEY=your-secret-key
 
 ## 在代码中使用
 
-参考完整文档：[Email_System.md](../doc/Email_System.md)
+参考完整文档：`docs/developer/email.md`（入口）与 `docs/developer/email-readme.md`（细节）
 
 ```go
 import (
@@ -102,4 +102,4 @@ result, err := service.GetSender().Send(context.Background(), msg)
 3. **TLS/SSL errors**
    - 尝试 `-provider smtp` 并调整 TLS 设置
 
-更多信息请查看 [Email_System.md](../doc/Email_System.md)
+更多信息请查看 `docs/developer/email-readme.md`

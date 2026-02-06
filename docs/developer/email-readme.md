@@ -53,9 +53,9 @@ result, err := emailService.GetSender().Send(context.Background(), msg)
 
 ## 📚 完整文档
 
-- **[Email_System.md](../doc/Email_System.md)** - 完整使用文档
-- **[EMAIL_QUICKSTART.md](EMAIL_QUICKSTART.md)** - 快速开始指南
-- **[Email_System_Implementation.md](../doc/Email_System_Implementation.md)** - 实现细节
+- **docs/developer/email.md** - 邮件系统入口（推荐先看）
+- **docs/developer/email-quickstart.md** - 快速开始指南
+- **docs/developer/email-readme.md** - 本文档（细节/排错）
 
 ## ✨ 支持的邮件提供商
 
@@ -157,7 +157,7 @@ msg := &email.Message{
 ### TLS/SSL errors
 - 尝试切换 `use_tls` 和 `use_ssl` 设置
 
-更多问题请查看 [Email_System.md](../doc/Email_System.md) 的故障排查部分。
+更多问题请查看本文档的故障排查部分。
 
 ## 📦 依赖项
 
@@ -177,4 +177,4 @@ msg := &email.Message{
 
 ---
 
-**需要帮助？** 查看完整文档：[Email_System.md](../doc/Email_System.md)
+**需要帮助？** 先从 `docs/developer/email.md` 开始。

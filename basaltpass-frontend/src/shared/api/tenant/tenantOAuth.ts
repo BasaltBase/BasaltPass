@@ -5,10 +5,19 @@ import client from '../client'
 export interface TenantOAuthClient {
   id: number
   client_id: string
+  client_secret?: string
   redirect_uris: string[]
   scopes: string[]
   is_active: boolean
   created_at: string
+}
+
+export interface CreateTenantOAuthClientResponse {
+  data: {
+    client: TenantOAuthClient
+    app: TenantAppWithClients
+  }
+  message?: string
 }
 
 export interface TenantAppWithClients {
@@ -53,7 +62,7 @@ export const tenantOAuthApi = {
 
   // 为应用创建OAuth客户端
   async createClient(data: CreateTenantOAuthClientRequest) {
-    const response = await client.post('/api/v1/tenant/oauth/clients', data)
+    const response = await client.post<CreateTenantOAuthClientResponse>('/api/v1/tenant/oauth/clients', data)
     return response.data
   },
 

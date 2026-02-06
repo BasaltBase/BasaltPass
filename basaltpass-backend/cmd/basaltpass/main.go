@@ -65,10 +65,12 @@ func main() {
 
 	// Export route map in develop for auditing
 	if config.IsDevelop() {
-		if err := utils.DumpRoutes(app, "docs/ROUTES.md"); err != nil {
+		// scripts/dev.sh runs the backend with CWD=basaltpass-backend.
+		// Export to the repo-level docs folder.
+		if err := utils.DumpRoutes(app, "../docs/ROUTES.md"); err != nil {
 			log.Printf("[main][warn] route dump failed: %v", err)
 		} else {
-			log.Printf("[main][info] route map exported to docs/ROUTES.md")
+			log.Printf("[main][info] route map exported to ../docs/ROUTES.md")
 		}
 	}
 

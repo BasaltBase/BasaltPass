@@ -10,6 +10,12 @@ docker-compose up -d --build
 
 Default admin login: create via API then assign `admin` role. 
 
+## Documentation
+
+- Docs entry: ./docs/README.md
+- Developer docs: ./docs/developer/README.md
+- User/API docs: ./docs/user/README.md
+
 ## Local Dev (Dev Container / 非 Docker)
 
 在容器/本机直接跑前后端（后端 + 三个控制台）可以用一键脚本：
