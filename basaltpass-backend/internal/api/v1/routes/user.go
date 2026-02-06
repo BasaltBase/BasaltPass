@@ -22,7 +22,6 @@ func RegisterUserRoutes(v1 fiber.Router) {
 	userGroup := v1.Group("/user", middleware.JWTMiddleware())
 	userGroup.Get("/tenants", user.GetUserTenantsHandler)
 	userGroup.Get("/profile", user.GetProfileHandler)
-	userGroup.Get("/debug", user.DebugUserHandler) // 临时调试端点
 	userGroup.Put("/profile", user.UpdateProfileHandler)
 
 	// 用户应用授权管理

@@ -175,20 +175,3 @@ func Verify2FAHandler(c *fiber.Ctx) error {
 	}
 	return c.JSON(fiber.Map{"access_token": tokens.AccessToken})
 }
-
-// DebugCookiesHandler for testing cookie state
-func DebugCookiesHandler(c *fiber.Ctx) error {
-	cookies := c.Request().Header.Cookie("refresh_token")
-	allCookies := make(map[string]string)
-
-	c.Request().Header.VisitAllCookie(func(key, value []byte) {
-		allCookies[string(key)] = string(value)
-	})
-
-	return c.JSON(fiber.Map{
-		"refresh_token":     string(cookies),
-		"all_cookies":       allCookies,
-		"has_refresh_token": len(cookies) > 0,
-		"headers":           string(c.Request().Header.Header()),
-	})
-}

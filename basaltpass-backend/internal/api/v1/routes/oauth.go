@@ -5,6 +5,7 @@ import (
 	"basaltpass-backend/internal/handler/public/oauth"
 	passkey2 "basaltpass-backend/internal/handler/public/passkey"
 	"basaltpass-backend/internal/middleware"
+
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -51,7 +52,6 @@ func RegisterOAuthRoutes(v1 fiber.Router) {
 	authGroup.Post("/password/reset-request", auth2.RequestResetHandler)
 	authGroup.Post("/password/reset", auth2.ResetPasswordHandler)
 	authGroup.Post("/verify-2fa", auth2.Verify2FAHandler)
-	authGroup.Get("/debug/cookies", auth2.DebugCookiesHandler) // 调试端点
 
 	// Passkey authentication routes
 	passkeyGroup := v1.Group("/passkey")

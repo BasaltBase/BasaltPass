@@ -1,12 +1,10 @@
 package routes
 
 import (
-	"basaltpass-backend/internal/debug"
 	"basaltpass-backend/internal/handler/public/currency"
 	"basaltpass-backend/internal/handler/public/payment"
 	publicSecurity "basaltpass-backend/internal/handler/public/security"
 	"basaltpass-backend/internal/handler/public/signup"
-	"basaltpass-backend/internal/middleware"
 	"basaltpass-backend/internal/middleware/ratelimit"
 
 	"github.com/gofiber/fiber/v2"
@@ -18,11 +16,6 @@ func RegisterPublicRoutes(v1 fiber.Router) {
 	v1.Get("/health", func(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusOK)
 	})
-	v1.Get("/not-implemented", notImplemented)
-
-	// 调试路由
-	debugGroup := v1.Group("/debug", middleware.JWTMiddleware())
-	debugGroup.Get("/user-tenant", debug.CheckUserTenantHandler)
 
 	// 新用户注册路由（带速率限制）
 	signupHandler := signup.NewHandler()
@@ -63,10 +56,4 @@ func RegisterPublicRoutes(v1 fiber.Router) {
 	// 密码重置相关
 	securityGroup.Post("/password/reset", publicSecurityHandler.StartPasswordResetHandler)           // 发起密码重置
 	securityGroup.Post("/password/reset/confirm", publicSecurityHandler.ConfirmPasswordResetHandler) // 确认密码重置
-}
-
-func notImplemented(c *fiber.Ctx) error {
-	return c.Status(fiber.StatusNotImplemented).JSON(fiber.Map{
-		"message": "not implemented",
-	})
 }

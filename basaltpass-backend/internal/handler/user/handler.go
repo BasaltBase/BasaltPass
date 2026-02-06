@@ -1,8 +1,6 @@
 package user
 
 import (
-	"basaltpass-backend/internal/common"
-	"basaltpass-backend/internal/model"
 	tenant2 "basaltpass-backend/internal/service/tenant"
 	"strconv"
 
@@ -36,36 +34,6 @@ func GetUserTenantsHandler(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{
 		"data": tenants,
-	})
-}
-
-// DebugUserHandler 调试用户状态 - 临时调试端点
-func DebugUserHandler(c *fiber.Ctx) error {
-	uid := c.Locals("userID")
-	tid := c.Locals("tenantID")
-
-	// 获取用户信息
-	var user model.User
-	if err := common.DB().First(&user, uid).Error; err != nil {
-		return c.JSON(fiber.Map{
-			"error":   "用户不存在",
-			"user_id": uid,
-		})
-	}
-
-	// 获取用户的租户关联
-	var tenantAdmins []model.TenantAdmin
-	common.DB().Preload("Tenant").Where("user_id = ?", uid).Find(&tenantAdmins)
-
-	return c.JSON(fiber.Map{
-		"user_id":   uid,
-		"tenant_id": tid,
-		"user": map[string]interface{}{
-			"id":       user.ID,
-			"email":    user.Email,
-			"nickname": user.Nickname,
-		},
-		"tenant_associations": tenantAdmins,
 	})
 }
 

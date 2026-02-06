@@ -11,6 +11,7 @@ basaltpass-frontend/apps/user/dist/
 
 # backend
 .env
+*.exe
 
 # general
 .DS_Store

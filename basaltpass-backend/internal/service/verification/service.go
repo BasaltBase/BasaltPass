@@ -470,15 +470,16 @@ func (s *Service) handleResend(challenge *model.VerificationChallenge, config *V
 		}
 
 		// 发送新验证码
+		if err := common.DB().Save(challenge).Error; err != nil {
+			return err
+		}
 		return s.sendVerificationEmail(challenge.Target, newCode, challenge.ExpiresAt)
-	} else {
-		// 不换码，直接重发
-		// 注意：这里无法获取原始验证码，需要重新设计
-		// 在实际实现中，可以考虑存储加密的验证码用于重发
-		return nil
 	}
 
-	return common.DB().Save(challenge).Error
+	// 不换码，直接重发
+	// 注意：这里无法获取原始验证码，需要重新设计
+	// 在实际实现中，可以考虑存储加密的验证码用于重发
+	return nil
 }
 
 // createNewChallenge 创建新的验证码挑战
