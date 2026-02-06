@@ -36,6 +36,14 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 	tenantUserGroup.Post("/invite", tenant2.InviteTenantUserHandler) // /tenant/users/invite
 	tenantUserGroup.Post("/:id/resend-invitation", tenant2.ResendInvitationHandler)
 
+	// 租户权限管理路由
+	tenantPermissionGroup := tenantGroup.Group("/permissions")
+	tenantPermissionGroup.Get("/", tenant2.GetTenantPermissions)
+	tenantPermissionGroup.Post("/", tenant2.CreateTenantPermission)
+	tenantPermissionGroup.Put("/:id", tenant2.UpdateTenantPermission)
+	tenantPermissionGroup.Delete("/:id", tenant2.DeleteTenantPermission)
+	tenantPermissionGroup.Get("/categories", tenant2.GetTenantPermissionCategories)
+
 	// 租户角色管理路由
 	tenantRoleGroupV2 := tenantGroup.Group("/roles")
 	tenantRoleGroupV2.Get("/", tenant2.GetTenantRoles)
@@ -45,6 +53,9 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 	tenantRoleGroupV2.Get("/users", tenant2.GetTenantUsersForRole)
 	tenantRoleGroupV2.Post("/assign", tenant2.AssignUserRoles)
 	tenantRoleGroupV2.Get("/users/:user_id", tenant2.GetUserRoles)
+	tenantRoleGroupV2.Get("/:id/permissions", tenant2.GetRolePermissions)
+	tenantRoleGroupV2.Post("/:id/permissions", tenant2.AddPermissionsToRole)
+	tenantRoleGroupV2.Delete("/:id/permissions/:permission_id", tenant2.RemovePermissionFromRole)
 
 	// 租户通知管理
 	tenantNotifGroup := tenantGroup.Group("/notifications")

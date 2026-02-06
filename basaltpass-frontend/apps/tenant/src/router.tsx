@@ -11,7 +11,11 @@ import AppStats from '../../../src/pages/tenant/app/AppStats'
 import TenantOAuthClients from '../../../src/pages/tenant/app/OAuthClients'
 import TenantUserManagement from '../../../src/pages/tenant/user/UserManagement'
 import TenantRoleManagement from '../../../src/pages/tenant/user/RoleManagement'
+import TenantPermissionManagement from '../../../src/pages/tenant/permission/TenantPermissionManagement'
 import TenantNotifications from '../../../src/pages/tenant/notification/Notifications'
+import AppUserManagement from '../../../src/pages/tenant/app/AppUserManagement'
+import AppRoleManagement from '../../../src/pages/tenant/app/AppRoleManagement'
+import AppPermissionManagement from '../../../src/pages/tenant/app/AppPermissionManagement'
 
 import TenantSubscriptionDashboard from '../../../src/pages/tenant/subscription/Dashboard'
 import TenantProducts from '../../../src/pages/tenant/subscription/Products'
@@ -67,10 +71,14 @@ export default function AppRouter() {
       <Route path="/tenant/apps/:id" element={<TenantRoute><AppDetail /></TenantRoute>} />
       <Route path="/tenant/apps/:id/settings" element={<TenantRoute><AppSettings /></TenantRoute>} />
       <Route path="/tenant/apps/:id/stats" element={<TenantRoute><AppStats /></TenantRoute>} />
+      <Route path="/tenant/apps/:id/users" element={<TenantRoute><AppUserManagement /></TenantRoute>} />
+      <Route path="/tenant/apps/:id/roles" element={<TenantRoute><AppRoleManagement /></TenantRoute>} />
+      <Route path="/tenant/apps/:id/permissions" element={<TenantRoute><AppPermissionManagement /></TenantRoute>} />
       <Route path="/tenant/oauth/clients" element={<TenantRoute><TenantOAuthClients /></TenantRoute>} />
 
       <Route path="/tenant/users" element={<TenantRoute><TenantUserManagement /></TenantRoute>} />
       <Route path="/tenant/roles" element={<TenantRoute><TenantRoleManagement /></TenantRoute>} />
+      <Route path="/tenant/permissions" element={<TenantRoute><TenantPermissionManagement /></TenantRoute>} />
       <Route path="/tenant/notifications" element={<TenantRoute><TenantNotifications /></TenantRoute>} />
 
       <Route path="/tenant/subscriptions" element={<TenantRoute><TenantSubscriptionDashboard /></TenantRoute>} />

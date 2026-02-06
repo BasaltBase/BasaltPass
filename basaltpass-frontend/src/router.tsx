@@ -77,6 +77,7 @@ import AppUserManagement from '@pages/tenant/app/AppUserManagement'
 import AppRoleManagement from '@pages/tenant/app/AppRoleManagement'
 import AppPermissionManagement from '@pages/tenant/app/AppPermissionManagement'
 import TenantRoleManagement from '@pages/tenant/user/RoleManagement'
+import TenantPermissionManagement from '@pages/tenant/permission/TenantPermissionManagement'
 import TenantSubscriptionDashboard from '@pages/tenant/subscription/Dashboard'
 import TenantProducts from '@pages/tenant/subscription/Products'
 import TenantSubscriptions from '@pages/tenant/subscription/Subscriptions'
@@ -403,7 +404,7 @@ export default function AppRouter() {
         </AdminRoute>
       } />
       
-      {/* 租户管理页面 - 需要认证保护 */
+      {/* 租户管理页面 - 需要认证保护 */}
       <Route path="/tenant/dashboard" element={
         <TenantRoute>
           <TenantDashboard />
@@ -424,11 +425,6 @@ export default function AppRouter() {
           <CreateApp />
         </TenantRoute>
       } />
-      <Route path="/tenant/apps/:id" element={
-        <TenantRoute>
-          <AppDetail />
-        </TenantRoute>
-      } />
       <Route path="/tenant/apps/:id/settings" element={
         <TenantRoute>
           <AppSettings />
@@ -437,6 +433,26 @@ export default function AppRouter() {
       <Route path="/tenant/apps/:id/stats" element={
         <TenantRoute>
           <AppStats />
+        </TenantRoute>
+      } />
+      <Route path="/tenant/apps/:id/users" element={
+        <TenantRoute>
+          <AppUserManagement />
+        </TenantRoute>
+      } />
+      <Route path="/tenant/apps/:id/roles" element={
+        <TenantRoute>
+          <AppRoleManagement />
+        </TenantRoute>
+      } />
+      <Route path="/tenant/apps/:id/permissions" element={
+        <TenantRoute>
+          <AppPermissionManagement />
+        </TenantRoute>
+      } />
+      <Route path="/tenant/apps/:id" element={
+        <TenantRoute>
+          <AppDetail />
         </TenantRoute>
       } />
       <Route path="/tenant/oauth/clients" element={
@@ -457,6 +473,11 @@ export default function AppRouter() {
       <Route path="/tenant/roles" element={
         <TenantRoute>
           <TenantRoleManagement />
+        </TenantRoute>
+      } />
+      <Route path="/tenant/permissions" element={
+        <TenantRoute>
+          <TenantPermissionManagement />
         </TenantRoute>
       } />
       
@@ -519,22 +540,6 @@ export default function AppRouter() {
       <Route path="/tenant/prices" element={
         <TenantRoute>
           <PriceManagement />
-        </TenantRoute>
-      } />
-      
-      <Route path="/tenant/apps/:id/users" element={
-        <TenantRoute>
-          <AppUserManagement />
-        </TenantRoute>
-      } />
-      <Route path="/tenant/apps/:id/roles" element={
-        <TenantRoute>
-          <AppRoleManagement />
-        </TenantRoute>
-      } />
-      <Route path="/tenant/apps/:id/permissions" element={
-        <TenantRoute>
-          <AppPermissionManagement />
         </TenantRoute>
       } />
       

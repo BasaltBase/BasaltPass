@@ -49,7 +49,8 @@ const navigation: NavigationItem[] = [
     icon: UsersIcon,
     children: [
       { name: '用户列表', href: '/tenant/users', icon: UsersIcon },
-      { name: '角色权限', href: '/tenant/roles', icon: KeyIcon },
+      { name: '角色管理', href: '/tenant/roles', icon: KeyIcon },
+      { name: '权限管理', href: '/tenant/permissions', icon: KeyIcon },
     ]
   },
   {

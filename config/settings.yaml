@@ -1,0 +1,405 @@
+settings:
+    analytics.enabled:
+        value: false
+        category: analytics
+        description: 是否启用统计分析
+    analytics.provider:
+        value: none
+        category: analytics
+        description: 统计服务提供方（none/umami/ga4/plausible）
+    analytics.tracking_id:
+        value: ""
+        category: analytics
+        description: 追踪 ID（如 GA4 Measurement ID）
+    audit.retention_days:
+        value: 90
+        category: audit
+        description: 审计日志保留天数
+    auth.enable_register:
+        value: true
+        category: auth
+        description: 允许新用户注册
+    auth.password_policy.min_length:
+        value: 8
+        category: auth
+        description: 密码最小长度
+    auth.password_policy.require_numbers:
+        value: true
+        category: auth
+        description: 密码需包含数字
+    auth.password_policy.require_special:
+        value: false
+        category: auth
+        description: 密码需包含特殊字符
+    auth.password_policy.require_uppercase:
+        value: false
+        category: auth
+        description: 密码需包含大写字母
+    auth.require_email_verification:
+        value: false
+        category: auth
+        description: 注册后是否要求邮箱验证
+    billing.currency_default:
+        value: CNY
+        category: billing
+        description: 默认货币
+    billing.invoice_prefix:
+        value: INV
+        category: billing
+        description: 发票编号前缀
+    billing.stripe.enabled:
+        value: false
+        category: billing
+        description: 是否启用 Stripe
+    billing.stripe.public_key:
+        value: ""
+        category: billing
+        description: Stripe 公钥
+    billing.stripe.secret_key:
+        value: ""
+        category: billing
+        description: Stripe 私钥
+    billing.stripe.webhook_secret:
+        value: ""
+        category: billing
+        description: Stripe Webhook 签名密钥
+    billing.tax_rate:
+        value: 0
+        category: billing
+        description: 默认税率（0-1）
+    cache.redis.addr:
+        value: 127.0.0.1:6379
+        category: cache
+        description: Redis 地址
+    cache.redis.db:
+        value: 0
+        category: cache
+        description: Redis 数据库索引
+    cache.redis.enabled:
+        value: false
+        category: cache
+        description: 是否启用 Redis 缓存
+    cache.redis.password:
+        value: ""
+        category: cache
+        description: Redis 密码
+    captcha.enabled:
+        value: false
+        category: captcha
+        description: 是否启用验证码
+    captcha.provider:
+        value: none
+        category: captcha
+        description: 验证码提供方（none/recaptcha/hcaptcha）
+    captcha.secret_key:
+        value: ""
+        category: captcha
+        description: Captcha Secret Key
+    captcha.site_key:
+        value: ""
+        category: captcha
+        description: Captcha Site Key
+    cors.allow_credentials:
+        value: true
+        category: cors
+        description: 是否允许携带凭据
+    cors.allow_headers:
+        value:
+            - Origin
+            - Content-Type
+            - Accept
+            - Authorization
+            - X-Requested-With
+            - X-Tenant-ID
+        category: cors
+        description: 允许的请求头
+    cors.allow_methods:
+        value:
+            - GET
+            - POST
+            - PUT
+            - DELETE
+            - OPTIONS
+            - PATCH
+        category: cors
+        description: 允许的方法
+    cors.allow_origins:
+        value:
+            - http://localhost:5173
+            - http://127.0.0.1:5173
+            - http://localhost:3000
+        category: cors
+        description: 允许的跨域来源列表
+    cors.expose_headers:
+        value:
+            - Authorization
+            - Content-Length
+        category: cors
+        description: 暴露给前端的响应头
+    cors.max_age_seconds:
+        value: 86400
+        category: cors
+        description: 预检请求缓存秒数
+    cors.strict_mode:
+        value: false
+        category: cors
+        description: 严格模式（仅允许白名单域名）
+    email.from_suffix:
+        value: example.com
+        category: email
+        description: 发件人邮箱后缀（用于 no-reply@<suffix>）
+    features.beta_features:
+        value: []
+        category: features
+        description: 开启的 Beta 功能列表
+    features.registration_invite_only:
+        value: false
+        category: features
+        description: 仅限邀请注册
+    general.date_format:
+        value: YYYY-MM-DD
+        category: general
+        description: 日期格式
+    general.locale:
+        value: zh-CN
+        category: general
+        description: 默认语言/区域
+    general.site_name:
+        value: BasaltPass
+        category: general
+        description: 系统名称
+    general.site_url:
+        value: http://localhost:8080
+        category: general
+        description: 站点 URL（用于邮件、回调等绝对链接）
+    general.theme:
+        value: light
+        category: general
+        description: 默认主题（light/dark/system）
+    general.time_format:
+        value: HH:mm:ss
+        category: general
+        description: 时间格式
+    general.timezone:
+        value: Asia/Shanghai
+        category: general
+        description: 默认时区
+    jwt.algorithm:
+        value: HS256
+        category: jwt
+        description: JWT 签名算法（HS256/RS256/ES256）
+    jwt.audience:
+        value: ""
+        category: jwt
+        description: JWT 受众（aud）
+    jwt.exp_minutes:
+        value: 60
+        category: jwt
+        description: 访问令牌过期分钟数
+    jwt.issuer:
+        value: basaltpass
+        category: jwt
+        description: JWT Issuer
+    jwt.refresh_exp_minutes:
+        value: 10080
+        category: jwt
+        description: 刷新令牌过期分钟数
+    logging.enable_http_access_log:
+        value: true
+        category: logging
+        description: 是否记录 HTTP 访问日志
+    logging.format:
+        value: text
+        category: logging
+        description: 日志格式（text/json）
+    logging.level:
+        value: info
+        category: logging
+        description: 日志级别（debug/info/warn/error）
+    logging.retention_days:
+        value: 14
+        category: logging
+        description: 应用日志保留天数
+    maintenance.enabled:
+        value: false
+        category: maintenance
+        description: 维护模式：启用后仅管理员可访问
+    maintenance.message:
+        value: 系统维护中，请稍后访问。
+        category: maintenance
+        description: 维护模式提示信息
+    notifications.email_enabled:
+        value: false
+        category: notifications
+        description: 是否启用邮件通知
+    notifications.push_enabled:
+        value: false
+        category: notifications
+        description: 是否启用推送通知（WebPush/FCM 等）
+    oauth.allowed_redirect_hosts:
+        value:
+            - localhost
+        category: oauth
+        description: 允许的 OAuth 回调主机名
+    oauth.allowed_scopes:
+        value:
+            - openid
+            - profile
+            - email
+        category: oauth
+        description: 允许的 OAuth Scope 列表
+    oauth.enable_refresh_tokens:
+        value: true
+        category: oauth
+        description: 是否启用刷新令牌
+    oauth.pkce_required:
+        value: true
+        category: oauth
+        description: 是否要求 PKCE
+    pagination.default_page_size:
+        value: 20
+        category: pagination
+        description: 默认分页大小
+    pagination.max_page_size:
+        value: 100
+        category: pagination
+        description: 最大分页大小
+    security.account_lockout.enabled:
+        value: true
+        category: security
+        description: 是否启用登录失败锁定
+    security.account_lockout.max_attempts:
+        value: 5
+        category: security
+        description: 锁定前允许的最大失败次数
+    security.account_lockout.window_minutes:
+        value: 15
+        category: security
+        description: 统计失败次数的时间窗口（分钟）
+    security.allowed_ips:
+        value: []
+        category: security
+        description: 允许访问的 IP 列表（留空表示不限制）
+    security.csp:
+        value: default-src 'self'
+        category: security
+        description: Content Security Policy
+    security.enforce_2fa:
+        value: false
+        category: security
+        description: 是否强制启用 2FA
+    security.rate_limit.enabled:
+        value: true
+        category: security
+        description: 是否启用速率限制
+    security.rate_limit.requests_per_minute:
+        value: 120
+        category: security
+        description: 每分钟请求上限
+    session.cookie_name:
+        value: basaltpass_sid
+        category: session
+        description: 会话 Cookie 名称
+    session.max_age_seconds:
+        value: 86400
+        category: session
+        description: 会话有效期（秒）
+    session.same_site:
+        value: Lax
+        category: session
+        description: Cookie SameSite 策略（Lax/Strict/None）
+    session.secure:
+        value: false
+        category: session
+        description: Cookie 仅通过 HTTPS 发送
+    smtp.enabled:
+        value: false
+        category: smtp
+        description: 是否开启邮件发送
+    smtp.from:
+        value: no-reply@example.com
+        category: smtp
+        description: 发件人邮箱
+    smtp.host:
+        value: smtp.example.com
+        category: smtp
+        description: SMTP 服务器
+    smtp.password:
+        value: ""
+        category: smtp
+        description: SMTP 密码
+    smtp.port:
+        value: 587
+        category: smtp
+        description: SMTP 端口
+    smtp.username:
+        value: ""
+        category: smtp
+        description: SMTP 用户名
+    storage.s3.access_key_id:
+        value: ""
+        category: storage
+        description: S3 Access Key ID
+    storage.s3.bucket:
+        value: ""
+        category: storage
+        description: S3 Bucket
+    storage.s3.enabled:
+        value: false
+        category: storage
+        description: 是否启用 S3 兼容存储
+    storage.s3.endpoint:
+        value: ""
+        category: storage
+        description: S3 Endpoint
+    storage.s3.region:
+        value: ""
+        category: storage
+        description: S3 区域
+    storage.s3.secret_access_key:
+        value: ""
+        category: storage
+        description: S3 Secret Access Key
+    ui.accent_color:
+        value: '#22c55e'
+        category: ui
+        description: 强调色（十六进制）
+    ui.brand_favicon_url:
+        value: ""
+        category: ui
+        description: Favicon URL
+    ui.brand_logo_url:
+        value: ""
+        category: ui
+        description: 品牌 Logo URL
+    ui.primary_color:
+        value: '#4f46e5'
+        category: ui
+        description: 品牌主色（十六进制）
+    uploads.allowed_types:
+        value:
+            - image/png
+            - image/jpeg
+            - application/pdf
+        category: uploads
+        description: 允许的 MIME 类型
+    uploads.max_size_mb:
+        value: 10
+        category: uploads
+        description: 最大上传大小（MB）
+    uploads.storage:
+        value: local
+        category: uploads
+        description: 文件存储类型（local/s3/azure/gcs）
+    webhooks.max_retries:
+        value: 3
+        category: webhooks
+        description: 失败重试次数
+    webhooks.signing_secret:
+        value: ""
+        category: webhooks
+        description: Webhook 签名密钥
+    webhooks.timeout_seconds:
+        value: 5
+        category: webhooks
+        description: Webhook 调用超时时间（秒）

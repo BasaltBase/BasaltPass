@@ -76,7 +76,7 @@ func CreateTenantRole(c *fiber.Ctx) error {
 	}
 
 	// 检查角色代码是否重复
-	var existingRole model.TenantRole
+	var existingRole model.TenantRbacRole
 	err := common.DB().Where("tenant_id = ? AND code = ?", tenantID, req.Code).First(&existingRole).Error
 	if err == nil {
 		return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "角色代码已存在"})
@@ -209,7 +209,7 @@ func UpdateTenantRole(c *fiber.Ctx) error {
 
 	// 检查新的角色代码是否重复（排除自己）
 	if req.Code != role.Code {
-		var existingRole model.TenantRole
+		var existingRole model.TenantRbacRole
 		err := common.DB().Where("tenant_id = ? AND code = ? AND id != ?", tenantID, req.Code, roleID).First(&existingRole).Error
 		if err == nil {
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "角色代码已存在"})

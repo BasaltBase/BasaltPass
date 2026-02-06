@@ -1,13 +1,159 @@
 nohup: ignoring input
-2026/02/03 23:12:59 config not explicitly loaded; using defaults+env
-2026/02/03 23:12:59 loaded env from .env
-2026/02/03 23:12:59 loaded config from /workspaces/BasaltPass/basaltpass-backend/config/config.yaml
-2026/02/03 23:12:59 Database (sqlite) DSN: /workspaces/BasaltPass/basaltpass-backend/basaltpass.db
-2026/02/03 23:12:59 [main][info] Environment: develop (develop=true, staging=false, production=false)
-2026/02/03 23:12:59 [Migration] Successfully initialized default currencies
-2026/02/03 23:12:59 [Migration] No old currency fields found in wallets table, skipping migration
-2026/02/03 23:13:01 [Migration] Existing database detected, applying compatibility migrations...
-2026/02/03 23:13:02 [main][info] route map exported to docs/ROUTES.md
-2026/02/03 23:13:02 [main][info] Starting server on :8080
-2026/02/03 23:13:02 failed to listen: listen tcp4 :8080: bind: address already in use
-exit status 1
+2026/02/05 23:05:35 config not explicitly loaded; using defaults+env
+2026/02/05 23:05:35 config file not found, using defaults and env vars
+2026/02/05 23:05:35 Database (sqlite) DSN: /workspaces/BasaltPass/basaltpass.db
+2026/02/05 23:05:35 [main][info] Environment: develop (develop=true, staging=false, production=false)
+2026/02/05 23:05:35 [Migration] Successfully initialized default currencies
+2026/02/05 23:05:35 [Migration] Wallets table doesn't exist yet, skipping currency migration
+2026/02/05 23:05:38 [Migration] Fresh database detected, ensuring default tenant...
+2026/02/05 23:05:38 [Migration] Created default tenant
+2026/02/05 23:05:38 [Migration] Seeded development superadmin user
+2026/02/05 23:05:38 [Migration] Created role: admin
+2026/02/05 23:05:38 [Migration] Created role: user
+2026/02/05 23:05:38 [Migration] Created permission: tenant.dashboard.stats.read
+2026/02/05 23:05:38 [Migration] Created permission: tenant.dashboard.activities.read
+2026/02/05 23:05:38 [Migration] Created permission: tenant.roles.read
+2026/02/05 23:05:38 [Migration] Created permission: tenant.roles.create
+2026/02/05 23:05:38 [Migration] Created permission: tenant.roles.permissions.read
+2026/02/05 23:05:38 [Migration] Created permission: tenant.roles.permissions.set
+2026/02/05 23:05:38 [Migration] Created permission: tenant.roles.permissions.remove
+2026/02/05 23:05:38 [Migration] Created permission: tenant.permissions.read
+2026/02/05 23:05:38 [Migration] Created permission: tenant.permissions.create
+2026/02/05 23:05:38 [Migration] Created permission: tenant.permissions.update
+2026/02/05 23:05:38 [Migration] Created permission: tenant.permissions.delete
+2026/02/05 23:05:38 [Migration] Created permission: tenant.users.read
+2026/02/05 23:05:38 [Migration] Created permission: tenant.users.create
+2026/02/05 23:05:38 [Migration] Created permission: tenant.users.update
+2026/02/05 23:05:38 [Migration] Created permission: tenant.users.delete
+2026/02/05 23:05:38 [Migration] Created permission: tenant.users.stats.read
+2026/02/05 23:05:38 [Migration] Created permission: tenant.users.ban
+2026/02/05 23:05:38 [Migration] Created permission: tenant.tenants.read
+2026/02/05 23:05:38 [Migration] Created permission: tenant.tenants.create
+2026/02/05 23:05:38 [Migration] Created permission: tenant.tenants.update
+2026/02/05 23:05:38 [Migration] Created permission: tenant.tenants.delete
+2026/02/05 23:05:38 [Migration] Created permission: tenant.tenants.stats.read
+2026/02/05 23:05:38 [Migration] Created permission: tenant.tenants.users.read
+2026/02/05 23:05:38 [Migration] Created permission: tenant.tenants.users.delete
+2026/02/05 23:05:38 [Migration] Created permission: tenant.wallets.read
+2026/02/05 23:05:38 [Migration] Created permission: tenant.wallets.create
+2026/02/05 23:05:38 [Migration] Created permission: tenant.wallets.delete
+2026/02/05 23:05:39 [Migration] Created permission: tenant.wallets.stats.read
+2026/02/05 23:05:39 [Migration] Created permission: tenant.wallets.transactions.read
+2026/02/05 23:05:39 [Migration] Created permission: tenant.wallets.adjust
+2026/02/05 23:05:39 [Migration] Created permission: tenant.wallets.freeze
+2026/02/05 23:05:39 [Migration] Created permission: tenant.wallets.unfreeze
+2026/02/05 23:05:39 [Migration] Created permission: tenant.currencies.read
+2026/02/05 23:05:39 [Migration] Created permission: tenant.notifications.read
+2026/02/05 23:05:39 [Migration] Created permission: tenant.notifications.create
+2026/02/05 23:05:39 [Migration] Created permission: tenant.notifications.delete
+2026/02/05 23:05:39 [Migration] Created permission: tenant.oauth.clients.read
+2026/02/05 23:05:39 [Migration] Created permission: tenant.oauth.clients.create
+2026/02/05 23:05:39 [Migration] Created permission: tenant.oauth.clients.update
+2026/02/05 23:05:39 [Migration] Created permission: tenant.oauth.clients.delete
+2026/02/05 23:05:39 [Migration] Created permission: tenant.oauth.clients.secret.regenerate
+2026/02/05 23:05:39 [Migration] Created permission: tenant.oauth.clients.tokens.read
+2026/02/05 23:05:39 [Migration] Created permission: tenant.oauth.clients.tokens.revoke
+2026/02/05 23:05:39 [Migration] Created permission: tenant.apps.read
+2026/02/05 23:05:39 [Migration] Created permission: tenant.apps.create
+2026/02/05 23:05:39 [Migration] Created permission: tenant.apps.update
+2026/02/05 23:05:39 [Migration] Created permission: tenant.apps.delete
+2026/02/05 23:05:39 [Migration] Created permission: tenant.apps.status.update
+2026/02/05 23:05:39 [Migration] Created permission: tenant.apps.stats.read
+2026/02/05 23:05:39 [Migration] Created permission: tenant.app_users.read
+2026/02/05 23:05:39 [Migration] Created permission: tenant.app_users.delete
+2026/02/05 23:05:39 [Migration] Created permission: tenant.app_users.status.update
+2026/02/05 23:05:39 [Migration] Created permission: tenant.app_users.by_status.read
+2026/02/05 23:05:39 [Migration] Created permission: tenant.products.read
+2026/02/05 23:05:39 [Migration] Created permission: tenant.products.create
+2026/02/05 23:05:39 [Migration] Created permission: tenant.products.update
+2026/02/05 23:05:39 [Migration] Created permission: tenant.products.delete
+2026/02/05 23:05:39 [Migration] Created permission: tenant.plans.read
+2026/02/05 23:05:39 [Migration] Created permission: tenant.plans.create
+2026/02/05 23:05:39 [Migration] Created permission: tenant.plans.update
+2026/02/05 23:05:39 [Migration] Created permission: tenant.plans.delete
+2026/02/05 23:05:39 [Migration] Created permission: tenant.plans.features.create
+2026/02/05 23:05:39 [Migration] Created permission: tenant.prices.read
+2026/02/05 23:05:39 [Migration] Created permission: tenant.prices.create
+2026/02/05 23:05:39 [Migration] Created permission: tenant.prices.update
+2026/02/05 23:05:39 [Migration] Created permission: tenant.prices.delete
+2026/02/05 23:05:39 [Migration] Created permission: tenant.coupons.read
+2026/02/05 23:05:39 [Migration] Created permission: tenant.coupons.create
+2026/02/05 23:05:39 [Migration] Created permission: tenant.coupons.update
+2026/02/05 23:05:39 [Migration] Created permission: tenant.coupons.delete
+2026/02/05 23:05:39 [Migration] Created permission: tenant.subscriptions.read
+2026/02/05 23:05:39 [Migration] Created permission: tenant.subscriptions.cancel
+2026/02/05 23:05:39 [Migration] Created permission: superadmin.tenants.create
+2026/02/05 23:05:39 [Migration] Created permission: superadmin.tenants.read
+2026/02/05 23:05:39 [Migration] Created permission: superadmin.tenants.update
+2026/02/05 23:05:39 [Migration] Created permission: superadmin.tenants.delete
+2026/02/05 23:05:39 [Migration] Created role: viewer
+2026/02/05 23:05:39 [Migration] Created role: user_manager
+2026/02/05 23:05:39 [Migration] Created role: tenant_viewer
+2026/02/05 23:05:39 [Migration] Created role: wallet_manager
+2026/02/05 23:05:39 [Migration] Created role: oauth_manager
+2026/02/05 23:05:39 [Migration] Created role: notification_manager
+2026/02/05 23:05:39 [Migration] Created role: app_manager
+2026/02/05 23:05:39 [Migration] Created role: product_manager
+2026/02/05 23:05:39 [Migration] Created role: subscription_manager
+2026/02/05 23:05:39 [Migration] Created role: auditor
+2026/02/05 23:05:39 [Migration] Created role: support
+
+2026/02/05 23:05:39 [31;1m/workspaces/BasaltPass/basaltpass-backend/internal/migration/migrate.go:772 [35;1mno such column: tenant_id
+[0m[33m[0.905ms] [34;1m[rows:0][0m SELECT * FROM `roles` WHERE (code = "app_manager" AND tenant_id = 1) AND `roles`.`deleted_at` IS NULL ORDER BY `roles`.`id` LIMIT 1
+2026/02/05 23:05:39 [Migration] Role app_manager not found for tenant 1, skip
+
+2026/02/05 23:05:39 [31;1m/workspaces/BasaltPass/basaltpass-backend/internal/migration/migrate.go:772 [35;1mno such column: tenant_id
+[0m[33m[0.961ms] [34;1m[rows:0][0m SELECT * FROM `roles` WHERE (code = "product_manager" AND tenant_id = 1) AND `roles`.`deleted_at` IS NULL ORDER BY `roles`.`id` LIMIT 1
+2026/02/05 23:05:39 [Migration] Role product_manager not found for tenant 1, skip
+
+2026/02/05 23:05:39 [31;1m/workspaces/BasaltPass/basaltpass-backend/internal/migration/migrate.go:772 [35;1mno such column: tenant_id
+[0m[33m[0.903ms] [34;1m[rows:0][0m SELECT * FROM `roles` WHERE (code = "support" AND tenant_id = 1) AND `roles`.`deleted_at` IS NULL ORDER BY `roles`.`id` LIMIT 1
+2026/02/05 23:05:39 [Migration] Role support not found for tenant 1, skip
+
+2026/02/05 23:05:39 [31;1m/workspaces/BasaltPass/basaltpass-backend/internal/migration/migrate.go:772 [35;1mno such column: tenant_id
+[0m[33m[0.924ms] [34;1m[rows:0][0m SELECT * FROM `roles` WHERE (code = "auditor" AND tenant_id = 1) AND `roles`.`deleted_at` IS NULL ORDER BY `roles`.`id` LIMIT 1
+2026/02/05 23:05:39 [Migration] Role auditor not found for tenant 1, skip
+
+2026/02/05 23:05:39 [31;1m/workspaces/BasaltPass/basaltpass-backend/internal/migration/migrate.go:772 [35;1mno such column: tenant_id
+[0m[33m[1.019ms] [34;1m[rows:0][0m SELECT * FROM `roles` WHERE (code = "tenant_viewer" AND tenant_id = 1) AND `roles`.`deleted_at` IS NULL ORDER BY `roles`.`id` LIMIT 1
+2026/02/05 23:05:39 [Migration] Role tenant_viewer not found for tenant 1, skip
+
+2026/02/05 23:05:39 [31;1m/workspaces/BasaltPass/basaltpass-backend/internal/migration/migrate.go:772 [35;1mno such column: tenant_id
+[0m[33m[0.949ms] [34;1m[rows:0][0m SELECT * FROM `roles` WHERE (code = "wallet_manager" AND tenant_id = 1) AND `roles`.`deleted_at` IS NULL ORDER BY `roles`.`id` LIMIT 1
+2026/02/05 23:05:39 [Migration] Role wallet_manager not found for tenant 1, skip
+
+2026/02/05 23:05:39 [31;1m/workspaces/BasaltPass/basaltpass-backend/internal/migration/migrate.go:772 [35;1mno such column: tenant_id
+[0m[33m[0.914ms] [34;1m[rows:0][0m SELECT * FROM `roles` WHERE (code = "oauth_manager" AND tenant_id = 1) AND `roles`.`deleted_at` IS NULL ORDER BY `roles`.`id` LIMIT 1
+2026/02/05 23:05:39 [Migration] Role oauth_manager not found for tenant 1, skip
+
+2026/02/05 23:05:39 [31;1m/workspaces/BasaltPass/basaltpass-backend/internal/migration/migrate.go:772 [35;1mno such column: tenant_id
+[0m[33m[0.941ms] [34;1m[rows:0][0m SELECT * FROM `roles` WHERE (code = "notification_manager" AND tenant_id = 1) AND `roles`.`deleted_at` IS NULL ORDER BY `roles`.`id` LIMIT 1
+2026/02/05 23:05:39 [Migration] Role notification_manager not found for tenant 1, skip
+
+2026/02/05 23:05:39 [31;1m/workspaces/BasaltPass/basaltpass-backend/internal/migration/migrate.go:772 [35;1mno such column: tenant_id
+[0m[33m[1.133ms] [34;1m[rows:0][0m SELECT * FROM `roles` WHERE (code = "subscription_manager" AND tenant_id = 1) AND `roles`.`deleted_at` IS NULL ORDER BY `roles`.`id` LIMIT 1
+2026/02/05 23:05:39 [Migration] Role subscription_manager not found for tenant 1, skip
+
+2026/02/05 23:05:39 [31;1m/workspaces/BasaltPass/basaltpass-backend/internal/migration/migrate.go:772 [35;1mno such column: tenant_id
+[0m[33m[1.031ms] [34;1m[rows:0][0m SELECT * FROM `roles` WHERE (code = "viewer" AND tenant_id = 1) AND `roles`.`deleted_at` IS NULL ORDER BY `roles`.`id` LIMIT 1
+2026/02/05 23:05:39 [Migration] Role viewer not found for tenant 1, skip
+
+2026/02/05 23:05:39 [31;1m/workspaces/BasaltPass/basaltpass-backend/internal/migration/migrate.go:772 [35;1mno such column: tenant_id
+[0m[33m[0.919ms] [34;1m[rows:0][0m SELECT * FROM `roles` WHERE (code = "user_manager" AND tenant_id = 1) AND `roles`.`deleted_at` IS NULL ORDER BY `roles`.`id` LIMIT 1
+2026/02/05 23:05:39 [Migration] Role user_manager not found for tenant 1, skip
+
+2026/02/05 23:05:39 [31;1m/workspaces/BasaltPass/basaltpass-backend/internal/migration/migrate.go:606 [35;1mno such column: tenant_id
+[0m[33m[0.955ms] [34;1m[rows:0][0m SELECT * FROM `roles` WHERE (code = "tenant" AND tenant_id = 1) AND `roles`.`deleted_at` IS NULL ORDER BY `roles`.`id` LIMIT 1
+2026/02/05 23:05:39 [Migration] Admin role not found for tenant 1, skip permission binding
+2026/02/05 23:05:39 [main][info] route map exported to docs/ROUTES.md
+2026/02/05 23:05:39 [main][info] Starting server on :8080
+
+ ┌───────────────────────────────────────────────────┐ 
+ │                   Fiber v2.52.0                   │ 
+ │               http://127.0.0.1:8080               │ 
+ │       (bound on host 0.0.0.0 and port 8080)       │ 
+ │                                                   │ 
+ │ Handlers ........... 694  Processes ........... 1 │ 
+ │ Prefork ....... Disabled  PID .............. 8107 │ 
+ └───────────────────────────────────────────────────┘ 
+
