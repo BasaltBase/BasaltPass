@@ -18,12 +18,18 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["../../src/*"],
-      "@api/*": ["../../src/api/*"],
-      "@components/*": ["../../src/components/*"],
-      "@pages/*": ["../../src/pages/*"],
-      "@utils/*": ["../../src/utils/*"],
-      "@types/*": ["../../src/types/*"],
-      "@contexts/*": ["../../src/contexts/*"]
+      "@api/*": ["../../src/shared/api/*"],
+      "@components/*": ["../../src/shared/components/*"],
+      "@pages/*": ["../../src/features/*"],
+      "@features/*": ["../../src/features/*"],
+      "@utils/*": ["../../src/shared/utils/*"],
+      "@types/*": ["../../src/shared/types/*"],
+      "@contexts/*": ["../../src/shared/contexts/*"],
+      "@shared/*": ["../../src/shared/*"],
+      "@ui/*": ["../../src/shared/ui/*"],
+      "@routes/*": ["../../src/shared/routes/*"],
+      "@hooks/*": ["../../src/shared/hooks/*"],
+      "@constants/*": ["../../src/shared/constants/*"]
     }
   },
   "include": ["src", "../../src"]

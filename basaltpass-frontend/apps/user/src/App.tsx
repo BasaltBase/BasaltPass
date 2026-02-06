@@ -1,6 +1,6 @@
 import { BrowserRouter } from 'react-router-dom'
-import { NotificationProvider } from '../../../src/contexts/NotificationContext'
-import { AuthProvider } from '../../../src/contexts/AuthContext'
+import { NotificationProvider } from '../../../src/shared/contexts/NotificationContext'
+import { AuthProvider } from '../../../src/shared/contexts/AuthContext'
 import AppRouter from './router'
 
 export default function App() {

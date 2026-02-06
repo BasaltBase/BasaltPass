@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { BrowserRouter } from 'react-router-dom'
-import { NotificationProvider } from '../../../src/contexts/NotificationContext'
-import { AuthProvider } from '../../../src/contexts/AuthContext'
+import { NotificationProvider } from '../../../src/shared/contexts/NotificationContext'
+import { AuthProvider } from '../../../src/shared/contexts/AuthContext'
 import AppRouter from './router'
-import { exchangeConsole } from '../../../src/api/console'
-import { setAccessToken } from '../../../src/utils/auth'
+import { exchangeConsole } from '../../../src/shared/api/console'
+import { setAccessToken } from '../../../src/shared/utils/auth'
 
 function ConsoleCodeGate({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false)

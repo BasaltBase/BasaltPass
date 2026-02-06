@@ -392,11 +392,11 @@ function LoginForm() {
 
 ### 添加新组件
 
-1. 在 `src/components/` 目录下创建新组件文件
+1. 在 `src/shared/ui/` 目录下创建新 UI 组件文件
 2. 遵循现有的命名约定和 API 设计模式
 3. 确保完整的 TypeScript 类型定义
 4. 添加相应的文档和使用示例
-5. 在 `src/components/index.ts` 中导出组件
+5. 在 `src/shared/ui/index.ts` 中导出 UI 组件
 
 ### 组件开发规范
 
