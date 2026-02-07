@@ -17,6 +17,7 @@ func DefaultAllowedScopes() []string {
 		OfflineAccess,
 		S2SRead,
 		S2SUserRead,
+		S2SUserWrite,
 		S2SRBACRead,
 		S2SWalletRead,
 		S2SMessagesRead,
@@ -49,6 +50,8 @@ func Describe(s string) Meta {
 		return Meta{Scope: s, Category: "s2s", Title: "S2S (legacy)", Description: "旧版聚合只读权限：等同于所有 s2s.*.read（建议逐步迁移到细分 scope）"}
 	case S2SUserRead:
 		return Meta{Scope: s, Category: "s2s", Title: "S2S User Read", Description: "读取用户基础信息（/api/v1/s2s/users/:id）"}
+	case S2SUserWrite:
+		return Meta{Scope: s, Category: "s2s", Title: "S2S User Write", Description: "修改用户基础资料（PATCH /api/v1/s2s/users/:id，仅限昵称等测试写入）"}
 	case S2SRBACRead:
 		return Meta{Scope: s, Category: "s2s", Title: "S2S RBAC Read", Description: "读取用户角色/权限（/roles、/permissions）"}
 	case S2SWalletRead:
@@ -77,6 +80,7 @@ const (
 const (
 	S2SRead         = "s2s.read"
 	S2SUserRead     = "s2s.user.read"
+	S2SUserWrite    = "s2s.user.write"
 	S2SRBACRead     = "s2s.rbac.read"
 	S2SWalletRead   = "s2s.wallet.read"
 	S2SMessagesRead = "s2s.messages.read"

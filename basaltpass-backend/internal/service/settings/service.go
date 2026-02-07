@@ -113,6 +113,7 @@ func defaultItems() map[string]SettingItem {
 			// S2S / third-party app scopes
 			"s2s.read",
 			"s2s.user.read",
+			"s2s.user.write",
 			"s2s.rbac.read",
 			"s2s.wallet.read",
 			"s2s.messages.read",

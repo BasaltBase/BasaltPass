@@ -151,6 +151,63 @@ paths:
           description: Logs 
   
   # ===================== S2S APIs =====================
+  /api/v1/s2s/health:
+    get:
+      summary: Health check (S2S)
+      description: Authenticated health endpoint. Validates client credentials only.
+      security:
+        - ClientID: []
+          ClientSecret: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      status: { type: string }
+                  error:
+                    oneOf:
+                      - type: 'null'
+                      - $ref: '#/components/schemas/ErrorObject'
+                  request_id: { type: string }
+        '401': { description: Invalid client }
+
+  /api/v1/s2s/me:
+    get:
+      summary: Get calling client context (S2S)
+      description: Returns client/app/tenant context and scopes for the authenticated caller.
+      security:
+        - ClientID: []
+          ClientSecret: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      client_id: { type: string }
+                      app_id: { type: integer }
+                      tenant_id: { type: integer }
+                      scopes:
+                        type: array
+                        items: { type: string }
+                  error:
+                    oneOf:
+                      - type: 'null'
+                      - $ref: '#/components/schemas/ErrorObject'
+                  request_id: { type: string }
+        '401': { description: Invalid client }
+
   /api/v1/s2s/users/{id}:
     get:
       summary: Get user by ID (S2S)
@@ -184,6 +241,71 @@ paths:
         '401': { description: Invalid client }
         '403': { description: Insufficient scope }
         '404': { description: Not found }
+
+    patch:
+      summary: Patch user (S2S)
+      description: Updates basic user fields for write-path validation (currently nickname only). Required scope: s2s.user.write.
+      security:
+        - ClientID: []
+          ClientSecret: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nickname: { type: string }
+                username: { type: string }
+      responses:
+        '200':
+          description: OK
+        '400': { description: Invalid parameter }
+        '401': { description: Invalid client }
+        '403': { description: Insufficient scope }
+        '404': { description: Not found }
+        '500': { description: Server error }
+
+  /api/v1/s2s/users/lookup:
+    get:
+      summary: Lookup users in tenant (S2S)
+      description: Lookup by email/phone (exact) or q (fuzzy). Required scope: s2s.user.read (legacy umbrella: s2s.read).
+      security:
+        - ClientID: []
+          ClientSecret: []
+      parameters:
+        - name: email
+          in: query
+          required: false
+          schema: { type: string }
+        - name: phone
+          in: query
+          required: false
+          schema: { type: string }
+        - name: q
+          in: query
+          required: false
+          schema: { type: string }
+        - name: page
+          in: query
+          required: false
+          schema: { type: integer, default: 1 }
+        - name: page_size
+          in: query
+          required: false
+          schema: { type: integer, default: 20 }
+      responses:
+        '200': { description: OK }
+        '400': { description: Invalid parameter }
+        '401': { description: Invalid client }
+        '403': { description: Insufficient scope }
+        '500': { description: Server error }
 
   /api/v1/s2s/users/{id}/roles:
     get:
@@ -229,10 +351,36 @@ paths:
         '403': { description: Insufficient scope }
         '500': { description: Server error }
 
-  /api/v1/s2s/users/{id}/permissions:
+  /api/v1/s2s/users/{id}/role-codes:
     get:
       summary: Get user role codes in tenant (S2S)
-      description: Returns role codes array for user in tenant (simplified permissions). If tenant_id omitted, uses client's tenant. Required scope: s2s.rbac.read (legacy umbrella: s2s.read).
+      description: Returns role codes array for user in tenant. If tenant_id omitted, uses client's tenant. Required scope: s2s.rbac.read (legacy umbrella: s2s.read).
+      security:
+        - ClientID: []
+          ClientSecret: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: tenant_id
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+        '400': { description: Invalid parameter }
+        '401': { description: Invalid client }
+        '403': { description: Insufficient scope }
+        '500': { description: Server error }
+
+  /api/v1/s2s/users/{id}/permissions:
+    get:
+      summary: Get user permission codes in tenant (S2S)
+      description: Returns permission codes derived from roles. Also includes role codes for backward compatibility (roles/role_codes). Required scope: s2s.rbac.read (legacy umbrella: s2s.read).
       security:
         - ClientID: []
           ClientSecret: []
@@ -258,6 +406,14 @@ paths:
                   data:
                     type: object
                     properties:
+                      permission_codes:
+                        type: array
+                        items:
+                          type: string
+                      role_codes:
+                        type: array
+                        items:
+                          type: string
                       roles:
                         type: array
                         items:

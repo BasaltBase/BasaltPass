@@ -17,8 +17,10 @@
   - `client_secret: <your_client_secret>`
 - Form（POST 表单）
   - `client_id`、`client_secret`
-- Query（仅用于内部/调试，不建议在生产暴露）
+- Query（可配置禁用；不建议在生产暴露）
   - `?client_id=...&client_secret=...`
+
+是否允许 Query 传参由后端配置控制：`s2s.allow_query_credentials`。
 
 若凭证缺失或错误，将返回 `401 Unauthorized`，错误码 `invalid_client`。
 若客户端缺少所需 scope，将返回 `403 Forbidden`，错误码 `insufficient_scope`。
@@ -28,6 +30,7 @@
 为便于给第三方 app 做最小权限授权，S2S scope 细分为：
 
 - `s2s.user.read`：读取用户基础资料（/users/{id}）
+- `s2s.user.write`：修改用户基础资料（PATCH /users/{id}，目前仅用于昵称等测试写入）
 - `s2s.rbac.read`：读取角色/权限（/roles、/permissions）
 - `s2s.wallet.read`：读取钱包与流水（/wallets）
 - `s2s.messages.read`：读取消息/通知（/messages）
@@ -69,12 +72,53 @@
 
 ---
 
+## 健康检查（已鉴权）
+
+GET `/health`
+
+- 描述：用于快速验证凭证是否有效（仅鉴权，不要求额外 scope）
+
+成功响应：
+
+```
+{
+  "data": {"status": "ok"},
+  "error": null,
+  "request_id": "..."
+}
+```
+
+---
+
+## 获取当前客户端上下文
+
+GET `/me`
+
+- 描述：返回当前调用方的 client/app/tenant 与 scopes（仅鉴权，不要求额外 scope）
+
+成功响应：
+
+```
+{
+  "data": {
+    "client_id": "...",
+    "app_id": 1,
+    "tenant_id": 2,
+    "scopes": ["s2s.user.read", "s2s.rbac.read"]
+  },
+  "error": null,
+  "request_id": "..."
+}
+```
+
+---
+
 ## 获取用户基础信息
 
 GET `/users/{id}`
 
 - 描述：按用户ID返回基础的用户档案信息（去除敏感字段）
-- Scope：`s2s.read`
+- Scope：`s2s.user.read`（兼容 `s2s.read`）
 
 请求示例：
 
@@ -110,13 +154,37 @@ client_secret: your_client_secret
 
 ---
 
+## 用户查找（lookup）
+
+GET `/users/lookup?email=...` 或 `/users/lookup?phone=...` 或 `/users/lookup?q=...`
+
+- 描述：在当前 OAuth Client 所属租户内按 email/phone 精确查找，或按 q（email/nickname 模糊）查询。
+- Scope：`s2s.user.read`（兼容 `s2s.read`）
+
+---
+
+## 修改用户昵称（写入测试）
+
+PATCH `/users/{id}`
+
+- 描述：修改用户昵称（当前用于验证 S2S 写入链路）。
+- Scope：`s2s.user.write`
+
+请求体示例：
+
+```
+{"nickname": "NewName"}
+```
+
+---
+
 ## 获取用户角色（按租户）
 
 GET `/users/{id}/roles?tenant_id={tenant_id}`
 
 - 描述：返回用户在指定租户下的角色列表。
 - `tenant_id` 可选：若未传，默认使用当前 OAuth Client 所属租户。
-- Scope：`s2s.read`
+- Scope：`s2s.rbac.read`（兼容 `s2s.read`）
 
 请求示例：
 
@@ -147,19 +215,44 @@ client_secret: your_client_secret
 
 ---
 
-## 获取用户权限（通过角色派生/简化为角色代码列表）
+## 获取用户角色代码（按租户）
 
-GET `/users/{id}/permissions?tenant_id={tenant_id}`
+GET `/users/{id}/role-codes?tenant_id={tenant_id}`
 
-- 描述：当前实现返回用户在指定租户下的角色代码数组（如需细粒度权限列表，可在后续版本扩展）。
+- 描述：返回用户在指定租户下的角色代码数组。
 - `tenant_id` 可选：未传入时默认使用当前 OAuth Client 所属租户。
-- Scope：`s2s.read`
+- Scope：`s2s.rbac.read`（兼容 `s2s.read`）
 
 成功响应：
 
 ```
 {
   "data": {
+    "role_codes": ["admin", "member"]
+  },
+  "error": null,
+  "request_id": "..."
+}
+```
+
+---
+
+## 获取用户权限（通过角色派生）
+
+GET `/users/{id}/permissions?tenant_id={tenant_id}`
+
+- 描述：返回用户在指定租户下的 `permission_codes`（通过角色派生）。
+- 兼容：同时返回 `role_codes`，并保留历史字段 `roles`（其值为角色代码数组）。
+- `tenant_id` 可选：未传入时默认使用当前 OAuth Client 所属租户。
+- Scope：`s2s.rbac.read`（兼容 `s2s.read`）
+
+成功响应：
+
+```
+{
+  "data": {
+    "permission_codes": ["user.read", "wallet.read"],
+    "role_codes": ["admin", "member"],
     "roles": ["admin", "member"]
   },
   "error": null,
@@ -180,7 +273,7 @@ GET `/users/{id}/wallets?currency={CODE}&limit={N}`
 - 描述：返回指定货币钱包的余额与最近交易。
 - 必填参数：`currency`（例如 `CNY`、`USD`）
 - 可选参数：`limit`（默认 20）
-- Scope：`s2s.read`
+- Scope：`s2s.wallet.read`（兼容 `s2s.read`）
 
 请求示例：
 

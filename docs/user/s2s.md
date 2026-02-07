@@ -14,6 +14,7 @@ Header 方式（推荐）：
 推荐细分 scope：
 
 - `s2s.user.read`
+- `s2s.user.write`
 - `s2s.rbac.read`
 - `s2s.wallet.read`
 - `s2s.messages.read`
@@ -45,8 +46,13 @@ S2S 返回使用 envelope：
 
 ## 端点概览
 
+- `GET /api/v1/s2s/health`
+- `GET /api/v1/s2s/me`
 - `GET /api/v1/s2s/users/:id`
+- `GET /api/v1/s2s/users/lookup?email=...|phone=...|q=...`
+- `PATCH /api/v1/s2s/users/:id`
 - `GET /api/v1/s2s/users/:id/roles?tenant_id=...`
+- `GET /api/v1/s2s/users/:id/role-codes?tenant_id=...`
 - `GET /api/v1/s2s/users/:id/permissions?tenant_id=...`
 - `GET /api/v1/s2s/users/:id/wallets?currency=CNY&limit=20`
 - `GET /api/v1/s2s/users/:id/messages?status=unread&page=1&page_size=20`

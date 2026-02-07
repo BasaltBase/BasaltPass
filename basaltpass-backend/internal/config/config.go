@@ -68,6 +68,17 @@ type Config struct {
 		// Enabled controls whether to auto-inject demo data on first run (empty DB)
 		Enabled bool `mapstructure:"enabled"`
 	} `mapstructure:"seeding"`
+
+	S2S struct {
+		// AllowQueryCredentials controls whether client_id/client_secret may be passed via query string.
+		// Strongly recommended to disable in production.
+		AllowQueryCredentials bool `mapstructure:"allow_query_credentials"`
+		RateLimit             struct {
+			Enabled           bool `mapstructure:"enabled"`
+			RequestsPerMinute int  `mapstructure:"requests_per_minute"`
+		} `mapstructure:"rate_limit"`
+		AuditEnabled bool `mapstructure:"audit_enabled"`
+	} `mapstructure:"s2s"`
 }
 
 var cfg Config
@@ -125,6 +136,12 @@ func Load(path string) (*Config, error) {
 		"Cache-Control", "Content-Language", "Content-Type", "Expires", "Last-Modified", "Pragma",
 	})
 	v.SetDefault("cors.max_age_seconds", 86400)
+
+	// S2S defaults
+	v.SetDefault("s2s.allow_query_credentials", false)
+	v.SetDefault("s2s.rate_limit.enabled", true)
+	v.SetDefault("s2s.rate_limit.requests_per_minute", 600)
+	v.SetDefault("s2s.audit_enabled", true)
 
 	// Email defaults
 	v.SetDefault("email.provider", "smtp")

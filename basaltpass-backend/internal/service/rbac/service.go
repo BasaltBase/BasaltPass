@@ -95,3 +95,16 @@ func CheckPermission(userID uint, tenantID uint, permissionCode string) (bool, e
 		Count(&count).Error
 	return count > 0, err
 }
+
+// GetUserPermissionCodes returns distinct permission codes derived from user's roles within a tenant.
+func GetUserPermissionCodes(userID uint, tenantID uint) ([]string, error) {
+	var codes []string
+	err := common.DB().Table("user_roles").
+		Select("distinct permissions.code").
+		Joins("JOIN roles ON user_roles.role_id = roles.id").
+		Joins("JOIN role_permissions ON roles.id = role_permissions.role_id").
+		Joins("JOIN permissions ON role_permissions.permission_id = permissions.id").
+		Where("user_roles.user_id = ? AND roles.tenant_id = ?", userID, tenantID).
+		Pluck("permissions.code", &codes).Error
+	return codes, err
+}
