@@ -629,7 +629,7 @@ export default function AppUserManagement() {
 
       {/* 用户操作模态框 */}
       {showActionModal && selectedUser && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center">
+        <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
             <h3 className="text-lg font-medium text-gray-900 mb-4">
               {getActionText(actionType)}用户
@@ -696,7 +696,7 @@ export default function AppUserManagement() {
 
       {/* 权限管理模态框 */}
       {showPermissionModal && selectedUser && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-10 mx-auto p-5 border w-full max-w-6xl shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <div className="flex justify-between items-center mb-6">

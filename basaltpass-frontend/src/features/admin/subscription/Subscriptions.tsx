@@ -343,7 +343,7 @@ export default function AdminSubscriptions() {
 
       {/* 详情模态框 */}
       {showDetailModal && selectedSubscription && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10">
+        <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10">
           <div className="w-3/4 max-w-4xl p-6 border shadow-lg rounded-md bg-white">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-semibold text-gray-900">
@@ -457,7 +457,7 @@ export default function AdminSubscriptions() {
 
       {/* 取消订阅确认模态框 */}
       {showCancelModal && cancelTarget && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div className="mt-3 text-center">
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">

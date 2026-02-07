@@ -25,9 +25,9 @@ const Modal: React.FC<ModalProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 !m-0 z-50 flex items-center justify-center">
       <div
-        className="fixed inset-0 bg-gray-900 bg-opacity-50"
+        className="fixed inset-0 !m-0 bg-gray-900 bg-opacity-50"
         onClick={onClose}
         aria-hidden="true"
       ></div>

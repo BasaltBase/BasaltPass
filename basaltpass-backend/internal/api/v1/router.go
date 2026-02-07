@@ -22,13 +22,13 @@ func RegisterRoutes(app *fiber.App) {
 	// 注册OAuth相关路由
 	routes2.RegisterOAuthRoutes(v1)
 
-	// 注册用户相关路由
+	// 注册用户控制台前端相关路由
 	routes2.RegisterUserRoutes(v1)
 
-	// 注册租户相关路由
+	// 注册租户控制台前端相关路由
 	routes2.RegisterTenantRoutes(v1)
 
-	// 注册管理员相关路由
+	// 注册管理员控制台前端相关路由
 	routes2.RegisterAdminRoutes(v1)
 
 	// 注册服务间（S2S）路由

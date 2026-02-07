@@ -58,7 +58,7 @@ export default function AppSettings() {
       setFormData({
         name: appData.name || '',
         description: appData.description || '',
-        logo_url: appData.logo_url || '',
+        logo_url: appData.logo_url || (appData as any).icon_url || '',
         homepage_url: appData.homepage_url || '',
         privacy_policy_url: appData.privacy_policy_url || '',
         terms_of_service_url: appData.terms_of_service_url || '',
@@ -352,12 +352,15 @@ export default function AppSettings() {
               <div className="space-y-3">
                 {formData.callback_urls.map((url, index) => (
                   <div key={index} className="flex items-center space-x-2">
-                    <PInput
-                      type="url"
-                      value={url}
-                      onChange={(e) => handleCallbackUrlChange(index, (e.target as HTMLInputElement).value)}
-                      placeholder="https://example.com/callback"
-                    />
+                    <div className="flex-1">
+                      <PInput
+                        type="url"
+                        value={url}
+                        onChange={(e) => handleCallbackUrlChange(index, (e.target as HTMLInputElement).value)}
+                        placeholder="https://example.com/callback"
+                        autoComplete="off"
+                      />
+                    </div>
                     {formData.callback_urls.length > 1 && (
                       <PButton 
                         variant="secondary" 
@@ -394,6 +397,68 @@ export default function AppSettings() {
                   </PButton>
                 </Link>
               </div>
+            </div>
+
+            {/* OAuth客户端 */}
+            <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <h3 className="text-lg font-medium text-gray-900">OAuth客户端</h3>
+                <Link to={ROUTES.tenant.oauthClients} className="shrink-0">
+                  <PButton variant="secondary" size="sm">管理</PButton>
+                </Link>
+              </div>
+
+              {!app.oauth_clients || app.oauth_clients.length === 0 ? (
+                <div className="text-sm text-gray-500">
+                  暂无 OAuth 客户端
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {app.oauth_clients.map((client) => (
+                    <div key={client.id} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium text-gray-900 break-all">
+                            {client.client_id}
+                          </div>
+                          <div className="mt-1 text-xs text-gray-500">
+                            创建于 {new Date(client.created_at).toLocaleString()}
+                          </div>
+                        </div>
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${client.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>
+                          {client.is_active ? '启用' : '停用'}
+                        </span>
+                      </div>
+
+                      <div className="mt-4">
+                        <div className="text-xs font-medium text-gray-500">Redirect URIs</div>
+                        {client.redirect_uris && client.redirect_uris.length > 0 ? (
+                          <div className="mt-2 space-y-1">
+                            {client.redirect_uris.map((uri) => (
+                              <div key={uri} className="text-xs font-mono text-gray-800 bg-gray-50 border border-gray-200 rounded px-2 py-1 break-all">
+                                {uri}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="mt-1 text-sm text-gray-500">未配置</div>
+                        )}
+                      </div>
+
+                      <div className="mt-4">
+                        <div className="text-xs font-medium text-gray-500 mb-2">Scopes</div>
+                        <div className="flex flex-wrap gap-2">
+                          {(client.scopes || []).map((scope) => (
+                            <span key={scope} className="inline-flex px-2 py-1 text-xs font-medium bg-indigo-50 text-indigo-700 rounded">
+                              {scope}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* 应用信息 */}
@@ -435,7 +500,7 @@ export default function AppSettings() {
 
         {/* 删除确认对话框 */}
         {showDeleteConfirm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="fixed inset-0 !m-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg p-6 max-w-md w-full">
               <div className="flex items-center mb-4">
                 <ExclamationTriangleIcon className="w-6 h-6 text-red-500 mr-2" />

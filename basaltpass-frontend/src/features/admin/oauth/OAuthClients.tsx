@@ -108,7 +108,7 @@ function CreateClientModal({ isOpen, onClose, onSuccess }: CreateClientModalProp
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10">
+    <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10">
       <div className="w-3/4 max-w-4xl p-6 border shadow-lg rounded-md bg-white">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-gray-900">创建OAuth2客户端</h2>
@@ -294,7 +294,7 @@ function ClientDetailModal({ client, isOpen, onClose, onUpdate }: ClientDetailMo
   if (!isOpen || !client) return null
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10">
+    <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10">
       <div className="w-3/4 max-w-4xl p-6 border shadow-lg rounded-md bg-white">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-gray-900">客户端详情</h2>

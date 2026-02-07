@@ -26,6 +26,7 @@
       "@types/*": ["src/shared/types/*"],
       "@contexts/*": ["src/shared/contexts/*"],
       "@shared/*": ["src/shared/*"],
+      "@ui": ["src/shared/ui/index.ts"],
       "@ui/*": ["src/shared/ui/*"],
       "@routes/*": ["src/shared/routes/*"],
       "@hooks/*": ["src/shared/hooks/*"],

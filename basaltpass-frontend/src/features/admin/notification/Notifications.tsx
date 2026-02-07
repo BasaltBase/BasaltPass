@@ -256,7 +256,7 @@ const AdminNotifications: React.FC = () => {
         )}
         {/* 创建通知模态框 */}
         {showCreateModal && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10">
+          <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10">
             <div className="w-3/4 max-w-4xl p-6 border shadow-lg rounded-md bg-white">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-semibold text-gray-900">发送新通知</h2>

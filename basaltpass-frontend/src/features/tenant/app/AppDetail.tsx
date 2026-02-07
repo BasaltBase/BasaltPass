@@ -11,7 +11,6 @@ import {
   ClipboardDocumentIcon,
   CheckIcon,
   EyeIcon,
-  EyeSlashIcon,
   ShieldCheckIcon,
   LockClosedIcon,
   UserGroupIcon,
@@ -20,6 +19,10 @@ import {
 import TenantLayout from '@features/tenant/components/TenantLayout'
 import { tenantAppApi, TenantApp } from '@api/tenant/tenantApp'
 import { ROUTES } from '@constants'
+import CreateOAuthClientModal from '@features/tenant/app/components/CreateOAuthClientModal'
+import OAuthClientDetailModal from '@features/tenant/app/components/OAuthClientDetailModal'
+import { PButton } from '@ui'
+import type { TenantOAuthClientSummary } from '@api/tenant/tenantApp'
 
 export default function AppDetail() {
   const { id } = useParams<{ id: string }>()
@@ -27,8 +30,10 @@ export default function AppDetail() {
   const [app, setApp] = useState<TenantApp | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [showClientSecret, setShowClientSecret] = useState(false)
   const [copiedField, setCopiedField] = useState<string | null>(null)
+  const [showCreateOAuthClientModal, setShowCreateOAuthClientModal] = useState(false)
+  const [selectedOAuthClient, setSelectedOAuthClient] = useState<TenantOAuthClientSummary | null>(null)
+  const [showOAuthClientDetailModal, setShowOAuthClientDetailModal] = useState(false)
 
   useEffect(() => {
     if (id) {
@@ -41,6 +46,7 @@ export default function AppDetail() {
     
     try {
       setLoading(true)
+      setError('')
       const response = await tenantAppApi.getTenantApp(id)
       setApp(response.data)
     } catch (err: any) {
@@ -87,7 +93,7 @@ export default function AppDetail() {
     }
   }
 
-  if (loading) {
+  if (loading && !app) {
     return (
       <TenantLayout title="应用详情">
         <div className="flex items-center justify-center py-12">
@@ -100,7 +106,7 @@ export default function AppDetail() {
     )
   }
 
-  if (error) {
+  if (error && !app) {
     return (
       <TenantLayout title="应用详情">
         <div className="flex items-center justify-center py-12">
@@ -142,9 +148,18 @@ export default function AppDetail() {
     )
   }
 
+  const appIdNumberRaw = typeof app.id === 'string' ? parseInt(app.id, 10) : app.id
+  const appIdNumber = Number.isFinite(appIdNumberRaw) ? appIdNumberRaw : 0
+
   return (
     <TenantLayout title={`${app.name} - 应用详情`}>
       <div className="space-y-6">
+        {error && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            {error}
+          </div>
+        )}
+
         {/* 面包屑导航 */}
         <button
           onClick={() => navigate(ROUTES.tenant.apps)}
@@ -435,90 +450,160 @@ export default function AppDetail() {
           </div>
         </div>
 
-        {/* OAuth配置 */}
+        {/* OAuth客户端 */}
         <div className="bg-white shadow rounded-lg">
-          <div className="px-6 py-4 border-b border-gray-200">
+          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between gap-4">
             <h3 className="text-lg font-medium text-gray-900 flex items-center">
               <KeyIcon className="h-5 w-5 mr-2 text-green-500" />
-              OAuth配置
+              OAuth客户端
             </h3>
+            <div className="flex items-center gap-3">
+              <Link to={ROUTES.tenant.oauthClients} className="text-sm text-blue-600 hover:text-blue-800">
+                去管理
+              </Link>
+              <PButton size="sm" onClick={() => setShowCreateOAuthClientModal(true)}>
+                创建客户端
+              </PButton>
+            </div>
           </div>
           <div className="px-6 py-4 space-y-4">
-            {/* 客户端ID */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">客户端ID</label>
-              <div className="mt-1 flex items-center space-x-2">
-                <code className="flex-1 px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-sm font-mono">
-                  app_{app.id}_client
-                </code>
-                <button
-                  onClick={() => copyToClipboard(`app_${app.id}_client`, 'clientId')}
-                  className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm text-gray-500 hover:text-gray-700"
-                >
-                  {copiedField === 'clientId' ? (
-                    <CheckIcon className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <ClipboardDocumentIcon className="h-4 w-4" />
-                  )}
-                </button>
+            {!app.oauth_clients || app.oauth_clients.length === 0 ? (
+              <div className="text-center py-10 bg-gray-50 rounded-lg border border-gray-200">
+                <KeyIcon className="h-10 w-10 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-700 font-medium">暂无OAuth客户端</p>
+                <p className="text-sm text-gray-500 mt-1">创建一个客户端以启用OAuth2/OIDC登录</p>
+                <div className="mt-4">
+                  <PButton onClick={() => setShowCreateOAuthClientModal(true)}>创建第一个客户端</PButton>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="space-y-4">
+                {app.oauth_clients.map((client) => (
+                  <div key={client.id} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-gray-900">Client ID</span>
+                          <span
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              client.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            }`}
+                          >
+                            {client.is_active ? '激活' : '停用'}
+                          </span>
+                        </div>
+                        <div className="mt-2 flex items-center gap-2">
+                          <code className="flex-1 px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-xs font-mono break-all">
+                            {client.client_id}
+                          </code>
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(client.client_id, `oauth_client_id_${client.id}`)}
+                            className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm text-gray-500 hover:text-gray-700"
+                            title="复制 Client ID"
+                          >
+                            {copiedField === `oauth_client_id_${client.id}` ? (
+                              <CheckIcon className="h-4 w-4 text-green-500" />
+                            ) : (
+                              <ClipboardDocumentIcon className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
 
-            {/* 客户端密钥 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">客户端密钥</label>
-              <div className="mt-1 flex items-center space-x-2">
-                <code className="flex-1 px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-sm font-mono">
-                  {showClientSecret ? `secret_${app.id}_${Date.now()}` : '••••••••••••••••••••••••••••••••'}
-                </code>
-                <button
-                  onClick={() => setShowClientSecret(!showClientSecret)}
-                  className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm text-gray-500 hover:text-gray-700"
-                >
-                  {showClientSecret ? (
-                    <EyeSlashIcon className="h-4 w-4" />
-                  ) : (
-                    <EyeIcon className="h-4 w-4" />
-                  )}
-                </button>
-                <button
-                  onClick={() => copyToClipboard(`secret_${app.id}_${Date.now()}`, 'clientSecret')}
-                  className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm text-gray-500 hover:text-gray-700"
-                >
-                  {copiedField === 'clientSecret' ? (
-                    <CheckIcon className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <ClipboardDocumentIcon className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-            </div>
+                        <div className="mt-3 flex items-center gap-2">
+                          <PButton
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => {
+                              setSelectedOAuthClient(client)
+                              setShowOAuthClientDetailModal(true)
+                            }}
+                            leftIcon={<EyeIcon className="h-4 w-4" />}
+                          >
+                            查看详情
+                          </PButton>
+                        </div>
 
-            {/* 回调地址 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">授权回调地址</label>
-              <div className="mt-1 space-y-2">
-                {(app.callback_urls || []).map((url, index) => (
-                  <div key={index} className="flex items-center space-x-2">
-                    <code className="flex-1 px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-sm font-mono">
-                      {url}
-                    </code>
-                    <button
-                      onClick={() => copyToClipboard(url, `callback_${index}`)}
-                      className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm text-gray-500 hover:text-gray-700"
-                    >
-                      {copiedField === `callback_${index}` ? (
-                        <CheckIcon className="h-4 w-4 text-green-500" />
-                      ) : (
-                        <ClipboardDocumentIcon className="h-4 w-4" />
-                      )}
-                    </button>
+                        <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <div className="text-sm font-medium text-gray-700">重定向URI</div>
+                            <div className="mt-2 space-y-2">
+                              {(client.redirect_uris || []).length === 0 ? (
+                                <div className="text-sm text-gray-500">未配置</div>
+                              ) : (
+                                (client.redirect_uris || []).map((uri, index) => (
+                                  <div key={index} className="flex items-center gap-2">
+                                    <code className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-xs font-mono break-all">
+                                      {uri}
+                                    </code>
+                                    <button
+                                      type="button"
+                                      onClick={() => copyToClipboard(uri, `oauth_redirect_${client.id}_${index}`)}
+                                      className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm text-gray-500 hover:text-gray-700"
+                                      title="复制 Redirect URI"
+                                    >
+                                      {copiedField === `oauth_redirect_${client.id}_${index}` ? (
+                                        <CheckIcon className="h-4 w-4 text-green-500" />
+                                      ) : (
+                                        <ClipboardDocumentIcon className="h-4 w-4" />
+                                      )}
+                                    </button>
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="text-sm font-medium text-gray-700">Scopes</div>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {(client.scopes || []).length === 0 ? (
+                                <span className="text-sm text-gray-500">未配置</span>
+                              ) : (
+                                (client.scopes || []).map((scope) => (
+                                  <span key={scope} className="inline-flex px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">
+                                    {scope}
+                                  </span>
+                                ))
+                              )}
+                            </div>
+
+                            <div className="mt-4">
+                              <div className="text-sm font-medium text-gray-700">创建时间</div>
+                              <div className="mt-1 text-sm text-gray-900">{client.created_at}</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ))}
+                <div className="text-xs text-gray-500">
+                  提示：Client Secret 仅在创建或重新生成时展示一次。
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
+
+        <CreateOAuthClientModal
+          isOpen={showCreateOAuthClientModal}
+          onClose={() => setShowCreateOAuthClientModal(false)}
+          onSuccess={fetchAppDetail}
+          apps={[{ id: appIdNumber, name: app.name, description: app.description }]}
+          defaultAppId={appIdNumber}
+          lockAppSelect
+        />
+
+        <OAuthClientDetailModal
+          client={selectedOAuthClient}
+          isOpen={showOAuthClientDetailModal}
+          onClose={() => {
+            setShowOAuthClientDetailModal(false)
+            setSelectedOAuthClient(null)
+          }}
+          onUpdate={fetchAppDetail}
+        />
       </div>
     </TenantLayout>
   )

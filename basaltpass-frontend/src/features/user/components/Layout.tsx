@@ -87,8 +87,8 @@ export default function Layout({ children }: LayoutProps) {
     <div className="h-screen flex overflow-hidden bg-gray-100">
       {/* 移动端侧边栏 */}
       {sidebarOpen && (
-        <div className="fixed inset-0 flex z-40 md:hidden">
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-0 !m-0 flex z-40 md:hidden">
+          <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
           <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white">
             <div className="absolute top-0 right-0 -mr-12 pt-2">
               <PButton
@@ -259,7 +259,7 @@ export default function Layout({ children }: LayoutProps) {
               )}
 
               {isUserMenuOpen && (
-                <div className="fixed inset-0 z-40" onClick={() => setIsUserMenuOpen(false)} />
+                <div className="fixed inset-0 !m-0 z-40" onClick={() => setIsUserMenuOpen(false)} />
               )}
             </div>
           </div>

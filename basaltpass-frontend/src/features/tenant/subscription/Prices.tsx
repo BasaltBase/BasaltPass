@@ -233,7 +233,7 @@ export default function TenantPrices() {
 
       {/* 创建/编辑定价模态框 */}
       {showModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white max-h-[80vh] overflow-y-auto">
             <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
               {editingPrice ? '编辑定价' : '创建定价'}
@@ -322,7 +322,7 @@ export default function TenantPrices() {
 
       {/* 删除确认模态框 */}
       {showDeleteModal && deleteTarget && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
               <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />

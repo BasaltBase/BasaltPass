@@ -722,7 +722,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
 
         {/* 创建钱包模态框 */}
         {createModalVisible && (
-          <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 !m-0 bg-black bg-opacity-60 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
             <PCard variant="elevated" className="relative mx-auto border-0 w-full max-w-md rounded-2xl">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
@@ -872,7 +872,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
 
         {/* 调整余额模态框 */}
         {adjustModalVisible && selectedWallet && (
-          <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 !m-0 bg-black bg-opacity-60 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
             <PCard variant="elevated" className="relative mx-auto border-0 w-full max-w-md rounded-2xl">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">

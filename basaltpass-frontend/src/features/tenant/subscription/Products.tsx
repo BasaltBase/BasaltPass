@@ -250,7 +250,7 @@ export default function TenantProducts() {
 
       {/* 创建/编辑产品模态框 */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 !m-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
             <div className="relative w-full max-w-md bg-white rounded-lg shadow-xl">
               {/* 模态框头部 */}
               <div className="px-6 py-4 border-b border-gray-200">
@@ -328,7 +328,7 @@ export default function TenantProducts() {
 
       {/* 删除确认模态框 */}
       {showDeleteModal && deleteTarget && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
             <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
               <div className="mt-3 text-center">
                 <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">

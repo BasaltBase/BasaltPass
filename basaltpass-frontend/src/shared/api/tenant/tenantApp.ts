@@ -2,11 +2,22 @@ import client from '../client'
 
 // 租户应用管理相关的API接口
 
+export interface TenantOAuthClientSummary {
+  id: number
+  client_id: string
+  redirect_uris: string[]
+  scopes: string[]
+  is_active: boolean
+  created_at: string
+}
+
 export interface TenantApp {
-  id: string
-  tenant_id: string
+  id: string | number
+  tenant_id: string | number
   name: string
   description: string
+  /** Newer backend field name for the app icon */
+  icon_url?: string
   logo_url?: string
   homepage_url?: string
   callback_urls: string[]
@@ -18,6 +29,7 @@ export interface TenantApp {
   updated_at: string
   last_accessed?: string
   oauth_client?: boolean
+  oauth_clients?: TenantOAuthClientSummary[]
   stats?: {
     total_users: number
     active_users: number

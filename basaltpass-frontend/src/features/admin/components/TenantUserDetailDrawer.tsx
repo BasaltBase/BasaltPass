@@ -22,8 +22,8 @@ const TenantUserDetailDrawer: React.FC<TenantUserDetailDrawerProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end">
-      <div className="fixed inset-0 bg-gray-900 bg-opacity-50" onClick={onClose} aria-hidden="true"></div>
+    <div className="fixed inset-0 !m-0 z-50 flex justify-end">
+      <div className="fixed inset-0 !m-0 bg-gray-900 bg-opacity-50" onClick={onClose} aria-hidden="true"></div>
       <div className="relative w-full max-w-xl bg-white shadow-xl h-full overflow-y-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <div>

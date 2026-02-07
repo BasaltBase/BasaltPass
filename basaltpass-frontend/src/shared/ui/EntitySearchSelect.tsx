@@ -420,7 +420,7 @@ const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
       {/* 点击外部关闭下拉列表 */}
       {open && (
         <div
-          className="fixed inset-0 z-9990"
+          className="fixed inset-0 !m-0 z-9990"
           onClick={() => setOpen(false)}
         />
       )}

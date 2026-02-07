@@ -183,7 +183,7 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
                 {/* 点击外部关闭菜单 */}
                 {isUserMenuOpen && (
                   <div 
-                    className="fixed inset-0 z-40" 
+                    className="fixed inset-0 !m-0 z-40" 
                     onClick={() => setIsUserMenuOpen(false)}
                   />
                 )}
@@ -217,8 +217,8 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
 
       {/* 移动端菜单 */}
       <div className="lg:hidden">
-        <div className="fixed inset-0 z-40 flex">
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-75" />
+        <div className="fixed inset-0 !m-0 z-40 flex">
+          <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-75" />
           <div className="relative flex w-full max-w-xs flex-1 flex-col bg-white">
             <div className="absolute top-0 right-0 -mr-12 pt-2">
               <button className="ml-1 flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
