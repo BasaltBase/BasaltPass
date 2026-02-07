@@ -10,6 +10,7 @@
 - 配置体系（config.yaml / settings.yaml / env 覆盖）：./configuration.md
 - 后端开发指南（路由/中间件/鉴权/数据库）：./backend.md
 - 前端开发指南（多控制台 apps / 本地端口）：./frontend.md
+- 应用/网站接入标准（如何做一个“符合 BasaltPass 标准”的集成）：./app-website-standard.md
 - OAuth2 / OIDC（授权服务器实现与调试）：./oauth2-oidc.md
 - 权限系统（全局/Admin + 租户/Tenant + 应用/App）：./rbac.md
 - 邮件系统（多 Provider + 测试工具）：./email.md
