@@ -50,6 +50,20 @@ export interface UpdateTenantOAuthClientRequest {
   is_active?: boolean
 }
 
+export interface OAuthScopeMeta {
+  scope: string
+  title: string
+  description: string
+  category: string
+}
+
+export interface ListOAuthScopesResponse {
+  data: {
+    scopes: OAuthScopeMeta[]
+    defaults: string[]
+  }
+}
+
 // 租户OAuth客户端管理API
 export const tenantOAuthApi = {
   // 获取租户应用和OAuth客户端列表
@@ -81,6 +95,12 @@ export const tenantOAuthApi = {
   // 重新生成客户端密钥
   async regenerateSecret(clientId: string) {
     const response = await client.post(`/api/v1/tenant/oauth/clients/${clientId}/regenerate-secret`)
+    return response.data
+  },
+
+  // 获取可用 scopes（用于控制台勾选）
+  async listScopes() {
+    const response = await client.get<ListOAuthScopesResponse>('/api/v1/tenant/oauth/scopes')
     return response.data
   }
 }

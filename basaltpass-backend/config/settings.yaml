@@ -246,6 +246,13 @@ settings:
             - openid
             - profile
             - email
+            - offline_access
+            - s2s.read
+            - s2s.user.read
+            - s2s.rbac.read
+            - s2s.wallet.read
+            - s2s.messages.read
+            - s2s.products.read
         category: oauth
         description: 允许的 OAuth Scope 列表
     oauth.enable_refresh_tokens:

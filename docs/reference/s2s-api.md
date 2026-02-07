@@ -6,7 +6,7 @@
 - 协议：HTTPS + JSON
 - 编码：UTF-8
 - 认证：OAuth Client 凭证（client_id + client_secret）
-- 鉴权：要求具备 scope：`s2s.read`
+- 鉴权：要求具备 scope（推荐细分，兼容旧版 `s2s.read`）
 
 ## 认证与授权
 
@@ -22,6 +22,18 @@
 
 若凭证缺失或错误，将返回 `401 Unauthorized`，错误码 `invalid_client`。
 若客户端缺少所需 scope，将返回 `403 Forbidden`，错误码 `insufficient_scope`。
+
+### Scope 细分（v1 推荐）
+
+为便于给第三方 app 做最小权限授权，S2S scope 细分为：
+
+- `s2s.user.read`：读取用户基础资料（/users/{id}）
+- `s2s.rbac.read`：读取角色/权限（/roles、/permissions）
+- `s2s.wallet.read`：读取钱包与流水（/wallets）
+- `s2s.messages.read`：读取消息/通知（/messages）
+- `s2s.products.read`：读取产品拥有情况（/products、/ownership）
+
+兼容：历史 scope `s2s.read` 仍然可用，并视为包含所有上述 `s2s.*.read` 权限。
 
 ## 统一响应结构
 

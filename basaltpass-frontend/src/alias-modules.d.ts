@@ -6,6 +6,7 @@
 
 declare module '@/*'
 declare module '@api/*'
+declare module '@components'
 declare module '@components/*'
 declare module '@pages/*'
 declare module '@features/*'

@@ -570,6 +570,10 @@
 | HEAD | /api/v1/tenant/oauth/clients/:client_id/stats |
 | GET | /api/v1/tenant/oauth/clients/:client_id/tokens |
 | HEAD | /api/v1/tenant/oauth/clients/:client_id/tokens |
+| GET | /api/v1/tenant/oauth/scopes |
+| GET | /api/v1/tenant/oauth/scopes |
+| HEAD | /api/v1/tenant/oauth/scopes |
+| HEAD | /api/v1/tenant/oauth/scopes |
 | GET | /api/v1/tenant/permissions/ |
 | GET | /api/v1/tenant/permissions/ |
 | HEAD | /api/v1/tenant/permissions/ |

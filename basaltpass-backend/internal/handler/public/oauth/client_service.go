@@ -2,6 +2,8 @@ package oauth
 
 import (
 	"basaltpass-backend/internal/service/aduit"
+	"basaltpass-backend/internal/service/scope"
+	"basaltpass-backend/internal/service/settings"
 	"errors"
 	"strings"
 	"time"
@@ -407,6 +409,26 @@ func (s *ClientService) validateCreateRequest(req *CreateClientRequest) error {
 			return errors.New("无效的重定向URI: " + uri)
 		}
 	}
+	if len(req.Scopes) > 0 {
+		allowed := settings.GetStringSlice("oauth.allowed_scopes", scope.DefaultAllowedScopes())
+		allowedSet := map[string]struct{}{}
+		for _, s := range allowed {
+			s = strings.TrimSpace(s)
+			if s == "" {
+				continue
+			}
+			allowedSet[s] = struct{}{}
+		}
+		for _, sc := range req.Scopes {
+			sc = strings.TrimSpace(sc)
+			if sc == "" {
+				continue
+			}
+			if _, ok := allowedSet[sc]; !ok {
+				return errors.New("无效的 scope: " + sc)
+			}
+		}
+	}
 	return nil
 }
 
@@ -418,6 +440,26 @@ func (s *ClientService) validateUpdateRequest(req *UpdateClientRequest) error {
 		for _, uri := range req.RedirectURIs {
 			if !isValidURL(uri) {
 				return errors.New("无效的重定向URI: " + uri)
+			}
+		}
+	}
+	if len(req.Scopes) > 0 {
+		allowed := settings.GetStringSlice("oauth.allowed_scopes", scope.DefaultAllowedScopes())
+		allowedSet := map[string]struct{}{}
+		for _, s := range allowed {
+			s = strings.TrimSpace(s)
+			if s == "" {
+				continue
+			}
+			allowedSet[s] = struct{}{}
+		}
+		for _, sc := range req.Scopes {
+			sc = strings.TrimSpace(sc)
+			if sc == "" {
+				continue
+			}
+			if _, ok := allowedSet[sc]; !ok {
+				return errors.New("无效的 scope: " + sc)
 			}
 		}
 	}

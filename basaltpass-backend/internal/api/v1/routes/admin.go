@@ -294,6 +294,7 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 	settingsGroup.Put("/bulk", adminSettings.BulkUpdateSettingsHandler) // /tenant/settings/bulk
 
 	// OAuth2客户端管理路由（高级管理级）
+	adminGroup.Get("/oauth/scopes", oauth.TenantListOAuthScopesHandler)
 	oauthClientGroup := adminGroup.Group("/oauth/clients")                                // /tenant/oauth/clients
 	oauthClientGroup.Post("/", oauth.CreateClientHandler)                                 // /tenant/oauth/clients
 	oauthClientGroup.Get("/", oauth.ListClientsHandler)                                   // /tenant/oauth/clients

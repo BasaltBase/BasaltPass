@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ExclamationTriangleIcon, KeyIcon, ClipboardDocumentIcon } from '@heroicons/react/24/outline'
-import { tenantOAuthApi, CreateTenantOAuthClientRequest } from '@api/tenant/tenantOAuth'
-import { PButton, PInput, PSelect, PTextarea, PCheckbox } from '@ui'
+import { tenantOAuthApi, CreateTenantOAuthClientRequest, type OAuthScopeMeta } from '@api/tenant/tenantOAuth'
+import { PButton, PInput, PSelect, PTextarea } from '@ui'
+import { OAuthScopePicker } from '@components'
 import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline'
 
 export interface CreateOAuthClientModalApp {
@@ -43,6 +44,49 @@ export default function CreateOAuthClientModal({
   const [error, setError] = useState('')
   const [createdCredentials, setCreatedCredentials] = useState<{ clientId: string; clientSecret: string } | null>(null)
 
+  const [scopeMetas, setScopeMetas] = useState<OAuthScopeMeta[]>([])
+  const [scopeDefaults, setScopeDefaults] = useState<string[]>(['openid', 'profile', 'email'])
+  const [scopeLoading, setScopeLoading] = useState(false)
+  const [scopeError, setScopeError] = useState('')
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    let cancelled = false
+    const loadScopes = async () => {
+      setScopeLoading(true)
+      setScopeError('')
+      try {
+        const resp = await tenantOAuthApi.listScopes()
+        if (cancelled) return
+        setScopeMetas(resp?.data?.scopes || [])
+        setScopeDefaults(resp?.data?.defaults || ['openid', 'profile', 'email'])
+      } catch (e: any) {
+        if (cancelled) return
+        setScopeError(e?.response?.data?.error || '加载 scopes 失败')
+      } finally {
+        if (cancelled) return
+        setScopeLoading(false)
+      }
+    }
+
+    loadScopes()
+    return () => {
+      cancelled = true
+    }
+  }, [isOpen])
+
+  useEffect(() => {
+    if (!isOpen) return
+    setFormData(prev => {
+      const current = prev.scopes || []
+      if (current.length === 0) {
+        return { ...prev, scopes: scopeDefaults }
+      }
+      return prev
+    })
+  }, [isOpen, scopeDefaults])
+
   const copyToClipboard = async (text: string) => {
     await navigator.clipboard.writeText(text)
     alert('已复制到剪贴板')
@@ -56,7 +100,7 @@ export default function CreateOAuthClientModal({
       name: '',
       description: '',
       redirect_uris: [''],
-      scopes: ['openid', 'profile', 'email'],
+      scopes: scopeDefaults,
       allowed_origins: ['']
     })
   }
@@ -149,11 +193,12 @@ export default function CreateOAuthClientModal({
     }))
   }
 
+
   if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-8">
-      <div className="relative w-full max-w-3xl mx-4 bg-white shadow-xl rounded-xl border border-gray-100">
+      <div className="relative w-full max-w-6xl mx-2 bg-white shadow-xl rounded-xl border border-gray-100">
         <div className="bg-white px-6 py-5 border-b border-gray-200 rounded-t-xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
@@ -237,188 +282,196 @@ export default function CreateOAuthClientModal({
             </div>
           </div>
         ) : (
-          <form id="oauth-client-form" onSubmit={handleSubmit} className="px-6 py-6 space-y-6">
-            <div className="border-b border-gray-200 pb-6">
-              <div className="flex items-center mb-4">
-                <div className="h-2 w-2 bg-indigo-600 rounded-full mr-3"></div>
-                <h4 className="text-lg font-medium text-gray-900">基本信息</h4>
-              </div>
+          <form id="oauth-client-form" onSubmit={handleSubmit} className="px-6 py-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Left column: name/callback/cors */}
+              <div className="space-y-6">
+                <div className="border-b border-gray-200 pb-6">
+                  <div className="flex items-center mb-4">
+                    <div className="h-2 w-2 bg-indigo-600 rounded-full mr-3"></div>
+                    <h4 className="text-lg font-medium text-gray-900">基本信息</h4>
+                  </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="sm:col-span-2">
-                  <PSelect
-                    required
-                    value={formData.app_id}
-                    onChange={(e) => setFormData(prev => ({ ...prev, app_id: parseInt((e.target as HTMLSelectElement).value) }))}
-                    disabled={lockAppSelect}
-                    label={
-                      <span>
-                        关联应用 <span className="text-red-500">*</span>
-                      </span>
-                    }
-                    variant="rounded"
-                    size="lg"
-                  >
-                    <option value={0}>请选择要配置的应用</option>
-                    {(apps || []).map(app => (
-                      <option key={app.id} value={app.id}>{app.name}</option>
-                    ))}
-                  </PSelect>
-                </div>
-
-                <div>
-                  <PInput
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: (e.target as HTMLInputElement).value }))}
-                    label={
-                      <span>
-                        客户端名称 <span className="text-red-500">*</span>
-                      </span>
-                    }
-                    placeholder="例如：Web客户端"
-                    variant="rounded"
-                    size="lg"
-                    autoComplete="off"
-                  />
-                </div>
-
-                <div>
-                  <PTextarea
-                    value={formData.description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: (e.target as HTMLTextAreaElement).value }))}
-                    label="客户端描述"
-                    rows={3}
-                    placeholder="简要描述此客户端的用途..."
-                    variant="rounded"
-                    size="lg"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="border-b border-gray-200 pb-6">
-              <div className="flex items-center mb-4">
-                <div className="h-2 w-2 bg-emerald-600 rounded-full mr-3"></div>
-                <h4 className="text-lg font-medium text-gray-900">OAuth配置</h4>
-              </div>
-
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  重定向URI <span className="text-red-500">*</span>
-                </label>
-                <div className="space-y-3">
-                  {(formData.redirect_uris || []).map((uri, index) => (
-                    <div key={index} className="flex items-center space-x-3">
-                      <div className="flex-1">
-                        <PInput
-                          type="url"
-                          value={uri}
-                          onChange={(e) => updateRedirectUri(index, (e.target as HTMLInputElement).value)}
-                          placeholder="https://example.com/auth/callback"
-                          variant="rounded"
-                          size="lg"
-                          aria-label={`重定向URI ${index + 1}`}
-                          autoComplete="off"
-                        />
-                      </div>
-                      {(formData.redirect_uris || []).length > 1 && (
-                        <PButton
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => removeRedirectUri(index)}
-                          className="px-3"
-                          title="删除URI"
-                          aria-label="删除URI"
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                        </PButton>
-                      )}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="sm:col-span-2">
+                      <PSelect
+                        required
+                        value={formData.app_id}
+                        onChange={(e) => setFormData(prev => ({ ...prev, app_id: parseInt((e.target as HTMLSelectElement).value) }))}
+                        disabled={lockAppSelect}
+                        label={
+                          <span>
+                            关联应用 <span className="text-red-500">*</span>
+                          </span>
+                        }
+                        variant="rounded"
+                        size="lg"
+                      >
+                        <option value={0}>请选择要配置的应用</option>
+                        {(apps || []).map(app => (
+                          <option key={app.id} value={app.id}>{app.name}</option>
+                        ))}
+                      </PSelect>
                     </div>
-                  ))}
-                  <PButton
-                    type="button"
-                    onClick={addRedirectUri}
-                    variant="secondary"
-                    size="sm"
-                    leftIcon={<PlusIcon className="h-4 w-4" />}
-                  >
-                    添加重定向URI
-                  </PButton>
-                </div>
-                <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <p className="text-sm text-blue-800">
-                    <strong>提示：</strong>用户授权后将重定向到这些地址，请确保地址有效且支持HTTPS
-                  </p>
-                </div>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">权限范围</label>
-                <div className="grid grid-cols-2 gap-3">
-                  {['openid', 'profile', 'email', 'offline_access'].map(scope => (
-                    <PCheckbox
-                      key={scope}
-                      variant="card"
-                      checked={(formData.scopes || []).includes(scope)}
-                      onChange={() => toggleScope(scope)}
-                      label={scope}
-                    />
-                  ))}
+                    <div>
+                      <PInput
+                        type="text"
+                        required
+                        value={formData.name}
+                        onChange={(e) => setFormData(prev => ({ ...prev, name: (e.target as HTMLInputElement).value }))}
+                        label={
+                          <span>
+                            客户端名称 <span className="text-red-500">*</span>
+                          </span>
+                        }
+                        placeholder="例如：Web客户端"
+                        variant="rounded"
+                        size="lg"
+                        autoComplete="off"
+                      />
+                    </div>
+
+                    <div>
+                      <PTextarea
+                        value={formData.description}
+                        onChange={(e) => setFormData(prev => ({ ...prev, description: (e.target as HTMLTextAreaElement).value }))}
+                        label="客户端描述"
+                        rows={3}
+                        placeholder="简要描述此客户端的用途..."
+                        variant="rounded"
+                        size="lg"
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="pb-6">
-              <div className="flex items-center mb-4">
-                <div className="h-2 w-2 bg-purple-600 rounded-full mr-3"></div>
-                <h4 className="text-lg font-medium text-gray-900">CORS配置</h4>
-                <span className="ml-2 text-sm text-gray-500">(可选)</span>
-              </div>
+                <div className="border-b border-gray-200 pb-6">
+                  <div className="flex items-center mb-4">
+                    <div className="h-2 w-2 bg-emerald-600 rounded-full mr-3"></div>
+                    <h4 className="text-lg font-medium text-gray-900">回调地址</h4>
+                  </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">允许的来源</label>
-                <div className="space-y-3">
-                  {(formData.allowed_origins || []).map((origin, index) => (
-                    <div key={index} className="flex items-center space-x-3">
-                      <div className="flex-1">
-                        <PInput
-                          type="url"
-                          value={origin}
-                          onChange={(e) => updateAllowedOrigin(index, (e.target as HTMLInputElement).value)}
-                          placeholder="https://example.com"
-                          variant="rounded"
-                          size="lg"
-                          aria-label={`允许的来源 ${index + 1}`}
-                          autoComplete="off"
-                        />
-                      </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      重定向URI <span className="text-red-500">*</span>
+                    </label>
+                    <div className="space-y-3">
+                      {(formData.redirect_uris || []).map((uri, index) => (
+                        <div key={index} className="flex items-center space-x-3">
+                          <div className="flex-1">
+                            <PInput
+                              type="url"
+                              value={uri}
+                              onChange={(e) => updateRedirectUri(index, (e.target as HTMLInputElement).value)}
+                              placeholder="https://example.com/auth/callback"
+                              variant="rounded"
+                              size="lg"
+                              aria-label={`重定向URI ${index + 1}`}
+                              autoComplete="off"
+                            />
+                          </div>
+                          {(formData.redirect_uris || []).length > 1 && (
+                            <PButton
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => removeRedirectUri(index)}
+                              className="px-3"
+                              title="删除URI"
+                              aria-label="删除URI"
+                            >
+                              <TrashIcon className="h-4 w-4" />
+                            </PButton>
+                          )}
+                        </div>
+                      ))}
                       <PButton
                         type="button"
+                        onClick={addRedirectUri}
                         variant="secondary"
                         size="sm"
-                        onClick={() => removeAllowedOrigin(index)}
-                        className="px-3"
-                        title="删除来源"
-                        aria-label="删除来源"
+                        leftIcon={<PlusIcon className="h-4 w-4" />}
                       >
-                        <TrashIcon className="h-4 w-4" />
+                        添加重定向URI
                       </PButton>
                     </div>
-                  ))}
-                  <PButton
-                    type="button"
-                    onClick={addAllowedOrigin}
-                    variant="secondary"
-                    size="sm"
-                    leftIcon={<PlusIcon className="h-4 w-4" />}
-                  >
-                    添加允许的来源
-                  </PButton>
+                    <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <p className="text-sm text-blue-800">
+                        <strong>提示：</strong>用户授权后将重定向到这些地址，请确保地址有效且支持HTTPS
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <p className="mt-2 text-xs text-gray-500">配置允许跨域请求的源域名</p>
+
+                <div className="pb-6">
+                  <div className="flex items-center mb-4">
+                    <div className="h-2 w-2 bg-purple-600 rounded-full mr-3"></div>
+                    <h4 className="text-lg font-medium text-gray-900">CORS配置</h4>
+                    <span className="ml-2 text-sm text-gray-500">(可选)</span>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">允许的来源</label>
+                    <div className="space-y-3">
+                      {(formData.allowed_origins || []).map((origin, index) => (
+                        <div key={index} className="flex items-center space-x-3">
+                          <div className="flex-1">
+                            <PInput
+                              type="url"
+                              value={origin}
+                              onChange={(e) => updateAllowedOrigin(index, (e.target as HTMLInputElement).value)}
+                              placeholder="https://example.com"
+                              variant="rounded"
+                              size="lg"
+                              aria-label={`允许的来源 ${index + 1}`}
+                              autoComplete="off"
+                            />
+                          </div>
+                          <PButton
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => removeAllowedOrigin(index)}
+                            className="px-3"
+                            title="删除来源"
+                            aria-label="删除来源"
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </PButton>
+                        </div>
+                      ))}
+                      <PButton
+                        type="button"
+                        onClick={addAllowedOrigin}
+                        variant="secondary"
+                        size="sm"
+                        leftIcon={<PlusIcon className="h-4 w-4" />}
+                      >
+                        添加允许的来源
+                      </PButton>
+                    </div>
+                    <p className="mt-2 text-xs text-gray-500">配置允许跨域请求的源域名</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right column: scopes */}
+              <div className="lg:pt-1">
+                <div className="border border-gray-200 rounded-xl p-5 bg-gray-50">
+                  <div className="flex items-center mb-4">
+                    <div className="h-2 w-2 bg-amber-600 rounded-full mr-3"></div>
+                    <h4 className="text-lg font-medium text-gray-900">权限范围</h4>
+                  </div>
+                  <OAuthScopePicker
+                    metas={scopeMetas}
+                    selected={formData.scopes || []}
+                    onToggle={toggleScope}
+                    loading={scopeLoading}
+                    error={scopeError}
+                    columnsMd={2}
+                  />
+                </div>
               </div>
             </div>
           </form>

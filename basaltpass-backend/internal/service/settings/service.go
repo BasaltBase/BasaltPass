@@ -105,7 +105,19 @@ func defaultItems() map[string]SettingItem {
 		"oauth.allowed_redirect_hosts": {Value: []string{"localhost"}, Category: "oauth", Description: "允许的 OAuth 回调主机名"},
 		"oauth.pkce_required":          {Value: true, Category: "oauth", Description: "是否要求 PKCE"},
 		"oauth.enable_refresh_tokens":  {Value: true, Category: "oauth", Description: "是否启用刷新令牌"},
-		"oauth.allowed_scopes":         {Value: []string{"openid", "profile", "email"}, Category: "oauth", Description: "允许的 OAuth Scope 列表"},
+		"oauth.allowed_scopes": {Value: []string{
+			"openid",
+			"profile",
+			"email",
+			"offline_access",
+			// S2S / third-party app scopes
+			"s2s.read",
+			"s2s.user.read",
+			"s2s.rbac.read",
+			"s2s.wallet.read",
+			"s2s.messages.read",
+			"s2s.products.read",
+		}, Category: "oauth", Description: "允许的 OAuth Scope 列表"},
 
 		// SMTP/Email
 		"smtp.enabled":      {Value: false, Category: "smtp", Description: "是否开启邮件发送"},

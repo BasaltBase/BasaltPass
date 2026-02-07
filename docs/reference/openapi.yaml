@@ -154,7 +154,7 @@ paths:
   /api/v1/s2s/users/{id}:
     get:
       summary: Get user by ID (S2S)
-      description: Service-to-service API. Returns basic user profile by ID.
+      description: Service-to-service API. Returns basic user profile by ID. Required scope: s2s.user.read (legacy umbrella: s2s.read).
       security:
         - ClientID: []
           ClientSecret: []
@@ -188,7 +188,7 @@ paths:
   /api/v1/s2s/users/{id}/roles:
     get:
       summary: Get user roles in tenant (S2S)
-      description: Returns roles for user in given tenant. If tenant_id omitted, uses calling client's tenant.
+      description: Returns roles for user in given tenant. If tenant_id omitted, uses calling client's tenant. Required scope: s2s.rbac.read (legacy umbrella: s2s.read).
       security:
         - ClientID: []
           ClientSecret: []
@@ -232,7 +232,7 @@ paths:
   /api/v1/s2s/users/{id}/permissions:
     get:
       summary: Get user role codes in tenant (S2S)
-      description: Returns role codes array for user in tenant (simplified permissions). If tenant_id omitted, uses client's tenant.
+      description: Returns role codes array for user in tenant (simplified permissions). If tenant_id omitted, uses client's tenant. Required scope: s2s.rbac.read (legacy umbrella: s2s.read).
       security:
         - ClientID: []
           ClientSecret: []
@@ -276,7 +276,7 @@ paths:
   /api/v1/s2s/users/{id}/wallets:
     get:
       summary: Get user wallet by currency (S2S)
-      description: Returns wallet balance and recent transactions for given currency code.
+      description: Returns wallet balance and recent transactions for given currency code. Required scope: s2s.wallet.read (legacy umbrella: s2s.read).
       security:
         - ClientID: []
           ClientSecret: []
@@ -321,7 +321,7 @@ paths:
   /api/v1/s2s/users/{id}/messages:
     get:
       summary: List user messages/notifications (S2S)
-      description: Returns paginated messages; broadcasts (receiver_id=0) included. Optional status=unread|all
+      description: Returns paginated messages; broadcasts (receiver_id=0) included. Optional status=unread|all. Required scope: s2s.messages.read (legacy umbrella: s2s.read).
       security:
         - ClientID: []
           ClientSecret: []
@@ -372,7 +372,7 @@ paths:
   /api/v1/s2s/users/{id}/products:
     get:
       summary: List user owned products (S2S)
-      description: Returns products that user owns via active subscriptions or paid orders.
+      description: Returns products that user owns via active subscriptions or paid orders. Required scope: s2s.products.read (legacy umbrella: s2s.read).
       security:
         - ClientID: []
           ClientSecret: []
@@ -408,7 +408,7 @@ paths:
   /api/v1/s2s/users/{id}/products/{product_id}/ownership:
     get:
       summary: Check user product ownership (S2S)
-      description: Returns whether user owns the product via active subscription or paid order.
+      description: Returns whether user owns the product via active subscription or paid order. Required scope: s2s.products.read (legacy umbrella: s2s.read).
       security:
         - ClientID: []
           ClientSecret: []

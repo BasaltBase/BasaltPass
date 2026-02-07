@@ -11,8 +11,10 @@ import {
   PlusIcon
 } from '@heroicons/react/24/outline'
 import { appApi, OAuthClientInfo, CreateOAuthClientRequest, UpdateOAuthClientRequest } from '@api/admin/app'
+import { oauthApi, type OAuthScopeMeta } from '@api/oauth/oauth'
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { ROUTES } from '@constants'
+import { OAuthScopePicker } from '@components'
 
 export default function OAuthClientConfig() {
   const { appId } = useParams<{ appId: string }>()
@@ -22,6 +24,8 @@ export default function OAuthClientConfig() {
   const [client, setClient] = useState<OAuthClientInfo | null>(null)
   const [showSecret, setShowSecret] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [scopeMetas, setScopeMetas] = useState<OAuthScopeMeta[]>([])
+  const [scopeLoading, setScopeLoading] = useState(false)
   
   const [formData, setFormData] = useState<CreateOAuthClientRequest>({
     app_id: appId || '',
@@ -37,6 +41,28 @@ export default function OAuthClientConfig() {
       loadOAuthClient()
     }
   }, [appId])
+
+  useEffect(() => {
+    let cancelled = false
+    const loadScopes = async () => {
+      setScopeLoading(true)
+      try {
+        const resp = await oauthApi.listScopes()
+        if (cancelled) return
+        setScopeMetas(resp?.data?.data?.scopes || [])
+      } catch (e) {
+        // keep fallback scopes
+      } finally {
+        if (cancelled) return
+        setScopeLoading(false)
+      }
+    }
+
+    loadScopes()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const loadOAuthClient = async () => {
     if (!appId) return
@@ -157,12 +183,7 @@ export default function OAuthClientConfig() {
     }))
   }
 
-  const availableScopes = [
-    { id: 'openid', name: 'OpenID Connect', description: '基础身份验证' },
-    { id: 'profile', name: '用户资料', description: '访问用户基本信息' },
-    { id: 'email', name: '邮箱地址', description: '访问用户邮箱' },
-    { id: 'offline_access', name: '离线访问', description: '获取刷新令牌' }
-  ]
+  const pickerMetas = (scopeMetas || [])
 
   const availableGrantTypes = [
     { id: 'authorization_code', name: '授权码模式', description: '标准的OAuth2流程' },
@@ -390,26 +411,14 @@ export default function OAuthClientConfig() {
                 {/* 权限范围 */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">权限范围</label>
-                  <div className="space-y-2">
-                    {availableScopes.map((scope) => (
-                      <div key={scope.id} className="flex items-start">
-                        <div className="flex items-center h-5">
-                          <input
-                            type="checkbox"
-                            checked={(formData.scopes || []).includes(scope.id)}
-                            onChange={() => toggleScope(scope.id)}
-                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                          />
-                        </div>
-                        <div className="ml-3">
-                          <label className="text-sm font-medium text-gray-900">
-                            {scope.name}
-                          </label>
-                          <p className="text-sm text-gray-500">{scope.description}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <OAuthScopePicker
+                    metas={pickerMetas}
+                    selected={formData.scopes || []}
+                    onToggle={toggleScope}
+                    loading={scopeLoading}
+                    error={''}
+                    columnsMd={2}
+                  />
                 </div>
 
                 {/* 重定向URI */}

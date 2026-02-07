@@ -2,6 +2,8 @@ package oauth
 
 import (
 	"basaltpass-backend/internal/service/app"
+	"basaltpass-backend/internal/service/scope"
+	"basaltpass-backend/internal/service/settings"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -215,6 +217,25 @@ func TenantRegenerateClientSecretHandler(c *fiber.Ctx) error {
 			"client_secret": newSecret,
 		},
 		"message": "客户端密钥已重新生成",
+	})
+}
+
+// TenantListOAuthScopesHandler returns available scope options for tenant console UI.
+// GET /api/v1/tenant/oauth/scopes
+func TenantListOAuthScopesHandler(c *fiber.Ctx) error {
+	allowed := settings.GetStringSlice("oauth.allowed_scopes", scope.DefaultAllowedScopes())
+	allowed = scope.NormalizeList(allowed)
+
+	metas := make([]scope.Meta, 0, len(allowed))
+	for _, sc := range allowed {
+		metas = append(metas, scope.Describe(sc))
+	}
+
+	return c.JSON(fiber.Map{
+		"data": fiber.Map{
+			"scopes":   metas,
+			"defaults": scope.DefaultClientScopes(),
+		},
 	})
 }
 

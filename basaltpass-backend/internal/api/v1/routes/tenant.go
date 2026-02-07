@@ -76,6 +76,9 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 	tenantOAuthGroup.Delete("/:client_id", oauth.TenantDeleteOAuthClientHandler)
 	tenantOAuthGroup.Post("/:client_id/regenerate-secret", oauth.TenantRegenerateClientSecretHandler)
 
+	// 租户OAuth scope 选项（用于控制台创建/编辑客户端）
+	tenantGroup.Get("/oauth/scopes", oauth.TenantListOAuthScopesHandler)
+
 	// 租户订阅管理（读写，所有租户成员可访问）
 	tenantSubscriptionMgmtGroup := tenantGroup.Group("/subscription")
 

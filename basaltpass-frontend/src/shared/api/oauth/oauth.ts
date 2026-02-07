@@ -52,6 +52,18 @@ export interface ClientStats {
   total_users: number
 }
 
+export interface OAuthScopeMeta {
+  scope: string
+  title: string
+  description: string
+  category: string
+}
+
+export interface ListOAuthScopesData {
+  scopes: OAuthScopeMeta[]
+  defaults: string[]
+}
+
 // OAuth2客户端管理API
 export const oauthApi = {
   // 获取客户端列表
@@ -94,6 +106,11 @@ export const oauthApi = {
   // 撤销客户端所有令牌
   revokeClientTokens(clientId: string) {
     return client.post<{ message: string }>(`/api/v1/admin/oauth/clients/${clientId}/revoke-tokens`)
+  },
+
+  // 获取可用 scopes（用于控制台勾选）
+  listScopes() {
+    return client.get<{ data: ListOAuthScopesData }>('/api/v1/admin/oauth/scopes')
   }
 }
 

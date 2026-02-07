@@ -3,10 +3,23 @@ package middleware
 import (
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
+	scopesvc "basaltpass-backend/internal/service/scope"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
 )
+
+func s2sEnvelopeError(c *fiber.Ctx, status int, code, message string) error {
+	requestID, _ := c.Locals("requestid").(string)
+	return c.Status(status).JSON(fiber.Map{
+		"data": nil,
+		"error": fiber.Map{
+			"code":    code,
+			"message": message,
+		},
+		"request_id": requestID,
+	})
+}
 
 // ClientAuthMiddleware 验证服务间调用（S2S）客户端身份。
 // 支持以下凭证方式（按优先级）：
@@ -44,53 +57,26 @@ func ClientAuthMiddleware(requiredScopes ...string) fiber.Handler {
 		}
 
 		if clientID == "" || clientSecret == "" {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": fiber.Map{
-					"code":    "invalid_client",
-					"message": "Missing client_id or client_secret",
-				},
-			})
+			return s2sEnvelopeError(c, fiber.StatusUnauthorized, "invalid_client", "Missing client_id or client_secret")
 		}
 
 		db := common.DB()
 		var client model.OAuthClient
 		if err := db.Preload("App").Where("client_id = ? AND is_active = ?", clientID, true).First(&client).Error; err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": fiber.Map{
-					"code":    "invalid_client",
-					"message": "Client not found or inactive",
-				},
-			})
+			return s2sEnvelopeError(c, fiber.StatusUnauthorized, "invalid_client", "Client not found or inactive")
 		}
 
 		if !client.VerifyClientSecret(clientSecret) {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": fiber.Map{
-					"code":    "invalid_client",
-					"message": "Client secret mismatch",
-				},
-			})
+			return s2sEnvelopeError(c, fiber.StatusUnauthorized, "invalid_client", "Client secret mismatch")
 		}
+
+		clientScopes := client.GetScopeList()
+		c.Locals("s2s_scopes", clientScopes)
 
 		// 如果配置了 requiredScopes，则要求客户端 scopes 至少包含这些项
 		if len(requiredScopes) > 0 {
-			allowed := client.GetScopeList()
-			for _, req := range requiredScopes {
-				ok := false
-				for _, have := range allowed {
-					if strings.TrimSpace(have) == strings.TrimSpace(req) {
-						ok = true
-						break
-					}
-				}
-				if !ok {
-					return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
-						"error": fiber.Map{
-							"code":    "insufficient_scope",
-							"message": "Client lacks required scope: " + req,
-						},
-					})
-				}
+			if !scopesvc.SatisfiesAll(clientScopes, requiredScopes) {
+				return s2sEnvelopeError(c, fiber.StatusForbidden, "insufficient_scope", "Client lacks required scope")
 			}
 		}
 
@@ -102,6 +88,22 @@ func ClientAuthMiddleware(requiredScopes ...string) fiber.Handler {
 			c.Locals("s2s_tenant_id", client.App.TenantID)
 		}
 
+		return c.Next()
+	}
+}
+
+// ClientScopeMiddleware checks S2S client scopes only.
+// It expects ClientAuthMiddleware to have already authenticated the client.
+func ClientScopeMiddleware(requiredScopes ...string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		if len(requiredScopes) == 0 {
+			return c.Next()
+		}
+		scopesAny := c.Locals("s2s_scopes")
+		scopesList, _ := scopesAny.([]string)
+		if !scopesvc.SatisfiesAll(scopesList, requiredScopes) {
+			return s2sEnvelopeError(c, fiber.StatusForbidden, "insufficient_scope", "Client lacks required scope")
+		}
 		return c.Next()
 	}
 }

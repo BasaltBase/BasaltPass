@@ -19,6 +19,7 @@
     "paths": {
       "@/*": ["src/*"],
       "@api/*": ["src/shared/api/*"],
+      "@components": ["src/shared/components/index.ts"],
       "@components/*": ["src/shared/components/*"],
       "@pages/*": ["src/features/*"],
       "@features/*": ["src/features/*"],

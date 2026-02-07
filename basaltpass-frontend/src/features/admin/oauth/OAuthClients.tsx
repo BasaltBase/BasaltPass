@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { 
   PlusIcon, 
   MagnifyingGlassIcon,
@@ -10,10 +10,11 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline'
 import { ChevronRightIcon } from '@heroicons/react/24/outline'
-import { oauthApi, type OAuthClient, type CreateClientRequest } from '@api/oauth/oauth'
+import { oauthApi, type OAuthClient, type CreateClientRequest, type OAuthScopeMeta } from '@api/oauth/oauth'
 import { Link } from 'react-router-dom'
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { ROUTES } from '@constants'
+import { OAuthScopePicker } from '@components'
 
 interface CreateClientModalProps {
   isOpen: boolean
@@ -31,6 +32,49 @@ function CreateClientModal({ isOpen, onClose, onSuccess }: CreateClientModalProp
   })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [scopeMetas, setScopeMetas] = useState<OAuthScopeMeta[]>([])
+  const [scopeDefaults, setScopeDefaults] = useState<string[]>(['openid', 'profile', 'email'])
+  const [scopeLoading, setScopeLoading] = useState(false)
+  const [scopeError, setScopeError] = useState('')
+
+  useEffect(() => {
+    if (!isOpen) return
+    let cancelled = false
+
+    const loadScopes = async () => {
+      setScopeLoading(true)
+      setScopeError('')
+      try {
+        const resp = await oauthApi.listScopes()
+        if (cancelled) return
+        const data = resp?.data?.data
+        setScopeMetas(data?.scopes || [])
+        setScopeDefaults(data?.defaults || ['openid', 'profile', 'email'])
+      } catch (e: any) {
+        if (cancelled) return
+        setScopeError(e?.response?.data?.error || '加载 scopes 失败')
+      } finally {
+        if (cancelled) return
+        setScopeLoading(false)
+      }
+    }
+
+    loadScopes()
+    return () => {
+      cancelled = true
+    }
+  }, [isOpen])
+
+  useEffect(() => {
+    if (!isOpen) return
+    setFormData(prev => {
+      const current = prev.scopes || []
+      if (current.length === 0) return { ...prev, scopes: scopeDefaults }
+      return prev
+    })
+  }, [isOpen, scopeDefaults])
+
+  // scope rendering handled by shared OAuthScopePicker
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -53,7 +97,7 @@ function CreateClientModal({ isOpen, onClose, onSuccess }: CreateClientModalProp
         name: '',
         description: '',
         redirect_uris: [''],
-        scopes: ['openid', 'profile', 'email'],
+        scopes: scopeDefaults,
         allowed_origins: ['']
       })
     } catch (err: any) {
@@ -109,7 +153,7 @@ function CreateClientModal({ isOpen, onClose, onSuccess }: CreateClientModalProp
 
   return (
     <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10">
-      <div className="w-3/4 max-w-4xl p-6 border shadow-lg rounded-md bg-white">
+      <div className="w-11/12 max-w-6xl p-6 border shadow-lg rounded-md bg-white">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-gray-900">创建OAuth2客户端</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl font-bold">
@@ -118,122 +162,116 @@ function CreateClientModal({ isOpen, onClose, onSuccess }: CreateClientModalProp
         </div>
         
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* 第一行：应用名称和应用描述 */}
-          <div className="grid grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">应用名称 *</label>
-              <input
-                type="text"
-                required
-                value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="输入应用名称"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">应用描述</label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="输入应用描述"
-                rows={3}
-              />
-            </div>
-          </div>
-
-          {/* 第二行：重定向URI（全宽） */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">重定向URI *</label>
-            {formData.redirect_uris.map((uri, index) => (
-              <div key={index} className="flex gap-2 mb-2">
-                <input
-                  type="url"
-                  required
-                  value={uri}
-                  onChange={(e) => updateRedirectURI(index, e.target.value)}
-                  className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="https://yourapp.com/callback"
-                />
-                {formData.redirect_uris.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeRedirectURI(index)}
-                    className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                  >
-                    删除
-                  </button>
-                )}
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={addRedirectURI}
-              className="text-blue-600 hover:text-blue-800 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              + 添加重定向URI
-            </button>
-          </div>
-
-          {/* 第三行：权限范围（全宽） */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">权限范围</label>
-            <div className="grid grid-cols-3 gap-3">
-              {['openid', 'profile', 'email', 'phone', 'address'].map((scope) => (
-                <label key={scope} className="flex items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left column: name/callback/cors */}
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">应用名称 *</label>
                   <input
-                    type="checkbox"
-                    checked={formData.scopes?.includes(scope) || false}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setFormData(prev => ({
-                          ...prev,
-                          scopes: [...(prev.scopes || []), scope]
-                        }))
-                      } else {
-                        setFormData(prev => ({
-                          ...prev,
-                          scopes: prev.scopes?.filter(s => s !== scope) || []
-                        }))
-                      }
-                    }}
-                    className="mr-2 h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="输入应用名称"
                   />
-                  <span className="text-sm text-gray-700">{scope}</span>
-                </label>
-              ))}
-            </div>
-          </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">应用描述</label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="输入应用描述"
+                    rows={3}
+                  />
+                </div>
+              </div>
 
-          {/* 第四行：允许的CORS源（全宽） */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">允许的CORS源</label>
-            {formData.allowed_origins?.map((origin, index) => (
-              <div key={index} className="flex gap-2 mb-2">
-                <input
-                  type="url"
-                  value={origin}
-                  onChange={(e) => updateAllowedOrigin(index, e.target.value)}
-                  className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="https://yourapp.com"
-                />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">重定向URI *</label>
+                {formData.redirect_uris.map((uri, index) => (
+                  <div key={index} className="flex gap-2 mb-2">
+                    <input
+                      type="url"
+                      required
+                      value={uri}
+                      onChange={(e) => updateRedirectURI(index, e.target.value)}
+                      className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="https://yourapp.com/callback"
+                    />
+                    {formData.redirect_uris.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeRedirectURI(index)}
+                        className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                      >
+                        删除
+                      </button>
+                    )}
+                  </div>
+                ))}
                 <button
                   type="button"
-                  onClick={() => removeAllowedOrigin(index)}
-                  className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  onClick={addRedirectURI}
+                  className="text-blue-600 hover:text-blue-800 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
-                  删除
+                  + 添加重定向URI
                 </button>
               </div>
-            ))}
-            <button
-              type="button"
-              onClick={addAllowedOrigin}
-              className="text-blue-600 hover:text-blue-800 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              + 添加CORS源
-            </button>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">允许的CORS源</label>
+                {formData.allowed_origins?.map((origin, index) => (
+                  <div key={index} className="flex gap-2 mb-2">
+                    <input
+                      type="url"
+                      value={origin}
+                      onChange={(e) => updateAllowedOrigin(index, e.target.value)}
+                      className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="https://yourapp.com"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeAllowedOrigin(index)}
+                      className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                    >
+                      删除
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={addAllowedOrigin}
+                  className="text-blue-600 hover:text-blue-800 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  + 添加CORS源
+                </button>
+              </div>
+            </div>
+
+            {/* Right column: scopes */}
+            <div className="lg:pt-1">
+              <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                <label className="block text-sm font-medium text-gray-700 mb-2">权限范围</label>
+                <OAuthScopePicker
+                  metas={scopeMetas}
+                  selected={formData.scopes || []}
+                  onToggle={(scope) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      scopes: (prev.scopes || []).includes(scope)
+                        ? (prev.scopes || []).filter(s => s !== scope)
+                        : [...(prev.scopes || []), scope]
+                    }))
+                  }}
+                  loading={scopeLoading}
+                  error={scopeError}
+                  columnsMd={2}
+                />
+              </div>
+            </div>
           </div>
 
           {error && (

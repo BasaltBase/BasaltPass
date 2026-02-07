@@ -9,7 +9,17 @@ Header 方式（推荐）：
 - `client_id: <your_client_id>`
 - `client_secret: <your_client_secret>`
 
-并检查 scope（当前默认要求：`s2s.read`）。
+并检查 scope（推荐按最小权限细分；兼容旧版 `s2s.read`）。
+
+推荐细分 scope：
+
+- `s2s.user.read`
+- `s2s.rbac.read`
+- `s2s.wallet.read`
+- `s2s.messages.read`
+- `s2s.products.read`
+
+兼容：历史 scope `s2s.read` 仍然可用（等同于包含所有 `s2s.*.read`）。
 
 ## 统一返回
 
