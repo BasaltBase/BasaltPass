@@ -11,7 +11,8 @@ import {
   PencilIcon,
   TrashIcon,
   ChartBarIcon,
-  CalendarIcon
+  CalendarIcon,
+  CubeIcon
 } from '@heroicons/react/24/outline'
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { PInput, PSelect, PTextarea, PCheckbox, PButton } from '@ui'
@@ -547,6 +548,41 @@ const TenantDetail: React.FC = () => {
                     </dd>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* 应用列表 */}
+            <div className="bg-white shadow rounded-lg">
+              <div className="px-4 py-5 sm:p-6">
+                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4 flex items-center">
+                  <CubeIcon className="h-5 w-5 mr-2 text-gray-400" />
+                  应用列表
+                </h3>
+                {tenant.recent_apps && tenant.recent_apps.length > 0 ? (
+                  <div className="space-y-3">
+                    {tenant.recent_apps.map((app) => (
+                      <div key={app.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <div className="flex items-center space-x-3">
+                          <div className="flex-shrink-0">
+                            <CubeIcon className="h-6 w-6 text-purple-600" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">{app.name}</p>
+                            <p className="text-xs text-gray-500">{app.type}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-gray-500">创建于</p>
+                          <p className="text-xs text-gray-900">{new Date(app.created_at).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6 text-gray-500 text-sm">
+                    暂无应用
+                  </div>
+                )}
               </div>
             </div>
           </div>
