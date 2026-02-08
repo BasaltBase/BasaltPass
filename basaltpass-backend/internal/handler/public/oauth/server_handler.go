@@ -1,12 +1,17 @@
 package oauth
 
 import (
+	"basaltpass-backend/internal/config"
 	"basaltpass-backend/internal/service/aduit"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 
+	"basaltpass-backend/internal/model"
+
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 var oauthServerService = NewOAuthServerService()
@@ -34,19 +39,96 @@ func AuthorizeHandler(c *fiber.Ctx) error {
 	// 检查用户是否已登录
 	userID := c.Locals("userID")
 	if userID == nil {
+		// Hosted login flow uses an HttpOnly cookie; browser redirects can't attach Authorization headers.
+		if uid, ok := tryUserIDFromAccessTokenCookie(c); ok {
+			c.Locals("userID", uid)
+			userID = uid
+		}
+	}
+	if userID == nil {
 		// 用户未登录，重定向到登录页面
 		loginURL := buildLoginURL(c, req)
 		return c.Redirect(loginURL, http.StatusFound)
 	}
 
-	// 用户已登录，显示授权同意页面
-	return c.Render("oauth_consent", fiber.Map{
-		"client":       client,
-		"scopes":       strings.Split(req.Scope, " "),
-		"redirect_uri": req.RedirectURI,
-		"state":        req.State,
-		"client_id":    req.ClientID,
+	// 用户已登录，重定向到前端托管的授权同意页面
+	consentURL := buildConsentURL(req, client)
+	return c.Redirect(consentURL, http.StatusFound)
+}
+
+func tryUserIDFromAccessTokenCookie(c *fiber.Ctx) (uint, bool) {
+	tokenStr := c.Cookies("access_token")
+	if tokenStr == "" {
+		return 0, false
+	}
+
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		// Mirror existing test fallback behavior.
+		if os.Getenv("BASALTPASS_DYNO_MODE") == "test" {
+			secret = "test-secret"
+		} else {
+			return 0, false
+		}
+	}
+
+	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, jwt.ErrTokenSignatureInvalid
+		}
+		return []byte(secret), nil
 	})
+	if err != nil || token == nil || !token.Valid {
+		return 0, false
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return 0, false
+	}
+	if sub, exists := claims["sub"]; exists {
+		if subFloat, ok := sub.(float64); ok {
+			return uint(subFloat), true
+		}
+	}
+
+	return 0, false
+}
+
+func buildConsentURL(req *AuthorizeRequest, client *model.OAuthClient) string {
+	uiBaseURL := strings.TrimRight(config.Get().UI.BaseURL, "/")
+	consentPath := "/oauth-consent"
+	base := consentPath
+	if uiBaseURL != "" {
+		base = uiBaseURL + consentPath
+	}
+
+	q := url.Values{}
+	q.Set("client_id", req.ClientID)
+	q.Set("redirect_uri", req.RedirectURI)
+	if req.Scope != "" {
+		q.Set("scope", req.Scope)
+	}
+	if req.State != "" {
+		q.Set("state", req.State)
+	}
+	if req.CodeChallenge != "" {
+		q.Set("code_challenge", req.CodeChallenge)
+	}
+	if req.CodeChallengeMethod != "" {
+		q.Set("code_challenge_method", req.CodeChallengeMethod)
+	}
+	if client != nil {
+		// Prefer app display fields when available.
+		if strings.TrimSpace(client.App.Name) != "" {
+			q.Set("client_name", client.App.Name)
+		}
+		if strings.TrimSpace(client.App.Description) != "" {
+			q.Set("client_description", client.App.Description)
+		}
+	}
+
+	return base + "?" + q.Encode()
 }
 
 // ConsentHandler 处理用户授权同意
@@ -54,6 +136,12 @@ func AuthorizeHandler(c *fiber.Ctx) error {
 func ConsentHandler(c *fiber.Ctx) error {
 	// 检查用户是否已登录
 	userIDVal := c.Locals("userID")
+	if userIDVal == nil {
+		if uid, ok := tryUserIDFromAccessTokenCookie(c); ok {
+			c.Locals("userID", uid)
+			userIDVal = uid
+		}
+	}
 	if userIDVal == nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthorized"})
 	}
@@ -64,6 +152,8 @@ func ConsentHandler(c *fiber.Ctx) error {
 	redirectURI := c.FormValue("redirect_uri")
 	state := c.FormValue("state")
 	scope := c.FormValue("scope")
+	codeChallenge := c.FormValue("code_challenge")
+	codeChallengeMethod := c.FormValue("code_challenge_method")
 	action := c.FormValue("action") // "allow" 或 "deny"
 
 	if action != "allow" {
@@ -73,11 +163,13 @@ func ConsentHandler(c *fiber.Ctx) error {
 
 	// 构建授权请求
 	req := &AuthorizeRequest{
-		ClientID:     clientID,
-		RedirectURI:  redirectURI,
-		ResponseType: "code",
-		Scope:        scope,
-		State:        state,
+		ClientID:            clientID,
+		RedirectURI:         redirectURI,
+		ResponseType:        "code",
+		Scope:               scope,
+		State:               state,
+		CodeChallenge:       codeChallenge,
+		CodeChallengeMethod: codeChallengeMethod,
 	}
 
 	// 验证请求
@@ -142,7 +234,7 @@ func handleAuthorizationCodeGrant(c *fiber.Ctx) error {
 	}
 
 	// 交换令牌
-	tokenResponse, err := oauthServerService.ExchangeCodeForToken(req, clientSecret)
+	tokenResponse, err := oauthServerService.ExchangeCodeForToken(req, clientID, clientSecret)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error":             err.Error(),
@@ -260,6 +352,10 @@ func RevokeHandler(c *fiber.Ctx) error {
 // buildLoginURL 构建登录URL，包含OAuth2参数
 func buildLoginURL(c *fiber.Ctx, req *AuthorizeRequest) string {
 	loginURL := "/login"
+	uiBaseURL := strings.TrimRight(config.Get().UI.BaseURL, "/")
+	if uiBaseURL != "" {
+		loginURL = uiBaseURL + "/login"
+	}
 
 	// 构建原始OAuth2授权URL作为重定向参数
 	originalURL := "/api/v1/oauth/authorize?" + c.Context().QueryArgs().String()

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { getAccessToken } from '@utils/auth'
 import { ShieldCheckIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
@@ -20,6 +20,7 @@ export default function OAuthConsent() {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const submittedRef = useRef(false)
   
   // 从URL参数中获取OAuth授权信息
   const clientName = searchParams.get('client_name') || '未知应用'
@@ -28,77 +29,62 @@ export default function OAuthConsent() {
   const redirectUri = searchParams.get('redirect_uri') || ''
   const state = searchParams.get('state') || ''
   const clientId = searchParams.get('client_id') || ''
+  const codeChallenge = searchParams.get('code_challenge') || ''
+  const codeChallengeMethod = searchParams.get('code_challenge_method') || ''
+
+  const apiBase = (import.meta as any).env?.VITE_API_BASE || 'http://localhost:8080'
+  const consentEndpoint = String(apiBase).replace(/\/$/, '') + '/api/v1/oauth/consent'
+
+  const submitConsentForm = (action: 'allow' | 'deny') => {
+    if (submittedRef.current) return
+    submittedRef.current = true
+
+    const form = document.createElement('form')
+    form.method = 'POST'
+    form.action = consentEndpoint
+
+    const append = (name: string, value: string) => {
+      const input = document.createElement('input')
+      input.type = 'hidden'
+      input.name = name
+      input.value = value
+      form.appendChild(input)
+    }
+
+    append('action', action)
+    append('client_id', clientId)
+    append('redirect_uri', redirectUri)
+    append('scope', scopes.join(' '))
+    if (state) append('state', state)
+    if (codeChallenge) append('code_challenge', codeChallenge)
+    if (codeChallengeMethod) append('code_challenge_method', codeChallengeMethod)
+
+    document.body.appendChild(form)
+    form.submit()
+  }
 
   const handleAllow = async () => {
+    if (submittedRef.current) return
     setLoading(true)
     setError('')
-
     try {
-      // 构建表单数据
-      const formData = new FormData()
-      formData.append('action', 'allow')
-      formData.append('client_id', clientId)
-      formData.append('redirect_uri', redirectUri)
-      formData.append('scope', scopes.join(' '))
-      if (state) {
-        formData.append('state', state)
-      }
-
-      // 发送同意请求
-  const response = await fetch('/api/v1/oauth/consent', {
-        method: 'POST',
-        body: formData,
-        credentials: 'include',
-        headers: {
-          'Authorization': `Bearer ${getAccessToken()}`
-        }
-      })
-
-      if (response.ok) {
-        // 成功的话会重定向，这里不会执行到
-        window.location.href = response.url
-      } else {
-        throw new Error('授权失败')
-      }
+      submitConsentForm('allow')
     } catch (err: any) {
+      submittedRef.current = false
       setError(err.message || '授权失败，请重试')
-    } finally {
       setLoading(false)
     }
   }
 
   const handleDeny = async () => {
+    if (submittedRef.current) return
     setLoading(true)
-    
+    setError('')
     try {
-      // 构建表单数据
-      const formData = new FormData()
-      formData.append('action', 'deny')
-      formData.append('client_id', clientId)
-      formData.append('redirect_uri', redirectUri)
-      if (state) {
-        formData.append('state', state)
-      }
-
-      // 发送拒绝请求
-  const response = await fetch('/api/v1/oauth/consent', {
-        method: 'POST',
-        body: formData,
-        credentials: 'include',
-        headers: {
-          'Authorization': `Bearer ${getAccessToken()}`
-        }
-      })
-
-      if (response.ok) {
-        // 成功的话会重定向，这里不会执行到
-        window.location.href = response.url
-      } else {
-        throw new Error('取消授权失败')
-      }
+      submitConsentForm('deny')
     } catch (err: any) {
+      submittedRef.current = false
       setError(err.message || '操作失败，请重试')
-    } finally {
       setLoading(false)
     }
   }

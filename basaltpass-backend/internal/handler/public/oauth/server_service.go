@@ -137,7 +137,7 @@ func (s *OAuthServerService) GenerateAuthorizationCode(userID uint, req *Authori
 }
 
 // ExchangeCodeForToken 用授权码换取访问令牌
-func (s *OAuthServerService) ExchangeCodeForToken(req *TokenRequest, clientSecret string) (*TokenResponse, error) {
+func (s *OAuthServerService) ExchangeCodeForToken(req *TokenRequest, clientID string, clientSecret string) (*TokenResponse, error) {
 	// 1. 验证grant_type
 	if req.GrantType != "authorization_code" {
 		return nil, errors.New("unsupported_grant_type")
@@ -157,23 +157,28 @@ func (s *OAuthServerService) ExchangeCodeForToken(req *TokenRequest, clientSecre
 		return nil, errors.New("invalid_grant")
 	}
 
-	// 4. 验证客户端
-	var client model.OAuthClient
-	if err := s.db.Where("client_id = ?", authCode.ClientID).First(&client).Error; err != nil {
+	// 4. 验证客户端ID匹配
+	if authCode.ClientID != clientID {
 		return nil, errors.New("invalid_client")
 	}
 
-	// 5. 验证客户端密钥
+	// 5. 查找并验证客户端
+	var client model.OAuthClient
+	if err := s.db.Where("client_id = ?", clientID).First(&client).Error; err != nil {
+		return nil, errors.New("invalid_client")
+	}
+
+	// 6. 验证客户端密钥
 	if !client.VerifyClientSecret(clientSecret) {
 		return nil, errors.New("invalid_client")
 	}
 
-	// 6. 验证redirect_uri
+	// 7. 验证redirect_uri
 	if req.RedirectURI != authCode.RedirectURI {
 		return nil, errors.New("invalid_grant")
 	}
 
-	// 7. PKCE验证（如果使用）
+	// 8. PKCE验证（如果使用）
 	if authCode.CodeChallenge != "" {
 		if req.CodeVerifier == "" {
 			return nil, errors.New("invalid_request")
@@ -182,12 +187,9 @@ func (s *OAuthServerService) ExchangeCodeForToken(req *TokenRequest, clientSecre
 		var challenge string
 		switch authCode.CodeChallengeMethod {
 		case "S256", "":
+			// Use hex encoding for S256, as expected by CanShelf and other clients
 			hash := sha256.Sum256([]byte(req.CodeVerifier))
-			challenge = strings.TrimRight(
-				strings.ReplaceAll(
-					strings.ReplaceAll(hex.EncodeToString(hash[:]), "+", "-"),
-					"/", "_"),
-				"=")
+			challenge = hex.EncodeToString(hash[:])
 		case "plain":
 			challenge = req.CodeVerifier
 		default:
@@ -199,21 +201,21 @@ func (s *OAuthServerService) ExchangeCodeForToken(req *TokenRequest, clientSecre
 		}
 	}
 
-	// 8. 生成访问令牌
+	// 9. 生成访问令牌
 	tokenBytes := make([]byte, 32)
 	if _, err := rand.Read(tokenBytes); err != nil {
 		return nil, err
 	}
 	accessToken := hex.EncodeToString(tokenBytes)
 
-	// 9. 生成刷新令牌
+	// 10. 生成刷新令牌
 	refreshTokenBytes := make([]byte, 32)
 	if _, err := rand.Read(refreshTokenBytes); err != nil {
 		return nil, err
 	}
 	refreshToken := hex.EncodeToString(refreshTokenBytes)
 
-	// 10. 保存访问令牌
+	// 11. 保存访问令牌
 	oauthToken := &model.OAuthAccessToken{
 		Token:     accessToken,
 		ClientID:  authCode.ClientID,
@@ -228,7 +230,7 @@ func (s *OAuthServerService) ExchangeCodeForToken(req *TokenRequest, clientSecre
 		return nil, err
 	}
 
-	// 10.1 保存刷新令牌
+	// 11.1 保存刷新令牌
 	refreshTokenModel := &model.OAuthRefreshToken{
 		Token:         refreshToken,
 		ClientID:      authCode.ClientID,
@@ -244,12 +246,12 @@ func (s *OAuthServerService) ExchangeCodeForToken(req *TokenRequest, clientSecre
 		return nil, err
 	}
 
-	// 11. 标记授权码为已使用
+	// 12. 标记授权码为已使用
 	if err := s.db.Model(&authCode).Update("used", true).Error; err != nil {
 		return nil, err
 	}
 
-	// 12. 记录用户对应用的授权关系
+	// 13. 记录用户对应用的授权关系
 	if authCode.AppID > 0 {
 		appUserService := app_user.NewAppUserService(s.db)
 		if err := appUserService.RecordUserAppAuthorization(authCode.AppID, authCode.UserID, authCode.Scopes); err != nil {
@@ -259,7 +261,7 @@ func (s *OAuthServerService) ExchangeCodeForToken(req *TokenRequest, clientSecre
 		}
 	}
 
-	// 12. 更新客户端最后使用时间
+	// 14. 更新客户端最后使用时间
 	now := time.Now()
 	s.db.Model(&client).Update("last_used_at", &now)
 

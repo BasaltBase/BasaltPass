@@ -79,6 +79,13 @@ type Config struct {
 		} `mapstructure:"rate_limit"`
 		AuditEnabled bool `mapstructure:"audit_enabled"`
 	} `mapstructure:"s2s"`
+
+	UI struct {
+		// BaseURL is the public URL where the hosted login UI is served.
+		// In development, the default is the user console dev server (http://localhost:5173).
+		// In production, you can leave it empty when UI and API share the same origin.
+		BaseURL string `mapstructure:"base_url"`
+	} `mapstructure:"ui"`
 }
 
 var cfg Config
@@ -142,6 +149,15 @@ func Load(path string) (*Config, error) {
 	v.SetDefault("s2s.rate_limit.enabled", true)
 	v.SetDefault("s2s.rate_limit.requests_per_minute", 600)
 	v.SetDefault("s2s.audit_enabled", true)
+
+	// UI defaults
+	// When UI and API are served separately (dev), use the dev server port.
+	// When UI is served by the same origin as the API, leaving this empty keeps redirects relative.
+	if strings.EqualFold(v.GetString("env"), "develop") {
+		v.SetDefault("ui.base_url", "http://localhost:5173")
+	} else {
+		v.SetDefault("ui.base_url", "")
+	}
 
 	// Email defaults
 	v.SetDefault("email.provider", "smtp")

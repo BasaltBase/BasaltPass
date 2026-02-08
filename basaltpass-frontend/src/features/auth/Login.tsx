@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ROUTES } from '@constants'
 import client from '@api/client'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@contexts/AuthContext'
 import { loginWithPasskeyFlow } from '@api/oauth/passkey'
 import { isPasskeySupported } from '@utils/webauthn'
@@ -12,6 +12,7 @@ import { PInput, PButton, PCheckbox } from '@ui'
 function Login() {
   const navigate = useNavigate()
   const { login } = useAuth()
+  const [searchParams] = useSearchParams()
   // step: 1-用户名密码，2-二次验证
   const [step, setStep] = useState(1)
   const [identifier, setIdentifier] = useState('')
@@ -26,6 +27,22 @@ function Login() {
   const [twoFACode, setTwoFACode] = useState('')
   const [emailCode, setEmailCode] = useState('')
   const [rememberMe, setRememberMe] = useState(false)
+
+  const redirectParam = searchParams.get('redirect') || ''
+  const redirectAfterLogin = () => {
+    if (!redirectParam) return false
+
+    const apiBase = (import.meta as any).env?.VITE_API_BASE || 'http://localhost:8080'
+    const base = String(apiBase).replace(/\/$/, '')
+    const target = redirectParam.startsWith('http://') || redirectParam.startsWith('https://')
+      ? redirectParam
+      : redirectParam.startsWith('/')
+        ? base + redirectParam
+        : base + '/' + redirectParam
+
+    window.location.href = target
+    return true
+  }
 
   // 登录第一步：用户名密码
   const submitPasswordLogin = async (e: React.FormEvent) => {
@@ -45,7 +62,9 @@ function Login() {
         setStep(2)
       } else if (res.data.access_token) {
         await login(res.data.access_token)
-        navigate(ROUTES.user.dashboard)
+        if (!redirectAfterLogin()) {
+          navigate(ROUTES.user.dashboard)
+        }
       } else {
         setError('未知的登录响应')
       }
@@ -119,7 +138,9 @@ function Login() {
         try {
           const passkeyResult = await loginWithPasskeyFlow(identifier)
           await login(passkeyResult.access_token)
-          navigate(ROUTES.user.dashboard)
+          if (!redirectAfterLogin()) {
+            navigate(ROUTES.user.dashboard)
+          }
           return // 直接返回，不需要调用verify-2fa API
         } catch (err: any) {
           setError(err.message || 'Passkey验证失败')
@@ -129,7 +150,9 @@ function Login() {
       }
       const res = await client.post('/api/v1/auth/verify-2fa', payload)
       await login(res.data.access_token)
-      navigate(ROUTES.user.dashboard)
+      if (!redirectAfterLogin()) {
+        navigate(ROUTES.user.dashboard)
+      }
     } catch (err: any) {
       const message = err.response?.data?.error || err.message || '二次验证失败'
       setError(message)
