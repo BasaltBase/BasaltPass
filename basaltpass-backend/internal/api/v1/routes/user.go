@@ -24,6 +24,16 @@ func RegisterUserRoutes(v1 fiber.Router) {
 	userGroup.Get("/profile", user.GetProfileHandler)
 	userGroup.Put("/profile", user.UpdateProfileHandler)
 
+	// 用户详细资料
+	userGroup.Get("/profile-detail", user.GetUserProfileHandler)
+	userGroup.Put("/profile-detail", user.UpdateUserProfileHandler)
+
+	// 用户资料相关选项数据
+	userGroup.Get("/genders", user.GetGendersHandler)
+	userGroup.Get("/languages", user.GetLanguagesHandler)
+	userGroup.Get("/currencies", user.GetCurrenciesHandler)
+	userGroup.Get("/timezones", user.GetTimezonesHandler)
+
 	// 用户应用授权管理
 	userGroup.Get("/apps", app_user.GetUserAppsHandler)
 	userGroup.Delete("/apps/:app_id", app_user.RevokeUserAppHandler)

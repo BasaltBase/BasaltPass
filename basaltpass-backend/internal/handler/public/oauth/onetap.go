@@ -4,11 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 	"time"
 
 	"basaltpass-backend/internal/common"
+	security "basaltpass-backend/internal/handler/user/security"
 	"basaltpass-backend/internal/model"
 	auth "basaltpass-backend/internal/service/auth"
 
@@ -82,6 +84,11 @@ func OneTapLoginHandler(c *fiber.Ctx) error {
 		})
 	}
 
+	// 记录登录成功
+	if err := security.RecordLoginSuccess(user.ID, c.IP(), c.Get("User-Agent")); err != nil {
+		log.Printf("failed to record login history: %v", err)
+	}
+
 	return c.JSON(OneTapAuthResponse{
 		Success: true,
 		IDToken: idToken,
@@ -118,6 +125,11 @@ func SilentAuthHandler(c *fiber.Ctx) error {
 	idToken, err := generateIDToken(c, user, client, nonce)
 	if err != nil {
 		return renderSilentAuthError(c, fiber.StatusInternalServerError, redirectURI, state, "server_error")
+	}
+
+	// 记录登录成功
+	if err := security.RecordLoginSuccess(user.ID, c.IP(), c.Get("User-Agent")); err != nil {
+		log.Printf("failed to record login history: %v", err)
 	}
 
 	return renderSilentAuthSuccess(c, redirectURI, state, idToken)

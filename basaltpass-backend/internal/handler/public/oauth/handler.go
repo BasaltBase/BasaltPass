@@ -3,10 +3,12 @@ package oauth
 import (
 	"basaltpass-backend/internal/service/auth"
 	"context"
+	"log"
 	"net/http"
 	"os"
 
 	"basaltpass-backend/internal/common"
+	security "basaltpass-backend/internal/handler/user/security"
 	"basaltpass-backend/internal/model"
 
 	"github.com/gofiber/fiber/v2"
@@ -60,6 +62,11 @@ func CallbackHandler(c *fiber.Ctx) error {
 	tokens, _ := auth.GenerateTokenPair(oa.UserID)
 	// set refresh cookie
 	c.Cookie(&fiber.Cookie{Name: "refresh_token", Value: tokens.RefreshToken, HTTPOnly: true, Path: "/", MaxAge: 7 * 24 * 60 * 60})
+
+	// 记录登录成功
+	if err := security.RecordLoginSuccess(oa.UserID, c.IP(), c.Get("User-Agent")); err != nil {
+		log.Printf("failed to record login history: %v", err)
+	}
 
 	redirectURL := os.Getenv("OAUTH_SUCCESS_URL")
 	if redirectURL == "" {

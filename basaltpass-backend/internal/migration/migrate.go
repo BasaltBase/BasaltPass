@@ -42,6 +42,11 @@ func RunMigrations() {
 		&model.UserRole{},
 		&model.Permission{},
 
+		// 用户资料相关
+		&model.Gender{},
+		&model.Language{},
+		&model.UserProfile{},
+
 		// 团队
 		&model.Team{},
 		&model.TeamMember{},
@@ -51,6 +56,7 @@ func RunMigrations() {
 		&model.WalletTx{},
 		&model.AuditLog{},
 		&model.LoginLog{},
+		&model.LoginHistory{},
 		&model.OAuthAccount{},
 		&model.PasswordReset{},
 		&model.Passkey{},
@@ -137,6 +143,9 @@ func RunMigrations() {
 	createDefaultRoles()
 	seedSystemApps()
 	createSubscriptionIndexes()
+
+	// 初始化性别和语言数据
+	InitGendersAndLanguages()
 
 	// 系统权限种子化，并赋予默认租户的 tenant 角色
 	seedSystemPermissions()

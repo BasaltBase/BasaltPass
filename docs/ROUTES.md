@@ -800,9 +800,18 @@
 | GET | /api/v1/user/apps |
 | HEAD | /api/v1/user/apps |
 | DELETE | /api/v1/user/apps/:app_id |
+| GET | /api/v1/user/currencies |
+| HEAD | /api/v1/user/currencies |
+| GET | /api/v1/user/genders |
+| HEAD | /api/v1/user/genders |
+| GET | /api/v1/user/languages |
+| HEAD | /api/v1/user/languages |
 | GET | /api/v1/user/profile |
 | HEAD | /api/v1/user/profile |
 | PUT | /api/v1/user/profile |
+| GET | /api/v1/user/profile-detail |
+| HEAD | /api/v1/user/profile-detail |
+| PUT | /api/v1/user/profile-detail |
 | CONNECT | /api/v1/user/security |
 | DELETE | /api/v1/user/security |
 | GET | /api/v1/user/security |
@@ -816,6 +825,8 @@
 | POST | /api/v1/user/security/password/change |
 | GET | /api/v1/user/tenants |
 | HEAD | /api/v1/user/tenants |
+| GET | /api/v1/user/timezones |
+| HEAD | /api/v1/user/timezones |
 | CONNECT | /api/v1/users |
 | DELETE | /api/v1/users |
 | GET | /api/v1/users |

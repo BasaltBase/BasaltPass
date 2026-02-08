@@ -33,6 +33,7 @@ import PasskeyManagement from '../../../src/features/user/security/PasskeyManage
 import LoginHistory from '../../../src/features/user/security/LoginHistory'
 
 import UserAppsIndex from '../../../src/features/user/apps/Index'
+import UserAppDetail from '../../../src/features/user/apps/Detail'
 
 import SubscriptionIndex from '../../../src/features/user/subscription/Index'
 import ProductsPage from '../../../src/features/user/subscription/Products'
@@ -142,6 +143,7 @@ export default function AppRouter() {
 
       {/* Apps */}
       <Route path="/my-apps" element={<ProtectedRoute><UserAppsIndex /></ProtectedRoute>} />
+      <Route path="/my-apps/:id" element={<ProtectedRoute><UserAppDetail /></ProtectedRoute>} />
 
       {/* Subscriptions */}
       <Route path="/products" element={<ProtectedRoute><ProductsPage /></ProtectedRoute>} />

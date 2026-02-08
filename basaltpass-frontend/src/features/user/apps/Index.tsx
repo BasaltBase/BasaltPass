@@ -104,7 +104,7 @@ export default function UserAppsIndex() {
                     </div>
                   )}
                   <div className="mt-6 flex items-center justify-between">
-                    <Link to={`/tenant/apps/${app.app_id}`} className="text-sm text-blue-600 hover:text-blue-700">查看应用</Link>
+                    <Link to={`/my-apps/${app.app_id}`} className="text-sm text-blue-600 hover:text-blue-700">查看应用</Link>
                     <button
                       onClick={() => revoke(app)}
                       disabled={revokingId === app.app_id}

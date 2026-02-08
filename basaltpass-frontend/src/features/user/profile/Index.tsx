@@ -5,6 +5,7 @@ import Layout from '@features/user/components/Layout'
 import { PCard, PButton, PInput } from '@ui'
 import PhoneInput from '@ui/common/PhoneInput'
 import { formatPhoneForDisplay } from '@utils/phoneValidator'
+import { getUserProfile, type UserProfile } from '@api/user/profile'
 import { ROUTES } from '@constants'
 import { 
   UserIcon, 
@@ -12,7 +13,13 @@ import {
   PhoneIcon, 
   IdentificationIcon,
   PencilIcon,
-  CameraIcon
+  CameraIcon,
+  GlobeAltIcon,
+  CurrencyDollarIcon,
+  MapPinIcon,
+  BriefcaseIcon,
+  LinkIcon,
+  CalendarIcon
 } from '@heroicons/react/24/outline'
 
 interface Profile {
@@ -27,6 +34,7 @@ interface Profile {
 function Profile() {
   const navigate = useNavigate()
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
   const [editForm, setEditForm] = useState({
@@ -36,14 +44,17 @@ function Profile() {
   })
 
   useEffect(() => {
-    client
-      .get('/api/v1/user/profile')
-      .then((res) => {
-        setProfile(res.data)
+    Promise.all([
+      client.get('/api/v1/user/profile'),
+      getUserProfile()
+    ])
+      .then(([profileRes, userProfileRes]) => {
+        setProfile(profileRes.data)
+        setUserProfile(userProfileRes.data.profile)
         setEditForm({
-          nickname: res.data.nickname || '',
-          email: res.data.email || '',
-          phone: res.data.phone || ''
+          nickname: profileRes.data.nickname || '',
+          email: profileRes.data.email || '',
+          phone: profileRes.data.phone || ''
         })
         setIsLoading(false)
       })
@@ -86,25 +97,7 @@ function Profile() {
   return (
     <Layout>
       <div className="space-y-6">
-        {/* 页面标题 */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">个人资料</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              管理您的个人信息和账户设置
-            </p>
-          </div>
-          <PButton
-            onClick={() => setIsEditing(!isEditing)}
-            variant="secondary"
-          >
-            <PencilIcon className="h-5 w-5 mr-2" />
-            {isEditing ? '取消编辑' : '编辑资料'}
-          </PButton>
-        </div>
-
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-          {/* 头像和基本信息 */}
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">{/* 头像和基本信息 */}
           <div className="lg:col-span-1">
             <PCard variant="bordered" size="lg">
               <div className="flex flex-col items-center">
@@ -258,6 +251,122 @@ function Profile() {
                 </div>
               )}
             </PCard>
+
+            {/* 详细资料 */}
+            {userProfile && (
+              <PCard variant="bordered" size="lg" className="mt-6">
+                <h3 className="text-xl font-semibold text-gray-900 mb-6">详细资料</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {userProfile.gender && (
+                    <div className="space-y-2">
+                      <label className="flex items-center text-sm font-medium text-gray-500">
+                        <UserIcon className="h-4 w-4 mr-2" />
+                        性别
+                      </label>
+                      <p className="text-sm text-gray-900">{userProfile.gender.name_cn || userProfile.gender.name}</p>
+                    </div>
+                  )}
+                  {userProfile.birth_date && (
+                    <div className="space-y-2">
+                      <label className="flex items-center text-sm font-medium text-gray-500">
+                        <CalendarIcon className="h-4 w-4 mr-2" />
+                        出生日期
+                      </label>
+                      <p className="text-sm text-gray-900">{new Date(userProfile.birth_date).toLocaleDateString('zh-CN')}</p>
+                    </div>
+                  )}
+                  {userProfile.language && (
+                    <div className="space-y-2">
+                      <label className="flex items-center text-sm font-medium text-gray-500">
+                        <GlobeAltIcon className="h-4 w-4 mr-2" />
+                        语言
+                      </label>
+                      <p className="text-sm text-gray-900">{userProfile.language.name_local || userProfile.language.name}</p>
+                    </div>
+                  )}
+                  {userProfile.timezone && (
+                    <div className="space-y-2">
+                      <label className="flex items-center text-sm font-medium text-gray-500">
+                        <GlobeAltIcon className="h-4 w-4 mr-2" />
+                        时区
+                      </label>
+                      <p className="text-sm text-gray-900">{userProfile.timezone}</p>
+                    </div>
+                  )}
+                  {userProfile.currency && (
+                    <div className="space-y-2">
+                      <label className="flex items-center text-sm font-medium text-gray-500">
+                        <CurrencyDollarIcon className="h-4 w-4 mr-2" />
+                        主要货币
+                      </label>
+                      <p className="text-sm text-gray-900">
+                        {userProfile.currency.name_cn || userProfile.currency.name} ({userProfile.currency.code})
+                      </p>
+                    </div>
+                  )}
+                  {userProfile.location && (
+                    <div className="space-y-2">
+                      <label className="flex items-center text-sm font-medium text-gray-500">
+                        <MapPinIcon className="h-4 w-4 mr-2" />
+                        所在地
+                      </label>
+                      <p className="text-sm text-gray-900">{userProfile.location}</p>
+                    </div>
+                  )}
+                  {userProfile.company && (
+                    <div className="space-y-2">
+                      <label className="flex items-center text-sm font-medium text-gray-500">
+                        <BriefcaseIcon className="h-4 w-4 mr-2" />
+                        公司
+                      </label>
+                      <p className="text-sm text-gray-900">{userProfile.company}</p>
+                    </div>
+                  )}
+                  {userProfile.job_title && (
+                    <div className="space-y-2">
+                      <label className="flex items-center text-sm font-medium text-gray-500">
+                        <BriefcaseIcon className="h-4 w-4 mr-2" />
+                        职位
+                      </label>
+                      <p className="text-sm text-gray-900">{userProfile.job_title}</p>
+                    </div>
+                  )}
+                  {userProfile.website && (
+                    <div className="space-y-2">
+                      <label className="flex items-center text-sm font-medium text-gray-500">
+                        <LinkIcon className="h-4 w-4 mr-2" />
+                        个人网站
+                      </label>
+                      <a 
+                        href={userProfile.website} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-sm text-blue-600 hover:underline"
+                      >
+                        {userProfile.website}
+                      </a>
+                    </div>
+                  )}
+                  {userProfile.bio && (
+                    <div className="space-y-2 md:col-span-2">
+                      <label className="flex items-center text-sm font-medium text-gray-500">
+                        <UserIcon className="h-4 w-4 mr-2" />
+                        个人简介
+                      </label>
+                      <p className="text-sm text-gray-900 whitespace-pre-wrap">{userProfile.bio}</p>
+                    </div>
+                  )}
+                </div>
+                <div className="mt-6 pt-6 border-t border-gray-100">
+                  <a 
+                    href={ROUTES.user.settings}
+                    className="text-sm text-blue-600 hover:underline"
+                  >
+                    在设置中编辑详细资料 →
+                  </a>
+                </div>
+              </PCard>
+            )}
           </div>
         </div>
       </div>

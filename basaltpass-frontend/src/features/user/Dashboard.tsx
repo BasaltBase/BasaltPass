@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import Layout from '@features/user/components/Layout'
 import { PCard, PButton } from '@ui'
-import { getBalance } from '@api/user/wallet'
+import { getBalance, history as getWalletHistory } from '@api/user/wallet'
 import { getSecurityStatus, SecurityStatus } from '@api/user/security'
 import { ROUTES } from '@constants'
 import { 
@@ -50,42 +50,20 @@ export default function Dashboard() {
         setIsLoading(true)
         setError(null)
 
-        // 并行获取钱包余额和安全状态
-        const [walletResponse, securityResponse] = await Promise.all([
+        // 并行获取钱包余额、安全状态和交易历史
+        const [walletResponse, securityResponse, historyResponse] = await Promise.all([
           getBalance('USD'),
-          getSecurityStatus()
+          getSecurityStatus(),
+          getWalletHistory('USD', 3) // 获取最近3条交易记录
         ])
 
         setWalletData(walletResponse.data)
         setSecurityStatus(securityResponse.data)
-
-        // 模拟交易数据（保持原有的模拟数据）
-        setRecentTransactions([
-          {
-            id: '1',
-            type: 'recharge',
-            amount: 500,
-            status: 'completed',
-            date: '2024-01-15',
-            description: '支付宝充值'
-          },
-          {
-            id: '2',
-            type: 'withdraw',
-            amount: 200,
-            status: 'pending',
-            date: '2024-01-14',
-            description: '提现到银行卡'
-          },
-          {
-            id: '3',
-            type: 'recharge',
-            amount: 1000,
-            status: 'completed',
-            date: '2024-01-13',
-            description: '微信支付充值'
-          }
-        ])
+        
+        // 使用真实的交易数据
+        if (historyResponse.data && historyResponse.data.transactions) {
+          setRecentTransactions(historyResponse.data.transactions)
+        }
       } catch (err) {
         console.error('获取数据失败:', err)
         setError('获取数据失败，请稍后重试')
@@ -120,8 +98,6 @@ export default function Dashboard() {
       name: '钱包余额',
       value: `$${(walletData.balance / 100).toFixed(2)}`, // 余额以分为单位存储
       icon: WalletIcon,
-      change: '+12.5%',
-      changeType: 'positive' as const,
     },
     {
       name: '安全等级',
@@ -190,21 +166,23 @@ export default function Dashboard() {
               </dt>
               <dd className="ml-16 flex items-baseline">
                 <p className="text-2xl font-semibold text-gray-900">{item.value}</p>
-                <p
-                  className={`ml-2 flex items-baseline text-sm font-semibold ${
-                    item.changeType === 'positive'
-                      ? 'text-green-600'
-                      : 'text-gray-500'
-                  }`}
-                >
-                  {item.changeType === 'positive' && (
-                    <ArrowUpIcon className="h-4 w-4 flex-shrink-0 self-center" />
-                  )}
-                  <span className="sr-only">
-                    {item.changeType === 'positive' ? '增加' : '状态'}
-                  </span>
-                  {item.change}
-                </p>
+                {item.change && (
+                  <p
+                    className={`ml-2 flex items-baseline text-sm font-semibold ${
+                      item.changeType === 'positive'
+                        ? 'text-green-600'
+                        : 'text-gray-500'
+                    }`}
+                  >
+                    {item.changeType === 'positive' && (
+                      <ArrowUpIcon className="h-4 w-4 flex-shrink-0 self-center" />
+                    )}
+                    <span className="sr-only">
+                      {item.changeType === 'positive' ? '增加' : '状态'}
+                    </span>
+                    {item.change}
+                  </p>
+                )}
               </dd>
             </PCard>
           ))}
