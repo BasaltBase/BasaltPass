@@ -71,9 +71,11 @@ func (s *OAuthServerService) ValidateAuthorizeRequest(req *AuthorizeRequest) (*m
 		return nil, errors.New("unsupported_response_type")
 	}
 
-	// 2. 查找并验证客户端
+	// 2. 查找并验证客户端（预加载App信息以显示应用详情）
 	var client model.OAuthClient
-	if err := s.db.Where("client_id = ? AND is_active = ?", req.ClientID, true).First(&client).Error; err != nil {
+	if err := s.db.Where("client_id = ? AND is_active = ?", req.ClientID, true).
+		Preload("App").
+		First(&client).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("invalid_client")
 		}
@@ -108,7 +110,7 @@ func (s *OAuthServerService) ValidateAuthorizeRequest(req *AuthorizeRequest) (*m
 }
 
 // GenerateAuthorizationCode 生成授权码
-func (s *OAuthServerService) GenerateAuthorizationCode(userID uint, req *AuthorizeRequest) (string, error) {
+func (s *OAuthServerService) GenerateAuthorizationCode(userID uint, req *AuthorizeRequest, client *model.OAuthClient) (string, error) {
 	// 生成授权码
 	codeBytes := make([]byte, 32)
 	if _, err := rand.Read(codeBytes); err != nil {
@@ -116,11 +118,29 @@ func (s *OAuthServerService) GenerateAuthorizationCode(userID uint, req *Authori
 	}
 	code := hex.EncodeToString(codeBytes)
 
-	// 创建授权码记录
+	// 获取租户ID（从App获取）
+	var tenantID uint
+	if client.AppID > 0 {
+		// 如果client已经预加载了App，直接使用
+		if client.App.ID > 0 {
+			tenantID = client.App.TenantID
+		} else {
+			// 否则需要查询
+			var app model.App
+			if err := s.db.Select("tenant_id").Where("id = ?", client.AppID).First(&app).Error; err != nil {
+				return "", err
+			}
+			tenantID = app.TenantID
+		}
+	}
+
+	// 创建授权码记录（包含AppID和TenantID）
 	authCode := &model.OAuthAuthorizationCode{
 		Code:                code,
 		ClientID:            req.ClientID,
 		UserID:              userID,
+		TenantID:            tenantID,
+		AppID:               client.AppID,
 		RedirectURI:         req.RedirectURI,
 		Scopes:              req.Scope,
 		CodeChallenge:       req.CodeChallenge,

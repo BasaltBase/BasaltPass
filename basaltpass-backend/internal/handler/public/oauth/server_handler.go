@@ -173,13 +173,13 @@ func ConsentHandler(c *fiber.Ctx) error {
 	}
 
 	// 验证请求
-	_, err := oauthServerService.ValidateAuthorizeRequest(req)
+	client, err := oauthServerService.ValidateAuthorizeRequest(req)
 	if err != nil {
 		return redirectWithError(c, redirectURI, err.Error(), state)
 	}
 
 	// 生成授权码
-	code, err := oauthServerService.GenerateAuthorizationCode(userID, req)
+	code, err := oauthServerService.GenerateAuthorizationCode(userID, req, client)
 	if err != nil {
 		return redirectWithError(c, redirectURI, "server_error", state)
 	}

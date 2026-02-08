@@ -542,11 +542,29 @@ func (s *AppService) appToResponse(app *model.App, oauthClients []model.OAuthCli
 func (s *AppService) getAppStats(appID uint) *AppStats {
 	stats := &AppStats{}
 
-	// 获取总用户数（这里需要与app_user模块配合）
-	// 暂时返回模拟数据
-	stats.TotalUsers = 0
-	stats.ActiveUsers = 0
-	stats.RequestsToday = 0
+	// 获取总用户数（从app_users表）
+	var totalUsers int64
+	if err := s.db.Model(&model.AppUser{}).Where("app_id = ?", appID).Count(&totalUsers).Error; err == nil {
+		stats.TotalUsers = totalUsers
+	}
+
+	// 获取活跃用户数（最近30天有活动的用户）
+	var activeUsers int64
+	thirtyDaysAgo := time.Now().AddDate(0, 0, -30)
+	if err := s.db.Model(&model.AppUser{}).
+		Where("app_id = ? AND last_active_at > ?", appID, thirtyDaysAgo).
+		Count(&activeUsers).Error; err == nil {
+		stats.ActiveUsers = activeUsers
+	}
+
+	// 获取今日请求数（从OAuth访问令牌表）
+	var requestsToday int64
+	today := time.Now().Truncate(24 * time.Hour)
+	if err := s.db.Model(&model.OAuthAccessToken{}).
+		Where("app_id = ? AND created_at >= ?", appID, today).
+		Count(&requestsToday).Error; err == nil {
+		stats.RequestsToday = requestsToday
+	}
 
 	return stats
 }

@@ -127,19 +127,7 @@ export default function OAuthConsent() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center">
-          <ShieldCheckIcon className="h-12 w-12 text-blue-600" />
-        </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          授权确认
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          应用请求访问您的账户信息
-        </p>
-      </div>
-
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+      <div className="sm:mx-auto sm:w-full sm:max-w-4xl">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           {error ? (
             <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
@@ -152,88 +140,104 @@ export default function OAuthConsent() {
               </div>
             </div>
           ) : (
-            <>
-              {/* 应用信息 */}
-              <div className="mb-6">
-                <div className="text-center">
-                  <div className="mx-auto h-16 w-16 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span className="text-blue-600 text-xl font-bold">
-                      {clientName.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <h3 className="mt-4 text-lg font-medium text-gray-900">
-                    {clientName}
-                  </h3>
-                  {clientDescription && (
-                    <p className="mt-1 text-sm text-gray-500">
-                      {clientDescription}
-                    </p>
-                  )}
+            <div className="lg:grid lg:grid-cols-5 lg:gap-8">
+              {/* 左侧：应用信息和标题 (大屏占2列) */}
+              <div className="lg:col-span-2 flex flex-col items-center lg:items-start lg:border-r lg:border-gray-200 lg:pr-8">
+                <div className="flex justify-center lg:justify-start w-full mb-6">
+                  <ShieldCheckIcon className="h-16 w-16 text-blue-600" />
                 </div>
-              </div>
-
-              {/* 权限信息 */}
-              <div className="mb-6">
-                <h4 className="text-sm font-medium text-gray-900 mb-3">
-                  该应用将获得以下权限：
-                </h4>
-                <div className="space-y-2">
-                  {scopes.map((scope) => (
-                    <div key={scope} className="flex items-start">
-                      <div className="flex-shrink-0">
-                        <div className="h-2 w-2 bg-indigo-600 rounded-full mt-2"></div>
-                      </div>
-                      <div className="ml-3">
-                        <p className="text-sm font-medium text-gray-900">
-                          {getScopeDisplayName(scope)}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {getScopeDescription(scope)}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* 警告信息 */}
-              <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-md p-4">
-                <div className="flex">
-                  <ExclamationTriangleIcon className="h-5 w-5 text-yellow-400" />
-                  <div className="ml-3">
-                    <h3 className="text-sm font-medium text-yellow-800">注意</h3>
-                    <p className="mt-1 text-sm text-yellow-700">
-                      只有当您信任该应用时才应授权。授权后，该应用将能够访问您的相关信息。
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* 操作按钮 */}
-              <div className="flex space-x-3">
-                <button
-                  onClick={handleDeny}
-                  disabled={loading}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-                >
-                  {loading ? '处理中...' : '拒绝'}
-                </button>
-                <button
-                  onClick={handleAllow}
-                  disabled={loading}
-                  className="flex-1 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-                >
-                  {loading ? '处理中...' : '授权'}
-                </button>
-              </div>
-
-              {/* 底部说明 */}
-              <div className="mt-6 text-center">
-                <p className="text-xs text-gray-500">
-                  授权后，您可以随时在账户设置中撤销应用的访问权限
+                <h2 className="text-2xl lg:text-3xl font-extrabold text-gray-900 text-center lg:text-left mb-4">
+                  授权确认
+                </h2>
+                <p className="text-sm text-gray-600 text-center lg:text-left mb-6">
+                  应用请求访问您的账户信息
                 </p>
+                
+                {/* 应用信息 */}
+                <div className="w-full">
+                  <div className="flex flex-col items-center lg:items-start">
+                    <div className="h-20 w-20 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                      <span className="text-blue-600 text-2xl font-bold">
+                        {clientName.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <h3 className="text-xl font-medium text-gray-900 text-center lg:text-left">
+                      {clientName}
+                    </h3>
+                    {clientDescription && (
+                      <p className="mt-2 text-sm text-gray-500 text-center lg:text-left">
+                        {clientDescription}
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
-            </>
+
+              {/* 右侧：权限信息和操作按钮 (大屏占3列) */}
+              <div className="lg:col-span-3 mt-8 lg:mt-0">
+                {/* 权限信息 */}
+                <div className="mb-6">
+                  <h4 className="text-sm font-medium text-gray-900 mb-3">
+                    该应用将获得以下权限：
+                  </h4>
+                  <div className="space-y-2">
+                    {scopes.map((scope) => (
+                      <div key={scope} className="flex items-start">
+                        <div className="flex-shrink-0">
+                          <div className="h-2 w-2 bg-indigo-600 rounded-full mt-2"></div>
+                        </div>
+                        <div className="ml-3">
+                          <p className="text-sm font-medium text-gray-900">
+                            {getScopeDisplayName(scope)}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {getScopeDescription(scope)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 警告信息 */}
+                <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-md p-4">
+                  <div className="flex">
+                    <ExclamationTriangleIcon className="h-5 w-5 text-yellow-400 flex-shrink-0" />
+                    <div className="ml-3">
+                      <h3 className="text-sm font-medium text-yellow-800">注意</h3>
+                      <p className="mt-1 text-sm text-yellow-700">
+                        只有当您信任该应用时才应授权。授权后，该应用将能够访问您的相关信息。
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 操作按钮 */}
+                <div className="flex space-x-3">
+                  <button
+                    onClick={handleDeny}
+                    disabled={loading}
+                    className="flex-1 px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                  >
+                    {loading ? '处理中...' : '拒绝'}
+                  </button>
+                  <button
+                    onClick={handleAllow}
+                    disabled={loading}
+                    className="flex-1 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                  >
+                    {loading ? '处理中...' : '授权'}
+                  </button>
+                </div>
+
+                {/* 底部说明 */}
+                <div className="mt-6 text-center lg:text-left">
+                  <p className="text-xs text-gray-500">
+                    授权后，您可以随时在账户设置中撤销应用的访问权限
+                  </p>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </div>
