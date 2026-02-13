@@ -5,6 +5,7 @@ import { PCard, PButton } from '@ui'
 import { getBalance, history as getWalletHistory } from '@api/user/wallet'
 import { getSecurityStatus, SecurityStatus } from '@api/user/security'
 import { ROUTES } from '@constants'
+import { useConfig } from '@contexts/ConfigContext'
 import { 
   WalletIcon, 
   UserIcon, 
@@ -38,6 +39,7 @@ interface RecentTransaction {
 }
 
 export default function Dashboard() {
+  const { marketEnabled } = useConfig()
   const [walletData, setWalletData] = useState<WalletData>({ balance: 0, currency: 'USD' })
   const [securityStatus, setSecurityStatus] = useState<SecurityStatus | null>(null)
   const [recentTransactions, setRecentTransactions] = useState<RecentTransaction[]>([])
@@ -264,19 +266,21 @@ export default function Dashboard() {
                 </div>
               </Link>
 
-              <Link
-                to={ROUTES.user.subscriptions}
-                className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
-              >
-                <div className="flex-shrink-0">
-                  <CreditCardIcon className="h-6 w-6 text-orange-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <span className="absolute inset-0" aria-hidden="true" />
-                  <p className="text-sm font-medium text-gray-900">订阅管理</p>
-                  <p className="text-sm text-gray-500">管理订阅计划</p>
-                </div>
-              </Link>
+              {marketEnabled && (
+                <Link
+                  to={ROUTES.user.subscriptions}
+                  className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
+                >
+                  <div className="flex-shrink-0">
+                    <CreditCardIcon className="h-6 w-6 text-orange-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="absolute inset-0" aria-hidden="true" />
+                    <p className="text-sm font-medium text-gray-900">订阅管理</p>
+                    <p className="text-sm text-gray-500">管理订阅计划</p>
+                  </div>
+                </Link>
+              )}
 
               <Link
                 to={ROUTES.user.notifications}

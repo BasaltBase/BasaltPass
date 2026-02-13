@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { BrowserRouter } from 'react-router-dom'
 import { NotificationProvider } from '../../../src/shared/contexts/NotificationContext'
 import { AuthProvider } from '../../../src/shared/contexts/AuthContext'
+import { ConfigProvider } from '../../../src/shared/contexts/ConfigContext'
 import AppRouter from './router'
 import { exchangeConsole } from '../../../src/shared/api/console'
 import { setAccessToken } from '../../../src/shared/utils/auth'
@@ -42,11 +43,13 @@ export default function App() {
   return (
     <ConsoleCodeGate>
       <BrowserRouter>
-        <AuthProvider>
-          <NotificationProvider>
-            <AppRouter />
-          </NotificationProvider>
-        </AuthProvider>
+        <ConfigProvider>
+          <AuthProvider>
+            <NotificationProvider>
+              <AppRouter />
+            </NotificationProvider>
+          </AuthProvider>
+        </ConfigProvider>
       </BrowserRouter>
     </ConsoleCodeGate>
   )

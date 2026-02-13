@@ -34,11 +34,27 @@ func AdminCreateHandler(c *fiber.Ctx) error {
 func AdminListHandler(c *fiber.Ctx) error {
 	page, _ := strconv.Atoi(c.Query("page", "1"))
 	pageSize, _ := strconv.Atoi(c.Query("page_size", "20"))
+	adminID := c.Locals("userID").(uint)
+
+	// 获取当前管理员的tenant_id
+	var admin model.User
+	db := common.DB()
+	if err := db.Select("tenant_id").First(&admin, adminID).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "获取用户信息失败"})
+	}
+
+	// 只返回同一租户的通知（通过receiver_id匹配同租户用户）
 	var notifs []model.Notification
 	var total int64
-	db := common.DB()
-	db.Model(&model.Notification{}).Count(&total)
-	if err := db.Order("created_at desc").Offset((page - 1) * pageSize).Limit(pageSize).Preload("App").Find(&notifs).Error; err != nil {
+
+	// 获取同一租户的所有用户ID
+	var tenantUserIDs []uint
+	db.Model(&model.User{}).Where("tenant_id = ?", admin.TenantID).Pluck("id", &tenantUserIDs)
+	tenantUserIDs = append(tenantUserIDs, 0) // 包括广播消息
+
+	query := db.Model(&model.Notification{}).Where("receiver_id IN ?", tenantUserIDs)
+	query.Count(&total)
+	if err := query.Order("created_at desc").Offset((page - 1) * pageSize).Limit(pageSize).Preload("App").Find(&notifs).Error; err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.JSON(fiber.Map{"data": notifs, "total": total, "page": page, "page_size": pageSize})

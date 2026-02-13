@@ -13,8 +13,18 @@ import (
 // User represents an authenticated account in the system.
 type User struct {
 	gorm.Model
-	Email         string `gorm:"uniqueIndex;size:128"`
-	Phone         string `gorm:"uniqueIndex;size:32"`
+
+	// TenantID 用户所属租户ID
+	// 普通用户必须属于某个租户
+	// admin和tenant_admin可以为0（平台级用户）
+	TenantID uint `gorm:"index;not null;default:0" json:"tenant_id"`
+
+	// Email和Phone的唯一性由迁移层创建“租户范围”复合唯一索引保证：
+	// (email, tenant_id) 与 (phone, tenant_id)
+	// 这样同一个邮箱/手机号可以在不同租户下注册不同账户。
+	// 注意：这里不声明 unique，避免 AutoMigrate 误建成单列唯一索引。
+	Email         string `gorm:"size:128;index" json:"email"`
+	Phone         string `gorm:"size:32;index" json:"phone"`
 	PasswordHash  string `gorm:"size:255"`
 	Nickname      string `gorm:"size:64"`
 	AvatarURL     string `gorm:"size:255"`

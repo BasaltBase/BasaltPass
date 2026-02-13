@@ -42,6 +42,12 @@ func (s *AdminUserService) GetUserList(req AdminUserListRequest) (*UserListRespo
 
 	query := s.db.Model(&model.User{})
 
+	// 租户过滤：如果指定了tenant_id，只查询该租户的用户
+	// Admin默认可以看所有租户的用户，除非特别指定
+	if req.TenantID != nil {
+		query = query.Where("tenant_id = ?", *req.TenantID)
+	}
+
 	// 搜索条件
 	if req.Search != "" {
 		searchPattern := "%" + req.Search + "%"

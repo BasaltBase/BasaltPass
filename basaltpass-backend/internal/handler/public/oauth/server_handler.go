@@ -47,11 +47,21 @@ func AuthorizeHandler(c *fiber.Ctx) error {
 	}
 	if userID == nil {
 		// 用户未登录，重定向到登录页面
-		loginURL := buildLoginURL(c, req)
+		// 构建租户特定的登录URL
+		loginURL := buildLoginURLWithTenant(c, req, client)
 		return c.Redirect(loginURL, http.StatusFound)
 	}
 
-	// 用户已登录，重定向到前端托管的授权同意页面
+	// 用户已登录，验证用户是否属于该租户
+	uid := userID.(uint)
+	if err := oauthServerService.ValidateUserTenant(uid, client); err != nil {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error":             "tenant_mismatch",
+			"error_description": "User does not belong to the tenant of this application",
+		})
+	}
+
+	// 用户已登录且属于正确的租户，重定向到前端托管的授权同意页面
 	consentURL := buildConsentURL(req, client)
 	return c.Redirect(consentURL, http.StatusFound)
 }
@@ -176,6 +186,14 @@ func ConsentHandler(c *fiber.Ctx) error {
 	client, err := oauthServerService.ValidateAuthorizeRequest(req)
 	if err != nil {
 		return redirectWithError(c, redirectURI, err.Error(), state)
+	}
+
+	// 验证用户是否属于该租户
+	if err := oauthServerService.ValidateUserTenant(userID, client); err != nil {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error":             "tenant_mismatch",
+			"error_description": "User does not belong to the tenant of this application",
+		})
 	}
 
 	// 生成授权码
@@ -349,7 +367,42 @@ func RevokeHandler(c *fiber.Ctx) error {
 
 // 辅助函数
 
-// buildLoginURL 构建登录URL，包含OAuth2参数
+// buildLoginURLWithTenant 构建租户特定的登录URL，包含OAuth2参数
+func buildLoginURLWithTenant(c *fiber.Ctx, req *AuthorizeRequest, client *model.OAuthClient) string {
+	var tenantCode string
+
+	// 获取租户code
+	if client.AppID > 0 {
+		var app model.App
+		if client.App.ID > 0 {
+			app = client.App
+		} else {
+			oauthServerService.db.Preload("Tenant").First(&app, client.AppID)
+		}
+
+		if app.Tenant.ID > 0 {
+			tenantCode = app.Tenant.Code
+		}
+	}
+
+	uiBaseURL := strings.TrimRight(config.Get().UI.BaseURL, "/")
+
+	// 构建租户登录URL：/tenant/{tenant_code}/login
+	var loginURL string
+	if tenantCode != "" {
+		loginURL = uiBaseURL + "/tenant/" + tenantCode + "/login"
+	} else {
+		// 如果没有租户code，使用平台登录
+		loginURL = uiBaseURL + "/login"
+	}
+
+	// 构建原始OAuth2授权URL作为重定向参数
+	originalURL := "/api/v1/oauth/authorize?" + c.Context().QueryArgs().String()
+
+	return loginURL + "?redirect=" + url.QueryEscape(originalURL)
+}
+
+// buildLoginURL 构建登录URL，包含OAuth2参数（保留向后兼容性）
 func buildLoginURL(c *fiber.Ctx, req *AuthorizeRequest) string {
 	loginURL := "/login"
 	uiBaseURL := strings.TrimRight(config.Get().UI.BaseURL, "/")

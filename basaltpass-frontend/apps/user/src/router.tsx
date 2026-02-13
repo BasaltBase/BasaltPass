@@ -3,6 +3,8 @@ import ProtectedRoute from '@routes/ProtectedRoute'
 import PublicRoute from '@routes/PublicRoute'
 import Login from '../../../src/features/auth/Login'
 import Register from '../../../src/features/auth/Register'
+import TenantLogin from '../../../src/features/auth/TenantLogin'
+import TenantRegister from '../../../src/features/auth/TenantRegister'
 import OauthSuccess from '../../../src/features/auth/OauthSuccess'
 import OAuthConsent from '../../../src/features/auth/OAuthConsent'
 
@@ -63,6 +65,39 @@ export default function AppRouter() {
         element={
           <PublicRoute>
             <Register />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/auth/tenant/:tenantCode/login"
+        element={
+          <PublicRoute>
+            <TenantLogin />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/auth/tenant/:tenantCode/register"
+        element={
+          <PublicRoute>
+            <TenantRegister />
+          </PublicRoute>
+        }
+      />
+      {/* Backward compatibility */}
+      <Route
+        path="/tenant/:tenantCode/login"
+        element={
+          <PublicRoute>
+            <TenantLogin />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/tenant/:tenantCode/register"
+        element={
+          <PublicRoute>
+            <TenantRegister />
           </PublicRoute>
         }
       />

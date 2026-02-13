@@ -59,31 +59,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return tokenScope === expectedScope
   }, [expectedScope])
 
-  const tryRefresh = useCallback(async () => {
-    try {
-      const res = await client.post('/api/v1/auth/refresh')
-      const accessToken = res.data?.access_token
-      if (typeof accessToken === 'string' && accessToken.length > 0) {
-        setAccessToken(accessToken)
-        return accessToken as string
-      }
-    } catch (e) {
-      // ignore
-    }
-    return null
-  }, [])
-
   const checkAuth = useCallback(async () => {
     debugAuth.log('Starting auth check')
-    let token = getAccessToken()
-    
-    if (!token) {
-      debugAuth.log('No token found, attempting refresh')
-      token = await tryRefresh()
-    }
+    const token = getAccessToken()
 
     if (!token) {
-      debugAuth.log('No token found, setting unauthenticated')
+      debugAuth.log('No token found, setting unauthenticated immediately')
       setUser(null)
       setTenants([])
       setIsLoading(false)

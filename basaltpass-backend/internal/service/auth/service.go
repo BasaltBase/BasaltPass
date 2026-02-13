@@ -50,6 +50,23 @@ func (s Service) Register(req RegisterRequest) (*model.User, error) {
 	}
 	isFirstUser := userCount == 0
 
+	// 检查用户是否已存在（同一个租户下的邮箱/手机号）
+	// 注意：admin用户（tenant_id=0）可以与普通用户使用相同的邮箱/手机号
+	db := common.DB()
+	var existingUser model.User
+
+	// 构建检查条件
+	checkQuery := db.Where("tenant_id = ?", req.TenantID)
+	if req.Email != "" {
+		checkQuery = checkQuery.Where("email = ?", req.Email)
+	} else if normalizedPhone != "" {
+		checkQuery = checkQuery.Where("phone = ?", normalizedPhone)
+	}
+
+	if err := checkQuery.First(&existingUser).Error; err == nil {
+		return nil, errors.New("user already exists in this tenant")
+	}
+
 	// 开始事务
 	tx := common.DB().Begin()
 	defer func() {
@@ -63,12 +80,14 @@ func (s Service) Register(req RegisterRequest) (*model.User, error) {
 		Phone:        normalizedPhone,
 		PasswordHash: string(hash),
 		Nickname:     "New User",
+		TenantID:     req.TenantID, // 设置租户ID
 	}
 
 	// 利用数据库唯一约束防止并发注册导致产生多个超级管理员
 	if isFirstUser {
 		t := true
 		user.IsSystemAdmin = &t
+		user.TenantID = 0 // 第一个用户是平台级管理员，不属于任何租户
 	}
 
 	if err := tx.Create(user).Error; err != nil {
@@ -111,10 +130,39 @@ func (s Service) LoginV2(req LoginRequest) (LoginResult, error) {
 
 	var user model.User
 	db := common.DB()
-	if err := db.Preload("Passkeys").Where("email = ? OR phone = ?", req.EmailOrPhone, req.EmailOrPhone).First(&user).Error; err != nil {
-		// return LoginResult{}, errors.New("user not found")
-		// 为防止用户枚举，统一返回无效凭证错误
-		return LoginResult{}, errors.New("invalid email or password")
+
+	// 构建查询条件：email/phone + tenant_id
+	// 特殊处理：
+	// 1. 如果tenant_id = 0，表示平台登录，只允许admin和tenant_admin登录
+	// 2. 如果tenant_id > 0，表示租户登录，只查询该租户下的用户
+	query := db.Preload("Passkeys").Where("email = ? OR phone = ?", req.EmailOrPhone, req.EmailOrPhone)
+
+	if req.TenantID == 0 {
+		// 平台登录：只允许admin(is_system_admin=true)或tenant_admin(存在于tenant_admins表)
+		// 先查询用户
+		if err := query.First(&user).Error; err != nil {
+			return LoginResult{}, errors.New("invalid email or password")
+		}
+
+		// 检查是否是系统管理员
+		isAdmin := user.IsSystemAdmin != nil && *user.IsSystemAdmin
+
+		// 检查是否是租户管理员
+		var isTenantAdmin bool
+		var tenantAdminCount int64
+		db.Model(&model.TenantAdmin{}).Where("user_id = ?", user.ID).Count(&tenantAdminCount)
+		isTenantAdmin = tenantAdminCount > 0
+
+		// 如果既不是admin也不是tenant_admin，拒绝平台登录
+		if !isAdmin && !isTenantAdmin {
+			return LoginResult{}, errors.New("only administrators can login to platform")
+		}
+	} else {
+		// 租户登录：查询指定租户下的用户
+		query = query.Where("tenant_id = ?", req.TenantID)
+		if err := query.First(&user).Error; err != nil {
+			return LoginResult{}, errors.New("invalid email or password")
+		}
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {

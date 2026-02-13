@@ -20,6 +20,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { PButton } from '@ui'
 import { useAuth } from '@contexts/AuthContext'
+import { useConfig } from '@contexts/ConfigContext'
 import EnhancedNotificationIcon from '@components/EnhancedNotificationIcon'
 import { authorizeConsole } from '@api/console'
 import { ROUTES } from '@constants'
@@ -28,9 +29,9 @@ const navigation = [
   { name: '仪表板', href: ROUTES.user.dashboard, icon: HomeIcon },
   { name: '个人资料', href: ROUTES.user.profile, icon: UserIcon },
   { name: '团队', href: ROUTES.user.teams, icon: UserGroupIcon },
-  { name: '钱包', href: ROUTES.user.wallet, icon: WalletIcon },
-  { name: '我的订阅', href: ROUTES.user.subscriptions, icon: CreditCardIcon },
-  { name: '产品与套餐', href: ROUTES.user.products, icon: CubeIcon },
+  { name: '钱包', href: ROUTES.user.wallet, icon: WalletIcon, requiresMarket: true },
+  { name: '我的订阅', href: ROUTES.user.subscriptions, icon: CreditCardIcon, requiresMarket: true },
+  { name: '产品与套餐', href: ROUTES.user.products, icon: CubeIcon, requiresMarket: true },
   { name: '我的应用', href: ROUTES.user.myApps, icon: CubeIcon },
   { name: '安全', href: ROUTES.user.security, icon: ShieldCheckIcon },
   { name: '设置', href: ROUTES.user.settings, icon: CogIcon },
@@ -46,7 +47,17 @@ export default function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const location = useLocation()
-  const { user, logout, canAccessTenant, canAccessAdmin } = useAuth()
+  const { user, tenants, logout, canAccessTenant, canAccessAdmin } = useAuth()
+  const { marketEnabled } = useConfig()
+
+  const tenantDisplayName = (() => {
+    if (user?.tenant_id && user.tenant_id > 0) {
+      const currentTenant = tenants.find((t) => Number(t.id) === user.tenant_id)
+      if (currentTenant?.name) return currentTenant.name
+    }
+    if (tenants.length === 1 && tenants[0]?.name) return tenants[0].name
+    return 'BasaltPass'
+  })()
 
   const handleLogout = () => {
     logout()
@@ -59,6 +70,14 @@ export default function Layout({ children }: LayoutProps) {
   }
 
   const isActive = (href: string) => location.pathname === href
+
+  // 根据市场功能配置过滤导航项
+  const filteredNavigation = navigation.filter(item => {
+    if (item.requiresMarket && !marketEnabled) {
+      return false
+    }
+    return true
+  })
 
   const consoleUserUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || ''
   const consoleTenantUrl = (import.meta as any).env?.VITE_CONSOLE_TENANT_URL || ''
@@ -102,10 +121,10 @@ export default function Layout({ children }: LayoutProps) {
             </div>
             <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
               <div className="flex-shrink-0 flex items-center px-4">
-                <h1 className="text-xl font-bold text-gray-900">BasaltPass</h1>
+                <h1 className="text-xl font-bold text-gray-900">{tenantDisplayName}</h1>
               </div>
               <nav className="mt-5 px-2 space-y-1">
-                {navigation.map((item) => (
+                {filteredNavigation.map((item) => (
                   <Link
                     key={item.name}
                     to={item.href}
@@ -131,10 +150,10 @@ export default function Layout({ children }: LayoutProps) {
           <div className="flex flex-col h-0 flex-1 border-r border-gray-200 bg-white">
             <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
               <div className="flex items-center flex-shrink-0 px-4">
-                <h1 className="text-xl font-bold text-gray-900">BasaltPass</h1>
+                <h1 className="text-xl font-bold text-gray-900">{tenantDisplayName}</h1>
               </div>
               <nav className="mt-5 flex-1 px-2 bg-white space-y-1">
-                {navigation.map((item) => (
+                {filteredNavigation.map((item) => (
                   <Link
                     key={item.name}
                     to={item.href}

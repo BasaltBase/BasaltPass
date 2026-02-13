@@ -5,6 +5,7 @@ import "gorm.io/gorm"
 // Team represents a team in the system
 type Team struct {
 	gorm.Model
+	TenantID    uint   `gorm:"index;not null;default:0"`
 	Name        string `gorm:"size:100;not null"`
 	Description string `gorm:"size:500"`
 	AvatarURL   string `gorm:"size:255"`

@@ -24,6 +24,7 @@ type PendingSignup struct {
 	Phone        string       `gorm:"type:varchar(32);index"`      // 未验证的手机号
 	Username     string       `gorm:"type:varchar(64)"`            // 用户名
 	PasswordHash string       `gorm:"type:varchar(255)"`           // 密码哈希
+	TenantID     uint         `gorm:"index;not null;default:0"`    // 租户ID，0表示平台用户
 	Status       SignupStatus `gorm:"type:varchar(20);default:'PENDING_EMAIL'"`
 	ExpiresAt    time.Time    `gorm:"index"` // 24小时过期
 

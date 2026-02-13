@@ -1,6 +1,8 @@
 package user
 
 import (
+	"basaltpass-backend/internal/common"
+	"basaltpass-backend/internal/model"
 	tenant2 "basaltpass-backend/internal/service/tenant"
 	"strconv"
 
@@ -63,7 +65,21 @@ func SearchHandler(c *fiber.Ctx) error {
 		limit = 10
 	}
 
-	results, err := svc.SearchUsers(query, limit)
+	// 获取当前用户的tenant_id
+	var tenantID uint
+	if tid, ok := c.Locals("tenantID").(uint); ok {
+		tenantID = tid
+	} else {
+		// 如果没有tenantID，从用户记录获取
+		userID := c.Locals("userID").(uint)
+		var user model.User
+		if err := common.DB().Select("tenant_id").First(&user, userID).Error; err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to get user tenant"})
+		}
+		tenantID = user.TenantID
+	}
+
+	results, err := svc.SearchUsers(query, limit, tenantID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}

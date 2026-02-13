@@ -152,6 +152,10 @@ settings:
         value: []
         category: features
         description: 开启的 Beta 功能列表
+    features.market_enabled:
+        value: true
+        category: features
+        description: 是否启用市场功能（订阅、产品、套餐等）
     features.registration_invite_only:
         value: false
         category: features

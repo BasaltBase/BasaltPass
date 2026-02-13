@@ -53,6 +53,7 @@ function Login() {
       const res = await client.post('/api/v1/auth/login', {
         identifier,
         password,
+        tenant_id: 0, // 平台登录，tenant_id=0
       })
       if (res.data.need_2fa) {
         setUserId(res.data.user_id)
@@ -83,6 +84,8 @@ function Login() {
         setAvailable2FAMethods([])
         setTwoFACode('')
         setEmailCode('')
+      } else if (msg.includes('only administrators can login to platform')) {
+        setError('普通用户不能登录平台，请使用租户登录')
       } else {
         setError(raw || '登录失败，请检查您的凭据')
       }

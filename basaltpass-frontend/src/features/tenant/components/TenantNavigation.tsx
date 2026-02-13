@@ -17,6 +17,7 @@ import {
   CurrencyDollarIcon
 } from '@heroicons/react/24/outline'
 import { ROUTES } from '@constants'
+import { useConfig } from '@contexts/ConfigContext'
 
 interface NavigationItem {
   name: string
@@ -24,9 +25,10 @@ interface NavigationItem {
   icon: React.ComponentType<any>
   children?: NavigationItem[]
   current?: boolean
+  requiresMarket?: boolean
 }
 
-const navigation: NavigationItem[] = [
+const navigationItems: NavigationItem[] = [
   {
     name: '仪表板',
     href: ROUTES.tenant.dashboard,
@@ -62,6 +64,7 @@ const navigation: NavigationItem[] = [
   {
     name: '订阅管理',
     icon: CreditCardIcon,
+    requiresMarket: true,
     children: [
       { name: '订阅概览', href: ROUTES.tenant.subscriptions, icon: ChartBarIcon },
       { name: '产品管理', href: ROUTES.tenant.subscriptionProducts, icon: CubeIcon },
@@ -75,7 +78,16 @@ const navigation: NavigationItem[] = [
 
 export default function TenantNavigation() {
   const location = useLocation()
+  const { marketEnabled } = useConfig()
   const [expandedSections, setExpandedSections] = useState<string[]>(['应用管理', '订阅管理'])
+
+  // 根据市场功能配置过滤导航项
+  const navigation = navigationItems.filter(item => {
+    if (item.requiresMarket && !marketEnabled) {
+      return false
+    }
+    return true
+  })
 
   const toggleSection = (sectionName: string) => {
     setExpandedSections(prev => 

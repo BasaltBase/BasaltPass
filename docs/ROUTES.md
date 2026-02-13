@@ -212,6 +212,8 @@
 | POST | /api/v1/auth/verify-2fa |
 | GET | /api/v1/check_session_iframe |
 | HEAD | /api/v1/check_session_iframe |
+| GET | /api/v1/config |
+| HEAD | /api/v1/config |
 | GET | /api/v1/coupons/:code/validate |
 | HEAD | /api/v1/coupons/:code/validate |
 | GET | /api/v1/currencies/ |
@@ -778,6 +780,8 @@
 | POST | /api/v1/tenant/wallets/:id/unfreeze |
 | GET | /api/v1/tenant/wallets/stats |
 | HEAD | /api/v1/tenant/wallets/stats |
+| GET | /api/v1/tenants/by-code/:code |
+| HEAD | /api/v1/tenants/by-code/:code |
 | CONNECT | /api/v1/usage |
 | DELETE | /api/v1/usage |
 | GET | /api/v1/usage |

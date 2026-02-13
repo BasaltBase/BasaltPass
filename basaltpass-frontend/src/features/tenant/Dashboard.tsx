@@ -14,6 +14,7 @@ import { tenantAppApi } from '@api/tenant/tenantApp'
 import { tenantNotificationApi } from '@api/tenant/notification'
 import { tenantUserManagementApi } from '@api/tenant/tenantUserManagement'
 import { tenantSubscriptionAPI } from '@api/tenant/subscription'
+import { useConfig } from '@contexts/ConfigContext'
 
 interface TenantStats {
   appsTotal: number
@@ -32,6 +33,7 @@ interface QuickAction {
   href: string
   icon: React.ComponentType<any>
   color: string
+  requiresMarket?: boolean
 }
 
 const quickActions: QuickAction[] = [
@@ -61,25 +63,29 @@ const quickActions: QuickAction[] = [
     description: '查看订阅状态和收入',
     href: '/tenant/subscriptions',
     icon: ChartBarIcon,
-    color: 'bg-purple-500 hover:bg-purple-600'
+    color: 'bg-purple-500 hover:bg-purple-600',
+    requiresMarket: true
   },
   {
     name: '产品管理',
     description: '管理订阅产品',
     href: '/tenant/subscriptions/products',
     icon: ServerIcon,
-    color: 'bg-orange-500 hover:bg-orange-600'
+    color: 'bg-orange-500 hover:bg-orange-600',
+    requiresMarket: true
   },
   {
     name: '优惠券管理',
     description: '创建和管理优惠券',
     href: '/tenant/subscriptions/coupons',
     icon: CreditCardIcon,
-    color: 'bg-red-500 hover:bg-red-600'
+    color: 'bg-red-500 hover:bg-red-600',
+    requiresMarket: true
   }
 ]
 
 export default function TenantDashboard() {
+  const { marketEnabled } = useConfig()
   const [stats, setStats] = useState<TenantStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -132,7 +138,7 @@ export default function TenantDashboard() {
 
   const cards = useMemo(() => {
     if (!stats) return []
-    return [
+    const allCards = [
       {
         title: '应用',
         value: stats.appsTotal,
@@ -164,9 +170,12 @@ export default function TenantDashboard() {
         icon: ChartBarIcon,
         href: '/tenant/subscriptions/subscriptions',
         tone: 'text-purple-700 bg-purple-50',
+        requiresMarket: true,
       },
     ]
-  }, [stats])
+    // 根据市场功能配置过滤卡片
+    return allCards.filter(card => !card.requiresMarket || marketEnabled)
+  }, [stats, marketEnabled])
 
   if (loading) {
     return (
@@ -228,7 +237,9 @@ export default function TenantDashboard() {
                 <h2 className="text-base font-medium text-gray-900">快捷操作</h2>
               </div>
               <div className="p-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {quickActions.map((action) => (
+                {quickActions
+                  .filter(action => !action.requiresMarket || marketEnabled)
+                  .map((action) => (
                   <Link
                     key={action.name}
                     to={action.href}

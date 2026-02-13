@@ -139,6 +139,7 @@ func RunMigrations() {
 
 	// 在自动迁移后处理特殊的迁移情况
 	handleSpecialMigrations()
+	ensureUserTenantScopedUniqueIndexes()
 
 	createDefaultRoles()
 	seedSystemApps()
@@ -191,6 +192,12 @@ func handleSpecialMigrations() {
 
 	// 现有数据库的特殊迁移逻辑
 	log.Println("[Migration] Existing database detected, applying compatibility migrations...")
+
+	// 迁移用户表添加tenant_id字段
+	handleUserTenantIDMigration()
+
+	// 迁移团队表添加tenant_id字段
+	handleTeamTenantIDMigration()
 
 	// 如果由于之前失败导致仅创建了租户/角色等，但没有用户与价格，则在启用 seeding 时补种一次
 	if cfg := config.Get(); cfg.Seeding.Enabled {
@@ -1098,5 +1105,166 @@ func seedDevData() error {
 	if userCnt == 0 || priceCnt == 0 {
 		return errors.New("seed incomplete: users or prices not created")
 	}
+
 	return nil
+}
+
+// handleUserTenantIDMigration 处理用户表添加tenant_id字段的迁移
+func handleUserTenantIDMigration() {
+	db := common.DB()
+
+	// 检查users表是否已有tenant_id字段
+	if db.Migrator().HasColumn(&model.User{}, "tenant_id") {
+		log.Println("[Migration] tenant_id column already exists in users table")
+		ensureUserTenantScopedUniqueIndexes()
+		return
+	}
+
+	log.Println("[Migration] Adding tenant_id column to users table...")
+
+	// 1. 先删除旧的email和phone唯一索引
+	if db.Migrator().HasIndex(&model.User{}, "email") || db.Migrator().HasIndex(&model.User{}, "idx_users_email") {
+		log.Println("[Migration] Dropping old email unique index...")
+		db.Exec("DROP INDEX IF EXISTS idx_users_email")
+		db.Exec("DROP INDEX IF EXISTS users_email_key") // PostgreSQL
+	}
+
+	if db.Migrator().HasIndex(&model.User{}, "phone") || db.Migrator().HasIndex(&model.User{}, "idx_users_phone") {
+		log.Println("[Migration] Dropping old phone unique index...")
+		db.Exec("DROP INDEX IF EXISTS idx_users_phone")
+		db.Exec("DROP INDEX IF EXISTS users_phone_key") // PostgreSQL
+	}
+
+	// 2. 添加tenant_id字段，默认为0
+	if err := db.Exec("ALTER TABLE users ADD COLUMN tenant_id INTEGER NOT NULL DEFAULT 0").Error; err != nil {
+		log.Printf("[Migration] Failed to add tenant_id column: %v", err)
+		return
+	}
+
+	// 3. 为现有用户设置tenant_id
+	// 对于admin用户（is_system_admin为true）和租户管理员，tenant_id保持为0（平台级用户）
+	// 对于其他用户，尝试从tenant_admins表中获取其第一个租户ID
+	log.Println("[Migration] Setting tenant_id for existing users...")
+
+	// 先处理租户管理员：从tenant_admins表获取其管理的租户ID
+	db.Exec(`
+		UPDATE users 
+		SET tenant_id = (
+			SELECT tenant_id 
+			FROM tenant_admins 
+			WHERE tenant_admins.user_id = users.id 
+			ORDER BY created_at ASC 
+			LIMIT 1
+		)
+		WHERE id IN (SELECT user_id FROM tenant_admins)
+		AND (is_system_admin IS NULL OR is_system_admin = false)
+	`)
+
+	// 对于app_users（业务用户），从app表获取租户ID
+	db.Exec(`
+		UPDATE users 
+		SET tenant_id = (
+			SELECT apps.tenant_id 
+			FROM app_users 
+			JOIN apps ON app_users.app_id = apps.id 
+			WHERE app_users.user_id = users.id 
+			ORDER BY app_users.created_at ASC 
+			LIMIT 1
+		)
+		WHERE tenant_id = 0
+		AND (is_system_admin IS NULL OR is_system_admin = false)
+		AND id IN (SELECT user_id FROM app_users)
+	`)
+
+	// 4. 重建用户表租户范围唯一索引
+	ensureUserTenantScopedUniqueIndexes()
+
+	log.Println("[Migration] Successfully migrated users table with tenant_id column")
+}
+
+// ensureUserTenantScopedUniqueIndexes 确保 users 表中邮箱/手机号唯一性为“租户范围”
+// 目标：同一租户内 email/phone 不重复；不同租户允许重复。
+func ensureUserTenantScopedUniqueIndexes() {
+	db := common.DB()
+	dialect := strings.ToLower(db.Dialector.Name())
+
+	log.Println("[Migration] Ensuring tenant-scoped unique indexes on users(email, tenant_id) and users(phone, tenant_id)...")
+
+	// 先删除历史上可能存在的单列唯一索引（以及错误的同名索引定义）
+	db.Exec("DROP INDEX IF EXISTS idx_users_email")
+	db.Exec("DROP INDEX IF EXISTS users_email_key")
+	db.Exec("DROP INDEX IF EXISTS idx_users_phone")
+	db.Exec("DROP INDEX IF EXISTS users_phone_key")
+	db.Exec("DROP INDEX IF EXISTS idx_email_tenant")
+	db.Exec("DROP INDEX IF EXISTS idx_phone_tenant")
+
+	// 再创建期望的复合唯一索引
+	if dialect == "sqlite" || dialect == "postgres" || dialect == "postgresql" {
+		if err := db.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_email_tenant ON users (email, tenant_id) WHERE email != ''").Error; err != nil {
+			log.Printf("[Migration] Failed to create idx_email_tenant: %v", err)
+		}
+		if err := db.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_phone_tenant ON users (phone, tenant_id) WHERE phone != ''").Error; err != nil {
+			log.Printf("[Migration] Failed to create idx_phone_tenant: %v", err)
+		}
+	} else {
+		if err := db.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_email_tenant ON users (email, tenant_id)").Error; err != nil {
+			log.Printf("[Migration] Failed to create idx_email_tenant: %v", err)
+		}
+		if err := db.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_phone_tenant ON users (phone, tenant_id)").Error; err != nil {
+			log.Printf("[Migration] Failed to create idx_phone_tenant: %v", err)
+		}
+	}
+
+	// tenant_id 普通索引
+	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_users_tenant_id ON users (tenant_id)").Error; err != nil {
+		log.Printf("[Migration] Failed to create idx_users_tenant_id: %v", err)
+	}
+}
+
+// handleTeamTenantIDMigration 处理团队表添加tenant_id字段的迁移
+func handleTeamTenantIDMigration() {
+	db := common.DB()
+
+	// 检查teams表是否已有tenant_id字段
+	if db.Migrator().HasColumn(&model.Team{}, "tenant_id") {
+		log.Println("[Migration] tenant_id column already exists in teams table")
+		return
+	}
+
+	log.Println("[Migration] Adding tenant_id column to teams table...")
+
+	// 1. 添加tenant_id字段，默认为0
+	if err := db.Exec("ALTER TABLE teams ADD COLUMN tenant_id INTEGER NOT NULL DEFAULT 0").Error; err != nil {
+		log.Printf("[Migration] Failed to add tenant_id column to teams: %v", err)
+		return
+	}
+
+	// 2. 为现有团队设置tenant_id
+	// 从团队创建者（team_members中role='owner'的用户）获取租户ID
+	log.Println("[Migration] Setting tenant_id for existing teams...")
+
+	db.Exec(`
+		UPDATE teams 
+		SET tenant_id = (
+			SELECT users.tenant_id 
+			FROM team_members 
+			JOIN users ON team_members.user_id = users.id 
+			WHERE team_members.team_id = teams.id 
+			AND team_members.role = 'owner' 
+			ORDER BY team_members.created_at ASC 
+			LIMIT 1
+		)
+		WHERE EXISTS (
+			SELECT 1 FROM team_members 
+			WHERE team_members.team_id = teams.id 
+			AND team_members.role = 'owner'
+		)
+	`)
+
+	// 3. 创建tenant_id索引以提高查询性能
+	if err := db.Exec("CREATE INDEX idx_teams_tenant_id ON teams (tenant_id)").Error; err != nil {
+		log.Printf("[Migration] Failed to create idx_teams_tenant_id: %v", err)
+	}
+
+	log.Println("[Migration] Successfully migrated teams table with tenant_id column")
 }

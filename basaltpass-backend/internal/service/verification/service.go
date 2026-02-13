@@ -47,6 +47,7 @@ type StartSignupRequest struct {
 	Phone    string `json:"phone"`
 	Username string `json:"username"`
 	Password string `json:"password"`
+	TenantID uint   `json:"tenant_id"` // 租户ID，0表示平台用户
 
 	// 风控信息
 	IP        string `json:"-"` // 通过中间件设置
@@ -135,6 +136,7 @@ func (s *Service) StartSignup(req StartSignupRequest) (*StartSignupResponse, err
 		DeviceIDHash:  s.hashWithSalt(req.DeviceID, signupID),
 		UserAgentHash: s.hashWithSalt(req.UserAgent, signupID),
 		RiskLevel:     riskLevel,
+		TenantID:      req.TenantID, // 保存租户ID
 	}
 
 	if err := common.DB().Create(pendingSignup).Error; err != nil {
@@ -291,11 +293,11 @@ func (s *Service) CompleteSignup(req CompleteSignupRequest) (*model.User, error)
 		}
 	}()
 
-	// 检查邮箱是否已被其他用户注册
+	// 检查邮箱和租户组合是否已被注册（同一邮箱可以在不同租户注册）
 	var existingUser model.User
-	if err := tx.Where("email = ?", pendingSignup.Email).First(&existingUser).Error; err == nil {
+	if err := tx.Where("email = ? AND tenant_id = ?", pendingSignup.Email, pendingSignup.TenantID).First(&existingUser).Error; err == nil {
 		tx.Rollback()
-		return nil, errors.New("email already registered")
+		return nil, errors.New("email already registered in this tenant")
 	}
 
 	// 检查是否是第一个用户
@@ -312,7 +314,8 @@ func (s *Service) CompleteSignup(req CompleteSignupRequest) (*model.User, error)
 		Phone:         pendingSignup.Phone,
 		PasswordHash:  pendingSignup.PasswordHash,
 		Nickname:      pendingSignup.Username,
-		EmailVerified: true, // 已通过邮箱验证
+		TenantID:      pendingSignup.TenantID, // 设置租户ID
+		EmailVerified: true,                   // 已通过邮箱验证
 		PhoneVerified: pendingSignup.Phone != "" && pendingSignup.Status == model.SignupStatusCompleted,
 	}
 

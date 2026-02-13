@@ -64,8 +64,14 @@ const (
 )
 
 // GenerateTokenPair creates JWT access and refresh tokens for a user id.
+// 自动从用户记录中获取tenant_id
 func GenerateTokenPair(userID uint) (TokenPair, error) {
-	return GenerateTokenPairWithTenantAndScope(userID, 0, ConsoleScopeUser)
+	// 从数据库获取用户的tenant_id
+	var user model.User
+	if err := common.DB().Select("id", "tenant_id").First(&user, userID).Error; err != nil {
+		return TokenPair{}, err
+	}
+	return GenerateTokenPairWithTenantAndScope(userID, user.TenantID, ConsoleScopeUser)
 }
 
 // GenerateTokenPairWithTenant creates JWT tokens with tenant context
@@ -83,14 +89,10 @@ func GenerateTokenPairWithTenantAndScope(userID uint, tenantID uint, scope strin
 	if scope == "" {
 		scope = ConsoleScopeUser
 	}
-	// 如果没有指定租户ID，尝试获取用户的默认租户（admin scope 不绑定默认租户）
-	if tenantID == 0 && scope != ConsoleScopeAdmin {
-		tenantID = getUserDefaultTenant(userID)
-	}
 
 	accessClaims := jwt.MapClaims{
 		"sub": userID,
-		"tid": tenantID, // 租户ID
+		"tid": tenantID, // 租户ID - 现在直接使用user.tenant_id
 		"scp": scope,    // console scope
 		"exp": time.Now().Add(15 * time.Minute).Unix(),
 	}

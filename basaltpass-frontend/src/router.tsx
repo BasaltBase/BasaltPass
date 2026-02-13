@@ -3,7 +3,10 @@ import ProtectedRoute from '@routes/ProtectedRoute'
 import PublicRoute from '@routes/PublicRoute'
 import AdminRoute from '@features/admin/components/AdminRoute'
 import TenantRoute from '@features/tenant/components/TenantRoute'
+import MarketFeatureRoute from '@/shared/components/MarketFeatureRoute'
 import Login from '@pages/auth/Login'
+import TenantLogin from '@features/auth/TenantLogin'
+import TenantRegister from '@features/auth/TenantRegister'
 import Register from '@pages/auth/Register'
 import Profile from '@pages/user/profile/Index'
 import OauthSuccess from '@pages/auth/OauthSuccess'
@@ -103,6 +106,13 @@ export default function AppRouter() {
           <Login />
         </PublicRoute>
       } />
+      
+      {/* 租户登录页面 */}
+      <Route path="/auth/tenant/:tenantCode/login" element={<TenantLogin />} />
+      
+      {/* 租户注册页面 */}
+      <Route path="/auth/tenant/:tenantCode/register" element={<TenantRegister />} />
+      
       <Route path="/register" element={
         <PublicRoute>
           <Register />
@@ -158,20 +168,26 @@ export default function AppRouter() {
         </ProtectedRoute>
       } />
       
-      {/* 订阅系统 - 需要认证保护 */}
+      {/* 订阅系统 - 需要认证保护和市场功能启用 */}
       <Route path="/products" element={
         <ProtectedRoute>
-          <ProductsPage />
+          <MarketFeatureRoute>
+            <ProductsPage />
+          </MarketFeatureRoute>
         </ProtectedRoute>
       } />
       <Route path="/subscriptions" element={
         <ProtectedRoute>
-          <SubscriptionIndex />
+          <MarketFeatureRoute>
+            <SubscriptionIndex />
+          </MarketFeatureRoute>
         </ProtectedRoute>
       } />
       <Route path="/subscriptions/checkout" element={
         <ProtectedRoute>
-          <SubscriptionCheckout />
+          <MarketFeatureRoute>
+            <SubscriptionCheckout />
+          </MarketFeatureRoute>
         </ProtectedRoute>
       } />
       
@@ -336,27 +352,37 @@ export default function AppRouter() {
       } />
       <Route path="/admin/subscriptions" element={
         <AdminRoute>
-          <AdminSubscriptions />
+          <MarketFeatureRoute>
+            <AdminSubscriptions />
+          </MarketFeatureRoute>
         </AdminRoute>
       } />
       <Route path="/admin/products" element={
         <AdminRoute>
-          <AdminProducts />
+          <MarketFeatureRoute>
+            <AdminProducts />
+          </MarketFeatureRoute>
         </AdminRoute>
       } />
       <Route path="/admin/plans" element={
         <AdminRoute>
-          <AdminPlans />
+          <MarketFeatureRoute>
+            <AdminPlans />
+          </MarketFeatureRoute>
         </AdminRoute>
       } />
       <Route path="/admin/prices" element={
         <AdminRoute>
-          <AdminPrices />
+          <MarketFeatureRoute>
+            <AdminPrices />
+          </MarketFeatureRoute>
         </AdminRoute>
       } />
       <Route path="/admin/coupons" element={
         <AdminRoute>
-          <AdminCoupons />
+          <MarketFeatureRoute>
+            <AdminCoupons />
+          </MarketFeatureRoute>
         </AdminRoute>
       } />
       <Route path="/admin/notifications" element={
@@ -487,45 +513,61 @@ export default function AppRouter() {
         </TenantRoute>
       } />
       
-      {/* 租户订阅管理页面 */}
+      {/* 租户订阅管理页面 - 需要市场功能启用 */}
       <Route path="/tenant/subscriptions" element={
         <TenantRoute>
-          <TenantSubscriptionDashboard />
+          <MarketFeatureRoute>
+            <TenantSubscriptionDashboard />
+          </MarketFeatureRoute>
         </TenantRoute>
       } />
       <Route path="/tenant/subscriptions/products" element={
         <TenantRoute>
-          <TenantProducts />
+          <MarketFeatureRoute>
+            <TenantProducts />
+          </MarketFeatureRoute>
         </TenantRoute>
       } />
       <Route path="/tenant/subscriptions/plans" element={
         <TenantRoute>
-          <TenantPlans />
+          <MarketFeatureRoute>
+            <TenantPlans />
+          </MarketFeatureRoute>
         </TenantRoute>
       } />
       <Route path="/tenant/subscriptions/prices" element={
         <TenantRoute>
-          <TenantPrices />
+          <MarketFeatureRoute>
+            <TenantPrices />
+          </MarketFeatureRoute>
         </TenantRoute>
       } />
       <Route path="/tenant/subscriptions/subscriptions" element={
         <TenantRoute>
-          <TenantSubscriptions />
+          <MarketFeatureRoute>
+            <TenantSubscriptions />
+          </MarketFeatureRoute>
         </TenantRoute>
       } />
       <Route path="/tenant/subscriptions/detail/:id" element={
         <TenantRoute>
-          <TenantSubscriptionDetail />
+          <MarketFeatureRoute>
+            <TenantSubscriptionDetail />
+          </MarketFeatureRoute>
         </TenantRoute>
       } />
       <Route path="/tenant/subscriptions/coupons" element={
         <TenantRoute>
-          <TenantCoupons />
+          <MarketFeatureRoute>
+            <TenantCoupons />
+          </MarketFeatureRoute>
         </TenantRoute>
       } />
       <Route path="/tenant/subscriptions/invoices" element={
         <TenantRoute>
-          <TenantInvoices />
+          <MarketFeatureRoute>
+            <TenantInvoices />
+          </MarketFeatureRoute>
         </TenantRoute>
       } />
       <Route path="/tenant/subscription-status" element={

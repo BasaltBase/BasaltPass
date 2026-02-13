@@ -4,7 +4,9 @@ import (
 	"basaltpass-backend/internal/handler/public/currency"
 	"basaltpass-backend/internal/handler/public/payment"
 	publicSecurity "basaltpass-backend/internal/handler/public/security"
+	publicSettings "basaltpass-backend/internal/handler/public/settings"
 	"basaltpass-backend/internal/handler/public/signup"
+	publicTenant "basaltpass-backend/internal/handler/public/tenant"
 	"basaltpass-backend/internal/middleware/ratelimit"
 
 	"github.com/gofiber/fiber/v2"
@@ -56,4 +58,10 @@ func RegisterPublicRoutes(v1 fiber.Router) {
 	// 密码重置相关
 	securityGroup.Post("/password/reset", publicSecurityHandler.StartPasswordResetHandler)           // 发起密码重置
 	securityGroup.Post("/password/reset/confirm", publicSecurityHandler.ConfirmPasswordResetHandler) // 确认密码重置
+
+	// 租户公开信息路由（用于租户登录页面）
+	v1.Get("/tenants/by-code/:code", publicTenant.GetTenantByCodeHandler)
+
+	// 公开配置路由（用于前端获取系统配置）
+	v1.Get("/config", publicSettings.GetPublicConfigHandler)
 }

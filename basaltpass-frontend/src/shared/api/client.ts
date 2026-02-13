@@ -1,9 +1,26 @@
 import axios from 'axios'
 import { getAccessToken, clearAccessToken } from '../utils/auth'
 
+const normalizeApiBase = (rawBase?: string) => {
+  const fallback = 'http://127.0.0.1:8080'
+  const value = String(rawBase || fallback).trim()
+
+  try {
+    const url = new URL(value)
+    if (url.hostname === 'localhost') {
+      url.hostname = '127.0.0.1'
+      return url.toString().replace(/\/$/, '')
+    }
+    return value.replace(/\/$/, '')
+  } catch {
+    return fallback
+  }
+}
+
 const client = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE || 'http://localhost:8080',
+  baseURL: normalizeApiBase((import.meta as any).env?.VITE_API_BASE),
   withCredentials: true,
+  timeout: Number((import.meta as any).env?.VITE_API_TIMEOUT_MS || 10000),
 })
 
 // 是否正在刷新token的标志

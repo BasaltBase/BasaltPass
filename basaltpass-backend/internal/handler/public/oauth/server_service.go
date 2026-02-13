@@ -496,3 +496,40 @@ func (s *OAuthServerService) RevokeToken(token string) error {
 
 	return nil
 }
+
+// ValidateUserTenant 验证用户是否属于应用所在的租户
+func (s *OAuthServerService) ValidateUserTenant(userID uint, client *model.OAuthClient) error {
+	// 获取用户信息
+	var user model.User
+	if err := s.db.Select("id", "tenant_id", "is_system_admin").First(&user, userID).Error; err != nil {
+		return errors.New("user_not_found")
+	}
+
+	// 系统管理员可以访问所有租户的应用
+	if user.IsSystemAdmin != nil && *user.IsSystemAdmin {
+		return nil
+	}
+
+	// 获取应用所属租户ID
+	var tenantID uint
+	if client.AppID > 0 {
+		// 如果client已经预加载了App，直接使用
+		if client.App.ID > 0 {
+			tenantID = client.App.TenantID
+		} else {
+			// 否则需要查询
+			var app model.App
+			if err := s.db.Select("tenant_id").Where("id = ?", client.AppID).First(&app).Error; err != nil {
+				return errors.New("app_not_found")
+			}
+			tenantID = app.TenantID
+		}
+	}
+
+	// 验证用户的tenant_id是否与应用的tenant_id匹配
+	if user.TenantID != tenantID {
+		return errors.New("tenant_mismatch")
+	}
+
+	return nil
+}
