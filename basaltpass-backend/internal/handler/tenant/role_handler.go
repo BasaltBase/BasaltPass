@@ -305,15 +305,17 @@ func AssignUserRoles(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "未找到租户信息"})
 	}
 
-	// 检查用户是否属于当前租户（通过TenantAdmin表）
-	var tenantAdmin model.TenantAdmin
-	err := common.DB().Where("user_id = ? AND tenant_id = ?", req.UserID, tenantID).First(&tenantAdmin).Error
+	// 检查用户是否属于当前租户（优先 users.tenant_id）
+	_, _, belongs, err := loadTenantMembership(req.UserID, tenantID)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "用户不存在或不属于当前租户"})
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "用户不存在"})
 		} else {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "查询用户失败"})
 		}
+	}
+	if !belongs {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "用户不存在或不属于当前租户"})
 	}
 
 	// 检查所有角色是否都属于当前租户
@@ -370,21 +372,25 @@ func GetUserRoles(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "未找到租户信息"})
 	}
 
+	targetUserID := uint(userID)
+
 	// 检查用户是否属于当前租户并获取用户信息
-	var tenantAdmin model.TenantAdmin
-	err = common.DB().Preload("User").Where("user_id = ? AND tenant_id = ?", userID, tenantID).First(&tenantAdmin).Error
+	user, _, belongs, err := loadTenantMembership(targetUserID, tenantID)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "用户不存在或不属于当前租户"})
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "用户不存在"})
 		} else {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "查询用户失败"})
 		}
+	}
+	if !belongs {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "用户不存在或不属于当前租户"})
 	}
 
 	// 获取用户的角色
 	var roles []model.TenantRbacRole
 	err = common.DB().Joins("JOIN tenant_user_roles ON tenant_roles.id = tenant_user_roles.role_id").
-		Where("tenant_user_roles.user_id = ? AND tenant_user_roles.tenant_id = ?", userID, tenantID).
+		Where("tenant_user_roles.user_id = ? AND tenant_user_roles.tenant_id = ?", targetUserID, tenantID).
 		Find(&roles).Error
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "获取用户角色失败"})
@@ -408,9 +414,9 @@ func GetUserRoles(c *fiber.Ctx) error {
 	}
 
 	userRoleResponse := UserRoleResponse{
-		UserID:   tenantAdmin.User.ID,
-		Email:    tenantAdmin.User.Email,
-		Nickname: tenantAdmin.User.Nickname,
+		UserID:   user.ID,
+		Email:    user.Email,
+		Nickname: user.Nickname,
 		Roles:    roleResponses,
 	}
 
@@ -431,11 +437,11 @@ func GetTenantUsersForRole(c *fiber.Ctx) error {
 
 	offset := (page - 1) * pageSize
 
-	// 构建查询 - 通过TenantAdmin表获取租户用户
-	query := common.DB().Table("tenant_admins").
-		Select("users.id, users.email, users.nickname, tenant_admins.role, tenant_admins.created_at").
-		Joins("JOIN users ON users.id = tenant_admins.user_id").
-		Where("tenant_admins.tenant_id = ?", tenantID)
+	// 构建查询 - 以 users.tenant_id 为主，tenant_admins 仅补充角色
+	query := common.DB().Table("users").
+		Select("DISTINCT users.id, users.email, users.nickname, COALESCE(tenant_admins.role, 'member') as role, users.created_at").
+		Joins("LEFT JOIN tenant_admins ON tenant_admins.user_id = users.id AND tenant_admins.tenant_id = ?", tenantID).
+		Where("users.tenant_id = ? OR tenant_admins.tenant_id = ?", tenantID, tenantID)
 
 	if search != "" {
 		query = query.Where("(users.email LIKE ? OR users.nickname LIKE ?)",
@@ -444,20 +450,20 @@ func GetTenantUsersForRole(c *fiber.Ctx) error {
 
 	// 获取总数
 	var total int64
-	countQuery := common.DB().Table("tenant_admins").
-		Joins("JOIN users ON users.id = tenant_admins.user_id").
-		Where("tenant_admins.tenant_id = ?", tenantID)
+	countQuery := common.DB().Table("users").
+		Joins("LEFT JOIN tenant_admins ON tenant_admins.user_id = users.id AND tenant_admins.tenant_id = ?", tenantID).
+		Where("users.tenant_id = ? OR tenant_admins.tenant_id = ?", tenantID, tenantID)
 	if search != "" {
 		countQuery = countQuery.Where("(users.email LIKE ? OR users.nickname LIKE ?)",
 			"%"+search+"%", "%"+search+"%")
 	}
-	countQuery.Count(&total)
+	countQuery.Distinct("users.id").Count(&total)
 
 	// 获取用户列表
 	var users []TenantUserInfo
 	err := query.Offset(offset).
 		Limit(pageSize).
-		Order("tenant_admins.created_at DESC").
+		Order("users.created_at DESC").
 		Scan(&users).Error
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "获取用户列表失败"})

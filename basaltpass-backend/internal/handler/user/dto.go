@@ -11,6 +11,7 @@ type ProfileResponse struct {
 	HasTenant    bool   `json:"has_tenant"`
 	TenantID     *uint  `json:"tenant_id,omitempty"`
 	TenantRole   string `json:"tenant_role,omitempty"`
+	Banned       bool   `json:"banned"`
 }
 
 // UpdateProfileRequest defines fields that can be updated.

@@ -8,9 +8,17 @@ type TenantPublicInfo = {
 
 const tenantDataCache = new Map<string, TenantPublicInfo>()
 const tenantInFlightCache = new Map<string, Promise<TenantPublicInfo>>()
+const tenantRequestTimeoutMs = Number((import.meta as any).env?.VITE_PUBLIC_TENANT_TIMEOUT_MS || 15000)
+
+const inferDefaultApiBase = () => {
+  if (typeof window !== 'undefined' && window.location?.hostname) {
+    return `${window.location.protocol}//${window.location.hostname}:8080`
+  }
+  return 'http://localhost:8080'
+}
 
 const buildBaseCandidates = () => {
-  const base = String((import.meta as any).env?.VITE_API_BASE || 'http://127.0.0.1:8080').replace(/\/$/, '')
+  const base = String((import.meta as any).env?.VITE_API_BASE || inferDefaultApiBase()).replace(/\/$/, '')
   const candidates = [base]
   if (base.includes('localhost')) {
     candidates.push(base.replace('localhost', '127.0.0.1'))
@@ -43,7 +51,7 @@ export async function fetchPublicTenantByCode(tenantCode: string): Promise<Tenan
         const url = `${candidate}/api/v1/tenants/by-code/${normalizedCode}`
         const res = await axios.get(url, {
           withCredentials: false,
-          timeout: 5000,
+          timeout: tenantRequestTimeoutMs,
         })
         const data = res.data as TenantPublicInfo
         tenantDataCache.set(normalizedCode, data)

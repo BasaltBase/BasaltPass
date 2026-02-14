@@ -3,8 +3,11 @@ package auth
 import (
 	"basaltpass-backend/internal/handler/user/security"
 	"basaltpass-backend/internal/service/aduit"
+	settingssvc "basaltpass-backend/internal/service/settings"
 	"basaltpass-backend/internal/utils"
+	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"basaltpass-backend/internal/common"
@@ -17,6 +20,25 @@ import (
 
 // Service encapsulates auth related operations.
 type Service struct{}
+
+var (
+	ErrMissingCredentials = errors.New("identifier and password required")
+	ErrInvalidCredentials = errors.New("invalid email or password")
+	ErrPlatformAdminOnly  = errors.New("only administrators can login to platform")
+	ErrServiceUnavailable = errors.New("authentication service temporarily unavailable")
+)
+
+const loginQueryTimeout = 8 * time.Second
+
+func normalizeLoginQueryError(err error) error {
+	if err == nil {
+		return nil
+	}
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return ErrInvalidCredentials
+	}
+	return fmt.Errorf("%w: %v", ErrServiceUnavailable, err)
+}
 
 // Register creates a new user with hashed password.
 func (s Service) Register(req RegisterRequest) (*model.User, error) {
@@ -125,11 +147,14 @@ type LoginResult struct {
 // Login 校验用户名密码，判断是否需要二次验证
 func (s Service) LoginV2(req LoginRequest) (LoginResult, error) {
 	if req.EmailOrPhone == "" || req.Password == "" {
-		return LoginResult{}, errors.New("identifier and password required")
+		return LoginResult{}, ErrMissingCredentials
 	}
 
 	var user model.User
-	db := common.DB()
+	ctx, cancel := context.WithTimeout(context.Background(), loginQueryTimeout)
+	defer cancel()
+
+	db := common.DB().WithContext(ctx)
 
 	// 构建查询条件：email/phone + tenant_id
 	// 特殊处理：
@@ -141,7 +166,7 @@ func (s Service) LoginV2(req LoginRequest) (LoginResult, error) {
 		// 平台登录：只允许admin(is_system_admin=true)或tenant_admin(存在于tenant_admins表)
 		// 先查询用户
 		if err := query.First(&user).Error; err != nil {
-			return LoginResult{}, errors.New("invalid email or password")
+			return LoginResult{}, normalizeLoginQueryError(err)
 		}
 
 		// 检查是否是系统管理员
@@ -150,23 +175,25 @@ func (s Service) LoginV2(req LoginRequest) (LoginResult, error) {
 		// 检查是否是租户管理员
 		var isTenantAdmin bool
 		var tenantAdminCount int64
-		db.Model(&model.TenantAdmin{}).Where("user_id = ?", user.ID).Count(&tenantAdminCount)
+		if err := db.Model(&model.TenantAdmin{}).Where("user_id = ?", user.ID).Count(&tenantAdminCount).Error; err != nil {
+			return LoginResult{}, fmt.Errorf("%w: %v", ErrServiceUnavailable, err)
+		}
 		isTenantAdmin = tenantAdminCount > 0
 
 		// 如果既不是admin也不是tenant_admin，拒绝平台登录
 		if !isAdmin && !isTenantAdmin {
-			return LoginResult{}, errors.New("only administrators can login to platform")
+			return LoginResult{}, ErrPlatformAdminOnly
 		}
 	} else {
 		// 租户登录：查询指定租户下的用户
 		query = query.Where("tenant_id = ?", req.TenantID)
 		if err := query.First(&user).Error; err != nil {
-			return LoginResult{}, errors.New("invalid email or password")
+			return LoginResult{}, normalizeLoginQueryError(err)
 		}
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
-		return LoginResult{}, errors.New("invalid email or password")
+		return LoginResult{}, ErrInvalidCredentials
 	}
 
 	// 收集用户可用的所有2FA方式
@@ -188,8 +215,9 @@ func (s Service) LoginV2(req LoginRequest) (LoginResult, error) {
 				defaultMethod = "passkey"
 			}
 		}
-	} else {
-		// 未开启强二次验证时，作为兜底：未验证邮箱（或未来支持的手机号）需要做验证
+	} else if settingssvc.GetBool("auth.require_email_verification", false) {
+		// 仅在显式要求邮箱验证时，才将 email 作为登录前置校验。
+		// 默认关闭，避免未实现完整验证码流程时导致登录被卡住。
 		if !user.EmailVerified {
 			availableMethods = append(availableMethods, "email")
 			if defaultMethod == "" {
@@ -218,7 +246,7 @@ func (s Service) LoginV2(req LoginRequest) (LoginResult, error) {
 	// 不需要二次验证，直接登录
 	tokens, err := GenerateTokenPair(user.ID)
 	if err != nil {
-		return LoginResult{}, err
+		return LoginResult{}, fmt.Errorf("%w: %v", ErrServiceUnavailable, err)
 	}
 	return LoginResult{Need2FA: false, TokenPair: tokens, UserID: user.ID}, nil
 }

@@ -8,12 +8,17 @@ import {
   ServerIcon,
   ShieldCheckIcon,
   UsersIcon,
+  LinkIcon,
+  ClipboardDocumentIcon,
+  CheckIcon,
+  InformationCircleIcon
 } from '@heroicons/react/24/outline'
 import TenantLayout from '@features/tenant/components/TenantLayout'
 import { tenantAppApi } from '@api/tenant/tenantApp'
 import { tenantNotificationApi } from '@api/tenant/notification'
 import { tenantUserManagementApi } from '@api/tenant/tenantUserManagement'
 import { tenantSubscriptionAPI } from '@api/tenant/subscription'
+import { tenantApi } from '@api/tenant/tenant'
 import { useConfig } from '@contexts/ConfigContext'
 
 interface TenantStats {
@@ -89,15 +94,18 @@ export default function TenantDashboard() {
   const [stats, setStats] = useState<TenantStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [tenantCode, setTenantCode] = useState<string>('')
+  const [copiedField, setCopiedField] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [appsRes, userStatsRes, notifStatsRes, subStatsRes] = await Promise.all([
+        const [appsRes, userStatsRes, notifStatsRes, subStatsRes, tenantInfoRes] = await Promise.all([
           tenantAppApi.listTenantApps(),
           tenantUserManagementApi.getTenantUserStats(),
           tenantNotificationApi.getNotificationStats(),
           tenantSubscriptionAPI.adminGetSubscriptionStats(),
+          tenantApi.getTenantInfo(),
         ])
 
         const apps = (appsRes as any)?.data?.apps || []
@@ -125,6 +133,11 @@ export default function TenantDashboard() {
           subscriptionsTotal,
           subscriptionsActive,
         })
+
+        // 获取租户code
+        if (tenantInfoRes?.data?.code) {
+          setTenantCode(tenantInfoRes.data.code)
+        }
       } catch (err) {
         console.error('获取数据失败:', err);
         setError('加载数据失败');
@@ -135,6 +148,26 @@ export default function TenantDashboard() {
 
     fetchData();
   }, []);
+
+  const copyToClipboard = async (text: string, field: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopiedField(field)
+      setTimeout(() => setCopiedField(null), 2000)
+    } catch (err) {
+      console.error('复制失败:', err)
+    }
+  }
+
+  const getLoginUrl = () => {
+    const baseUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || 'http://localhost:5173'
+    return `${baseUrl}/auth/tenant/${tenantCode}/login`
+  }
+
+  const getRegisterUrl = () => {
+    const baseUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || 'http://localhost:5173'
+    return `${baseUrl}/auth/tenant/${tenantCode}/register`
+  }
 
   const cards = useMemo(() => {
     if (!stats) return []
@@ -231,6 +264,84 @@ export default function TenantDashboard() {
             </Link>
           ))}
         </div>
+
+        {/* 用户访问链接 */}
+        {tenantCode && (
+          <div className="bg-white rounded-lg shadow">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center">
+                <LinkIcon className="h-5 w-5 text-blue-500 mr-2" />
+                <h2 className="text-base font-medium text-gray-900">用户访问链接</h2>
+              </div>
+              <p className="mt-1 text-sm text-gray-500">分享这些链接给您的用户进行登录或注册</p>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* 登录链接 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    登录页面
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={getLoginUrl()}
+                      className="flex-1 text-sm px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600 font-mono"
+                    />
+                    <button
+                      onClick={() => copyToClipboard(getLoginUrl(), 'login')}
+                      className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      title="复制链接"
+                    >
+                      {copiedField === 'login' ? (
+                        <CheckIcon className="h-5 w-5 text-green-500" />
+                      ) : (
+                        <ClipboardDocumentIcon className="h-5 w-5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* 注册链接 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    注册页面
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={getRegisterUrl()}
+                      className="flex-1 text-sm px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600 font-mono"
+                    />
+                    <button
+                      onClick={() => copyToClipboard(getRegisterUrl(), 'register')}
+                      className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      title="复制链接"
+                    >
+                      {copiedField === 'register' ? (
+                        <CheckIcon className="h-5 w-5 text-green-500" />
+                      ) : (
+                        <ClipboardDocumentIcon className="h-5 w-5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* 提示信息 */}
+              <div className="mt-4 p-3 bg-blue-50 rounded-md">
+                <div className="flex">
+                  <InformationCircleIcon className="h-5 w-5 text-blue-400 mr-2 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-blue-700">
+                    <p>将这些链接分享给您的用户，他们可以通过这些链接直接访问您租户的登录和注册页面。</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
             <div className="bg-white rounded-lg shadow">
               <div className="px-6 py-4 border-b border-gray-200">

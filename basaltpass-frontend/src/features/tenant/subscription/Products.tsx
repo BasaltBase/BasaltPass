@@ -140,26 +140,6 @@ export default function TenantProducts() {
   return (
     <TenantLayout title="产品管理">
       <div>
-        {/* 面包屑 */}
-        <nav className="flex mb-6" aria-label="Breadcrumb">
-          <ol className="inline-flex items-center gap-1 md:gap-3">
-            <li className="inline-flex items-center">
-              <Link
-                to={ROUTES.tenant.subscriptions}
-                className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600"
-              >
-                订阅系统
-              </Link>
-            </li>
-            <li>
-              <div className="flex items-center">
-                <ChevronRightIcon className="flex-shrink-0 h-5 w-5 text-gray-400" />
-                <span className="ml-4 text-sm font-medium text-gray-500">产品管理</span>
-              </div>
-            </li>
-          </ol>
-        </nav>
-
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-semibold text-gray-900">产品管理</h1>
           <PButton onClick={() => setShowModal(true)}>

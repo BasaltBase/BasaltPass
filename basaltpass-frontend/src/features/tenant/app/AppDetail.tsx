@@ -160,15 +160,6 @@ export default function AppDetail() {
           </div>
         )}
 
-        {/* 面包屑导航 */}
-        <button
-          onClick={() => navigate(ROUTES.tenant.apps)}
-          className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-700"
-        >
-          <ArrowLeftIcon className="h-4 w-4 mr-2" />
-          返回应用列表
-        </button>
-
         {/* 页面头部 */}
         <div className="flex justify-between items-start">
           <div className="flex items-center">

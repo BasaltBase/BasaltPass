@@ -171,22 +171,7 @@ export default function TenantPrices() {
           {/* 页面头部 */}
           <div className="lg:flex lg:items-center lg:justify-between">
             <div className="flex-1 min-w-0">
-              <nav className="flex" aria-label="Breadcrumb">
-                <ol className="flex items-center space-x-2">
-                  <li>
-                    <Link to={ROUTES.tenant.subscriptions} className="text-gray-400 hover:text-gray-500">
-                      订阅管理
-                    </Link>
-                  </li>
-                  <li>
-                    <ChevronRightIcon className="h-5 w-5 text-gray-400" />
-                  </li>
-                  <li>
-                    <span className="text-gray-900">定价管理</span>
-                  </li>
-                </ol>
-              </nav>
-              <h2 className="mt-2 text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+              <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
                 定价管理
               </h2>
             </div>

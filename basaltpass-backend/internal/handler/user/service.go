@@ -24,10 +24,16 @@ func (s Service) GetProfile(userID uint) (ProfileResponse, error) {
 		tenantID   *uint
 		tenantRole string
 	)
+
+	// 控制台访问策略：仅 tenant_admins 中存在记录的用户才视为可访问租户控制台。
 	var ta model.TenantAdmin
-	if err := common.DB().Where("user_id = ?", userID).Order("created_at ASC").First(&ta).Error; err == nil {
+	if err := common.DB().
+		Where("user_id = ?", userID).
+		Order("created_at ASC").
+		First(&ta).Error; err == nil {
 		hasTenant = true
-		tenantID = &ta.TenantID
+		tid := ta.TenantID
+		tenantID = &tid
 		tenantRole = string(ta.Role)
 	}
 
@@ -41,6 +47,7 @@ func (s Service) GetProfile(userID uint) (ProfileResponse, error) {
 		HasTenant:    hasTenant,
 		TenantID:     tenantID,
 		TenantRole:   tenantRole,
+		Banned:       u.Banned,
 	}, nil
 }
 

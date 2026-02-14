@@ -149,15 +149,6 @@ export default function CreateApp() {
   return (
     <TenantLayout title="创建应用">
       <div className="space-y-6">
-        {/* 面包屑导航 */}
-        <button
-          onClick={() => navigate(ROUTES.tenant.apps)}
-          className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors duration-200"
-        >
-          <ArrowLeftIcon className="h-4 w-4 mr-2" />
-          返回应用列表
-        </button>
-
         {/* 页面头部 */}
         <div className="bg-white shadow rounded-lg">
           <div className="px-4 py-5 sm:p-6">

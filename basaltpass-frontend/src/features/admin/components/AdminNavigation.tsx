@@ -58,11 +58,10 @@ const navigationItems: NavigationItem[] = [
     ]
   },
   {
-    name: '平台管理',
-    icon: Cog6ToothIcon,
+    name: '租户管理',
+    icon: BuildingOfficeIcon,
     children: [
-      { name: '租户管理', href: ROUTES.admin.tenants, icon: BuildingOfficeIcon },
-      { name: 'OAuth客户端', href: ROUTES.admin.oauthClients, icon: KeyIcon },
+      { name: '租户列表', href: ROUTES.admin.tenants, icon: BuildingOfficeIcon },
     ]
   },
   {

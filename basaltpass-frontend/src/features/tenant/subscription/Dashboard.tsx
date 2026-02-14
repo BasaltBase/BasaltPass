@@ -118,26 +118,6 @@ export default function TenantSubscriptionDashboard() {
   return (
     <TenantLayout title="订阅系统">
       <div className="space-y-6">
-        {/* 面包屑 */}
-        <nav className="flex" aria-label="Breadcrumb">
-          <ol className="inline-flex items-center space-x-1 md:space-x-3">
-            <li className="inline-flex items-center">
-              <Link
-                to={ROUTES.tenant.dashboard}
-                className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600"
-              >
-                租户控制台
-              </Link>
-            </li>
-            <li>
-              <div className="flex items-center">
-                <ChevronRightIcon className="flex-shrink-0 h-5 w-5 text-gray-400" />
-                <span className="ml-4 text-sm font-medium text-gray-500">订阅系统</span>
-              </div>
-            </li>
-          </ol>
-        </nav>
-
         {/* 统计卡片 */}
         {stats && (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">

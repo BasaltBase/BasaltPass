@@ -53,6 +53,10 @@ func userDefaultTenantID(userID uint) (uint, error) {
 }
 
 func userHasTenant(userID uint, tenantID uint) (bool, error) {
+	if tenantID == 0 {
+		return false, nil
+	}
+
 	var cnt int64
 	err := common.DB().Model(&model.TenantAdmin{}).
 		Where("user_id = ? AND tenant_id = ?", userID, tenantID).

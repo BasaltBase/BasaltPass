@@ -251,18 +251,24 @@ func (s *TenantService) ListTenants(page, pageSize int, search string) ([]*Tenan
 
 // GetUserTenants 获取用户的租户列表
 func (s *TenantService) GetUserTenants(userID uint) ([]*TenantResponse, error) {
+	respMap := make(map[uint]*TenantResponse)
+
 	var tenantAdmins []model.TenantAdmin
 	if err := s.db.Preload("Tenant").Where("user_id = ?", userID).Find(&tenantAdmins).Error; err != nil {
 		return nil, err
 	}
 
-	responses := make([]*TenantResponse, len(tenantAdmins))
-	for i, ta := range tenantAdmins {
+	for _, ta := range tenantAdmins {
 		resp := s.tenantToResponse(&ta.Tenant, nil)
 		// 添加用户在租户中的角色信息
 		resp.Metadata = make(map[string]interface{})
 		resp.Metadata["user_role"] = ta.Role
-		responses[i] = resp
+		respMap[ta.TenantID] = resp
+	}
+
+	responses := make([]*TenantResponse, 0, len(respMap))
+	for _, resp := range respMap {
+		responses = append(responses, resp)
 	}
 
 	return responses, nil

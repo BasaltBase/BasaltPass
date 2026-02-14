@@ -207,15 +207,6 @@ export default function OAuthClientConfig() {
   return (
     <AdminLayout title="OAuth客户端配置">
       <div className="space-y-6">
-        {/* 面包屑导航 */}
-        <button
-          onClick={() => navigate(ROUTES.admin.apps)}
-          className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-700"
-        >
-          <ArrowLeftIcon className="h-4 w-4 mr-2" />
-          返回应用列表
-        </button>
-        
         {/* 页面头部 */}
         <div className="flex items-center">
           <KeyIcon className="h-8 w-8 mr-3 text-indigo-600" />

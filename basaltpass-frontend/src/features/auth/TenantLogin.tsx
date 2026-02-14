@@ -54,6 +54,7 @@ function TenantLogin() {
   const [rememberMe, setRememberMe] = useState(false)
 
   const redirectParam = searchParams.get('redirect') || ''
+  const authRequestTimeout = Number((import.meta as any).env?.VITE_AUTH_TIMEOUT_MS || 12000)
 
   // 加载租户信息
   useEffect(() => {
@@ -85,7 +86,7 @@ function TenantLogin() {
   const redirectAfterLogin = () => {
     if (!redirectParam) return false
 
-    const apiBase = (import.meta as any).env?.VITE_API_BASE || 'http://localhost:8080'
+    const apiBase = client.defaults.baseURL || (import.meta as any).env?.VITE_API_BASE || 'http://localhost:8080'
     const base = String(apiBase).replace(/\/$/, '')
     const target = redirectParam.startsWith('http://') || redirectParam.startsWith('https://')
       ? redirectParam
@@ -112,7 +113,7 @@ function TenantLogin() {
         identifier,
         password,
         tenant_id: tenantInfo.id, // 带上租户ID
-      })
+      }, { timeout: authRequestTimeout })
       if (res.data.need_2fa) {
         setUserId(res.data.user_id)
         setTwoFAType(res.data['2fa_type'])
@@ -138,6 +139,8 @@ function TenantLogin() {
         setAvailable2FAMethods([])
         setTwoFACode('')
         setEmailCode('')
+      } else if (err?.code === 'ECONNABORTED' || msg.includes('timeout')) {
+        setError('登录请求超时：请确认 BasaltPass 后端已运行在 http://localhost:8080')
       } else {
         setError(raw || '登录失败，请检查您的凭据')
       }
@@ -203,7 +206,7 @@ function TenantLogin() {
         }
       }
 
-      const res = await client.post('/api/v1/auth/verify-2fa', payload)
+      const res = await client.post('/api/v1/auth/verify-2fa', payload, { timeout: authRequestTimeout })
       if (res.data.access_token) {
         await login(res.data.access_token)
         if (!redirectAfterLogin()) {
@@ -214,7 +217,12 @@ function TenantLogin() {
       }
     } catch (err: any) {
       const raw = err?.response?.data?.error || err?.response?.data?.message || err?.message || ''
-      setError(raw || '验证失败')
+      const msg = typeof raw === 'string' ? raw.toLowerCase() : ''
+      if (err?.code === 'ECONNABORTED' || msg.includes('timeout')) {
+        setError('二次验证请求超时：请确认 BasaltPass 后端可访问')
+      } else {
+        setError(raw || '验证失败')
+      }
     } finally {
       setIsLoading(false)
     }

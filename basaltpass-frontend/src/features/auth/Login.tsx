@@ -29,10 +29,19 @@ function Login() {
   const [rememberMe, setRememberMe] = useState(false)
 
   const redirectParam = searchParams.get('redirect') || ''
+  const authRequestTimeout = Number((import.meta as any).env?.VITE_AUTH_TIMEOUT_MS || 12000)
+  console.log('[OAuth Debug] redirectParam:', redirectParam)
+  console.log('[OAuth Debug] redirectParam length:', redirectParam.length)
+  
   const redirectAfterLogin = () => {
-    if (!redirectParam) return false
+    console.log('[OAuth Debug] redirectAfterLogin called')
+    console.log('[OAuth Debug] redirectParam:', redirectParam)
+    if (!redirectParam) {
+      console.log('[OAuth Debug] No redirect param, returning false')
+      return false
+    }
 
-    const apiBase = (import.meta as any).env?.VITE_API_BASE || 'http://localhost:8080'
+    const apiBase = client.defaults.baseURL || (import.meta as any).env?.VITE_API_BASE || 'http://localhost:8080'
     const base = String(apiBase).replace(/\/$/, '')
     const target = redirectParam.startsWith('http://') || redirectParam.startsWith('https://')
       ? redirectParam
@@ -40,6 +49,7 @@ function Login() {
         ? base + redirectParam
         : base + '/' + redirectParam
 
+    console.log('[OAuth Debug] Redirecting to:', target)
     window.location.href = target
     return true
   }
@@ -54,7 +64,7 @@ function Login() {
         identifier,
         password,
         tenant_id: 0, // 平台登录，tenant_id=0
-      })
+      }, { timeout: authRequestTimeout })
       if (res.data.need_2fa) {
         setUserId(res.data.user_id)
         setTwoFAType(res.data['2fa_type'])
@@ -62,8 +72,11 @@ function Login() {
 
         setStep(2)
       } else if (res.data.access_token) {
+        console.log('[OAuth Debug] Login successful, checking redirect...')
         await login(res.data.access_token)
+        console.log('[OAuth Debug] Calling redirectAfterLogin...')
         if (!redirectAfterLogin()) {
+          console.log('[OAuth Debug] No redirect, navigating to dashboard')
           navigate(ROUTES.user.dashboard)
         }
       } else {
@@ -86,6 +99,8 @@ function Login() {
         setEmailCode('')
       } else if (msg.includes('only administrators can login to platform')) {
         setError('普通用户不能登录平台，请使用租户登录')
+      } else if (err?.code === 'ECONNABORTED' || msg.includes('timeout')) {
+        setError('登录请求超时：请确认 BasaltPass 后端已运行在 http://localhost:8080')
       } else {
         setError(raw || '登录失败，请检查您的凭据')
       }
@@ -140,8 +155,11 @@ function Login() {
         // 进行真正的Passkey验证
         try {
           const passkeyResult = await loginWithPasskeyFlow(identifier)
+          console.log('[OAuth Debug] Passkey login successful')
           await login(passkeyResult.access_token)
+          console.log('[OAuth Debug] Calling redirectAfterLogin (passkey)...')
           if (!redirectAfterLogin()) {
+            console.log('[OAuth Debug] No redirect, navigating to dashboard')
             navigate(ROUTES.user.dashboard)
           }
           return // 直接返回，不需要调用verify-2fa API
@@ -151,14 +169,22 @@ function Login() {
           return
         }
       }
-      const res = await client.post('/api/v1/auth/verify-2fa', payload)
+      const res = await client.post('/api/v1/auth/verify-2fa', payload, { timeout: authRequestTimeout })
+      console.log('[OAuth Debug] 2FA verification successful')
       await login(res.data.access_token)
+      console.log('[OAuth Debug] Calling redirectAfterLogin (2FA)...')
       if (!redirectAfterLogin()) {
+        console.log('[OAuth Debug] No redirect, navigating to dashboard')
         navigate(ROUTES.user.dashboard)
       }
     } catch (err: any) {
-      const message = err.response?.data?.error || err.message || '二次验证失败'
-      setError(message)
+      const raw = err?.response?.data?.error || err?.message || ''
+      const msg = typeof raw === 'string' ? raw.toLowerCase() : ''
+      if (err?.code === 'ECONNABORTED' || msg.includes('timeout')) {
+        setError('二次验证请求超时：请确认 BasaltPass 后端可访问')
+      } else {
+        setError(raw || '二次验证失败')
+      }
     } finally {
       setIsLoading(false)
     }

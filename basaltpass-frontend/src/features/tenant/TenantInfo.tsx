@@ -9,7 +9,10 @@ import {
   ClockIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
-  InformationCircleIcon
+  InformationCircleIcon,
+  LinkIcon,
+  ClipboardDocumentIcon,
+  CheckIcon
 } from '@heroicons/react/24/outline'
 import TenantLayout from '@features/tenant/components/TenantLayout'
 import { tenantApi, TenantInfo } from '@api/tenant/tenant'
@@ -19,6 +22,7 @@ export default function TenantInfoPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [debugInfo, setDebugInfo] = useState<any>(null)
+  const [copiedField, setCopiedField] = useState<string | null>(null)
 
   useEffect(() => {
     fetchTenantInfo()
@@ -83,6 +87,26 @@ export default function TenantInfoPage() {
       deleted: '已删除'
     }
     return statusNames[status as keyof typeof statusNames] || status
+  }
+
+  const copyToClipboard = async (text: string, field: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopiedField(field)
+      setTimeout(() => setCopiedField(null), 2000)
+    } catch (err) {
+      console.error('复制失败:', err)
+    }
+  }
+
+  const getLoginUrl = () => {
+    const baseUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || 'http://localhost:5173'
+    return `${baseUrl}/auth/tenant/${tenantInfo?.code}/login`
+  }
+
+  const getRegisterUrl = () => {
+    const baseUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || 'http://localhost:5173'
+    return `${baseUrl}/auth/tenant/${tenantInfo?.code}/register`
   }
 
   if (loading) {
@@ -230,6 +254,82 @@ export default function TenantInfoPage() {
 
           {/* 统计信息 */}
           <div className="space-y-6">
+            {/* 用户访问链接 */}
+            <div className="bg-white shadow rounded-lg">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center">
+                  <LinkIcon className="h-5 w-5 text-blue-500 mr-2" />
+                  <h3 className="text-lg font-medium text-gray-900">用户访问链接</h3>
+                </div>
+                <p className="mt-1 text-sm text-gray-500">分享这些链接给您的用户进行登录或注册</p>
+              </div>
+              <div className="px-6 py-6">
+                <div className="space-y-4">
+                  {/* 登录链接 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      登录页面
+                    </label>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="text"
+                        readOnly
+                        value={getLoginUrl()}
+                        className="flex-1 text-sm px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600 font-mono"
+                      />
+                      <button
+                        onClick={() => copyToClipboard(getLoginUrl(), 'login')}
+                        className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        title="复制链接"
+                      >
+                        {copiedField === 'login' ? (
+                          <CheckIcon className="h-5 w-5 text-green-500" />
+                        ) : (
+                          <ClipboardDocumentIcon className="h-5 w-5" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 注册链接 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      注册页面
+                    </label>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="text"
+                        readOnly
+                        value={getRegisterUrl()}
+                        className="flex-1 text-sm px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600 font-mono"
+                      />
+                      <button
+                        onClick={() => copyToClipboard(getRegisterUrl(), 'register')}
+                        className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        title="复制链接"
+                      >
+                        {copiedField === 'register' ? (
+                          <CheckIcon className="h-5 w-5 text-green-500" />
+                        ) : (
+                          <ClipboardDocumentIcon className="h-5 w-5" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 提示信息 */}
+                  <div className="mt-4 p-3 bg-blue-50 rounded-md">
+                    <div className="flex">
+                      <InformationCircleIcon className="h-5 w-5 text-blue-400 mr-2 flex-shrink-0 mt-0.5" />
+                      <div className="text-sm text-blue-700">
+                        <p>将这些链接分享给您的用户，他们可以通过这些链接直接访问您租户的登录和注册页面。</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* 使用统计 */}
             <div className="bg-white shadow rounded-lg">
               <div className="px-6 py-4 border-b border-gray-200">

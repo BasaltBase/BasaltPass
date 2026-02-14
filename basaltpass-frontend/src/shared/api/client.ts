@@ -1,26 +1,41 @@
 import axios from 'axios'
 import { getAccessToken, clearAccessToken } from '../utils/auth'
 
+const inferDefaultApiBase = () => {
+  if (typeof window !== 'undefined' && window.location?.hostname) {
+    const host = window.location.hostname === 'localhost' ? '127.0.0.1' : window.location.hostname
+    return `${window.location.protocol}//${host}:8080`
+  }
+  return 'http://127.0.0.1:8080'
+}
+
 const normalizeApiBase = (rawBase?: string) => {
-  const fallback = 'http://127.0.0.1:8080'
+  const fallback = inferDefaultApiBase()
   const value = String(rawBase || fallback).trim()
 
   try {
     const url = new URL(value)
     if (url.hostname === 'localhost') {
       url.hostname = '127.0.0.1'
-      return url.toString().replace(/\/$/, '')
     }
-    return value.replace(/\/$/, '')
+    return url.toString().replace(/\/$/, '')
   } catch {
     return fallback
   }
 }
 
+const normalizeTimeoutMs = (rawTimeout: unknown, fallback = 30000) => {
+  const parsed = Number(rawTimeout)
+  if (Number.isFinite(parsed) && parsed > 0) {
+    return parsed
+  }
+  return fallback
+}
+
 const client = axios.create({
   baseURL: normalizeApiBase((import.meta as any).env?.VITE_API_BASE),
   withCredentials: true,
-  timeout: Number((import.meta as any).env?.VITE_API_TIMEOUT_MS || 10000),
+  timeout: normalizeTimeoutMs((import.meta as any).env?.VITE_API_TIMEOUT_MS, 30000),
 })
 
 // 是否正在刷新token的标志

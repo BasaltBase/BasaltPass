@@ -136,26 +136,6 @@ export default function TenantSubscriptions() {
   return (
     <TenantLayout title="订阅管理">
       <div className="space-y-6">
-        {/* 面包屑 */}
-        <nav className="flex" aria-label="Breadcrumb">
-          <ol className="inline-flex items-center space-x-1 md:space-x-3">
-            <li className="inline-flex items-center">
-              <Link
-                to={ROUTES.tenant.subscriptions}
-                className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600"
-              >
-                订阅系统
-              </Link>
-            </li>
-            <li>
-              <div className="flex items-center">
-                <ChevronRightIcon className="flex-shrink-0 h-5 w-5 text-gray-400" />
-                <span className="ml-4 text-sm font-medium text-gray-500">订阅管理</span>
-              </div>
-            </li>
-          </ol>
-        </nav>
-
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-semibold text-gray-900">订阅管理</h1>
         </div>

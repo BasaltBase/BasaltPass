@@ -1,5 +1,18 @@
 import client from '../client'
 
+export interface UserBasicProfile {
+  id: number
+  email: string
+  phone: string
+  nickname: string
+  avatar_url: string
+  is_super_admin: boolean
+  has_tenant: boolean
+  tenant_id?: number
+  tenant_role?: string
+  banned: boolean
+}
+
 export interface Gender {
   id: number
   code: string
@@ -68,6 +81,9 @@ export interface UpdateProfileData {
   company?: string
   job_title?: string
 }
+
+// 获取用户基本信息（包括账户状态）
+export const getProfile = () => client.get<UserBasicProfile>('/api/v1/user/profile')
 
 // 获取用户详细资料
 export const getUserProfile = () => client.get<{ profile: UserProfile }>('/api/v1/user/profile-detail')

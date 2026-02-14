@@ -75,6 +75,7 @@ func (s *OAuthServerService) ValidateAuthorizeRequest(req *AuthorizeRequest) (*m
 	var client model.OAuthClient
 	if err := s.db.Where("client_id = ? AND is_active = ?", req.ClientID, true).
 		Preload("App").
+		Preload("App.Tenant").
 		First(&client).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("invalid_client")
@@ -109,6 +110,51 @@ func (s *OAuthServerService) ValidateAuthorizeRequest(req *AuthorizeRequest) (*m
 	return &client, nil
 }
 
+// resolveClientTenantID resolves tenant ownership for an OAuth client.
+// Fallback order:
+// 1) client.App.TenantID (preloaded)
+// 2) apps.tenant_id by client.AppID
+// 3) latest authorization record tenant_id for this client
+// 4) creator's tenant_admin tenant_id
+func (s *OAuthServerService) resolveClientTenantID(client *model.OAuthClient) uint {
+	if client == nil {
+		return 0
+	}
+
+	if client.App.TenantID > 0 {
+		return client.App.TenantID
+	}
+
+	if client.AppID > 0 {
+		var app model.App
+		if err := s.db.Select("tenant_id").Where("id = ?", client.AppID).First(&app).Error; err == nil && app.TenantID > 0 {
+			return app.TenantID
+		}
+	}
+
+	if strings.TrimSpace(client.ClientID) != "" {
+		var code model.OAuthAuthorizationCode
+		if err := s.db.Select("tenant_id").
+			Where("client_id = ? AND tenant_id > 0", client.ClientID).
+			Order("id DESC").
+			First(&code).Error; err == nil && code.TenantID > 0 {
+			return code.TenantID
+		}
+	}
+
+	if client.CreatedBy > 0 {
+		var admin model.TenantAdmin
+		if err := s.db.Select("tenant_id").
+			Where("user_id = ? AND tenant_id > 0", client.CreatedBy).
+			Order("id ASC").
+			First(&admin).Error; err == nil && admin.TenantID > 0 {
+			return admin.TenantID
+		}
+	}
+
+	return 0
+}
+
 // GenerateAuthorizationCode 生成授权码
 func (s *OAuthServerService) GenerateAuthorizationCode(userID uint, req *AuthorizeRequest, client *model.OAuthClient) (string, error) {
 	// 生成授权码
@@ -118,21 +164,8 @@ func (s *OAuthServerService) GenerateAuthorizationCode(userID uint, req *Authori
 	}
 	code := hex.EncodeToString(codeBytes)
 
-	// 获取租户ID（从App获取）
-	var tenantID uint
-	if client.AppID > 0 {
-		// 如果client已经预加载了App，直接使用
-		if client.App.ID > 0 {
-			tenantID = client.App.TenantID
-		} else {
-			// 否则需要查询
-			var app model.App
-			if err := s.db.Select("tenant_id").Where("id = ?", client.AppID).First(&app).Error; err != nil {
-				return "", err
-			}
-			tenantID = app.TenantID
-		}
-	}
+	// 获取租户ID（支持历史脏数据的兜底恢复）
+	tenantID := s.resolveClientTenantID(client)
 
 	// 创建授权码记录（包含AppID和TenantID）
 	authCode := &model.OAuthAuthorizationCode{
@@ -510,20 +543,10 @@ func (s *OAuthServerService) ValidateUserTenant(userID uint, client *model.OAuth
 		return nil
 	}
 
-	// 获取应用所属租户ID
-	var tenantID uint
-	if client.AppID > 0 {
-		// 如果client已经预加载了App，直接使用
-		if client.App.ID > 0 {
-			tenantID = client.App.TenantID
-		} else {
-			// 否则需要查询
-			var app model.App
-			if err := s.db.Select("tenant_id").Where("id = ?", client.AppID).First(&app).Error; err != nil {
-				return errors.New("app_not_found")
-			}
-			tenantID = app.TenantID
-		}
+	// 获取应用所属租户ID（支持历史脏数据的兜底恢复）
+	tenantID := s.resolveClientTenantID(client)
+	if tenantID == 0 {
+		return errors.New("app_tenant_not_found")
 	}
 
 	// 验证用户的tenant_id是否与应用的tenant_id匹配

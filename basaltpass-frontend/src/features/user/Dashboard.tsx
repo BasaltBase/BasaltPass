@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import Layout from '@features/user/components/Layout'
 import { PCard, PButton } from '@ui'
-import { getBalance, history as getWalletHistory } from '@api/user/wallet'
+import { history as getWalletHistory } from '@api/user/wallet'
 import { getSecurityStatus, SecurityStatus } from '@api/user/security'
+import { getProfile, UserBasicProfile } from '@api/user/profile'
 import { ROUTES } from '@constants'
 import { useConfig } from '@contexts/ConfigContext'
 import { 
@@ -24,11 +25,6 @@ import {
   QuestionMarkCircleIcon
 } from '@heroicons/react/24/outline'
 
-interface WalletData {
-  balance: number
-  currency: string
-}
-
 interface RecentTransaction {
   id: string
   type: 'recharge' | 'withdraw'
@@ -40,7 +36,7 @@ interface RecentTransaction {
 
 export default function Dashboard() {
   const { marketEnabled } = useConfig()
-  const [walletData, setWalletData] = useState<WalletData>({ balance: 0, currency: 'USD' })
+  const [userProfile, setUserProfile] = useState<UserBasicProfile | null>(null)
   const [securityStatus, setSecurityStatus] = useState<SecurityStatus | null>(null)
   const [recentTransactions, setRecentTransactions] = useState<RecentTransaction[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -52,14 +48,14 @@ export default function Dashboard() {
         setIsLoading(true)
         setError(null)
 
-        // 并行获取钱包余额、安全状态和交易历史
-        const [walletResponse, securityResponse, historyResponse] = await Promise.all([
-          getBalance('USD'),
+        // 并行获取用户信息、安全状态和交易历史
+        const [profileResponse, securityResponse, historyResponse] = await Promise.all([
+          getProfile(),
           getSecurityStatus(),
           getWalletHistory('USD', 3) // 获取最近3条交易记录
         ])
 
-        setWalletData(walletResponse.data)
+        setUserProfile(profileResponse.data)
         setSecurityStatus(securityResponse.data)
         
         // 使用真实的交易数据
@@ -97,9 +93,11 @@ export default function Dashboard() {
 
   const stats = [
     {
-      name: '钱包余额',
-      value: `$${(walletData.balance / 100).toFixed(2)}`, // 余额以分为单位存储
-      icon: WalletIcon,
+      name: '账户状态',
+      value: userProfile?.banned ? '已封禁' : '正常',
+      icon: UserIcon,
+      change: userProfile?.banned ? '账户已被封禁，请联系管理员' : '账户运行正常',
+      changeType: userProfile?.banned ? ('negative' as const) : ('positive' as const),
     },
     {
       name: '安全等级',
@@ -167,20 +165,29 @@ export default function Dashboard() {
                 </p>
               </dt>
               <dd className="ml-16 flex items-baseline">
-                <p className="text-2xl font-semibold text-gray-900">{item.value}</p>
+                <p className={`text-2xl font-semibold ${
+                  item.name === '账户状态' && userProfile?.banned 
+                    ? 'text-red-600' 
+                    : 'text-gray-900'
+                }`}>{item.value}</p>
                 {item.change && (
                   <p
                     className={`ml-2 flex items-baseline text-sm font-semibold ${
                       item.changeType === 'positive'
                         ? 'text-green-600'
+                        : item.changeType === 'negative'
+                        ? 'text-red-600'
                         : 'text-gray-500'
                     }`}
                   >
                     {item.changeType === 'positive' && (
                       <ArrowUpIcon className="h-4 w-4 flex-shrink-0 self-center" />
                     )}
+                    {item.changeType === 'negative' && (
+                      <ArrowDownIcon className="h-4 w-4 flex-shrink-0 self-center" />
+                    )}
                     <span className="sr-only">
-                      {item.changeType === 'positive' ? '增加' : '状态'}
+                      {item.changeType === 'positive' ? '增加' : item.changeType === 'negative' ? '警告' : '状态'}
                     </span>
                     {item.change}
                   </p>

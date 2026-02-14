@@ -19,6 +19,7 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
   const { user, logout, canAccessTenant } = useAuth()
   const location = useLocation()
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const handleLogout = () => {
     logout()
@@ -63,6 +64,14 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 justify-between items-center">
             <div className="flex items-center">
+              {/* 移动端汉堡菜单按钮 */}
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="lg:hidden mr-3 inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+              >
+                <span className="sr-only">打开侧边栏</span>
+                <Bars3Icon className="h-6 w-6" />
+              </button>
               <Link to={ROUTES.admin.dashboard} className="flex items-center">
                 <div className="h-8 w-8 bg-indigo-600 rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-lg">B</span>
@@ -194,7 +203,38 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
       </header>
 
       <div className="flex">
-        {/* 侧边栏 */}
+        {/* 移动端侧边栏 */}
+        {sidebarOpen && (
+          <div className="fixed inset-0 !m-0 z-40 flex lg:hidden">
+            <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
+            <div className="relative flex w-full max-w-xs flex-1 flex-col bg-white">
+              <div className="absolute top-0 right-0 -mr-12 pt-2">
+                <button 
+                  onClick={() => setSidebarOpen(false)}
+                  className="ml-1 flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                >
+                  <span className="sr-only">关闭侧边栏</span>
+                  <svg className="h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="h-0 flex-1 overflow-y-auto pt-5 pb-4">
+                <div className="flex flex-shrink-0 items-center px-4">
+                  <div className="h-8 w-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-lg">B</span>
+                  </div>
+                  <span className="ml-2 text-xl font-bold text-gray-900">BasaltPass</span>
+                </div>
+                <nav className="mt-5 space-y-1 px-2">
+                  <AdminNavigation />
+                </nav>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 桌面端侧边栏 */}
         <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 lg:pt-16">
           <div className="flex flex-1 flex-col overflow-y-auto bg-white border-r border-gray-200">
             <div className="flex flex-1 flex-col pt-5 pb-4">
@@ -212,32 +252,6 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
               {children}
             </div>
           </main>
-        </div>
-      </div>
-
-      {/* 移动端菜单 */}
-      <div className="lg:hidden">
-        <div className="fixed inset-0 !m-0 z-40 flex">
-          <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-75" />
-          <div className="relative flex w-full max-w-xs flex-1 flex-col bg-white">
-            <div className="absolute top-0 right-0 -mr-12 pt-2">
-              <button className="ml-1 flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
-                <span className="sr-only">关闭侧边栏</span>
-                <Bars3Icon className="h-6 w-6 text-white" />
-              </button>
-            </div>
-            <div className="h-0 flex-1 overflow-y-auto pt-5 pb-4">
-              <div className="flex flex-shrink-0 items-center px-4">
-                <div className="h-8 w-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">B</span>
-                </div>
-                <span className="ml-2 text-xl font-bold text-gray-900">BasaltPass</span>
-              </div>
-              <nav className="mt-5 space-y-1 px-2">
-                <AdminNavigation />
-              </nav>
-            </div>
-          </div>
         </div>
       </div>
     </div>

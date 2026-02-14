@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 
 	"basaltpass-backend/internal/model"
@@ -67,11 +68,34 @@ func AuthorizeHandler(c *fiber.Ctx) error {
 }
 
 func tryUserIDFromAccessTokenCookie(c *fiber.Ctx) (uint, bool) {
-	tokenStr := c.Cookies("access_token")
-	if tokenStr == "" {
-		return 0, false
+	// OAuth hosted flow can come from different consoles (user/tenant/admin),
+	// so we need to accept scoped cookie names as well.
+	cookieNames := []string{
+		"access_token",
+		"access_token_user",
+		"access_token_tenant",
+		"access_token_admin",
+		// Fallback to refresh cookies when access token cookie already expired.
+		"refresh_token",
+		"refresh_token_user",
+		"refresh_token_tenant",
+		"refresh_token_admin",
 	}
 
+	for _, name := range cookieNames {
+		tokenStr := strings.TrimSpace(c.Cookies(name))
+		if tokenStr == "" {
+			continue
+		}
+		if uid, ok := parseUserIDFromJWT(tokenStr); ok {
+			return uid, true
+		}
+	}
+
+	return 0, false
+}
+
+func parseUserIDFromJWT(tokenStr string) (uint, bool) {
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
 		// Mirror existing test fallback behavior.
@@ -96,12 +120,19 @@ func tryUserIDFromAccessTokenCookie(c *fiber.Ctx) (uint, bool) {
 	if !ok {
 		return 0, false
 	}
-	if sub, exists := claims["sub"]; exists {
-		if subFloat, ok := sub.(float64); ok {
-			return uint(subFloat), true
+	sub, exists := claims["sub"]
+	if !exists {
+		return 0, false
+	}
+	if subFloat, ok := sub.(float64); ok {
+		return uint(subFloat), true
+	}
+	if subStr, ok := sub.(string); ok {
+		uid, err := strconv.ParseUint(subStr, 10, 64)
+		if err == nil {
+			return uint(uid), true
 		}
 	}
-
 	return 0, false
 }
 
@@ -370,27 +401,20 @@ func RevokeHandler(c *fiber.Ctx) error {
 // buildLoginURLWithTenant 构建租户特定的登录URL，包含OAuth2参数
 func buildLoginURLWithTenant(c *fiber.Ctx, req *AuthorizeRequest, client *model.OAuthClient) string {
 	var tenantCode string
-
-	// 获取租户code
-	if client.AppID > 0 {
-		var app model.App
-		if client.App.ID > 0 {
-			app = client.App
-		} else {
-			oauthServerService.db.Preload("Tenant").First(&app, client.AppID)
-		}
-
-		if app.Tenant.ID > 0 {
-			tenantCode = app.Tenant.Code
+	tenantID := oauthServerService.resolveClientTenantID(client)
+	if tenantID > 0 {
+		var tenant model.Tenant
+		if err := oauthServerService.db.Select("id", "code").First(&tenant, tenantID).Error; err == nil {
+			tenantCode = strings.TrimSpace(tenant.Code)
 		}
 	}
 
 	uiBaseURL := strings.TrimRight(config.Get().UI.BaseURL, "/")
 
-	// 构建租户登录URL：/tenant/{tenant_code}/login
+	// 构建租户登录URL：/auth/tenant/{tenant_code}/login
 	var loginURL string
 	if tenantCode != "" {
-		loginURL = uiBaseURL + "/tenant/" + tenantCode + "/login"
+		loginURL = uiBaseURL + "/auth/tenant/" + tenantCode + "/login"
 	} else {
 		// 如果没有租户code，使用平台登录
 		loginURL = uiBaseURL + "/login"

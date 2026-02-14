@@ -36,7 +36,6 @@ const navigation = [
   { name: '安全', href: ROUTES.user.security, icon: ShieldCheckIcon },
   { name: '设置', href: ROUTES.user.settings, icon: CogIcon },
   { name: '帮助', href: ROUTES.user.help, icon: QuestionMarkCircleIcon },
-  { name: '关于', href: ROUTES.user.about, icon: InformationCircleIcon },
 ]
 
 interface LayoutProps {

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { getPublicConfig, PublicConfig } from '@api/config'
 
 interface ConfigContextType {
@@ -10,17 +10,22 @@ interface ConfigContextType {
 const ConfigContext = createContext<ConfigContextType | undefined>(undefined)
 
 export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [config, setConfig] = useState<PublicConfig | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [config, setConfig] = useState<PublicConfig | null>({ market_enabled: true })
+  const [loading, setLoading] = useState(false)
+  const hasFetchedRef = useRef(false)
 
   useEffect(() => {
+    if (hasFetchedRef.current) {
+      return
+    }
+    hasFetchedRef.current = true
+
     const fetchConfig = async () => {
       try {
+        setLoading(true)
         const data = await getPublicConfig()
         setConfig(data)
-      } catch (error) {
-        console.error('Failed to load config:', error)
-        // 如果加载失败，使用默认配置
+      } catch {
         setConfig({ market_enabled: true })
       } finally {
         setLoading(false)

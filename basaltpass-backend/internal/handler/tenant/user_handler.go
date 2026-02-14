@@ -50,6 +50,29 @@ type InviteTenantUserRequest struct {
 	Message string `json:"message,omitempty"`
 }
 
+// loadTenantMembership 优先使用 users.tenant_id 判断用户归属，
+// 并兼容读取 tenant_admins 作为角色来源与旧数据回退。
+func loadTenantMembership(userID, tenantID uint) (model.User, *model.TenantAdmin, bool, error) {
+	var user model.User
+	if err := common.DB().Unscoped().First(&user, userID).Error; err != nil {
+		return model.User{}, nil, false, err
+	}
+
+	var tenantAdmin model.TenantAdmin
+	err := common.DB().Where("tenant_id = ? AND user_id = ?", tenantID, userID).First(&tenantAdmin).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return model.User{}, nil, false, err
+	}
+
+	var tenantAdminPtr *model.TenantAdmin
+	if err == nil {
+		tenantAdminPtr = &tenantAdmin
+	}
+
+	belongs := user.TenantID == tenantID || tenantAdminPtr != nil
+	return user, tenantAdminPtr, belongs, nil
+}
+
 // GetTenantUsersHandler 获取租户用户列表
 // GET /api/v1/tenant/users
 func GetTenantUsersHandler(c *fiber.Ctx) error {
@@ -348,12 +371,13 @@ func GetTenantUserStatsHandler(c *fiber.Ctx) error {
 // PUT /api/v1/tenant/users/:id
 func UpdateTenantUserHandler(c *fiber.Ctx) error {
 	tenantID := c.Locals("tenantID").(uint)
-	userID, err := strconv.ParseUint(c.Params("id"), 10, 32)
+	userIDUint64, err := strconv.ParseUint(c.Params("id"), 10, 32)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "无效的用户ID",
 		})
 	}
+	userID := uint(userIDUint64)
 
 	var req UpdateTenantUserRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -362,22 +386,26 @@ func UpdateTenantUserHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	// 检查用户是否属于该租户
-	var tenantAdmin model.TenantAdmin
-	if err := common.DB().Where("tenant_id = ? AND user_id = ?", tenantID, uint(userID)).
-		First(&tenantAdmin).Error; err != nil {
+	// 检查用户是否属于该租户（优先 users.tenant_id）
+	user, tenantAdmin, belongs, err := loadTenantMembership(userID, tenantID)
+	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"error": "用户不属于该租户",
+				"error": "用户不存在",
 			})
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "查询用户失败",
 		})
 	}
+	if !belongs {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "用户不属于该租户",
+		})
+	}
 
 	// 不能修改所有者角色
-	if tenantAdmin.Role == model.TenantRoleOwner {
+	if tenantAdmin != nil && tenantAdmin.Role == model.TenantRoleOwner {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 			"error": "不能修改租户所有者",
 		})
@@ -390,22 +418,26 @@ func UpdateTenantUserHandler(c *fiber.Ctx) error {
 				"error": "无效的角色类型",
 			})
 		}
-		tenantAdmin.Role = model.TenantRole(*req.Role)
+		newRole := model.TenantRole(*req.Role)
+		if tenantAdmin != nil {
+			tenantAdmin.Role = newRole
+		} else if newRole != model.TenantRoleMember {
+			tenantAdmin = &model.TenantAdmin{
+				UserID:   userID,
+				TenantID: tenantID,
+				Role:     newRole,
+			}
+		}
 	}
 
 	// 更新用户状态
 	if req.Status != nil {
-		var user model.User
-		if err := common.DB().First(&user, uint(userID)).Error; err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "查询用户失败",
-			})
-		}
-
 		switch *req.Status {
 		case "active":
 			// 激活用户 - 清除删除标记
-			if err := common.DB().Unscoped().Model(&user).Update("deleted_at", nil).Error; err != nil {
+			if err := common.DB().Unscoped().Model(&model.User{}).
+				Where("id = ?", userID).
+				Update("deleted_at", nil).Error; err != nil {
 				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 					"error": "激活用户失败",
 				})
@@ -417,14 +449,28 @@ func UpdateTenantUserHandler(c *fiber.Ctx) error {
 					"error": "暂停用户失败",
 				})
 			}
+		default:
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "无效的状态类型",
+			})
 		}
 	}
 
 	// 保存租户角色更改
-	if err := common.DB().Save(&tenantAdmin).Error; err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "更新用户失败",
-		})
+	if req.Role != nil && tenantAdmin != nil {
+		if tenantAdmin.ID == 0 {
+			if err := common.DB().Create(tenantAdmin).Error; err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"error": "更新用户失败",
+				})
+			}
+		} else {
+			if err := common.DB().Save(tenantAdmin).Error; err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"error": "更新用户失败",
+				})
+			}
+		}
 	}
 
 	return c.JSON(fiber.Map{
@@ -436,40 +482,69 @@ func UpdateTenantUserHandler(c *fiber.Ctx) error {
 // DELETE /api/v1/tenant/users/:id
 func RemoveTenantUserHandler(c *fiber.Ctx) error {
 	tenantID := c.Locals("tenantID").(uint)
-	userID, err := strconv.ParseUint(c.Params("id"), 10, 32)
+	userIDUint64, err := strconv.ParseUint(c.Params("id"), 10, 32)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "无效的用户ID",
 		})
 	}
+	userID := uint(userIDUint64)
 
-	// 检查用户是否属于该租户
-	var tenantAdmin model.TenantAdmin
-	if err := common.DB().Where("tenant_id = ? AND user_id = ?", tenantID, uint(userID)).
-		First(&tenantAdmin).Error; err != nil {
+	// 检查用户是否属于该租户（优先 users.tenant_id）
+	user, tenantAdmin, belongs, err := loadTenantMembership(userID, tenantID)
+	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"error": "用户不属于该租户",
+				"error": "用户不存在",
 			})
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "查询用户失败",
 		})
 	}
+	if !belongs {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "用户不属于该租户",
+		})
+	}
 
 	// 不能移除所有者
-	if tenantAdmin.Role == model.TenantRoleOwner {
+	if tenantAdmin != nil && tenantAdmin.Role == model.TenantRoleOwner {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 			"error": "不能移除租户所有者",
 		})
 	}
 
-	// 删除租户用户关联
-	if err := common.DB().Delete(&tenantAdmin).Error; err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "移除用户失败",
-		})
+	tx := common.DB().Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// 主关系改为 users.tenant_id，移除时先清理主关系
+	if user.TenantID == tenantID {
+		if err := tx.Unscoped().
+			Model(&model.User{}).
+			Where("id = ?", userID).
+			Update("tenant_id", 0).Error; err != nil {
+			tx.Rollback()
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "移除用户失败",
+			})
+		}
 	}
+
+	// 兼容删除 tenant_admin 关系记录
+	if tenantAdmin != nil {
+		if err := tx.Delete(tenantAdmin).Error; err != nil {
+			tx.Rollback()
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "移除用户失败",
+			})
+		}
+	}
+	tx.Commit()
 
 	return c.JSON(fiber.Map{
 		"message": "用户移除成功",
@@ -506,7 +581,13 @@ func InviteTenantUserHandler(c *fiber.Ctx) error {
 	userExists := common.DB().Where("email = ?", req.Email).First(&existingUser).Error == nil
 
 	if userExists {
-		// 检查是否已经是该租户的用户
+		// 关系判断优先 users.tenant_id，tenant_admins 作为补充
+		if existingUser.TenantID == tenantID {
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+				"error": "用户已经是该租户的成员",
+			})
+		}
+
 		var existingTenantAdmin model.TenantAdmin
 		if common.DB().Where("tenant_id = ? AND user_id = ?", tenantID, existingUser.ID).
 			First(&existingTenantAdmin).Error == nil {
@@ -515,18 +596,45 @@ func InviteTenantUserHandler(c *fiber.Ctx) error {
 			})
 		}
 
-		// 添加到租户
-		tenantAdmin := model.TenantAdmin{
-			UserID:   existingUser.ID,
-			TenantID: tenantID,
-			Role:     model.TenantRole(req.Role),
+		if existingUser.TenantID != 0 && existingUser.TenantID != tenantID {
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+				"error": "用户已属于其他租户",
+			})
 		}
 
-		if err := common.DB().Create(&tenantAdmin).Error; err != nil {
+		tx := common.DB().Begin()
+		defer func() {
+			if r := recover(); r != nil {
+				tx.Rollback()
+			}
+		}()
+
+		// 主关系落到 users.tenant_id
+		if err := tx.Model(&model.User{}).
+			Where("id = ?", existingUser.ID).
+			Update("tenant_id", tenantID).Error; err != nil {
+			tx.Rollback()
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": "添加用户到租户失败",
 			})
 		}
+
+		// 非 member 角色写入 tenant_admins；member 默认不必写入记录
+		if req.Role != "member" {
+			tenantAdmin := model.TenantAdmin{
+				UserID:   existingUser.ID,
+				TenantID: tenantID,
+				Role:     model.TenantRole(req.Role),
+			}
+			if err := tx.Create(&tenantAdmin).Error; err != nil {
+				tx.Rollback()
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"error": "添加用户到租户失败",
+				})
+			}
+		}
+
+		tx.Commit()
 	} else {
 		// 创建邀请记录 - 这里可以扩展为发送邀请邮件等逻辑
 		// 暂时简单返回成功，实际应该创建invitation记录并发送邮件
@@ -554,26 +662,16 @@ func ResendInvitationHandler(c *fiber.Ctx) error {
 // GET /api/v1/tenant/users/:id
 func GetTenantUserHandler(c *fiber.Ctx) error {
 	tenantID := c.Locals("tenantID").(uint)
-	userID, err := strconv.ParseUint(c.Params("id"), 10, 32)
+	userIDUint64, err := strconv.ParseUint(c.Params("id"), 10, 32)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "无效的用户ID",
 		})
 	}
+	userID := uint(userIDUint64)
 
-	var user TenantUserResponse
-	if err := common.DB().Table("tenant_admins").
-		Select(`users.id, users.email, users.nickname, users.avatar, 
-			tenant_admins.role, 
-			CASE 
-				WHEN users.email_verified_at IS NULL THEN 'inactive'
-				WHEN users.deleted_at IS NOT NULL THEN 'suspended'
-				ELSE 'active'
-			END as status,
-			users.last_login_at, tenant_admins.created_at, tenant_admins.updated_at`).
-		Joins("JOIN users ON users.id = tenant_admins.user_id").
-		Where("tenant_admins.tenant_id = ? AND tenant_admins.user_id = ?", tenantID, uint(userID)).
-		Scan(&user).Error; err != nil {
+	user, tenantAdmin, belongs, err := loadTenantMembership(userID, tenantID)
+	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"error": "用户不存在",
@@ -583,8 +681,43 @@ func GetTenantUserHandler(c *fiber.Ctx) error {
 			"error": "查询用户失败",
 		})
 	}
+	if !belongs {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "用户不存在或不属于当前租户",
+		})
+	}
+
+	role := string(model.TenantRoleMember)
+	isTenantAdmin := false
+	createdAt := user.CreatedAt
+	updatedAt := user.UpdatedAt
+	if tenantAdmin != nil {
+		role = string(tenantAdmin.Role)
+		isTenantAdmin = true
+		createdAt = tenantAdmin.CreatedAt
+		updatedAt = tenantAdmin.UpdatedAt
+	}
+
+	status := "active"
+	if !user.EmailVerified {
+		status = "inactive"
+	} else if user.DeletedAt.Valid {
+		status = "suspended"
+	}
+
+	resp := TenantUserResponse{
+		ID:            user.ID,
+		Email:         user.Email,
+		Nickname:      user.Nickname,
+		Avatar:        user.AvatarURL,
+		Role:          role,
+		Status:        status,
+		CreatedAt:     createdAt,
+		UpdatedAt:     updatedAt,
+		IsTenantAdmin: isTenantAdmin,
+	}
 
 	return c.JSON(fiber.Map{
-		"user": user,
+		"user": resp,
 	})
 }

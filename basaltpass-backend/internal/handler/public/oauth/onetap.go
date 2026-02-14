@@ -394,8 +394,15 @@ func extractTokenFromRequest(c *fiber.Ctx) string {
 	if authHeader := c.Get("Authorization"); strings.HasPrefix(authHeader, "Bearer ") {
 		return strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
 	}
-	if token := c.Cookies("access_token"); token != "" {
-		return token
+	for _, cookieName := range []string{
+		"access_token",
+		"access_token_user",
+		"access_token_tenant",
+		"access_token_admin",
+	} {
+		if token := c.Cookies(cookieName); token != "" {
+			return token
+		}
 	}
 	if cookie := c.Cookies("Authorization"); strings.HasPrefix(cookie, "Bearer ") {
 		return strings.TrimSpace(strings.TrimPrefix(cookie, "Bearer "))

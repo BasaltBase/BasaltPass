@@ -4,12 +4,86 @@ import (
 	"basaltpass-backend/internal/config"
 	security "basaltpass-backend/internal/handler/user/security"
 	auth2 "basaltpass-backend/internal/service/auth"
+	"errors"
 	"log"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 var svc = auth2.Service{}
+
+func firstNonEmptyString(payload map[string]interface{}, keys ...string) string {
+	for _, key := range keys {
+		value, ok := payload[key]
+		if !ok {
+			continue
+		}
+		if s, ok := value.(string); ok {
+			s = strings.TrimSpace(s)
+			if s != "" {
+				return s
+			}
+		}
+	}
+	return ""
+}
+
+func hydrateLegacyLoginFields(c *fiber.Ctx, req *auth2.LoginRequest) {
+	if strings.TrimSpace(req.EmailOrPhone) != "" && strings.TrimSpace(req.Password) != "" {
+		return
+	}
+
+	var raw map[string]interface{}
+	if err := c.BodyParser(&raw); err != nil {
+		return
+	}
+
+	if strings.TrimSpace(req.EmailOrPhone) == "" {
+		req.EmailOrPhone = firstNonEmptyString(raw, "identifier", "email_or_phone", "email", "username", "phone", "account")
+	}
+	if strings.TrimSpace(req.Password) == "" {
+		req.Password = firstNonEmptyString(raw, "password", "pass", "pwd")
+	}
+}
+
+func normalizeScope(raw string) string {
+	scope := strings.ToLower(strings.TrimSpace(raw))
+	switch scope {
+	case "tenant", "admin", "user":
+		return scope
+	default:
+		return "user"
+	}
+}
+
+func setCookie(c *fiber.Ctx, name, value string, maxAge int, isProd bool) {
+	c.Cookie(&fiber.Cookie{
+		Name:     name,
+		Value:    value,
+		HTTPOnly: true,
+		Secure:   isProd,
+		SameSite: "Lax",
+		Path:     "/",
+		MaxAge:   maxAge,
+		Domain:   "",
+	})
+}
+
+func setAuthCookies(c *fiber.Ctx, scope, accessToken, refreshToken string) {
+	isProd := config.IsProduction()
+	normalizedScope := normalizeScope(scope)
+
+	// Keep unscoped cookies for OAuth hosted login compatibility.
+	setCookie(c, "refresh_token", refreshToken, 7*24*60*60, isProd)
+	setCookie(c, "access_token", accessToken, 15*60, isProd)
+
+	// Also set scope-specific cookies for tenant/admin consoles.
+	if normalizedScope != "user" {
+		setCookie(c, "refresh_token_"+normalizedScope, refreshToken, 7*24*60*60, isProd)
+		setCookie(c, "access_token_"+normalizedScope, accessToken, 15*60, isProd)
+	}
+}
 
 // RegisterHandler handles POST /auth/register (DEPRECATED - use /signup/start instead)
 func RegisterHandler(c *fiber.Ctx) error {
@@ -27,8 +101,21 @@ func LoginHandler(c *fiber.Ctx) error {
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
+	hydrateLegacyLoginFields(c, &req)
+
 	result, err := svc.LoginV2(req)
 	if err != nil {
+		if errors.Is(err, auth2.ErrMissingCredentials) {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		}
+		if errors.Is(err, auth2.ErrServiceUnavailable) {
+			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
+				"error": auth2.ErrServiceUnavailable.Error(),
+			})
+		}
+		if errors.Is(err, auth2.ErrPlatformAdminOnly) {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": err.Error()})
+		}
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": err.Error()})
 	}
 	if result.Need2FA {
@@ -39,50 +126,42 @@ func LoginHandler(c *fiber.Ctx) error {
 			"available_2fa_methods": result.Available2FAMethods,
 		})
 	}
-	// Set refresh token as HttpOnly cookie
-	isProd := config.IsProduction()
-	c.Cookie(&fiber.Cookie{
-		Name:     "refresh_token",
-		Value:    result.TokenPair.RefreshToken,
-		HTTPOnly: true,
-		Secure:   isProd,
-		SameSite: "Lax",
-		Path:     "/",
-		MaxAge:   7 * 24 * 60 * 60, // 7天
-		Domain:   "",               // 空字符串表示当前域
-	})
+	setAuthCookies(c, c.Get("X-Auth-Scope"), result.TokenPair.AccessToken, result.TokenPair.RefreshToken)
 
-	// 同时设置 access_token cookie 以提供更安全的存储选项
-	c.Cookie(&fiber.Cookie{
-		Name:     "access_token",
-		Value:    result.TokenPair.AccessToken,
-		HTTPOnly: true,
-		Secure:   isProd,
-		SameSite: "Lax",
-		Path:     "/",
-		MaxAge:   15 * 60, // 15分钟
-		Domain:   "",
-	})
+	userID := result.UserID
+	clientIP := c.IP()
+	userAgent := c.Get("User-Agent")
+	go func() {
+		if err := security.RecordLoginSuccess(userID, clientIP, userAgent); err != nil {
+			log.Printf("failed to record login history: %v", err)
+		}
+	}()
 
-	if err := security.RecordLoginSuccess(result.UserID, c.IP(), c.Get("User-Agent")); err != nil {
-		log.Printf("failed to record login history: %v", err)
-	}
-	return c.JSON(fiber.Map{"access_token": result.TokenPair.AccessToken})
+	return c.JSON(fiber.Map{
+		"access_token": result.TokenPair.AccessToken,
+		"data": fiber.Map{
+			"token": result.TokenPair.AccessToken,
+			"user": fiber.Map{
+				"id": result.UserID,
+			},
+		},
+	})
 }
 
 // RefreshHandler handles POST /auth/refresh
 func RefreshHandler(c *fiber.Ctx) error {
 	// Scope-aware refresh: for tenant/admin consoles, use dedicated refresh cookies.
-	scope := c.Get("X-Auth-Scope")
-	if scope == "" {
-		scope = "user"
-	}
+	scope := normalizeScope(c.Get("X-Auth-Scope"))
 	cookieName := "refresh_token"
 	if scope != "user" {
 		cookieName = "refresh_token_" + scope
 	}
 
 	rt := c.Cookies(cookieName)
+	if rt == "" && scope != "user" {
+		// Backward compatibility for old login cookies.
+		rt = c.Cookies("refresh_token")
+	}
 	if rt == "" {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "missing refresh token"})
 	}
@@ -90,34 +169,7 @@ func RefreshHandler(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": err.Error()})
 	}
-	// update refresh token cookie
-	isProd := config.IsProduction()
-	c.Cookie(&fiber.Cookie{
-		Name:     cookieName,
-		Value:    tokens.RefreshToken,
-		HTTPOnly: true,
-		Secure:   isProd,
-		SameSite: "Lax",
-		Path:     "/",
-		MaxAge:   7 * 24 * 60 * 60, // 7天
-		Domain:   "",               // 空字符串表示当前域
-	})
-
-	// 更新 access_token cookie（非鉴权来源，仅用于调试/兼容）
-	accessCookieName := "access_token"
-	if scope != "user" {
-		accessCookieName = "access_token_" + scope
-	}
-	c.Cookie(&fiber.Cookie{
-		Name:     accessCookieName,
-		Value:    tokens.AccessToken,
-		HTTPOnly: true,
-		Secure:   isProd,
-		SameSite: "Lax",
-		Path:     "/",
-		MaxAge:   15 * 60, // 15分钟
-		Domain:   "",
-	})
+	setAuthCookies(c, scope, tokens.AccessToken, tokens.RefreshToken)
 
 	return c.JSON(fiber.Map{"access_token": tokens.AccessToken})
 }
@@ -163,15 +215,22 @@ func Verify2FAHandler(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": err.Error()})
 	}
-	c.Cookie(&fiber.Cookie{
-		Name:     "refresh_token",
-		Value:    tokens.RefreshToken,
-		HTTPOnly: true,
-		Path:     "/",
-		MaxAge:   7 * 24 * 60 * 60,
+	setAuthCookies(c, c.Get("X-Auth-Scope"), tokens.AccessToken, tokens.RefreshToken)
+	userID := req.UserID
+	clientIP := c.IP()
+	userAgent := c.Get("User-Agent")
+	go func() {
+		if err := security.RecordLoginSuccess(userID, clientIP, userAgent); err != nil {
+			log.Printf("failed to record login history: %v", err)
+		}
+	}()
+	return c.JSON(fiber.Map{
+		"access_token": tokens.AccessToken,
+		"data": fiber.Map{
+			"token": tokens.AccessToken,
+			"user": fiber.Map{
+				"id": req.UserID,
+			},
+		},
 	})
-	if err := security.RecordLoginSuccess(req.UserID, c.IP(), c.Get("User-Agent")); err != nil {
-		log.Printf("failed to record login history: %v", err)
-	}
-	return c.JSON(fiber.Map{"access_token": tokens.AccessToken})
 }

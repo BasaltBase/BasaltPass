@@ -12,7 +12,6 @@ import Dashboard from '../../../src/features/user/Dashboard'
 import Profile from '../../../src/features/user/profile/Index'
 import Settings from '../../../src/features/user/Settings'
 import Help from '../../../src/features/user/Help'
-import About from '../../../src/features/user/About'
 import Notifications from '../../../src/features/user/Notifications'
 
 import TeamIndex from '../../../src/features/user/team/Index'
@@ -134,14 +133,6 @@ export default function AppRouter() {
         element={
           <ProtectedRoute>
             <Help />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/about"
-        element={
-          <ProtectedRoute>
-            <About />
           </ProtectedRoute>
         }
       />
