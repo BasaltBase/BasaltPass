@@ -139,7 +139,7 @@ func TestTenantProductIsolation(t *testing.T) {
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	assert.NoError(t, err)
 
-	err = db.AutoMigrate(&model.Product{})
+	err = db.AutoMigrate(&model.Product{}, &model.Plan{}, &model.PlanFeature{}, &model.Price{})
 	assert.NoError(t, err)
 
 	// 创建两个不同租户的服务
