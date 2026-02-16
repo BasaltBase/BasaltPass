@@ -17,6 +17,19 @@ type LoggingService struct {
 	db *gorm.DB
 }
 
+var emailLogSortFieldWhitelist = map[string]string{
+	"id":              "id",
+	"created_at":      "created_at",
+	"updated_at":      "updated_at",
+	"status":          "status",
+	"provider":        "provider",
+	"subject":         "subject",
+	"to_address":      "to_address",
+	"from_address":    "from_address",
+	"context":         "context",
+	"sent_by_user_id": "sent_by_user_id",
+}
+
 // NewLoggingService creates a new email logging service
 func NewLoggingService() *LoggingService {
 	return &LoggingService{
@@ -131,16 +144,8 @@ func (s *LoggingService) GetEmailLogs(ctx context.Context, params *EmailLogQuery
 	offset := (params.Page - 1) * params.PageSize
 	query = query.Offset(offset).Limit(params.PageSize)
 
-	// Apply ordering
-	orderBy := "created_at DESC"
-	if params.SortBy != "" {
-		direction := "ASC"
-		if params.SortDesc {
-			direction = "DESC"
-		}
-		orderBy = fmt.Sprintf("%s %s", params.SortBy, direction)
-	}
-	query = query.Order(orderBy)
+	// Apply ordering (whitelist field + asc/desc only)
+	query = query.Order(buildEmailLogOrderClause(params))
 
 	var logs []*model.EmailLog
 	err := query.Find(&logs).Error
@@ -214,17 +219,18 @@ func (s *LoggingService) GetEmailStats(ctx context.Context, fromDate, toDate *ti
 
 // EmailLogQueryParams represents query parameters for email logs
 type EmailLogQueryParams struct {
-	Page     int                   `json:"page" query:"page"`
-	PageSize int                   `json:"page_size" query:"page_size"`
-	Status   model.EmailSendStatus `json:"status" query:"status"`
-	Provider string                `json:"provider" query:"provider"`
-	Context  string                `json:"context" query:"context"`
-	UserID   *uint                 `json:"user_id" query:"user_id"`
-	FromDate *time.Time            `json:"from_date" query:"from_date"`
-	ToDate   *time.Time            `json:"to_date" query:"to_date"`
-	Search   string                `json:"search" query:"search"`
-	SortBy   string                `json:"sort_by" query:"sort_by"`
-	SortDesc bool                  `json:"sort_desc" query:"sort_desc"`
+	Page      int                   `json:"page" query:"page"`
+	PageSize  int                   `json:"page_size" query:"page_size"`
+	Status    model.EmailSendStatus `json:"status" query:"status"`
+	Provider  string                `json:"provider" query:"provider"`
+	Context   string                `json:"context" query:"context"`
+	UserID    *uint                 `json:"user_id" query:"user_id"`
+	FromDate  *time.Time            `json:"from_date" query:"from_date"`
+	ToDate    *time.Time            `json:"to_date" query:"to_date"`
+	Search    string                `json:"search" query:"search"`
+	SortBy    string                `json:"sort_by" query:"sort_by"`
+	SortOrder string                `json:"sort_order" query:"sort_order"`
+	SortDesc  bool                  `json:"sort_desc" query:"sort_desc"`
 }
 
 // EmailStats represents email sending statistics
@@ -234,4 +240,31 @@ type EmailStats struct {
 	FailedEmails  int64            `json:"failed_emails"`
 	PendingEmails int64            `json:"pending_emails"`
 	ProviderStats map[string]int64 `json:"provider_stats"`
+}
+
+func buildEmailLogOrderClause(params *EmailLogQueryParams) string {
+	field := "created_at"
+	if v, ok := emailLogSortFieldWhitelist[strings.ToLower(strings.TrimSpace(params.SortBy))]; ok {
+		field = v
+	}
+
+	// Keep previous behavior for legacy sort_desc clients:
+	// - no sort_by => default DESC
+	// - with sort_by => default ASC unless sort_desc=true
+	order := "DESC"
+	if strings.TrimSpace(params.SortBy) != "" {
+		order = "ASC"
+		if params.SortDesc {
+			order = "DESC"
+		}
+	}
+
+	switch strings.ToLower(strings.TrimSpace(params.SortOrder)) {
+	case "asc":
+		order = "ASC"
+	case "desc":
+		order = "DESC"
+	}
+
+	return field + " " + order
 }

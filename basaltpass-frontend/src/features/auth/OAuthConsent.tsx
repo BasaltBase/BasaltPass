@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { getAccessToken } from '@utils/auth'
+import client from '@api/client'
 import { ShieldCheckIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 
 interface ConsentPageData {
@@ -32,7 +32,7 @@ export default function OAuthConsent() {
   const codeChallenge = searchParams.get('code_challenge') || ''
   const codeChallengeMethod = searchParams.get('code_challenge_method') || ''
 
-  const apiBase = (import.meta as any).env?.VITE_API_BASE || 'http://localhost:8080'
+  const apiBase = client.defaults.baseURL || (import.meta as any).env?.VITE_API_BASE || 'http://localhost:8080'
   const consentEndpoint = String(apiBase).replace(/\/$/, '') + '/api/v1/oauth/consent'
 
   const submitConsentForm = (action: 'allow' | 'deny') => {

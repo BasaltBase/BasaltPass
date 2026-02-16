@@ -205,8 +205,6 @@
 | HEAD | /api/v1/auth/oauth/:provider/callback |
 | GET | /api/v1/auth/oauth/:provider/login |
 | HEAD | /api/v1/auth/oauth/:provider/login |
-| POST | /api/v1/auth/password/reset |
-| POST | /api/v1/auth/password/reset-request |
 | POST | /api/v1/auth/refresh |
 | POST | /api/v1/auth/register |
 | POST | /api/v1/auth/verify-2fa |
@@ -480,16 +478,19 @@
 | POST | /api/v1/tenant/apps/:app_id/permissions |
 | DELETE | /api/v1/tenant/apps/:app_id/permissions/:permission_id |
 | PUT | /api/v1/tenant/apps/:app_id/permissions/:permission_id |
+| POST | /api/v1/tenant/apps/:app_id/permissions/import |
 | GET | /api/v1/tenant/apps/:app_id/roles |
 | HEAD | /api/v1/tenant/apps/:app_id/roles |
 | POST | /api/v1/tenant/apps/:app_id/roles |
 | DELETE | /api/v1/tenant/apps/:app_id/roles/:role_id |
 | PUT | /api/v1/tenant/apps/:app_id/roles/:role_id |
+| POST | /api/v1/tenant/apps/:app_id/roles/import |
 | GET | /api/v1/tenant/apps/:app_id/users |
 | GET | /api/v1/tenant/apps/:app_id/users |
 | HEAD | /api/v1/tenant/apps/:app_id/users |
 | HEAD | /api/v1/tenant/apps/:app_id/users |
 | DELETE | /api/v1/tenant/apps/:app_id/users/:user_id |
+| POST | /api/v1/tenant/apps/:app_id/users/:user_id/check-access |
 | GET | /api/v1/tenant/apps/:app_id/users/:user_id/permissions |
 | HEAD | /api/v1/tenant/apps/:app_id/users/:user_id/permissions |
 | POST | /api/v1/tenant/apps/:app_id/users/:user_id/permissions |
@@ -597,6 +598,8 @@
 | PUT | /api/v1/tenant/permissions/:id |
 | GET | /api/v1/tenant/permissions/categories |
 | HEAD | /api/v1/tenant/permissions/categories |
+| POST | /api/v1/tenant/permissions/check |
+| POST | /api/v1/tenant/permissions/import |
 | GET | /api/v1/tenant/plans/ |
 | HEAD | /api/v1/tenant/plans/ |
 | POST | /api/v1/tenant/plans/ |
@@ -636,6 +639,8 @@
 | DELETE | /api/v1/tenant/roles/:id/permissions/:permission_id |
 | DELETE | /api/v1/tenant/roles/:id/permissions/:permission_id |
 | POST | /api/v1/tenant/roles/assign |
+| POST | /api/v1/tenant/roles/check |
+| POST | /api/v1/tenant/roles/import |
 | GET | /api/v1/tenant/roles/users |
 | HEAD | /api/v1/tenant/roles/users |
 | GET | /api/v1/tenant/roles/users/:user_id |

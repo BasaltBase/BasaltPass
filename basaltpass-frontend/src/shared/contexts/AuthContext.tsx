@@ -190,7 +190,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     user,
     tenants,
     canAccessAdmin: !!user?.is_super_admin,
-    canAccessTenant: !!user?.has_tenant || tenants.length > 0,
+    canAccessTenant: !!user?.has_tenant,
     isAuthenticated: !!user,
     isLoading,
     login,

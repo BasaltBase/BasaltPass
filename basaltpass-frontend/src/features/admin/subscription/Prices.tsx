@@ -229,9 +229,6 @@ export default function AdminPrices() {
   return (
     <AdminLayout title="价格管理">
       <div className="space-y-6">
-          </ol>
-        </nav>
-
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-semibold text-gray-900">定价管理</h1>
           <div className="flex items-center space-x-3">

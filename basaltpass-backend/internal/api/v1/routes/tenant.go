@@ -40,6 +40,8 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 	tenantPermissionGroup := tenantGroup.Group("/permissions")
 	tenantPermissionGroup.Get("/", tenant2.GetTenantPermissions)
 	tenantPermissionGroup.Post("/", tenant2.CreateTenantPermission)
+	tenantPermissionGroup.Post("/import", tenant2.ImportTenantPermissions)
+	tenantPermissionGroup.Post("/check", tenant2.CheckTenantUserPermissions)
 	tenantPermissionGroup.Put("/:id", tenant2.UpdateTenantPermission)
 	tenantPermissionGroup.Delete("/:id", tenant2.DeleteTenantPermission)
 	tenantPermissionGroup.Get("/categories", tenant2.GetTenantPermissionCategories)
@@ -48,6 +50,8 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 	tenantRoleGroupV2 := tenantGroup.Group("/roles")
 	tenantRoleGroupV2.Get("/", tenant2.GetTenantRoles)
 	tenantRoleGroupV2.Post("/", tenant2.CreateTenantRole)
+	tenantRoleGroupV2.Post("/import", tenant2.ImportTenantRoles)
+	tenantRoleGroupV2.Post("/check", tenant2.CheckTenantUserRoles)
 	tenantRoleGroupV2.Put("/:id", tenant2.UpdateTenantRole)
 	tenantRoleGroupV2.Delete("/:id", tenant2.DeleteTenantRole)
 	tenantRoleGroupV2.Get("/users", tenant2.GetTenantUsersForRole)
@@ -163,12 +167,14 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 	// 应用权限管理路由
 	tenantAppGroup.Get("/:app_id/permissions", app_rbac2.GetAppPermissions)
 	tenantAppGroup.Post("/:app_id/permissions", app_rbac2.CreateAppPermission)
+	tenantAppGroup.Post("/:app_id/permissions/import", app_rbac2.ImportAppPermissions)
 	tenantAppGroup.Put("/:app_id/permissions/:permission_id", app_rbac2.UpdateAppPermission)
 	tenantAppGroup.Delete("/:app_id/permissions/:permission_id", app_rbac2.DeleteAppPermission)
 
 	// 应用角色管理路由
 	tenantAppGroup.Get("/:app_id/roles", app_rbac2.GetAppRoles)
 	tenantAppGroup.Post("/:app_id/roles", app_rbac2.CreateAppRole)
+	tenantAppGroup.Post("/:app_id/roles/import", app_rbac2.ImportAppRoles)
 	tenantAppGroup.Put("/:app_id/roles/:role_id", app_rbac2.UpdateAppRole)
 	tenantAppGroup.Delete("/:app_id/roles/:role_id", app_rbac2.DeleteAppRole)
 
@@ -180,6 +186,7 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 
 	// 应用用户权限管理路由
 	tenantAppGroup.Get("/:app_id/users/:user_id/permissions", app_rbac2.GetUserPermissions)
+	tenantAppGroup.Post("/:app_id/users/:user_id/check-access", app_rbac2.CheckUserAccess)
 	tenantAppGroup.Post("/:app_id/users/:user_id/permissions", app_rbac2.GrantUserPermissions)
 	tenantAppGroup.Delete("/:app_id/users/:user_id/permissions/:permission_id", app_rbac2.RevokeUserPermission)
 	tenantAppGroup.Post("/:app_id/users/:user_id/roles", app_rbac2.AssignUserRoles)

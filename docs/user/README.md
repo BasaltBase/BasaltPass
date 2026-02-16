@@ -5,6 +5,7 @@
 ## 你可以从这里开始
 
 - 快速开始（拿到 token 并调用一个接口）：./quickstart.md
+- 第三方 App 完整接入指南（基于 CanShelf 实践）：./third-party-app-integration.md
 - 鉴权与会话（JWT、console scope、租户上下文）：./auth.md
 - OAuth2 / OIDC（授权码 + PKCE，userinfo 等）：./oauth2.md
 - 租户控制台 API（/api/v1/tenant/...）：./tenant-admin.md

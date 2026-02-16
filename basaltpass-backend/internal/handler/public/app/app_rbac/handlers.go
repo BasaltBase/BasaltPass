@@ -3,6 +3,7 @@ package app_rbac
 import (
 	"errors"
 	"strconv"
+	"strings"
 	"time"
 
 	"basaltpass-backend/internal/common"
@@ -58,6 +59,19 @@ type GrantPermissionRequest struct {
 type AssignRoleRequest struct {
 	RoleIDs   []uint     `json:"role_ids" validate:"required"`
 	ExpiresAt *time.Time `json:"expires_at,omitempty"`
+}
+
+type ImportAppPermissionRequest struct {
+	Category string   `json:"category"`
+	Content  string   `json:"content"`
+	Codes    []string `json:"codes"`
+	Items    []string `json:"items"`
+}
+
+type ImportAppRoleRequest struct {
+	Content string   `json:"content"`
+	Codes   []string `json:"codes"`
+	Items   []string `json:"items"`
 }
 
 // GetAppPermissions 获取应用权限列表
@@ -390,4 +404,187 @@ func DeleteAppRole(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusNoContent).Send(nil)
+}
+
+// ImportAppPermissions 批量导入应用权限码（支持文本/文件）
+// POST /api/v1/tenant/apps/:app_id/permissions/import
+func ImportAppPermissions(c *fiber.Ctx) error {
+	appID, err := strconv.ParseUint(c.Params("app_id"), 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "无效的应用ID"})
+	}
+	tenantID := c.Locals("tenantID").(uint)
+
+	var app model.App
+	if err := common.DB().Where("id = ? AND tenant_id = ?", appID, tenantID).First(&app).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "应用不存在"})
+	}
+
+	contentType := strings.ToLower(c.Get("Content-Type"))
+	category := "imported"
+	raw := ""
+	if strings.HasPrefix(contentType, "multipart/form-data") {
+		category = c.FormValue("category", "imported")
+		raw, err = readImportRawContent(c)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "读取导入文件失败"})
+		}
+	} else {
+		var req ImportAppPermissionRequest
+		if err := c.BodyParser(&req); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
+		}
+		if strings.TrimSpace(req.Category) != "" {
+			category = strings.TrimSpace(req.Category)
+		}
+		raw = req.Content
+		if raw == "" && len(req.Codes) > 0 {
+			raw = codesToRaw(req.Codes)
+		}
+		if raw == "" && len(req.Items) > 0 {
+			raw = codesToRaw(req.Items)
+		}
+	}
+
+	codes, inputDuplicateCount := normalizeCodesFromRaw(raw)
+	if len(codes) == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "未解析到可导入的权限码"})
+	}
+
+	createdCount := 0
+	existingCount := 0
+	createdCodes := make([]string, 0, len(codes))
+	existingCodes := make([]string, 0)
+	now := time.Now()
+
+	for _, code := range codes {
+		var existing model.AppPermission
+		err := common.DB().Where("app_id = ? AND code = ?", appID, code).First(&existing).Error
+		if err == nil {
+			existingCount++
+			existingCodes = append(existingCodes, code)
+			continue
+		}
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "检查权限码失败"})
+		}
+
+		permission := model.AppPermission{
+			Code:        code,
+			Name:        code,
+			Description: "imported",
+			Category:    category,
+			AppID:       uint(appID),
+			TenantID:    tenantID,
+			CreatedAt:   now,
+			UpdatedAt:   now,
+		}
+		if err := common.DB().Create(&permission).Error; err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "导入权限码失败"})
+		}
+		createdCount++
+		createdCodes = append(createdCodes, code)
+	}
+
+	return c.JSON(fiber.Map{
+		"data": fiber.Map{
+			"app_id":                   appID,
+			"tenant_id":                tenantID,
+			"category":                 category,
+			"created_count":            createdCount,
+			"existing_count":           existingCount,
+			"input_duplicate_filtered": inputDuplicateCount,
+			"created_codes":            createdCodes,
+			"existing_codes":           existingCodes,
+		},
+		"message": "应用权限码导入完成",
+	})
+}
+
+// ImportAppRoles 批量导入应用角色码（支持文本/文件）
+// POST /api/v1/tenant/apps/:app_id/roles/import
+func ImportAppRoles(c *fiber.Ctx) error {
+	appID, err := strconv.ParseUint(c.Params("app_id"), 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "无效的应用ID"})
+	}
+	tenantID := c.Locals("tenantID").(uint)
+
+	var app model.App
+	if err := common.DB().Where("id = ? AND tenant_id = ?", appID, tenantID).First(&app).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "应用不存在"})
+	}
+
+	contentType := strings.ToLower(c.Get("Content-Type"))
+	raw := ""
+	if strings.HasPrefix(contentType, "multipart/form-data") {
+		raw, err = readImportRawContent(c)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "读取导入文件失败"})
+		}
+	} else {
+		var req ImportAppRoleRequest
+		if err := c.BodyParser(&req); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
+		}
+		raw = req.Content
+		if raw == "" && len(req.Codes) > 0 {
+			raw = codesToRaw(req.Codes)
+		}
+		if raw == "" && len(req.Items) > 0 {
+			raw = codesToRaw(req.Items)
+		}
+	}
+
+	codes, inputDuplicateCount := normalizeCodesFromRaw(raw)
+	if len(codes) == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "未解析到可导入的角色码"})
+	}
+
+	createdCount := 0
+	existingCount := 0
+	createdCodes := make([]string, 0, len(codes))
+	existingCodes := make([]string, 0)
+	now := time.Now()
+
+	for _, code := range codes {
+		var existing model.AppRole
+		err := common.DB().Where("app_id = ? AND code = ?", appID, code).First(&existing).Error
+		if err == nil {
+			existingCount++
+			existingCodes = append(existingCodes, code)
+			continue
+		}
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "检查角色码失败"})
+		}
+
+		role := model.AppRole{
+			Code:        code,
+			Name:        code,
+			Description: "imported",
+			AppID:       uint(appID),
+			TenantID:    tenantID,
+			CreatedAt:   now,
+			UpdatedAt:   now,
+		}
+		if err := common.DB().Create(&role).Error; err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "导入角色码失败"})
+		}
+		createdCount++
+		createdCodes = append(createdCodes, code)
+	}
+
+	return c.JSON(fiber.Map{
+		"data": fiber.Map{
+			"app_id":                   appID,
+			"tenant_id":                tenantID,
+			"created_count":            createdCount,
+			"existing_count":           existingCount,
+			"input_duplicate_filtered": inputDuplicateCount,
+			"created_codes":            createdCodes,
+			"existing_codes":           existingCodes,
+		},
+		"message": "应用角色码导入完成",
+	})
 }

@@ -29,6 +29,7 @@ func firstNonEmptyString(payload map[string]interface{}, keys ...string) string 
 	return ""
 }
 
+// RegisterHandler handles POST /auth/register (DEPRECATED - use /signup/start instead) 用于兼容非标准客户端的注册请求
 func hydrateLegacyLoginFields(c *fiber.Ctx, req *auth2.LoginRequest) {
 	if strings.TrimSpace(req.EmailOrPhone) != "" && strings.TrimSpace(req.Password) != "" {
 		return
@@ -90,7 +91,7 @@ func RegisterHandler(c *fiber.Ctx) error {
 	// 旧的注册API已被弃用，重定向到新的验证码流程
 	return c.Status(fiber.StatusGone).JSON(fiber.Map{
 		"error":        "This registration endpoint has been deprecated. Please use the new verification-based registration flow.",
-		"message":      "请使用新的邮箱验证注册流程。访问 /register 页面进行注册。",
+		"message":      "The /auth/register endpoint is no longer available. To create an account, please start with the /signup/start endpoint which initiates the new verification-based registration process.",
 		"new_endpoint": "/api/v1/signup/start",
 	})
 }
@@ -101,6 +102,7 @@ func LoginHandler(c *fiber.Ctx) error {
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
+	// Hydrate legacy fields for backward compatibility with old clients.
 	hydrateLegacyLoginFields(c, &req)
 
 	result, err := svc.LoginV2(req)
@@ -172,37 +174,6 @@ func RefreshHandler(c *fiber.Ctx) error {
 	setAuthCookies(c, scope, tokens.AccessToken, tokens.RefreshToken)
 
 	return c.JSON(fiber.Map{"access_token": tokens.AccessToken})
-}
-
-// RequestResetHandler handles password reset code request
-func RequestResetHandler(c *fiber.Ctx) error {
-	var body struct {
-		Identifier string `json:"identifier"`
-	}
-	if err := c.BodyParser(&body); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
-	}
-	code, err := RequestPasswordReset(body.Identifier)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
-	}
-	return c.JSON(fiber.Map{"code": code}) // mock returns code directly
-}
-
-// ResetPasswordHandler handles actual password reset
-func ResetPasswordHandler(c *fiber.Ctx) error {
-	var body struct {
-		Identifier string `json:"identifier"`
-		Code       string `json:"code"`
-		Password   string `json:"password"`
-	}
-	if err := c.BodyParser(&body); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
-	}
-	if err := ResetPassword(body.Identifier, body.Code, body.Password); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
-	}
-	return c.SendStatus(fiber.StatusNoContent)
 }
 
 // Verify2FAHandler handles POST /auth/verify-2fa

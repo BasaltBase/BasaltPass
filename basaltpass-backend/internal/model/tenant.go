@@ -38,22 +38,23 @@ type Tenant struct {
 	UpdatedAt   time.Time    `json:"updated_at"`
 
 	// 关联
-	TenantAdmins []TenantAdmin `gorm:"foreignKey:TenantID" json:"tenant_admins,omitempty"`
-	Apps         []App         `gorm:"foreignKey:TenantID" json:"apps,omitempty"`
+	TenantUsers []TenantUser `gorm:"foreignKey:TenantID" json:"tenant_users,omitempty"`
+	Apps        []App        `gorm:"foreignKey:TenantID" json:"apps,omitempty"`
 	// Note: 租户RBAC角色现在在独立的 TenantRbacRole 模型中，不再通过这里关联
 }
 
-// TenantRole 租户角色类型（用于表示租户管理员级别：owner/admin/member）
+// TenantRole 租户角色类型（用于表示租户管理员级别：owner/admin/member/user）
 type TenantRole string
 
 const (
 	TenantRoleOwner  TenantRole = "owner"
 	TenantRoleAdmin  TenantRole = "tenant"
 	TenantRoleMember TenantRole = "member"
+	TenantRoleUser   TenantRole = "user"
 )
 
-// TenantAdmin 租户管理员关联模型（原UserTenant重命名）
-type TenantAdmin struct {
+// TenantUser 租户管理员关联模型（原UserTenant重命名）
+type TenantUser struct {
 	ID       uint       `gorm:"primaryKey" json:"id"`
 	UserID   uint       `gorm:"not null;index" json:"user_id"`
 	TenantID uint       `gorm:"not null;index" json:"tenant_id"`
@@ -68,8 +69,8 @@ type TenantAdmin struct {
 }
 
 // TableName 设置表名
-func (TenantAdmin) TableName() string {
-	return "tenant_admins"
+func (TenantUser) TableName() string {
+	return "tenant_users"
 }
 
 // AppUser 应用用户关联模型 - 记录用户对应用的授权信息

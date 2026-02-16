@@ -12,7 +12,7 @@
 - ✅ 注册流程支持tenant_id
 - ✅ 登录流程区分平台登录和租户登录
 - ✅ JWT Token包含用户的tenant_id
-- ✅ 平台登录限制（只允许admin和tenant_admin）
+- ✅ 平台登录限制（只允许admin和tenant_user中的admin或user）
 
 ### 3. OAuth2授权流程更新
 - ✅ 添加用户租户验证（ValidateUserTenant）

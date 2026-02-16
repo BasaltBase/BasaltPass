@@ -748,7 +748,7 @@ export default function TenantUserManagement() {
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
                               {getRoleText(user.role)}
                             </span>
-                            {!user.is_tenant_admin && (
+                            {!user.is_tenant_user && (
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">应用用户</span>
                             )}
                           </div>
@@ -783,7 +783,7 @@ export default function TenantUserManagement() {
                         align: 'right',
                         render: (user: TenantUser) => (
                           <div className="flex items-center justify-end space-x-2">
-                            {user.is_tenant_admin && user.role !== 'owner' && (
+                            {user.is_tenant_user && user.role !== 'owner' && (
                               <>
                                 <PButton
                                   variant="ghost"
@@ -805,7 +805,7 @@ export default function TenantUserManagement() {
                                 </PButton>
                               </>
                             )}
-                            {user.is_tenant_admin && user.status === 'inactive' && (
+                            {user.is_tenant_user && user.status === 'inactive' && (
                               <PButton
                                 variant="ghost"
                                 size="sm"

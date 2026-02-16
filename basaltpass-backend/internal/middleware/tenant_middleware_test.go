@@ -29,7 +29,7 @@ func setupTenantMiddlewareTestDB(t *testing.T) *gorm.DB {
 		t.Fatalf("failed to open test database: %v", err)
 	}
 
-	if err := db.AutoMigrate(&model.Tenant{}, &model.TenantAdmin{}); err != nil {
+	if err := db.AutoMigrate(&model.Tenant{}, &model.TenantUser{}); err != nil {
 		t.Fatalf("failed to migrate test schema: %v", err)
 	}
 
@@ -52,17 +52,17 @@ func createTenantForTest(t *testing.T, db *gorm.DB, code string, status model.Te
 	return tenant
 }
 
-func createTenantAdminForTest(t *testing.T, db *gorm.DB, userID, tenantID uint, role model.TenantRole, createdAt time.Time) {
+func createTenantUserForTest(t *testing.T, db *gorm.DB, userID, tenantID uint, role model.TenantRole, createdAt time.Time) {
 	t.Helper()
 
-	tenantAdmin := model.TenantAdmin{
+	tenantUser := model.TenantUser{
 		UserID:    userID,
 		TenantID:  tenantID,
 		Role:      role,
 		CreatedAt: createdAt,
 		UpdatedAt: createdAt,
 	}
-	if err := db.Create(&tenantAdmin).Error; err != nil {
+	if err := db.Create(&tenantUser).Error; err != nil {
 		t.Fatalf("failed to create tenant admin: %v", err)
 	}
 }
@@ -167,7 +167,7 @@ func TestTenantMiddleware_RejectsSpoofedTenantID(t *testing.T) {
 	userID := uint(10)
 	tenant1 := createTenantForTest(t, db, "spoof-a", model.TenantStatusActive)
 	tenant2 := createTenantForTest(t, db, "spoof-b", model.TenantStatusActive)
-	createTenantAdminForTest(t, db, userID, tenant1.ID, model.TenantRoleAdmin, time.Now().UTC())
+	createTenantUserForTest(t, db, userID, tenant1.ID, model.TenantRoleAdmin, time.Now().UTC())
 
 	app := testAppWithTenantMiddleware(map[string]interface{}{
 		"userID":   userID,
@@ -191,8 +191,8 @@ func TestTenantMiddleware_UsesAssociatedTenantAndRole(t *testing.T) {
 	secondTenant := createTenantForTest(t, db, "secondary-tenant", model.TenantStatusActive)
 
 	base := time.Now().UTC()
-	createTenantAdminForTest(t, db, userID, firstTenant.ID, model.TenantRoleMember, base.Add(-2*time.Hour))
-	createTenantAdminForTest(t, db, userID, secondTenant.ID, model.TenantRoleOwner, base.Add(-1*time.Hour))
+	createTenantUserForTest(t, db, userID, firstTenant.ID, model.TenantRoleMember, base.Add(-2*time.Hour))
+	createTenantUserForTest(t, db, userID, secondTenant.ID, model.TenantRoleOwner, base.Add(-1*time.Hour))
 
 	app := testAppWithTenantMiddleware(map[string]interface{}{
 		"userID": userID,
@@ -216,7 +216,7 @@ func TestTenantMiddleware_RejectsInactiveTenant(t *testing.T) {
 
 	userID := uint(30)
 	suspendedTenant := createTenantForTest(t, db, "suspended-tenant", model.TenantStatusSuspended)
-	createTenantAdminForTest(t, db, userID, suspendedTenant.ID, model.TenantRoleAdmin, time.Now().UTC())
+	createTenantUserForTest(t, db, userID, suspendedTenant.ID, model.TenantRoleAdmin, time.Now().UTC())
 
 	app := testAppWithTenantMiddleware(map[string]interface{}{
 		"userID": userID,
@@ -235,7 +235,7 @@ func TestTenantMiddleware_RejectsInvalidTenantAssociation(t *testing.T) {
 	db := setupTenantMiddlewareTestDB(t)
 
 	userID := uint(40)
-	createTenantAdminForTest(t, db, userID, 9999, model.TenantRoleAdmin, time.Now().UTC())
+	createTenantUserForTest(t, db, userID, 9999, model.TenantRoleAdmin, time.Now().UTC())
 
 	app := testAppWithTenantMiddleware(map[string]interface{}{
 		"userID": userID,
@@ -256,8 +256,8 @@ func TestTenantOwnerMiddleware_AllowsOwnerOnly(t *testing.T) {
 	tenantID := uint(100)
 	ownerID := uint(1)
 	adminID := uint(2)
-	createTenantAdminForTest(t, db, ownerID, tenantID, model.TenantRoleOwner, time.Now().UTC())
-	createTenantAdminForTest(t, db, adminID, tenantID, model.TenantRoleAdmin, time.Now().UTC())
+	createTenantUserForTest(t, db, ownerID, tenantID, model.TenantRoleOwner, time.Now().UTC())
+	createTenantUserForTest(t, db, adminID, tenantID, model.TenantRoleAdmin, time.Now().UTC())
 
 	t.Run("owner can pass", func(t *testing.T) {
 		app := testAppWithGuard(map[string]interface{}{
@@ -301,7 +301,7 @@ func TestTenantOwnerMiddleware_AllowsOwnerOnly(t *testing.T) {
 	})
 }
 
-func TestTenantAdminMiddleware_AllowsOwnerAndAdminOnly(t *testing.T) {
+func TestTenantUserMiddleware_AllowsOwnerAndAdminOnly(t *testing.T) {
 	db := setupTenantMiddlewareTestDB(t)
 
 	tenantID := uint(200)
@@ -310,15 +310,15 @@ func TestTenantAdminMiddleware_AllowsOwnerAndAdminOnly(t *testing.T) {
 	memberID := uint(13)
 	otherID := uint(14)
 
-	createTenantAdminForTest(t, db, ownerID, tenantID, model.TenantRoleOwner, time.Now().UTC())
-	createTenantAdminForTest(t, db, adminID, tenantID, model.TenantRoleAdmin, time.Now().UTC())
-	createTenantAdminForTest(t, db, memberID, tenantID, model.TenantRoleMember, time.Now().UTC())
+	createTenantUserForTest(t, db, ownerID, tenantID, model.TenantRoleOwner, time.Now().UTC())
+	createTenantUserForTest(t, db, adminID, tenantID, model.TenantRoleAdmin, time.Now().UTC())
+	createTenantUserForTest(t, db, memberID, tenantID, model.TenantRoleMember, time.Now().UTC())
 
 	t.Run("owner can pass", func(t *testing.T) {
 		app := testAppWithGuard(map[string]interface{}{
 			"userID":   ownerID,
 			"tenantID": tenantID,
-		}, TenantAdminMiddleware())
+		}, TenantUserMiddleware())
 
 		resp, _ := doGet(t, app)
 		if resp.StatusCode != fiber.StatusOK {
@@ -330,7 +330,7 @@ func TestTenantAdminMiddleware_AllowsOwnerAndAdminOnly(t *testing.T) {
 		app := testAppWithGuard(map[string]interface{}{
 			"userID":   adminID,
 			"tenantID": tenantID,
-		}, TenantAdminMiddleware())
+		}, TenantUserMiddleware())
 
 		resp, _ := doGet(t, app)
 		if resp.StatusCode != fiber.StatusOK {
@@ -342,7 +342,7 @@ func TestTenantAdminMiddleware_AllowsOwnerAndAdminOnly(t *testing.T) {
 		app := testAppWithGuard(map[string]interface{}{
 			"userID":   memberID,
 			"tenantID": tenantID,
-		}, TenantAdminMiddleware())
+		}, TenantUserMiddleware())
 
 		resp, body := doGet(t, app)
 		if resp.StatusCode != fiber.StatusForbidden {
@@ -357,7 +357,7 @@ func TestTenantAdminMiddleware_AllowsOwnerAndAdminOnly(t *testing.T) {
 		app := testAppWithGuard(map[string]interface{}{
 			"userID":   otherID,
 			"tenantID": tenantID,
-		}, TenantAdminMiddleware())
+		}, TenantUserMiddleware())
 
 		resp, body := doGet(t, app)
 		if resp.StatusCode != fiber.StatusForbidden {
@@ -371,7 +371,7 @@ func TestTenantAdminMiddleware_AllowsOwnerAndAdminOnly(t *testing.T) {
 	t.Run("missing context is rejected", func(t *testing.T) {
 		app := testAppWithGuard(map[string]interface{}{
 			"userID": ownerID,
-		}, TenantAdminMiddleware())
+		}, TenantUserMiddleware())
 
 		resp, body := doGet(t, app)
 		if resp.StatusCode != fiber.StatusUnauthorized {

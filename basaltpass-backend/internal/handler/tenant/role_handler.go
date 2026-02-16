@@ -2,6 +2,7 @@ package tenant
 
 import (
 	"strconv"
+	"strings"
 	"time"
 
 	"basaltpass-backend/internal/common"
@@ -45,6 +46,18 @@ type PermissionInfo struct {
 type UserRoleRequest struct {
 	UserID  uint   `json:"user_id" validate:"required"`
 	RoleIDs []uint `json:"role_ids" validate:"required"`
+}
+
+type CheckTenantRoleRequest struct {
+	UserID    uint     `json:"user_id"`
+	RoleCode  string   `json:"role_code"`
+	RoleCodes []string `json:"role_codes"`
+}
+
+type ImportTenantRoleRequest struct {
+	Content string   `json:"content"`
+	Codes   []string `json:"codes"`
+	Items   []string `json:"items"`
 }
 
 // UserRoleResponse 用户角色响应
@@ -437,11 +450,11 @@ func GetTenantUsersForRole(c *fiber.Ctx) error {
 
 	offset := (page - 1) * pageSize
 
-	// 构建查询 - 以 users.tenant_id 为主，tenant_admins 仅补充角色
+	// 构建查询 - 以 users.tenant_id 为主，tenant_users 仅补充角色
 	query := common.DB().Table("users").
-		Select("DISTINCT users.id, users.email, users.nickname, COALESCE(tenant_admins.role, 'member') as role, users.created_at").
-		Joins("LEFT JOIN tenant_admins ON tenant_admins.user_id = users.id AND tenant_admins.tenant_id = ?", tenantID).
-		Where("users.tenant_id = ? OR tenant_admins.tenant_id = ?", tenantID, tenantID)
+		Select("DISTINCT users.id, users.email, users.nickname, COALESCE(tenant_users.role, 'member') as role, users.created_at").
+		Joins("LEFT JOIN tenant_users ON tenant_users.user_id = users.id AND tenant_users.tenant_id = ?", tenantID).
+		Where("users.tenant_id = ? OR tenant_users.tenant_id = ?", tenantID, tenantID)
 
 	if search != "" {
 		query = query.Where("(users.email LIKE ? OR users.nickname LIKE ?)",
@@ -451,8 +464,8 @@ func GetTenantUsersForRole(c *fiber.Ctx) error {
 	// 获取总数
 	var total int64
 	countQuery := common.DB().Table("users").
-		Joins("LEFT JOIN tenant_admins ON tenant_admins.user_id = users.id AND tenant_admins.tenant_id = ?", tenantID).
-		Where("users.tenant_id = ? OR tenant_admins.tenant_id = ?", tenantID, tenantID)
+		Joins("LEFT JOIN tenant_users ON tenant_users.user_id = users.id AND tenant_users.tenant_id = ?", tenantID).
+		Where("users.tenant_id = ? OR tenant_users.tenant_id = ?", tenantID, tenantID)
 	if search != "" {
 		countQuery = countQuery.Where("(users.email LIKE ? OR users.nickname LIKE ?)",
 			"%"+search+"%", "%"+search+"%")
@@ -478,5 +491,144 @@ func GetTenantUsersForRole(c *fiber.Ctx) error {
 				"total":     total,
 			},
 		},
+	})
+}
+
+// CheckTenantUserRoles 检查用户是否拥有租户角色（支持单个/批量）
+// POST /api/v1/tenant/roles/check
+func CheckTenantUserRoles(c *fiber.Ctx) error {
+	tenantID := c.Locals("tenantID").(uint)
+	var req CheckTenantRoleRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
+	}
+	if req.UserID == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "user_id 必填"})
+	}
+
+	codes := make([]string, 0, len(req.RoleCodes)+1)
+	if req.RoleCode != "" {
+		codes = append(codes, req.RoleCode)
+	}
+	codes = append(codes, req.RoleCodes...)
+	normalizedInput, inputDuplicates := normalizeCodesFromRaw(codesToRaw(codes))
+	if len(normalizedInput) == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "role_code(s) 必填"})
+	}
+
+	now := time.Now()
+	var roleCodes []string
+	if err := common.DB().
+		Table("tenant_user_rbac_roles").
+		Select("tenant_rbac_roles.code").
+		Joins("JOIN tenant_rbac_roles ON tenant_rbac_roles.id = tenant_user_rbac_roles.role_id").
+		Where("tenant_user_rbac_roles.user_id = ? AND tenant_user_rbac_roles.tenant_id = ?", req.UserID, tenantID).
+		Where("tenant_user_rbac_roles.expires_at IS NULL OR tenant_user_rbac_roles.expires_at > ?", now).
+		Pluck("tenant_rbac_roles.code", &roleCodes).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "查询用户角色失败"})
+	}
+
+	roleSet := make(map[string]bool, len(roleCodes))
+	for _, code := range roleCodes {
+		roleSet[code] = true
+	}
+
+	result := make(map[string]bool, len(normalizedInput))
+	hasAll := true
+	for _, code := range normalizedInput {
+		ok := roleSet[code]
+		result[code] = ok
+		if !ok {
+			hasAll = false
+		}
+	}
+
+	return c.JSON(fiber.Map{
+		"data": fiber.Map{
+			"user_id":                  req.UserID,
+			"tenant_id":                tenantID,
+			"roles":                    result,
+			"has_all_roles":            hasAll,
+			"input_duplicate_filtered": inputDuplicates,
+		},
+		"message": "角色校验完成",
+	})
+}
+
+// ImportTenantRoles 批量导入租户角色码（支持文本/文件）
+// POST /api/v1/tenant/roles/import
+func ImportTenantRoles(c *fiber.Ctx) error {
+	tenantID := c.Locals("tenantID").(uint)
+	contentType := c.Get("Content-Type")
+
+	raw := ""
+	if strings.HasPrefix(strings.ToLower(contentType), "multipart/form-data") {
+		var err error
+		raw, err = readImportRawContent(c)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "读取导入文件失败"})
+		}
+	} else {
+		var req ImportTenantRoleRequest
+		if err := c.BodyParser(&req); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
+		}
+		raw = req.Content
+		if raw == "" && len(req.Codes) > 0 {
+			raw = codesToRaw(req.Codes)
+		}
+		if raw == "" && len(req.Items) > 0 {
+			raw = codesToRaw(req.Items)
+		}
+	}
+
+	codes, inputDuplicateCount := normalizeCodesFromRaw(raw)
+	if len(codes) == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "未解析到可导入的角色码"})
+	}
+
+	createdCount := 0
+	existingCount := 0
+	createdCodes := make([]string, 0, len(codes))
+	existingCodes := make([]string, 0)
+	now := time.Now()
+	for _, code := range codes {
+		var existing model.TenantRbacRole
+		err := common.DB().Where("tenant_id = ? AND code = ?", tenantID, code).First(&existing).Error
+		if err == nil {
+			existingCount++
+			existingCodes = append(existingCodes, code)
+			continue
+		}
+		if err != gorm.ErrRecordNotFound {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "检查角色码失败"})
+		}
+
+		role := model.TenantRbacRole{
+			TenantID:    tenantID,
+			Code:        code,
+			Name:        code,
+			Description: "imported",
+			IsSystem:    false,
+			CreatedAt:   now,
+			UpdatedAt:   now,
+		}
+		if err := common.DB().Create(&role).Error; err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "导入角色码失败"})
+		}
+		createdCount++
+		createdCodes = append(createdCodes, code)
+	}
+
+	return c.JSON(fiber.Map{
+		"data": fiber.Map{
+			"tenant_id":                tenantID,
+			"created_count":            createdCount,
+			"existing_count":           existingCount,
+			"input_duplicate_filtered": inputDuplicateCount,
+			"created_codes":            createdCodes,
+			"existing_codes":           existingCodes,
+		},
+		"message": "角色码导入完成",
 	})
 }

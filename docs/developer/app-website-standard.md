@@ -206,6 +206,25 @@ BasaltPass 的多数租户接口依赖 tenant 上下文；你的应用也必须�
 - **方案 A（推荐，集中管理）**：业务后端通过 S2S 拉取用户 `permission_codes`，短 TTL 缓存。
 - **方案 B（嵌入式）**：把角色/权限同步到你的业务库（需要一致性策略）。
 
+如果你希望由 BasaltPass 直接完成“是否拥有权限/角色”的判断，可使用租户控制台 RBAC 校验接口（适合后台管理场景）：
+
+- `POST /api/v1/tenant/permissions/check`
+- `POST /api/v1/tenant/roles/check`
+- `POST /api/v1/tenant/apps/:app_id/users/:user_id/check-access`
+
+这些接口返回 `code -> bool` 的键值对结果，可直接映射到你的 API 授权中间件。
+
+另外，若你有大量权限点需要初始化，可使用批量导入接口：
+
+- 租户级：
+  - `POST /api/v1/tenant/permissions/import`
+  - `POST /api/v1/tenant/roles/import`
+- 应用级：
+  - `POST /api/v1/tenant/apps/:app_id/permissions/import`
+  - `POST /api/v1/tenant/apps/:app_id/roles/import`
+
+导入支持粘贴文本或上传文件，且会自动去重并统一为小写。
+
 ---
 
 ## 推荐具备（SHOULD）清单
@@ -328,6 +347,7 @@ S2S API 返回使用统一 envelope；错误处理建议优先以 HTTP status �
 
 ## 进一步阅读
 
+- 第三方 App 端到端接入（CanShelf 实战）：`docs/user/third-party-app-integration.md`
 - API 约定：`docs/developer/api-conventions.md`
 - OAuth2/OIDC：`docs/developer/oauth2-oidc.md`
 - RBAC：`docs/developer/rbac.md`

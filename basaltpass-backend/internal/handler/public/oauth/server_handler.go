@@ -3,6 +3,7 @@ package oauth
 import (
 	"basaltpass-backend/internal/config"
 	"basaltpass-backend/internal/service/aduit"
+	"encoding/base64"
 	"net/http"
 	"net/url"
 	"os"
@@ -348,10 +349,16 @@ func UserInfoHandler(c *fiber.Ctx) error {
 // IntrospectHandler 令牌内省端点
 // POST /oauth/introspect
 func IntrospectHandler(c *fiber.Ctx) error {
-	token := c.FormValue("token")
+	authenticatedClientID := getAuthenticatedOAuthClientID(c)
+	if authenticatedClientID == "" {
+		return oauthInvalidClient(c)
+	}
+
+	token := strings.TrimSpace(c.FormValue("token"))
 	if token == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "invalid_request",
+			"error":             "invalid_request",
+			"error_description": "Missing token parameter",
 		})
 	}
 
@@ -360,6 +367,13 @@ func IntrospectHandler(c *fiber.Ctx) error {
 	if err != nil {
 		return c.JSON(fiber.Map{
 			"active": false,
+		})
+	}
+
+	if oauthToken.ClientID != authenticatedClientID {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error":             "access_denied",
+			"error_description": "Token does not belong to authenticated client",
 		})
 	}
 
@@ -378,15 +392,38 @@ func IntrospectHandler(c *fiber.Ctx) error {
 // RevokeHandler 令牌撤销端点
 // POST /oauth/revoke
 func RevokeHandler(c *fiber.Ctx) error {
-	token := c.FormValue("token")
+	authenticatedClientID := getAuthenticatedOAuthClientID(c)
+	if authenticatedClientID == "" {
+		return oauthInvalidClient(c)
+	}
+
+	token := strings.TrimSpace(c.FormValue("token"))
 	if token == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "invalid_request",
+			"error":             "invalid_request",
+			"error_description": "Missing token parameter",
+		})
+	}
+
+	tokenClientID, found, err := oauthServerService.ResolveTokenClientID(token)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "server_error",
+		})
+	}
+	if !found {
+		// RFC7009 recommends treating unknown tokens as a successful no-op.
+		return c.SendStatus(fiber.StatusOK)
+	}
+	if tokenClientID != authenticatedClientID {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error":             "access_denied",
+			"error_description": "Token does not belong to authenticated client",
 		})
 	}
 
 	// 撤销令牌
-	err := oauthServerService.RevokeToken(token)
+	err = oauthServerService.RevokeToken(token)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "server_error",
@@ -476,8 +513,13 @@ func redirectWithCode(c *fiber.Ctx, redirectURI, code, state string) error {
 
 // extractClientCredentials 提取客户端凭证（支持Basic Auth和表单参数）
 func extractClientCredentials(c *fiber.Ctx) (clientID, clientSecret string) {
-	// 尝试从Basic Auth获取
-	clientID = c.Get("client_id")
+	// 优先从 Authorization: Basic 获取（OAuth2 标准方式）
+	if basicID, basicSecret, ok := parseBasicAuthCredentials(c.Get("Authorization")); ok {
+		return basicID, basicSecret
+	}
+
+	// 向后兼容：支持自定义头 client_id/client_secret
+	clientID = strings.TrimSpace(c.Get("client_id"))
 	clientSecret = c.Get("client_secret")
 
 	if clientID != "" && clientSecret != "" {
@@ -485,8 +527,31 @@ func extractClientCredentials(c *fiber.Ctx) (clientID, clientSecret string) {
 	}
 
 	// 尝试从表单参数获取
-	clientID = c.FormValue("client_id")
+	clientID = strings.TrimSpace(c.FormValue("client_id"))
 	clientSecret = c.FormValue("client_secret")
 
 	return clientID, clientSecret
+}
+
+func parseBasicAuthCredentials(authHeader string) (clientID, clientSecret string, ok bool) {
+	parts := strings.SplitN(strings.TrimSpace(authHeader), " ", 2)
+	if len(parts) != 2 || !strings.EqualFold(parts[0], "Basic") {
+		return "", "", false
+	}
+
+	decoded, err := base64.StdEncoding.DecodeString(strings.TrimSpace(parts[1]))
+	if err != nil {
+		return "", "", false
+	}
+
+	clientID, clientSecret, ok = strings.Cut(string(decoded), ":")
+	if !ok {
+		return "", "", false
+	}
+	clientID = strings.TrimSpace(clientID)
+	if clientID == "" || clientSecret == "" {
+		return "", "", false
+	}
+
+	return clientID, clientSecret, true
 }

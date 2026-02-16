@@ -81,7 +81,7 @@ func RunMigrations() {
 
 		// 租户和应用模型
 		&model.Tenant{},
-		&model.TenantAdmin{}, // 租户管理员
+		&model.TenantUser{}, // 租户管理员
 		&model.App{},
 		&model.AppUser{},     // 业务应用用户映射
 		&model.TenantQuota{}, // 租户配额
@@ -157,6 +157,7 @@ func RunMigrations() {
 	// 删除遗留的 system_settings 表（如果存在），系统设置已迁移至文件
 	dropLegacySystemSettingsTable()
 } // handleSpecialMigrations 处理特殊的迁移情况
+
 func handleSpecialMigrations() {
 	db := common.DB()
 
@@ -190,16 +191,10 @@ func handleSpecialMigrations() {
 		return
 	}
 
-	// 现有数据库的特殊迁移逻辑
-	log.Println("[Migration] Existing database detected, applying compatibility migrations...")
+	// 现有数据库：保留最小初始化逻辑，不再执行历史结构兼容迁移。
+	log.Println("[Migration] Existing database detected, running minimal initialization...")
 
-	// 迁移用户表添加tenant_id字段
-	handleUserTenantIDMigration()
-
-	// 迁移团队表添加tenant_id字段
-	handleTeamTenantIDMigration()
-
-	// 如果由于之前失败导致仅创建了租户/角色等，但没有用户与价格，则在启用 seeding 时补种一次
+	// 如果启用了 seeding 且数据库为空壳（没有用户与价格），补种一次开发数据。
 	if cfg := config.Get(); cfg.Seeding.Enabled {
 		var userCnt, priceCnt int64
 		_ = db.Model(&model.User{}).Count(&userCnt).Error
@@ -212,87 +207,6 @@ func handleSpecialMigrations() {
 				log.Println("[Migration] Fallback dev seed completed")
 			}
 		}
-	}
-
-	// 处理 user_tenants 表重命名为 tenant_admins
-	if db.Migrator().HasTable("user_tenants") {
-		log.Println("[Migration] Found user_tenants table, migrating to tenant_admins...")
-
-		// 检查 tenant_admins 表是否已存在
-		if !db.Migrator().HasTable("tenant_admins") {
-			// 重命名表
-			if err := db.Exec("ALTER TABLE user_tenants RENAME TO tenant_admins").Error; err != nil {
-				log.Printf("[Migration] Failed to rename user_tenants to tenant_admins: %v", err)
-			} else {
-				log.Println("[Migration] Successfully renamed user_tenants to tenant_admins")
-			}
-		} else {
-			// 如果两个表都存在，需要迁移数据
-			log.Println("[Migration] Both user_tenants and tenant_admins exist, migrating data...")
-			if err := db.Exec(`
-				INSERT INTO tenant_admins (id, user_id, tenant_id, role, created_at, updated_at)
-				SELECT id, user_id, tenant_id, role, created_at, updated_at
-				FROM user_tenants
-				WHERE NOT EXISTS (
-					SELECT 1 FROM tenant_admins 
-					WHERE tenant_admins.user_id = user_tenants.user_id 
-					AND tenant_admins.tenant_id = user_tenants.tenant_id
-				)
-			`).Error; err != nil {
-				log.Printf("[Migration] Failed to migration data from user_tenants to tenant_admins: %v", err)
-			} else {
-				log.Println("[Migration] Successfully migrated data from user_tenants to tenant_admins")
-				// 删除旧表
-				if err := db.Migrator().DropTable("user_tenants"); err != nil {
-					log.Printf("[Migration] Failed to drop user_tenants table: %v", err)
-				} else {
-					log.Println("[Migration] Dropped user_tenants table")
-				}
-			}
-		}
-	}
-
-	// 处理租户表缺失字段
-	if !db.Migrator().HasColumn(&model.Tenant{}, "code") {
-		log.Println("[Migration] Adding code column to tenants table...")
-		if err := db.Exec("ALTER TABLE tenants ADD COLUMN code VARCHAR(64)").Error; err != nil {
-			log.Printf("[Migration] Failed to add code column: %v", err)
-		} else {
-			// 为现有租户设置code值
-			db.Exec("UPDATE tenants SET code = 'tenant_' || id WHERE code IS NULL OR code = ''")
-			log.Println("[Migration] Successfully added code column to tenants")
-		}
-	}
-
-	if !db.Migrator().HasColumn(&model.Tenant{}, "status") {
-		log.Println("[Migration] Adding status column to tenants table...")
-		db.Exec("ALTER TABLE tenants ADD COLUMN status VARCHAR(20) DEFAULT 'active'")
-		db.Exec("UPDATE tenants SET status = 'active' WHERE status IS NULL")
-	}
-
-	if !db.Migrator().HasColumn(&model.Tenant{}, "description") {
-		log.Println("[Migration] Adding description column to tenants table...")
-		db.Exec("ALTER TABLE tenants ADD COLUMN description VARCHAR(500)")
-	}
-
-	// 处理角色表tenant_id字段
-	if !db.Migrator().HasColumn(&model.Role{}, "tenant_id") {
-		log.Println("[Migration] Adding tenant_id column to roles table...")
-
-		// 添加可空的tenant_id字段
-		if err := db.Exec("ALTER TABLE roles ADD COLUMN tenant_id INTEGER").Error; err != nil {
-			log.Printf("[Migration] Failed to add tenant_id column: %v", err)
-			return
-		}
-
-		// 获取默认租户ID
-		var defaultTenant model.Tenant
-		if err := db.First(&defaultTenant).Error; err == nil {
-			db.Exec("UPDATE roles SET tenant_id = ? WHERE tenant_id IS NULL", defaultTenant.ID)
-			log.Printf("[Migration] Updated existing roles with default tenant_id: %d", defaultTenant.ID)
-		}
-
-		log.Println("[Migration] Successfully migrated roles table with tenant_id")
 	}
 }
 
@@ -331,7 +245,7 @@ func seedDevSuperAdmin() error {
 		return err
 	}
 
-	// 3) 在 tenant_admins 中将其关联到默认租户（code=default），作为 owner（幂等）
+	// 3) 在 tenant_users 中将其关联到默认租户（code=default），作为 owner（幂等）
 	var tenant model.Tenant
 	if err := db.Where("code = ?", "default").First(&tenant).Error; err != nil {
 		// 回退：取任意一个租户
@@ -340,10 +254,10 @@ func seedDevSuperAdmin() error {
 		}
 	}
 	var cnt int64
-	if err := db.Model(&model.TenantAdmin{}).
+	if err := db.Model(&model.TenantUser{}).
 		Where("user_id = ? AND tenant_id = ?", u.ID, tenant.ID).
 		Count(&cnt).Error; err == nil && cnt == 0 {
-		_ = db.Create(&model.TenantAdmin{UserID: u.ID, TenantID: tenant.ID, Role: model.TenantRoleOwner}).Error
+		_ = db.Create(&model.TenantUser{UserID: u.ID, TenantID: tenant.ID, Role: model.TenantRoleOwner}).Error
 	}
 	// 4) 在默认租户下创建一个演示 App，并将超管加入为 app user
 	if err := db.Where("code = ?", "default").First(&tenant).Error; err != nil {
@@ -913,17 +827,17 @@ func seedDevData() error {
 		for i, t := range tenants {
 			u := pickedUsers[i%len(pickedUsers)]
 			var cnt int64
-			if err := db.Model(&model.TenantAdmin{}).
+			if err := db.Model(&model.TenantUser{}).
 				Where("user_id = ? AND tenant_id = ?", u.ID, t.ID).
 				Count(&cnt).Error; err == nil && cnt == 0 {
-				if err := db.Create(&model.TenantAdmin{UserID: u.ID, TenantID: t.ID, Role: model.TenantRoleAdmin}).Error; err == nil {
+				if err := db.Create(&model.TenantUser{UserID: u.ID, TenantID: t.ID, Role: model.TenantRoleAdmin}).Error; err == nil {
 					adminBind++
 				} else {
-					log.Printf("[Seed][tenant_admin] bind failed tenant=%d user=%d: %v", t.ID, u.ID, err)
+					log.Printf("[Seed][tenant_user] bind failed tenant=%d user=%d: %v", t.ID, u.ID, err)
 				}
 			}
 		}
-		log.Printf("[Seed] tenant admins bound for non-default tenants: %d", adminBind)
+		log.Printf("[Seed] tenant users bound for non-default tenants: %d", adminBind)
 	}
 
 	// 4) 随机把这些用户加入到上述 10 个 app 中（可叠加）
@@ -1109,79 +1023,6 @@ func seedDevData() error {
 	return nil
 }
 
-// handleUserTenantIDMigration 处理用户表添加tenant_id字段的迁移
-func handleUserTenantIDMigration() {
-	db := common.DB()
-
-	// 检查users表是否已有tenant_id字段
-	if db.Migrator().HasColumn(&model.User{}, "tenant_id") {
-		log.Println("[Migration] tenant_id column already exists in users table")
-		ensureUserTenantScopedUniqueIndexes()
-		return
-	}
-
-	log.Println("[Migration] Adding tenant_id column to users table...")
-
-	// 1. 先删除旧的email和phone唯一索引
-	if db.Migrator().HasIndex(&model.User{}, "email") || db.Migrator().HasIndex(&model.User{}, "idx_users_email") {
-		log.Println("[Migration] Dropping old email unique index...")
-		db.Exec("DROP INDEX IF EXISTS idx_users_email")
-		db.Exec("DROP INDEX IF EXISTS users_email_key") // PostgreSQL
-	}
-
-	if db.Migrator().HasIndex(&model.User{}, "phone") || db.Migrator().HasIndex(&model.User{}, "idx_users_phone") {
-		log.Println("[Migration] Dropping old phone unique index...")
-		db.Exec("DROP INDEX IF EXISTS idx_users_phone")
-		db.Exec("DROP INDEX IF EXISTS users_phone_key") // PostgreSQL
-	}
-
-	// 2. 添加tenant_id字段，默认为0
-	if err := db.Exec("ALTER TABLE users ADD COLUMN tenant_id INTEGER NOT NULL DEFAULT 0").Error; err != nil {
-		log.Printf("[Migration] Failed to add tenant_id column: %v", err)
-		return
-	}
-
-	// 3. 为现有用户设置tenant_id
-	// 对于admin用户（is_system_admin为true）和租户管理员，tenant_id保持为0（平台级用户）
-	// 对于其他用户，尝试从tenant_admins表中获取其第一个租户ID
-	log.Println("[Migration] Setting tenant_id for existing users...")
-
-	// 先处理租户管理员：从tenant_admins表获取其管理的租户ID
-	db.Exec(`
-		UPDATE users 
-		SET tenant_id = (
-			SELECT tenant_id 
-			FROM tenant_admins 
-			WHERE tenant_admins.user_id = users.id 
-			ORDER BY created_at ASC 
-			LIMIT 1
-		)
-		WHERE id IN (SELECT user_id FROM tenant_admins)
-		AND (is_system_admin IS NULL OR is_system_admin = false)
-	`)
-
-	// 对于app_users（业务用户），从app表获取租户ID
-	db.Exec(`
-		UPDATE users 
-		SET tenant_id = (
-			SELECT apps.tenant_id 
-			FROM app_users 
-			JOIN apps ON app_users.app_id = apps.id 
-			WHERE app_users.user_id = users.id 
-			ORDER BY app_users.created_at ASC 
-			LIMIT 1
-		)
-		WHERE tenant_id = 0
-		AND (is_system_admin IS NULL OR is_system_admin = false)
-		AND id IN (SELECT user_id FROM app_users)
-	`)
-
-	// 4. 重建用户表租户范围唯一索引
-	ensureUserTenantScopedUniqueIndexes()
-
-	log.Println("[Migration] Successfully migrated users table with tenant_id column")
-}
-
 // ensureUserTenantScopedUniqueIndexes 确保 users 表中邮箱/手机号唯一性为“租户范围”
 // 目标：同一租户内 email/phone 不重复；不同租户允许重复。
 func ensureUserTenantScopedUniqueIndexes() {
@@ -1219,52 +1060,4 @@ func ensureUserTenantScopedUniqueIndexes() {
 	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_users_tenant_id ON users (tenant_id)").Error; err != nil {
 		log.Printf("[Migration] Failed to create idx_users_tenant_id: %v", err)
 	}
-}
-
-// handleTeamTenantIDMigration 处理团队表添加tenant_id字段的迁移
-func handleTeamTenantIDMigration() {
-	db := common.DB()
-
-	// 检查teams表是否已有tenant_id字段
-	if db.Migrator().HasColumn(&model.Team{}, "tenant_id") {
-		log.Println("[Migration] tenant_id column already exists in teams table")
-		return
-	}
-
-	log.Println("[Migration] Adding tenant_id column to teams table...")
-
-	// 1. 添加tenant_id字段，默认为0
-	if err := db.Exec("ALTER TABLE teams ADD COLUMN tenant_id INTEGER NOT NULL DEFAULT 0").Error; err != nil {
-		log.Printf("[Migration] Failed to add tenant_id column to teams: %v", err)
-		return
-	}
-
-	// 2. 为现有团队设置tenant_id
-	// 从团队创建者（team_members中role='owner'的用户）获取租户ID
-	log.Println("[Migration] Setting tenant_id for existing teams...")
-
-	db.Exec(`
-		UPDATE teams 
-		SET tenant_id = (
-			SELECT users.tenant_id 
-			FROM team_members 
-			JOIN users ON team_members.user_id = users.id 
-			WHERE team_members.team_id = teams.id 
-			AND team_members.role = 'owner' 
-			ORDER BY team_members.created_at ASC 
-			LIMIT 1
-		)
-		WHERE EXISTS (
-			SELECT 1 FROM team_members 
-			WHERE team_members.team_id = teams.id 
-			AND team_members.role = 'owner'
-		)
-	`)
-
-	// 3. 创建tenant_id索引以提高查询性能
-	if err := db.Exec("CREATE INDEX idx_teams_tenant_id ON teams (tenant_id)").Error; err != nil {
-		log.Printf("[Migration] Failed to create idx_teams_tenant_id: %v", err)
-	}
-
-	log.Println("[Migration] Successfully migrated teams table with tenant_id column")
 }

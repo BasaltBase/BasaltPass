@@ -41,7 +41,7 @@ func TenantMiddleware() fiber.Handler {
 			})
 		}
 
-		// 若令牌中携带了目标租户ID，只把它作为“候选值”进行 tenant_admin 关系校验
+		// 若令牌中携带了目标租户ID，只把它作为“候选值”进行 tenant_user 关系校验
 		requestedTenantID := uint(0)
 		if tidAny := c.Locals("tenantID"); tidAny != nil {
 			if tid, ok := tidAny.(uint); ok {
@@ -49,7 +49,7 @@ func TenantMiddleware() fiber.Handler {
 			}
 		}
 
-		// 控制台访问统一要求在 tenant_admins 中存在对应关系
+		// 控制台访问统一要求在 tenant_users 中存在对应关系
 		tenantID, tenantRole, err := resolveUserTenantContext(userID, requestedTenantID)
 		if err != nil {
 			fmt.Printf("[TenantMiddleware] No tenant association found for user %v: %v\n", userID, err)
@@ -82,8 +82,8 @@ func TenantMiddleware() fiber.Handler {
 }
 
 // resolveUserTenantContext 解析用户当前租户上下文：
-// 1) 若有请求租户ID，则必须命中 tenant_admins(user_id, tenant_id)
-// 2) 若无请求租户ID，则使用 tenant_admins 的首条记录作为默认租户
+// 1) 若有请求租户ID，则必须命中 tenant_users(user_id, tenant_id)
+// 2) 若无请求租户ID，则使用 tenant_users 的首条记录作为默认租户
 func resolveUserTenantContext(userID uint, requestedTenantID uint) (uint, model.TenantRole, error) {
 	query := common2.DB().Where("user_id = ?", userID)
 	if requestedTenantID > 0 {
@@ -92,12 +92,12 @@ func resolveUserTenantContext(userID uint, requestedTenantID uint) (uint, model.
 		query = query.Order("created_at ASC")
 	}
 
-	var tenantAdmin model.TenantAdmin
-	if err := query.First(&tenantAdmin).Error; err != nil {
+	var tenantUser model.TenantUser
+	if err := query.First(&tenantUser).Error; err != nil {
 		return 0, "", err
 	}
 
-	return tenantAdmin.TenantID, tenantAdmin.Role, nil
+	return tenantUser.TenantID, tenantUser.Role, nil
 }
 
 // TenantOwnerMiddleware 租户所有者中间件
@@ -113,14 +113,14 @@ func TenantOwnerMiddleware() fiber.Handler {
 		}
 
 		// 检查用户在租户中的角色
-		var tenantAdmin model.TenantAdmin
-		if err := common2.DB().Where("user_id = ? AND tenant_id = ?", userID, tenantID).First(&tenantAdmin).Error; err != nil {
+		var tenantUser model.TenantUser
+		if err := common2.DB().Where("user_id = ? AND tenant_id = ?", userID, tenantID).First(&tenantUser).Error; err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 				"error": "Access denied",
 			})
 		}
 
-		if tenantAdmin.Role != model.TenantRoleOwner {
+		if tenantUser.Role != model.TenantRoleOwner {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 				"error": "Tenant owner access required",
 			})
@@ -130,36 +130,36 @@ func TenantOwnerMiddleware() fiber.Handler {
 	}
 }
 
-// TenantAdminMiddleware 租户管理员中间件（所有者或管理员）
-func TenantAdminMiddleware() fiber.Handler {
+// TenantUserMiddleware 租户管理员中间件（所有者或管理员）
+func TenantUserMiddleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		userID := c.Locals("userID")
 		tenantID := c.Locals("tenantID")
 
 		if userID == nil || tenantID == nil {
-			fmt.Printf("[TenantAdminMiddleware] Missing context - userID: %v, tenantID: %v\n", userID, tenantID)
+			fmt.Printf("[TenantUserMiddleware] Missing context - userID: %v, tenantID: %v\n", userID, tenantID)
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error": "Missing user or tenant context",
 			})
 		}
 
 		// 检查用户在租户中的角色
-		var tenantAdmin model.TenantAdmin
-		if err := common2.DB().Where("user_id = ? AND tenant_id = ?", userID, tenantID).First(&tenantAdmin).Error; err != nil {
-			fmt.Printf("[TenantAdminMiddleware] No tenant tenant record found for user %v in tenant %v: %v\n", userID, tenantID, err)
+		var tenantUser model.TenantUser
+		if err := common2.DB().Where("user_id = ? AND tenant_id = ?", userID, tenantID).First(&tenantUser).Error; err != nil {
+			fmt.Printf("[TenantUserMiddleware] No tenant tenant record found for user %v in tenant %v: %v\n", userID, tenantID, err)
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 				"error": "Access denied",
 			})
 		}
 
-		if tenantAdmin.Role != model.TenantRoleOwner && tenantAdmin.Role != model.TenantRoleAdmin {
-			fmt.Printf("[TenantAdminMiddleware] User %v has insufficient role %s in tenant %v\n", userID, tenantAdmin.Role, tenantID)
+		if tenantUser.Role != model.TenantRoleOwner && tenantUser.Role != model.TenantRoleAdmin {
+			fmt.Printf("[TenantUserMiddleware] User %v has insufficient role %s in tenant %v\n", userID, tenantUser.Role, tenantID)
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 				"error": "Tenant tenant access required",
 			})
 		}
 
-		fmt.Printf("[TenantAdminMiddleware] User %v authorized as %s in tenant %v\n", userID, tenantAdmin.Role, tenantID)
+		fmt.Printf("[TenantUserMiddleware] User %v authorized as %s in tenant %v\n", userID, tenantUser.Role, tenantID)
 		return c.Next()
 	}
 }

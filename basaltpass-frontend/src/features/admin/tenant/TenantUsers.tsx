@@ -42,7 +42,7 @@ const TenantUsers: React.FC = () => {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [search, setSearch] = useState('')
-  const [userType, setUserType] = useState<'all' | 'tenant_admin' | 'app_user'>('all')
+  const [userType, setUserType] = useState<'all' | 'tenant_user' | 'app_user'>('all')
   const [role, setRole] = useState('')
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [isInviteOpen, setInviteOpen] = useState(false)
@@ -199,7 +199,7 @@ const TenantUsers: React.FC = () => {
   }
 
   const getRoleBadge = (role: string, userType: string) => {
-    if (userType === 'tenant_admin') {
+    if (userType === 'tenant_user') {
       switch (role) {
         case 'owner':
           return (
@@ -373,7 +373,7 @@ const TenantUsers: React.FC = () => {
                 onChange={(e) => setUserType(e.target.value as any)}
               >
                 <option value="all">所有用户</option>
-                <option value="tenant_admin">租户管理员</option>
+                <option value="tenant_user">租户管理员</option>
                 <option value="app_user">应用用户</option>
               </select>
             </div>

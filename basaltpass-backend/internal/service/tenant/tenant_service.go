@@ -141,13 +141,13 @@ func (s *TenantService) CreateTenant(ownerUserID uint, req *CreateTenantRequest)
 	}
 
 	// 添加创建者为租户所有者
-	tenantAdmin := &model.TenantAdmin{
+	tenantUser := &model.TenantUser{
 		UserID:   ownerUserID,
 		TenantID: tenant.ID,
 		Role:     model.TenantRoleOwner,
 	}
 
-	if err := tx.Create(tenantAdmin).Error; err != nil {
+	if err := tx.Create(tenantUser).Error; err != nil {
 		tx.Rollback()
 		return nil, err
 	}
@@ -253,15 +253,35 @@ func (s *TenantService) ListTenants(page, pageSize int, search string) ([]*Tenan
 func (s *TenantService) GetUserTenants(userID uint) ([]*TenantResponse, error) {
 	respMap := make(map[uint]*TenantResponse)
 
-	var tenantAdmins []model.TenantAdmin
-	if err := s.db.Preload("Tenant").Where("user_id = ?", userID).Find(&tenantAdmins).Error; err != nil {
+	// 普通用户可能只有 users.tenant_id，没有 tenant_users 记录。
+	// 先补齐主租户，保证用户控制台可以拿到当前租户名称。
+	var user model.User
+	if err := s.db.Select("tenant_id").First(&user, userID).Error; err != nil {
+		return nil, err
+	}
+	if user.TenantID > 0 {
+		var tenant model.Tenant
+		if err := s.db.First(&tenant, user.TenantID).Error; err == nil {
+			resp := s.tenantToResponse(&tenant, nil)
+			if resp.Metadata == nil {
+				resp.Metadata = make(map[string]interface{})
+			}
+			resp.Metadata["user_role"] = string(model.TenantRoleMember)
+			respMap[user.TenantID] = resp
+		}
+	}
+
+	var tenantUsers []model.TenantUser
+	if err := s.db.Preload("Tenant").Where("user_id = ?", userID).Find(&tenantUsers).Error; err != nil {
 		return nil, err
 	}
 
-	for _, ta := range tenantAdmins {
+	for _, ta := range tenantUsers {
 		resp := s.tenantToResponse(&ta.Tenant, nil)
 		// 添加用户在租户中的角色信息
-		resp.Metadata = make(map[string]interface{})
+		if resp.Metadata == nil {
+			resp.Metadata = make(map[string]interface{})
+		}
 		resp.Metadata["user_role"] = ta.Role
 		respMap[ta.TenantID] = resp
 	}
@@ -327,15 +347,15 @@ func (s *TenantService) DeleteTenant(tenantID uint) error {
 
 // GetMemberRole 获取租户成员角色
 func (s *TenantService) GetMemberRole(tenantID, userID uint) (model.TenantRole, error) {
-	var tenantAdmin model.TenantAdmin
-	if err := s.db.Where("tenant_id = ? AND user_id = ?", tenantID, userID).First(&tenantAdmin).Error; err != nil {
+	var tenantUser model.TenantUser
+	if err := s.db.Where("tenant_id = ? AND user_id = ?", tenantID, userID).First(&tenantUser).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return "", errors.New("用户不在该租户中")
 		}
 		return "", err
 	}
 
-	return tenantAdmin.Role, nil
+	return tenantUser.Role, nil
 }
 
 // InviteUserToTenant 邀请用户加入租户
@@ -350,19 +370,19 @@ func (s *TenantService) InviteUserToTenant(tenantID, inviterUserID, userID uint,
 	}
 
 	// 检查用户是否已在租户中
-	var existingTA model.TenantAdmin
+	var existingTA model.TenantUser
 	if err := s.db.Where("user_id = ? AND tenant_id = ?", userID, tenantID).First(&existingTA).Error; err == nil {
 		return errors.New("用户已在租户中")
 	}
 
 	// 创建租户管理员关联
-	tenantAdmin := &model.TenantAdmin{
+	tenantUser := &model.TenantUser{
 		UserID:   userID,
 		TenantID: tenantID,
 		Role:     role,
 	}
 
-	if err := s.db.Create(tenantAdmin).Error; err != nil {
+	if err := s.db.Create(tenantUser).Error; err != nil {
 		return err
 	}
 
@@ -392,7 +412,7 @@ func (s *TenantService) getTenantStats(tenantID uint) *TenantStats {
 	stats := &TenantStats{}
 
 	// 用户统计
-	s.db.Model(&model.TenantAdmin{}).Where("tenant_id = ?", tenantID).Count(&stats.TotalUsers)
+	s.db.Model(&model.TenantUser{}).Where("tenant_id = ?", tenantID).Count(&stats.TotalUsers)
 
 	// 应用统计
 	s.db.Model(&model.App{}).Where("tenant_id = ?", tenantID).Count(&stats.TotalApps)
@@ -406,7 +426,7 @@ func (s *TenantService) getTenantDetailStats(tenantID uint) *TenantDetailStats {
 	stats := &TenantDetailStats{}
 
 	// 用户统计
-	s.db.Model(&model.TenantAdmin{}).Where("tenant_id = ?", tenantID).Count(&stats.TotalUsers)
+	s.db.Model(&model.TenantUser{}).Where("tenant_id = ?", tenantID).Count(&stats.TotalUsers)
 
 	// 应用统计
 	s.db.Model(&model.App{}).Where("tenant_id = ?", tenantID).Count(&stats.TotalApps)
@@ -451,7 +471,7 @@ func (s *TenantService) createDefaultRoles(tx *gorm.DB, tenantID uint) error {
 	defaultRoles := []model.TenantRbacRole{
 		{
 			TenantID:    tenantID,
-			Code:        "tenant_admin",
+			Code:        "tenant_user",
 			Name:        "租户管理员",
 			Description: "租户管理员角色",
 			IsSystem:    true,

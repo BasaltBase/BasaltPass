@@ -45,11 +45,11 @@ func normalizeTarget(t string) string {
 }
 
 func userDefaultTenantID(userID uint) (uint, error) {
-	var ta model.TenantAdmin
-	if err := common.DB().Where("user_id = ?", userID).Order("created_at ASC").First(&ta).Error; err != nil {
+	var tenantUser model.TenantUser
+	if err := common.DB().Where("user_id = ?", userID).Order("created_at ASC").First(&tenantUser).Error; err != nil {
 		return 0, err
 	}
-	return ta.TenantID, nil
+	return tenantUser.TenantID, nil
 }
 
 func userHasTenant(userID uint, tenantID uint) (bool, error) {
@@ -58,7 +58,7 @@ func userHasTenant(userID uint, tenantID uint) (bool, error) {
 	}
 
 	var cnt int64
-	err := common.DB().Model(&model.TenantAdmin{}).
+	err := common.DB().Model(&model.TenantUser{}).
 		Where("user_id = ? AND tenant_id = ?", userID, tenantID).
 		Count(&cnt).Error
 	if err != nil {

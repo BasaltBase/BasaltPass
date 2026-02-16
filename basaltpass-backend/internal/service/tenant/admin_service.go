@@ -65,7 +65,7 @@ func (s *AdminTenantService) GetTenantList(req admindto.AdminTenantListRequest) 
 	}
 	adminCounts := map[uint]int64{}
 	var rows1 []pair
-	s.db.Model(&model.TenantAdmin{}).Select("tenant_id, COUNT(*) as cnt").Where("tenant_id IN ?", ids).Group("tenant_id").Scan(&rows1)
+	s.db.Model(&model.TenantUser{}).Select("tenant_id, COUNT(*) as cnt").Where("tenant_id IN ?", ids).Group("tenant_id").Scan(&rows1)
 	for _, r := range rows1 {
 		adminCounts[r.TenantID] = r.Cnt
 	}
@@ -98,14 +98,14 @@ func (s *AdminTenantService) GetTenantDetail(id uint) (*admindto.AdminTenantDeta
 	}
 
 	var adminCount int64
-	s.db.Model(&model.TenantAdmin{}).Where("tenant_id = ?", id).Count(&adminCount)
+	s.db.Model(&model.TenantUser{}).Where("tenant_id = ?", id).Count(&adminCount)
 	var appCount int64
 	s.db.Model(&model.App{}).Where("tenant_id = ?", id).Count(&appCount)
 	var activeAppCount int64
 	s.db.Model(&model.App{}).Where("tenant_id = ? AND status = ?", id, model.AppStatusActive).Count(&activeAppCount)
 
 	// Recent users
-	var tas []model.TenantAdmin
+	var tas []model.TenantUser
 	s.db.Preload("User").Where("tenant_id = ?", id).Order("created_at DESC").Limit(5).Find(&tas)
 	recentUsers := make([]admindto.RecentUser, 0, len(tas))
 	for _, ta := range tas {
@@ -162,13 +162,13 @@ func (s *AdminTenantService) CreateTenant(req admindto.AdminCreateTenantRequest)
 			return fmt.Errorf("创建租户失败: %w", err)
 		}
 
-		// 绑定所有者到tenant_admin表，角色为owner
-		tenantAdmin := &model.TenantAdmin{
+		// 绑定所有者到tenant_user表，角色为owner
+		tenantUser := &model.TenantUser{
 			UserID:   owner.ID,
 			TenantID: tenant.ID,
 			Role:     model.TenantRoleOwner,
 		}
-		if err := tx.Create(tenantAdmin).Error; err != nil {
+		if err := tx.Create(tenantUser).Error; err != nil {
 			return fmt.Errorf("绑定租户所有者失败: %w", err)
 		}
 
@@ -236,19 +236,19 @@ func (s *AdminTenantService) GetTenantUsers(tenantID uint, req admindto.AdminTen
 	}
 	offset := (req.Page - 1) * req.Limit
 
-	q := s.db.Model(&model.TenantAdmin{}).Where("tenant_id = ?", tenantID).Preload("User")
+	q := s.db.Model(&model.TenantUser{}).Where("tenant_id = ?", tenantID).Preload("User")
 	if req.Role != "" {
 		q = q.Where("role = ?", req.Role)
 	}
 	var total int64
 	q.Count(&total)
-	var records []model.TenantAdmin
+	var records []model.TenantUser
 	if err := q.Offset(offset).Limit(req.Limit).Order("created_at DESC").Find(&records).Error; err != nil {
 		return nil, err
 	}
 	users := make([]admindto.AdminTenantUser, 0, len(records))
 	for _, r := range records {
-		users = append(users, admindto.AdminTenantUser{ID: r.UserID, Email: r.User.Email, Nickname: r.User.Nickname, Role: string(r.Role), UserType: "tenant_admin", Status: "active", CreatedAt: r.CreatedAt})
+		users = append(users, admindto.AdminTenantUser{ID: r.UserID, Email: r.User.Email, Nickname: r.User.Nickname, Role: string(r.Role), UserType: "tenant_user", Status: "active", CreatedAt: r.CreatedAt})
 	}
 	totalPages := int(math.Ceil(float64(total) / float64(req.Limit)))
 	return &admindto.AdminTenantUserListResponse{Users: users, Pagination: admindto.PaginationResponse{Page: req.Page, Limit: req.Limit, Total: total, TotalPages: totalPages}}, nil
@@ -256,7 +256,7 @@ func (s *AdminTenantService) GetTenantUsers(tenantID uint, req admindto.AdminTen
 
 // RemoveTenantUser 移除租户管理员
 func (s *AdminTenantService) RemoveTenantUser(tenantID uint, userID uint) error {
-	return s.db.Where("tenant_id = ? AND user_id = ?", tenantID, userID).Delete(&model.TenantAdmin{}).Error
+	return s.db.Where("tenant_id = ? AND user_id = ?", tenantID, userID).Delete(&model.TenantUser{}).Error
 }
 
 // 占位避免未使用导入

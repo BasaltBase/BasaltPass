@@ -33,6 +33,49 @@ func setupAdminUserTestDB(t *testing.T) *gorm.DB {
 	return db
 }
 
+func TestBuildAdminUserOrderClause(t *testing.T) {
+	tests := []struct {
+		name      string
+		sortBy    string
+		sortOrder string
+		want      string
+	}{
+		{
+			name:      "valid field and order",
+			sortBy:    "email",
+			sortOrder: "asc",
+			want:      "email ASC",
+		},
+		{
+			name:      "invalid field falls back to created_at",
+			sortBy:    "created_at; DROP TABLE users;--",
+			sortOrder: "desc",
+			want:      "created_at DESC",
+		},
+		{
+			name:      "invalid order falls back to DESC",
+			sortBy:    "email",
+			sortOrder: "desc; SELECT pg_sleep(1);--",
+			want:      "email DESC",
+		},
+		{
+			name:      "last_login alias stays supported",
+			sortBy:    "last_login",
+			sortOrder: "asc",
+			want:      "created_at ASC",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := buildAdminUserOrderClause(tt.sortBy, tt.sortOrder)
+			if got != tt.want {
+				t.Fatalf("buildAdminUserOrderClause() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestBanUserCreatesAuditLog(t *testing.T) {
 	db := setupAdminUserTestDB(t)
 	svc := NewAdminUserService(db)

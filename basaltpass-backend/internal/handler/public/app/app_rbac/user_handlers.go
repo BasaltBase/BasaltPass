@@ -19,6 +19,13 @@ type AppUser struct {
 	Status   string `json:"status"`
 }
 
+type CheckAppAccessRequest struct {
+	PermissionCode  string   `json:"permission_code"`
+	PermissionCodes []string `json:"permission_codes"`
+	RoleCode        string   `json:"role_code"`
+	RoleCodes       []string `json:"role_codes"`
+}
+
 // GetAppUsers 获取应用用户列表
 func GetAppUsers(c *fiber.Ctx) error {
 	appID, err := strconv.ParseUint(c.Params("app_id"), 10, 32)
@@ -322,4 +329,128 @@ func RevokeUserRole(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "角色撤销成功"})
+}
+
+// CheckUserAccess 检查用户在应用中是否拥有指定权限/角色（支持键值对结果）
+// POST /api/v1/tenant/apps/:app_id/users/:user_id/check-access
+func CheckUserAccess(c *fiber.Ctx) error {
+	appID, err := strconv.ParseUint(c.Params("app_id"), 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "无效的应用ID"})
+	}
+	userID, err := strconv.ParseUint(c.Params("user_id"), 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "无效的用户ID"})
+	}
+
+	tenantID := c.Locals("tenantID").(uint)
+	var app model.App
+	if err := common.DB().Where("id = ? AND tenant_id = ?", appID, tenantID).First(&app).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "应用不存在"})
+	}
+
+	var req CheckAppAccessRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
+	}
+
+	permissionInput := make([]string, 0, len(req.PermissionCodes)+1)
+	if req.PermissionCode != "" {
+		permissionInput = append(permissionInput, req.PermissionCode)
+	}
+	permissionInput = append(permissionInput, req.PermissionCodes...)
+	normalizedPermissionInput, permissionInputDuplicates := normalizeCodesFromRaw(codesToRaw(permissionInput))
+
+	roleInput := make([]string, 0, len(req.RoleCodes)+1)
+	if req.RoleCode != "" {
+		roleInput = append(roleInput, req.RoleCode)
+	}
+	roleInput = append(roleInput, req.RoleCodes...)
+	normalizedRoleInput, roleInputDuplicates := normalizeCodesFromRaw(codesToRaw(roleInput))
+
+	if len(normalizedPermissionInput) == 0 && len(normalizedRoleInput) == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "permission_code(s) 或 role_code(s) 至少提供一项"})
+	}
+
+	now := time.Now()
+	ownedPermissions := make(map[string]bool)
+	ownedRoles := make(map[string]bool)
+
+	var directPermissionCodes []string
+	if err := common.DB().
+		Table("app_user_permissions").
+		Select("app_permissions.code").
+		Joins("JOIN app_permissions ON app_permissions.id = app_user_permissions.permission_id").
+		Where("app_user_permissions.user_id = ? AND app_user_permissions.app_id = ?", userID, appID).
+		Where("app_user_permissions.expires_at IS NULL OR app_user_permissions.expires_at > ?", now).
+		Pluck("app_permissions.code", &directPermissionCodes).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "查询用户直接权限失败"})
+	}
+	for _, code := range directPermissionCodes {
+		ownedPermissions[code] = true
+	}
+
+	var roleCodes []string
+	if err := common.DB().
+		Table("app_user_roles").
+		Select("app_roles.code").
+		Joins("JOIN app_roles ON app_roles.id = app_user_roles.role_id").
+		Where("app_user_roles.user_id = ? AND app_user_roles.app_id = ?", userID, appID).
+		Where("app_user_roles.expires_at IS NULL OR app_user_roles.expires_at > ?", now).
+		Pluck("app_roles.code", &roleCodes).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "查询用户角色失败"})
+	}
+	for _, code := range roleCodes {
+		ownedRoles[code] = true
+	}
+
+	var rolePermissionCodes []string
+	if err := common.DB().
+		Table("app_user_roles").
+		Select("distinct app_permissions.code").
+		Joins("JOIN app_role_permissions ON app_role_permissions.app_role_id = app_user_roles.role_id").
+		Joins("JOIN app_permissions ON app_permissions.id = app_role_permissions.app_permission_id").
+		Where("app_user_roles.user_id = ? AND app_user_roles.app_id = ?", userID, appID).
+		Where("app_user_roles.expires_at IS NULL OR app_user_roles.expires_at > ?", now).
+		Pluck("app_permissions.code", &rolePermissionCodes).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "查询用户角色权限失败"})
+	}
+	for _, code := range rolePermissionCodes {
+		ownedPermissions[code] = true
+	}
+
+	permissionResult := make(map[string]bool, len(normalizedPermissionInput))
+	hasAllPermissions := true
+	for _, code := range normalizedPermissionInput {
+		ok := ownedPermissions[code]
+		permissionResult[code] = ok
+		if !ok {
+			hasAllPermissions = false
+		}
+	}
+
+	roleResult := make(map[string]bool, len(normalizedRoleInput))
+	hasAllRoles := true
+	for _, code := range normalizedRoleInput {
+		ok := ownedRoles[code]
+		roleResult[code] = ok
+		if !ok {
+			hasAllRoles = false
+		}
+	}
+
+	return c.JSON(fiber.Map{
+		"data": fiber.Map{
+			"user_id":                        userID,
+			"app_id":                         appID,
+			"tenant_id":                      tenantID,
+			"permissions":                    permissionResult,
+			"roles":                          roleResult,
+			"has_all_permissions":            hasAllPermissions,
+			"has_all_roles":                  hasAllRoles,
+			"permission_input_dup_filtered":  permissionInputDuplicates,
+			"role_input_dup_filtered":        roleInputDuplicates,
+		},
+		"message": "应用访问校验完成",
+	})
 }

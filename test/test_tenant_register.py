@@ -4,14 +4,54 @@
 测试每个租户的专属注册页面，验证自动发送tenant_id
 """
 
-import requests
 import json
 import time
+import subprocess
+from pathlib import Path
+
+try:
+    import requests
+except ImportError:
+    requests = None
 
 BASE_URL = "http://localhost:8080"
 
+
+def _require_requests():
+    if requests is None:
+        raise RuntimeError("缺少 requests 依赖，请先安装: pip install requests")
+
+
+def test_create_app_records_tenant_user_role_user():
+    """
+    通过后端单元测试验证：
+    用户创建租户应用时，会在 tenant_users 中记录该用户且 role=user。
+    """
+    print("\n" + "=" * 60)
+    print("CreateApp -> tenant_users(role=user) 校验")
+    print("=" * 60)
+
+    backend_dir = Path(__file__).resolve().parents[1] / "basaltpass-backend"
+    cmd = [
+        "go",
+        "test",
+        "./internal/service/app",
+        "-run",
+        "TestCreateAppCreatesTenantUserWithUserRole|TestCreateAppKeepsExistingTenantUserRole",
+    ]
+
+    result = subprocess.run(cmd, cwd=backend_dir, capture_output=True, text=True)
+    if result.returncode != 0:
+        print("   ✗ 单元测试失败")
+        print(result.stdout.strip())
+        print(result.stderr.strip())
+        raise RuntimeError("CreateApp tenant_users 行为校验失败")
+
+    print("   ✓ 单元测试通过，已验证 tenant_users(role=user) 写入逻辑")
+
 def test_tenant_registration():
     """测试租户用户注册流程"""
+    _require_requests()
     
     print("=" * 60)
     print("租户用户注册测试")
@@ -95,6 +135,7 @@ def test_tenant_registration():
 
 def test_platform_vs_tenant_isolation():
     """测试平台用户和租户用户的隔离"""
+    _require_requests()
     
     print("\n" + "=" * 60)
     print("租户隔离测试")
@@ -111,5 +152,6 @@ def test_platform_vs_tenant_isolation():
     print(f"\n✓ 每个租户的用户数据完全隔离")
 
 if __name__ == "__main__":
+    test_create_app_records_tenant_user_role_user()
     test_tenant_registration()
     test_platform_vs_tenant_isolation()

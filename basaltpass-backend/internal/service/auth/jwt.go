@@ -118,8 +118,8 @@ func GenerateTokenPairWithTenantAndScope(userID uint, tenantID uint, scope strin
 
 // getUserDefaultTenant 获取用户的默认租户ID
 func getUserDefaultTenant(userID uint) uint {
-	var tenantAdmin model.TenantAdmin
-	if err := common.DB().Where("user_id = ?", userID).Order("created_at ASC").First(&tenantAdmin).Error; err != nil {
+	var tenantUser model.TenantUser
+	if err := common.DB().Where("user_id = ?", userID).Order("created_at ASC").First(&tenantUser).Error; err != nil {
 		// 如果没有找到用户租户关联，返回默认租户ID
 		var defaultTenant model.Tenant
 		if err := common.DB().Where("code = ?", "default").First(&defaultTenant).Error; err == nil {
@@ -127,7 +127,7 @@ func getUserDefaultTenant(userID uint) uint {
 		}
 		return 1 // 最后的兜底值
 	}
-	return tenantAdmin.TenantID
+	return tenantUser.TenantID
 }
 
 // ParseToken validates a JWT and returns claims.

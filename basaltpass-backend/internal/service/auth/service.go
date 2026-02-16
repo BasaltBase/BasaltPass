@@ -158,12 +158,12 @@ func (s Service) LoginV2(req LoginRequest) (LoginResult, error) {
 
 	// 构建查询条件：email/phone + tenant_id
 	// 特殊处理：
-	// 1. 如果tenant_id = 0，表示平台登录，只允许admin和tenant_admin登录
+	// 1. 如果tenant_id = 0，表示平台登录，只允许admin和tenant_user登录
 	// 2. 如果tenant_id > 0，表示租户登录，只查询该租户下的用户
 	query := db.Preload("Passkeys").Where("email = ? OR phone = ?", req.EmailOrPhone, req.EmailOrPhone)
 
 	if req.TenantID == 0 {
-		// 平台登录：只允许admin(is_system_admin=true)或tenant_admin(存在于tenant_admins表)
+		// 平台登录：只允许admin(is_system_admin=true)或tenant_user(存在于tenant_users表)
 		// 先查询用户
 		if err := query.First(&user).Error; err != nil {
 			return LoginResult{}, normalizeLoginQueryError(err)
@@ -173,15 +173,15 @@ func (s Service) LoginV2(req LoginRequest) (LoginResult, error) {
 		isAdmin := user.IsSystemAdmin != nil && *user.IsSystemAdmin
 
 		// 检查是否是租户管理员
-		var isTenantAdmin bool
-		var tenantAdminCount int64
-		if err := db.Model(&model.TenantAdmin{}).Where("user_id = ?", user.ID).Count(&tenantAdminCount).Error; err != nil {
+		var isTenantUser bool
+		var tenantUserCount int64
+		if err := db.Model(&model.TenantUser{}).Where("user_id = ?", user.ID).Count(&tenantUserCount).Error; err != nil {
 			return LoginResult{}, fmt.Errorf("%w: %v", ErrServiceUnavailable, err)
 		}
-		isTenantAdmin = tenantAdminCount > 0
+		isTenantUser = tenantUserCount > 0
 
-		// 如果既不是admin也不是tenant_admin，拒绝平台登录
-		if !isAdmin && !isTenantAdmin {
+		// 如果既不是admin也不是tenant_user，拒绝平台登录
+		if !isAdmin && !isTenantUser {
 			return LoginResult{}, ErrPlatformAdminOnly
 		}
 	} else {
@@ -330,12 +330,12 @@ func (s Service) setupFirstUserAsGlobalAdmin(tx *gorm.DB, user *model.User) erro
 	}
 
 	// 2. 创建租户管理员关联，设置为Owner
-	tenantAdmin := model.TenantAdmin{
+	tenantUser := model.TenantUser{
 		UserID:   user.ID,
 		TenantID: defaultTenant.ID,
 		Role:     "owner", // 设置为租户Owner
 	}
-	if err := tx.Create(&tenantAdmin).Error; err != nil {
+	if err := tx.Create(&tenantUser).Error; err != nil {
 		return err
 	}
 

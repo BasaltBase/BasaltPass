@@ -154,6 +154,10 @@ func GetEmailLogsHandler(c *fiber.Ctx) error {
 		params.SortBy = sortBy
 	}
 
+	if sortOrder := c.Query("sort_order"); sortOrder != "" {
+		params.SortOrder = sortOrder
+	}
+
 	if sortDesc := c.Query("sort_desc"); sortDesc == "true" {
 		params.SortDesc = true
 	}

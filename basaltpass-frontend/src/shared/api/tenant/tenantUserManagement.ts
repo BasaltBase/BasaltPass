@@ -16,7 +16,7 @@ export interface TenantUser {
   app_count?: number
   last_authorized_at?: string
   last_active_at?: string
-  is_tenant_admin?: boolean
+  is_tenant_user?: boolean
 }
 
 export interface TenantUserStats {

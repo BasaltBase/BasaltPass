@@ -66,7 +66,7 @@ const TenantUserDetailDrawer: React.FC<TenantUserDetailDrawerProps> = ({
                   </div>
                   <div>
                     <span className="font-medium text-gray-900">用户类型</span>
-                    <p className="mt-1">{user.user_type === 'tenant_admin' ? '租户管理员' : '应用用户'}</p>
+                    <p className="mt-1">{user.user_type === 'tenant_user' ? '租户管理员' : '应用用户'}</p>
                   </div>
                   <div>
                     <span className="font-medium text-gray-900">角色</span>

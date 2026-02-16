@@ -127,11 +127,15 @@ type OAuthClientInfo struct {
 }
 
 // CreateApp 创建应用
-func (s *AppService) CreateApp(tenantID uint, req *CreateAppRequest) (*AppResponse, error) {
+func (s *AppService) CreateApp(tenantID, creatorUserID uint, req *CreateAppRequest) (*AppResponse, error) {
 	// 验证租户权限（TODO: 添加更详细的权限检查）
 	var tenant model.Tenant
 	if err := s.db.First(&tenant, tenantID).Error; err != nil {
 		return nil, errors.New("租户不存在")
+	}
+
+	if creatorUserID == 0 {
+		return nil, errors.New("无效的创建者")
 	}
 
 	// 创建应用
@@ -150,11 +154,29 @@ func (s *AppService) CreateApp(tenantID uint, req *CreateAppRequest) (*AppRespon
 		return nil, err
 	}
 
+	// 确保创建者在 tenant_users 中存在记录，角色为普通用户
+	var tenantUser model.TenantUser
+	if err := tx.Where("user_id = ? AND tenant_id = ?", creatorUserID, tenantID).First(&tenantUser).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			if err := tx.Create(&model.TenantUser{
+				UserID:   creatorUserID,
+				TenantID: tenantID,
+				Role:     model.TenantRoleUser,
+			}).Error; err != nil {
+				tx.Rollback()
+				return nil, err
+			}
+		} else {
+			tx.Rollback()
+			return nil, err
+		}
+	}
+
 	// 创建默认OAuth客户端
 	oauthClient := &model.OAuthClient{
 		AppID:     app.ID,
 		IsActive:  true,
-		CreatedBy: tenantID, // TODO: 使用实际的创建者用户ID
+		CreatedBy: creatorUserID,
 	}
 
 	// 生成客户端凭证
@@ -180,7 +202,9 @@ func (s *AppService) CreateApp(tenantID uint, req *CreateAppRequest) (*AppRespon
 		return nil, err
 	}
 
-	tx.Commit()
+	if err := tx.Commit().Error; err != nil {
+		return nil, err
+	}
 
 	// 审计日志
 	aduit.LogAudit(tenantID, "创建应用", "app", string(rune(app.ID)), "", "")

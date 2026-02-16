@@ -110,12 +110,34 @@ func (s *OAuthServerService) ValidateAuthorizeRequest(req *AuthorizeRequest) (*m
 	return &client, nil
 }
 
+// ValidateClientCredentials verifies OAuth client_id/client_secret.
+func (s *OAuthServerService) ValidateClientCredentials(clientID string, clientSecret string) (*model.OAuthClient, error) {
+	clientID = strings.TrimSpace(clientID)
+	if clientID == "" || clientSecret == "" {
+		return nil, errors.New("invalid_client")
+	}
+
+	var client model.OAuthClient
+	if err := s.db.Where("client_id = ? AND is_active = ?", clientID, true).First(&client).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("invalid_client")
+		}
+		return nil, err
+	}
+
+	if !client.VerifyClientSecret(clientSecret) {
+		return nil, errors.New("invalid_client")
+	}
+
+	return &client, nil
+}
+
 // resolveClientTenantID resolves tenant ownership for an OAuth client.
 // Fallback order:
 // 1) client.App.TenantID (preloaded)
 // 2) apps.tenant_id by client.AppID
 // 3) latest authorization record tenant_id for this client
-// 4) creator's tenant_admin tenant_id
+// 4) creator's tenant_user tenant_id
 func (s *OAuthServerService) resolveClientTenantID(client *model.OAuthClient) uint {
 	if client == nil {
 		return 0
@@ -143,7 +165,7 @@ func (s *OAuthServerService) resolveClientTenantID(client *model.OAuthClient) ui
 	}
 
 	if client.CreatedBy > 0 {
-		var admin model.TenantAdmin
+		var admin model.TenantUser
 		if err := s.db.Select("tenant_id").
 			Where("user_id = ? AND tenant_id > 0", client.CreatedBy).
 			Order("id ASC").
@@ -512,6 +534,31 @@ func (s *OAuthServerService) BuildAuthorizeURL(baseURL string, req *AuthorizeReq
 
 	u.RawQuery = q.Encode()
 	return u.String(), nil
+}
+
+// ResolveTokenClientID resolves the owner client_id of a token.
+// It checks both access token and refresh token tables.
+func (s *OAuthServerService) ResolveTokenClientID(token string) (clientID string, found bool, err error) {
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return "", false, nil
+	}
+
+	var accessToken model.OAuthAccessToken
+	if err := s.db.Select("client_id").Where("token = ?", token).First(&accessToken).Error; err == nil {
+		return accessToken.ClientID, true, nil
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return "", false, err
+	}
+
+	var refreshToken model.OAuthRefreshToken
+	if err := s.db.Select("client_id").Where("token = ?", token).First(&refreshToken).Error; err == nil {
+		return refreshToken.ClientID, true, nil
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return "", false, err
+	}
+
+	return "", false, nil
 }
 
 // RevokeToken 撤销令牌

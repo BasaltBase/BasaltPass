@@ -37,8 +37,8 @@ func RegisterOAuthRoutes(v1 fiber.Router) {
 	oauthServerGroup.Post("/consent", oauth.ConsentHandler)
 	oauthServerGroup.Post("/token", oauth.TokenHandler)
 	oauthServerGroup.Get("/userinfo", oauth.UserInfoHandler)
-	oauthServerGroup.Post("/introspect", oauth.IntrospectHandler)
-	oauthServerGroup.Post("/revoke", oauth.RevokeHandler)
+	oauthServerGroup.Post("/introspect", oauth.OAuthClientAuthMiddleware(), oauth.IntrospectHandler)
+	oauthServerGroup.Post("/revoke", oauth.OAuthClientAuthMiddleware(), oauth.RevokeHandler)
 	oauthServerGroup.Get("/jwks", oauth.JWKSHandler)
 
 	// TODO ⬇️ One-Tap Auth和Silent Auth端点
@@ -53,8 +53,6 @@ func RegisterOAuthRoutes(v1 fiber.Router) {
 	authGroup.Post("/refresh", auth2.RefreshHandler)
 	authGroup.Post("/console/authorize", middleware.JWTMiddleware(), auth2.ConsoleAuthorizeHandler)
 	authGroup.Post("/console/exchange", auth2.ConsoleExchangeHandler)
-	authGroup.Post("/password/reset-request", auth2.RequestResetHandler)
-	authGroup.Post("/password/reset", auth2.ResetPasswordHandler)
 	authGroup.Post("/verify-2fa", timeout.NewWithContext(auth2.Verify2FAHandler, authRouteTimeout))
 
 	// Passkey authentication routes

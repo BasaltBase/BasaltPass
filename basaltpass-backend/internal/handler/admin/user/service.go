@@ -17,6 +17,17 @@ type AdminUserService struct {
 	db *gorm.DB
 }
 
+var adminUserSortFieldWhitelist = map[string]string{
+	"id":            "id",
+	"created_at":    "created_at",
+	"updated_at":    "updated_at",
+	"email":         "email",
+	"phone":         "phone",
+	"nickname":      "nickname",
+	"last_login":    "created_at", // Keep compatibility with existing API enum.
+	"last_login_at": "created_at",
+}
+
 func NewAdminUserService(db *gorm.DB) *AdminUserService {
 	return &AdminUserService{db: db}
 }
@@ -80,9 +91,8 @@ func (s *AdminUserService) GetUserList(req AdminUserListRequest) (*UserListRespo
 		return nil, err
 	}
 
-	// 排序
-	orderClause := fmt.Sprintf("%s %s", req.SortBy, strings.ToUpper(req.SortOrder))
-	query = query.Order(orderClause)
+	// 排序（字段白名单 + asc/desc 限制，避免 SQL 注入）
+	query = query.Order(buildAdminUserOrderClause(req.SortBy, req.SortOrder))
 
 	// 分页
 	offset := (req.Page - 1) * req.Limit
@@ -498,4 +508,20 @@ func (s *AdminUserService) CreateUser(req AdminCreateUserRequest) (*model.User, 
 func hashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	return string(bytes), err
+}
+
+func buildAdminUserOrderClause(sortBy, sortOrder string) string {
+	field := "created_at"
+	if v, ok := adminUserSortFieldWhitelist[strings.ToLower(strings.TrimSpace(sortBy))]; ok {
+		field = v
+	}
+
+	switch strings.ToLower(strings.TrimSpace(sortOrder)) {
+	case "asc":
+		return field + " ASC"
+	case "desc":
+		return field + " DESC"
+	default:
+		return field + " DESC"
+	}
 }

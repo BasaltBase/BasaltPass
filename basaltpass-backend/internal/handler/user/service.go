@@ -25,16 +25,24 @@ func (s Service) GetProfile(userID uint) (ProfileResponse, error) {
 		tenantRole string
 	)
 
-	// 控制台访问策略：仅 tenant_admins 中存在记录的用户才视为可访问租户控制台。
-	var ta model.TenantAdmin
+	// 普通租户用户始终以 users.tenant_id 作为其默认租户上下文。
+	if u.TenantID > 0 {
+		tid := u.TenantID
+		tenantID = &tid
+	}
+
+	// 控制台访问策略：仅 tenant_users 中存在记录的用户才视为可访问租户控制台。
+	var ta model.TenantUser
 	if err := common.DB().
 		Where("user_id = ?", userID).
 		Order("created_at ASC").
 		First(&ta).Error; err == nil {
 		hasTenant = true
-		tid := ta.TenantID
-		tenantID = &tid
 		tenantRole = string(ta.Role)
+		if tenantID == nil && ta.TenantID > 0 {
+			tid := ta.TenantID
+			tenantID = &tid
+		}
 	}
 
 	return ProfileResponse{

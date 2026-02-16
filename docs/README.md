@@ -9,6 +9,7 @@
 
 - 开发文档入口：./developer/README.md
 - 用户/API 文档入口：./user/README.md
+- 第三方 App 完整接入指南（CanShelf 实践）：./user/third-party-app-integration.md
 
 ## API 索引（自动/半自动）
 

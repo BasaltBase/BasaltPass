@@ -116,7 +116,7 @@ export interface AdminTenantUser {
   email: string;
   nickname: string;
   role: 'owner' | 'admin' | 'member';
-  user_type: 'tenant_admin' | 'app_user';
+  user_type: 'tenant_user' | 'app_user';
   status: string;
   app_name?: string;
   last_active_at?: string;
@@ -154,7 +154,7 @@ export interface AdminTenantUserListRequest {
   page?: number;
   limit?: number;
   search?: string;
-  user_type?: 'all' | 'tenant_admin' | 'app_user';
+  user_type?: 'all' | 'tenant_user' | 'app_user';
   role?: string;
   status?: string;
 }

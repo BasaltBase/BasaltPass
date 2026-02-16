@@ -18,10 +18,10 @@ type TenantUserLite struct {
 	Role     string `json:"role,omitempty"`
 }
 
-func getTenantAdminUserIDs(tenantID uint) ([]uint, error) {
+func getTenantUserUserIDs(tenantID uint) ([]uint, error) {
 	db := common.DB()
 	var ids []uint
-	if err := db.Table("tenant_admins").Where("tenant_id = ?", tenantID).Pluck("user_id", &ids).Error; err != nil {
+	if err := db.Table("tenant_users").Where("tenant_id = ?", tenantID).Pluck("user_id", &ids).Error; err != nil {
 		return nil, err
 	}
 	return ids, nil
@@ -46,7 +46,7 @@ func listTenantUsersLite(tenantID uint, search string, limit int) ([]TenantUserL
 		Select("DISTINCT u.id, u.email, u.phone, u.nickname, COALESCE(ta.role, 'member') as role").
 		Joins("JOIN app_users au ON au.user_id = u.id").
 		Joins("JOIN apps a ON a.id = au.app_id").
-		Joins("LEFT JOIN tenant_admins ta ON ta.user_id = u.id AND ta.tenant_id = ?", tenantID).
+		Joins("LEFT JOIN tenant_users ta ON ta.user_id = u.id AND ta.tenant_id = ?", tenantID).
 		Where("a.tenant_id = ?", tenantID)
 
 	if s := strings.TrimSpace(search); s != "" {
@@ -138,7 +138,7 @@ func TenantListHandler(c *fiber.Ctx) error {
 	pageSize, _ := strconv.Atoi(c.Query("page_size", "20"))
 	search := strings.TrimSpace(c.Query("search", ""))
 	db := common.DB()
-	adminIDs, err := getTenantAdminUserIDs(tenantID)
+	adminIDs, err := getTenantUserUserIDs(tenantID)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -177,7 +177,7 @@ func TenantDeleteHandler(c *fiber.Ctx) error {
 	tenantID := c.Locals("tenantID").(uint)
 	nid, _ := strconv.Atoi(c.Params("id"))
 	db := common.DB()
-	adminIDs, err := getTenantAdminUserIDs(tenantID)
+	adminIDs, err := getTenantUserUserIDs(tenantID)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -194,7 +194,7 @@ func TenantGetNotificationHandler(c *fiber.Ctx) error {
 	tenantID := c.Locals("tenantID").(uint)
 	nid, _ := strconv.Atoi(c.Params("id"))
 	db := common.DB()
-	adminIDs, err := getTenantAdminUserIDs(tenantID)
+	adminIDs, err := getTenantUserUserIDs(tenantID)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -213,7 +213,7 @@ func TenantUpdateNotificationHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 	db := common.DB()
-	adminIDs, err := getTenantAdminUserIDs(tenantID)
+	adminIDs, err := getTenantUserUserIDs(tenantID)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -230,7 +230,7 @@ func TenantUpdateNotificationHandler(c *fiber.Ctx) error {
 func TenantGetNotificationStatsHandler(c *fiber.Ctx) error {
 	tenantID := c.Locals("tenantID").(uint)
 	db := common.DB()
-	adminIDs, err := getTenantAdminUserIDs(tenantID)
+	adminIDs, err := getTenantUserUserIDs(tenantID)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}

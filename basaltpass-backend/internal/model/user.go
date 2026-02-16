@@ -16,7 +16,7 @@ type User struct {
 
 	// TenantID 用户所属租户ID
 	// 普通用户必须属于某个租户
-	// admin和tenant_admin可以为0（平台级用户）
+	// admin和tenant_user可以为0（平台级用户）
 	TenantID uint `gorm:"index;not null;default:0" json:"tenant_id"`
 
 	// Email和Phone的唯一性由迁移层创建“租户范围”复合唯一索引保证：
@@ -55,7 +55,7 @@ type User struct {
 	TeamMemberships []TeamMember `gorm:"foreignKey:UserID"`
 
 	// 租户关联
-	TenantMemberships []TenantAdmin `gorm:"foreignKey:UserID"`
+	TenantMemberships []TenantUser `gorm:"foreignKey:UserID"`
 
 	// 应用授权关联
 	AppAuthorizations []AppUser `gorm:"foreignKey:UserID"`

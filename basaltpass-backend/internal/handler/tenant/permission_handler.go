@@ -2,6 +2,7 @@ package tenant
 
 import (
 	"strconv"
+	"strings"
 	"time"
 
 	"basaltpass-backend/internal/common"
@@ -17,6 +18,19 @@ type PermissionRequest struct {
 	Name        string `json:"name" validate:"required,min=1,max=100"`
 	Description string `json:"description" validate:"max=500"`
 	Category    string `json:"category" validate:"required,min=1,max=50"`
+}
+
+type CheckTenantPermissionRequest struct {
+	UserID          uint     `json:"user_id"`
+	PermissionCode  string   `json:"permission_code"`
+	PermissionCodes []string `json:"permission_codes"`
+}
+
+type ImportTenantPermissionRequest struct {
+	Category string   `json:"category"`
+	Content  string   `json:"content"`
+	Codes    []string `json:"codes"`
+	Items    []string `json:"items"`
 }
 
 // TenantPermissionResponse 租户权限响应
@@ -318,6 +332,181 @@ func GetTenantPermissionCategories(c *fiber.Ctx) error {
 		},
 		"message": "获取权限分类成功",
 	})
+}
+
+// CheckTenantUserPermissions 检查用户是否拥有租户权限（支持单个/批量）
+// POST /api/v1/tenant/permissions/check
+func CheckTenantUserPermissions(c *fiber.Ctx) error {
+	tenantID := c.Locals("tenantID").(uint)
+	var req CheckTenantPermissionRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
+	}
+	if req.UserID == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "user_id 必填"})
+	}
+
+	codes := make([]string, 0, len(req.PermissionCodes)+1)
+	if req.PermissionCode != "" {
+		codes = append(codes, req.PermissionCode)
+	}
+	codes = append(codes, req.PermissionCodes...)
+	normalizedInput, inputDuplicates := normalizeCodesFromRaw(codesToRaw(codes))
+	if len(normalizedInput) == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "permission_code(s) 必填"})
+	}
+
+	now := time.Now()
+	ownedSet := make(map[string]bool)
+
+	var directCodes []string
+	if err := common.DB().
+		Table("tenant_user_rbac_permissions").
+		Select("tenant_rbac_permissions.code").
+		Joins("JOIN tenant_rbac_permissions ON tenant_rbac_permissions.id = tenant_user_rbac_permissions.permission_id").
+		Where("tenant_user_rbac_permissions.user_id = ? AND tenant_user_rbac_permissions.tenant_id = ?", req.UserID, tenantID).
+		Where("tenant_user_rbac_permissions.expires_at IS NULL OR tenant_user_rbac_permissions.expires_at > ?", now).
+		Pluck("tenant_rbac_permissions.code", &directCodes).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "查询用户直接权限失败"})
+	}
+	for _, code := range directCodes {
+		ownedSet[code] = true
+	}
+
+	var roleCodes []string
+	if err := common.DB().
+		Table("tenant_user_rbac_roles").
+		Select("distinct tenant_rbac_permissions.code").
+		Joins("JOIN tenant_rbac_role_permissions ON tenant_rbac_role_permissions.role_id = tenant_user_rbac_roles.role_id").
+		Joins("JOIN tenant_rbac_permissions ON tenant_rbac_permissions.id = tenant_rbac_role_permissions.permission_id").
+		Where("tenant_user_rbac_roles.user_id = ? AND tenant_user_rbac_roles.tenant_id = ?", req.UserID, tenantID).
+		Where("tenant_user_rbac_roles.expires_at IS NULL OR tenant_user_rbac_roles.expires_at > ?", now).
+		Pluck("tenant_rbac_permissions.code", &roleCodes).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "查询用户角色权限失败"})
+	}
+	for _, code := range roleCodes {
+		ownedSet[code] = true
+	}
+
+	result := make(map[string]bool, len(normalizedInput))
+	hasAll := true
+	for _, code := range normalizedInput {
+		ok := ownedSet[code]
+		result[code] = ok
+		if !ok {
+			hasAll = false
+		}
+	}
+
+	return c.JSON(fiber.Map{
+		"data": fiber.Map{
+			"user_id":                  req.UserID,
+			"tenant_id":                tenantID,
+			"permissions":              result,
+			"has_all_permissions":      hasAll,
+			"input_duplicate_filtered": inputDuplicates,
+		},
+		"message": "权限校验完成",
+	})
+}
+
+// ImportTenantPermissions 批量导入租户权限码（支持文本/文件）
+// POST /api/v1/tenant/permissions/import
+func ImportTenantPermissions(c *fiber.Ctx) error {
+	tenantID := c.Locals("tenantID").(uint)
+	contentType := c.Get("Content-Type")
+
+	category := "imported"
+	raw := ""
+	if strings.HasPrefix(strings.ToLower(contentType), "multipart/form-data") {
+		category = c.FormValue("category", "imported")
+		var err error
+		raw, err = readImportRawContent(c)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "读取导入文件失败"})
+		}
+	} else {
+		var req ImportTenantPermissionRequest
+		if err := c.BodyParser(&req); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
+		}
+		if req.Category != "" {
+			category = req.Category
+		}
+		raw = req.Content
+		if raw == "" && len(req.Codes) > 0 {
+			raw = codesToRaw(req.Codes)
+		}
+		if raw == "" && len(req.Items) > 0 {
+			raw = codesToRaw(req.Items)
+		}
+	}
+
+	codes, inputDuplicateCount := normalizeCodesFromRaw(raw)
+	if len(codes) == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "未解析到可导入的权限码"})
+	}
+
+	createdCount := 0
+	existingCount := 0
+	createdCodes := make([]string, 0, len(codes))
+	existingCodes := make([]string, 0)
+	now := time.Now()
+	for _, code := range codes {
+		var existing model.TenantRbacPermission
+		err := common.DB().Where("tenant_id = ? AND code = ?", tenantID, code).First(&existing).Error
+		if err == nil {
+			existingCount++
+			existingCodes = append(existingCodes, code)
+			continue
+		}
+		if err != gorm.ErrRecordNotFound {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "检查权限码失败"})
+		}
+
+		permission := model.TenantRbacPermission{
+			Code:        code,
+			Name:        code,
+			Description: "imported",
+			Category:    category,
+			TenantID:    tenantID,
+			CreatedAt:   now,
+			UpdatedAt:   now,
+		}
+		if err := common.DB().Create(&permission).Error; err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "导入权限码失败"})
+		}
+		createdCount++
+		createdCodes = append(createdCodes, code)
+	}
+
+	return c.JSON(fiber.Map{
+		"data": fiber.Map{
+			"tenant_id":                tenantID,
+			"category":                 category,
+			"created_count":            createdCount,
+			"existing_count":           existingCount,
+			"input_duplicate_filtered": inputDuplicateCount,
+			"created_codes":            createdCodes,
+			"existing_codes":           existingCodes,
+		},
+		"message": "权限码导入完成",
+	})
+}
+
+func codesToRaw(codes []string) string {
+	return stringsJoinWithNewline(codes)
+}
+
+func stringsJoinWithNewline(items []string) string {
+	if len(items) == 0 {
+		return ""
+	}
+	out := items[0]
+	for i := 1; i < len(items); i++ {
+		out += "\n" + items[i]
+	}
+	return out
 }
 
 // AddPermissionsToRole 为角色添加权限

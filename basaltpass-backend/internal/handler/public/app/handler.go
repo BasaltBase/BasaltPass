@@ -20,6 +20,13 @@ func CreateAppHandler(c *fiber.Ctx) error {
 		})
 	}
 
+	userID := getUserIDFromContext(c)
+	if userID == 0 {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "无效的用户上下文",
+		})
+	}
+
 	var req app2.CreateAppRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -27,7 +34,7 @@ func CreateAppHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	app, err := appService.CreateApp(tenantID, &req)
+	app, err := appService.CreateApp(tenantID, userID, &req)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
@@ -256,6 +263,17 @@ func getTenantIDFromContext(c *fiber.Ctx) uint {
 	if tenantID := c.Locals("tenantID"); tenantID != nil {
 		if tid, ok := tenantID.(uint); ok {
 			return tid
+		}
+	}
+
+	return 0
+}
+
+// 辅助函数：从上下文获取用户ID
+func getUserIDFromContext(c *fiber.Ctx) uint {
+	if userID := c.Locals("userID"); userID != nil {
+		if uid, ok := userID.(uint); ok {
+			return uid
 		}
 	}
 

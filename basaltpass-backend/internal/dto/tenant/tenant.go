@@ -39,7 +39,7 @@ type AdminTenantUserListRequest struct {
 	Page     int    `query:"page" validate:"min=1"`
 	Limit    int    `query:"limit" validate:"min=1,max=100"`
 	Search   string `query:"search"`
-	UserType string `query:"user_type"` // tenant_admin, app_user, all
+	UserType string `query:"user_type"` // tenant_user, app_user, all
 	Role     string `query:"role"`      // owner, tenant, member
 	Status   string `query:"status"`    // active, suspended, banned
 }
@@ -102,7 +102,7 @@ type AdminTenantUser struct {
 	Email        string     `json:"email"`
 	Nickname     string     `json:"nickname"`
 	Role         string     `json:"role"`      // owner, tenant, member
-	UserType     string     `json:"user_type"` // tenant_admin, app_user
+	UserType     string     `json:"user_type"` // tenant_user, app_user
 	Status       string     `json:"status"`    // active, suspended, banned
 	AppName      *string    `json:"app_name,omitempty"`
 	LastActiveAt *time.Time `json:"last_active_at,omitempty"`

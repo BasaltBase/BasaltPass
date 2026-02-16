@@ -71,7 +71,7 @@ func MaintenanceMiddleware() fiber.Handler {
 
 							// Check if user is tenant admin
 							var taCount int64
-							if err := common.DB().Model(&model.TenantAdmin{}).
+							if err := common.DB().Model(&model.TenantUser{}).
 								Where("user_id = ? AND role IN ?", uid, []model.TenantRole{model.TenantRoleOwner, model.TenantRoleAdmin}).
 								Count(&taCount).Error; err == nil && taCount > 0 {
 								// Tenant admins can bypass maintenance mode for ALL routes
