@@ -1,0 +1,54 @@
+﻿
+> basaltpass-docs@0.0.0 build
+> docusaurus build
+
+node.exe : [WARNING] 
+The `siteConfig.onBrok
+enMarkdownLinks` 
+config option is 
+deprecated and will 
+be removed in 
+Docusaurus v4.
+At line:1 char:1
++ & "C:\Program Files\
+nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: ([WARNING]    
+ The `... Docusaur    
+us v4.:String) []    
+, RemoteException
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+Please migrate and 
+move this option to `s
+iteConfig.markdown.hoo
+ks.onBrokenMarkdownLin
+ks` instead.
+[INFO] [en] Creating an optimized production build...
+[WARNING] The `siteCon
+fig.onBrokenMarkdownLi
+nks` config option is 
+deprecated and will 
+be removed in 
+Docusaurus v4.
+Please migrate and 
+move this option to `s
+iteConfig.markdown.hoo
+ks.onBrokenMarkdownLin
+ks` instead.
+[90m[[90mwebpackbar[90m][39m [36mΓä╣[39m Compiling Client
+[90m[[90mwebpackbar[90m][39m [36mΓä╣[39m Compiling Server
+[90m[[90mwebpackbar[90m][39m [32mΓ£ö[39m Server: Compiled successfully in 1.52s
+[90m[[90mwebpackbar[90m][39m [32mΓ£ö[39m Client: Compiled successfully in 3.47s
+[SUCCESS] Generated static files in "build".
+[INFO] Use `npm run serve` command to test your build locally.

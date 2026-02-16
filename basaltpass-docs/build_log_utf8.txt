@@ -1,0 +1,176 @@
+﻿
+> basaltpass-docs@0.0.0 build
+> docusaurus build
+
+node.exe : [WARNING] The `s
+iteConfig.onBrokenMarkdownL
+inks` config option is 
+deprecated and will be 
+removed in Docusaurus v4.
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
+    + CategoryInfo         
+     : NotSpeci    fied: 
+([WARNING]     The `... 
+Docusaur    us v4.:String) 
+[]    , RemoteException
+    + FullyQualifiedE    
+rrorId : NativeCo    
+mmandError
+ 
+Please migrate and move 
+this option to `siteConfig.
+markdown.hooks.onBrokenMark
+downLinks` instead.
+[INFO] [en] Creating an optimized production build...
+[WARNING] The `siteConfig.o
+nBrokenMarkdownLinks` 
+config option is 
+deprecated and will be 
+removed in Docusaurus v4.
+Please migrate and move 
+this option to `siteConfig.
+markdown.hooks.onBrokenMark
+downLinks` instead.
+[90m[[90mwebpackbar[90m][39m [36mΓä╣[39m Compiling Client
+[90m[[90mwebpackbar[90m][39m [36mΓä╣[39m Compiling Server
+[90m[[90mwebpackbar[90m][39m [32mΓ£ö[39m Server: Compiled successfully in 632.93ms
+[90m[[90mwebpackbar[90m][39m [32mΓ£ö[39m Client: Compiled successfully in 905.31ms
+
+[ERROR] Error: Unable to 
+build website for locale 
+en.
+    at tryToBuildLocale (C:
+\Users\Administrator\Deskto
+p\WorkPlace\BasaltPass\basa
+ltpass-docs\node_modules\@d
+ocusaurus\core\lib\commands
+\build\build.js:83:15)
+    at async C:\Users\Admin
+istrator\Desktop\WorkPlace\
+BasaltPass\basaltpass-docs\
+node_modules\@docusaurus\co
+re\lib\commands\build\build
+.js:35:9
+    at async 
+mapAsyncSequential (C:\User
+s\Administrator\Desktop\Wor
+kPlace\BasaltPass\basaltpas
+s-docs\node_modules\@docusa
+urus\utils\lib\jsUtils.js:2
+1:24)
+    at async Command.build 
+(C:\Users\Administrator\Des
+ktop\WorkPlace\BasaltPass\b
+asaltpass-docs\node_modules
+\@docusaurus\core\lib\comma
+nds\build\build.js:34:5)
+    at async Promise.all 
+(index 0)
+    at async runCLI (C:\Use
+rs\Administrator\Desktop\Wo
+rkPlace\BasaltPass\basaltpa
+ss-docs\node_modules\@docus
+aurus\core\lib\commands\cli
+.js:56:5)
+    at async file:///C:/Use
+rs/Administrator/Desktop/Wo
+rkPlace/BasaltPass/basaltpa
+ss-docs/node_modules/@docus
+aurus/core/bin/docusaurus.m
+js:44:3 {
+  [cause]: Error: 
+Docusaurus found broken 
+links!
+  
+  Please check the pages 
+of your site in the list 
+below, and make sure you 
+don't reference any path 
+that does not exist.
+  Note: it's possible to 
+ignore broken links with 
+the 'onBrokenLinks' 
+Docusaurus configuration, 
+and let the build pass.
+  
+  Exhaustive list of all 
+broken links found:
+  - Broken link on source 
+page path = /BasaltPass/:
+     -> linking to 
+/BasaltPass/docs/intro
+  
+      at throwError (C:\Use
+rs\Administrator\Desktop\Wo
+rkPlace\BasaltPass\basaltpa
+ss-docs\node_modules\@docus
+aurus\logger\lib\logger.js:
+80:11)
+      at reportBrokenLinks 
+(C:\Users\Administrator\Des
+ktop\WorkPlace\BasaltPass\b
+asaltpass-docs\node_modules
+\@docusaurus\core\lib\serve
+r\brokenLinks.js:250:47)
+      at handleBrokenLinks 
+(C:\Users\Administrator\Des
+ktop\WorkPlace\BasaltPass\b
+asaltpass-docs\node_modules
+\@docusaurus\core\lib\serve
+r\brokenLinks.js:282:5)
+      at 
+executeBrokenLinksCheck (C:
+\Users\Administrator\Deskto
+p\WorkPlace\BasaltPass\basa
+ltpass-docs\node_modules\@d
+ocusaurus\core\lib\commands
+\build\buildLocale.js:119:4
+7)
+      at C:\Users\Administr
+ator\Desktop\WorkPlace\Basa
+ltPass\basaltpass-docs\node
+_modules\@docusaurus\core\l
+ib\commands\build\buildLoca
+le.js:94:67
+      at Object.async (C:\U
+sers\Administrator\Desktop\
+WorkPlace\BasaltPass\basalt
+pass-docs\node_modules\@doc
+usaurus\logger\lib\perfLogg
+er.js:42:47)
+      at buildLocale (C:\Us
+ers\Administrator\Desktop\W
+orkPlace\BasaltPass\basaltp
+ass-docs\node_modules\@docu
+saurus\core\lib\commands\bu
+ild\buildLocale.js:94:31)
+      at async 
+runBuildLocaleTask (C:\User
+s\Administrator\Desktop\Wor
+kPlace\BasaltPass\basaltpas
+s-docs\node_modules\@docusa
+urus\core\lib\commands\buil
+d\build.js:98:5)
+      at async C:\Users\Adm
+inistrator\Desktop\WorkPlac
+e\BasaltPass\basaltpass-doc
+s\node_modules\@docusaurus\
+core\lib\commands\build\bui
+ld.js:79:13
+      at async 
+tryToBuildLocale (C:\Users\
+Administrator\Desktop\WorkP
+lace\BasaltPass\basaltpass-
+docs\node_modules\@docusaur
+us\core\lib\commands\build\
+build.js:75:9)
+}
+[INFO] Docusaurus version: 3.9.2
+Node version: v24.13.0
