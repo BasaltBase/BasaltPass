@@ -36,8 +36,8 @@ func (j JSONB) Value() (driver.Value, error) {
 // Product 产品模型
 type Product struct {
 	gorm.Model
-	TenantID     *uint64 `gorm:"index"`
-	Code         string  `gorm:"uniqueIndex;size:64;not null"`
+	TenantID     *uint64 `gorm:"uniqueIndex:idx_product_tenant_code;index"`
+	Code         string  `gorm:"uniqueIndex:idx_product_tenant_code;size:64;not null"`
 	Name         string  `gorm:"size:255;not null"`
 	Description  string  `gorm:"type:text"`
 	IsActive     bool    `gorm:"not null;default:true"`
