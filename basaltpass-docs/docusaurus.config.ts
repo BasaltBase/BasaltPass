@@ -8,13 +8,13 @@ const config: Config = {
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here
-  url: 'https://github.com',
+  url: 'https://basaltbase.github.io',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/BasaltPass/',
 
   // GitHub pages deployment config.
-  organizationName: 'BasaltPass', // Usually your GitHub org/user name.
+  organizationName: 'BasaltBase', // Usually your GitHub org/user name.
   projectName: 'BasaltPass', // Usually your repo name.
 
   onBrokenLinks: 'throw',
