@@ -1,32 +1,50 @@
 ---
-sidebar_position: 3
+sidebar_position: 5
 ---
 
-# Security Configuration
+# 安全配置 (Security Configuration)
 
-Securing your BasaltPass instance is critical for protecting user data.
+保护您的 BasaltPass 部署是至关重要的。以下是关键的安全配置建议。
 
-## JWT Secret
+## 1. 强制 HTTPS
 
-The most important setting is the `JWT_SECRET`.
--   **Usage**: Signs all Access Tokens and ID Tokens.
--   **Risk**: If leaked, attackers can forge tokens and impersonate any user.
--   **Configuration**:
-    ```bash
-    export BASALTPASS_JWT_SECRET="your-very-long-random-string"
-    ```
-    > **Note**: In production, ensure this is a long, high-entropy string.
+在生产环境中，**必须** 使用 HTTPS。BasaltPass 本身可以配置证书，但通常建议在反向代理 (Nginx, Traefik, ALB) 层处理 SSL 终结。
 
-## CORS (Cross-Origin Resource Sharing)
+如果直接配置 TLS：
+```yaml
+server:
+  tls:
+    enabled: true
+    cert_file: "/path/to/cert.pem"
+    key_file: "/path/to/key.pem"
+```
 
-If you are hosting BasaltPass on a different domain than your frontend apps, you must configure CORS.
+## 2. JWT 密钥 (JWT Secret)
 
--   **Config**: `server.cors_allowed_origins`
--   **Env**: `BASALTPASS_SERVER_CORS_ALLOWED_ORIGINS`
--   **Value**: A comma-separated list of allowed origins (e.g., `https://myapp.com,https://admin.myapp.com`).
+`auth.jwt_secret` 用于签名所有访问令牌。
+-   **绝对不要** 使用默认值。
+-   在生产环境中使用长随机字符串 (至少 32 字符)。
+-   定期轮换密钥 (这将使旧令牌失效)。
 
-## HTTPS / SSL
+## 3. CORS 策略
 
-BasaltPass (the Go binary) is designed to run behind a Reverse Proxy (Nginx, Caddy, AWS ALB) which handles SSL termination.
--   **Recommendation**: Always use HTTPS in production.
--   **Cookies**: BasaltPass sets `Secure` and `HttpOnly` flags on cookies automatically when detecting HTTPS.
+仅允许受信任的域访问 API。
+```yaml
+security:
+  cors:
+    allowed_origins:
+      - "https://myapp.com"
+      - "https://admin.myapp.com"
+    allowed_methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+```
+
+## 4. 速率限制 (Rate Limiting)
+
+防止暴力破解攻击。
+```yaml
+security:
+  rate_limit:
+    enabled: true
+    requests_per_second: 10
+    burst: 20
+```

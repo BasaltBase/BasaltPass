@@ -2,48 +2,48 @@
 sidebar_position: 3
 ---
 
-# Getting Started
+# 快速开始 (Getting Started)
 
-Learn how to run BasaltPass locally for development and testing.
+学习如何在本地运行 BasaltPass 进行开发和测试。
 
-## Prerequisites
+## 前置要求
 
 -   Docker & Docker Compose
 -   Git
 
-## Method A: Docker Compose (Easiest)
+## 方法 A: Docker Compose (最简单)
 
-Run the entire stack with a single command:
+使用一条命令运行整个技术栈：
 
 ```bash
 docker-compose up -d --build
 ```
 
--   **Backend**: `http://localhost:8080`
--   **Frontend**: `http://localhost:3000` (check `docker-compose.yml` for exact port)
+-   **后端**: `http://localhost:8080`
+-   **前端**: `http://localhost:3000` (查看 `docker-compose.yml` 确认确切端口)
 
-## Method B: Dev Scripts (Recommended)
+## 方法 B: 开发脚本 (推荐)
 
-For active development, use the provided helper scripts:
+对于积极开发，请使用提供的辅助脚本：
 
 ```bash
 ./scripts/dev.sh up
 ```
 
-### Common Ports
+### 常用端口
 
-| Service | Port | Description |
+| 服务 | 端口 | 描述 |
 | :--- | :--- | :--- |
-| **Backend** | `8080` | API Server |
-| **User Console** | `5173` | End-user login & profile |
-| **Tenant Console** | `5174` | Organization management |
-| **Admin Console** | `5175` | Platform administration |
+| **后端 (Backend)** | `8080` | API 服务器 |
+| **用户控制台 (User Console)** | `5173` | 终端用户登录与个人资料 |
+| **租户控制台 (Tenant Console)** | `5174` | 组织管理 |
+| **管理控制台 (Admin Console)** | `5175` | 平台管理 |
 
-## Configuration
+## 配置
 
-BasaltPass is configured via:
-1.  **.env file**: For secrets and environment-specific variables.
-2.  **config.yaml**: Default system configuration.
-3.  **Environment Variables**: Override any config (e.g., `BASALTPASS_DB_HOST`).
+BasaltPass 通过以下方式配置：
+1.  **.env 文件**: 用于机密信息和特定环境的变量。
+2.  **config.yaml**: 默认系统配置。
+3.  **环境变量**: 覆盖任何配置 (例如 `BASALTPASS_DB_HOST`)。
 
-> **Note**: Ensure `JWT_SECRET` is set in production!
+> **注意**: 在生产环境中务必设置 `JWT_SECRET`！

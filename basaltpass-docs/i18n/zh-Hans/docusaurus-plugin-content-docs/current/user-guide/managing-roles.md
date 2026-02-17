@@ -2,18 +2,18 @@
 sidebar_position: 3
 ---
 
-# Managing Roles & Permissions
+# 角色与权限管理 (Managing Roles & Permissions)
 
-BasaltPass uses a flexible **RBAC (Role-Based Access Control)** system.
+BasaltPass 使用灵活的 **RBAC (基于角色的访问控制)** 系统。
 
-## Concepts
+## 概念
 
--   **Permission**: A specifc right to perform an action (e.g., `article.create`).
--   **Role**: A named collection of permissions (e.g., `Editor`).
+-   **权限 (Permission)**: 执行操作的具体权利 (例如 `article.create`).
+-   **角色 (Role)**: 一组权限的命名集合 (例如 `Editor`).
 
-## Checking Permissions
+## 检查权限
 
-You can verify if a user has specific access rights using the Check API. This is useful for debugging or integrating your backend.
+您可以使用 Check API 验证用户是否具有特定访问权限。这对于调试或集成后端非常有用。
 
 **API**: `POST /api/v1/tenant/permissions/check`
 
@@ -24,7 +24,7 @@ You can verify if a user has specific access rights using the Check API. This is
 }
 ```
 
-**Response**:
+**响应**:
 ```json
 {
   "permissions": {
@@ -34,16 +34,16 @@ You can verify if a user has specific access rights using the Check API. This is
 }
 ```
 
-## Importing Permissions
+## 导入权限
 
-To initialize your system, you can batch import permissions and roles.
+要初始化您的系统，您可以批量导入权限和角色。
 
 **API**: `POST /api/v1/tenant/permissions/import`
--   **Input**: JSON array or text file.
--   **Feature**: Automatically deduplicates and normalizes (lowercase) codes.
+-   **输入**: JSON 数组或文本文件。
+-   **特性**: 自动去重并标准化 (小写) 代码。
 
-## Best Practices
+## 最佳实践
 
-1.  **Granular Permissions**: Define permissions based on resource actions (`resource.action`).
-2.  **Composite Roles**: Create roles that group logical sets of permissions.
-3.  **Least Privilege**: Assign users the minimum role necessary for their job.
+1.  **细粒度权限**: 基于资源操作定义权限 (`resource.action`)。
+2.  **复合角色**: 创建将逻辑权限集分组的角色。
+3.  **最小权限**: 仅分配用户工作所需的最小角色。

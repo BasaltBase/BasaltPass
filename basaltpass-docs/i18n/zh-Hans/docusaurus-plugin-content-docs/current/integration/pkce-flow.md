@@ -2,31 +2,31 @@
 sidebar_position: 4
 ---
 
-# PKCE Authorization Flow
+# PKCE 授权流程
 
-Proof Key for Code Exchange (PKCE) is **mandatory** for public clients (SPAs, Mobile Apps) and recommended for all clients to prevent authorization code interception attacks.
+PKCE (Proof Key for Code Exchange) 对于公共客户端 (SPA, 移动应用) 是 **强制性** 的，并且推荐所有客户端使用，以防止授权码拦截攻击。
 
-## How it Works
+## 工作原理
 
-1.  **Client** creates a high-entropy cryptographically random string called `code_verifier`.
-2.  **Client** calculates the `code_challenge` from the `code_verifier`.
-3.  **Client** sends `code_challenge` with the Authorization Request.
-4.  **BasaltPass** stores the `code_challenge`.
-5.  **BasaltPass** returns an `authorization_code`.
-6.  **Client** sends `authorization_code` AND the original `code_verifier` to the Token Endpoint.
-7.  **BasaltPass** verifies that `TRANSFORM(code_verifier) == code_challenge`.
+1.  **客户端** 创建一个高熵的加密随机字符串，称为 `code_verifier`。
+2.  **客户端** 从 `code_verifier` 计算出 `code_challenge`。
+3.  **客户端** 在授权请求中通过 `code_challenge` 发送给 BasaltPass。
+4.  **BasaltPass** 存储 `code_challenge`。
+5.  **BasaltPass** 返回 `authorization_code`。
+6.  **客户端** 将 `authorization_code` 和原始的 `code_verifier` 发送到令牌端点。
+7.  **BasaltPass** 验证 `TRANSFORM(code_verifier) == code_challenge`。
 
-## Implementation Details (Crucial)
+## 实现细节 (关键)
 
-BasaltPass has a specific requirement for the `code_challenge` calculation that differs slightly from the standard base64url encoding in some libraries.
+BasaltPass 对 `code_challenge` 的计算有特定要求。
 
-### Requirement
--   **Algorithm**: SHA-256 (`S256`)
--   **Encoding**: **Hexadecimal** (Lower case) string.
+### 要求
+-   **算法**: SHA-256 (`S256`)
+-   **编码**: **十六进制 (Hexadecimal)** (小写) 字符串。
 
-> **Warning**: Do NOT use Base64Url encoding for the SHA-256 hash. Use Hex encoding.
+> **警告**: 不要在 SHA-256 哈希后使用 Base64Url 编码。请使用 **Hex** 编码。
 
-### Code Examples
+### 代码示例
 
 #### JavaScript / TypeScript
 
@@ -36,25 +36,10 @@ async function generateCodeChallenge(verifier) {
     const data = encoder.encode(verifier);
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
     
-    // Convert buffer to Hex String
+    // 转换为 Hex 字符串
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     
     return hashHex;
 }
 ```
-
-#### Python
-
-```python
-import hashlib
-
-def generate_challenge(verifier: str) -> str:
-    # Use hexdigest(), NOT base64 encoding
-    return hashlib.sha256(verifier.encode('ascii')).hexdigest()
-```
-
-## Common Errors
-
--   `invalid_grant`: Often caused by sending a Base64Url encoded challenge or verifier mismatch.
--   `invalid_request`: Missing `code_challenge` when it is required.

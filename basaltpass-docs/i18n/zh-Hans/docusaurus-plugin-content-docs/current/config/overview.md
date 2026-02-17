@@ -2,28 +2,44 @@
 sidebar_position: 1
 ---
 
-# Configuration Overview
+# 配置概览 (Configuration Overview)
 
-BasaltPass uses a two-layer configuration system to offer flexibility and stability.
+BasaltPass 旨在具有高度的可配置性。系统配置主要包括全局设置、服务连接和安全参数。
 
-## 1. Service Configuration (`config.yaml`)
+## 配置文件
 
-This layer controls the *infrastructure* settings of the application.
--   **File**: `basaltpass-backend/config/config.yaml`
--   **Scope**: Database connection, Server Port, Log Level, Email Provider credentials.
--   **Override**: Environment variables (e.g., `BASALTPASS_DATABASE_PORT`).
+主配置文件通常位于 `/opt/basaltpass/config/config.yaml`。
 
-## 2. System Settings (`settings.yaml`)
+```yaml
+server:
+  host: "0.0.0.0"
+  port: 8080
 
-This layer controls the *business logic* and *运行时 behavior*.
--   **File**: `basaltpass-backend/config/settings.yaml` (Automatically generated/managed).
--   **Scope**: Site Name, Registration rules, OAuth allow-lists.
--   **Management**: Can be updated via Admin API without restarting the server.
+database:
+  driver: "postgres"
+  dsn: "postgres://user:pass@localhost:5432/basaltpass?sslmode=disable"
 
-## Environment Variables
+auth:
+  jwt_secret: "CHANGE_ME_IN_PRODUCTION"
+  token_expiry: 3600 # 秒
 
-All `config.yaml` settings can be overridden by environment variables.
--   **Prefix**: `BASALTPASS_`
--   **Format**: Uppercase, dots replaced by underscores.
-    -   `server.port` -> `BASALTPASS_SERVER_PORT`
-    -   `database.host` -> `BASALTPASS_DATABASE_HOST`
+email:
+  enabled: true
+  provider: "smtp"
+```
+
+## 环境变量 (Env Vars)
+
+所有的配置项都可以通过环境变量覆盖。环境变量的优先级高于配置文件。
+格式通常为大写，并使用下划线分隔层级。
+
+-   `BASALTPASS_SERVER_PORT=9090`
+-   `BASALTPASS_DATABASE_DSN="mysql://..."`
+-   `BASALTPASS_AUTH_JWT_SECRET="complex_random_string"`
+
+## 加载顺序
+
+1.  默认值 (代码内)
+2.  `config.yaml`
+3.  环境变量
+4.  命令行参数 (Flags)

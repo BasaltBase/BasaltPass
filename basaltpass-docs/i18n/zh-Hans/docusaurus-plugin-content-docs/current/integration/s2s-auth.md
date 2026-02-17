@@ -2,13 +2,13 @@
 sidebar_position: 5
 ---
 
-# Server-to-Server (S2S) Auth
+# 服务端对服务端 (S2S) 认证
 
-S2S authentication is used when your backend service needs to access BasaltPass APIs directly, rather than on behalf of a user. This uses the **Client Credentials Flow**.
+当您的后端服务需要直接访问 BasaltPass API (而不是代表用户) 时，使用 S2S 认证。这使用的是 **客户端凭证模式 (Client Credentials Flow)**。
 
-## Obtaining a Token
+## 获取令牌
 
-**Request**:
+**请求**:
 ```http
 POST /api/v1/oauth/token
 Content-Type: application/x-www-form-urlencoded
@@ -19,7 +19,7 @@ grant_type=client_credentials
 &scope=s2s.user.read s2s.rbac.read
 ```
 
-**Response**:
+**响应**:
 ```json
 {
   "access_token": "eyJ...",
@@ -28,23 +28,23 @@ grant_type=client_credentials
 }
 ```
 
-## Available Scopes
+## 可用范围 (Scopes)
 
-It is best practice to request only the scopes you need (Principle of Least Privilege).
+最佳实践是只申请您需要的权限 (最小权限原则)。
 
-| Scope | Description |
+| Scope | 描述 |
 | :--- | :--- |
-| `s2s.user.read` | Read user profiles, lookups. |
-| `s2s.user.write` | Update user details (careful!). |
-| `s2s.rbac.read` | Read roles and permissions. |
-| `s2s.wallet.read` | Access user wallet information. |
-| `s2s.messages.read`| Access user internal messages. |
+| `s2s.user.read` | 读取用户资料，查找用户。 |
+| `s2s.user.write` | 更新用户详情 (小心使用!)。 |
+| `s2s.rbac.read` | 读取角色和权限。 |
+| `s2s.wallet.read` | 访问用户钱包信息。 |
+| `s2s.messages.read`| 访问用户站内信。 |
 
-## S2S API Envelope
+## S2S API 统一封装 (Envelope)
 
-All S2S APIs return a standard envelope structure:
+所有 S2S API 返回标准的封装结构：
 
-**Success**:
+**成功**:
 ```json
 {
   "data": { ... },
@@ -53,7 +53,7 @@ All S2S APIs return a standard envelope structure:
 }
 ```
 
-**Error**:
+**错误**:
 ```json
 {
   "data": null,

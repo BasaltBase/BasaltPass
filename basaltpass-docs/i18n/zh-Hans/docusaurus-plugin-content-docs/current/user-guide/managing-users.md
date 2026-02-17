@@ -2,33 +2,33 @@
 sidebar_position: 2
 ---
 
-# Managing Users
+# 用户管理 (Managing Users)
 
-As a Tenant Admin, you can invite, manage, and remove users from your tenant.
+作为租户管理员，您可以邀请、管理和移除租户内的用户。
 
-## Inviting Users
+## 邀请用户
 
-You can invite new users via email or creating them directly.
+您可以通过电子邮件邀请新用户或直接创建他们。
 
-**API Endpoint**: `POST /api/v1/tenant/users/invite`
+**API 端点**: `POST /api/v1/tenant/users/invite`
 
-**Console Action**:
-1.  Go to **Users** page.
-2.  Click **Invite User**.
-3.  Enter the email address and assign initial roles.
-4.  The user will receive an email with a setup link.
+**控制台操作**:
+1.  进入 **用户 (Users)** 页面。
+2.  点击 **邀请用户 (Invite User)**。
+3.  输入电子邮件地址并分配初始角色。
+4.  用户将收到一封带有设置链接的电子邮件。
 
-## User List & Search
+## 用户列表与搜索
 
-You can view and filter users by:
--   Email / Name
--   Role
--   Status (Active/Suspended)
+您可以查看并筛选用户：
+-   邮箱 / 姓名
+-   角色
+-   状态 (激活/挂起)
 
-## Granting Access
+## 授予访问权限
 
-Access is granted via **Roles**. You can assign multiple roles to a user.
--   **Go to**: User Detail Page -> Roles Tab.
--   **Action**: Select roles and click Save.
+访问权限通过 **角色 (Roles)** 授予。您可以为一个用户分配多个角色。
+-   **进入**: 用户详情页 -> 角色标签页。
+-   **操作**: 选择角色并点击保存。
 
-See [Managing Roles](./managing-roles.md) for more details.
+请参阅 [角色管理](./managing-roles.md) 获取更多详情。

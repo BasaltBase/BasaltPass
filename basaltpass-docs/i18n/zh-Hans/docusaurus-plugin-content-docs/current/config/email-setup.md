@@ -2,40 +2,39 @@
 sidebar_position: 2
 ---
 
-# Email Setup
+# 电子邮件设置 (Email Service Setup)
 
-BasaltPass requires an email service to send verification codes, password resets, and user invites.
+BasaltPass 使用电子邮件发送验证码、密码重置链接和系统通知。
 
-## Supported Providers
+## SMTP 配置
 
--   **SMTP** (Generic, Gmail, Outlook, etc.)
--   **AWS SES**
--   **Mailgun**
--   **Brevo** (formerly Sendinblue)
+这是最常见的配置方式，支持 Gmail, Outlook, AWS SES, SendGrid 等。
 
-## Configuration (SMTP Example)
+在 `config.yaml` 中：
 
-You can configure this in `config.yaml` or via Environment Variables (Recommended).
-
-```bash
-export BASALTPASS_EMAIL_PROVIDER=smtp
-export BASALTPASS_EMAIL_SMTP_HOST=smtp.gmail.com
-export BASALTPASS_EMAIL_SMTP_PORT=587
-export BASALTPASS_EMAIL_SMTP_USERNAME=your-email@gmail.com
-export BASALTPASS_EMAIL_SMTP_PASSWORD=your-app-password
-export BASALTPASS_EMAIL_SMTP_USE_TLS=true
+```yaml
+email:
+  provider: "smtp"
+  smtp:
+    host: "smtp.example.com"
+    port: 587
+    username: "postmaster@example.com"
+    password: "secure_password"
+    from_address: "no-reply@example.com"
+    from_name: "BasaltPass Auth"
+    # TLS/SSL 选项
+    secure: false # 如果端口是 465 则设为 true
+    require_tls: true # STARTTLS
 ```
 
-## Testing
+## 调试
 
-BasaltPass includes a helper script to verify email configuration:
+如果邮件发送失败：
+1.  检查 Docker 容器是否可以访问外网 (DNS, Firewall)。
+2.  验证 SMTP 凭据是否正确。
+3.  查看应用日志 (`docker-compose logs backend`) 获取详细错误信息。
 
-```bash
-cd basaltpass-backend
-./scripts/test_email.sh
-```
+## 模板 (Templates)
 
-Or run the Go binary directly:
-```bash
-./email-test -from your-email@gmail.com -to recipient@example.com
-```
+邮件内容由 HTML 模板控制。您可以在 `templates/email/` 目录下找到并自定义它们。
+请参阅 [邮件模板](./email-templates.md) 文档。

@@ -2,26 +2,26 @@
 sidebar_position: 1
 ---
 
-# Tenant Administration
+# 租户管理 (Tenant Administration)
 
-In BasaltPass, a **Tenant** is an isolated environment for your organization or project. As a Tenant Admin, you have full control over the users, roles, and configuration within your tenant.
+在 BasaltPass 中，**租户 (Tenant)** 是您组织或项目的隔离环境。作为租户管理员，您对租户内的用户、角色和配置拥有完全控制权。
 
-## Accessing the Console
+## 访问控制台
 
-The Tenant Console is your control center.
--   **Default URL**: `http://localhost:5174` (local) or your deployed domain.
--   **Login**: Use your admin credentials.
+租户控制台是您的控制中心。
+-   **默认 URL**: `http://localhost:5174` (本地) 或您的部署域名。
+-   **登录**: 使用您的管理员凭证。
 
-## Dashboard Overview
+## 仪表盘概览
 
-Upon login, you will see the **Dashboard**, which provides a snapshot of your tenant's health:
--   **Total Users**: Number of registered users.
--   **Active Sessions**: Currently logged-in users.
--   **Recent Activity**: Audit logs of recent actions.
+登录后，您将看到 **仪表盘 (Dashboard)**，它提供租户健康状况的快照：
+-   **总用户数**: 注册用户数量。
+-   **活跃会话**: 当前登录的用户。
+-   **最近活动**: 近期操作的审计日志。
 
-## Tenant Settings
+## 租户设置
 
-You can configure tenant-specific settings:
--   **Display Name**: The name shown to users.
--   **Branding**: Logo and color scheme (if supported).
--   **Security Policies**: Password complexity, MFA requirements.
+您可以配置租户特定的设置：
+-   **显示名称**: 向用户显示的名称。
+-   **品牌**: Logo 和配色方案 (如果支持)。
+-   **安全策略**: 密码复杂度、多重身份验证 (MFA) 要求。

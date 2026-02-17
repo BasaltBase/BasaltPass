@@ -2,30 +2,30 @@
 sidebar_position: 10
 ---
 
-# Mobile App Integration
+# 移动应用集成 (Mobile App Integration)
 
-Integrating mobile apps (iOS, Android) requires special attention to security and UX.
+集成移动应用 (iOS, Android) 需要特别注意安全性和用户体验 (UX)。
 
-## Best Practices
+## 最佳实践
 
-### 1. Use PKCE
-**Mandatory**. Mobile apps are public clients and cannot store a client secret safely. Always use the Authorization Code Flow with PKCE.
+### 1. 使用 PKCE
+**强制性**。移动应用是公共客户端，无法安全存储 client secret。始终使用带 PKCE 的授权码流程。
 
-### 2. Custom URL Schemes / Universal Links
-Use Deep Links to handle the redirect back to your app after login.
--   **iOS**: Universal Links (`https://myapp.com/callback`) or Custom Scheme (`myapp://callback`).
--   **Android**: App Links (`https://myapp.com/callback`) or Custom Scheme.
+### 2. 自定义 URL Schemes / Universal Links
+使用深度链接 (Deep Links) 在登录后处理重定向回您的应用。
+-   **iOS**: Universal Links (`https://myapp.com/callback`) 或 Custom Scheme (`myapp://callback`).
+-   **Android**: App Links (`https://myapp.com/callback`) 或 Custom Scheme.
 
-**Important**: Register these exact callback URLs in the BasaltPass Console.
+**重要**: 在 BasaltPass 控制台中注册这些确切的 callback URL。
 
-### 3. Use System Browser (ASWebAuthenticationSession)
-Do **NOT** use embedded WebViews for login.
--   **Security**: Embedded WebViews are vulnerable to keylogging.
--   **UX**: Users trust the system browser. Shared cookies (SSO) work better.
--   **iOS**: Use `ASWebAuthenticationSession`.
--   **Android**: Use `Custom Tabs`.
+### 3. 使用系统浏览器 (ASWebAuthenticationSession)
+**不要** 使用嵌入式 WebView 进行登录。
+-   **安全性**: 嵌入式 WebView 容易受到键盘记录攻击。
+-   **UX**: 用户信任系统浏览器。共享 Cookie (SSO) 效果更好。
+-   **iOS**: 使用 `ASWebAuthenticationSession`。
+-   **Android**: 使用 `Custom Tabs`。
 
-### 4. Secure Storage
-Store Access and Refresh Tokens in the system's secure storage.
+### 4. 安全存储
+将访问令牌和刷新令牌存储在系统的安全存储中。
 -   **iOS**: Keychain.
 -   **Android**: EncryptedSharedPreferences.
