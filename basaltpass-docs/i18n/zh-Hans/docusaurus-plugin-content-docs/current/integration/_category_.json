@@ -1,0 +1,8 @@
+{
+    "label": "Integration Guide",
+    "position": 2,
+    "link": {
+        "type": "generated-index",
+        "description": "Guides for integrating third-party applications with BasaltPass."
+    }
+}

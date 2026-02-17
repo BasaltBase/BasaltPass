@@ -22,7 +22,15 @@ const config: Config = {
 
   i18n: {
     defaultLocale: 'en',
-    locales: ['en'],
+    locales: ['en', 'zh-Hans'],
+    localeConfigs: {
+      en: {
+        label: 'English',
+      },
+      'zh-Hans': {
+        label: '简体中文',
+      },
+    },
   },
 
   presets: [
@@ -66,6 +74,10 @@ const config: Config = {
         {
           href: 'https://github.com/your-org/BasaltPass',
           label: 'GitHub',
+          position: 'right',
+        },
+        {
+          type: 'localeDropdown',
           position: 'right',
         },
       ],

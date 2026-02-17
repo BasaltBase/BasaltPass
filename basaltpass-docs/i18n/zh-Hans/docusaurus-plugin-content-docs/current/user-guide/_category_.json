@@ -1,0 +1,8 @@
+{
+    "label": "User & Admin Guide",
+    "position": 3,
+    "link": {
+        "type": "generated-index",
+        "description": "Manuals for End Users, Tenant Admins, and Platform Admins."
+    }
+}

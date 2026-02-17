@@ -1,0 +1,46 @@
+{
+  "version.label": {
+    "message": "Next",
+    "description": "The label for version current"
+  },
+  "sidebar.tutorialSidebar.category.Introduction": {
+    "message": "Introduction",
+    "description": "The label for category 'Introduction' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.Introduction.link.generated-index.description": {
+    "message": "Learn about the core concepts of BasaltPass.",
+    "description": "The generated-index page description for category 'Introduction' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.Integration Guide": {
+    "message": "Integration Guide",
+    "description": "The label for category 'Integration Guide' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.Integration Guide.link.generated-index.description": {
+    "message": "Guides for integrating third-party applications with BasaltPass.",
+    "description": "The generated-index page description for category 'Integration Guide' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.User & Admin Guide": {
+    "message": "User & Admin Guide",
+    "description": "The label for category 'User & Admin Guide' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.User & Admin Guide.link.generated-index.description": {
+    "message": "Manuals for End Users, Tenant Admins, and Platform Admins.",
+    "description": "The generated-index page description for category 'User & Admin Guide' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.Configuration": {
+    "message": "Configuration",
+    "description": "The label for category 'Configuration' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.Configuration.link.generated-index.description": {
+    "message": "Advanced configuration for BasaltPass deployments.",
+    "description": "The generated-index page description for category 'Configuration' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.Reference": {
+    "message": "Reference",
+    "description": "The label for category 'Reference' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.Reference.link.generated-index.description": {
+    "message": "API references and architectural details.",
+    "description": "The generated-index page description for category 'Reference' in sidebar 'tutorialSidebar'"
+  }
+}
