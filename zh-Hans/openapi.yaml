@@ -1,0 +1,673 @@
+openapi: 3.0.3
+info:
+  title: BasaltPass API
+  version: 0.1.0
+servers:
+  - url: http://localhost:8080
+paths:
+  /api/v1/auth/register:
+    post:
+      summary: Register new user
+      responses:
+        '501':
+          description: Not implemented
+  /api/v1/auth/login:
+    post:
+      summary: User login
+      responses:
+        '501':
+          description: Not implemented
+  /api/v1/auth/refresh:
+    post:
+      summary: Refresh access token
+      responses:
+        '401':
+          description: Unauthorized
+        '200':
+          description: New access token
+  /api/v1/user/profile:
+    get:
+      summary: Get user profile
+      responses:
+        '200':
+          description: User profile
+    put:
+      summary: Update user profile
+      responses:
+        '204':
+          description: Updated
+  /api/v1/wallet/balance:
+    get:
+      summary: Get wallet balance
+      responses:
+        '200':
+          description: Balance
+  /api/v1/wallet/recharge:
+    post:
+      summary: Recharge wallet (mock)
+      responses:
+        '204':
+          description: Recharged
+  /api/v1/wallet/withdraw:
+    post:
+      summary: Withdraw funds (mock)
+      responses:
+        '204':
+          description: Withdrawn
+  /api/v1/wallet/history:
+    get:
+      summary: Transaction history
+      responses:
+        '200':
+          description: List
+  /api/v1/security/2fa/setup:
+    post:
+      summary: Setup TOTP secret
+      responses:
+        '200':
+          description: Secret created
+  /api/v1/security/2fa/verify:
+    post:
+      summary: Verify TOTP code
+      responses:
+        '204':
+          description: Verified 
+  /api/v1/admin/roles:
+    get:
+      summary: List roles
+      responses:
+        '200':
+          description: Role list
+    post:
+      summary: Create role
+      responses:
+        '201':
+          description: Role created
+  /api/v1/admin/user/{id}/role:
+    post:
+      summary: Assign role to user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Assigned 
+  /api/v1/admin/users:
+    get:
+      summary: List users
+      responses:
+        '200':
+          description: Users
+  /api/v1/admin/user/{id}/ban:
+    post:
+      summary: Ban or unban user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Updated 
+  /api/v1/admin/wallets:
+    get:
+      summary: List wallet transactions
+      responses:
+        '200':
+          description: List
+  /api/v1/admin/tx/{id}/approve:
+    post:
+      summary: Approve or reject transaction
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Updated 
+  /api/v1/admin/logs:
+    get:
+      summary: List audit logs
+      responses:
+        '200':
+          description: Logs 
+  
+  # ===================== S2S APIs =====================
+  /api/v1/s2s/health:
+    get:
+      summary: Health check (S2S)
+      description: Authenticated health endpoint. Validates client credentials only.
+      security:
+        - ClientID: []
+          ClientSecret: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      status: { type: string }
+                  error:
+                    oneOf:
+                      - type: 'null'
+                      - $ref: '#/components/schemas/ErrorObject'
+                  request_id: { type: string }
+        '401': { description: Invalid client }
+
+  /api/v1/s2s/me:
+    get:
+      summary: Get calling client context (S2S)
+      description: Returns client/app/tenant context and scopes for the authenticated caller.
+      security:
+        - ClientID: []
+          ClientSecret: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      client_id: { type: string }
+                      app_id: { type: integer }
+                      tenant_id: { type: integer }
+                      scopes:
+                        type: array
+                        items: { type: string }
+                  error:
+                    oneOf:
+                      - type: 'null'
+                      - $ref: '#/components/schemas/ErrorObject'
+                  request_id: { type: string }
+        '401': { description: Invalid client }
+
+  /api/v1/s2s/users/{id}:
+    get:
+      summary: Get user by ID (S2S)
+      description: Service-to-service API. Returns basic user profile by ID. Required scope: s2s.user.read (legacy umbrella: s2s.read).
+      security:
+        - ClientID: []
+          ClientSecret: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/S2SUser'
+                  error:
+                    oneOf:
+                      - type: 'null'
+                      - $ref: '#/components/schemas/ErrorObject'
+                  request_id:
+                    type: string
+        '400': { description: Invalid parameter }
+        '401': { description: Invalid client }
+        '403': { description: Insufficient scope }
+        '404': { description: Not found }
+
+    patch:
+      summary: Patch user (S2S)
+      description: Updates basic user fields for write-path validation (currently nickname only). Required scope: s2s.user.write.
+      security:
+        - ClientID: []
+          ClientSecret: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nickname: { type: string }
+                username: { type: string }
+      responses:
+        '200':
+          description: OK
+        '400': { description: Invalid parameter }
+        '401': { description: Invalid client }
+        '403': { description: Insufficient scope }
+        '404': { description: Not found }
+        '500': { description: Server error }
+
+  /api/v1/s2s/users/lookup:
+    get:
+      summary: Lookup users in tenant (S2S)
+      description: Lookup by email/phone (exact) or q (fuzzy). Required scope: s2s.user.read (legacy umbrella: s2s.read).
+      security:
+        - ClientID: []
+          ClientSecret: []
+      parameters:
+        - name: email
+          in: query
+          required: false
+          schema: { type: string }
+        - name: phone
+          in: query
+          required: false
+          schema: { type: string }
+        - name: q
+          in: query
+          required: false
+          schema: { type: string }
+        - name: page
+          in: query
+          required: false
+          schema: { type: integer, default: 1 }
+        - name: page_size
+          in: query
+          required: false
+          schema: { type: integer, default: 20 }
+      responses:
+        '200': { description: OK }
+        '400': { description: Invalid parameter }
+        '401': { description: Invalid client }
+        '403': { description: Insufficient scope }
+        '500': { description: Server error }
+
+  /api/v1/s2s/users/{id}/roles:
+    get:
+      summary: Get user roles in tenant (S2S)
+      description: Returns roles for user in given tenant. If tenant_id omitted, uses calling client's tenant. Required scope: s2s.rbac.read (legacy umbrella: s2s.read).
+      security:
+        - ClientID: []
+          ClientSecret: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: tenant_id
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      roles:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/S2SRole'
+                  error:
+                    oneOf:
+                      - type: 'null'
+                      - $ref: '#/components/schemas/ErrorObject'
+                  request_id:
+                    type: string
+        '400': { description: Invalid parameter }
+        '401': { description: Invalid client }
+        '403': { description: Insufficient scope }
+        '500': { description: Server error }
+
+  /api/v1/s2s/users/{id}/role-codes:
+    get:
+      summary: Get user role codes in tenant (S2S)
+      description: Returns role codes array for user in tenant. If tenant_id omitted, uses client's tenant. Required scope: s2s.rbac.read (legacy umbrella: s2s.read).
+      security:
+        - ClientID: []
+          ClientSecret: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: tenant_id
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+        '400': { description: Invalid parameter }
+        '401': { description: Invalid client }
+        '403': { description: Insufficient scope }
+        '500': { description: Server error }
+
+  /api/v1/s2s/users/{id}/permissions:
+    get:
+      summary: Get user permission codes in tenant (S2S)
+      description: Returns permission codes derived from roles. Also includes role codes for backward compatibility (roles/role_codes). Required scope: s2s.rbac.read (legacy umbrella: s2s.read).
+      security:
+        - ClientID: []
+          ClientSecret: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: tenant_id
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      permission_codes:
+                        type: array
+                        items:
+                          type: string
+                      role_codes:
+                        type: array
+                        items:
+                          type: string
+                      roles:
+                        type: array
+                        items:
+                          type: string
+                  error:
+                    oneOf:
+                      - type: 'null'
+                      - $ref: '#/components/schemas/ErrorObject'
+                  request_id:
+                    type: string
+        '400': { description: Invalid parameter }
+        '401': { description: Invalid client }
+        '403': { description: Insufficient scope }
+        '500': { description: Server error }
+
+  /api/v1/s2s/users/{id}/wallets:
+    get:
+      summary: Get user wallet by currency (S2S)
+      description: Returns wallet balance and recent transactions for given currency code. Required scope: s2s.wallet.read (legacy umbrella: s2s.read).
+      security:
+        - ClientID: []
+          ClientSecret: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: currency
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/S2SUserWallet'
+                  error:
+                    oneOf:
+                      - type: 'null'
+                      - $ref: '#/components/schemas/ErrorObject'
+                  request_id:
+                    type: string
+        '400': { description: Invalid parameter }
+        '401': { description: Invalid client }
+        '403': { description: Insufficient scope }
+        '500': { description: Server error }
+
+  /api/v1/s2s/users/{id}/messages:
+    get:
+      summary: List user messages/notifications (S2S)
+      description: Returns paginated messages; broadcasts (receiver_id=0) included. Optional status=unread|all. Required scope: s2s.messages.read (legacy umbrella: s2s.read).
+      security:
+        - ClientID: []
+          ClientSecret: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: status
+          in: query
+          required: false
+          schema: { type: string, enum: [unread, all], default: all }
+        - name: page
+          in: query
+          required: false
+          schema: { type: integer, default: 1 }
+        - name: page_size
+          in: query
+          required: false
+          schema: { type: integer, default: 20 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      messages:
+                        type: array
+                        items: { $ref: '#/components/schemas/S2SMessage' }
+                      total: { type: integer }
+                      page: { type: integer }
+                      page_size: { type: integer }
+                  error:
+                    oneOf:
+                      - type: 'null'
+                      - $ref: '#/components/schemas/ErrorObject'
+                  request_id: { type: string }
+        '400': { description: Invalid parameter }
+        '401': { description: Invalid client }
+        '403': { description: Insufficient scope }
+        '500': { description: Server error }
+
+  /api/v1/s2s/users/{id}/products:
+    get:
+      summary: List user owned products (S2S)
+      description: Returns products that user owns via active subscriptions or paid orders. Required scope: s2s.products.read (legacy umbrella: s2s.read).
+      security:
+        - ClientID: []
+          ClientSecret: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      products:
+                        type: array
+                        items: { $ref: '#/components/schemas/S2SProduct' }
+                  error:
+                    oneOf:
+                      - type: 'null'
+                      - $ref: '#/components/schemas/ErrorObject'
+                  request_id: { type: string }
+        '400': { description: Invalid parameter }
+        '401': { description: Invalid client }
+        '403': { description: Insufficient scope }
+        '500': { description: Server error }
+
+  /api/v1/s2s/users/{id}/products/{product_id}/ownership:
+    get:
+      summary: Check user product ownership (S2S)
+      description: Returns whether user owns the product via active subscription or paid order. Required scope: s2s.products.read (legacy umbrella: s2s.read).
+      security:
+        - ClientID: []
+          ClientSecret: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: product_id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/S2SOwnership'
+                  error:
+                    oneOf:
+                      - type: 'null'
+                      - $ref: '#/components/schemas/ErrorObject'
+                  request_id: { type: string }
+        '400': { description: Invalid parameter }
+        '401': { description: Invalid client }
+        '403': { description: Insufficient scope }
+        '500': { description: Server error }
+
+components:
+  securitySchemes:
+    ClientID:
+      type: apiKey
+      in: header
+      name: client_id
+    ClientSecret:
+      type: apiKey
+      in: header
+      name: client_secret
+  schemas:
+    ErrorObject:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+    S2SUser:
+      type: object
+      properties:
+        id: { type: integer }
+        email: { type: string }
+        nickname: { type: string }
+        avatar_url: { type: string }
+        email_verified: { type: boolean }
+        phone: { type: string }
+        phone_verified: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    S2SRole:
+      type: object
+      properties:
+        id: { type: integer }
+        code: { type: string }
+        name: { type: string }
+        description: { type: string }
+    S2SWalletTx:
+      type: object
+      properties:
+        id: { type: integer }
+        wallet_id: { type: integer }
+        type: { type: string, description: 'recharge|withdraw|...' }
+        amount: { type: integer, description: 'in smallest unit' }
+        status: { type: string }
+        reference: { type: string }
+        created_at: { type: string, format: date-time }
+    S2SUserWallet:
+      type: object
+      properties:
+        currency: { type: string }
+        balance: { type: integer }
+        wallet_id: { type: integer }
+        transactions:
+          type: array
+          items: { $ref: '#/components/schemas/S2SWalletTx' }
+    S2SMessage:
+      type: object
+      properties:
+        id: { type: integer }
+        app_id: { type: integer }
+        title: { type: string }
+        content: { type: string }
+        type: { type: string }
+        sender_id: { type: integer, nullable: true }
+        sender_name: { type: string }
+        receiver_id: { type: integer }
+        is_read: { type: boolean }
+        read_at: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+    S2SProduct:
+      type: object
+      properties:
+        id: { type: integer }
+        code: { type: string }
+        name: { type: string }
+        description: { type: string }
+        effective_at: { type: string, format: date-time, nullable: true }
+        deprecated_at: { type: string, format: date-time, nullable: true }
+    S2SOwnership:
+      type: object
+      properties:
+        has_ownership: { type: boolean }
+        via:
+          type: array
+          items: { type: string, enum: [subscription, order] }

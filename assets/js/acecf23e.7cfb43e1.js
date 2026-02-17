@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkbasaltpass_docs=globalThis.webpackChunkbasaltpass_docs||[]).push([[1903],{1912(s){s.exports=JSON.parse('{"blogBasePath":"/BasaltPass/blog","blogTitle":"Blog","authorsListPath":"/BasaltPass/blog/authors"}')}}]);
