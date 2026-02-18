@@ -132,9 +132,9 @@ start_backend() {
 
   # If already running but pidfile is missing (manual start), adopt by port.
   local port_pid
-  port_pid="$(pid_from_port 8080)"
+  port_pid="$(pid_from_port 8101)"
   if [[ -n "$port_pid" ]] && is_pid_running "$port_pid"; then
-    echo "Backend already running on :8080 (pid $port_pid)"
+    echo "Backend already running on :8101 (pid $port_pid)"
     echo "$port_pid" >"$backend_pid_file"
     return 0
   fi
@@ -147,7 +147,7 @@ start_backend() {
     exit 1
   fi
 
-  echo "Starting backend on :8080"
+  echo "Starting backend on :8101"
   (
     cd "$backend_dir"
 
@@ -161,8 +161,8 @@ start_backend() {
       nohup go run ./cmd/basaltpass >"$backend_log" 2>&1 &
     fi
 
-    # Prefer the actual listener PID (basaltpass) once :8080 is bound.
-    if listener_pid="$(wait_for_port_pid 8080 15)"; then
+    # Prefer the actual listener PID (basaltpass) once :8101 is bound.
+    if listener_pid="$(wait_for_port_pid 8101 15)"; then
       echo "$listener_pid" >"$backend_pid_file"
     else
       echo $! >"$backend_pid_file"
@@ -217,10 +217,10 @@ status() {
   ap="$(read_pid "$admin_pid_file")"
 
   # If pidfiles are missing/stale, try to infer by port.
-  if [[ -z "${bp:-}" ]] || ! is_pid_running "${bp:-0}"; then bp="$(pid_from_port 8080)"; fi
-  if [[ -z "${up:-}" ]] || ! is_pid_running "${up:-0}"; then up="$(pid_from_port 5173)"; fi
-  if [[ -z "${tp:-}" ]] || ! is_pid_running "${tp:-0}"; then tp="$(pid_from_port 5174)"; fi
-  if [[ -z "${ap:-}" ]] || ! is_pid_running "${ap:-0}"; then ap="$(pid_from_port 5175)"; fi
+  if [[ -z "${bp:-}" ]] || ! is_pid_running "${bp:-0}"; then bp="$(pid_from_port 8101)"; fi
+  if [[ -z "${up:-}" ]] || ! is_pid_running "${up:-0}"; then up="$(pid_from_port 5101)"; fi
+  if [[ -z "${tp:-}" ]] || ! is_pid_running "${tp:-0}"; then tp="$(pid_from_port 5102)"; fi
+  if [[ -z "${ap:-}" ]] || ! is_pid_running "${ap:-0}"; then ap="$(pid_from_port 5103)"; fi
 
   echo "Repo: $ROOT"
   echo "Run dir: $RUNDIR"
@@ -233,7 +233,7 @@ status() {
 
   echo
   if command -v ss >/dev/null 2>&1; then
-    ss -ltnp | grep -E ':(5173|5174|5175|8080)\b' || true
+    ss -ltnp | grep -E ':(5101|5102|5103|8101)\b' || true
   fi
 }
 
@@ -253,12 +253,12 @@ healthcheck() {
   # brief retries after startup
   local tries=20
   for i in $(seq 1 "$tries"); do
-    curl -fsS http://127.0.0.1:8080/health >/dev/null && break
+    curl -fsS http://127.0.0.1:8101/health >/dev/null && break
     sleep 0.2
   done
-  curl -fsS http://127.0.0.1:8080/health >/dev/null && echo "8080 OK" || { echo "8080 FAIL"; ok=1; }
+  curl -fsS http://127.0.0.1:8101/health >/dev/null && echo "8101 OK" || { echo "8101 FAIL"; ok=1; }
 
-  for port in 5173 5174 5175; do
+  for port in 5101 5102 5103; do
     for i in $(seq 1 "$tries"); do
       curl -fsS "http://127.0.0.1:$port/" >/dev/null && break
       sleep 0.2
@@ -271,18 +271,18 @@ healthcheck() {
 case "$cmd" in
   up)
     start_backend
-    start_frontend "frontend-user" "$user_pid_file" "$user_log" "dev:user" 5173
-    start_frontend "frontend-tenant" "$tenant_pid_file" "$tenant_log" "dev:tenant" 5174
-    start_frontend "frontend-admin" "$admin_pid_file" "$admin_log" "dev:admin" 5175
+    start_frontend "frontend-user" "$user_pid_file" "$user_log" "dev:user" 5101
+    start_frontend "frontend-tenant" "$tenant_pid_file" "$tenant_log" "dev:tenant" 5102
+    start_frontend "frontend-admin" "$admin_pid_file" "$admin_log" "dev:admin" 5103
 
     echo
     status
     echo
     echo "URLs:" 
-    echo "- Backend:  http://localhost:8080/health"
-    echo "- User:     http://localhost:5173/"
-    echo "- Tenant:   http://localhost:5174/"
-    echo "- Admin:    http://localhost:5175/"
+    echo "- Backend:  http://localhost:8101/health"
+    echo "- User:     http://localhost:5101/"
+    echo "- Tenant:   http://localhost:5102/"
+    echo "- Admin:    http://localhost:5103/"
     echo
     echo "Logs: $LOGDIR (or run: scripts/dev.sh logs)"
 
@@ -295,10 +295,10 @@ case "$cmd" in
     ;;
 
   down|stop)
-    stop_port "frontend-admin" 5175 "$admin_pid_file"
-    stop_port "frontend-tenant" 5174 "$tenant_pid_file"
-    stop_port "frontend-user" 5173 "$user_pid_file"
-    stop_port "backend" 8080 "$backend_pid_file"
+    stop_port "frontend-admin" 5103 "$admin_pid_file"
+    stop_port "frontend-tenant" 5102 "$tenant_pid_file"
+    stop_port "frontend-user" 5101 "$user_pid_file"
+    stop_port "backend" 8101 "$backend_pid_file"
 
     # extra safety if pidfiles are stale
     pkill -f "node .*vite" 2>/dev/null || true

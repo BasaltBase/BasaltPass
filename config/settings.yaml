@@ -125,9 +125,14 @@ settings:
         description: 允许的方法
     cors.allow_origins:
         value:
-            - http://localhost:5173
-            - http://127.0.0.1:5173
-            - http://localhost:3000
+            - http://localhost:5101
+            - http://127.0.0.1:5101
+            - http://localhost:5102
+            - http://127.0.0.1:5102
+            - http://localhost:5103
+            - http://127.0.0.1:5103
+            - http://localhost:5104
+            - http://127.0.0.1:5104
         category: cors
         description: 允许的跨域来源列表
     cors.expose_headers:
@@ -173,7 +178,7 @@ settings:
         category: general
         description: 系统名称
     general.site_url:
-        value: http://localhost:8080
+        value: http://localhost:8101
         category: general
         description: 站点 URL（用于邮件、回调等绝对链接）
     general.theme:

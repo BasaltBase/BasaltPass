@@ -3,7 +3,7 @@ import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
-  title: 'BasaltPass Documentation',
+  title: 'BasaltPass',
   tagline: 'Secure, scalable, and isolated multi-tenant authentication.',
   favicon: 'img/favicon.ico',
 
@@ -19,15 +19,6 @@ const config: Config = {
 
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
-  markdown: {
-    format: 'mdx',
-    mermaid: true,
-    mdx1Compat: {
-      comments: true,
-      admonitions: true,
-      headingIds: true,
-    },
-  },
 
   i18n: {
     defaultLocale: 'en',
@@ -49,12 +40,12 @@ const config: Config = {
         docs: {
           sidebarPath: './sidebars.ts',
           editUrl:
-            'https://github.com/your-org/BasaltPass/tree/main/basaltpass-docs/',
+            'https://github.com/BasaltBase/BasaltPass/tree/main/basaltpass-docs/',
         },
         blog: {
           showReadingTime: true,
           editUrl:
-            'https://github.com/your-org/BasaltPass/tree/main/basaltpass-docs/',
+            'https://github.com/BasaltBase/BasaltPass/tree/main/basaltpass-docs/',
         },
         theme: {
           customCss: './src/css/custom.css',
@@ -65,7 +56,7 @@ const config: Config = {
 
   themeConfig: {
     // Replace with your project's social card
-    image: 'img/docusaurus-social-card.jpg',
+    image: 'img/logo.svg',
     navbar: {
       title: 'BasaltPass',
       logo: {
@@ -81,7 +72,7 @@ const config: Config = {
         },
         { to: '/blog', label: 'Blog', position: 'left' },
         {
-          href: 'https://github.com/your-org/BasaltPass',
+          href: 'https://github.com/BasaltBase/BasaltPass',
           label: 'GitHub',
           position: 'right',
         },
@@ -112,7 +103,7 @@ const config: Config = {
           items: [
             {
               label: 'GitHub',
-              href: 'https://github.com/your-org/BasaltPass',
+              href: 'https://github.com/BasaltBase/BasaltPass',
             },
           ],
         },

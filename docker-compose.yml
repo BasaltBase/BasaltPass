@@ -5,7 +5,7 @@ services:
       context: .
       dockerfile: backend.Dockerfile
     ports:
-      - "8080:8080"
+      - "8101:8101"
     volumes:
       - data:/data
     # Load environment variables from project .env (JWT_SECRET, BASALTPASS_*)
@@ -19,7 +19,7 @@ services:
       context: .
       dockerfile: frontend.Dockerfile
     ports:
-      - "3000:80"
+      - "5104:80"
     depends_on:
       - backend
 volumes:

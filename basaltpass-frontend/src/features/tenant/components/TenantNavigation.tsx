@@ -52,6 +52,7 @@ const navigationItems: NavigationItem[] = [
     icon: UsersIcon,
     children: [
       { name: '用户列表', href: ROUTES.tenant.users, icon: UsersIcon },
+      { name: '团队管理', href: ROUTES.tenant.teams, icon: UsersIcon },
       { name: '角色管理', href: ROUTES.tenant.roles, icon: KeyIcon },
       { name: '权限管理', href: ROUTES.tenant.permissions, icon: KeyIcon },
     ]

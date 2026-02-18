@@ -61,6 +61,20 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 	tenantRoleGroupV2.Post("/:id/permissions", tenant2.AddPermissionsToRole)
 	tenantRoleGroupV2.Delete("/:id/permissions/:permission_id", tenant2.RemovePermissionFromRole)
 
+	// 租户团队管理路由
+	tenantTeamGroup := tenantGroup.Group("/teams")
+	tenantTeamGroup.Get("/", tenant2.ListTenantTeamsHandler)
+	tenantTeamGroup.Post("/", tenant2.CreateTenantTeamHandler)
+	tenantTeamGroup.Get("/:id", tenant2.GetTenantTeamHandler)
+	tenantTeamGroup.Put("/:id", tenant2.UpdateTenantTeamHandler)
+	tenantTeamGroup.Delete("/:id", tenant2.DeleteTenantTeamHandler)
+	tenantTeamGroup.Get("/:id/members", tenant2.ListTenantTeamMembersHandler)
+	tenantTeamGroup.Post("/:id/members", tenant2.AddTenantTeamMemberHandler)
+	tenantTeamGroup.Delete("/:id/members/:user_id", tenant2.RemoveTenantTeamMemberHandler)
+	tenantTeamGroup.Put("/:id/members/:user_id/role", tenant2.UpdateTenantTeamMemberRoleHandler)
+	tenantTeamGroup.Post("/:id/transfer/:new_owner_id", tenant2.TransferTenantTeamOwnershipHandler)
+	tenantTeamGroup.Post("/:id/active", tenant2.ToggleTenantTeamActiveHandler)
+
 	// 租户通知管理
 	tenantNotifGroup := tenantGroup.Group("/notifications")
 	tenantNotifGroup.Post("/", tenantNotif.TenantCreateHandler)

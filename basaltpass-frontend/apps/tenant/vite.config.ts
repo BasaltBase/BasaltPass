@@ -23,7 +23,7 @@ export default defineConfig({
   },
   server: {
     host: true,
-    port: 5174,
+    port: 5102,
     strictPort: true,
     fs: {
       allow: [path.resolve(__dirname, '../..')],

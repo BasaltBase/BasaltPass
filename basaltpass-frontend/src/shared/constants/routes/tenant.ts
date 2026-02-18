@@ -6,6 +6,7 @@ export const TENANT_ROUTES = {
   appsNew: '/tenant/apps/new',
   oauthClients: '/tenant/oauth/clients',
   users: '/tenant/users',
+  teams: '/tenant/teams',
   roles: '/tenant/roles',
   permissions: '/tenant/permissions',
   notifications: '/tenant/notifications',

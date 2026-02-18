@@ -3,9 +3,9 @@ import { getAccessToken, clearAccessToken } from '../utils/auth'
 
 const inferDefaultApiBase = () => {
   if (typeof window !== 'undefined' && window.location?.hostname) {
-    return `${window.location.protocol}//${window.location.hostname}:8080`
+    return `${window.location.protocol}//${window.location.hostname}:8101`
   }
-  return 'http://127.0.0.1:8080'
+  return 'http://127.0.0.1:8101'
 }
 
 const normalizeApiBase = (rawBase?: string) => {

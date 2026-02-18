@@ -15,7 +15,7 @@ type Config struct {
 	// Env indicates current environment: develop, staging, production
 	Env    string `mapstructure:"env"`
 	Server struct {
-		// Address in host:port or :port format, e.g. ":8080"
+		// Address in host:port or :port format, e.g. ":8101"
 		Address string `mapstructure:"address"`
 	} `mapstructure:"server"`
 
@@ -82,7 +82,7 @@ type Config struct {
 
 	UI struct {
 		// BaseURL is the public URL where the hosted login UI is served.
-		// In development, the default is the user console dev server (http://localhost:5173).
+		// In development, the default is the user console dev server (http://localhost:5101).
 		// In production, you can leave it empty when UI and API share the same origin.
 		BaseURL string `mapstructure:"base_url"`
 	} `mapstructure:"ui"`
@@ -122,15 +122,20 @@ func Load(path string) (*Config, error) {
 
 	// Defaults
 	v.SetDefault("env", "develop")
-	v.SetDefault("server.address", ":8080")
+	v.SetDefault("server.address", ":8101")
 	v.SetDefault("seeding.enabled", false)
 	v.SetDefault("database.driver", "sqlite")
 	v.SetDefault("database.path", "basaltpass.db")
 	v.SetDefault("database.dsn", "") // 显式设置默认值，以确保 Viper 能从环境变量 BASALTPASS_DATABASE_DSN Unmarshal
 	v.SetDefault("cors.allow_origins", []string{
-		"http://localhost:5173",
-		"http://127.0.0.1:5173",
-		"http://localhost:3000",
+		"http://localhost:5101",
+		"http://127.0.0.1:5101",
+		"http://localhost:5102",
+		"http://127.0.0.1:5102",
+		"http://localhost:5103",
+		"http://127.0.0.1:5103",
+		"http://localhost:5104",
+		"http://127.0.0.1:5104",
 	})
 	v.SetDefault("cors.allow_methods", []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"})
 	v.SetDefault("cors.allow_headers", []string{
@@ -154,7 +159,7 @@ func Load(path string) (*Config, error) {
 	// When UI and API are served separately (dev), use the dev server port.
 	// When UI is served by the same origin as the API, leaving this empty keeps redirects relative.
 	if strings.EqualFold(v.GetString("env"), "develop") {
-		v.SetDefault("ui.base_url", "http://localhost:5173")
+		v.SetDefault("ui.base_url", "http://localhost:5101")
 	} else {
 		v.SetDefault("ui.base_url", "")
 	}
