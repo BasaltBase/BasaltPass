@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkbasaltpass_docs=globalThis.webpackChunkbasaltpass_docs||[]).push([[7472],{5513(s){s.exports=JSON.parse('{"title":"Recent posts","items":[{"title":"\u6b22\u8fce\u4f7f\u7528 BasaltPass","permalink":"/BasaltPass/zh-Hans/blog/welcome-to-basaltpass","unlisted":false,"date":"2024-02-18T00:00:00.000Z"}]}')}}]);

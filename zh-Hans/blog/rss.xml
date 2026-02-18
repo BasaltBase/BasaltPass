@@ -9,24 +9,24 @@
         <generator>https://github.com/jpmonette/feed</generator>
         <language>zh-Hans</language>
         <item>
-            <title><![CDATA[Welcome to BasaltPass]]></title>
+            <title><![CDATA[欢迎使用 BasaltPass]]></title>
             <link>https://basaltbase.github.io/BasaltPass/zh-Hans/blog/welcome-to-basaltpass</link>
             <guid>https://basaltbase.github.io/BasaltPass/zh-Hans/blog/welcome-to-basaltpass</guid>
             <pubDate>Sun, 18 Feb 2024 00:00:00 GMT</pubDate>
-            <description><![CDATA[Welcome to the official blog of BasaltPass!]]></description>
-            <content:encoded><![CDATA[<p>Welcome to the official blog of <strong>BasaltPass</strong>!</p>
-<p>We are excited to introduce BasaltPass, a modern, secure, and multi-tenant authentication system designed to simplify identity management for your applications.</p>
-<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="why-basaltpass">Why BasaltPass?<a href="https://basaltbase.github.io/BasaltPass/zh-Hans/blog/welcome-to-basaltpass#why-basaltpass" class="hash-link" aria-label="Why BasaltPass?的直接链接" title="Why BasaltPass?的直接链接" translate="no">​</a></h2>
-<p>In today's digital landscape, security and scalability are paramount. Building a robust authentication system from scratch is complex and time-consuming. BasaltPass provides a ready-to-use solution that is:</p>
+            <description><![CDATA[欢迎来到 BasaltPass 的官方博客！]]></description>
+            <content:encoded><![CDATA[<p>欢迎来到 <strong>BasaltPass</strong> 的官方博客！</p>
+<p>我们很高兴向您介绍 BasaltPass，这是一个现代、安全且支持多租户的身份验证系统，旨在简化您应用程序的身份管理。</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="为什么选择-basaltpass">为什么选择 BasaltPass？<a href="https://basaltbase.github.io/BasaltPass/zh-Hans/blog/welcome-to-basaltpass#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%80%89%E6%8B%A9-basaltpass" class="hash-link" aria-label="为什么选择 BasaltPass？的直接链接" title="为什么选择 BasaltPass？的直接链接" translate="no">​</a></h2>
+<p>在当今的数字环境中，安全性和可扩展性至关重要。从头构建一个强大的身份验证系统既复杂又耗时。BasaltPass 提供了一个现成的解决方案，具有以下特点：</p>
 <ul>
-<li class=""><strong>Multi-Tenant by Design</strong>: Seamlessly manage multiple organizations with strict data isolation.</li>
-<li class=""><strong>Standards Compliant</strong>: Fully compatible with OAuth 2.0 and OpenID Connect (OIDC).</li>
-<li class=""><strong>Secure</strong>: Implements best practices like PKCE and RBAC out of the box.</li>
-<li class=""><strong>Developer Focused</strong>: Easy to integrate with comprehensive documentation and APIs.</li>
+<li class=""><strong>原生多租户</strong>：无缝管理多个组织，并严格隔离数据。</li>
+<li class=""><strong>符合标准</strong>：完全兼容 OAuth 2.0 和 OpenID Connect (OIDC)。</li>
+<li class=""><strong>安全</strong>：开箱即用，支持 PKCE 和 RBAC 等最佳实践。</li>
+<li class=""><strong>开发者友好</strong>：易于集成，提供全面的文档和 API。</li>
 </ul>
-<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="whats-next">What's Next?<a href="https://basaltbase.github.io/BasaltPass/zh-Hans/blog/welcome-to-basaltpass#whats-next" class="hash-link" aria-label="What's Next?的直接链接" title="What's Next?的直接链接" translate="no">​</a></h2>
-<p>We are constantly working to improve BasaltPass. Stay tuned to this blog for updates on new features, tutorials, and security best practices.</p>
-<p>Check out our <a class="" href="https://basaltbase.github.io/BasaltPass/zh-Hans/docs/intro/what-is-basaltpass">Documentation</a> to get started today!</p>]]></content:encoded>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="下一步是什么">下一步是什么？<a href="https://basaltbase.github.io/BasaltPass/zh-Hans/blog/welcome-to-basaltpass#%E4%B8%8B%E4%B8%80%E6%AD%A5%E6%98%AF%E4%BB%80%E4%B9%88" class="hash-link" aria-label="下一步是什么？的直接链接" title="下一步是什么？的直接链接" translate="no">​</a></h2>
+<p>我们正在不断努力改进 BasaltPass。请关注本博客以获取有关新功能、教程和安全最佳实践的更新。</p>
+<p>立即查看我们的 <a class="" href="https://basaltbase.github.io/BasaltPass/zh-Hans/docs/intro/what-is-basaltpass">文档</a> 以开始使用！</p>]]></content:encoded>
             <category>introduction</category>
             <category>basaltpass</category>
             <category>security</category>
