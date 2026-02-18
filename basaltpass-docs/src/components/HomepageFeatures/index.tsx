@@ -9,35 +9,37 @@ type FeatureItem = {
   description: ReactNode;
 };
 
+import Translate, {translate} from '@docusaurus/Translate';
+
 const FeatureList: FeatureItem[] = [
   {
-    title: 'Multi-Tenant by Design',
+    title: translate({message: 'Multi-Tenant by Design', id: 'homepage.features.multitenant.title'}),
     icon: '🏢',
     description: (
-      <>
+      <Translate id="homepage.features.multitenant.description">
         Built from the ground up to support multiple tenants with strict data isolation.
         Perfect for SaaS platforms and large enterprises.
-      </>
+      </Translate>
     ),
   },
   {
-    title: 'Standards Compliant',
+    title: translate({message: 'Standards Compliant', id: 'homepage.features.standards.title'}),
     icon: '🔐',
     description: (
-      <>
-        Fully implements <code>OAuth 2.0</code> and <code>OpenID Connect</code> protocols.
+      <Translate id="homepage.features.standards.description">
+        Fully implements OAuth 2.0 and OpenID Connect protocols.
         Compatible with any standard OIDC client library.
-      </>
+      </Translate>
     ),
   },
   {
-    title: 'Secure & Scalable',
+    title: translate({message: 'Secure & Scalable', id: 'homepage.features.secure.title'}),
     icon: '⚡',
     description: (
-      <>
-        Features modern security practices like <code>PKCE</code>, RBAC, and Audit Logs.
+      <Translate id="homepage.features.secure.description">
+        Features modern security practices like PKCE, RBAC, and Audit Logs.
         Designed to scale with your user base.
-      </>
+      </Translate>
     ),
   },
 ];

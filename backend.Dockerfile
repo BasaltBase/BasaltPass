@@ -10,5 +10,5 @@ RUN CGO_ENABLED=1 GOOS=linux go build -o server ./cmd/basaltpass
 FROM gcr.io/distroless/base-debian12
 WORKDIR /app
 COPY --from=builder /app/server ./
-EXPOSE 8080
+EXPOSE 8101
 ENTRYPOINT ["/app/server"] 
