@@ -19,7 +19,7 @@ Common issues encountered when integrating with BasaltPass and how to solve them
 ## 3. CORS Error in Browser
 **Error**: Login page or token endpoint blocked by CORS policy.
 **Cause**: Your frontend origin is not whitelisted.
-**Fix**: Add your domain (e.g., `http://localhost:3000`) to the **Allowed Origins** list in the Client configuration.
+**Resolution**: Add your domain (e.g., `http://localhost:8101`) to the **Allowed Origins** list in client configuration.
 
 ## 4. Invalid Scope
 **Error**: `invalid_scope`.

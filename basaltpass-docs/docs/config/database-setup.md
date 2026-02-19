@@ -20,7 +20,7 @@ To switch databases, update `config.yaml` or set environment variables.
 
 ```bash
 export BASALTPASS_DATABASE_DRIVER=postgres
-export BASALTPASS_DATABASE_DSN="host=localhost user=gorm password=gorm dbname=gorm port=9920 sslmode=disable"
+export BASALTPASS_DATABASE_DSN="host=localhost user=gorm password=gorm dbname=gorm port=8101 sslmode=disable"
 ```
 
 ### MySQL Example

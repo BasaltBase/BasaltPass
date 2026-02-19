@@ -32,7 +32,7 @@ BasaltPass 是一个面向多应用/跨项目的身份与权限平台（AuthN/Au
 # build and run
 docker-compose up -d --build
 
-# backend at http://localhost:8080
+# backend at http://localhost:8101
 # frontend at http://localhost:5173 (user), http://localhost:5174 (tenant), http://localhost:5175 (admin)
 ```
 
@@ -40,7 +40,7 @@ Default admin login: create via API then assign `admin` role.
 
 ## Documentation
 
-- Docs entry: ./docs/README.md
+- Docs entry: [BasaltPass Documentation](https://basaltbase.github.io/BasaltPass/)
 - Developer docs: ./docs/developer/README.md
 - User/API docs: ./docs/user/README.md
 
@@ -61,11 +61,11 @@ Default admin login: create via API then assign `admin` role.
 ./scripts/dev.sh down
 ```
 
-默认端口：后端 `8080`，user `5173`，tenant `5174`，admin `5175`。
+默认端口：后端 `8101`，user `5173`，tenant `5174`，admin `5175`。
 
 启动后常用入口：
 
-- Backend: http://localhost:8080
+- Backend: http://localhost:8101
 - User Console: http://localhost:5173
 - Tenant Console: http://localhost:5174
 - Admin Console: http://localhost:5175

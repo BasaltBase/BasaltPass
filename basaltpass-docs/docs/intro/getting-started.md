@@ -19,7 +19,7 @@ Run the entire stack with a single command:
 docker-compose up -d --build
 ```
 
--   **Backend**: `http://localhost:8080`
+-Now you can access the BasaltPass backend at `http://localhost:8101`.
 -   **Frontend**: `http://localhost:3000` (check `docker-compose.yml` for exact port)
 
 ## Method B: Dev Scripts (Recommended)

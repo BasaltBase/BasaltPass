@@ -19,7 +19,7 @@ sidebar_position: 7
 ## 3. 浏览器 CORS 错误
 **错误**: 登录页面或令牌端点被 CORS 策略阻止。
 **原因**: 您的前端 Origin 未被列入白名单。
-**解决方法**: 将您的域名 (例如 `http://localhost:3000`) 添加到客户端配置中的 **允许的来源 (Allowed Origins)** 列表。
+**解决方法**: 将您的域名 (例如 `http://localhost:8101`) 添加到客户端配置中的 **允许的来源 (Allowed Origins)** 列表。
 
 ## 4. 无效的范围 (Invalid Scope)
 **错误**: `invalid_scope`。
