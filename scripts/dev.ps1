@@ -135,7 +135,7 @@ function Start-Frontend {
     Write-Host "Found npm: $NpmExe"
 
     # Start npm run in background. npm.cmd is needed on Windows
-    $p = Start-Process -FilePath $NpmExe -ArgumentList "run", $NpmScript -WorkingDirectory $FrontendDir -RedirectStandardOutput $LogFile -RedirectStandardError $LogFile -PassThru -NoNewWindow
+    $p = Start-Process -FilePath $NpmExe -ArgumentList "run", $NpmScript -WorkingDirectory $FrontendDir -PassThru -NoNewWindow
 
     if ($Port) {
         $newPid = Wait-For-Port $Port
