@@ -20,6 +20,15 @@ import (
 
 func main() {
 	// Load configuration (config file optional; env vars supported)
+	cwd, _ := os.Getwd()
+	log.Printf("[main][debug] CWD: %s", cwd)
+
+	if _, err := os.Stat("config/config.yaml"); err != nil {
+		log.Printf("[main][debug] Stat config/config.yaml failed: %v", err)
+	} else {
+		log.Printf("[main][debug] Stat config/config.yaml success")
+	}
+
 	cfgPath := os.Getenv("BASALTPASS_CONFIG")
 	if _, err := config.Load(cfgPath); err != nil {
 		log.Fatalf("[main][error] Failed to load config: %v", err)
