@@ -218,15 +218,10 @@ function TenantRegister() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
-            <div className="mx-auto h-12 w-12 bg-green-500 rounded-full flex items-center justify-center">
-              <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            <h2 className="mt-6 text-left text-4xl font-extrabold text-gray-900">
               注册成功！
             </h2>
-            <p className="mt-2 text-center text-sm text-gray-600">
+            <p className="mt-2 text-left text-sm text-gray-600">
               您在 <span className="font-semibold text-indigo-600">{tenantInfo?.name}</span> 的账户已创建成功
             </p>
             <div className="mt-6">
@@ -249,13 +244,13 @@ function TenantRegister() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-lg">
           <div>
-            <h2 className="text-center text-3xl font-extrabold text-gray-900">
+            <h2 className="text-left text-4xl font-extrabold text-gray-900">
               验证邮箱
             </h2>
-            <p className="mt-2 text-center text-sm text-gray-600">
+            <p className="mt-2 text-left text-sm text-gray-600">
               我们已向 <span className="font-semibold">{email}</span> 发送验证码
             </p>
-            <p className="mt-1 text-center text-sm text-gray-500">
+            <p className="mt-1 text-left text-sm text-gray-500">
               注册租户: <span className="font-semibold text-indigo-600">{tenantInfo?.name}</span>
             </p>
           </div>
@@ -319,10 +314,10 @@ function TenantRegister() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-lg">
         <div>
-          <h2 className="text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="text-left text-4xl font-extrabold text-gray-900">
             注册账户
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-left text-sm text-gray-600">
             注册到 <span className="font-semibold text-indigo-600">{tenantInfo?.name}</span>
           </p>
         </div>

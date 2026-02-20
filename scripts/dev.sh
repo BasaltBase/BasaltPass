@@ -51,6 +51,14 @@ is_pid_running() {
   [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null
 }
 
+is_pid_listening_on_port() {
+  local pid="$1"
+  local port="$2"
+  local port_pid
+  port_pid="$(pid_from_port "$port")"
+  [[ -n "$pid" ]] && [[ -n "$port_pid" ]] && [[ "$pid" == "$port_pid" ]]
+}
+
 read_pid() {
   local file="$1"
   [[ -f "$file" ]] && cat "$file" || true
@@ -180,8 +188,14 @@ start_frontend() {
   local existing
   existing="$(read_pid "$pid_file")"
   if [[ -n "$existing" ]] && is_pid_running "$existing"; then
-    echo "$name already running (pid $existing)"
-    return 0
+    if [[ -n "$port" ]] && is_pid_listening_on_port "$existing" "$port"; then
+      echo "$name already running (pid $existing)"
+      return 0
+    fi
+
+    # Stale pidfile: process exists but is not listening on the expected port.
+    echo "Removing stale PID for $name (pid $existing, expected :$port)"
+    rm -f "$pid_file"
   fi
 
   # If already running but pidfile is missing (manual start), adopt by port.
@@ -226,10 +240,10 @@ status() {
   echo "Run dir: $RUNDIR"
   echo
 
-  printf "%-10s %s\n" "backend" "${bp:-<none>}"; [[ -n "${bp:-}" ]] && is_pid_running "$bp" && echo "  - running" || echo "  - stopped"
-  printf "%-10s %s\n" "user" "${up:-<none>}"; [[ -n "${up:-}" ]] && is_pid_running "$up" && echo "  - running" || echo "  - stopped"
-  printf "%-10s %s\n" "tenant" "${tp:-<none>}"; [[ -n "${tp:-}" ]] && is_pid_running "$tp" && echo "  - running" || echo "  - stopped"
-  printf "%-10s %s\n" "admin" "${ap:-<none>}"; [[ -n "${ap:-}" ]] && is_pid_running "$ap" && echo "  - running" || echo "  - stopped"
+  printf "%-10s %s\n" "backend" "${bp:-<none>}"; [[ -n "${bp:-}" ]] && is_pid_listening_on_port "$bp" 8101 && echo "  - running" || echo "  - stopped"
+  printf "%-10s %s\n" "user" "${up:-<none>}"; [[ -n "${up:-}" ]] && is_pid_listening_on_port "$up" 5101 && echo "  - running" || echo "  - stopped"
+  printf "%-10s %s\n" "tenant" "${tp:-<none>}"; [[ -n "${tp:-}" ]] && is_pid_listening_on_port "$tp" 5102 && echo "  - running" || echo "  - stopped"
+  printf "%-10s %s\n" "admin" "${ap:-<none>}"; [[ -n "${ap:-}" ]] && is_pid_listening_on_port "$ap" 5103 && echo "  - running" || echo "  - stopped"
 
   echo
   if command -v ss >/dev/null 2>&1; then
