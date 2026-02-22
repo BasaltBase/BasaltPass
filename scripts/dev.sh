@@ -46,6 +46,21 @@ wait_for_port_pid() {
   return 1
 }
 
+service_state() {
+  local pid="$1"
+  local port="$2"
+
+  if [[ -n "${pid:-}" ]] && is_pid_running "$pid"; then
+    if is_pid_listening_on_port "$pid" "$port"; then
+      echo "running"
+    else
+      echo "starting"
+    fi
+  else
+    echo "stopped"
+  fi
+}
+
 is_pid_running() {
   local pid="$1"
   [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null
@@ -169,8 +184,9 @@ start_backend() {
       nohup go run ./cmd/basaltpass >"$backend_log" 2>&1 &
     fi
 
+    # First run may take longer while go downloads modules.
     # Prefer the actual listener PID (basaltpass) once :8101 is bound.
-    if listener_pid="$(wait_for_port_pid 8101 15)"; then
+    if listener_pid="$(wait_for_port_pid 8101 90)"; then
       echo "$listener_pid" >"$backend_pid_file"
     else
       echo $! >"$backend_pid_file"
@@ -240,10 +256,10 @@ status() {
   echo "Run dir: $RUNDIR"
   echo
 
-  printf "%-10s %s\n" "backend" "${bp:-<none>}"; [[ -n "${bp:-}" ]] && is_pid_listening_on_port "$bp" 8101 && echo "  - running" || echo "  - stopped"
-  printf "%-10s %s\n" "user" "${up:-<none>}"; [[ -n "${up:-}" ]] && is_pid_listening_on_port "$up" 5101 && echo "  - running" || echo "  - stopped"
-  printf "%-10s %s\n" "tenant" "${tp:-<none>}"; [[ -n "${tp:-}" ]] && is_pid_listening_on_port "$tp" 5102 && echo "  - running" || echo "  - stopped"
-  printf "%-10s %s\n" "admin" "${ap:-<none>}"; [[ -n "${ap:-}" ]] && is_pid_listening_on_port "$ap" 5103 && echo "  - running" || echo "  - stopped"
+  printf "%-10s %s\n" "backend" "${bp:-<none>}"; echo "  - $(service_state "${bp:-}" 8101)"
+  printf "%-10s %s\n" "user" "${up:-<none>}"; echo "  - $(service_state "${up:-}" 5101)"
+  printf "%-10s %s\n" "tenant" "${tp:-<none>}"; echo "  - $(service_state "${tp:-}" 5102)"
+  printf "%-10s %s\n" "admin" "${ap:-<none>}"; echo "  - $(service_state "${ap:-}" 5103)"
 
   echo
   if command -v ss >/dev/null 2>&1; then
@@ -263,17 +279,18 @@ logs() {
 
 healthcheck() {
   local ok=0
+  local backend_tries=300
+  local frontend_tries=20
 
-  # brief retries after startup
-  local tries=20
-  for i in $(seq 1 "$tries"); do
+  # Backend may need longer on first run while go modules download.
+  for i in $(seq 1 "$backend_tries"); do
     curl -fsS http://127.0.0.1:8101/health >/dev/null && break
     sleep 0.2
   done
   curl -fsS http://127.0.0.1:8101/health >/dev/null && echo "8101 OK" || { echo "8101 FAIL"; ok=1; }
 
   for port in 5101 5102 5103; do
-    for i in $(seq 1 "$tries"); do
+    for i in $(seq 1 "$frontend_tries"); do
       curl -fsS "http://127.0.0.1:$port/" >/dev/null && break
       sleep 0.2
     done
