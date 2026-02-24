@@ -5,7 +5,14 @@ import (
 	"time"
 
 	"basaltpass-backend/internal/common"
+	"basaltpass-backend/internal/config"
 	"basaltpass-backend/internal/model"
+	emailservice "basaltpass-backend/internal/service/email"
+
+	"context"
+	"crypto/rand"
+	"encoding/hex"
+	"fmt"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -635,17 +642,131 @@ func InviteTenantUserHandler(c *fiber.Ctx) error {
 		}
 
 		tx.Commit()
-	} else {
-		// 创建邀请记录 - 这里可以扩展为发送邀请邮件等逻辑
-		// 暂时简单返回成功，实际应该创建invitation记录并发送邮件
 		return c.JSON(fiber.Map{
-			"message": "邀请已发送，用户注册后将自动加入租户",
+			"message": "用户被直接添加到租户中",
+		})
+	} else {
+		// 生成邀请Token
+		tokenBytes := make([]byte, 32)
+		if _, err := rand.Read(tokenBytes); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "生成邀请令牌失败",
+			})
+		}
+		tokenStr := hex.EncodeToString(tokenBytes)
+
+		inviterIDVal := c.Locals("userID")
+		var inviterID uint
+		if inviterIDVal != nil {
+			inviterID = inviterIDVal.(uint)
+		}
+
+		invitation := model.TenantInvitation{
+			TenantID:  tenantID,
+			Email:     req.Email,
+			Role:      model.TenantRole(req.Role),
+			Status:    "pending",
+			InviterID: inviterID,
+			Token:     tokenStr,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+
+		if err := common.DB().Create(&invitation).Error; err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "创建邀请记录失败",
+			})
+		}
+
+		// 获取租户名称
+		var tenant model.Tenant
+		common.DB().Where("id = ?", tenantID).First(&tenant)
+
+		// 异步发送邮件
+		go func() {
+			cfg := config.Get()
+			emailSvc, err := emailservice.NewServiceFromConfig(cfg)
+			if err == nil && emailSvc != nil {
+				baseURL := cfg.UI.BaseURL
+				if baseURL == "" {
+					baseURL = "http://localhost:5101" // fallback
+				}
+				inviteLink := fmt.Sprintf("%s/login?tenant=%s&email=%s&invite_token=%s", baseURL, tenant.Code, req.Email, tokenStr)
+
+				subject := fmt.Sprintf("Invitation to join %s on BasaltPass", tenant.Name)
+				htmlBody := fmt.Sprintf(`
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tenant Invitation</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f7f9fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    <div style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+        
+        <!-- 头部 -->
+        <div style="padding: 32px 40px; border-bottom: 1px solid #edf2f7; text-align: center;">
+            <h1 style="color: #1a202c; font-size: 24px; font-weight: 600; margin: 0; letter-spacing: -0.5px;">BasaltPass</h1>
+        </div>
+        
+        <!-- 主内容 -->
+        <div style="padding: 40px;">
+            <h2 style="color: #2d3748; font-size: 20px; font-weight: 600; margin: 0 0 24px; text-align: center;">Invitation to Join Tenant</h2>
+            
+            <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin: 0 0 24px;">
+                You have been invited to join <strong>%s</strong> as a member.
+            </p>
+            
+            <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin: 0 0 32px;">
+                Please click the button below to accept the invitation and securely log in or register your account:
+            </p>
+            
+            <div style="text-align: center; margin: 0 0 32px;">
+                <a href="%s" style="background-color: #2b6cb0; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 16px; display: inline-block;">Accept Invitation</a>
+            </div>
+            
+            <hr style="border: 0; border-top: 1px solid #edf2f7; margin: 32px 0;">
+            
+            <p style="color: #718096; font-size: 14px; line-height: 1.6; margin: 0;">
+                If you're having trouble clicking the button, copy and paste the URL below into your web browser:<br>
+                <a href="%s" style="color: #2b6cb0; word-break: break-all;">%s</a>
+            </p>
+        </div>
+        
+        <!-- 页脚 -->
+        <div style="background-color: #f7fafc; padding: 24px 40px; text-align: center; border-top: 1px solid #edf2f7;">
+            <p style="color: #a0aec0; font-size: 13px; margin: 0;">
+                &copy; %d BasaltPass. All rights reserved.<br>
+                This is an automated message, please do not reply directly.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+				`, tenant.Name, inviteLink, inviteLink, inviteLink, time.Now().Year())
+
+				msg := &emailservice.Message{
+					To:       []string{req.Email},
+					Subject:  subject,
+					HTMLBody: htmlBody,
+					TextBody: fmt.Sprintf("You have been invited to join %s. Please visit this link to accept the invitation: %s", tenant.Name, inviteLink),
+				}
+				_, sendErr := emailSvc.SendWithLogging(context.Background(), msg, &inviterID, "tenant_invitation")
+				if sendErr != nil {
+					fmt.Printf("[Email Debug] SendWithLogging failed: %v\n", sendErr)
+				} else {
+					fmt.Printf("[Email Debug] SendWithLogging succeeded\n")
+				}
+			} else {
+				fmt.Printf("[Email Debug] Failed to init email service: %v\n", err)
+			}
+		}()
+
+		return c.JSON(fiber.Map{
+			"message": "邀请已发送，用户可以通过邮件中的链接接受邀请",
 		})
 	}
-
-	return c.JSON(fiber.Map{
-		"message": "用户邀请成功",
-	})
 }
 
 // ResendInvitationHandler 重新发送邀请

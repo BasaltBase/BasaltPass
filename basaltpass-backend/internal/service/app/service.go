@@ -62,32 +62,47 @@ func NewAppService() *AppService {
 
 // CreateAppRequest 创建应用请求
 type CreateAppRequest struct {
-	Name           string   `json:"name" validate:"required,min=1,max=128"`
-	Description    string   `json:"description" validate:"max=500"`
-	IconURL        string   `json:"icon_url" validate:"omitempty,url"`
-	RedirectURIs   []string `json:"redirect_uris" validate:"required,min=1"`
-	Scopes         []string `json:"scopes"`
-	AllowedOrigins []string `json:"allowed_origins"`
+	Name              string   `json:"name" validate:"required,min=1,max=128"`
+	Description       string   `json:"description" validate:"max=500"`
+	IconURL           string   `json:"icon_url" validate:"omitempty,url"`
+	LogoURL           string   `json:"logo_url"`
+	HomepageURL       string   `json:"homepage_url"`
+	PrivacyPolicyURL  string   `json:"privacy_policy_url"`
+	TermsOfServiceURL string   `json:"terms_of_service_url"`
+	IsVerified        bool     `json:"is_verified"`
+	RedirectURIs      []string `json:"redirect_uris" validate:"required,min=1"`
+	Scopes            []string `json:"scopes"`
+	AllowedOrigins    []string `json:"allowed_origins"`
 }
 
 // UpdateAppRequest 更新应用请求
 type UpdateAppRequest struct {
-	Name        string           `json:"name" validate:"omitempty,min=1,max=128"`
-	Description string           `json:"description" validate:"max=500"`
-	IconURL     string           `json:"icon_url" validate:"omitempty,url"`
-	Status      *model.AppStatus `json:"status" validate:"omitempty,oneof=active suspended deleted"`
+	Name              string           `json:"name" validate:"omitempty,min=1,max=128"`
+	Description       string           `json:"description" validate:"max=500"`
+	IconURL           string           `json:"icon_url" validate:"omitempty,url"`
+	LogoURL           *string          `json:"logo_url"`
+	HomepageURL       *string          `json:"homepage_url"`
+	PrivacyPolicyURL  *string          `json:"privacy_policy_url"`
+	TermsOfServiceURL *string          `json:"terms_of_service_url"`
+	IsVerified        *bool            `json:"is_verified"`
+	Status            *model.AppStatus `json:"status" validate:"omitempty,oneof=active suspended deleted"`
 }
 
 // AppResponse 应用响应
 type AppResponse struct {
-	ID          uint            `json:"id"`
-	TenantID    uint            `json:"tenant_id"`
-	Name        string          `json:"name"`
-	Description string          `json:"description"`
-	IconURL     string          `json:"icon_url"`
-	Status      model.AppStatus `json:"status"`
-	CreatedAt   string          `json:"created_at"`
-	UpdatedAt   string          `json:"updated_at"`
+	ID                uint            `json:"id"`
+	TenantID          uint            `json:"tenant_id"`
+	Name              string          `json:"name"`
+	Description       string          `json:"description"`
+	IconURL           string          `json:"icon_url"`
+	LogoURL           string          `json:"logo_url"`
+	HomepageURL       string          `json:"homepage_url"`
+	PrivacyPolicyURL  string          `json:"privacy_policy_url"`
+	TermsOfServiceURL string          `json:"terms_of_service_url"`
+	IsVerified        bool            `json:"is_verified"`
+	Status            model.AppStatus `json:"status"`
+	CreatedAt         string          `json:"created_at"`
+	UpdatedAt         string          `json:"updated_at"`
 
 	// OAuth客户端信息
 	OAuthClients []OAuthClientInfo `json:"oauth_clients,omitempty"`
@@ -105,15 +120,20 @@ type AppStats struct {
 
 // AppWithOAuthClients 包含OAuth客户端信息的应用响应
 type AppWithOAuthClients struct {
-	ID           uint              `json:"id"`
-	TenantID     uint              `json:"tenant_id"`
-	Name         string            `json:"name"`
-	Description  string            `json:"description"`
-	IconURL      string            `json:"icon_url"`
-	Status       model.AppStatus   `json:"status"`
-	CreatedAt    string            `json:"created_at"`
-	UpdatedAt    string            `json:"updated_at"`
-	OAuthClients []OAuthClientInfo `json:"oauth_clients"`
+	ID                uint              `json:"id"`
+	TenantID          uint              `json:"tenant_id"`
+	Name              string            `json:"name"`
+	Description       string            `json:"description"`
+	IconURL           string            `json:"icon_url"`
+	LogoURL           string            `json:"logo_url"`
+	HomepageURL       string            `json:"homepage_url"`
+	PrivacyPolicyURL  string            `json:"privacy_policy_url"`
+	TermsOfServiceURL string            `json:"terms_of_service_url"`
+	IsVerified        bool              `json:"is_verified"`
+	Status            model.AppStatus   `json:"status"`
+	CreatedAt         string            `json:"created_at"`
+	UpdatedAt         string            `json:"updated_at"`
+	OAuthClients      []OAuthClientInfo `json:"oauth_clients"`
 }
 
 // OAuthClientInfo OAuth客户端信息
@@ -140,11 +160,16 @@ func (s *AppService) CreateApp(tenantID, creatorUserID uint, req *CreateAppReque
 
 	// 创建应用
 	app := &model.App{
-		TenantID:    tenantID,
-		Name:        req.Name,
-		Description: req.Description,
-		IconURL:     req.IconURL,
-		Status:      model.AppStatusActive,
+		TenantID:          tenantID,
+		Name:              req.Name,
+		Description:       req.Description,
+		IconURL:           req.IconURL,
+		LogoURL:           req.LogoURL,
+		HomepageURL:       req.HomepageURL,
+		PrivacyPolicyURL:  req.PrivacyPolicyURL,
+		TermsOfServiceURL: req.TermsOfServiceURL,
+		IsVerified:        req.IsVerified,
+		Status:            model.AppStatusActive,
 	}
 
 	// 开始事务
@@ -284,15 +309,20 @@ func (s *AppService) GetTenantAppsWithOAuthClients(tenantID uint, page, pageSize
 	var result []*AppWithOAuthClients
 	for _, app := range apps {
 		appWithClients := &AppWithOAuthClients{
-			ID:           app.ID,
-			TenantID:     app.TenantID,
-			Name:         app.Name,
-			Description:  app.Description,
-			IconURL:      app.IconURL,
-			Status:       app.Status,
-			CreatedAt:    app.CreatedAt.Format(time.RFC3339),
-			UpdatedAt:    app.UpdatedAt.Format(time.RFC3339),
-			OAuthClients: []OAuthClientInfo{},
+			ID:                app.ID,
+			TenantID:          app.TenantID,
+			Name:              app.Name,
+			Description:       app.Description,
+			IconURL:           app.IconURL,
+			LogoURL:           app.LogoURL,
+			HomepageURL:       app.HomepageURL,
+			PrivacyPolicyURL:  app.PrivacyPolicyURL,
+			TermsOfServiceURL: app.TermsOfServiceURL,
+			IsVerified:        app.IsVerified,
+			Status:            app.Status,
+			CreatedAt:         app.CreatedAt.Format(time.RFC3339),
+			UpdatedAt:         app.UpdatedAt.Format(time.RFC3339),
+			OAuthClients:      []OAuthClientInfo{},
 		}
 
 		for _, client := range app.OAuthClients {
@@ -334,6 +364,21 @@ func (s *AppService) UpdateApp(tenantID, appID uint, req *UpdateAppRequest) (*Ap
 	}
 	if req.IconURL != "" {
 		updates["icon_url"] = req.IconURL
+	}
+	if req.LogoURL != nil {
+		updates["logo_url"] = *req.LogoURL
+	}
+	if req.HomepageURL != nil {
+		updates["homepage_url"] = *req.HomepageURL
+	}
+	if req.PrivacyPolicyURL != nil {
+		updates["privacy_policy_url"] = *req.PrivacyPolicyURL
+	}
+	if req.TermsOfServiceURL != nil {
+		updates["terms_of_service_url"] = *req.TermsOfServiceURL
+	}
+	if req.IsVerified != nil {
+		updates["is_verified"] = *req.IsVerified
 	}
 	if req.Status != nil {
 		updates["status"] = *req.Status
@@ -531,14 +576,19 @@ func (s *AppService) GetAppStats(tenantID, appID uint, period string) (*Detailed
 
 func (s *AppService) appToResponse(app *model.App, oauthClients []model.OAuthClient) *AppResponse {
 	resp := &AppResponse{
-		ID:          app.ID,
-		TenantID:    app.TenantID,
-		Name:        app.Name,
-		Description: app.Description,
-		IconURL:     app.IconURL,
-		Status:      app.Status,
-		CreatedAt:   app.CreatedAt.Format("2006-01-02 15:04:05"),
-		UpdatedAt:   app.UpdatedAt.Format("2006-01-02 15:04:05"),
+		ID:                app.ID,
+		TenantID:          app.TenantID,
+		Name:              app.Name,
+		Description:       app.Description,
+		IconURL:           app.IconURL,
+		LogoURL:           app.LogoURL,
+		HomepageURL:       app.HomepageURL,
+		PrivacyPolicyURL:  app.PrivacyPolicyURL,
+		TermsOfServiceURL: app.TermsOfServiceURL,
+		IsVerified:        app.IsVerified,
+		Status:            app.Status,
+		CreatedAt:         app.CreatedAt.Format("2006-01-02 15:04:05"),
+		UpdatedAt:         app.UpdatedAt.Format("2006-01-02 15:04:05"),
 	}
 
 	// 处理OAuth客户端信息
@@ -733,6 +783,21 @@ func (s *AppService) AdminUpdateApp(appID string, req *UpdateAppRequest) (*AppRe
 	}
 	if req.IconURL != "" {
 		updates["icon_url"] = req.IconURL
+	}
+	if req.LogoURL != nil {
+		updates["logo_url"] = *req.LogoURL
+	}
+	if req.HomepageURL != nil {
+		updates["homepage_url"] = *req.HomepageURL
+	}
+	if req.PrivacyPolicyURL != nil {
+		updates["privacy_policy_url"] = *req.PrivacyPolicyURL
+	}
+	if req.TermsOfServiceURL != nil {
+		updates["terms_of_service_url"] = *req.TermsOfServiceURL
+	}
+	if req.IsVerified != nil {
+		updates["is_verified"] = *req.IsVerified
 	}
 	if req.Status != nil {
 		updates["status"] = *req.Status

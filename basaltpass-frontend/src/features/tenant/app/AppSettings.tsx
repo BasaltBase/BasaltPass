@@ -35,6 +35,7 @@ export default function AppSettings() {
     homepage_url: '',
     privacy_policy_url: '',
     terms_of_service_url: '',
+    is_verified: false,
     callback_urls: [''],
     status: 'active' as 'active' | 'inactive' | 'pending'
   })
@@ -62,6 +63,7 @@ export default function AppSettings() {
         homepage_url: appData.homepage_url || '',
         privacy_policy_url: appData.privacy_policy_url || '',
         terms_of_service_url: appData.terms_of_service_url || '',
+        is_verified: appData.is_verified ?? false,
         callback_urls: appData.callback_urls?.length > 0 ? appData.callback_urls : [''],
         status: appData.status || 'active'
       })
@@ -119,6 +121,7 @@ export default function AppSettings() {
         homepage_url: formData.homepage_url || undefined,
         privacy_policy_url: formData.privacy_policy_url || undefined,
         terms_of_service_url: formData.terms_of_service_url || undefined,
+        is_verified: formData.is_verified,
         callback_urls: formData.callback_urls.filter(url => url.trim() !== ''),
         status: formData.status
       }
@@ -339,6 +342,41 @@ export default function AppSettings() {
                   onChange={(e) => handleInputChange('terms_of_service_url', (e.target as HTMLInputElement).value)}
                   placeholder="https://example.com/terms"
                 />
+
+                {/* 认证徽章开关 */}
+                <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-gray-50">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="h-9 w-9 rounded-full flex items-center justify-center flex-shrink-0"
+                      style={{ background: '#1d9bf0' }}
+                    >
+                      <svg viewBox="0 0 24 24" fill="white" className="h-5 w-5">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">标记为认证应用</p>
+                      <p className="text-xs text-gray-500">
+                        认证应用将在 OAuth 授权页面上显示蓝色验证徽章，表明该应用由租户运营并受信任
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={formData.is_verified}
+                    onClick={() => setFormData(prev => ({ ...prev, is_verified: !prev.is_verified }))}
+                    className={`ml-4 relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                      formData.is_verified ? 'bg-blue-500' : 'bg-gray-200'
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                        formData.is_verified ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
               </div>
             </div>
 

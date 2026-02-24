@@ -81,7 +81,8 @@ func RunMigrations() {
 
 		// 租户和应用模型
 		&model.Tenant{},
-		&model.TenantUser{}, // 租户管理员
+		&model.TenantUser{},       // 租户管理员
+		&model.TenantInvitation{}, // 租户邀请
 		&model.App{},
 		&model.AppUser{},     // 业务应用用户映射
 		&model.TenantQuota{}, // 租户配额

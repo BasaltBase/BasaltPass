@@ -332,6 +332,34 @@ func (s *Service) CompleteSignup(req CompleteSignupRequest) (*model.User, error)
 		return nil, err
 	}
 
+	// 自动处理租户邀请（如果用户存在未处理的邀请记录）
+	var invitations []model.TenantInvitation
+	if err := tx.Where("email = ? AND status = ?", user.Email, "pending").Find(&invitations).Error; err == nil && len(invitations) > 0 {
+		for _, inv := range invitations {
+			// 更新邀请状态
+			inv.Status = "accepted"
+			tx.Save(&inv)
+
+			// 如果用户的主租户未设置或为 0，且当前邀请属于某个租户，则可以更新主租户
+			if user.TenantID == 0 {
+				user.TenantID = inv.TenantID
+				tx.Save(user)
+			}
+
+			// 检查是否已经是该租户成员
+			var cnt int64
+			tx.Model(&model.TenantUser{}).Where("user_id = ? AND tenant_id = ?", user.ID, inv.TenantID).Count(&cnt)
+			if cnt == 0 {
+				tenantUser := model.TenantUser{
+					UserID:   user.ID,
+					TenantID: inv.TenantID,
+					Role:     inv.Role,
+				}
+				tx.Create(&tenantUser)
+			}
+		}
+	}
+
 	// 清理：标记注册会话为已完成，使相关挑战失效
 	tx.Model(&pendingSignup).Update("status", model.SignupStatusCompleted)
 	tx.Model(&model.VerificationChallenge{}).Where("signup_id = ? AND status = ?",
@@ -538,7 +566,7 @@ func (s *Service) generateSalt() (string, error) {
 
 // sendVerificationEmail 发送验证邮件
 func (s *Service) sendVerificationEmail(email, code string, expiresAt time.Time) error {
-	subject := "🔒 BasaltPass 邮箱验证码"
+	subject := "BasaltPass - Verification Code"
 
 	// 计算剩余有效时间
 	remaining := time.Until(expiresAt)
@@ -546,99 +574,72 @@ func (s *Service) sendVerificationEmail(email, code string, expiresAt time.Time)
 
 	// 纯文本版本
 	textBody := fmt.Sprintf(`
-亲爱的用户，
+Dear User,
 
-您的 BasaltPass 邮箱验证码是：%s
+Your BasaltPass verification code is: %s
 
-此验证码将在 %d 分钟后过期。
+This verification code will expire in %d minutes.
 
-如果您未申请此验证码，请忽略此邮件。
+If this request did not come from you, please safely ignore this email.
 
-祝好，
-BasaltPass 团队
+Best regards,
+The BasaltPass Team
 `, code, minutes)
 
-	// HTML版本 - 美化样式
+	// HTML版本 - 现代专业样式 (无 Emoji)
 	htmlBody := fmt.Sprintf(`
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BasaltPass 邮箱验证</title>
+    <title>BasaltPass Verification</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f5f7fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-    <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+<body style="margin: 0; padding: 0; background-color: #f7f9fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    <div style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+        
         <!-- 头部 -->
-        <div style="background: linear-gradient(135deg, #667eea 0%%, #764ba2 100%%); padding: 40px 30px; text-align: center;">
-            <div style="background-color: #ffffff; width: 60px; height: 60px; border-radius: 50%%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
-                <div style="font-size: 28px;">🔒</div>
-            </div>
-            <h1 style="color: #ffffff; font-size: 28px; font-weight: 600; margin: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                BasaltPass
-            </h1>
-            <p style="color: #e1e8ff; font-size: 16px; margin: 8px 0 0; opacity: 0.9;">
-                安全身份验证平台
-            </p>
+        <div style="padding: 32px 40px; border-bottom: 1px solid #edf2f7; text-align: center;">
+            <h1 style="color: #1a202c; font-size: 24px; font-weight: 600; margin: 0; letter-spacing: -0.5px;">BasaltPass</h1>
         </div>
         
         <!-- 主内容 -->
-        <div style="padding: 40px 30px;">
-            <h2 style="color: #2d3748; font-size: 24px; font-weight: 600; margin: 0 0 24px; text-align: center;">
-                邮箱验证码
-            </h2>
+        <div style="padding: 40px;">
+            <h2 style="color: #2d3748; font-size: 20px; font-weight: 600; margin: 0 0 24px; text-align: center;">Verification Code</h2>
             
             <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin: 0 0 32px; text-align: center;">
-                您正在注册 BasaltPass 账户，请使用以下验证码完成邮箱验证：
+                You are trying to register a BasaltPass account. Please use the verification code below to complete the process:
             </p>
             
             <!-- 验证码框 -->
-            <div style="background: linear-gradient(135deg, #667eea 0%%, #764ba2 100%%); border-radius: 12px; padding: 2px; margin: 0 auto 32px; max-width: 300px;">
-                <div style="background-color: #ffffff; border-radius: 10px; padding: 24px; text-align: center;">
-                    <div style="color: #667eea; font-size: 36px; font-weight: bold; letter-spacing: 8px; font-family: 'Courier New', monospace;">
-                        %s
-                    </div>
+            <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px; margin: 0 auto 32px; max-width: 320px; text-align: center;">
+                <div style="color: #2b6cb0; font-size: 36px; font-weight: 700; letter-spacing: 8px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">
+                    %s
                 </div>
             </div>
             
             <!-- 提示信息 -->
-            <div style="background-color: #fff8f0; border: 1px solid #fed7aa; border-radius: 8px; padding: 16px; margin: 0 0 32px;">
-                <div style="display: flex; align-items: flex-start;">
-                    <div style="color: #f59e0b; font-size: 18px; margin-right: 12px; margin-top: 2px;">⏰</div>
-                    <div style="color: #92400e; font-size: 14px; line-height: 1.5;">
-                        <strong>重要提醒：</strong>此验证码将在 <strong style="color: #dc2626;">%d 分钟</strong> 后过期，请尽快使用。
-                    </div>
-                </div>
+            <div style="margin: 0 0 32px; text-align: center;">
+                <p style="color: #718096; font-size: 14px; margin: 0;">
+                    This verification code will expire in <strong style="color: #e53e3e; font-weight: 600;">%d minutes</strong>.
+                </p>
             </div>
             
-            <p style="color: #718096; font-size: 14px; line-height: 1.6; margin: 0 0 24px; text-align: center;">
-                如果您未申请此验证码，请忽略此邮件。为了您的账户安全，请不要将验证码泄露给他人。
+            <p style="color: #a0aec0; font-size: 13px; line-height: 1.6; margin: 0; text-align: center;">
+                If you did not request this verification code, please disregard this email. For the security of your account, do not share this code with anyone.
             </p>
         </div>
         
         <!-- 页脚 -->
-        <div style="background-color: #f7fafc; padding: 30px; text-align: center; border-top: 1px solid #e2e8f0;">
-            <p style="color: #a0aec0; font-size: 14px; margin: 0 0 12px;">
-                此邮件由 BasaltPass 系统自动发送，请勿直接回复
+        <div style="background-color: #f7fafc; padding: 24px 40px; text-align: center; border-top: 1px solid #edf2f7;">
+            <p style="color: #a0aec0; font-size: 13px; margin: 0;">
+                &copy; %d BasaltPass. All rights reserved.<br>
+                This is an automated message, please do not reply directly.
             </p>
-            <p style="color: #2d3748; font-size: 16px; font-weight: 600; margin: 0;">
-                BasaltPass Team
-            </p>
-            <div style="margin-top: 20px;">
-                <div style="display: inline-block; margin: 0 8px;">
-                    <div style="width: 8px; height: 8px; background-color: #667eea; border-radius: 50%%; display: inline-block;"></div>
-                </div>
-                <div style="display: inline-block; margin: 0 8px;">
-                    <div style="width: 8px; height: 8px; background-color: #764ba2; border-radius: 50%%; display: inline-block;"></div>
-                </div>
-                <div style="display: inline-block; margin: 0 8px;">
-                    <div style="width: 8px; height: 8px; background-color: #667eea; border-radius: 50%%; display: inline-block;"></div>
-                </div>
-            </div>
         </div>
     </div>
 </body>
-</html>`, code, minutes)
+</html>`, code, minutes, time.Now().Year())
 
 	// 发送验证码
 	msg := &emailservice.Message{

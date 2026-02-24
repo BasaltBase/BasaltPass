@@ -1,27 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import client from '@api/client'
 import { ShieldCheckIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 
-interface ConsentPageData {
-  client: {
-    id: number
-    name: string
-    description: string
-  }
-  scopes: string[]
-  redirect_uri: string
-  state?: string
-  client_id: string
-}
-
 export default function OAuthConsent() {
   const [searchParams] = useSearchParams()
-  const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const submittedRef = useRef(false)
-  
+
   // 从URL参数中获取OAuth授权信息
   const clientName = searchParams.get('client_name') || '未知应用'
   const clientDescription = searchParams.get('client_description') || ''
@@ -31,6 +18,9 @@ export default function OAuthConsent() {
   const clientId = searchParams.get('client_id') || ''
   const codeChallenge = searchParams.get('code_challenge') || ''
   const codeChallengeMethod = searchParams.get('code_challenge_method') || ''
+  const privacyPolicyUrl = searchParams.get('privacy_policy_url') || ''
+  const termsOfServiceUrl = searchParams.get('terms_of_service_url') || ''
+  const isVerified = searchParams.get('is_verified') === 'true'
 
   const apiBase = client.defaults.baseURL || (import.meta as any).env?.VITE_API_BASE || 'http://localhost:8080'
   const consentEndpoint = String(apiBase).replace(/\/$/, '') + '/api/v1/oauth/consent'
@@ -89,38 +79,36 @@ export default function OAuthConsent() {
     }
   }
 
-  // 检查参数完整性
   useEffect(() => {
     if (!clientId || !redirectUri) {
       setError('授权请求参数不完整')
     }
   }, [clientId, redirectUri])
 
-  // 权限范围的友好名称映射
   const getScopeDisplayName = (scope: string) => {
     const scopeNames: Record<string, string> = {
-      'openid': '基本身份信息',
-      'profile': '用户资料',
-      'email': '邮箱地址',
-      'phone': '手机号码',
-      'address': '地址信息',
-      'read': '读取权限',
-      'write': '写入权限',
-      'admin': '管理员权限'
+      openid: '基本身份信息',
+      profile: '用户资料',
+      email: '邮箱地址',
+      phone: '手机号码',
+      address: '地址信息',
+      read: '读取权限',
+      write: '写入权限',
+      admin: '管理员权限',
     }
     return scopeNames[scope] || scope
   }
 
   const getScopeDescription = (scope: string) => {
     const scopeDescriptions: Record<string, string> = {
-      'openid': '允许应用确认您的身份',
-      'profile': '允许应用访问您的基本资料（昵称、头像等）',
-      'email': '允许应用访问您的邮箱地址',
-      'phone': '允许应用访问您的手机号码',
-      'address': '允许应用访问您的地址信息',
-      'read': '允许应用读取您的数据',
-      'write': '允许应用修改您的数据',
-      'admin': '允许应用执行管理员操作'
+      openid: '允许应用确认您的身份',
+      profile: '允许应用访问您的基本资料（昵称、头像等）',
+      email: '允许应用访问您的邮箱地址',
+      phone: '允许应用访问您的手机号码',
+      address: '允许应用访问您的地址信息',
+      read: '允许应用读取您的数据',
+      write: '允许应用修改您的数据',
+      admin: '允许应用执行管理员操作',
     }
     return scopeDescriptions[scope] || `允许应用访问 ${scope} 相关数据`
   }
@@ -141,7 +129,7 @@ export default function OAuthConsent() {
             </div>
           ) : (
             <div className="lg:grid lg:grid-cols-5 lg:gap-8">
-              {/* 左侧：应用信息和标题 (大屏占2列) */}
+              {/* 左侧：应用信息 */}
               <div className="lg:col-span-2 flex flex-col items-center lg:items-start lg:border-r lg:border-gray-200 lg:pr-8">
                 <div className="flex justify-center lg:justify-start w-full mb-6">
                   <ShieldCheckIcon className="h-16 w-16 text-blue-600" />
@@ -152,30 +140,82 @@ export default function OAuthConsent() {
                 <p className="text-sm text-gray-600 text-center lg:text-left mb-6">
                   应用请求访问您的账户信息
                 </p>
-                
-                {/* 应用信息 */}
-                <div className="w-full">
-                  <div className="flex flex-col items-center lg:items-start">
-                    <div className="h-20 w-20 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+
+                {/* 应用头像 + 认证徽章 */}
+                <div className="flex flex-col items-center lg:items-start w-full">
+                  <div className="relative mb-4">
+                    <div className="h-20 w-20 bg-blue-100 rounded-full flex items-center justify-center">
                       <span className="text-blue-600 text-2xl font-bold">
                         {clientName.charAt(0).toUpperCase()}
                       </span>
                     </div>
-                    <h3 className="text-xl font-medium text-gray-900 text-center lg:text-left">
-                      {clientName}
-                    </h3>
-                    {clientDescription && (
-                      <p className="mt-2 text-sm text-gray-500 text-center lg:text-left">
-                        {clientDescription}
-                      </p>
+                    {/* Twitter-style 蓝V认证徽章 */}
+                    {isVerified && (
+                      <div
+                        className="absolute bottom-0 right-0 h-6 w-6 rounded-full flex items-center justify-center shadow-md"
+                        style={{ background: '#1d9bf0' }}
+                        title="认证应用"
+                      >
+                        {/* 勾选图标 */}
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="white"
+                          className="h-3.5 w-3.5"
+                          aria-label="认证"
+                        >
+                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                        </svg>
+                      </div>
                     )}
                   </div>
+
+                  <h3 className="text-xl font-medium text-gray-900 text-center lg:text-left flex items-center gap-2">
+                    {clientName}
+                    {isVerified && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                        认证应用
+                      </span>
+                    )}
+                  </h3>
+                  {clientDescription && (
+                    <p className="mt-2 text-sm text-gray-500 text-center lg:text-left">
+                      {clientDescription}
+                    </p>
+                  )}
                 </div>
+
+                {/* 隐私政策 & 服务条款 */}
+                {(privacyPolicyUrl || termsOfServiceUrl) && (
+                  <div className="mt-6 w-full text-center lg:text-left">
+                    <p className="text-xs text-gray-400 mb-1">相关链接</p>
+                    <div className="flex flex-wrap gap-x-3 gap-y-1 justify-center lg:justify-start">
+                      {privacyPolicyUrl && (
+                        <a
+                          href={privacyPolicyUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-indigo-600 hover:text-indigo-800 underline"
+                        >
+                          隐私政策
+                        </a>
+                      )}
+                      {termsOfServiceUrl && (
+                        <a
+                          href={termsOfServiceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-indigo-600 hover:text-indigo-800 underline"
+                        >
+                          服务条款
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* 右侧：权限信息和操作按钮 (大屏占3列) */}
+              {/* 右侧：权限 & 操作 */}
               <div className="lg:col-span-3 mt-8 lg:mt-0">
-                {/* 权限信息 */}
                 <div className="mb-6">
                   <h4 className="text-sm font-medium text-gray-900 mb-3">
                     该应用将获得以下权限：
@@ -199,7 +239,6 @@ export default function OAuthConsent() {
                   </div>
                 </div>
 
-                {/* 警告信息 */}
                 <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-md p-4">
                   <div className="flex">
                     <ExclamationTriangleIcon className="h-5 w-5 text-yellow-400 flex-shrink-0" />
@@ -212,7 +251,6 @@ export default function OAuthConsent() {
                   </div>
                 </div>
 
-                {/* 操作按钮 */}
                 <div className="flex space-x-3">
                   <button
                     onClick={handleDeny}
@@ -230,7 +268,6 @@ export default function OAuthConsent() {
                   </button>
                 </div>
 
-                {/* 底部说明 */}
                 <div className="mt-6 text-center lg:text-left">
                   <p className="text-xs text-gray-500">
                     授权后，您可以随时在账户设置中撤销应用的访问权限
@@ -243,4 +280,4 @@ export default function OAuthConsent() {
       </div>
     </div>
   )
-} 
+}

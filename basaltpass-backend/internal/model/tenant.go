@@ -113,14 +113,19 @@ func (AppUser) TableName() string {
 
 // App 应用模型（原OAuthClient的扩展）
 type App struct {
-	ID          uint      `gorm:"primaryKey" json:"id"`
-	TenantID    uint      `gorm:"not null;index" json:"tenant_id"`
-	Name        string    `gorm:"size:128;not null" json:"name"`
-	Description string    `gorm:"size:500" json:"description"`
-	IconURL     string    `gorm:"size:255" json:"icon_url"`
-	Status      AppStatus `gorm:"type:varchar(20);default:active" json:"status"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID                uint      `gorm:"primaryKey" json:"id"`
+	TenantID          uint      `gorm:"not null;index" json:"tenant_id"`
+	Name              string    `gorm:"size:128;not null" json:"name"`
+	Description       string    `gorm:"size:500" json:"description"`
+	IconURL           string    `gorm:"size:255" json:"icon_url"`
+	LogoURL           string    `gorm:"size:500" json:"logo_url"`
+	HomepageURL       string    `gorm:"size:500" json:"homepage_url"`
+	PrivacyPolicyURL  string    `gorm:"size:500" json:"privacy_policy_url"`
+	TermsOfServiceURL string    `gorm:"size:500" json:"terms_of_service_url"`
+	IsVerified        bool      `gorm:"default:false" json:"is_verified"`
+	Status            AppStatus `gorm:"type:varchar(20);default:active" json:"status"`
+	CreatedAt         time.Time `json:"created_at"`
+	UpdatedAt         time.Time `json:"updated_at"`
 
 	// 关联
 	Tenant       Tenant        `gorm:"foreignKey:TenantID" json:"tenant,omitempty"`

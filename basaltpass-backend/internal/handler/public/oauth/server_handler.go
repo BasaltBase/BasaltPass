@@ -168,6 +168,15 @@ func buildConsentURL(req *AuthorizeRequest, client *model.OAuthClient) string {
 		if strings.TrimSpace(client.App.Description) != "" {
 			q.Set("client_description", client.App.Description)
 		}
+		if strings.TrimSpace(client.App.PrivacyPolicyURL) != "" {
+			q.Set("privacy_policy_url", client.App.PrivacyPolicyURL)
+		}
+		if strings.TrimSpace(client.App.TermsOfServiceURL) != "" {
+			q.Set("terms_of_service_url", client.App.TermsOfServiceURL)
+		}
+		if client.App.IsVerified {
+			q.Set("is_verified", "true")
+		}
 	}
 
 	return base + "?" + q.Encode()

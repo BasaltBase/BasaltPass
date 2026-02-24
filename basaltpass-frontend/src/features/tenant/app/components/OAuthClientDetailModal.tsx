@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { ArrowPathIcon, ClipboardDocumentIcon, KeyIcon } from '@heroicons/react/24/outline'
+import { ArrowPathIcon, ClipboardDocumentIcon, KeyIcon, PencilIcon, PlusIcon, TrashIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { tenantOAuthApi } from '@api/tenant/tenantOAuth'
-import { PButton } from '@ui'
+import { PButton, PInput } from '@ui'
 
 export interface OAuthClientLike {
   id: number
@@ -22,6 +22,12 @@ interface OAuthClientDetailModalProps {
 export default function OAuthClientDetailModal({ client, isOpen, onClose, onUpdate }: OAuthClientDetailModalProps) {
   const [newSecret, setNewSecret] = useState('')
   const [isRegenerating, setIsRegenerating] = useState(false)
+
+  // Redirect URI editing state
+  const [editingUris, setEditingUris] = useState(false)
+  const [uris, setUris] = useState<string[]>([])
+  const [isSavingUris, setIsSavingUris] = useState(false)
+  const [uriError, setUriError] = useState('')
 
   const copyToClipboard = async (text: string) => {
     await navigator.clipboard.writeText(text)
@@ -54,6 +60,51 @@ export default function OAuthClientDetailModal({ client, isOpen, onClose, onUpda
     }
   }
 
+  const startEditUris = () => {
+    setUris(client?.redirect_uris ? [...client.redirect_uris] : [])
+    setUriError('')
+    setEditingUris(true)
+  }
+
+  const cancelEditUris = () => {
+    setEditingUris(false)
+    setUriError('')
+  }
+
+  const saveUris = async () => {
+    if (!client) return
+    const cleaned = uris.map(u => u.trim()).filter(Boolean)
+    if (cleaned.length === 0) {
+      setUriError('至少需要一条回调地址')
+      return
+    }
+    setIsSavingUris(true)
+    setUriError('')
+    try {
+      await tenantOAuthApi.updateClient(client.client_id, { redirect_uris: cleaned })
+      setEditingUris(false)
+      onUpdate?.()
+    } catch (err: any) {
+      setUriError(err?.response?.data?.error || '保存失败')
+    } finally {
+      setIsSavingUris(false)
+    }
+  }
+
+  const updateUri = (index: number, value: string) => {
+    const next = [...uris]
+    next[index] = value
+    setUris(next)
+  }
+
+  const removeUri = (index: number) => {
+    setUris(uris.filter((_, i) => i !== index))
+  }
+
+  const addUri = () => {
+    setUris([...uris, ''])
+  }
+
   if (!isOpen || !client) return null
 
   return (
@@ -73,6 +124,7 @@ export default function OAuthClientDetailModal({ client, isOpen, onClose, onUpda
             <button
               onClick={() => {
                 setNewSecret('')
+                setEditingUris(false)
                 onClose()
               }}
               className="text-gray-400 hover:text-gray-600 transition-colors duration-200 p-2 hover:bg-gray-100 rounded-lg"
@@ -153,19 +205,89 @@ export default function OAuthClientDetailModal({ client, isOpen, onClose, onUpda
             )}
           </div>
 
+          {/* Redirect URIs with inline editing */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">重定向URI</label>
-            <div className="space-y-2">
-              {(client.redirect_uris || []).length === 0 ? (
-                <div className="text-sm text-gray-500">未配置</div>
-              ) : (
-                (client.redirect_uris || []).map((uri, index) => (
-                  <div key={index} className="text-sm bg-gray-50 p-2 rounded border border-gray-200 break-all">
-                    {uri}
-                  </div>
-                ))
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">回调地址 (Redirect URIs)</label>
+              {!editingUris && (
+                <PButton
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={startEditUris}
+                  leftIcon={<PencilIcon className="h-4 w-4" />}
+                >
+                  编辑
+                </PButton>
               )}
             </div>
+
+            {editingUris ? (
+              <div className="space-y-2">
+                {uris.map((uri, index) => (
+                  <div key={index} className="flex items-center space-x-2">
+                    <PInput
+                      value={uri}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateUri(index, e.target.value)}
+                      placeholder="https://example.com/callback"
+                      className="flex-1 text-sm font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeUri(index)}
+                      className="text-red-500 hover:text-red-700 p-1"
+                      title="删除"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={addUri}
+                  className="flex items-center space-x-1 text-sm text-indigo-600 hover:text-indigo-800"
+                >
+                  <PlusIcon className="h-4 w-4" />
+                  <span>添加一条</span>
+                </button>
+
+                {uriError && <p className="text-sm text-red-600">{uriError}</p>}
+
+                <div className="flex items-center space-x-2 pt-1">
+                  <PButton
+                    type="button"
+                    size="sm"
+                    loading={isSavingUris}
+                    onClick={saveUris}
+                    leftIcon={<CheckIcon className="h-4 w-4" />}
+                  >
+                    保存
+                  </PButton>
+                  <PButton
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={cancelEditUris}
+                    leftIcon={<XMarkIcon className="h-4 w-4" />}
+                  >
+                    取消
+                  </PButton>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {(client.redirect_uris || []).length === 0 ? (
+                  <div className="text-sm text-gray-500">未配置</div>
+                ) : (
+                  (client.redirect_uris || []).map((uri, index) => (
+                    <div key={index} className="text-sm bg-gray-50 p-2 rounded border border-gray-200 break-all font-mono">
+                      {uri}
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
           </div>
 
           <div>
@@ -189,6 +311,7 @@ export default function OAuthClientDetailModal({ client, isOpen, onClose, onUpda
               variant="secondary"
               onClick={() => {
                 setNewSecret('')
+                setEditingUris(false)
                 onClose()
               }}
             >

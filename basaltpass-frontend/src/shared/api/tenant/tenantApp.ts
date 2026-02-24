@@ -23,6 +23,7 @@ export interface TenantApp {
   callback_urls: string[]
   privacy_policy_url?: string
   terms_of_service_url?: string
+  is_verified?: boolean
   status: 'active' | 'inactive' | 'pending'
   settings: Record<string, any>
   created_at: string
@@ -45,6 +46,7 @@ export interface CreateTenantAppRequest {
   callback_urls: string[]
   privacy_policy_url?: string
   terms_of_service_url?: string
+  is_verified?: boolean
   settings?: Record<string, any>
 }
 
@@ -56,6 +58,7 @@ export interface UpdateTenantAppRequest {
   callback_urls?: string[]
   privacy_policy_url?: string
   terms_of_service_url?: string
+  is_verified?: boolean
   status?: 'active' | 'inactive' | 'pending'
   settings?: Record<string, any>
 }
