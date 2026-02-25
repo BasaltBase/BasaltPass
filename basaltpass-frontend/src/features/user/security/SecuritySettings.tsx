@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { Link, useNavigate } from 'react-router-dom'
 import Layout from '@features/user/components/Layout'
 import PhoneInput from '@ui/common/PhoneInput'
@@ -160,7 +161,7 @@ export default function SecuritySettings() {
   }
 
   const handleDisable2FA = async () => {
-    const code = prompt('请输入验证器应用中的6位验证码以确认禁用两步验证：')
+    const code = await uiPrompt('请输入验证器应用中的6位验证码以确认禁用两步验证：')
     if (!code) return
 
     try {

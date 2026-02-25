@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   KeyIcon,
@@ -106,17 +107,17 @@ export default function AppPermissionManagement() {
   const handleDeletePermission = async (permission: Permission) => {
     if (!appId) return
     
-    if (!confirm(`确定要删除权限"${permission.name}"吗？这将会影响所有拥有此权限的用户和角色。`)) {
+    if (!await uiConfirm(`确定要删除权限"${permission.name}"吗？这将会影响所有拥有此权限的用户和角色。`)) {
       return
     }
 
     try {
       await userPermissionsApi.deletePermission(appId, permission.id)
       await fetchPermissions()
-      alert('权限删除成功')
+      uiAlert('权限删除成功')
     } catch (err: any) {
       console.error('删除权限失败:', err)
-      alert(err.response?.data?.error || '删除权限失败')
+      uiAlert(err.response?.data?.error || '删除权限失败')
     }
   }
 
@@ -133,19 +134,19 @@ export default function AppPermissionManagement() {
           description: formData.description,
           category: formData.category
         })
-        alert('权限更新成功')
+        uiAlert('权限更新成功')
         setShowEditModal(false)
       } else {
         // 创建权限
         await userPermissionsApi.createPermission(appId, formData)
-        alert('权限创建成功')
+        uiAlert('权限创建成功')
         setShowCreateModal(false)
       }
       
       await fetchPermissions()
     } catch (err: any) {
       console.error('保存权限失败:', err)
-      alert(err.response?.data?.error || '保存权限失败')
+      uiAlert(err.response?.data?.error || '保存权限失败')
     } finally {
       setSubmitting(false)
     }

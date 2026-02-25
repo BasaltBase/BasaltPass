@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   UsersIcon,
@@ -153,10 +154,10 @@ export default function AppUserManagement() {
       await fetchUserPermissions(selectedUser.user_id.toString())
       setSelectedPermissions([])
       setPermissionExpiry('')
-      alert('权限授予成功')
+      uiAlert('权限授予成功')
     } catch (err: any) {
       console.error('授予权限失败:', err)
-      alert(err.response?.data?.error || '授予权限失败')
+      uiAlert(err.response?.data?.error || '授予权限失败')
     }
   }
 
@@ -174,10 +175,10 @@ export default function AppUserManagement() {
       await fetchUserPermissions(selectedUser.user_id.toString())
       setSelectedRoles([])
       setPermissionExpiry('')
-      alert('角色分配成功')
+      uiAlert('角色分配成功')
     } catch (err: any) {
       console.error('分配角色失败:', err)
-      alert(err.response?.data?.error || '分配角色失败')
+      uiAlert(err.response?.data?.error || '分配角色失败')
     }
   }
 
@@ -185,15 +186,15 @@ export default function AppUserManagement() {
   const handleRevokePermission = async (permissionId: number) => {
     if (!selectedUser || !appId) return
 
-    if (!confirm('确定要撤销此权限吗？')) return
+    if (!await uiConfirm('确定要撤销此权限吗？')) return
 
     try {
       await userPermissionsApi.revokeUserPermission(appId, selectedUser.user_id.toString(), permissionId)
       await fetchUserPermissions(selectedUser.user_id.toString())
-      alert('权限撤销成功')
+      uiAlert('权限撤销成功')
     } catch (err: any) {
       console.error('撤销权限失败:', err)
-      alert(err.response?.data?.error || '撤销权限失败')
+      uiAlert(err.response?.data?.error || '撤销权限失败')
     }
   }
 
@@ -201,15 +202,15 @@ export default function AppUserManagement() {
   const handleRevokeRole = async (roleId: number) => {
     if (!selectedUser || !appId) return
 
-    if (!confirm('确定要撤销此角色吗？')) return
+    if (!await uiConfirm('确定要撤销此角色吗？')) return
 
     try {
       await userPermissionsApi.revokeUserRole(appId, selectedUser.user_id.toString(), roleId)
       await fetchUserPermissions(selectedUser.user_id.toString())
-      alert('角色撤销成功')
+      uiAlert('角色撤销成功')
     } catch (err: any) {
       console.error('撤销角色失败:', err)
-      alert(err.response?.data?.error || '撤销角色失败')
+      uiAlert(err.response?.data?.error || '撤销角色失败')
     }
   }
 
@@ -242,10 +243,10 @@ export default function AppUserManagement() {
       fetchUsers() // 重新加载用户列表
       
       // 显示成功消息
-      alert(`用户${getActionText(actionType)}成功`)
+      uiAlert(`用户${getActionText(actionType)}成功`)
     } catch (err: any) {
       console.error('操作失败:', err)
-      alert(err.response?.data?.error || '操作失败，请重试')
+      uiAlert(err.response?.data?.error || '操作失败，请重试')
     } finally {
       setProcessingAction(false)
     }
@@ -254,17 +255,17 @@ export default function AppUserManagement() {
   const handleRevokeAuthorization = async (user: AppUser) => {
     if (!appId) return
     
-    if (!confirm(`确定要撤销用户 ${user.user_nickname || user.user_email} 的应用授权吗？`)) {
+    if (!await uiConfirm(`确定要撤销用户 ${user.user_nickname || user.user_email} 的应用授权吗？`)) {
       return
     }
 
     try {
       await appUserApi.revokeUserAuthorization(appId, user.user_id.toString())
       fetchUsers() // 重新加载用户列表
-      alert('授权撤销成功')
+      uiAlert('授权撤销成功')
     } catch (err: any) {
       console.error('撤销授权失败:', err)
-      alert(err.response?.data?.error || '撤销授权失败，请重试')
+      uiAlert(err.response?.data?.error || '撤销授权失败，请重试')
     }
   }
 

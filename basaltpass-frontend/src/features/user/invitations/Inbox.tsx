@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { Link } from 'react-router-dom'
 import Layout from '@features/user/components/Layout'
 import { PButton } from '@ui'
@@ -61,7 +62,7 @@ const Inbox: React.FC = () => {
       }
       load(currentPage) // 重新加载当前页
     } catch (error: any) {
-      alert(error.response?.data?.message || `${action === 'accept' ? '接受' : '拒绝'}邀请失败`)
+      uiAlert(error.response?.data?.message || `${action === 'accept' ? '接受' : '拒绝'}邀请失败`)
     } finally {
       setActionLoading(null)
     }

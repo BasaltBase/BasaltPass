@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { useParams, useNavigate } from 'react-router-dom'
 import { 
   BuildingOfficeIcon, 
@@ -122,7 +123,7 @@ const TenantDetail: React.FC = () => {
   const handleDelete = async () => {
     if (!id || !tenant) return
     
-    if (!confirm(`确定要删除租户 "${tenant.name}" 吗？此操作不可恢复。`)) {
+    if (!await uiConfirm(`确定要删除租户 "${tenant.name}" 吗？此操作不可恢复。`)) {
       return
     }
     

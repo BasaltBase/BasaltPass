@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { ExclamationTriangleIcon, KeyIcon, ClipboardDocumentIcon } from '@heroicons/react/24/outline'
 import { tenantOAuthApi, CreateTenantOAuthClientRequest, type OAuthScopeMeta } from '@api/tenant/tenantOAuth'
 import { PButton, PInput, PSelect, PTextarea } from '@ui'
@@ -89,7 +90,7 @@ export default function CreateOAuthClientModal({
 
   const copyToClipboard = async (text: string) => {
     await navigator.clipboard.writeText(text)
-    alert('已复制到剪贴板')
+    uiAlert('已复制到剪贴板')
   }
 
   const resetForm = () => {

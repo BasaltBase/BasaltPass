@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { 
   PlusIcon, 
   PencilIcon, 
@@ -115,19 +116,19 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
     
     // 验证必须选择钱包类型
     if (!createForm.user_id && !createForm.team_id) {
-      alert('请选择钱包类型并输入对应的ID');
+      uiAlert('请选择钱包类型并输入对应的ID');
       return;
     }
     
     setCreateLoading(true);
     try {
       await adminWalletApi.createWallet(createForm);
-      alert('钱包创建成功');
+      uiAlert('钱包创建成功');
       setCreateModalVisible(false);
       setCreateForm({ currency_code: '', initial_balance: 0, user_id: undefined, team_id: undefined });
       loadWallets();
     } catch (error: any) {
-      alert(error.response?.data?.error || '创建钱包失败');
+      uiAlert(error.response?.data?.error || '创建钱包失败');
     } finally {
       setCreateLoading(false);
     }
@@ -141,13 +142,13 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
     setAdjustLoading(true);
     try {
       await adminWalletApi.adjustBalance(selectedWallet.id, adjustForm);
-      alert('余额调整成功');
+      uiAlert('余额调整成功');
       setAdjustModalVisible(false);
       setAdjustForm({ amount: 0, reason: '' });
       setSelectedWallet(null);
       loadWallets();
     } catch (error: any) {
-      alert(error.response?.data?.error || '调整余额失败');
+      uiAlert(error.response?.data?.error || '调整余额失败');
     } finally {
       setAdjustLoading(false);
     }
@@ -155,40 +156,40 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
 
   // 冻结钱包
   const handleFreezeWallet = async (wallet: Wallet) => {
-    if (!confirm('确定要冻结这个钱包吗？')) return;
+    if (!await uiConfirm('确定要冻结这个钱包吗？')) return;
     
     try {
       await adminWalletApi.freezeWallet(wallet.id);
-      alert('钱包已冻结');
+      uiAlert('钱包已冻结');
       loadWallets();
     } catch (error: any) {
-      alert(error.response?.data?.error || '冻结钱包失败');
+      uiAlert(error.response?.data?.error || '冻结钱包失败');
     }
   };
 
   // 解冻钱包
   const handleUnfreezeWallet = async (wallet: Wallet) => {
-    if (!confirm('确定要解冻这个钱包吗？')) return;
+    if (!await uiConfirm('确定要解冻这个钱包吗？')) return;
     
     try {
       await adminWalletApi.unfreezeWallet(wallet.id);
-      alert('钱包已解冻');
+      uiAlert('钱包已解冻');
       loadWallets();
     } catch (error: any) {
-      alert(error.response?.data?.error || '解冻钱包失败');
+      uiAlert(error.response?.data?.error || '解冻钱包失败');
     }
   };
 
   // 删除钱包
   const handleDeleteWallet = async (wallet: Wallet) => {
-    if (!confirm('确定要删除这个钱包吗？只能删除余额为0的钱包。')) return;
+    if (!await uiConfirm('确定要删除这个钱包吗？只能删除余额为0的钱包。')) return;
     
     try {
       await adminWalletApi.deleteWallet(wallet.id);
-      alert('钱包已删除');
+      uiAlert('钱包已删除');
       loadWallets();
     } catch (error: any) {
-      alert(error.response?.data?.error || '删除钱包失败');
+      uiAlert(error.response?.data?.error || '删除钱包失败');
     }
   };
 

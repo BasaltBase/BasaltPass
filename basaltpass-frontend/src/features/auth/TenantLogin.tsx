@@ -55,6 +55,9 @@ function TenantLogin() {
 
   const redirectParam = searchParams.get('redirect') || ''
   const authRequestTimeout = Number((import.meta as any).env?.VITE_AUTH_TIMEOUT_MS || 12000)
+  const resolvedApiBase = String(
+    client.defaults.baseURL || (import.meta as any).env?.VITE_API_BASE || 'http://localhost:8101'
+  ).replace(/\/$/, '')
 
   // 加载租户信息
   useEffect(() => {
@@ -86,8 +89,7 @@ function TenantLogin() {
   const redirectAfterLogin = () => {
     if (!redirectParam) return false
 
-    const apiBase = client.defaults.baseURL || (import.meta as any).env?.VITE_API_BASE || 'http://localhost:8080'
-    const base = String(apiBase).replace(/\/$/, '')
+    const base = resolvedApiBase
     const target = redirectParam.startsWith('http://') || redirectParam.startsWith('https://')
       ? redirectParam
       : redirectParam.startsWith('/')
@@ -140,7 +142,7 @@ function TenantLogin() {
         setTwoFACode('')
         setEmailCode('')
       } else if (err?.code === 'ECONNABORTED' || msg.includes('timeout')) {
-        setError('登录请求超时：请确认 BasaltPass 后端已运行在 http://localhost:8080')
+        setError(`登录请求超时：请确认 BasaltPass 后端已运行在 ${resolvedApiBase}`)
       } else {
         setError(raw || '登录失败，请检查您的凭据')
       }

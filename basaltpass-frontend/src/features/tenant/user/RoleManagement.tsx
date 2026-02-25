@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { 
   ShieldCheckIcon, 
   PlusIcon, 
@@ -381,7 +382,7 @@ const TenantRoleManagement: React.FC = () => {
                           <PButton
                             variant="ghost"
                             size="sm"
-                            onClick={() => { if (window.confirm('确认删除该角色？')) handleDelete(role.id); }}
+                            onClick={async () => { if (await uiConfirm('确认删除该角色？')) handleDelete(role.id); }}
                             title="删除角色"
                             className="text-red-600 hover:text-red-800"
                           >

@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeftIcon, RocketLaunchIcon, PlusIcon, TrashIcon, CubeIcon, KeyIcon, DocumentTextIcon } from '@heroicons/react/24/outline'
+import { ArrowLeftIcon, RocketLaunchIcon, PlusIcon, TrashIcon, CubeIcon, KeyIcon, DocumentTextIcon, CheckIcon } from '@heroicons/react/24/outline'
 import { tenantAppApi, CreateTenantAppRequest } from '@api/tenant/tenantApp'
 import TenantLayout from '@features/tenant/components/TenantLayout'
 import { ROUTES } from '@constants'
@@ -13,12 +14,13 @@ export default function CreateApp() {
     description: '',
     logo_url: '',
     homepage_url: '',
-    callback_urls: [''],
+    redirect_uris: [''],
     privacy_policy_url: '',
     terms_of_service_url: '',
     settings: {}
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [createdCredentials, setCreatedCredentials] = useState<{ clientId: string, clientSecret: string } | null>(null)
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
@@ -32,9 +34,9 @@ export default function CreateApp() {
     }
 
     // 验证回调地址
-    const validCallbackUrls = formData.callback_urls.filter(url => url.trim())
+    const validCallbackUrls = formData.redirect_uris.filter(url => url.trim())
     if (validCallbackUrls.length === 0) {
-      newErrors.callback_urls = '至少需要一个回调地址'
+      newErrors.redirect_uris = '至少需要一个回调地址'
     } else {
       const invalidUrls = validCallbackUrls.filter(url => {
         try {
@@ -45,7 +47,7 @@ export default function CreateApp() {
         }
       })
       if (invalidUrls.length > 0) {
-        newErrors.callback_urls = '请输入有效的URL格式'
+        newErrors.redirect_uris = '请输入有效的URL格式'
       }
     }
 
@@ -99,7 +101,7 @@ export default function CreateApp() {
       // 过滤空的回调地址
       const cleanedData = {
         ...formData,
-        callback_urls: formData.callback_urls.filter(url => url.trim()),
+        redirect_uris: formData.redirect_uris.filter(url => url.trim()),
         // 清空空字符串字段
         logo_url: formData.logo_url?.trim() || undefined,
         homepage_url: formData.homepage_url?.trim() || undefined,
@@ -107,11 +109,19 @@ export default function CreateApp() {
         terms_of_service_url: formData.terms_of_service_url?.trim() || undefined
       }
 
-      await tenantAppApi.createTenantApp(cleanedData)
-      navigate(ROUTES.tenant.apps)
+      const result = await tenantAppApi.createTenantApp(cleanedData)
+      
+      if (result.data?.oauth_clients?.[0]) {
+        setCreatedCredentials({
+          clientId: result.data.oauth_clients[0].client_id,
+          clientSecret: result.data.oauth_clients[0].client_secret
+        })
+      } else {
+        navigate(ROUTES.tenant.apps)
+      }
     } catch (error) {
       console.error('Failed to create app:', error)
-      alert('创建应用失败，请重试')
+      uiAlert('创建应用失败，请重试')
     } finally {
       setLoading(false)
     }
@@ -128,22 +138,27 @@ export default function CreateApp() {
   const addCallbackUrl = () => {
     setFormData(prev => ({
       ...prev,
-      callback_urls: [...prev.callback_urls, '']
+      redirect_uris: [...prev.redirect_uris, '']
     }))
   }
 
   const removeCallbackUrl = (index: number) => {
     setFormData(prev => ({
       ...prev,
-      callback_urls: prev.callback_urls.filter((_, i) => i !== index)
+      redirect_uris: prev.redirect_uris.filter((_, i) => i !== index)
     }))
   }
 
   const updateCallbackUrl = (index: number, value: string) => {
     setFormData(prev => ({
       ...prev,
-      callback_urls: prev.callback_urls.map((url, i) => i === index ? value : url)
+      redirect_uris: prev.redirect_uris.map((url, i) => i === index ? value : url)
     }))
+  }
+
+  const handleCloseModal = () => {
+    setCreatedCredentials(null)
+    navigate(ROUTES.tenant.apps)
   }
 
   return (
@@ -194,7 +209,7 @@ export default function CreateApp() {
                     type="text"
                     id="name"
                     value={formData.name}
-                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    onChange={(e: any) => handleInputChange('name', e.target.value)}
                     className={`block w-full px-4 py-3 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300 ${
                       errors.name ? 'border-red-300 focus:border-red-500' : 'border-gray-200'
                     }`}
@@ -216,7 +231,7 @@ export default function CreateApp() {
                     id="description"
                     rows={4}
                     value={formData.description}
-                    onChange={(e) => handleInputChange('description', e.target.value)}
+                    onChange={(e: any) => handleInputChange('description', e.target.value)}
                     className={`block w-full px-4 py-3 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300 resize-none ${
                       errors.description ? 'border-red-300 focus:border-red-500' : 'border-gray-200'
                     }`}
@@ -238,7 +253,7 @@ export default function CreateApp() {
                     type="url"
                     id="logo_url"
                     value={formData.logo_url}
-                    onChange={(e) => handleInputChange('logo_url', e.target.value)}
+                    onChange={(e: any) => handleInputChange('logo_url', e.target.value)}
                     className={`block w-full px-4 py-3 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300 ${
                       errors.logo_url ? 'border-red-300 focus:border-red-500' : 'border-gray-200'
                     }`}
@@ -262,7 +277,7 @@ export default function CreateApp() {
                     type="url"
                     id="homepage_url"
                     value={formData.homepage_url}
-                    onChange={(e) => handleInputChange('homepage_url', e.target.value)}
+                    onChange={(e: any) => handleInputChange('homepage_url', e.target.value)}
                     className={`block w-full px-4 py-3 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300 ${
                       errors.homepage_url ? 'border-red-300 focus:border-red-500' : 'border-gray-200'
                     }`}
@@ -299,18 +314,18 @@ export default function CreateApp() {
                   授权回调地址 <span className="text-red-500">*</span>
                 </label>
                 <div className="space-y-3">
-                  {formData.callback_urls.map((url, index) => (
+                  {formData.redirect_uris.map((url, index) => (
                     <div key={index} className="flex items-center space-x-3">
                       <div className="flex-1">
                         <input
                           type="url"
                           value={url}
-                          onChange={(e) => updateCallbackUrl(index, e.target.value)}
+                          onChange={(e: any) => updateCallbackUrl(index, e.target.value)}
                           className="block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300"
                           placeholder="https://example.com/auth/callback"
                         />
                       </div>
-                      {formData.callback_urls.length > 1 && (
+                      {formData.redirect_uris.length > 1 && (
                         <button
                           type="button"
                           onClick={() => removeCallbackUrl(index)}
@@ -331,10 +346,10 @@ export default function CreateApp() {
                     添加回调地址
                   </button>
                 </div>
-                {errors.callback_urls && (
+                {errors.redirect_uris && (
                   <p className="mt-2 text-sm text-red-600 flex items-center">
                     <span className="w-1 h-1 bg-red-500 rounded-full mr-2"></span>
-                    {errors.callback_urls}
+                    {errors.redirect_uris}
                   </p>
                 )}
                 <div className="mt-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
@@ -368,7 +383,7 @@ export default function CreateApp() {
                     type="url"
                     id="privacy_policy_url"
                     value={formData.privacy_policy_url}
-                    onChange={(e) => handleInputChange('privacy_policy_url', e.target.value)}
+                    onChange={(e: any) => handleInputChange('privacy_policy_url', e.target.value)}
                     className={`block w-full px-4 py-3 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300 ${
                       errors.privacy_policy_url ? 'border-red-300 focus:border-red-500' : 'border-gray-200'
                     }`}
@@ -392,7 +407,7 @@ export default function CreateApp() {
                     type="url"
                     id="terms_of_service_url"
                     value={formData.terms_of_service_url}
-                    onChange={(e) => handleInputChange('terms_of_service_url', e.target.value)}
+                    onChange={(e: any) => handleInputChange('terms_of_service_url', e.target.value)}
                     className={`block w-full px-4 py-3 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300 ${
                       errors.terms_of_service_url ? 'border-red-300 focus:border-red-500' : 'border-gray-200'
                     }`}
@@ -440,6 +455,50 @@ export default function CreateApp() {
           </form>
         </div>
       </div>
+
+      {createdCredentials && (
+        <div className="fixed inset-0 !m-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 max-w-lg w-full">
+            <div className="flex items-center mb-4">
+              <div className="h-10 w-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                <CheckIcon className="h-6 w-6 text-green-600" />
+              </div>
+              <h3 className="text-xl font-medium text-gray-900">应用创建成功</h3>
+            </div>
+            
+            <div className="mb-6">
+              <p className="text-sm text-gray-600 mb-4">
+                请复制并妥善保存以下 <strong>Client Secret</strong>。这是您唯一一次能看到该密钥的机会，关闭此窗口后将无法再次查看。
+              </p>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Client ID</label>
+                  <div className="bg-gray-50 p-3 rounded border border-gray-200 font-mono text-sm break-all">
+                    {createdCredentials.clientId}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Client Secret</label>
+                  <div className="bg-gray-50 p-3 rounded border border-gray-200 font-mono text-sm break-all">
+                    {createdCredentials.clientSecret}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                我已保存，去应用列表
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </TenantLayout>
   )
 }

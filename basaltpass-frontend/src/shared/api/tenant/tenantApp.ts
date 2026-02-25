@@ -20,7 +20,7 @@ export interface TenantApp {
   icon_url?: string
   logo_url?: string
   homepage_url?: string
-  callback_urls: string[]
+  redirect_uris: string[]
   privacy_policy_url?: string
   terms_of_service_url?: string
   is_verified?: boolean
@@ -43,7 +43,7 @@ export interface CreateTenantAppRequest {
   description: string
   logo_url?: string
   homepage_url?: string
-  callback_urls: string[]
+  redirect_uris: string[]
   privacy_policy_url?: string
   terms_of_service_url?: string
   is_verified?: boolean
@@ -55,7 +55,7 @@ export interface UpdateTenantAppRequest {
   description?: string
   logo_url?: string
   homepage_url?: string
-  callback_urls?: string[]
+  redirect_uris?: string[]
   privacy_policy_url?: string
   terms_of_service_url?: string
   is_verified?: boolean

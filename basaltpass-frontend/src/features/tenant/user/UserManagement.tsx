@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { Link } from 'react-router-dom'
 import {
   UsersIcon,
@@ -325,7 +326,7 @@ export default function TenantUserManagement() {
       return
     }
 
-    if (!confirm(`确定要移除用户"${user.nickname || user.email}"吗？`)) {
+    if (!await uiConfirm(`确定要移除用户"${user.nickname || user.email}"吗？`)) {
       return
     }
 

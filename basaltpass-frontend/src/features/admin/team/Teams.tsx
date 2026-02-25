@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { PButton, PInput, PCard, PSelect } from '@ui'
 import { adminTeamApi, AdminTeamBrief } from '@api/admin/team'
@@ -93,7 +94,7 @@ export default function AdminTeamsPage() {
 
   const removeMember = async (m: any) => {
     if(!memberTeam) return
-    if(!confirm('确认移除成员?')) return
+    if(!await uiConfirm('确认移除成员?')) return
     await adminTeamApi.removeMember(memberTeam.id, m.user_id)
     reloadMembers()
   }
@@ -106,13 +107,13 @@ export default function AdminTeamsPage() {
 
   const transferOwner = async (m: any) => {
     if(!memberTeam) return
-    if(!confirm('确认将所有者转移给该成员?')) return
+    if(!await uiConfirm('确认将所有者转移给该成员?')) return
     setTransferring(true)
     try { await adminTeamApi.transferOwnership(memberTeam.id, m.user_id); load(); reloadMembers() } finally { setTransferring(false) }
   }
 
   const removeTeam = async (team: AdminTeamBrief) => {
-    if(!confirm('确认删除团队?')) return
+    if(!await uiConfirm('确认删除团队?')) return
     await adminTeamApi.remove(team.id)
     load()
   }

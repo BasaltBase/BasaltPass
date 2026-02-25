@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { useNavigate } from 'react-router-dom';
 import Layout from '@features/user/components/Layout';
 import { PCard, PButton, PInput, PSelect } from '@ui';
@@ -45,7 +46,7 @@ const SubscriptionCheckout: React.FC = () => {
 
   const handleCheckout = async () => {
     if (!selectedPrice) {
-      alert('请选择一个价格');
+      uiAlert('请选择一个价格');
       return;
     }
 
@@ -69,7 +70,7 @@ const SubscriptionCheckout: React.FC = () => {
       }
 
     } catch (error: any) {
-      alert('创建订阅失败: ' + error.message);
+      uiAlert('创建订阅失败: ' + error.message);
     } finally {
       setLoading(false);
     }

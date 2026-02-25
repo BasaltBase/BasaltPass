@@ -140,6 +140,7 @@ type AppWithOAuthClients struct {
 type OAuthClientInfo struct {
 	ID           uint     `json:"id"`
 	ClientID     string   `json:"client_id"`
+	ClientSecret string   `json:"client_secret,omitempty"`
 	RedirectURIs []string `json:"redirect_uris"`
 	Scopes       []string `json:"scopes"`
 	IsActive     bool     `json:"is_active"`
@@ -236,7 +237,11 @@ func (s *AppService) CreateApp(tenantID, creatorUserID uint, req *CreateAppReque
 
 	clients := []model.OAuthClient{*oauthClient}
 
-	return s.appToResponse(app, clients), nil
+	resp := s.appToResponse(app, clients)
+	if len(resp.OAuthClients) > 0 {
+		resp.OAuthClients[0].ClientSecret = oauthClient.ClientSecret
+	}
+	return resp, nil
 }
 
 // GetApp 获取应用详情
@@ -760,7 +765,11 @@ func (s *AppService) AdminCreateApp(req *AdminCreateAppRequest) (*AppResponse, e
 		return nil, err
 	}
 
-	return s.appToResponse(&createdApp, createdApp.OAuthClients), nil
+	resp := s.appToResponse(&createdApp, createdApp.OAuthClients)
+	if len(resp.OAuthClients) > 0 {
+		resp.OAuthClients[0].ClientSecret = oauthClient.ClientSecret
+	}
+	return resp, nil
 }
 
 // AdminUpdateApp 系统管理员更新应用

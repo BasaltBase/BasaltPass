@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import Layout from '@features/user/components/Layout'
 import { userAppsApi, UserApp } from '@api/user/apps'
@@ -44,15 +45,15 @@ export default function UserAppDetail() {
   }
 
   const revoke = async () => {
-    if (!app || !confirm(`确定要撤销对「${app.app_name}」的授权吗？`)) return
+    if (!app || !await uiConfirm(`确定要撤销对「${app.app_name}」的授权吗？`)) return
     try {
       setRevoking(true)
       await userAppsApi.revoke(app.app_id)
-      alert('已撤销授权')
+      uiAlert('已撤销授权')
       navigate('/my-apps')
     } catch (e: any) {
       console.error(e)
-      alert(e?.response?.data?.error || '撤销失败')
+      uiAlert(e?.response?.data?.error || '撤销失败')
       setRevoking(false)
     }
   }

@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import TenantLayout from '@features/tenant/components/TenantLayout'
 import { PButton, PInput, PCard, PSelect } from '@ui'
 import { tenantTeamApi, TenantTeamBrief } from '@api/tenant/tenantTeam'
@@ -118,7 +119,7 @@ export default function TenantTeamsPage() {
 
   const removeMember = async (m: any) => {
     if (!memberTeam) return
-    if (!confirm('确认移除成员?')) return
+    if (!await uiConfirm('确认移除成员?')) return
     await tenantTeamApi.removeMember(memberTeam.id, m.user_id)
     reloadMembers()
   }
@@ -131,7 +132,7 @@ export default function TenantTeamsPage() {
 
   const transferOwner = async (m: any) => {
     if (!memberTeam) return
-    if (!confirm('确认将所有者转移给该成员?')) return
+    if (!await uiConfirm('确认将所有者转移给该成员?')) return
     setTransferring(true)
     try {
       await tenantTeamApi.transferOwnership(memberTeam.id, m.user_id)
@@ -143,7 +144,7 @@ export default function TenantTeamsPage() {
   }
 
   const removeTeam = async (team: TenantTeamBrief) => {
-    if (!confirm('确认删除团队?')) return
+    if (!await uiConfirm('确认删除团队?')) return
     await tenantTeamApi.remove(team.id)
     load()
   }

@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import Layout from '@features/user/components/Layout'
 import { PSelect, PCard, PToggle, PButton, PInput } from '@ui'
 import { 
@@ -110,10 +111,10 @@ export default function Settings() {
         company: profile.company,
         job_title: profile.job_title
       })
-      alert('设置已保存')
+      uiAlert('设置已保存')
     } catch (err) {
       console.error('Failed to save settings:', err)
-      alert('保存失败，请重试')
+      uiAlert('保存失败，请重试')
     } finally {
       setSaving(false)
     }

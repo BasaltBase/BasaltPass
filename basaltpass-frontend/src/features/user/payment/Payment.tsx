@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { useNavigate } from 'react-router-dom';
 import { paymentAPI, CreatePaymentIntentRequest, PaymentIntent, MockStripeResponse } from '@api/subscription/payment/payment';
 import { getBalance } from '@api/user/wallet';
@@ -32,7 +33,7 @@ const Payment: React.FC = () => {
     e.preventDefault();
     
     if (!amount || parseFloat(amount) <= 0) {
-      alert('请输入有效的金额');
+      uiAlert('请输入有效的金额');
       return;
     }
 
@@ -57,9 +58,9 @@ const Payment: React.FC = () => {
       setPaymentIntent(response.payment_intent);
       setStripeResponse(response.stripe_mock_response);
       
-      alert('支付意图创建成功！');
+      uiAlert('支付意图创建成功！');
     } catch (error: any) {
-      alert('创建失败: ' + error.message);
+      uiAlert('创建失败: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -67,7 +68,7 @@ const Payment: React.FC = () => {
 
   const handleCreatePaymentSession = async () => {
     if (!paymentIntent) {
-      alert('请先创建支付意图');
+      uiAlert('请先创建支付意图');
       return;
     }
 
@@ -83,13 +84,13 @@ const Payment: React.FC = () => {
       const response = await paymentAPI.createPaymentSession(sessionRequest);
       
       // 显示Stripe模拟响应
-      alert('支付会话创建成功！即将跳转到支付页面...');
+      uiAlert('支付会话创建成功！即将跳转到支付页面...');
       
       // 跳转到支付页面
       window.open(paymentAPI.getPaymentCheckoutUrl(response.session.StripeSessionID), '_blank');
       
     } catch (error: any) {
-      alert('创建支付会话失败: ' + error.message);
+      uiAlert('创建支付会话失败: ' + error.message);
     } finally {
       setLoading(false);
     }

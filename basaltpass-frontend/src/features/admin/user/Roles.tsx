@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import client from '@api/client'
 import { PlusIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 import { listPermissions, getRolePermissions, setRolePermissions, type Permission } from '@api/admin/permissions'
@@ -99,7 +100,7 @@ export default function Roles() {
       await setRolePermissions(assigningRole.ID, ids)
       setAssigningRole(null)
     } catch (e:any) {
-      alert(e.response?.data?.error || '保存失败')
+      uiAlert(e.response?.data?.error || '保存失败')
     } finally {
       setSavingPerms(false)
     }

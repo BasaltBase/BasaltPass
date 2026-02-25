@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { Link } from 'react-router-dom'
 import { 
   PlusIcon, 
@@ -77,19 +78,19 @@ export default function TenantAppList() {
       fetchApps()
     } catch (err: any) {
       console.error('切换应用状态失败:', err)
-      alert('切换应用状态失败，请重试')
+      uiAlert('切换应用状态失败，请重试')
     }
   }
 
   const handleDeleteApp = async (appId: string) => {
-    if (confirm('确定要删除这个应用吗？此操作不可恢复。')) {
+    if (await uiConfirm('确定要删除这个应用吗？此操作不可恢复。')) {
       try {
         await tenantAppApi.deleteTenantApp(appId)
         // 重新获取应用列表
         fetchApps()
       } catch (err: any) {
         console.error('删除应用失败:', err)
-        alert('删除应用失败，请重试')
+        uiAlert('删除应用失败，请重试')
       }
     }
   }

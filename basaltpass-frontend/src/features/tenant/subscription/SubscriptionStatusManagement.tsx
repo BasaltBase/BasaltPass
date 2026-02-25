@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import TenantLayout from '@features/tenant/components/TenantLayout';
 import { 
   CreditCardIcon,
@@ -127,7 +128,7 @@ const SubscriptionStatusManagement: React.FC = () => {
     if (!subscription) return;
 
     const confirmMessage = `确定要将订阅状态改为"${getStatusText(newStatus)}"吗？`;
-    if (!confirm(confirmMessage)) return;
+    if (!await uiConfirm(confirmMessage)) return;
 
     try {
       if (newStatus === 'canceled') {
@@ -137,11 +138,11 @@ const SubscriptionStatusManagement: React.FC = () => {
         console.log('Changing status to:', newStatus);
       }
       
-      alert('订阅状态更新成功');
+      uiAlert('订阅状态更新成功');
       fetchSubscriptions();
     } catch (error: any) {
       console.error('Failed to update subscription status:', error);
-      alert(`状态更新失败: ${error.response?.data?.error || error.message}`);
+      uiAlert(`状态更新失败: ${error.response?.data?.error || error.message}`);
     }
   };
 

@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { Link } from 'react-router-dom'
 import { 
   PlusIcon, 
@@ -50,7 +51,7 @@ export default function TenantList() {
   }
 
   const handleDeleteTenant = async (id: number) => {
-    if (!confirm('确定要删除这个租户吗？此操作不可撤销。')) {
+    if (!await uiConfirm('确定要删除这个租户吗？此操作不可撤销。')) {
       return
     }
 
@@ -59,7 +60,7 @@ export default function TenantList() {
       await loadTenants()
     } catch (error) {
       console.error('Failed to delete tenant:', error)
-      alert('删除租户失败')
+      uiAlert('删除租户失败')
     }
   }
 

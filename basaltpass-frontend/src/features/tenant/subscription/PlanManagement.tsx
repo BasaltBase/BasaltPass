@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import TenantLayout from '@features/tenant/components/TenantLayout';
 import { 
   RocketLaunchIcon,
@@ -70,17 +71,17 @@ const PlanManagement: React.FC<PlanManagementProps> = () => {
   };
 
   const handleDeletePlan = async (planId: number, planName: string) => {
-    if (!confirm(`确定要删除套餐"${planName}"吗？这将同时删除相关的定价配置。`)) {
+    if (!await uiConfirm(`确定要删除套餐"${planName}"吗？这将同时删除相关的定价配置。`)) {
       return;
     }
 
     try {
       await tenantSubscriptionAPI.deleteTenantPlan(planId);
-      alert('套餐删除成功');
+      uiAlert('套餐删除成功');
       fetchData();
     } catch (error: any) {
       console.error('Failed to delete plan:', error);
-      alert(`删除套餐失败: ${error.response?.data?.error || error.message}`);
+      uiAlert(`删除套餐失败: ${error.response?.data?.error || error.message}`);
     }
   };
 
@@ -250,7 +251,7 @@ const CreatePlanModal: React.FC<{
       try {
         metadata = JSON.parse(formData.metadata);
       } catch (e) {
-        alert('元数据格式错误，请检查JSON格式');
+        uiAlert('元数据格式错误，请检查JSON格式');
         return;
       }
       
@@ -274,7 +275,7 @@ const CreatePlanModal: React.FC<{
       onSuccess();
     } catch (error: any) {
       console.error('Failed to save plan:', error);
-      alert(`保存套餐失败: ${error.response?.data?.error || error.message}`);
+      uiAlert(`保存套餐失败: ${error.response?.data?.error || error.message}`);
     } finally {
       setSubmitting(false);
     }

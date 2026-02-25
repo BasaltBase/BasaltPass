@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { 
   PlusIcon, 
   EyeIcon, 
@@ -55,13 +56,13 @@ export default function TenantOAuthClients() {
   }
 
   const handleDelete = async (client: TenantOAuthClient) => {
-    if (!confirm(`确定要删除OAuth客户端 "${client.client_id}" 吗？此操作不可恢复。`)) return
+    if (!await uiConfirm(`确定要删除OAuth客户端 "${client.client_id}" 吗？此操作不可恢复。`)) return
 
     try {
       await tenantOAuthApi.deleteClient(client.client_id)
       loadAppsWithClients()
     } catch (err: any) {
-      alert(err.response?.data?.error || '删除失败')
+      uiAlert(err.response?.data?.error || '删除失败')
     }
   }
 

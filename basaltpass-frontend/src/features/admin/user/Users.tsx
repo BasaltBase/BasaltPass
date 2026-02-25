@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { adminUserApi, type AdminUser, type UserListParams, type UserStats } from '@api/admin/user'
 import { Link } from 'react-router-dom'
 import { 
@@ -119,7 +120,7 @@ export default function Users() {
 
   // 处理删除用户
   const handleDeleteUser = async (user: AdminUser) => {
-    if (!confirm(`确定要删除用户 ${user.nickname || user.email} 吗？此操作不可恢复。`)) {
+    if (!await uiConfirm(`确定要删除用户 ${user.nickname || user.email} 吗？此操作不可恢复。`)) {
       return
     }
     

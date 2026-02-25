@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import Layout from '@features/user/components/Layout'
 import { getOrder } from '@api/subscription/payment/order'
@@ -97,7 +98,7 @@ export default function OrderConfirmPage() {
 
     } catch (error: any) {
       console.error('创建支付失败:', error)
-      alert(error.response?.data?.error || '创建支付失败，请重试')
+      uiAlert(error.response?.data?.error || '创建支付失败，请重试')
     } finally {
       setPaying(false)
     }

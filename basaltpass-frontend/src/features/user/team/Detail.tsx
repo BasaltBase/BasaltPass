@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import Layout from '@features/user/components/Layout';
 import { PCard, PButton } from '@ui';
@@ -57,7 +58,7 @@ const TeamDetail: React.FC = () => {
       await invitationApi.revoke(team.id, invitationId);
       loadOutgoingInvitations(); // 重新加载列表
     } catch (error: any) {
-      alert(error.response?.data?.message || '撤回邀请失败');
+      uiAlert(error.response?.data?.message || '撤回邀请失败');
     }
   };
 

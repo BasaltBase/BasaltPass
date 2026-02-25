@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { 
   ArrowLeftIcon, 
@@ -36,7 +37,7 @@ export default function AppSettings() {
     privacy_policy_url: '',
     terms_of_service_url: '',
     is_verified: false,
-    callback_urls: [''],
+    redirect_uris: [''],
     status: 'active' as 'active' | 'inactive' | 'pending'
   })
 
@@ -64,7 +65,7 @@ export default function AppSettings() {
         privacy_policy_url: appData.privacy_policy_url || '',
         terms_of_service_url: appData.terms_of_service_url || '',
         is_verified: appData.is_verified ?? false,
-        callback_urls: appData.callback_urls?.length > 0 ? appData.callback_urls : [''],
+        redirect_uris: appData.oauth_clients?.[0]?.redirect_uris?.length ? appData.oauth_clients[0].redirect_uris : [''],
         status: appData.status || 'active'
       })
     } catch (err: any) {
@@ -83,27 +84,27 @@ export default function AppSettings() {
   }
 
   const handleCallbackUrlChange = (index: number, value: string) => {
-    const newCallbackUrls = [...formData.callback_urls]
+    const newCallbackUrls = [...formData.redirect_uris]
     newCallbackUrls[index] = value
     setFormData(prev => ({
       ...prev,
-      callback_urls: newCallbackUrls
+      redirect_uris: newCallbackUrls
     }))
   }
 
   const addCallbackUrl = () => {
     setFormData(prev => ({
       ...prev,
-      callback_urls: [...prev.callback_urls, '']
+      redirect_uris: [...prev.redirect_uris, '']
     }))
   }
 
   const removeCallbackUrl = (index: number) => {
-    if (formData.callback_urls.length === 1) return
-    const newCallbackUrls = formData.callback_urls.filter((_, i) => i !== index)
+    if (formData.redirect_uris.length === 1) return
+    const newCallbackUrls = formData.redirect_uris.filter((_, i) => i !== index)
     setFormData(prev => ({
       ...prev,
-      callback_urls: newCallbackUrls
+      redirect_uris: newCallbackUrls
     }))
   }
 
@@ -122,7 +123,7 @@ export default function AppSettings() {
         privacy_policy_url: formData.privacy_policy_url || undefined,
         terms_of_service_url: formData.terms_of_service_url || undefined,
         is_verified: formData.is_verified,
-        callback_urls: formData.callback_urls.filter(url => url.trim() !== ''),
+        redirect_uris: formData.redirect_uris.filter(url => url.trim() !== ''),
         status: formData.status
       }
 
@@ -132,10 +133,10 @@ export default function AppSettings() {
       await fetchAppDetail()
       
       // 显示成功消息
-      alert('应用设置已保存')
+      uiAlert('应用设置已保存')
     } catch (err: any) {
       console.error('保存失败:', err)
-      alert(err.response?.data?.error || '保存失败')
+      uiAlert(err.response?.data?.error || '保存失败')
     } finally {
       setSaving(false)
     }
@@ -144,7 +145,7 @@ export default function AppSettings() {
   const handleDelete = async () => {
     if (!id || !app) return
     if (deleteConfirmText !== app.name) {
-      alert('请输入正确的应用名称以确认删除')
+      uiAlert('请输入正确的应用名称以确认删除')
       return
     }
 
@@ -153,7 +154,7 @@ export default function AppSettings() {
       navigate(ROUTES.tenant.apps)
     } catch (err: any) {
       console.error('删除失败:', err)
-      alert(err.response?.data?.error || '删除失败')
+      uiAlert(err.response?.data?.error || '删除失败')
     }
   }
 
@@ -388,7 +389,7 @@ export default function AppSettings() {
               </div>
               
               <div className="space-y-3">
-                {formData.callback_urls.map((url, index) => (
+                {formData.redirect_uris.map((url, index) => (
                   <div key={index} className="flex items-center space-x-2">
                     <div className="flex-1">
                       <PInput
@@ -399,7 +400,7 @@ export default function AppSettings() {
                         autoComplete="off"
                       />
                     </div>
-                    {formData.callback_urls.length > 1 && (
+                    {formData.redirect_uris.length > 1 && (
                       <PButton 
                         variant="secondary" 
                         size="sm" 

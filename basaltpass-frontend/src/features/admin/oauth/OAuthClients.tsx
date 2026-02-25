@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { 
   PlusIcon, 
   MagnifyingGlassIcon,
@@ -314,7 +315,7 @@ function ClientDetailModal({ client, isOpen, onClose, onUpdate }: ClientDetailMo
   const [isRegenerating, setIsRegenerating] = useState(false)
 
   const handleRegenerateSecret = async () => {
-    if (!client || !confirm('确定要重新生成客户端密钥吗？这会使现有的密钥失效。')) return
+    if (!client || !await uiConfirm('确定要重新生成客户端密钥吗？这会使现有的密钥失效。')) return
 
     setIsRegenerating(true)
     try {
@@ -492,13 +493,13 @@ export default function OAuthClients() {
   }
 
   const handleDelete = async (client: OAuthClient) => {
-    if (!confirm(`确定要删除客户端 "${client.name}" 吗？此操作不可恢复。`)) return
+    if (!await uiConfirm(`确定要删除客户端 "${client.name}" 吗？此操作不可恢复。`)) return
 
     try {
       await oauthApi.deleteClient(client.client_id)
       loadClients()
     } catch (err: any) {
-      alert(err.response?.data?.error || '删除失败')
+      uiAlert(err.response?.data?.error || '删除失败')
     }
   }
 

@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   ShieldCheckIcon,
@@ -104,17 +105,17 @@ export default function AppRoleManagement() {
   const handleDeleteRole = async (role: Role) => {
     if (!appId) return
     
-    if (!confirm(`确定要删除角色"${role.name}"吗？这将会影响所有拥有此角色的用户。`)) {
+    if (!await uiConfirm(`确定要删除角色"${role.name}"吗？这将会影响所有拥有此角色的用户。`)) {
       return
     }
 
     try {
       await userPermissionsApi.deleteRole(appId, role.id)
       await fetchRolesAndPermissions()
-      alert('角色删除成功')
+      uiAlert('角色删除成功')
     } catch (err: any) {
       console.error('删除角色失败:', err)
-      alert(err.response?.data?.error || '删除角色失败')
+      uiAlert(err.response?.data?.error || '删除角色失败')
     }
   }
 
@@ -131,19 +132,19 @@ export default function AppRoleManagement() {
           description: formData.description,
           permission_ids: formData.permission_ids
         })
-        alert('角色更新成功')
+        uiAlert('角色更新成功')
         setShowEditModal(false)
       } else {
         // 创建角色
         await userPermissionsApi.createRole(appId, formData)
-        alert('角色创建成功')
+        uiAlert('角色创建成功')
         setShowCreateModal(false)
       }
       
       await fetchRolesAndPermissions()
     } catch (err: any) {
       console.error('保存角色失败:', err)
-      alert(err.response?.data?.error || '保存角色失败')
+      uiAlert(err.response?.data?.error || '保存角色失败')
     } finally {
       setSubmitting(false)
     }

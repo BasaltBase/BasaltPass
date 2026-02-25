@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { listPermissions, createPermission, updatePermission, deletePermission, type Permission } from '@api/admin/permissions'
 
@@ -56,12 +57,12 @@ export default function PermissionsPage() {
   const onEdit = (p: Permission) => { setEditing(p); setCode(p.Code); setDesc(p.Desc || '') }
 
   const onDelete = async (id: number) => {
-    if (!confirm('确定删除该权限吗？')) return
+    if (!await uiConfirm('确定删除该权限吗？')) return
     try {
       await deletePermission(id)
       await load()
     } catch (e: any) {
-      alert(e.response?.data?.error || '删除失败')
+      uiAlert(e.response?.data?.error || '删除失败')
     }
   }
 

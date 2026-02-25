@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { useParams, Navigate } from 'react-router-dom'
 import AdminLayout from '@features/admin/components/AdminLayout'
 import PInput from '@ui/PInput'
@@ -68,9 +69,9 @@ export default function SettingsCategoryPage() {
     try {
       setSaving(true)
       await client.put('/api/v1/admin/settings/bulk', Array.isArray(settings) ? settings : [])
-      alert('已保存设置')
+      uiAlert('已保存设置')
     } catch (e: any) {
-      alert(e?.message || '保存失败')
+      uiAlert(e?.message || '保存失败')
     } finally {
       setSaving(false)
     }

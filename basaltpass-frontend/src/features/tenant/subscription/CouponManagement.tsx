@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import TenantLayout from '@features/tenant/components/TenantLayout';
 import { 
   GiftIcon,
@@ -49,7 +50,7 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
       setCoupons(response.data || []);
     } catch (error) {
       console.error('Failed to fetch coupons:', error);
-      alert('获取优惠券列表失败，请检查网络连接或联系管理员');
+      uiAlert('获取优惠券列表失败，请检查网络连接或联系管理员');
       setCoupons([]);
     } finally {
       setLoading(false);
@@ -79,17 +80,17 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
   };
 
   const handleDeleteCoupon = async (couponCode: string) => {
-    if (!confirm(`确定要删除优惠券"${couponCode}"吗？`)) {
+    if (!await uiConfirm(`确定要删除优惠券"${couponCode}"吗？`)) {
       return;
     }
 
     try {
       await deleteTenantCoupon(couponCode);
       setCoupons(prev => prev.filter(c => c.Code !== couponCode));
-      alert('优惠券删除成功');
+      uiAlert('优惠券删除成功');
     } catch (error: any) {
       console.error('Failed to delete coupon:', error);
-      alert(`删除优惠券失败: ${error.response?.data?.error || error.message || '服务器错误'}`);
+      uiAlert(`删除优惠券失败: ${error.response?.data?.error || error.message || '服务器错误'}`);
     }
   };
 
@@ -99,10 +100,10 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
       setCoupons(prev => prev.map(c => 
         c.Code === couponCode ? { ...c, IsActive: !currentStatus } : c
       ));
-      alert(`优惠券已${!currentStatus ? '启用' : '停用'}`);
+      uiAlert(`优惠券已${!currentStatus ? '启用' : '停用'}`);
     } catch (error: any) {
       console.error('Failed to toggle coupon status:', error);
-      alert(`操作失败: ${error.response?.data?.error || error.message || '服务器错误'}`);
+      uiAlert(`操作失败: ${error.response?.data?.error || error.message || '服务器错误'}`);
     }
   };
 
@@ -502,17 +503,17 @@ const CreateCouponModal: React.FC<{
       if (coupon) {
         // 更新优惠券
         await updateTenantCoupon(coupon.Code, submitData as tenantSubscriptionAPI.UpdateTenantCouponRequest);
-        alert('优惠券更新成功');
+        uiAlert('优惠券更新成功');
       } else {
         // 创建优惠券
         await createTenantCoupon(submitData);
-        alert('优惠券创建成功');
+        uiAlert('优惠券创建成功');
       }
       
       onSuccess();
     } catch (error: any) {
       console.error('Failed to save coupon:', error);
-      alert(`保存优惠券失败: ${error.response?.data?.error || error.message}`);
+      uiAlert(`保存优惠券失败: ${error.response?.data?.error || error.message}`);
     } finally {
       setSubmitting(false);
     }

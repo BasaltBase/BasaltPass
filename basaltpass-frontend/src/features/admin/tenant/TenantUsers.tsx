@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   UsersIcon,
@@ -182,7 +183,7 @@ const TenantUsers: React.FC = () => {
   }
 
   const handleRemoveUser = async (userId: number) => {
-    if (!confirm('确定要移除这个用户吗？')) {
+    if (!await uiConfirm('确定要移除这个用户吗？')) {
       return
     }
 
@@ -194,7 +195,7 @@ const TenantUsers: React.FC = () => {
     } catch (error: any) {
       console.error('Failed to remove user:', error)
       const errorMessage = error.response?.data?.error || '移除用户失败'
-      alert(errorMessage)
+      uiAlert(errorMessage)
     }
   }
 

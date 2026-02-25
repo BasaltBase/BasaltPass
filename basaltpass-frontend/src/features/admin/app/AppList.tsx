@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { Link } from 'react-router-dom'
 import { 
   PlusIcon, 
@@ -40,7 +41,7 @@ export default function AppList() {
   }
 
   const handleDeleteApp = async (id: string) => {
-    if (!confirm('确定要删除这个应用吗？此操作不可撤销。')) {
+    if (!await uiConfirm('确定要删除这个应用吗？此操作不可撤销。')) {
       return
     }
 
@@ -49,7 +50,7 @@ export default function AppList() {
       await loadApps()
     } catch (error) {
       console.error('Failed to delete app:', error)
-      alert('删除应用失败')
+      uiAlert('删除应用失败')
     }
   }
 

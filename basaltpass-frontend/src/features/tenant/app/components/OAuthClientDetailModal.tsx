@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { ArrowPathIcon, ClipboardDocumentIcon, KeyIcon, PencilIcon, PlusIcon, TrashIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { tenantOAuthApi } from '@api/tenant/tenantOAuth'
 import { PButton, PInput } from '@ui'
@@ -31,11 +32,11 @@ export default function OAuthClientDetailModal({ client, isOpen, onClose, onUpda
 
   const copyToClipboard = async (text: string) => {
     await navigator.clipboard.writeText(text)
-    alert('已复制到剪贴板')
+    uiAlert('已复制到剪贴板')
   }
 
   const handleRegenerateSecret = async () => {
-    if (!client || !confirm('确定要重新生成客户端密钥吗？这会使现有的密钥失效。')) return
+    if (!client || !await uiConfirm('确定要重新生成客户端密钥吗？这会使现有的密钥失效。')) return
 
     setIsRegenerating(true)
     try {
@@ -47,14 +48,14 @@ export default function OAuthClientDetailModal({ client, isOpen, onClose, onUpda
         ''
 
       if (!secret) {
-        alert('密钥已重新生成，但未返回新密钥')
+        uiAlert('密钥已重新生成，但未返回新密钥')
       }
 
       setNewSecret(secret)
       onUpdate?.()
     } catch (err) {
       console.error('重新生成密钥失败:', err)
-      alert('重新生成密钥失败')
+      uiAlert('重新生成密钥失败')
     } finally {
       setIsRegenerating(false)
     }

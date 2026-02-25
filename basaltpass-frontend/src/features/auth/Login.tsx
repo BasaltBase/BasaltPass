@@ -30,6 +30,9 @@ function Login() {
 
   const redirectParam = searchParams.get('redirect') || ''
   const authRequestTimeout = Number((import.meta as any).env?.VITE_AUTH_TIMEOUT_MS || 12000)
+  const resolvedApiBase = String(
+    client.defaults.baseURL || (import.meta as any).env?.VITE_API_BASE || 'http://localhost:8101'
+  ).replace(/\/$/, '')
   console.log('[OAuth Debug] redirectParam:', redirectParam)
   console.log('[OAuth Debug] redirectParam length:', redirectParam.length)
   
@@ -41,8 +44,7 @@ function Login() {
       return false
     }
 
-    const apiBase = client.defaults.baseURL || (import.meta as any).env?.VITE_API_BASE || 'http://localhost:8080'
-    const base = String(apiBase).replace(/\/$/, '')
+    const base = resolvedApiBase
     const target = redirectParam.startsWith('http://') || redirectParam.startsWith('https://')
       ? redirectParam
       : redirectParam.startsWith('/')
@@ -100,7 +102,7 @@ function Login() {
       } else if (msg.includes('only administrators can login to platform')) {
         setError('普通用户不能登录平台，请使用租户登录')
       } else if (err?.code === 'ECONNABORTED' || msg.includes('timeout')) {
-        setError('登录请求超时：请确认 BasaltPass 后端已运行在 http://localhost:8080')
+        setError(`登录请求超时：请确认 BasaltPass 后端已运行在 ${resolvedApiBase}`)
       } else {
         setError(raw || '登录失败，请检查您的凭据')
       }

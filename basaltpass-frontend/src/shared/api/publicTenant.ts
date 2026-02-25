@@ -12,9 +12,9 @@ const tenantRequestTimeoutMs = Number((import.meta as any).env?.VITE_PUBLIC_TENA
 
 const inferDefaultApiBase = () => {
   if (typeof window !== 'undefined' && window.location?.hostname) {
-    return `${window.location.protocol}//${window.location.hostname}:8080`
+    return `${window.location.protocol}//${window.location.hostname}:8101`
   }
-  return 'http://localhost:8080'
+  return 'http://localhost:8101'
 }
 
 const buildBaseCandidates = () => {

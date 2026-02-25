@@ -258,6 +258,35 @@ func PaymentCheckoutHandler(c *fiber.Ctx) error {
         // 嵌入的success_url
         const successUrl = '` + session.SuccessURL + `';
 
+        function showModal(message, onConfirm) {
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed;inset:0;background:rgba(17,24,39,.45);display:flex;align-items:center;justify-content:center;z-index:9999;';
+
+            const panel = document.createElement('div');
+            panel.style.cssText = 'width:min(92vw,420px);background:#fff;border-radius:12px;box-shadow:0 20px 50px rgba(0,0,0,.25);padding:20px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;';
+
+            const text = document.createElement('p');
+            text.style.cssText = 'margin:0 0 16px;color:#111827;line-height:1.6;';
+            text.textContent = message;
+
+            const actions = document.createElement('div');
+            actions.style.cssText = 'display:flex;justify-content:flex-end;';
+
+            const okBtn = document.createElement('button');
+            okBtn.textContent = '确定';
+            okBtn.style.cssText = 'border:none;background:#2563eb;color:#fff;border-radius:8px;padding:8px 14px;cursor:pointer;';
+            okBtn.onclick = () => {
+                document.body.removeChild(overlay);
+                if (onConfirm) onConfirm();
+            };
+
+            actions.appendChild(okBtn);
+            panel.appendChild(text);
+            panel.appendChild(actions);
+            overlay.appendChild(panel);
+            document.body.appendChild(overlay);
+        }
+
         console.log(localStorage.getItem('token'));
         async function simulatePayment(success) {
             try {
@@ -276,14 +305,15 @@ func PaymentCheckoutHandler(c *fiber.Ctx) error {
                 
                 if (success && data.stripe_mock_response) {
                     setTimeout(() => {
-                        alert('支付成功！正在跳转...');
-                        // 跳转到成功页面
-                        window.location.href = successUrl || 'http://localhost:5173/dashboard';
+                        showModal('支付成功！正在跳转...', () => {
+                            // 跳转到成功页面
+                            window.location.href = successUrl || 'http://localhost:5173/dashboard';
+                        });
                     }, 2000);
                 }
                 
             } catch (error) {
-                alert('请求失败: ' + error.message);
+                showModal('请求失败: ' + error.message);
             }
         }
         

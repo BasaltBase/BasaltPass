@@ -9,7 +9,7 @@ export interface App {
   description: string
   logo_url?: string
   homepage_url?: string
-  callback_urls: string[]
+  redirect_uris: string[]
   privacy_policy_url?: string
   terms_of_service_url?: string
   status: 'active' | 'inactive' | 'suspended'
@@ -37,7 +37,7 @@ export interface CreateAppRequest {
   description: string
   logo_url?: string
   homepage_url?: string
-  callback_urls: string[]
+  redirect_uris: string[]
   privacy_policy_url?: string
   terms_of_service_url?: string
   settings?: Record<string, any>
@@ -48,7 +48,7 @@ export interface UpdateAppRequest {
   description?: string
   logo_url?: string
   homepage_url?: string
-  callback_urls?: string[]
+  redirect_uris?: string[]
   privacy_policy_url?: string
   terms_of_service_url?: string
   status?: 'active' | 'inactive' | 'suspended'

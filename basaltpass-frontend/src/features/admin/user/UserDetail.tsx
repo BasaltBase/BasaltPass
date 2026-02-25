@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { adminUserApi, type AdminUserDetail } from '@api/admin/user'
 import { 
@@ -92,14 +93,14 @@ export default function UserDetail() {
       await loadUser(user.id)
     } catch (e) {
       console.error('分配角色失败', e)
-      alert('分配角色失败')
+      uiAlert('分配角色失败')
     }
   }
 
   const handleDeleteUser = async () => {
     if (!user) return
     
-    if (!confirm(`确定要删除用户 ${user.nickname || user.email} 吗？此操作不可恢复。`)) {
+    if (!await uiConfirm(`确定要删除用户 ${user.nickname || user.email} 吗？此操作不可恢复。`)) {
       return
     }
     

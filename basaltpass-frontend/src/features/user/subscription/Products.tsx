@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import Layout from '@features/user/components/Layout'
 import { PCard, PButton } from '@ui'
 import { listProducts } from '@api/subscription/subscription'
@@ -86,7 +87,7 @@ export default function ProductsPage() {
         return
       }
       
-      alert(error.response?.data?.error || error.message || '创建订单失败，请重试')
+      uiAlert(error.response?.data?.error || error.message || '创建订单失败，请重试')
     } finally {
       setSubscribingPrice(null)
     }

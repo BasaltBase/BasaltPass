@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import PButton from '@ui/PButton';
 
 export type Align = 'left' | 'center' | 'right';
@@ -203,9 +204,9 @@ const PTable = <T extends unknown>({
                     <td className={`${cellPadding} ${alignClass('right')}`}>
                       <div className="flex items-center justify-end space-x-2">
                         {actions.map((action) => {
-                          const handleClick = () => {
+                          const handleClick = async () => {
                             if (action.confirm) {
-                              if (!window.confirm(action.confirm)) return;
+                              if (!await uiConfirm(action.confirm)) return;
                             }
                             action.onClick(row);
                           };

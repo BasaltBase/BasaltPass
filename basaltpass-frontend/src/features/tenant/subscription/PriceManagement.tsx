@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import TenantLayout from '@features/tenant/components/TenantLayout';
 import { 
   CurrencyDollarIcon,
@@ -75,17 +76,17 @@ const PriceManagement: React.FC<PriceManagementProps> = () => {
   };
 
   const handleDeletePrice = async (priceId: number, planName: string) => {
-    if (!confirm(`确定要删除"${planName}"的这个定价吗？`)) {
+    if (!await uiConfirm(`确定要删除"${planName}"的这个定价吗？`)) {
       return;
     }
 
     try {
       await tenantSubscriptionAPI.deleteTenantPrice(priceId);
-      alert('定价删除成功');
+      uiAlert('定价删除成功');
       fetchData();
     } catch (error: any) {
       console.error('Failed to delete price:', error);
-      alert(`删除定价失败: ${error.response?.data?.error || error.message}`);
+      uiAlert(`删除定价失败: ${error.response?.data?.error || error.message}`);
     }
   };
 
@@ -254,7 +255,7 @@ const CreatePriceModal: React.FC<{
       try {
         metadata = JSON.parse(formData.metadata);
       } catch (e) {
-        alert('元数据格式错误，请检查JSON格式');
+        uiAlert('元数据格式错误，请检查JSON格式');
         return;
       }
       
@@ -283,7 +284,7 @@ const CreatePriceModal: React.FC<{
       onSuccess();
     } catch (error: any) {
       console.error('Failed to save price:', error);
-      alert(`保存定价失败: ${error.response?.data?.error || error.message}`);
+      uiAlert(`保存定价失败: ${error.response?.data?.error || error.message}`);
     } finally {
       setSubmitting(false);
     }

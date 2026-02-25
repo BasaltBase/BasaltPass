@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { Link } from 'react-router-dom'
 import { listPasskeys, createPasskey, deletePasskey, PasskeyInfo } from '@api/oauth/passkey'
 import { isPasskeySupported } from '@utils/webauthn'
@@ -67,7 +68,7 @@ function PasskeyManagement() {
   }
 
   const handleDeletePasskey = async (id: string, name: string) => {
-    if (!confirm(`确定要删除Passkey "${name}" 吗？此操作无法撤销。`)) {
+    if (!await uiConfirm(`确定要删除Passkey "${name}" 吗？此操作无法撤销。`)) {
       return
     }
 

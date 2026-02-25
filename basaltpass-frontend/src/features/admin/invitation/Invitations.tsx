@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { PButton, PInput, PSelect } from '@ui'
 import PTable, { PTableColumn } from '@ui/PTable'
@@ -53,7 +54,7 @@ export default function AdminInvitationsPage() {
   }
 
   const removeInvitation = async (inv: AdminInvitationBrief) => {
-    if(!confirm('确认删除邀请记录?')) return
+    if(!await uiConfirm('确认删除邀请记录?')) return
     await adminInvitationApi.remove(inv.id)
     load()
   }

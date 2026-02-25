@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { notificationApi, TenantNotification, CreateNotificationRequest } from '@api/tenant/tenantNotification'
 import { 
   BellIcon, 
@@ -52,7 +53,7 @@ const AdminNotifications: React.FC = () => {
   const handleCreateNotification = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.title.trim() || !formData.content.trim()) {
-      alert('请填写完整的通知信息')
+      uiAlert('请填写完整的通知信息')
       return
     }
     try {
@@ -63,21 +64,21 @@ const AdminNotifications: React.FC = () => {
       loadNotifications()
     } catch (error) {
       console.error('Failed to create notification:', error)
-      alert('创建通知失败')
+      uiAlert('创建通知失败')
     } finally {
       setCreating(false)
     }
   }
 
   const handleDelete = async (id: number) => {
-    if (!confirm('确定要删除这条通知吗？')) return
+    if (!await uiConfirm('确定要删除这条通知吗？')) return
 
     try {
       await notificationApi.deleteNotificationAdmin(id)
       setNotifications(prev => prev.filter(notification => notification.id !== id))
     } catch (error) {
       console.error('Failed to delete notification:', error)
-      alert('删除通知失败')
+      uiAlert('删除通知失败')
     }
   }
 

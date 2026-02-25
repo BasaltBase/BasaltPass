@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { useNavigate } from 'react-router-dom'
 import {
   KeyIcon,
@@ -120,17 +121,17 @@ export default function TenantPermissionManagement() {
   }
 
   const handleDeletePermission = async (permission: TenantPermission) => {
-    if (!confirm(`确定要删除权限"${permission.name}"吗？这将会影响所有使用此权限的角色。`)) {
+    if (!await uiConfirm(`确定要删除权限"${permission.name}"吗？这将会影响所有使用此权限的角色。`)) {
       return
     }
 
     try {
       await deleteTenantPermission(permission.id)
       await fetchPermissions()
-      alert('权限删除成功')
+      uiAlert('权限删除成功')
     } catch (err: any) {
       console.error('删除权限失败:', err)
-      alert(err.response?.data?.error || '删除权限失败')
+      uiAlert(err.response?.data?.error || '删除权限失败')
     }
   }
 
@@ -141,12 +142,12 @@ export default function TenantPermissionManagement() {
       if (editingPermission) {
         // 更新权限
         await updateTenantPermission(editingPermission.id, formData)
-        alert('权限更新成功')
+        uiAlert('权限更新成功')
         setShowEditModal(false)
       } else {
         // 创建权限
         await createTenantPermission(formData)
-        alert('权限创建成功')
+        uiAlert('权限创建成功')
         setShowCreateModal(false)
       }
       
@@ -154,7 +155,7 @@ export default function TenantPermissionManagement() {
       await fetchCategories()
     } catch (err: any) {
       console.error('保存权限失败:', err)
-      alert(err.response?.data?.error || '保存权限失败')
+      uiAlert(err.response?.data?.error || '保存权限失败')
     } finally {
       setSubmitting(false)
     }

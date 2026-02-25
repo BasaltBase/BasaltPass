@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import TenantLayout from '@features/tenant/components/TenantLayout'
@@ -51,17 +52,17 @@ export default function TenantSubscriptionDetail() {
     if (!subscription) return
     if (subscription.Status !== 'active') return
 
-    const ok = window.confirm('确定要取消该订阅吗？')
+    const ok = await uiConfirm('确定要取消该订阅吗？')
     if (!ok) return
 
-    const reason = window.prompt('取消原因（可选）') || undefined
+    const reason = await uiPrompt('取消原因（可选）') || undefined
 
     try {
       await tenantSubscriptionAPI.cancelSubscription(subscription.ID, { reason })
       await fetchDetail()
     } catch (err) {
       console.error('取消订阅失败:', err)
-      window.alert('取消订阅失败，请重试')
+      uiAlert('取消订阅失败，请重试')
     }
   }
 

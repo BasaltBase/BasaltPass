@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import Layout from '@features/user/components/Layout'
 import { invitationApi } from '@api/user/invitation'
 import { EntitySearchSelect, type BaseEntityItem, PButton, PTextarea } from '@ui'
@@ -17,7 +18,7 @@ const Invite: React.FC = () => {
   // 提交邀请
   const submit = async () => {
     if (selectedUsers.length === 0) {
-      alert('请至少选择一个用户')
+      uiAlert('请至少选择一个用户')
       return
     }
     
@@ -25,10 +26,10 @@ const Invite: React.FC = () => {
     try {
       const userIds = selectedUsers.map(u => Number(u.id))
       await invitationApi.create(teamId, userIds, remark)
-      alert(`已成功邀请 ${selectedUsers.length} 位用户`)
+      uiAlert(`已成功邀请 ${selectedUsers.length} 位用户`)
       navigate(`/teams/${teamId}`)
     } catch (error: any) {
-      alert(error.response?.data?.message || '发送邀请失败')
+      uiAlert(error.response?.data?.message || '发送邀请失败')
     } finally {
       setLoading(false)
     }

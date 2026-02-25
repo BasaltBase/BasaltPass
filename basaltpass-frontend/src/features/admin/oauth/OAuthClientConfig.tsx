@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { useParams, useNavigate } from 'react-router-dom'
 import { 
   ArrowLeftIcon, 
@@ -128,7 +129,7 @@ export default function OAuthClientConfig() {
   }
 
   const handleRegenerateSecret = async () => {
-    if (!client || !confirm('确定要重新生成客户端密钥吗？这将使现有的密钥失效。')) {
+    if (!client || !await uiConfirm('确定要重新生成客户端密钥吗？这将使现有的密钥失效。')) {
       return
     }
 
@@ -147,9 +148,9 @@ export default function OAuthClientConfig() {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text).then(() => {
-      alert('已复制到剪贴板')
+      uiAlert('已复制到剪贴板')
     }).catch(() => {
-      alert('复制失败，请手动复制')
+      uiAlert('复制失败，请手动复制')
     })
   }
 
