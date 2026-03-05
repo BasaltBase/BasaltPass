@@ -390,8 +390,11 @@ func (s *OAuthServerService) RefreshAccessToken(refreshToken string, clientID st
 	}
 	newRefreshTokenStr := hex.EncodeToString(refreshTokenBytes)
 
-	// 5. 删除关联的访问令牌（如果存在）
-	s.db.Where("user_id = ? AND client_id = ?", refreshTokenModel.UserID, clientID).Delete(&model.OAuthAccessToken{})
+	// 5. 仅删除与本 refresh token 直接关联的那一个 access token，
+	//    避免误杀同一用户在其他浏览器/设备上的并发会话。
+	if refreshTokenModel.AccessTokenID != nil {
+		s.db.Delete(&model.OAuthAccessToken{}, *refreshTokenModel.AccessTokenID)
+	}
 
 	// 6. 创建新的访问令牌
 	newToken := model.OAuthAccessToken{
