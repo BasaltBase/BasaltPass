@@ -520,19 +520,80 @@ func SendEmailVerificationHandler(c *fiber.Ctx) error {
 	})
 }
 
-// SendPhoneVerificationHandler sends phone verification (mock implementation)
+// SendPhoneVerificationHandler 生成验证码并发送至用户手机
+// POST /api/v1/security/phone/resend
+// 限制：
+//   - 用户账户必须已绑定手机号
+//   - 手机号已验证时拒绝重复发送
+//   - 若上一个有效 token 在冷却时间内（60s）则拒绝重发
 func SendPhoneVerificationHandler(c *fiber.Ctx) error {
 	uid := c.Locals("userID").(uint)
 
-	// In a real implementation, you would:
-	// 1. Generate a verification code
-	// 2. Send SMS with verification code
-	// 3. Store code in database with expiration
+	var user model.User
+	if err := common.DB().First(&user, uid).Error; err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "用户不存在"})
+	}
+	if user.Phone == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "账户未绑定手机号"})
+	}
+	if user.PhoneVerified {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "手机号已完成验证，无需重复发送"})
+	}
 
-	// For now, just log the action
-	aduit.LogAudit(uid, "发送手机验证", "", "", c.IP(), c.Get("User-Agent"))
+	// 冷却检查：若已有未过期且创建时间在 60 秒内的 token，拒绝重发
+	cooldownCutoff := time.Now().Add(-time.Duration(model.PhoneVerificationResendCooldown) * time.Second)
+	var recent model.PhoneVerificationToken
+	if err := common.DB().
+		Where("user_id = ? AND phone = ? AND used_at IS NULL AND expires_at > ? AND created_at > ?",
+			uid, user.Phone, time.Now(), cooldownCutoff).
+		Order("created_at DESC").
+		First(&recent).Error; err == nil {
+		remaining := int(time.Until(recent.CreatedAt.Add(
+			time.Duration(model.PhoneVerificationResendCooldown) * time.Second)).Seconds())
+		return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
+			"error":               fmt.Sprintf("请等待 %d 秒后再重新发送", remaining),
+			"retry_after_seconds": remaining,
+		})
+	}
 
-	return c.JSON(fiber.Map{"message": "验证短信已发送"})
+	// 生成验证码
+	code, err := generateEmailVerificationCode() // 复用同一个6位加密随机数字码生成函数
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "生成验证码失败"})
+	}
+
+	// 将旧的未使用 token 标记为过期（防止旧码仍可用）
+	now := time.Now()
+	common.DB().Model(&model.PhoneVerificationToken{}).
+		Where("user_id = ? AND used_at IS NULL", uid).
+		Update("expires_at", now)
+
+	// 存入新 token（只存哈希）
+	token := model.PhoneVerificationToken{
+		UserID:      uid,
+		Phone:       user.Phone,
+		CodeHash:    hashEmailVerificationCode(code), // 同 SHA-256 哈希
+		ExpiresAt:   now.Add(time.Duration(model.PhoneVerificationTTL) * time.Minute),
+		RequestedIP: c.IP(),
+	}
+	if err := common.DB().Create(&token).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "创建验证记录失败"})
+	}
+
+	// 发送验证码短信
+	secSvc := securityservice.NewService(common.DB())
+	if err := secSvc.SendPhoneVerificationSMS(user.Phone, code); err != nil {
+		// 发送失败时回滚 token，避免留下孤立记录
+		common.DB().Delete(&token)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "验证码发送失败，请稍后重试"})
+	}
+
+	aduit.LogAudit(uid, "发送手机验证码", "", user.Phone, c.IP(), c.Get("User-Agent"))
+
+	return c.JSON(fiber.Map{
+		"message":    "验证码已发送至手机，请在 10 分钟内完成验证",
+		"expires_in": model.PhoneVerificationTTL * 60,
+	})
 }
 
 // VerifyEmailHandler 验证用户提交的邮箱验证码
@@ -613,29 +674,76 @@ func ValidateTOTP(secret, code string) bool {
 	return totp.Validate(code, secret)
 }
 
-// VerifyPhoneHandler verifies phone verification code
+// VerifyPhoneHandler 验证用户提交的手机验证码
+// POST /api/v1/security/phone/verify
+// Body: {"code": "XXXXXX"}
 func VerifyPhoneHandler(c *fiber.Ctx) error {
 	uid := c.Locals("userID").(uint)
 
 	var body struct {
 		Code string `json:"code"`
 	}
-	if err := c.BodyParser(&body); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求格式错误"})
+	if err := c.BodyParser(&body); err != nil || body.Code == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请提供验证码"})
 	}
 
-	// Mock implementation - in real app, verify SMS code
-	if body.Code == "123456" { // Mock verification code
-		if err := common.DB().Model(&model.User{}).Where("id = ?", uid).Update("phone_verified", true).Error; err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "验证失败"})
-		}
-
-		aduit.LogAudit(uid, "手机验证成功", "", "", c.IP(), c.Get("User-Agent"))
-
-		return c.JSON(fiber.Map{"message": "手机验证成功"})
+	var user model.User
+	if err := common.DB().First(&user, uid).Error; err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "用户不存在"})
+	}
+	if user.PhoneVerified {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "手机号已完成验证"})
 	}
 
-	return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "验证码错误"})
+	// 查找最新的有效 token（未使用、未过期，且与当前绑定手机号匹配）
+	var token model.PhoneVerificationToken
+	if err := common.DB().
+		Where("user_id = ? AND phone = ? AND used_at IS NULL AND expires_at > ?",
+			uid, user.Phone, time.Now()).
+		Order("created_at DESC").
+		First(&token).Error; err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "验证码无效或已过期，请重新发送"})
+	}
+
+	// 检查尝试次数
+	if token.AttemptCount >= model.PhoneVerificationMaxAttempts {
+		return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
+			"error": "验证码尝试次数过多，请重新发送获取新验证码",
+		})
+	}
+
+	// 递增尝试次数（先记录，防止并发枚举攻击）
+	common.DB().Model(&token).UpdateColumn("attempt_count", token.AttemptCount+1)
+
+	// 比对哈希
+	if hashEmailVerificationCode(body.Code) != token.CodeHash {
+		remaining := model.PhoneVerificationMaxAttempts - (token.AttemptCount + 1)
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error":              "验证码错误",
+			"attempts_remaining": remaining,
+		})
+	}
+
+	// 验证通过：标记 token 已使用，并更新用户手机验证状态（事务）
+	now := time.Now()
+	tx := common.DB().Begin()
+	if err := tx.Model(&token).Updates(map[string]interface{}{"used_at": &now}).Error; err != nil {
+		tx.Rollback()
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "验证失败，请重试"})
+	}
+	if err := tx.Model(&user).Updates(map[string]interface{}{
+		"phone_verified": true,
+	}).Error; err != nil {
+		tx.Rollback()
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "验证失败，请重试"})
+	}
+	if err := tx.Commit().Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "验证失败，请重试"})
+	}
+
+	aduit.LogAudit(uid, "手机验证成功", "", user.Phone, c.IP(), c.Get("User-Agent"))
+
+	return c.JSON(fiber.Map{"message": "手机验证成功"})
 }
 
 // 新增安全功能处理器

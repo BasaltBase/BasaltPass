@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"errors"
 	"os"
 	"strings"
 	"time"
@@ -135,4 +136,42 @@ func ParseToken(tokenStr string) (*jwt.Token, error) {
 	return jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
 		return getJWTSecret(), nil
 	})
+}
+
+// GeneratePreAuthToken issues a short-lived (5 min) one-time token emitted after the
+// first-factor (password) check succeeds when 2FA is required.
+// The token carries the verified user identity so the 2FA step never trusts a
+// client-supplied user_id.
+func GeneratePreAuthToken(userID uint, tenantID uint) (string, error) {
+	claims := jwt.MapClaims{
+		"sub": userID,
+		"tid": tenantID,
+		"typ": "pre_auth",
+		"exp": time.Now().Add(5 * time.Minute).Unix(),
+	}
+	return jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(getJWTSecret())
+}
+
+// ParsePreAuthToken validates a pre_auth token and extracts the embedded user / tenant IDs.
+// Returns an error if the token is expired, tampered with, or not of type "pre_auth".
+func ParsePreAuthToken(tokenStr string) (userID uint, tenantID uint, err error) {
+	token, parseErr := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, jwt.ErrTokenSignatureInvalid
+		}
+		return getJWTSecret(), nil
+	})
+	if parseErr != nil || token == nil || !token.Valid {
+		return 0, 0, errors.New("invalid or expired 2FA session token")
+	}
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || claims["typ"] != "pre_auth" {
+		return 0, 0, errors.New("invalid token type")
+	}
+	subFloat, ok := claims["sub"].(float64)
+	if !ok {
+		return 0, 0, errors.New("missing subject in token")
+	}
+	tidFloat, _ := claims["tid"].(float64)
+	return uint(subFloat), uint(tidFloat), nil
 }

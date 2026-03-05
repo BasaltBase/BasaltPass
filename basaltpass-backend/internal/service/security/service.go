@@ -4,6 +4,7 @@ import (
 	"basaltpass-backend/internal/config"
 	"basaltpass-backend/internal/model"
 	emailservice "basaltpass-backend/internal/service/email"
+	smssvc "basaltpass-backend/internal/service/sms"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
@@ -21,6 +22,7 @@ import (
 type Service struct {
 	db       *gorm.DB
 	emailSvc *emailservice.Service
+	smsSvc   *smssvc.Service
 }
 
 // NewService 创建安全服务
@@ -30,6 +32,7 @@ func NewService(db *gorm.DB) *Service {
 	return &Service{
 		db:       db,
 		emailSvc: emailSvc,
+		smsSvc:   smssvc.New(),
 	}
 }
 
@@ -453,4 +456,10 @@ func (s *Service) validatePasswordStrength(password string) error {
 	// TODO: 检查常见弱密码或泄露密码库
 
 	return nil
+}
+
+// SendPhoneVerificationSMS 向用户手机发送验证码短信。
+// code 为6位明文数字，调用方已将其哈希后存入 phone_verification_tokens 表。
+func (s *Service) SendPhoneVerificationSMS(phone, code string) error {
+	return s.smsSvc.SendVerificationCode(phone, code, model.PhoneVerificationTTL)
 }

@@ -2,7 +2,7 @@ package middleware
 
 import (
 	common2 "basaltpass-backend/internal/common"
-	"fmt"
+	"log"
 	"os"
 
 	"basaltpass-backend/internal/model"
@@ -52,7 +52,7 @@ func TenantMiddleware() fiber.Handler {
 		// 控制台访问统一要求在 tenant_users 中存在对应关系
 		tenantID, tenantRole, err := resolveUserTenantContext(userID, requestedTenantID)
 		if err != nil {
-			fmt.Printf("[TenantMiddleware] No tenant association found for user %v: %v\n", userID, err)
+			log.Printf("[TenantMiddleware] no tenant association for user %d: %v", userID, err)
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error": "Missing tenant association",
 			})
@@ -61,13 +61,13 @@ func TenantMiddleware() fiber.Handler {
 		// 校验租户有效性
 		var tenant model.Tenant
 		if err := common2.DB().First(&tenant, tenantID).Error; err != nil {
-			fmt.Printf("[TenantMiddleware] Tenant %v not found for user %v: %v\n", tenantID, userID, err)
+			log.Printf("[TenantMiddleware] tenant %d not found for user %d: %v", tenantID, userID, err)
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error": "Invalid tenant association",
 			})
 		}
 		if tenant.Status != "active" {
-			fmt.Printf("[TenantMiddleware] Tenant %v status is %s, not active\n", tenant.ID, tenant.Status)
+			log.Printf("[TenantMiddleware] tenant %d status=%q, not active", tenant.ID, tenant.Status)
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 				"error": "Tenant is not active",
 			})
@@ -137,7 +137,7 @@ func TenantUserMiddleware() fiber.Handler {
 		tenantID := c.Locals("tenantID")
 
 		if userID == nil || tenantID == nil {
-			fmt.Printf("[TenantUserMiddleware] Missing context - userID: %v, tenantID: %v\n", userID, tenantID)
+			log.Printf("[TenantUserMiddleware] missing context (userID=%v tenantID=%v)", userID, tenantID)
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error": "Missing user or tenant context",
 			})
@@ -146,20 +146,19 @@ func TenantUserMiddleware() fiber.Handler {
 		// 检查用户在租户中的角色
 		var tenantUser model.TenantUser
 		if err := common2.DB().Where("user_id = ? AND tenant_id = ?", userID, tenantID).First(&tenantUser).Error; err != nil {
-			fmt.Printf("[TenantUserMiddleware] No tenant tenant record found for user %v in tenant %v: %v\n", userID, tenantID, err)
+			log.Printf("[TenantUserMiddleware] no tenant record for user %v in tenant %v: %v", userID, tenantID, err)
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 				"error": "Access denied",
 			})
 		}
 
 		if tenantUser.Role != model.TenantRoleOwner && tenantUser.Role != model.TenantRoleAdmin {
-			fmt.Printf("[TenantUserMiddleware] User %v has insufficient role %s in tenant %v\n", userID, tenantUser.Role, tenantID)
+			log.Printf("[TenantUserMiddleware] user %v has insufficient role in tenant %v", userID, tenantID)
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 				"error": "Tenant tenant access required",
 			})
 		}
 
-		fmt.Printf("[TenantUserMiddleware] User %v authorized as %s in tenant %v\n", userID, tenantUser.Role, tenantID)
 		return c.Next()
 	}
 }

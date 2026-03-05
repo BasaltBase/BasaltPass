@@ -121,10 +121,12 @@ func LoginHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": err.Error()})
 	}
 	if result.Need2FA {
+		// Return pre_auth_token instead of user_id to prevent client-side user ID substitution.
+		// The 2FA step must echo this token back; the server extracts user identity from it.
 		return c.JSON(fiber.Map{
 			"need_2fa":              true,
 			"2fa_type":              result.TwoFAType,
-			"user_id":               result.UserID,
+			"pre_auth_token":        result.PreAuthToken,
 			"available_2fa_methods": result.Available2FAMethods,
 		})
 	}
@@ -187,7 +189,11 @@ func Verify2FAHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": err.Error()})
 	}
 	setAuthCookies(c, c.Get("X-Auth-Scope"), tokens.AccessToken, tokens.RefreshToken)
-	userID := req.UserID
+
+	// Extract user identity from the pre_auth_token (already validated inside Verify2FA).
+	// ParsePreAuthToken will not fail here because Verify2FA already succeeded.
+	userID, _, _ := auth2.ParsePreAuthToken(req.PreAuthToken)
+
 	clientIP := c.IP()
 	userAgent := c.Get("User-Agent")
 	go func() {
@@ -200,7 +206,7 @@ func Verify2FAHandler(c *fiber.Ctx) error {
 		"data": fiber.Map{
 			"token": tokens.AccessToken,
 			"user": fiber.Map{
-				"id": req.UserID,
+				"id": userID,
 			},
 		},
 	})

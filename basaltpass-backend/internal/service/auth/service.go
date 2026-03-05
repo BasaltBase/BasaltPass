@@ -133,14 +133,18 @@ func (s Service) Register(req RegisterRequest) (*model.User, error) {
 }
 
 // LoginResult 用于登录结果的多态返回
-// 如果需要二次验证，Need2FA=true，TokenPair为空
+// 如果需要二次验证，Need2FA=true，TokenPair为空，PreAuthToken非空（发给客户端）
 // 如果不需要二次验证，Need2FA=false，TokenPair有效
 // Available2FAMethods: 用户可用的所有2FA方式列表
 type LoginResult struct {
 	Need2FA             bool     `json:"need_2fa"`
 	TwoFAType           string   `json:"2fa_type,omitempty"`              // 默认推荐的2FA方式
 	Available2FAMethods []string `json:"available_2fa_methods,omitempty"` // 所有可用的2FA方式
-	UserID              uint     `json:"user_id,omitempty"`
+	// PreAuthToken 仅在 Need2FA=true 时非空，客户端持有并在 Verify2FA 中回传。
+	// 服务端从该 token 中提取 user_id，客户端不再直接提交 user_id。
+	PreAuthToken string `json:"pre_auth_token,omitempty"`
+	// UserID 仅供服务端内部使用（审计日志），不通过 JSON 暴露给客户端。
+	UserID uint `json:"-"`
 	TokenPair
 }
 
@@ -249,13 +253,20 @@ func (s Service) LoginV2(req LoginRequest) (LoginResult, error) {
 		}
 	}
 
-	// 如果有2FA方式，返回需要验证
+	// 如果有2FA方式，颁发 pre_auth_token（绑定已验证的用户身份）并要求二次验证。
+	// pre_auth_token 5 分钟内有效，客户端回传到 /auth/verify-2fa，
+	// 服务端从 token 中读取 user_id，不再信任客户端提交的 user_id。
 	if len(availableMethods) > 0 {
+		preAuthToken, err := GeneratePreAuthToken(user.ID, req.TenantID)
+		if err != nil {
+			return LoginResult{}, fmt.Errorf("%w: %v", ErrServiceUnavailable, err)
+		}
 		return LoginResult{
 			Need2FA:             true,
 			TwoFAType:           defaultMethod,
 			Available2FAMethods: availableMethods,
-			UserID:              user.ID,
+			PreAuthToken:        preAuthToken,
+			UserID:              user.ID, // internal only
 		}, nil
 	}
 
@@ -290,11 +301,18 @@ func (s Service) Refresh(refreshToken string) (TokenPair, error) {
 	return GenerateTokenPairWithTenantAndScope(uint(userIDFloat), 0, scope)
 }
 
-// Verify2FA 校验二次验证信息，成功返回token
+// Verify2FA 校验二次验证信息，成功返回token。
+// 用户身份从 req.PreAuthToken（由 LoginV2 颁发）中提取，不信任客户端提交的 user_id。
 func (s Service) Verify2FA(req Verify2FARequest) (TokenPair, error) {
+	// 从 pre_auth_token 中提取已验证的用户身份，防止客户端替换 user_id
+	userID, tenantID, err := ParsePreAuthToken(req.PreAuthToken)
+	if err != nil {
+		return TokenPair{}, errors.New("invalid or expired 2FA session token")
+	}
+
 	db := common.DB()
 	var user model.User
-	if err := db.First(&user, req.UserID).Error; err != nil {
+	if err := db.First(&user, userID).Error; err != nil {
 		return TokenPair{}, errors.New("user not found")
 	}
 	switch req.TwoFAType {
@@ -304,7 +322,7 @@ func (s Service) Verify2FA(req Verify2FARequest) (TokenPair, error) {
 		}
 		// 从租户级 TOTP 表中加载该用户在指定租户下的 TOTP 配置
 		var totpCfg model.UserTenantTOTP
-		if err := db.Where("user_id = ? AND tenant_id = ? AND enabled = ?", req.UserID, req.TenantID, true).
+		if err := db.Where("user_id = ? AND tenant_id = ? AND enabled = ?", userID, tenantID, true).
 			First(&totpCfg).Error; err != nil {
 			return TokenPair{}, errors.New("TOTP 2FA not enabled for this tenant")
 		}

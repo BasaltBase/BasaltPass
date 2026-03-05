@@ -16,14 +16,16 @@ type LoginRequest struct {
 }
 
 // Verify2FARequest defines input for 2FA verification.
+// PreAuthToken is a short-lived JWT issued by LoginV2 after the first-factor check
+// succeeds. The server extracts user_id and tenant_id from the token; the client
+// must never submit these values directly.
 type Verify2FARequest struct {
-	UserID    uint   `json:"user_id"`
-	TenantID  uint   `json:"tenant_id"`           // 所属租户ID（TOTP 验证需要，0=系统租户）
-	TwoFAType string `json:"two_fa_type"`
-	Code      string `json:"code,omitempty"`      // TOTP/邮箱验证码
-	Passkey   string `json:"passkey,omitempty"`   // Passkey相关数据（如有）
+	PreAuthToken string `json:"pre_auth_token"`      // replaces user_id / tenant_id
+	TwoFAType    string `json:"two_fa_type"`
+	Code         string `json:"code,omitempty"`      // TOTP / email OTP
+	Passkey      string `json:"passkey,omitempty"`   // passkey data if any
 
-	// WebAuthn verification data for passkey
-	Email     string `json:"email,omitempty"`     // 用户邮箱（passkey验证需要）
+	// WebAuthn verification fields for passkey flow
+	Email     string `json:"email,omitempty"`     // user email (passkey)
 	Challenge string `json:"challenge,omitempty"` // WebAuthn challenge
 }

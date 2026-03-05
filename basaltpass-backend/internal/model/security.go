@@ -133,3 +133,41 @@ type SecurityOperation struct {
 	// 关联关系
 	User *User `gorm:"foreignKey:UserID"`
 }
+
+// PhoneVerificationToken 手机号验证令牌
+// 用于已登录用户通过短信验证码验证自己绑定的手机号。
+// 流程：
+//  1. 调用 POST /security/phone/resend → 生成6位随机数字码，SHA-256 哈希后存此表，明文发至用户手机
+//  2. 调用 POST /security/phone/verify + {"code":"XXXXXX"} → 哈希比对，通过则将 users.phone_verified 置 true
+type PhoneVerificationToken struct {
+	ID           uint       `gorm:"primaryKey"`
+	CreatedAt    time.Time
+	UserID       uint       `gorm:"not null;index"`
+	Phone        string     `gorm:"size:32;not null"` // E.164 格式手机号
+	CodeHash     string     `gorm:"size:64;not null"` // SHA-256(code)，明文不落库
+	ExpiresAt    time.Time  `gorm:"not null;index"`
+	UsedAt       *time.Time // 验证成功后设置
+	AttemptCount int        `gorm:"not null;default:0"` // 尝试次数（防暴力枚举）
+	RequestedIP  string     `gorm:"size:45"`
+
+	User *User `gorm:"foreignKey:UserID"`
+}
+
+const PhoneVerificationMaxAttempts = 5
+const PhoneVerificationTTL = 10              // 分钟（短信验证码有效期比邮件短）
+const PhoneVerificationResendCooldown = 60   // 秒，重发冷却
+
+// IsExpired 是否已过期
+func (t *PhoneVerificationToken) IsExpired() bool {
+	return time.Now().After(t.ExpiresAt)
+}
+
+// IsUsed 是否已使用
+func (t *PhoneVerificationToken) IsUsed() bool {
+	return t.UsedAt != nil
+}
+
+// IsValid 是否仍可用于验证
+func (t *PhoneVerificationToken) IsValid() bool {
+	return !t.IsExpired() && !t.IsUsed() && t.AttemptCount < PhoneVerificationMaxAttempts
+}
