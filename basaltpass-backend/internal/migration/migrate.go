@@ -76,6 +76,7 @@ func RunMigrations() {
 		// 安全增强系统
 		&model.EmailChangeRequest{},
 		&model.PasswordResetToken{},
+		&model.EmailVerificationToken{},
 		&model.SecurityOperation{},
 
 		// 速率限制系统

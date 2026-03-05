@@ -592,3 +592,76 @@ BasaltPass 团队
 	_, err := s.emailSvc.SendWithLogging(context.Background(), msg, nil, "password_reset_success")
 	return err
 }
+
+// SendEmailVerificationEmail 发送邮箱验证码邮件（已登录用户验证自己的邮箱）
+// code 为6位明文数字，应在调用前生成并存储其哈希值。
+func (s *Service) SendEmailVerificationEmail(toEmail, code string) error {
+	subject := "✉️ BasaltPass 邮箱验证码"
+
+	textBody := fmt.Sprintf(`
+亲爱的用户，
+
+您正在验证 BasaltPass 账户的邮箱地址。
+
+您的验证码为：
+
+    %s
+
+此验证码将在 %d 分钟后失效，请勿泄露给他人。
+
+如果您未进行此操作，请忽略此邮件。
+
+祝好，
+BasaltPass 团队
+`, code, 30)
+
+	htmlBody := fmt.Sprintf(`<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BasaltPass 邮箱验证码</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f5f7fa;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+    <div style="max-width:600px;margin:0 auto;background-color:#ffffff;">
+        <div style="background:linear-gradient(135deg,#667eea 0%%,#764ba2 100%%);padding:40px 30px;text-align:center;">
+            <div style="font-size:48px;margin-bottom:16px;">✉️</div>
+            <h1 style="color:#ffffff;font-size:28px;font-weight:600;margin:0;">BasaltPass</h1>
+            <p style="color:#e1e8ff;font-size:16px;margin:8px 0 0;opacity:0.9;">邮箱验证</p>
+        </div>
+        <div style="padding:40px 30px;text-align:center;">
+            <h2 style="color:#2d3748;font-size:22px;font-weight:600;margin:0 0 16px;">请输入以下验证码</h2>
+            <p style="color:#4a5568;font-size:15px;line-height:1.6;margin:0 0 32px;">
+                您正在验证 BasaltPass 账户绑定的邮箱地址，请在页面中输入以下验证码。
+            </p>
+            <div style="background:#f3f4f6;border-radius:12px;padding:24px;margin:0 0 32px;display:inline-block;min-width:200px;">
+                <div style="font-size:42px;font-weight:700;letter-spacing:12px;color:#1a202c;font-family:monospace;">%s</div>
+            </div>
+            <div style="background:#fff8f0;border:1px solid #fed7aa;border-radius:8px;padding:16px;margin:0 0 32px;text-align:left;">
+                <div style="color:#92400e;font-size:14px;line-height:1.5;">
+                    ⏰ <strong>此验证码将在 %d 分钟后过期</strong>，且只能使用一次。<br>
+                    🔒 请勿将验证码分享给任何人，BasaltPass 工作人员不会主动索要验证码。
+                </div>
+            </div>
+            <p style="color:#718096;font-size:14px;line-height:1.6;margin:0;">
+                如果您未请求验证邮箱，请忽略此邮件，您的账户不会受到影响。
+            </p>
+        </div>
+        <div style="background-color:#f7fafc;padding:30px;text-align:center;border-top:1px solid #e2e8f0;">
+            <p style="color:#a0aec0;font-size:14px;margin:0 0 8px;">此邮件由 BasaltPass 系统自动发送，请勿直接回复</p>
+            <p style="color:#2d3748;font-size:16px;font-weight:600;margin:0;">BasaltPass Team</p>
+        </div>
+    </div>
+</body>
+</html>`, code, 30)
+
+	msg := &emailservice.Message{
+		To:       []string{toEmail},
+		Subject:  subject,
+		TextBody: textBody,
+		HTMLBody: htmlBody,
+	}
+
+	_, err := s.emailSvc.SendWithLogging(context.Background(), msg, nil, "email_verification")
+	return err
+}

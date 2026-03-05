@@ -7,7 +7,13 @@ import (
 	notif "basaltpass-backend/internal/service/notification"
 	securityservice "basaltpass-backend/internal/service/security"
 	"basaltpass-backend/internal/utils"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"math/big"
 	"strconv"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/pquerna/otp/totp"
@@ -398,19 +404,100 @@ func VerifyHandler(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
-// SendEmailVerificationHandler sends email verification (mock implementation)
+// generateEmailVerificationCode 生成6位纯数字验证码（加密安全随机）
+func generateEmailVerificationCode() (string, error) {
+	const digits = "0123456789"
+	code := make([]byte, 6)
+	for i := range code {
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(digits))))
+		if err != nil {
+			return "", err
+		}
+		code[i] = digits[n.Int64()]
+	}
+	return string(code), nil
+}
+
+// hashEmailVerificationCode 对验证码做 SHA-256 哈希，返回十六进制字符串
+func hashEmailVerificationCode(code string) string {
+	h := sha256.Sum256([]byte(code))
+	return hex.EncodeToString(h[:])
+}
+
+// SendEmailVerificationHandler 生成验证码并发送至用户邮箱
+// POST /api/v1/security/email/send
+// 限制：
+//   - 用户邮箱不能为空
+//   - 邮箱已验证时拒绝重复发送
+//   - 若上一个有效 token 在冷却时间内（60s）则拒绝重发
 func SendEmailVerificationHandler(c *fiber.Ctx) error {
 	uid := c.Locals("userID").(uint)
 
-	// In a real implementation, you would:
-	// 1. Generate a verification token
-	// 2. Send email with verification link
-	// 3. Store token in database with expiration
+	var user model.User
+	if err := common.DB().First(&user, uid).Error; err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "用户不存在"})
+	}
+	if user.Email == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "账户未绑定邮箱"})
+	}
+	if user.EmailVerified {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "邮箱已完成验证，无需重复发送"})
+	}
 
-	// For now, just log the action
-	aduit.LogAudit(uid, "发送邮箱验证", "", "", c.IP(), c.Get("User-Agent"))
+	// 冷却检查：若已有未过期且创建时间在 60 秒内的 token，拒绝重发
+	cooldownCutoff := time.Now().Add(-time.Duration(model.EmailVerificationResendCooldown) * time.Second)
+	var recent model.EmailVerificationToken
+	if err := common.DB().
+		Where("user_id = ? AND email = ? AND used_at IS NULL AND expires_at > ? AND created_at > ?",
+			uid, user.Email, time.Now(), cooldownCutoff).
+		Order("created_at DESC").
+		First(&recent).Error; err == nil {
+		remaining := int(time.Until(recent.CreatedAt.Add(
+			time.Duration(model.EmailVerificationResendCooldown) * time.Second)).Seconds())
+		return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
+			"error":              fmt.Sprintf("请等待 %d 秒后再重新发送", remaining),
+			"retry_after_seconds": remaining,
+		})
+	}
 
-	return c.JSON(fiber.Map{"message": "验证邮件已发送"})
+	// 生成验证码
+	code, err := generateEmailVerificationCode()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "生成验证码失败"})
+	}
+
+	// 将旧的未使用 token 标记为过期（防止旧码仍可用）
+	now := time.Now()
+	common.DB().Model(&model.EmailVerificationToken{}).
+		Where("user_id = ? AND used_at IS NULL", uid).
+		Update("expires_at", now)
+
+	// 存入新 token（只存哈希）
+	token := model.EmailVerificationToken{
+		UserID:      uid,
+		Email:       user.Email,
+		CodeHash:    hashEmailVerificationCode(code),
+		ExpiresAt:   now.Add(time.Duration(model.EmailVerificationTTL) * time.Minute),
+		RequestedIP: c.IP(),
+	}
+	if err := common.DB().Create(&token).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "创建验证记录失败"})
+	}
+
+	// 发送验证码邮件
+	secSvc := securityservice.NewService(common.DB())
+	if err := secSvc.SendEmailVerificationEmail(user.Email, code); err != nil {
+		// 发送失败时回滚 token，避免留下孤立记录
+		common.DB().Delete(&token)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "验证码发送失败，请稍后重试"})
+	}
+
+	aduit.LogAudit(uid, "发送邮箱验证码", "", user.Email, c.IP(), c.Get("User-Agent"))
+
+	return c.JSON(fiber.Map{
+		"message":    "验证码已发送至邮箱，请在 30 分钟内完成验证",
+		"expires_in": model.EmailVerificationTTL * 60,
+	})
 }
 
 // SendPhoneVerificationHandler sends phone verification (mock implementation)
@@ -428,16 +515,75 @@ func SendPhoneVerificationHandler(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"message": "验证短信已发送"})
 }
 
-// VerifyEmailHandler verifies email verification code
+// VerifyEmailHandler 验证用户提交的邮箱验证码
+// POST /api/v1/security/email/verify
+// Body: {"code": "123456"}
 func VerifyEmailHandler(c *fiber.Ctx) error {
 	uid := c.Locals("userID").(uint)
 
-	// Mock implementation - in real app, verify token from email link
-	if err := common.DB().Model(&model.User{}).Where("id = ?", uid).Update("email_verified", true).Error; err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "验证失败"})
+	var body struct {
+		Code string `json:"code"`
+	}
+	if err := c.BodyParser(&body); err != nil || body.Code == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请提供验证码"})
 	}
 
-	aduit.LogAudit(uid, "邮箱验证成功", "", "", c.IP(), c.Get("User-Agent"))
+	var user model.User
+	if err := common.DB().First(&user, uid).Error; err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "用户不存在"})
+	}
+	if user.EmailVerified {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "邮箱已完成验证"})
+	}
+
+	// 查找最新的有效 token（未使用、未过期）
+	var token model.EmailVerificationToken
+	if err := common.DB().
+		Where("user_id = ? AND email = ? AND used_at IS NULL AND expires_at > ?",
+			uid, user.Email, time.Now()).
+		Order("created_at DESC").
+		First(&token).Error; err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "验证码无效或已过期，请重新发送"})
+	}
+
+	// 检查尝试次数
+	if token.AttemptCount >= model.EmailVerificationMaxAttempts {
+		return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
+			"error": "验证码尝试次数过多，请重新发送获取新验证码",
+		})
+	}
+
+	// 递增尝试次数（先记录，防止枚举攻击）
+	common.DB().Model(&token).UpdateColumn("attempt_count", token.AttemptCount+1)
+
+	// 比对哈希（常量时间比较由 sha256 哈希输出长度固定保证枚举无法加速）
+	if hashEmailVerificationCode(body.Code) != token.CodeHash {
+		remaining := model.EmailVerificationMaxAttempts - (token.AttemptCount + 1)
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error":             "验证码错误",
+			"attempts_remaining": remaining,
+		})
+	}
+
+	// 验证通过：标记 token 已使用，并更新用户邮箱验证状态（事务）
+	now := time.Now()
+	tx := common.DB().Begin()
+	if err := tx.Model(&token).Updates(map[string]interface{}{"used_at": &now}).Error; err != nil {
+		tx.Rollback()
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "验证失败，请重试"})
+	}
+	if err := tx.Model(&user).Updates(map[string]interface{}{
+		"email_verified":    true,
+		"email_verified_at": &now,
+	}).Error; err != nil {
+		tx.Rollback()
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "验证失败，请重试"})
+	}
+	if err := tx.Commit().Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "验证失败，请重试"})
+	}
+
+	aduit.LogAudit(uid, "邮箱验证成功", "", user.Email, c.IP(), c.Get("User-Agent"))
 
 	return c.JSON(fiber.Map{"message": "邮箱验证成功"})
 }
