@@ -38,22 +38,40 @@ type UpdateContactRequest struct {
 	Phone string `json:"phone,omitempty"`
 }
 
+// getTenantID 从请求中提取租户ID：优先 X-Tenant-ID header，默认 0（系统租户）
+func getTenantID(c *fiber.Ctx) uint {
+	if tidStr := c.Get("X-Tenant-ID"); tidStr != "" {
+		if tid, err := strconv.ParseUint(tidStr, 10, 32); err == nil {
+			return uint(tid)
+		}
+	}
+	return 0
+}
+
 // GetSecurityStatusHandler returns user's security status
 func GetSecurityStatusHandler(c *fiber.Ctx) error {
 	uid := c.Locals("userID").(uint)
+	tenantID := getTenantID(c)
 
 	var user model.User
 	if err := common.DB().First(&user, uid).Error; err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "用户不存在"})
 	}
 
-	// Count passkeys
+	// Count passkeys for this tenant
 	var passkeysCount int64
-	common.DB().Model(&model.Passkey{}).Where("user_id = ?", uid).Count(&passkeysCount)
+	common.DB().Model(&model.Passkey{}).Where("user_id = ? AND tenant_id = ?", uid, tenantID).Count(&passkeysCount)
+
+	// Check TOTP status for this tenant
+	var totpCfg model.UserTenantTOTP
+	totpEnabled := false
+	if err := common.DB().Where("user_id = ? AND tenant_id = ?", uid, tenantID).First(&totpCfg).Error; err == nil {
+		totpEnabled = totpCfg.Enabled
+	}
 
 	status := SecurityStatus{
 		PasswordSet:   user.PasswordHash != "",
-		TwoFAEnabled:  user.TwoFAEnabled,
+		TwoFAEnabled:  totpEnabled,
 		PasskeysCount: int(passkeysCount),
 		Email:         user.Email,
 		Phone:         user.Phone,
@@ -173,9 +191,10 @@ func UpdateContactHandler(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"message": "联系方式更新成功"})
 }
 
-// Disable2FAHandler disables two-factor authentication
+// Disable2FAHandler disables two-factor authentication for the current tenant
 func Disable2FAHandler(c *fiber.Ctx) error {
 	uid := c.Locals("userID").(uint)
+	tenantID := getTenantID(c)
 
 	var body struct {
 		Code string `json:"code"`
@@ -184,30 +203,33 @@ func Disable2FAHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求格式错误"})
 	}
 
-	var user model.User
-	if err := common.DB().First(&user, uid).Error; err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "用户不存在"})
+	// 加载该租户下的 TOTP 配置
+	var totpCfg model.UserTenantTOTP
+	if err := common.DB().Where("user_id = ? AND tenant_id = ?", uid, tenantID).First(&totpCfg).Error; err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "此租户下未配置两步验证"})
 	}
 
-	if !user.TwoFAEnabled {
+	if !totpCfg.Enabled {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "两步验证未启用"})
 	}
 
-	// Verify TOTP code
-	if !totp.Validate(body.Code, user.TOTPSecret) {
+	// 用当前租户的密钥验证 TOTP 码
+	if !totp.Validate(body.Code, totpCfg.Secret) {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "验证码无效"})
 	}
 
-	// Disable 2FA
+	// 禁用该租户的 TOTP：清空密钥并设为未启用
+	now := c.Context().Time()
 	updates := map[string]interface{}{
-		"two_fa_enabled": false,
-		"totp_secret":    "",
+		"enabled":    false,
+		"secret":     "",
+		"enabled_at": nil,
+		"updated_at": now,
 	}
-	if err := common.DB().Model(&user).Updates(updates).Error; err != nil {
+	if err := common.DB().Model(&totpCfg).Updates(updates).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "禁用失败"})
 	}
 
-	// Log audit
 	aduit.LogAudit(uid, "禁用两步验证", "", "", c.IP(), c.Get("User-Agent"))
 
 	return c.JSON(fiber.Map{"message": "两步验证已禁用"})
@@ -272,37 +294,105 @@ func GetLoginHistoryHandler(c *fiber.Ctx) error {
 	})
 }
 
-// SetupHandler generates TOTP secret and returns it.
+// SetupHandler 生成该用户在当前租户下的 TOTP 密钥并返回（含 QR 码 URL）。
+// 每次调用会为该租户重新生成新密钥（覆盖旧密钥但不自动启用，需调用 VerifyHandler 确认）。
 func SetupHandler(c *fiber.Ctx) error {
 	uid := c.Locals("userID").(uint)
-	secret, err := totp.Generate(totp.GenerateOpts{Issuer: "BasaltPass", AccountName: "user"})
+	tenantID := getTenantID(c)
+
+	// 用账户邮箱作为 TOTP 的 AccountName，区分来自不同租户的密钥
+	var user model.User
+	if err := common.DB().First(&user, uid).Error; err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "用户不存在"})
+	}
+
+	// 拼接 Issuer：系统租户直接用 "BasaltPass"，
+	// 其他租户使用 "租户名 (BasaltPass)"，
+	// 这样同一邮箱/手机号在不同租户注册时，验证器 App 可以区分条目。
+	issuer := "BasaltPass"
+	if tenantID != 0 {
+		var tenant model.Tenant
+		if err := common.DB().Select("name").First(&tenant, tenantID).Error; err == nil && tenant.Name != "" {
+			issuer = tenant.Name + " (BasaltPass)"
+		}
+	}
+
+	accountName := user.Email
+	if accountName == "" {
+		accountName = user.Phone
+	}
+
+	secret, err := totp.Generate(totp.GenerateOpts{
+		Issuer:      issuer,
+		AccountName: accountName,
+	})
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
-	common.DB().Model(&model.User{}).Where("id = ?", uid).Updates(map[string]interface{}{"totp_secret": secret.Secret()})
+
+	// 在 user_tenant_totps 表中 upsert（存在则更新密钥，不存在则创建）
+	// 新密钥存入后默认未启用，需用 VerifyHandler 验证后才生效
+	var totpCfg model.UserTenantTOTP
+	err = common.DB().Where("user_id = ? AND tenant_id = ?", uid, tenantID).First(&totpCfg).Error
+	if err != nil {
+		// 不存在，新建
+		totpCfg = model.UserTenantTOTP{
+			UserID:   uid,
+			TenantID: tenantID,
+			Secret:   secret.Secret(),
+			Enabled:  false,
+		}
+		if err := common.DB().Create(&totpCfg).Error; err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "保存失败"})
+		}
+	} else {
+		// 已存在，更新密钥并重置启用状态
+		if err := common.DB().Model(&totpCfg).Updates(map[string]interface{}{
+			"secret":     secret.Secret(),
+			"enabled":    false,
+			"enabled_at": nil,
+		}).Error; err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "保存失败"})
+		}
+	}
+
 	return c.JSON(fiber.Map{"secret": secret.Secret(), "qr": secret.URL()})
 }
 
-// VerifyHandler verifies submitted TOTP code and enables 2FA.
+// VerifyHandler 验证 TOTP 码并为当前租户启用 2FA。
 func VerifyHandler(c *fiber.Ctx) error {
 	uid := c.Locals("userID").(uint)
+	tenantID := getTenantID(c)
+
 	var body struct {
 		Code string `json:"code"`
 	}
 	if err := c.BodyParser(&body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
-	var user model.User
-	if err := common.DB().First(&user, uid).Error; err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
-	}
-	ok := totp.Validate(body.Code, user.TOTPSecret)
-	if !ok {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "invalid code"})
+
+	// 加载该租户的待激活 TOTP 配置
+	var totpCfg model.UserTenantTOTP
+	if err := common.DB().Where("user_id = ? AND tenant_id = ?", uid, tenantID).First(&totpCfg).Error; err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请先调用 /2fa/setup 生成密钥"})
 	}
 
-	// Enable 2FA and log audit
-	common.DB().Model(&user).Update("two_fa_enabled", true)
+	if totpCfg.Secret == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "TOTP 密钥不存在，请重新调用 /2fa/setup"})
+	}
+
+	if !totp.Validate(body.Code, totpCfg.Secret) {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "验证码无效"})
+	}
+
+	now := c.Context().Time()
+	if err := common.DB().Model(&totpCfg).Updates(map[string]interface{}{
+		"enabled":    true,
+		"enabled_at": &now,
+	}).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "启用失败"})
+	}
+
 	aduit.LogAudit(uid, "启用两步验证", "", "", c.IP(), c.Get("User-Agent"))
 
 	return c.SendStatus(fiber.StatusNoContent)

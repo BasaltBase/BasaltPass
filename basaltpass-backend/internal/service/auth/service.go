@@ -200,12 +200,20 @@ func (s Service) LoginV2(req LoginRequest) (LoginResult, error) {
 	var availableMethods []string
 	var defaultMethod string
 
+	// 查询该用户在当前租户下是否启用了 TOTP
+	var totpCfg model.UserTenantTOTP
+	totpEnabled := false
+	if err := db.Where("user_id = ? AND tenant_id = ? AND enabled = ?", user.ID, req.TenantID, true).
+		First(&totpCfg).Error; err == nil {
+		totpEnabled = true
+	}
+
 	// 是否具备强二次验证方式（TOTP 或 Passkey）
-	hasStrong2FA := (user.TwoFAEnabled && user.TOTPSecret != "") || len(user.Passkeys) > 0
+	hasStrong2FA := totpEnabled || len(user.Passkeys) > 0
 
 	if hasStrong2FA {
 		// 已开启强二次验证时，仅要求这些方式，不再因为未验证邮箱/手机号而拦截登录
-		if user.TwoFAEnabled && user.TOTPSecret != "" {
+		if totpEnabled {
 			availableMethods = append(availableMethods, "totp")
 			defaultMethod = "totp"
 		}
@@ -278,24 +286,30 @@ func (s Service) Refresh(refreshToken string) (TokenPair, error) {
 func (s Service) Verify2FA(req Verify2FARequest) (TokenPair, error) {
 	db := common.DB()
 	var user model.User
-	if err := db.Preload("Passkeys").First(&user, req.UserID).Error; err != nil {
+	if err := db.First(&user, req.UserID).Error; err != nil {
 		return TokenPair{}, errors.New("user not found")
 	}
 	switch req.TwoFAType {
 	case "totp":
-		if user.TOTPSecret == "" || !user.TwoFAEnabled {
-			return TokenPair{}, errors.New("2FA not enabled")
+		// 从租户级 TOTP 表中加载该用户在指定租户下的 TOTP 配置
+		var totpCfg model.UserTenantTOTP
+		if err := db.Where("user_id = ? AND tenant_id = ? AND enabled = ?", req.UserID, req.TenantID, true).
+			First(&totpCfg).Error; err != nil {
+			return TokenPair{}, errors.New("TOTP 2FA not enabled for this tenant")
 		}
-		if !security.ValidateTOTP(user.TOTPSecret, req.Code) {
+		if !security.ValidateTOTP(totpCfg.Secret, req.Code) {
 			return TokenPair{}, errors.New("invalid TOTP code")
 		}
 	case "passkey":
-		// 这里只做简单校验，实际Passkey校验应由passkey模块完成
-		if len(user.Passkeys) == 0 {
-			return TokenPair{}, errors.New("no passkey registered")
-		}
-		// 这里假设前端已完成WebAuthn流程，后端只需确认用户有passkey
-		// 可扩展为调用passkey.FinishLoginHandler等
+		// Passkey 2FA 必须通过专用的 WebAuthn 端点完成完整的挑战-响应验证，
+		// 不能在此处以"用户有 passkey"作为充分条件。
+		// 正确流程：
+		//   1. POST /api/v1/passkey/2fa/begin  → 获取 WebAuthn challenge
+		//   2. 浏览器/设备完成 WebAuthn 签名
+		//   3. POST /api/v1/passkey/2fa/finish → 验证签名并颁发 token
+		return TokenPair{}, errors.New("passkey 2FA requires the dedicated WebAuthn flow: " +
+			"call POST /api/v1/passkey/2fa/begin to get a challenge, " +
+			"then POST /api/v1/passkey/2fa/finish with the signed credential")
 	case "email":
 		if !user.EmailVerified {
 			return TokenPair{}, errors.New("email not verified")

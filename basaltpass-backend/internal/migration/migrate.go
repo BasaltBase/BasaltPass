@@ -60,6 +60,8 @@ func RunMigrations() {
 		&model.OAuthAccount{},
 		&model.PasswordReset{},
 		&model.Passkey{},
+		&model.TenantWebAuthnConfig{},
+		&model.UserTenantTOTP{},
 		&model.SystemApp{},
 		&model.Notification{},
 		&model.Invitation{},
@@ -157,6 +159,14 @@ func RunMigrations() {
 
 	// 删除遗留的 system_settings 表（如果存在），系统设置已迁移至文件
 	dropLegacySystemSettingsTable()
+
+	// Passkey 相关迁移
+	ensurePasskeyTenantIndex()
+	ensureSystemTenantWebAuthnConfig()
+
+	// TOTP 相关迁移
+	ensureUserTenantTOTPIndex()
+	migrateLegacyTOTPToTenantTable()
 } // handleSpecialMigrations 处理特殊的迁移情况
 
 func handleSpecialMigrations() {
@@ -743,6 +753,116 @@ func assignPermissionsToPredefinedRoles() {
 	// 执行绑定
 	for rc, codes := range rolePerms {
 		bind(rc, codes)
+	}
+}
+
+// ensurePasskeyTenantIndex 在 passkeys 表上创建 (credential_id, tenant_id) 复合唯一索引，
+// 并确保旧的单列唯一索引被清理（兼容历史数据）。
+func ensurePasskeyTenantIndex() {
+	db := common.DB()
+
+	// 移除旧的单列唯一索引（如果存在）
+	db.Exec("DROP INDEX IF EXISTS idx_passkeys_credential_id")
+	db.Exec("DROP INDEX IF EXISTS passkeys_credential_id_key")
+
+	// 创建 (credential_id, tenant_id) 复合唯一索引，保证同一租户内凭证唯一
+	if err := db.Exec(
+		"CREATE UNIQUE INDEX IF NOT EXISTS idx_passkeys_credential_tenant ON passkeys (credential_id, tenant_id)",
+	).Error; err != nil {
+		log.Printf("[Migration] Failed to create idx_passkeys_credential_tenant: %v", err)
+	} else {
+		log.Println("[Migration] Ensured passkeys composite unique index (credential_id, tenant_id)")
+	}
+
+	// 为现有 passkeys 中 tenant_id=NULL 的记录设置默认值 0（系统租户）
+	db.Exec("UPDATE passkeys SET tenant_id = 0 WHERE tenant_id IS NULL")
+}
+
+// ensureSystemTenantWebAuthnConfig 为系统租户(tenant_id=0)创建默认 WebAuthn 配置（幂等）。
+// 生产环境应通过管理接口更新为实际域名和 origins。
+func ensureSystemTenantWebAuthnConfig() {
+	db := common.DB()
+
+	var count int64
+	if err := db.Model(&model.TenantWebAuthnConfig{}).Where("tenant_id = ?", 0).Count(&count).Error; err != nil {
+		log.Printf("[Migration] Failed to check system WebAuthn config: %v", err)
+		return
+	}
+
+	if count == 0 {
+		defaultOrigins := `["http://localhost:3000","http://localhost:5101","http://localhost:5173","http://localhost:8080"]`
+		cfg := model.TenantWebAuthnConfig{
+			TenantID:      0,
+			RPID:          "localhost",
+			RPDisplayName: "BasaltPass",
+			RPOrigins:     defaultOrigins,
+		}
+		if err := db.Create(&cfg).Error; err != nil {
+			log.Printf("[Migration] Failed to create system WebAuthn config: %v", err)
+		} else {
+			log.Println("[Migration] Created default system tenant WebAuthn config (RPID=localhost)")
+		}
+	}
+}
+
+// ensureUserTenantTOTPIndex 在 user_tenant_totps 表上创建 (user_id, tenant_id) 复合唯一索引（幂等）。
+func ensureUserTenantTOTPIndex() {
+	db := common.DB()
+	if err := db.Exec(
+		"CREATE UNIQUE INDEX IF NOT EXISTS idx_user_tenant_totps_user_tenant ON user_tenant_totps (user_id, tenant_id)",
+	).Error; err != nil {
+		log.Printf("[Migration] Failed to create idx_user_tenant_totps_user_tenant: %v", err)
+	} else {
+		log.Println("[Migration] Ensured user_tenant_totps composite unique index (user_id, tenant_id)")
+	}
+}
+
+// migrateLegacyTOTPToTenantTable 将 users 表中旧的 totp_secret / two_fa_enabled 字段
+// 迁移到 user_tenant_totps 表（租户ID=0，系统租户），以保持历史数据向前兼容。
+// 仅处理尚未在 user_tenant_totps 中有记录的用户（幂等）。
+func migrateLegacyTOTPToTenantTable() {
+	db := common.DB()
+
+	// 找出所有 totp_secret 非空的旧用户
+	var users []model.User
+	if err := db.Where("totp_secret != '' AND totp_secret IS NOT NULL").Find(&users).Error; err != nil {
+		log.Printf("[Migration] Failed to query legacy TOTP users: %v", err)
+		return
+	}
+
+	if len(users) == 0 {
+		return
+	}
+
+	migrated := 0
+	for _, u := range users {
+		// 检查 user_tenant_totps 中是否已有该用户的租户0记录
+		var cnt int64
+		if err := db.Model(&model.UserTenantTOTP{}).
+			Where("user_id = ? AND tenant_id = ?", u.ID, 0).
+			Count(&cnt).Error; err != nil {
+			log.Printf("[Migration] Failed to check UserTenantTOTP for user %d: %v", u.ID, err)
+			continue
+		}
+		if cnt > 0 {
+			continue // 已经迁移过，跳过
+		}
+
+		record := model.UserTenantTOTP{
+			UserID:   u.ID,
+			TenantID: 0,
+			Secret:   u.TOTPSecret,
+			Enabled:  u.TwoFAEnabled,
+		}
+		if err := db.Create(&record).Error; err != nil {
+			log.Printf("[Migration] Failed to migrate TOTP for user %d: %v", u.ID, err)
+			continue
+		}
+		migrated++
+	}
+
+	if migrated > 0 {
+		log.Printf("[Migration] Migrated %d legacy TOTP records to user_tenant_totps (tenant_id=0)", migrated)
 	}
 }
 

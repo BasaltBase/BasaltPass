@@ -14,7 +14,7 @@ import {
   ChevronRightIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
-import { PSelect } from '@ui';
+import { PSelect, EntitySearchSelect } from '@ui';
 import {
   Role,
   CreateRoleRequest,
@@ -51,17 +51,9 @@ const TenantRoleManagement: React.FC = () => {
     total: 0,
   });
 
-  const [userPagination, setUserPagination] = useState({
-    current: 1,
-    pageSize: 20,
-    total: 0,
-  });
-
-  const [searchTerm, setSearchTerm] = useState('');
-  const [userSearchTerm, setUserSearchTerm] = useState('');
-  const debouncedSearchTerm = useDebounce(searchTerm, 200);
-  const debouncedUserSearchTerm = useDebounce(userSearchTerm, 200);
   const [appFilter, setAppFilter] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 200);
 
   // 表单数据
   const [formData, setFormData] = useState<CreateRoleRequest>({
@@ -113,35 +105,13 @@ const TenantRoleManagement: React.FC = () => {
     }
   };
 
-  // 获取用户列表
-  const fetchUsers = async (page = 1, pageSize = 20) => {
-    try {
-      const response = await getTenantUsersForRole({ 
-        page, 
-        page_size: pageSize,
-        search: debouncedUserSearchTerm
-      });
-      setUsers(response.data.data.users || []);
-      setUserPagination({
-        current: page,
-        pageSize,
-        total: response.data.data.pagination.total || 0,
-      });
-    } catch (error: any) {
-      setUsers([]);
-      showMessage('error', error.response?.data?.error || '获取用户列表失败');
-    }
-  };
+
 
   useEffect(() => {
     fetchRoles();
   }, [debouncedSearchTerm, appFilter]);
 
-  useEffect(() => {
-    if (userRoleModalVisible) {
-      fetchUsers();
-    }
-  }, [userRoleModalVisible, debouncedUserSearchTerm]);
+
 
   // 创建/更新角色
   const handleSubmit = async (e: React.FormEvent) => {
@@ -234,9 +204,7 @@ const TenantRoleManagement: React.FC = () => {
     fetchRoles(page, pagination.pageSize);
   };
 
-  const handleUserPageChange = (page: number) => {
-    fetchUsers(page, userPagination.pageSize);
-  };
+
 
   // 角色类型样式映射
   const getRoleTypeStyle = (isSystem: boolean) => {
@@ -561,72 +529,32 @@ const TenantRoleManagement: React.FC = () => {
                     <div className="border rounded-lg">
                       <div className="p-4 border-b bg-gray-50">
                         <h4 className="font-medium text-gray-900 mb-3">选择用户</h4>
-                        <div className="relative">
-                          <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                          <PInput
-                            type="text"
+                        <div className="mb-3">
+                          <EntitySearchSelect
+                            entity="user"
+                            context="tenant"
+                            value={selectedUser ? [{
+                              id: selectedUser.id,
+                              label: selectedUser.nickname || selectedUser.email,
+                              subtitle: selectedUser.email,
+                              type: 'user',
+                              raw: selectedUser
+                            }] : []}
+                            onChange={(items: any[]) => {
+                              if (items.length > 0) {
+                                handleUserRoleAssignment(items[items.length - 1].raw as TenantUser);
+                              } else {
+                                setSelectedUser(null);
+                                setUserRoles(null);
+                                setSelectedRoleIds([]);
+                              }
+                            }}
                             placeholder="搜索用户..."
-                            value={userSearchTerm}
-                            onChange={(e) => setUserSearchTerm(e.target.value)}
-                            className="pl-9"
-                            size="sm"
+                            maxSelect={1}
+                            variant="list"
                           />
                         </div>
                       </div>
-                      <div className="max-h-96 overflow-y-auto">
-                        {users.map((user) => (
-                          <div
-                            key={user.id}
-                            onClick={() => handleUserRoleAssignment(user)}
-                            className={`p-3 border-b cursor-pointer transition-colors ${
-                              selectedUser?.id === user.id ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50'
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <div className="text-sm font-medium text-gray-900">{user.nickname || user.email}</div>
-                                <div className="text-xs text-gray-500">{user.email}</div>
-                              </div>
-                              <span className={`px-2 py-1 text-xs rounded-full ${
-                                user.role === 'owner' ? 'bg-purple-100 text-purple-800' :
-                                user.role === 'admin' ? 'bg-red-100 text-red-800' :
-                                'bg-gray-100 text-gray-800'
-                              }`}>
-                                {user.role === 'owner' ? '所有者' : user.role === 'admin' ? '管理员' : '成员'}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      {/* 用户分页 */}
-                      {users.length > 0 && (
-                        <div className="p-3 border-t bg-gray-50">
-                          <div className="flex items-center justify-between text-xs text-gray-600">
-                            <span>共 {userPagination.total} 个用户</span>
-                            <div className="flex items-center space-x-1">
-                              <PButton
-                                variant="secondary"
-                                size="sm"
-                                onClick={() => handleUserPageChange(userPagination.current - 1)}
-                                disabled={userPagination.current <= 1}
-                                className="rounded"
-                              >
-                                <ChevronLeftIcon className="w-4 h-4" />
-                              </PButton>
-                              <span>{userPagination.current}/{Math.ceil(userPagination.total / userPagination.pageSize)}</span>
-                              <PButton
-                                variant="secondary"
-                                size="sm"
-                                onClick={() => handleUserPageChange(userPagination.current + 1)}
-                                disabled={userPagination.current >= Math.ceil(userPagination.total / userPagination.pageSize)}
-                                className="rounded"
-                              >
-                                <ChevronRightIcon className="w-4 h-4" />
-                              </PButton>
-                            </div>
-                          </div>
-                        </div>
-                      )}
                     </div>
 
                     {/* 角色分配 */}
@@ -646,7 +574,7 @@ const TenantRoleManagement: React.FC = () => {
                               <div key={role.id} className="flex items-start space-x-3">
                                 <PCheckbox
                                   checked={selectedRoleIds.includes(role.id)}
-                                  onChange={(e) => {
+                                  onChange={(e: any) => {
                                     if (e.target.checked) {
                                       setSelectedRoleIds([...selectedRoleIds, role.id]);
                                     } else {

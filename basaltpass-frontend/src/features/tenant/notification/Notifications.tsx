@@ -11,6 +11,7 @@ import {
   ChevronRightIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
+import { EntitySearchSelect } from '@ui';
 import {
   TenantNotification,
   TenantCreateNotificationRequest,
@@ -18,7 +19,6 @@ import {
   tenantNotificationApi
 } from '@api/tenant/notification';
 import TenantLayout from '@features/tenant/components/TenantLayout';
-import useDebounce from '@hooks/useDebounce';
 
 const TenantNotifications: React.FC = () => {
   const [notifications, setNotifications] = useState<TenantNotification[]>([]);
@@ -32,12 +32,6 @@ const TenantNotifications: React.FC = () => {
     total: 0,
   });
 
-  // 用户搜索相关状态
-  const [searchTerm, setSearchTerm] = useState('');
-  const debouncedSearchTerm = useDebounce(searchTerm, 300);
-  const [searchResults, setSearchResults] = useState<TenantUser[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [showSearchResults, setShowSearchResults] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<TenantUser[]>([]); // 保存选中的用户完整信息
 
   // 表单数据
@@ -100,49 +94,6 @@ const TenantNotifications: React.FC = () => {
     }
   };
 
-  // 搜索用户
-  const searchUsers = async (searchTerm: string) => {
-    if (!searchTerm.trim()) {
-      setSearchResults([]);
-      setShowSearchResults(false);
-      return;
-    }
-
-    setIsSearching(true);
-    try {
-      const response = await tenantNotificationApi.searchTenantUsers(searchTerm);
-      setSearchResults(response.data.data || []);
-      setShowSearchResults(true);
-    } catch (error: any) {
-      setSearchResults([]);
-      // 只在搜索关键词不为空时显示错误信息
-      if (searchTerm.trim()) {
-        showMessage('error', error.response?.data?.error || '搜索用户失败');
-      }
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  // 处理搜索输入变化
-  const handleSearchChange = (value: string) => {
-    setSearchTerm(value);
-  };
-
-  // 选择搜索结果中的用户
-  const selectUserFromSearch = (user: TenantUser) => {
-    // 检查用户是否已被选择
-    if (!(formData.receiver_ids || []).includes(user.id)) {
-      handleUserSelect(user.id);
-      // 添加到已选用户列表中
-      setSelectedUsers(prev => [...prev, user]);
-    }
-    // 清空搜索
-    setSearchTerm('');
-    setSearchResults([]);
-    setShowSearchResults(false);
-  };
-
   // 处理多选用户
   const handleUserSelect = (userId: number) => {
     const isSelected = (formData.receiver_ids || []).includes(userId);
@@ -159,8 +110,7 @@ const TenantNotifications: React.FC = () => {
       setSelectedUsers(prev => prev.filter(user => user.id !== userId));
     } else {
       // 如果是新选择，查找用户信息并添加到已选用户列表
-      const userInfo = users.find(user => user.id === userId) || 
-                      searchResults.find(user => user.id === userId);
+      const userInfo = users.find(user => user.id === userId);
       if (userInfo && !selectedUsers.find(user => user.id === userId)) {
         setSelectedUsers(prev => [...prev, userInfo]);
       }
@@ -171,16 +121,6 @@ const TenantNotifications: React.FC = () => {
     fetchNotifications();
     fetchUsers();
   }, []);
-
-  // 搜索防抖效果
-  useEffect(() => {
-    if (debouncedSearchTerm.trim()) {
-      searchUsers(debouncedSearchTerm);
-    } else {
-      setSearchResults([]);
-      setShowSearchResults(false);
-    }
-  }, [debouncedSearchTerm]);
 
   // 创建通知
   const handleCreate = async (e: React.FormEvent) => {
@@ -511,98 +451,29 @@ const TenantNotifications: React.FC = () => {
                         <span className="text-gray-500 text-xs ml-2">(不选择用户则向租户下所有用户广播)</span>
                       </label>
                       
-                      {/* 用户搜索框 */}
-                      <div className="mb-3 relative">
-                        <input
-                          type="text"
+                      {/* 用户搜索框 - 统一组件 */}
+                      <div className="mb-3">
+                        <EntitySearchSelect
+                          entity="user"
+                          context="tenant"
+                          value={selectedUsers.map(user => ({
+                            id: user.id,
+                            label: user.nickname || user.email,
+                            subtitle: user.phone || user.email,
+                            type: 'user',
+                            raw: user
+                          }))}
+                          onChange={(items: any[]) => {
+                            const newSelectedUsers = items.map((item: any) => item.raw as TenantUser);
+                            setSelectedUsers(newSelectedUsers);
+                            setFormData(prev => ({
+                              ...prev,
+                              receiver_ids: newSelectedUsers.map((u: any) => u.id)
+                            }));
+                          }}
                           placeholder="搜索用户（邮箱、昵称等）..."
-                          value={searchTerm}
-                          onChange={(e) => handleSearchChange(e.target.value)}
-                          className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          variant="chips"
                         />
-                        {isSearching && (
-                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-                          </div>
-                        )}
-                        
-                        {/* 搜索结果下拉框 */}
-                        {showSearchResults && searchResults.length > 0 && (
-                          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
-                            {searchResults.map(user => (
-                              <div
-                                key={user.id}
-                                onClick={() => selectUserFromSearch(user)}
-                                className="flex items-center p-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                              >
-                                <UserIcon className="w-4 h-4 text-gray-400 mr-2" />
-                                <span className="text-sm text-gray-900">
-                                  {user.nickname || user.email} ({user.phone || user.email})
-                                </span>
-                                {(formData.receiver_ids || []).includes(user.id) && (
-                                  <CheckIcon className="w-4 h-4 text-green-500 ml-auto" />
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                        
-                        {/* 无搜索结果提示 */}
-                        {showSearchResults && searchResults.length === 0 && searchTerm && (
-                          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg p-3 text-center text-gray-500 text-sm">
-                            未找到匹配的用户
-                          </div>
-                        )}
-                      </div>
-
-                      {/* 已选择的用户列表 */}
-                      {(formData.receiver_ids?.length || 0) > 0 && (
-                        <div className="mb-3">
-                          <div className="text-sm font-medium text-gray-700 mb-2">
-                            已选择的用户 ({formData.receiver_ids?.length || 0})
-                          </div>
-                          <div className="max-h-24 overflow-y-auto border border-gray-200 rounded-md bg-gray-50">
-                            {selectedUsers.map(user => (
-                              <div key={user.id} className="flex items-center justify-between p-2 text-sm">
-                                <div className="flex items-center">
-                                  <UserIcon className="w-4 h-4 text-gray-400 mr-2" />
-                                  <span>{user.nickname || user.email}</span>
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => handleUserSelect(user.id)}
-                                  className="text-red-500 hover:text-red-700"
-                                >
-                                  <XMarkIcon className="w-4 h-4" />
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* 所有用户列表（可选） */}
-                      <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-md">
-                        {!users || users.length === 0 ? (
-                          <div className="p-3 text-gray-500 text-center">暂无用户</div>
-                        ) : (
-                          users.map(user => (
-                            <label key={user.id} className="flex items-center p-2 hover:bg-gray-50 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={(formData.receiver_ids || []).includes(user.id)}
-                                onChange={() => handleUserSelect(user.id)}
-                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                              />
-                              <div className="ml-3 flex items-center">
-                                <UserIcon className="w-4 h-4 text-gray-400 mr-2" />
-                                <span className="text-sm text-gray-900">
-                                  {user.nickname || user.email} ({user.phone || user.email})
-                                </span>
-                              </div>
-                            </label>
-                          ))
-                        )}
                       </div>
                     </div>
                   </div>
@@ -627,9 +498,6 @@ const TenantNotifications: React.FC = () => {
                         receiver_ids: [],
                       });
                       setSelectedUsers([]); // 清空已选用户
-                      setSearchTerm(''); // 清空搜索
-                      setSearchResults([]);
-                      setShowSearchResults(false);
                     }}
                     className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors"
                   >

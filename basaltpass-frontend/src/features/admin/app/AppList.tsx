@@ -172,7 +172,7 @@ export default function AppList() {
                                   rel="noopener noreferrer"
                                   className="text-indigo-600 hover:text-indigo-800"
                                 >
-                                  {app.homepage_url}
+                                  站点主页
                                 </a>
                                 <span className="mx-2">•</span>
                               </>

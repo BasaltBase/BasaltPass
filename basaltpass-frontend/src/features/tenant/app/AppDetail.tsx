@@ -423,7 +423,7 @@ export default function AppDetail() {
                     rel="noopener noreferrer"
                     className="mt-1 text-sm text-blue-600 hover:text-blue-800"
                   >
-                    {app.homepage_url}
+                    站点主页
                   </a>
                 </div>
               )}

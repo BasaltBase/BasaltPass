@@ -125,15 +125,30 @@ const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
             console.log('开始 admin 用户搜索，查询:', q)
             const res = await adminUserApi.getUsers({ search: q, limit, page: 1 })
             console.log('Admin 用户搜索响应:', res)
-            items = res.users.map((u: AdminUser): BaseEntityItem => ({
+            items = res.users.map((u: AdminUser): BaseEntityItem => {
+              const memberships = u.tenant_memberships?.map(tm => tm.tenant_name).join(', ') || '无关联租户'
+              return {
+                id: u.id,
+                label: u.nickname || u.email,
+                subtitle: `${u.email} - 所属租户: ${memberships}`,
+                avatar: u.avatar_url,
+                raw: u,
+                type: 'user'
+              }
+            })
+            console.log('转换后的 items:', items)
+          } else if (context === 'tenant') {
+            // Import tenantNotificationApi dynamically if needed, or ensure it's imported at the top
+            const { tenantNotificationApi } = await import('@api/tenant/notification');
+            const res = await tenantNotificationApi.searchTenantUsers(q);
+            items = (res.data.data || []).map((u: any): BaseEntityItem => ({
               id: u.id,
               label: u.nickname || u.email,
               subtitle: u.email,
-              avatar: u.avatar_url,
+              avatar: u.avatar,
               raw: u,
               type: 'user'
             }))
-            console.log('转换后的 items:', items)
           } else { // 普通 user 场景
             const res = await userApi.search(q, limit)
             items = res.data.map((u: UserSearchResult): BaseEntityItem => ({

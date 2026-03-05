@@ -213,7 +213,7 @@ export default function TenantAppList() {
                                   rel="noopener noreferrer"
                                   className="text-blue-600 hover:text-blue-800"
                                 >
-                                  {app.homepage_url}
+                                  站点主页
                                 </a>
                                 <span className="mx-2">•</span>
                               </>
