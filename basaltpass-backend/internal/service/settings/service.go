@@ -77,6 +77,13 @@ func defaultItems() map[string]SettingItem {
 		"auth.password_policy.require_uppercase": {Value: false, Category: "auth", Description: "密码需包含大写字母"},
 		"auth.password_policy.require_special":   {Value: false, Category: "auth", Description: "密码需包含特殊字符"},
 
+		// 二次验证（2FA）方式开关
+		// 管理员可以在此处选择性地启用/禁用各种 2FA 方式。
+		// 关闭某个方式后，已为用户启用该方式的记录仍保留，但登录时不再触发该验证步骤。
+		"auth.2fa.totp_enabled":    {Value: true, Category: "auth", Description: "是否允许使用 TOTP（身份验证器 App）作为二次验证方式"},
+		"auth.2fa.passkey_enabled": {Value: true, Category: "auth", Description: "是否允许使用 Passkey（WebAuthn）作为二次验证方式"},
+		"auth.2fa.sms_enabled":     {Value: false, Category: "auth", Description: "是否允许使用短信验证码作为二次验证方式"},
+
 		// Security
 		"security.enforce_2fa":                    {Value: false, Category: "security", Description: "是否强制启用 2FA"},
 		"security.allowed_ips":                    {Value: []string{}, Category: "security", Description: "允许访问的 IP 列表（留空表示不限制）"},

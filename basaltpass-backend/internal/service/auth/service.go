@@ -196,20 +196,27 @@ func (s Service) LoginV2(req LoginRequest) (LoginResult, error) {
 		return LoginResult{}, ErrInvalidCredentials
 	}
 
+	// 读取管理员配置的 2FA 方式开关
+	totpMethodEnabled   := settingssvc.GetBool("auth.2fa.totp_enabled", true)
+	passkeyMethodEnabled := settingssvc.GetBool("auth.2fa.passkey_enabled", true)
+	smsMethodEnabled    := settingssvc.GetBool("auth.2fa.sms_enabled", false)
+
 	// 收集用户可用的所有2FA方式
 	var availableMethods []string
 	var defaultMethod string
 
-	// 查询该用户在当前租户下是否启用了 TOTP
+	// 查询该用户在当前租户下是否启用了 TOTP（同时需要系统开关打开）
 	var totpCfg model.UserTenantTOTP
 	totpEnabled := false
-	if err := db.Where("user_id = ? AND tenant_id = ? AND enabled = ?", user.ID, req.TenantID, true).
-		First(&totpCfg).Error; err == nil {
-		totpEnabled = true
+	if totpMethodEnabled {
+		if err := db.Where("user_id = ? AND tenant_id = ? AND enabled = ?", user.ID, req.TenantID, true).
+			First(&totpCfg).Error; err == nil {
+			totpEnabled = true
+		}
 	}
 
-	// 是否具备强二次验证方式（TOTP 或 Passkey）
-	hasStrong2FA := totpEnabled || len(user.Passkeys) > 0
+	// 是否具备强二次验证方式（TOTP 或 Passkey，受开关限制）
+	hasStrong2FA := totpEnabled || (passkeyMethodEnabled && len(user.Passkeys) > 0)
 
 	if hasStrong2FA {
 		// 已开启强二次验证时，仅要求这些方式，不再因为未验证邮箱/手机号而拦截登录
@@ -217,7 +224,7 @@ func (s Service) LoginV2(req LoginRequest) (LoginResult, error) {
 			availableMethods = append(availableMethods, "totp")
 			defaultMethod = "totp"
 		}
-		if len(user.Passkeys) > 0 {
+		if passkeyMethodEnabled && len(user.Passkeys) > 0 {
 			availableMethods = append(availableMethods, "passkey")
 			if defaultMethod == "" {
 				defaultMethod = "passkey"
@@ -232,13 +239,14 @@ func (s Service) LoginV2(req LoginRequest) (LoginResult, error) {
 				defaultMethod = "email"
 			}
 		}
-		// 如需支持手机号，可按需启用以下逻辑（目前未在 Verify2FA 中实现 phone 分支）
-		// if !user.PhoneVerified && user.Phone != "" {
-		//     availableMethods = append(availableMethods, "phone")
-		//     if defaultMethod == "" {
-		//         defaultMethod = "phone"
-		//     }
-		// }
+	}
+
+	// SMS 验证码作为额外的 2FA 方式（仅在开关打开且用户有手机号时追加）
+	if smsMethodEnabled && user.Phone != "" {
+		availableMethods = append(availableMethods, "sms")
+		if defaultMethod == "" {
+			defaultMethod = "sms"
+		}
 	}
 
 	// 如果有2FA方式，返回需要验证
@@ -291,6 +299,9 @@ func (s Service) Verify2FA(req Verify2FARequest) (TokenPair, error) {
 	}
 	switch req.TwoFAType {
 	case "totp":
+		if !settingssvc.GetBool("auth.2fa.totp_enabled", true) {
+			return TokenPair{}, errors.New("TOTP 2FA is disabled by administrator")
+		}
 		// 从租户级 TOTP 表中加载该用户在指定租户下的 TOTP 配置
 		var totpCfg model.UserTenantTOTP
 		if err := db.Where("user_id = ? AND tenant_id = ? AND enabled = ?", req.UserID, req.TenantID, true).
@@ -301,6 +312,9 @@ func (s Service) Verify2FA(req Verify2FARequest) (TokenPair, error) {
 			return TokenPair{}, errors.New("invalid TOTP code")
 		}
 	case "passkey":
+		if !settingssvc.GetBool("auth.2fa.passkey_enabled", true) {
+			return TokenPair{}, errors.New("Passkey 2FA is disabled by administrator")
+		}
 		// Passkey 2FA 必须通过专用的 WebAuthn 端点完成完整的挑战-响应验证，
 		// 不能在此处以"用户有 passkey"作为充分条件。
 		// 正确流程：
@@ -310,6 +324,12 @@ func (s Service) Verify2FA(req Verify2FARequest) (TokenPair, error) {
 		return TokenPair{}, errors.New("passkey 2FA requires the dedicated WebAuthn flow: " +
 			"call POST /api/v1/passkey/2fa/begin to get a challenge, " +
 			"then POST /api/v1/passkey/2fa/finish with the signed credential")
+	case "sms":
+		if !settingssvc.GetBool("auth.2fa.sms_enabled", false) {
+			return TokenPair{}, errors.New("SMS 2FA is disabled by administrator")
+		}
+		// SMS 验证码校验逻辑待实现
+		return TokenPair{}, errors.New("SMS 2FA verification is not yet implemented")
 	case "email":
 		if !user.EmailVerified {
 			return TokenPair{}, errors.New("email not verified")
