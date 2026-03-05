@@ -4,6 +4,7 @@ import (
 	"basaltpass-backend/internal/handler/public/app/app_user"
 	"crypto/rand"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -262,9 +263,9 @@ func (s *OAuthServerService) ExchangeCodeForToken(req *TokenRequest, clientID st
 		var challenge string
 		switch authCode.CodeChallengeMethod {
 		case "S256", "":
-			// Use hex encoding for S256, as expected by CanShelf and other clients
+			// RFC 7636 §4.2: code_challenge = BASE64URL(SHA256(ASCII(code_verifier)))
 			hash := sha256.Sum256([]byte(req.CodeVerifier))
-			challenge = hex.EncodeToString(hash[:])
+			challenge = base64.RawURLEncoding.EncodeToString(hash[:])
 		case "plain":
 			challenge = req.CodeVerifier
 		default:
