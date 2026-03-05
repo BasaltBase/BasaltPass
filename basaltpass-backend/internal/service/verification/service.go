@@ -274,6 +274,57 @@ func (s *Service) VerifyCode(req VerifyCodeRequest) error {
 	return common.DB().Save(&pendingSignup).Error
 }
 
+// ChangeEmailRequest 注册流程中的邮箱变更请求
+type ChangeEmailRequest struct {
+	SignupID string `json:"signup_id"`
+	NewEmail string `json:"new_email"`
+}
+
+// ChangeEmail 在注册流程中（邮箱尚未验证时）更换目标邮箱地址。
+// 成功后旧邮箱的所有活跃验证码挑战会被作废，前端需要重新调用 SendVerificationCode 获取新验证码。
+func (s *Service) ChangeEmail(req ChangeEmailRequest) error {
+	// 基本格式校验
+	newEmail := strings.ToLower(strings.TrimSpace(req.NewEmail))
+	if newEmail == "" || !strings.Contains(newEmail, "@") || strings.Count(newEmail, "@") != 1 {
+		return errors.New("invalid email format")
+	}
+	parts := strings.SplitN(newEmail, "@", 2)
+	if len(parts[0]) == 0 || len(parts[1]) == 0 || !strings.Contains(parts[1], ".") {
+		return errors.New("invalid email format")
+	}
+
+	// 查找仍处于"待邮箱验证"状态的注册会话
+	var pendingSignup model.PendingSignup
+	if err := common.DB().Where("id = ? AND status = ?", req.SignupID, model.SignupStatusPendingEmail).
+		First(&pendingSignup).Error; err != nil {
+		// 统一响应，不暴露会话是否存在
+		return nil
+	}
+
+	// 会话已过期则静默返回
+	if time.Now().After(pendingSignup.ExpiresAt) {
+		common.DB().Model(&pendingSignup).Update("status", model.SignupStatusExpired)
+		return nil
+	}
+
+	// 邮箱未变化，无需处理
+	if pendingSignup.Email == newEmail {
+		return nil
+	}
+
+	// 在事务中：更新邮箱 + 作废旧邮箱的验证码挑战
+	return common.DB().Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&pendingSignup).Update("email", newEmail).Error; err != nil {
+			return err
+		}
+		// 作废该会话下所有活跃的 email 渠道挑战（发往旧邮箱的验证码）
+		return tx.Model(&model.VerificationChallenge{}).
+			Where("signup_id = ? AND channel = ? AND status = ?",
+				req.SignupID, model.ChallengeChannelEmail, model.ChallengeStatusActive).
+			Update("status", model.ChallengeStatusInvalidated).Error
+	})
+}
+
 // CompleteSignup 完成注册
 func (s *Service) CompleteSignup(req CompleteSignupRequest) (*model.User, error) {
 	var pendingSignup model.PendingSignup

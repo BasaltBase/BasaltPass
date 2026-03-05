@@ -135,22 +135,25 @@ func (h *Handler) CompleteSignupHandler(c *fiber.Ctx) error {
 }
 
 // ChangeEmailHandler 更改邮箱地址（在验证前） PUT /signup/change_email
+// 允许用户在注册邮箱验证完成之前更换目标邮箱。
+// 成功后旧邮箱的验证码自动失效，前端需重新调用 send_email_code 获取新验证码。
+// 为防止会话枚举，无论内部错误如何均返回相同响应。
 func (h *Handler) ChangeEmailHandler(c *fiber.Ctx) error {
-	var req struct {
-		SignupID string `json:"signup_id"`
-		NewEmail string `json:"new_email"`
-	}
+	var req verification.ChangeEmailRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request format",
 		})
 	}
 
-	// TODO: 实现邮箱更改逻辑
-	// 1. 验证新邮箱格式
-	// 2. 更新pending_signup记录
-	// 3. 使旧的验证码挑战失效
-	// 4. 为了安全，总是返回成功响应
+	if req.SignupID == "" || req.NewEmail == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "signup_id and new_email are required",
+		})
+	}
+
+	// 错误静默处理：不向调用方暴露会话是否存在或具体失败原因
+	_ = h.verificationSvc.ChangeEmail(req)
 
 	return c.JSON(fiber.Map{
 		"message": "If eligible, email address updated",
