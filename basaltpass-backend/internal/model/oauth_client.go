@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -111,17 +112,26 @@ func (c *OAuthClient) ValidateRedirectURI(uri string) bool {
 	return false
 }
 
-// HashClientSecret 对客户端密钥进行哈希处理
+// HashClientSecret 对客户端密钥进行哈希处理，使用 bcrypt（cost=12）。
+// 调用后 c.ClientSecret 变为 bcrypt hash，原始明文不再保存。
 func (c *OAuthClient) HashClientSecret() {
-	if c.ClientSecret != "" {
-		hash := sha256.Sum256([]byte(c.ClientSecret))
-		c.ClientSecret = hex.EncodeToString(hash[:])
+	if c.ClientSecret == "" {
+		return
+	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(c.ClientSecret), 12)
+	if err == nil {
+		c.ClientSecret = string(hash)
 	}
 }
 
-// VerifyClientSecret 验证客户端密钥
+// VerifyClientSecret 验证客户端密钥。
+// bcrypt hash 以 "$2" 开头；旧的 SHA-256 hex（64 字符）在迁移完成前仍可验证通过。
 func (c *OAuthClient) VerifyClientSecret(secret string) bool {
-	hash := sha256.Sum256([]byte(secret))
-	hashedSecret := hex.EncodeToString(hash[:])
-	return c.ClientSecret == hashedSecret
+	stored := c.ClientSecret
+	if strings.HasPrefix(stored, "$2") {
+		return bcrypt.CompareHashAndPassword([]byte(stored), []byte(secret)) == nil
+	}
+	// 向后兼容：旧 SHA-256 hex 格式
+	legacy := sha256.Sum256([]byte(secret))
+	return hex.EncodeToString(legacy[:]) == stored
 }

@@ -219,8 +219,13 @@ func Disable2FAHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "两步验证未启用"})
 	}
 
-	// 用当前租户的密钥验证 TOTP 码
-	if !totp.Validate(body.Code, totpCfg.Secret) {
+	// 解密 TOTP 密钥后再验证
+	rawSecret, err := utils.DecryptTOTPSecret(totpCfg.Secret)
+	if err != nil || rawSecret == "" {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "TOTP 密钥解密失败"})
+	}
+
+	if !totp.Validate(body.Code, rawSecret) {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "验证码无效"})
 	}
 
@@ -336,6 +341,12 @@ func SetupHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
+	// 加密 TOTP 明文密钥后再持久化
+	encryptedSecret, err := utils.EncryptTOTPSecret(secret.Secret())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "密钥加密失败"})
+	}
+
 	// 在 user_tenant_totps 表中 upsert（存在则更新密钥，不存在则创建）
 	// 新密钥存入后默认未启用，需用 VerifyHandler 验证后才生效
 	var totpCfg model.UserTenantTOTP
@@ -345,7 +356,7 @@ func SetupHandler(c *fiber.Ctx) error {
 		totpCfg = model.UserTenantTOTP{
 			UserID:   uid,
 			TenantID: tenantID,
-			Secret:   secret.Secret(),
+			Secret:   encryptedSecret,
 			Enabled:  false,
 		}
 		if err := common.DB().Create(&totpCfg).Error; err != nil {
@@ -354,7 +365,7 @@ func SetupHandler(c *fiber.Ctx) error {
 	} else {
 		// 已存在，更新密钥并重置启用状态
 		if err := common.DB().Model(&totpCfg).Updates(map[string]interface{}{
-			"secret":     secret.Secret(),
+			"secret":     encryptedSecret,
 			"enabled":    false,
 			"enabled_at": nil,
 		}).Error; err != nil {
@@ -362,6 +373,7 @@ func SetupHandler(c *fiber.Ctx) error {
 		}
 	}
 
+	// 返回明文密钥给客户端（用于显示 QR 码），数据库中存储的是密文
 	return c.JSON(fiber.Map{"secret": secret.Secret(), "qr": secret.URL()})
 }
 
@@ -387,7 +399,12 @@ func VerifyHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "TOTP 密钥不存在，请重新调用 /2fa/setup"})
 	}
 
-	if !totp.Validate(body.Code, totpCfg.Secret) {
+	rawSecret, err := utils.DecryptTOTPSecret(totpCfg.Secret)
+	if err != nil || rawSecret == "" {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "TOTP 密钥解密失败，请重新调用 /2fa/setup"})
+	}
+
+	if !totp.Validate(body.Code, rawSecret) {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "验证码无效"})
 	}
 

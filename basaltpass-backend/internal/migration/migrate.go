@@ -6,6 +6,7 @@ import (
 	"basaltpass-backend/internal/middleware/ratelimit"
 	"basaltpass-backend/internal/model"
 	"basaltpass-backend/internal/service/currency"
+	"basaltpass-backend/internal/utils"
 	"errors"
 	"fmt"
 	"log"
@@ -168,6 +169,7 @@ func RunMigrations() {
 	// TOTP 相关迁移
 	ensureUserTenantTOTPIndex()
 	migrateLegacyTOTPToTenantTable()
+	encryptExistingTOTPSecrets() // 对已存在的明文 TOTP 密钥补加密
 } // handleSpecialMigrations 处理特殊的迁移情况
 
 func handleSpecialMigrations() {
@@ -849,10 +851,17 @@ func migrateLegacyTOTPToTenantTable() {
 			continue // 已经迁移过，跳过
 		}
 
+		// 迁移时立即加密明文密钥
+		encSecret, err := utils.EncryptTOTPSecret(u.TOTPSecret)
+		if err != nil {
+			log.Printf("[Migration] Failed to encrypt TOTP secret for user %d: %v", u.ID, err)
+			continue
+		}
+
 		record := model.UserTenantTOTP{
 			UserID:   u.ID,
 			TenantID: 0,
-			Secret:   u.TOTPSecret,
+			Secret:   encSecret,
 			Enabled:  u.TwoFAEnabled,
 		}
 		if err := db.Create(&record).Error; err != nil {
@@ -864,6 +873,40 @@ func migrateLegacyTOTPToTenantTable() {
 
 	if migrated > 0 {
 		log.Printf("[Migration] Migrated %d legacy TOTP records to user_tenant_totps (tenant_id=0)", migrated)
+	}
+}
+
+// encryptExistingTOTPSecrets 对 user_tenant_totps 表中仍以明文存储的 TOTP 密钥进行加密（幂等）。
+// 已加密的记录（带 "enc:v1:" 前缀）会被跳过。
+func encryptExistingTOTPSecrets() {
+	db := common.DB()
+
+	var records []model.UserTenantTOTP
+	if err := db.Where("secret != '' AND secret NOT LIKE ?", "enc:v1:%").Find(&records).Error; err != nil {
+		log.Printf("[Migration] encryptExistingTOTPSecrets: query failed: %v", err)
+		return
+	}
+
+	if len(records) == 0 {
+		return
+	}
+
+	encrypted := 0
+	for _, r := range records {
+		enc, err := utils.EncryptTOTPSecret(r.Secret)
+		if err != nil {
+			log.Printf("[Migration] encryptExistingTOTPSecrets: encrypt user_id=%d failed: %v", r.UserID, err)
+			continue
+		}
+		if err := db.Model(&r).Update("secret", enc).Error; err != nil {
+			log.Printf("[Migration] encryptExistingTOTPSecrets: save user_id=%d failed: %v", r.UserID, err)
+			continue
+		}
+		encrypted++
+	}
+
+	if encrypted > 0 {
+		log.Printf("[Migration] Encrypted %d existing plaintext TOTP secrets in user_tenant_totps", encrypted)
 	}
 }
 

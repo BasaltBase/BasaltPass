@@ -308,7 +308,11 @@ func (s Service) Verify2FA(req Verify2FARequest) (TokenPair, error) {
 			First(&totpCfg).Error; err != nil {
 			return TokenPair{}, errors.New("TOTP 2FA not enabled for this tenant")
 		}
-		if !security.ValidateTOTP(totpCfg.Secret, req.Code) {
+		rawSecret, err := utils.DecryptTOTPSecret(totpCfg.Secret)
+		if err != nil || rawSecret == "" {
+			return TokenPair{}, errors.New("TOTP configuration error")
+		}
+		if !security.ValidateTOTP(rawSecret, req.Code) {
 			return TokenPair{}, errors.New("invalid TOTP code")
 		}
 	case "passkey":
