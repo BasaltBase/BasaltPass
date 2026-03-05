@@ -5,6 +5,7 @@ import (
 	"basaltpass-backend/internal/handler/public/oauth"
 	passkey2 "basaltpass-backend/internal/handler/public/passkey"
 	"basaltpass-backend/internal/middleware"
+	"basaltpass-backend/internal/middleware/ratelimit"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -49,11 +50,17 @@ func RegisterOAuthRoutes(v1 fiber.Router) {
 	// 认证相关路由
 	authGroup := v1.Group("/auth")
 	authGroup.Post("/register", auth2.RegisterHandler)
-	authGroup.Post("/login", timeout.NewWithContext(auth2.LoginHandler, authRouteTimeout))
+	authGroup.Post("/login",
+		ratelimit.LoginRateLimit(),
+		timeout.NewWithContext(auth2.LoginHandler, authRouteTimeout),
+	)
 	authGroup.Post("/refresh", auth2.RefreshHandler)
 	authGroup.Post("/console/authorize", middleware.JWTMiddleware(), auth2.ConsoleAuthorizeHandler)
 	authGroup.Post("/console/exchange", auth2.ConsoleExchangeHandler)
-	authGroup.Post("/verify-2fa", timeout.NewWithContext(auth2.Verify2FAHandler, authRouteTimeout))
+	authGroup.Post("/verify-2fa",
+		ratelimit.Verify2FARateLimit(),
+		timeout.NewWithContext(auth2.Verify2FAHandler, authRouteTimeout),
+	)
 
 	// Passkey authentication routes
 	passkeyGroup := v1.Group("/passkey")
