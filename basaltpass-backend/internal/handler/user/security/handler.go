@@ -38,9 +38,11 @@ type ChangePasswordRequest struct {
 	ConfirmPassword string `json:"confirm_password"`
 }
 
-// UpdateContactRequest for contact info update
+// UpdateContactRequest for contact info update.
+// Email change is intentionally excluded: use POST /user/security/email/change instead,
+// which sends a confirmation link to the new address before applying the change.
 type UpdateContactRequest struct {
-	Email string `json:"email,omitempty"`
+	Email string `json:"email,omitempty"` // rejected; kept for graceful error messaging
 	Phone string `json:"phone,omitempty"`
 }
 
@@ -160,14 +162,15 @@ func UpdateContactHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "用户不存在"})
 	}
 
-	updates := make(map[string]interface{})
-
-	// Update email if provided
-	if req.Email != "" && req.Email != user.Email {
-		updates["email"] = req.Email
-		updates["email_verified"] = false // Reset verification status
-		aduit.LogAudit(uid, "修改邮箱", "", req.Email, c.IP(), c.Get("User-Agent"))
+	// Email changes must go through the verified flow to prevent account hijacking.
+	// Direct email updates are intentionally blocked here.
+	if req.Email != "" {
+		return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{
+			"error": "邮箱变更需通过安全验证流程，请使用 POST /api/v1/user/security/email/change 接口",
+		})
 	}
+
+	updates := make(map[string]interface{})
 
 	// Update phone if provided with E.164 normalization
 	if req.Phone != user.Phone {
