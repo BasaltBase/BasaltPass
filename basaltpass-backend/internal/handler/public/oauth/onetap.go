@@ -252,6 +252,10 @@ func generateIDToken(c *fiber.Ctx, user *model.User, client *model.OAuthClient, 
 
 // renderSilentAuthSuccess 渲染静默认证成功页面
 func renderSilentAuthSuccess(c *fiber.Ctx, redirectURI, state, idToken string) error {
+	idTokenJSON := jsonStringLiteral(idToken)
+	stateJSON := jsonStringLiteral(state)
+	redirectURIJSON := jsonStringLiteral(redirectURI)
+
 	html := fmt.Sprintf(`
 <!DOCTYPE html>
 <html>
@@ -263,8 +267,8 @@ func renderSilentAuthSuccess(c *fiber.Ctx, redirectURI, state, idToken string) e
         // 向父窗口发送认证结果
         const result = {
             success: true,
-            id_token: '%s',
-            state: '%s'
+            id_token: %s,
+            state: %s
         };
 
         if (window.parent && window.parent !== window) {
@@ -272,7 +276,7 @@ func renderSilentAuthSuccess(c *fiber.Ctx, redirectURI, state, idToken string) e
         }
 
         // 如果有redirect_uri，也可以重定向
-        const redirectUri = '%s';
+        const redirectUri = %s;
         if (redirectUri) {
             const params = new URLSearchParams({
                 id_token: result.id_token,
@@ -283,7 +287,7 @@ func renderSilentAuthSuccess(c *fiber.Ctx, redirectURI, state, idToken string) e
     </script>
 </body>
 </html>
-        `, idToken, state, redirectURI)
+        `, idTokenJSON, stateJSON, redirectURIJSON)
 
 	c.Set("Content-Type", "text/html")
 	return c.SendString(html)
@@ -291,6 +295,10 @@ func renderSilentAuthSuccess(c *fiber.Ctx, redirectURI, state, idToken string) e
 
 // renderSilentAuthError 渲染静默认证错误页面
 func renderSilentAuthError(c *fiber.Ctx, status int, redirectURI, state, errorCode string) error {
+	errorCodeJSON := jsonStringLiteral(errorCode)
+	stateJSON := jsonStringLiteral(state)
+	redirectURIJSON := jsonStringLiteral(redirectURI)
+
 	html := fmt.Sprintf(`
 <!DOCTYPE html>
 <html>
@@ -302,8 +310,8 @@ func renderSilentAuthError(c *fiber.Ctx, status int, redirectURI, state, errorCo
         // 向父窗口发送错误结果
         const result = {
             success: false,
-            error: '%s',
-            state: '%s'
+            error: %s,
+            state: %s
         };
 
         if (window.parent && window.parent !== window) {
@@ -311,7 +319,7 @@ func renderSilentAuthError(c *fiber.Ctx, status int, redirectURI, state, errorCo
         }
 
         // 如果有redirect_uri，重定向到错误页面
-        const redirectUri = '%s';
+        const redirectUri = %s;
         if (redirectUri) {
             const params = new URLSearchParams({
                 error: result.error,
@@ -322,7 +330,7 @@ func renderSilentAuthError(c *fiber.Ctx, status int, redirectURI, state, errorCo
     </script>
 </body>
 </html>
-        `, errorCode, state, redirectURI)
+        `, errorCodeJSON, stateJSON, redirectURIJSON)
 
 	c.Set("Content-Type", "text/html")
 	c.Status(status)
@@ -388,6 +396,14 @@ func preferredUsername(user *model.User) string {
 		return user.Nickname
 	}
 	return user.Email
+}
+
+func jsonStringLiteral(v string) string {
+	encoded, err := json.Marshal(v)
+	if err != nil {
+		return `""`
+	}
+	return string(encoded)
 }
 
 func extractTokenFromRequest(c *fiber.Ctx) string {

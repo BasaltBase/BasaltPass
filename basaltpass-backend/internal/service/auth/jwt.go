@@ -134,6 +134,9 @@ func getUserDefaultTenant(userID uint) uint {
 // ParseToken validates a JWT and returns claims.
 func ParseToken(tokenStr string) (*jwt.Token, error) {
 	return jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, jwt.ErrTokenSignatureInvalid
+		}
 		return getJWTSecret(), nil
 	})
 }

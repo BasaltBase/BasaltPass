@@ -3,15 +3,18 @@ package oauth
 import (
 	"basaltpass-backend/internal/service/auth"
 	"context"
+	"errors"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"basaltpass-backend/internal/common"
 	security "basaltpass-backend/internal/handler/user/security"
 	"basaltpass-backend/internal/model"
 
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
 // OAuth service placeholder - can be extended later
@@ -43,23 +46,71 @@ func CallbackHandler(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
-	// For demo purposes use token.AccessToken as unique providerID
-	providerID := token.Extra("id").(string)
+	// Prefer provider user id when available.
+	providerID := ""
+	if providerIDRaw := token.Extra("id"); providerIDRaw != nil {
+		providerIDStr, ok := providerIDRaw.(string)
+		if !ok {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid provider identity format"})
+		}
+		providerID = strings.TrimSpace(providerIDStr)
+	}
 	if providerID == "" {
-		providerID = token.AccessToken
+		providerID = strings.TrimSpace(token.AccessToken)
+	}
+	if providerID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "missing provider identity"})
 	}
 
 	var oa model.OAuthAccount
 	db := common.DB()
 	if err := db.Where("provider = ? AND provider_id = ?", providerName, providerID).First(&oa).Error; err != nil {
-		// create new user and oauth account
-		user := model.User{Nickname: providerName + "_user"}
-		db.Create(&user)
-		oa = model.OAuthAccount{UserID: user.ID, Provider: providerName, ProviderID: providerID}
-		db.Create(&oa)
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to query oauth account"})
+		}
+
+		defaultTenantID, tenantErr := ensureDefaultTenant(db)
+		if tenantErr != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to resolve default tenant"})
+		}
+
+		createErr := db.Transaction(func(tx *gorm.DB) error {
+			user := model.User{
+				TenantID: defaultTenantID,
+				Nickname: providerName + "_user",
+			}
+			if err := tx.Create(&user).Error; err != nil {
+				return err
+			}
+
+			tenantUser := model.TenantUser{
+				UserID:   user.ID,
+				TenantID: defaultTenantID,
+				Role:     model.TenantRoleMember,
+			}
+			if err := tx.Create(&tenantUser).Error; err != nil {
+				return err
+			}
+
+			oa = model.OAuthAccount{
+				UserID:     user.ID,
+				Provider:   providerName,
+				ProviderID: providerID,
+			}
+			if err := tx.Create(&oa).Error; err != nil {
+				return err
+			}
+			return nil
+		})
+		if createErr != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to create oauth account"})
+		}
 	}
 	// generate tokens
-	tokens, _ := auth.GenerateTokenPair(oa.UserID)
+	tokens, err := auth.GenerateTokenPair(oa.UserID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to generate tokens"})
+	}
 	// set refresh cookie
 	c.Cookie(&fiber.Cookie{Name: "refresh_token", Value: tokens.RefreshToken, HTTPOnly: true, Path: "/", MaxAge: 7 * 24 * 60 * 60})
 
@@ -74,4 +125,24 @@ func CallbackHandler(c *fiber.Ctx) error {
 	}
 	redirectURL = redirectURL + "?token=" + tokens.AccessToken
 	return c.Redirect(redirectURL, http.StatusTemporaryRedirect)
+}
+
+func ensureDefaultTenant(db *gorm.DB) (uint, error) {
+	var defaultTenant model.Tenant
+	if err := db.Where("code = ?", "default").First(&defaultTenant).Error; err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return 0, err
+		}
+		defaultTenant = model.Tenant{
+			Name:        "BasaltPass",
+			Code:        "default",
+			Description: "BasaltPass system default tenant",
+			Status:      model.TenantStatusActive,
+			Plan:        model.TenantPlanFree,
+		}
+		if err := db.Create(&defaultTenant).Error; err != nil {
+			return 0, err
+		}
+	}
+	return defaultTenant.ID, nil
 }
