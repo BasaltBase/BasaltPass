@@ -8,6 +8,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/helmet"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
@@ -47,6 +48,33 @@ func RegisterMiddlewares(app *fiber.App) {
 
 	// Request logger
 	app.Use(logger.New())
+
+	// Security headers (RFC-compliant, OWASP recommended)
+	helmetCfg := helmet.Config{
+		// 防止 MIME 类型嗅探攻击
+		ContentTypeNosniff: "nosniff",
+		// 防止 Clickjacking
+		XFrameOptions: "DENY",
+		// 旧版浏览器 XSS 过滤器（现代浏览器已内置保护，设为 0 符合最新建议）
+		XSSProtection: "0",
+		// 限制 Referrer 信息泄露
+		ReferrerPolicy: "strict-origin-when-cross-origin",
+		// 禁用不必要的浏览器特性
+		PermissionPolicy: "camera=(), microphone=(), geolocation=(), payment=()",
+		// CSP：纯 API 后端不提供 HTML，拒绝所有内容加载并禁止被嵌入
+		ContentSecurityPolicy: "default-src 'none'; frame-ancestors 'none'",
+		// 跨域隔离策略
+		CrossOriginEmbedderPolicy: "require-corp",
+		CrossOriginOpenerPolicy:   "same-origin",
+		CrossOriginResourcePolicy: "same-origin",
+	}
+	// HSTS 仅在生产环境（HTTPS）下启用，避免开发环境 HTTP 被锁死
+	if !config.IsDevelop() {
+		helmetCfg.HSTSMaxAge = 31536000      // 1 年
+		helmetCfg.HSTSExcludeSubdomains = false // 包含子域名
+		helmetCfg.HSTSPreloadEnabled = true
+	}
+	app.Use(helmet.New(helmetCfg))
 
 	// CORS configuration from config
 	c := config.Get().CORS
