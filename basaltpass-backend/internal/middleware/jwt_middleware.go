@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"basaltpass-backend/internal/common"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -41,8 +42,7 @@ func JWTMiddleware() fiber.Handler {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, jwt.ErrTokenSignatureInvalid
 			}
-			secret := getJWTSecret()
-			return []byte(secret), nil
+			return common.MustJWTSecret(), nil
 		})
 
 		if err != nil || !token.Valid {

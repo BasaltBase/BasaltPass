@@ -2,7 +2,6 @@ package auth
 
 import (
 	"errors"
-	"os"
 	"strings"
 	"time"
 
@@ -27,16 +26,6 @@ type consoleAuthorizeResponse struct {
 
 type consoleExchangeRequest struct {
 	Code string `json:"code"`
-}
-
-func getJWTSecret() string {
-	if secret := os.Getenv("JWT_SECRET"); secret != "" {
-		return secret
-	}
-	if os.Getenv("BASALTPASS_DYNO_MODE") == "test" {
-		return "test-secret"
-	}
-	panic("JWT_SECRET environment variable is required")
 }
 
 func normalizeTarget(t string) string {
@@ -138,7 +127,7 @@ func ConsoleAuthorizeHandler(c *fiber.Ctx) error {
 		"typ": "console_code",
 		"exp": time.Now().Add(30 * time.Second).Unix(),
 	}
-	code, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(getJWTSecret()))
+	code, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(common.MustJWTSecret())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to sign code"})
 	}
@@ -163,7 +152,7 @@ func ConsoleExchangeHandler(c *fiber.Ctx) error {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, jwt.ErrTokenSignatureInvalid
 		}
-		return []byte(getJWTSecret()), nil
+		return common.MustJWTSecret(), nil
 	})
 	if err != nil || !tok.Valid {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "invalid code"})

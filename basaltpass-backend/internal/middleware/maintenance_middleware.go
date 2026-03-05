@@ -39,8 +39,7 @@ func MaintenanceMiddleware() fiber.Handler {
 				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 					return nil, jwt.ErrTokenSignatureInvalid
 				}
-				secret := getJWTSecret()
-				return []byte(secret), nil
+				return common.MustJWTSecret(), nil
 			})
 
 			if err != nil {

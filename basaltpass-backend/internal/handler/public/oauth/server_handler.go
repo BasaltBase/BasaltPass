@@ -1,12 +1,12 @@
 package oauth
 
 import (
+	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/config"
 	"basaltpass-backend/internal/service/aduit"
 	"encoding/base64"
 	"net/http"
 	"net/url"
-	"os"
 	"strconv"
 	"strings"
 
@@ -97,21 +97,16 @@ func tryUserIDFromAccessTokenCookie(c *fiber.Ctx) (uint, bool) {
 }
 
 func parseUserIDFromJWT(tokenStr string) (uint, bool) {
-	secret := os.Getenv("JWT_SECRET")
-	if secret == "" {
-		// Mirror existing test fallback behavior.
-		if os.Getenv("BASALTPASS_DYNO_MODE") == "test" {
-			secret = "test-secret"
-		} else {
-			return 0, false
-		}
+	secret, err := common.JWTSecret()
+	if err != nil {
+		return 0, false
 	}
 
 	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, jwt.ErrTokenSignatureInvalid
 		}
-		return []byte(secret), nil
+		return secret, nil
 	})
 	if err != nil || token == nil || !token.Valid {
 		return 0, false

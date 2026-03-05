@@ -3,7 +3,6 @@ package middleware
 import (
 	common2 "basaltpass-backend/internal/common"
 	"log"
-	"os"
 
 	"basaltpass-backend/internal/model"
 
@@ -16,18 +15,6 @@ import (
 * Extracts tenant ID from JWT, headers, or user associations.
 *
  */
-
-// getJWTSecret 获取JWT密钥
-func getJWTSecret() string {
-	if secret := os.Getenv("JWT_SECRET"); secret != "" {
-		return secret
-	}
-	// 在测试环境下允许默认值，但在生产环境必须配置
-	if os.Getenv("BASALTPASS_DYNO_MODE") == "test" {
-		return "test-secret"
-	}
-	panic("JWT_SECRET environment variable is required")
-}
 
 // TenantMiddleware 租户隔离中间件
 func TenantMiddleware() fiber.Handler {

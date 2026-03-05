@@ -3,7 +3,6 @@ package auth
 import (
 	"errors"
 	"os"
-	"strings"
 	"time"
 
 	"basaltpass-backend/internal/common"
@@ -11,28 +10,6 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 )
-
-var jwtSecret []byte
-
-func getJWTSecret() []byte {
-	if len(jwtSecret) != 0 {
-		return jwtSecret
-	}
-
-	secret := os.Getenv("JWT_SECRET")
-	if secret == "" {
-		// Allow tests to run without requiring an env var.
-		// go test builds a binary typically named "*.test".
-		if os.Getenv("BASALTPASS_DYNO_MODE") == "test" || strings.HasSuffix(os.Args[0], ".test") {
-			secret = "test-secret"
-		} else {
-			panic("environment variable JWT_SECRET is required")
-		}
-	}
-
-	jwtSecret = []byte(secret)
-	return jwtSecret
-}
 
 func mustGetEnv(key string) string {
 	v := os.Getenv(key)
@@ -97,7 +74,7 @@ func GenerateTokenPairWithTenantAndScope(userID uint, tenantID uint, scope strin
 		"scp": scope,    // console scope
 		"exp": time.Now().Add(15 * time.Minute).Unix(),
 	}
-	accessToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims).SignedString(getJWTSecret())
+	accessToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims).SignedString(common.MustJWTSecret())
 	if err != nil {
 		return TokenPair{}, err
 	}
@@ -109,7 +86,7 @@ func GenerateTokenPairWithTenantAndScope(userID uint, tenantID uint, scope strin
 		"exp": time.Now().Add(7 * 24 * time.Hour).Unix(),
 		"typ": "refresh",
 	}
-	refreshToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString(getJWTSecret())
+	refreshToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString(common.MustJWTSecret())
 	if err != nil {
 		return TokenPair{}, err
 	}
@@ -137,7 +114,7 @@ func ParseToken(tokenStr string) (*jwt.Token, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, jwt.ErrTokenSignatureInvalid
 		}
-		return getJWTSecret(), nil
+		return common.MustJWTSecret(), nil
 	})
 }
 
@@ -152,7 +129,7 @@ func GeneratePreAuthToken(userID uint, tenantID uint) (string, error) {
 		"typ": "pre_auth",
 		"exp": time.Now().Add(5 * time.Minute).Unix(),
 	}
-	return jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(getJWTSecret())
+	return jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(common.MustJWTSecret())
 }
 
 // ParsePreAuthToken validates a pre_auth token and extracts the embedded user / tenant IDs.
@@ -162,7 +139,7 @@ func ParsePreAuthToken(tokenStr string) (userID uint, tenantID uint, err error) 
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, jwt.ErrTokenSignatureInvalid
 		}
-		return getJWTSecret(), nil
+		return common.MustJWTSecret(), nil
 	})
 	if parseErr != nil || token == nil || !token.Valid {
 		return 0, 0, errors.New("invalid or expired 2FA session token")
