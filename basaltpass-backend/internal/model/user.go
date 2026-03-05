@@ -61,10 +61,9 @@ type User struct {
 	AppAuthorizations []AppUser `gorm:"foreignKey:UserID"`
 }
 
-// isSuperAdmin
-// IsSuperAdmin 检查用户是否为超级管理员
+// IsSuperAdmin 检查用户是否为系统最高管理员，以 is_system_admin 字段为唯一依据。
 func (u *User) IsSuperAdmin() bool {
-	return u.HasRole(1) // 默认超级管理员的角色ID为1
+	return u.IsSystemAdmin != nil && *u.IsSystemAdmin
 }
 
 // WebAuthnID 返回用户的WebAuthn ID
