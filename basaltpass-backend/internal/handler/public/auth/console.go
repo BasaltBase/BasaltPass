@@ -1,8 +1,11 @@
 package auth
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"errors"
 	"strings"
+	"sync"
 	"time"
 
 	"basaltpass-backend/internal/common"
@@ -13,6 +16,68 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 )
+
+type consoleCodeState struct {
+	ExpiresAt int64
+	Used      bool
+}
+
+var (
+	consoleCodeMu    sync.Mutex
+	consoleCodeStore = map[string]*consoleCodeState{}
+)
+
+func generateConsoleCodeJTI() (string, error) {
+	buf := make([]byte, 24)
+	if _, err := rand.Read(buf); err != nil {
+		return "", err
+	}
+	return base64.RawURLEncoding.EncodeToString(buf), nil
+}
+
+func rememberIssuedConsoleCode(jti string, expiresAt int64) {
+	if strings.TrimSpace(jti) == "" || expiresAt <= 0 {
+		return
+	}
+	now := time.Now().Unix()
+
+	consoleCodeMu.Lock()
+	defer consoleCodeMu.Unlock()
+
+	consoleCodeStore[jti] = &consoleCodeState{
+		ExpiresAt: expiresAt,
+		Used:      false,
+	}
+	// Best-effort cleanup to avoid unbounded memory growth.
+	if len(consoleCodeStore) > 10000 {
+		for key, state := range consoleCodeStore {
+			if state == nil || state.ExpiresAt <= now || state.Used {
+				delete(consoleCodeStore, key)
+			}
+		}
+	}
+}
+
+func consumeConsoleCodeJTI(jti string) bool {
+	if strings.TrimSpace(jti) == "" {
+		return false
+	}
+	now := time.Now().Unix()
+
+	consoleCodeMu.Lock()
+	defer consoleCodeMu.Unlock()
+
+	state, ok := consoleCodeStore[jti]
+	if !ok || state == nil {
+		return false
+	}
+	if state.Used || state.ExpiresAt <= now {
+		delete(consoleCodeStore, jti)
+		return false
+	}
+	state.Used = true
+	return true
+}
 
 type consoleAuthorizeRequest struct {
 	Target   string `json:"target"`
@@ -125,12 +190,20 @@ func ConsoleAuthorizeHandler(c *fiber.Ctx) error {
 		"tid": tenantID,
 		"scp": req.Target,
 		"typ": "console_code",
-		"exp": time.Now().Add(30 * time.Second).Unix(),
 	}
+	exp := time.Now().Add(30 * time.Second).Unix()
+	jti, err := generateConsoleCodeJTI()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to generate code id"})
+	}
+	claims["exp"] = exp
+	claims["jti"] = jti
+
 	code, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(common.MustJWTSecret())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to sign code"})
 	}
+	rememberIssuedConsoleCode(jti, exp)
 
 	return c.JSON(consoleAuthorizeResponse{Code: code, Target: req.Target})
 }
@@ -163,6 +236,14 @@ func ConsoleExchangeHandler(c *fiber.Ctx) error {
 	}
 	if claims["typ"] != "console_code" {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "invalid code type"})
+	}
+	jti, ok := claims["jti"].(string)
+	if !ok || strings.TrimSpace(jti) == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "invalid code id"})
+	}
+	// Single-use enforcement: consume jti atomically to block replay in validity window.
+	if !consumeConsoleCodeJTI(jti) {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "code already used or expired"})
 	}
 
 	uidFloat, ok := claims["sub"].(float64)

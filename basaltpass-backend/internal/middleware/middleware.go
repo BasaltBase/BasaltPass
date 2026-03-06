@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"errors"
+	"log"
 	"strings"
 
 	"basaltpass-backend/internal/config"
@@ -25,13 +26,20 @@ import (
 func ErrorHandler(c *fiber.Ctx, err error) error {
 	// Default to 500 unless it's a *fiber.Error
 	code := fiber.StatusInternalServerError
+	message := "internal server error"
 	var e *fiber.Error
 	if errors.As(err, &e) {
 		code = e.Code
+		// Only expose explicit 4xx public errors; keep 5xx generic.
+		if code < fiber.StatusInternalServerError && strings.TrimSpace(e.Message) != "" {
+			message = e.Message
+		}
 	}
+	// Always keep full internal details in server logs.
+	log.Printf("[error_handler] status=%d path=%s request=%v err=%v", code, c.Path(), c.Locals("requestid"), err)
 
 	return c.Status(code).JSON(fiber.Map{
-		"error":   err.Error(),
+		"error":   message,
 		"code":    code,
 		"path":    c.Path(),
 		"request": c.Locals("requestid"),
@@ -70,7 +78,7 @@ func RegisterMiddlewares(app *fiber.App) {
 	}
 	// HSTS 仅在生产环境（HTTPS）下启用，避免开发环境 HTTP 被锁死
 	if !config.IsDevelop() {
-		helmetCfg.HSTSMaxAge = 31536000      // 1 年
+		helmetCfg.HSTSMaxAge = 31536000         // 1 年
 		helmetCfg.HSTSExcludeSubdomains = false // 包含子域名
 		helmetCfg.HSTSPreloadEnabled = true
 	}
