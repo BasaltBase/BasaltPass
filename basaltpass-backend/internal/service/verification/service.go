@@ -370,8 +370,9 @@ func (s *Service) CompleteSignup(req CompleteSignupRequest) (*model.User, error)
 		PhoneVerified: pendingSignup.Phone != "" && pendingSignup.Status == model.SignupStatusCompleted,
 	}
 
-	// 如果是第一个用户，设置为系统管理员
-	if isFirstUser {
+	// 仅允许“平台首用户”（tenant_id=0）自动成为系统管理员。
+	// 租户注册页面创建的普通用户（tenant_id>0）必须保持非系统管理员。
+	if isFirstUser && pendingSignup.TenantID == 0 {
 		t := true
 		user.IsSystemAdmin = &t
 		// TODO: 实现setupFirstUserAsGlobalAdmin逻辑

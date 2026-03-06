@@ -105,8 +105,9 @@ func (s Service) Register(req RegisterRequest) (*model.User, error) {
 		TenantID:     req.TenantID, // 设置租户ID
 	}
 
-	// 利用数据库唯一约束防止并发注册导致产生多个超级管理员
-	if isFirstUser {
+	// 仅允许“平台首用户”（tenant_id=0）自动成为系统管理员。
+	// 租户注册创建的普通用户（tenant_id>0）必须保持非系统管理员。
+	if isFirstUser && req.TenantID == 0 {
 		t := true
 		user.IsSystemAdmin = &t
 		user.TenantID = 0 // 第一个用户是平台级管理员，不属于任何租户
@@ -117,8 +118,8 @@ func (s Service) Register(req RegisterRequest) (*model.User, error) {
 		return nil, err
 	}
 
-	// 如果是第一个用户，设置为全局管理员
-	if isFirstUser {
+	// 仅在平台首用户场景下设置全局管理员能力
+	if isFirstUser && req.TenantID == 0 {
 		if err := s.setupFirstUserAsGlobalAdmin(tx, user); err != nil {
 			tx.Rollback()
 			return nil, err

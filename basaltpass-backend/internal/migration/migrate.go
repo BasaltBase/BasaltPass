@@ -146,6 +146,7 @@ func RunMigrations() {
 	// 在自动迁移后处理特殊的迁移情况
 	handleSpecialMigrations()
 	ensureUserTenantScopedUniqueIndexes()
+	ensureIsSystemAdminNonUniqueIndex()
 
 	createDefaultRoles()
 	seedSystemApps()
@@ -1225,5 +1226,36 @@ func ensureUserTenantScopedUniqueIndexes() {
 	// tenant_id 普通索引
 	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_users_tenant_id ON users (tenant_id)").Error; err != nil {
 		log.Printf("[Migration] Failed to create idx_users_tenant_id: %v", err)
+	}
+}
+
+// ensureIsSystemAdminNonUniqueIndex removes legacy unique index on users.is_system_admin
+// and keeps a normal non-unique index for query performance.
+func ensureIsSystemAdminNonUniqueIndex() {
+	db := common.DB()
+
+	log.Println("[Migration] Ensuring non-unique index on users(is_system_admin)...")
+
+	// 先尝试删除历史上的唯一索引（不同数据库/版本命名可能不同）
+	legacyIndexes := []string{
+		"idx_users_is_system_admin",
+		"is_system_admin",
+		"users_is_system_admin_key",
+	}
+	for _, name := range legacyIndexes {
+		if db.Migrator().HasIndex(&model.User{}, name) {
+			if err := db.Migrator().DropIndex(&model.User{}, name); err != nil {
+				log.Printf("[Migration] Failed to drop legacy index %s: %v", name, err)
+			}
+		}
+	}
+	// 兜底：处理部分数据库驱动无法识别 HasIndex 的情况。
+	db.Exec("DROP INDEX IF EXISTS idx_users_is_system_admin")
+	db.Exec("DROP INDEX IF EXISTS is_system_admin")
+	db.Exec("DROP INDEX IF EXISTS users_is_system_admin_key")
+
+	// 再创建普通索引（非 unique）
+	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_users_is_system_admin ON users (is_system_admin)").Error; err != nil {
+		log.Printf("[Migration] Failed to create idx_users_is_system_admin: %v", err)
 	}
 }

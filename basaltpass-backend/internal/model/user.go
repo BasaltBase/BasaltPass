@@ -41,9 +41,8 @@ type User struct {
 	RiskFlags         uint32     `gorm:"default:0"`     // 风险标记位掩码
 
 	// IsSystemAdmin 标记是否为系统最高管理员（首位用户）
-	// 使用指针指针类型配合 uniqueIndex 实现：全表只能有一个 true，其他均为 NULL
-	// MySQL/SQLite 都支持在 Unique Index 中存在多个 NULL
-	IsSystemAdmin *bool `gorm:"uniqueIndex"`
+	// 不再使用唯一约束，避免限制普通用户数据写入策略。
+	IsSystemAdmin *bool `gorm:"index"`
 
 	// WebAuthn相关字段
 	WebAuthnUserID []byte `gorm:"size:64;column:web_authn_id"` // WebAuthn用户ID (固定长度的随机字节)
