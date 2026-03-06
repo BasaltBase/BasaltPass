@@ -19,6 +19,8 @@ BasaltPass 实现了标准的 OAuth 2.0 和 OpenID Connect 1.0 协议。
 -   **Method**: `GET`
 -   **Usage**: 将用户浏览器重定向到此处以开始登录。
 -   **Params**: `client_id`, `redirect_uri`, `response_type=code`, `scope`, `state`, `code_challenge` (PKCE).
+-   **安全要求**: `state` 为必需参数，且必须是每次请求唯一、不可预测的随机值。BasaltPass 在回调时会严格校验 `state`，不匹配将返回 `400 invalid state`。
+-   **对接影响**: 如果你的接入方已经按标准传递随机 `state` 并在回调中原样返回，一般无需额外改动。
 
 ### 令牌端点 (Token Endpoint)
 -   **Path**: `/oauth/token`

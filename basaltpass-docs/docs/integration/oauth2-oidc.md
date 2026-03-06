@@ -19,6 +19,8 @@ The easiest way to configure your client library is using the Discovery Document
 -   **Method**: `GET`
 -   **Usage**: Redirect the user's browser here to start login.
 -   **Params**: `client_id`, `redirect_uri`, `response_type=code`, `scope`, `state`, `code_challenge` (PKCE).
+-   **Security requirement**: `state` is mandatory and must be an unguessable per-request value. BasaltPass validates `state` on callback and rejects mismatches with `400 invalid state`.
+-   **Integration impact**: If your client already sends a unique `state` and returns it unchanged in the callback, no changes are required.
 
 ### Token Endpoint
 -   **Path**: `/oauth/token`

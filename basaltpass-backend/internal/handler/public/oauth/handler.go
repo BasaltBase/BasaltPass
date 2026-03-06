@@ -3,6 +3,8 @@ package oauth
 import (
 	"basaltpass-backend/internal/service/auth"
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"errors"
 	"log"
 	"net/http"
@@ -10,6 +12,7 @@ import (
 	"strings"
 
 	"basaltpass-backend/internal/common"
+	"basaltpass-backend/internal/config"
 	security "basaltpass-backend/internal/handler/user/security"
 	"basaltpass-backend/internal/model"
 
@@ -19,6 +22,55 @@ import (
 
 // OAuth service placeholder - can be extended later
 
+const (
+	oauthStateCookiePrefix = "oauth_state_"
+	oauthStateTTLSeconds   = 300
+)
+
+func oauthStateCookieName(provider string) string {
+	return oauthStateCookiePrefix + provider
+}
+
+func generateOAuthState() (string, error) {
+	raw := make([]byte, 32)
+	if _, err := rand.Read(raw); err != nil {
+		return "", err
+	}
+	return base64.RawURLEncoding.EncodeToString(raw), nil
+}
+
+func setOAuthStateCookie(c *fiber.Ctx, provider, state string) {
+	c.Cookie(&fiber.Cookie{
+		Name:     oauthStateCookieName(provider),
+		Value:    state,
+		HTTPOnly: true,
+		Secure:   config.IsProduction(),
+		SameSite: "Lax",
+		Path:     "/",
+		MaxAge:   oauthStateTTLSeconds,
+	})
+}
+
+func clearOAuthStateCookie(c *fiber.Ctx, provider string) {
+	c.Cookie(&fiber.Cookie{
+		Name:     oauthStateCookieName(provider),
+		Value:    "",
+		HTTPOnly: true,
+		Secure:   config.IsProduction(),
+		SameSite: "Lax",
+		Path:     "/",
+		MaxAge:   -1,
+	})
+}
+
+func validateOAuthState(c *fiber.Ctx, provider string) bool {
+	queryState := strings.TrimSpace(c.Query("state"))
+	cookieState := strings.TrimSpace(c.Cookies(oauthStateCookieName(provider)))
+	// One-time use: clear even on mismatch to avoid replay.
+	clearOAuthStateCookie(c, provider)
+	return queryState != "" && cookieState != "" && queryState == cookieState
+}
+
 // LoginHandler redirects user to provider auth URL.
 func LoginHandler(c *fiber.Ctx) error {
 	providerName := c.Params("provider")
@@ -26,7 +78,11 @@ func LoginHandler(c *fiber.Ctx) error {
 	if p == nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "provider not found"})
 	}
-	state := "xyz" // TODO: generate and store in session
+	state, err := generateOAuthState()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to initialize oauth state"})
+	}
+	setOAuthStateCookie(c, providerName, state)
 	url := p.Config.AuthCodeURL(state)
 	return c.Redirect(url, http.StatusTemporaryRedirect)
 }
@@ -37,6 +93,9 @@ func CallbackHandler(c *fiber.Ctx) error {
 	p := Get(providerName)
 	if p == nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "provider not found"})
+	}
+	if !validateOAuthState(c, providerName) {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid state"})
 	}
 	code := c.Query("code")
 	if code == "" {
