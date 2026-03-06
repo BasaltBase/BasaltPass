@@ -210,7 +210,6 @@ func CheckSessionHandler(c *fiber.Ctx) error {
 			"authenticated":     false,
 			"one_tap_available": false,
 			"reason":            "login_required",
-			"user_id":           nil,
 			"session_time":      time.Now().Unix(),
 		})
 	}
@@ -219,7 +218,6 @@ func CheckSessionHandler(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
 			"authenticated":     true,
 			"one_tap_available": true,
-			"user_id":           user.ID,
 			"session_time":      time.Now().Unix(),
 		})
 	}
@@ -231,7 +229,6 @@ func CheckSessionHandler(c *fiber.Ctx) error {
 				"authenticated":     true,
 				"one_tap_available": false,
 				"reason":            oe.code,
-				"user_id":           user.ID,
 				"session_time":      time.Now().Unix(),
 			})
 		}
@@ -239,7 +236,6 @@ func CheckSessionHandler(c *fiber.Ctx) error {
 			"authenticated":     true,
 			"one_tap_available": false,
 			"reason":            "server_error",
-			"user_id":           user.ID,
 			"session_time":      time.Now().Unix(),
 		})
 	}
@@ -249,7 +245,6 @@ func CheckSessionHandler(c *fiber.Ctx) error {
 			"authenticated":     true,
 			"one_tap_available": false,
 			"reason":            "tenant_mismatch",
-			"user_id":           user.ID,
 			"session_time":      time.Now().Unix(),
 		})
 	}
@@ -258,7 +253,6 @@ func CheckSessionHandler(c *fiber.Ctx) error {
 			"authenticated":     true,
 			"one_tap_available": false,
 			"reason":            "interaction_required",
-			"user_id":           user.ID,
 			"session_time":      time.Now().Unix(),
 		})
 	}
@@ -266,7 +260,6 @@ func CheckSessionHandler(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"authenticated":     true,
 		"one_tap_available": true,
-		"user_id":           user.ID,
 		"session_time":      time.Now().Unix(),
 	})
 }

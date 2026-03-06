@@ -3,6 +3,7 @@ package settings
 import (
 	settingssvc "basaltpass-backend/internal/service/settings"
 	"net/http"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -14,13 +15,45 @@ type SettingDTO struct {
 	Description string      `json:"description"`
 }
 
+func isSensitiveSettingKey(key string) bool {
+	k := strings.ToLower(strings.TrimSpace(key))
+	if k == "" {
+		return false
+	}
+	return strings.Contains(k, "password") ||
+		strings.Contains(k, "secret") ||
+		strings.Contains(k, "access_key") ||
+		strings.Contains(k, "private_key") ||
+		strings.Contains(k, "api_key") ||
+		strings.Contains(k, "client_secret") ||
+		strings.Contains(k, "token")
+}
+
+func maskedSettingValue(key string, value interface{}) interface{} {
+	if !isSensitiveSettingKey(key) {
+		return value
+	}
+	if value == nil {
+		return nil
+	}
+	if s, ok := value.(string); ok && strings.TrimSpace(s) == "" {
+		return ""
+	}
+	return "******"
+}
+
 // List all settings optionally filtered by category
 func ListSettingsHandler(c *fiber.Ctx) error {
 	category := c.Query("category")
 	items := settingssvc.List(category)
 	res := make([]SettingDTO, 0, len(items))
 	for _, it := range items {
-		res = append(res, SettingDTO{Key: it.Key, Value: it.Value, Category: it.Category, Description: it.Description})
+		res = append(res, SettingDTO{
+			Key:         it.Key,
+			Value:       maskedSettingValue(it.Key, it.Value),
+			Category:    it.Category,
+			Description: it.Description,
+		})
 	}
 	return c.JSON(res)
 }
@@ -29,7 +62,12 @@ func ListSettingsHandler(c *fiber.Ctx) error {
 func GetSettingHandler(c *fiber.Ctx) error {
 	key := c.Params("key")
 	if it, ok := settingssvc.GetItem(key); ok {
-		return c.JSON(SettingDTO{Key: it.Key, Value: it.Value, Category: it.Category, Description: it.Description})
+		return c.JSON(SettingDTO{
+			Key:         it.Key,
+			Value:       maskedSettingValue(it.Key, it.Value),
+			Category:    it.Category,
+			Description: it.Description,
+		})
 	}
 	return c.Status(http.StatusNotFound).JSON(fiber.Map{"error": "not found"})
 }

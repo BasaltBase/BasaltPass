@@ -320,7 +320,6 @@ func PaymentCheckoutHandler(c *fiber.Ctx) error {
             document.body.appendChild(overlay);
         }
 
-        console.log(localStorage.getItem('token'));
         async function simulatePayment(success) {
             try {
                 const response = await fetch('/payment/simulate/` + sessionID + `', {

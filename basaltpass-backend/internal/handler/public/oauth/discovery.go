@@ -220,16 +220,11 @@ func CheckSessionIframeHandler(c *fiber.Ctx) error {
     <title>BasaltPass Session Check</title>
 </head>
 <body>
-    <script>
-        // TODO ⬇️ 实现session检查逻辑
-        console.log('Session check iframe - TODO ⬇️');
-        
-        window.addEventListener('message', function(e) {
-            // TODO ⬇️ 处理session检查请求
-            console.log('Session check request:', e.data);
-            e.source.postMessage('unchanged', e.origin);
-        });
-    </script>
+	<script>
+	        window.addEventListener('message', function(e) {
+	            e.source.postMessage('unchanged', e.origin);
+	        });
+	    </script>
 </body>
 </html>
 	`
