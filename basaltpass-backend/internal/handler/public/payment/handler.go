@@ -1,12 +1,37 @@
 package payment
 
 import (
+	"basaltpass-backend/internal/common"
+	"basaltpass-backend/internal/model"
 	payment2 "basaltpass-backend/internal/service/payment"
 	"fmt"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 )
+
+func requireSuperAdmin(c *fiber.Ctx) error {
+	userID, ok := c.Locals("userID").(uint)
+	if !ok || userID == 0 {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Unauthorized",
+		})
+	}
+
+	var user model.User
+	if err := common.DB().Select("id", "is_system_admin").First(&user, userID).Error; err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "User not found",
+		})
+	}
+
+	if !user.IsSuperAdmin() {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error": "Basalt super admin access required",
+		})
+	}
+	return nil
+}
 
 // CreatePaymentIntentHandler POST /payment/intents - 创建支付意图
 func CreatePaymentIntentHandler(c *fiber.Ctx) error {
@@ -125,6 +150,10 @@ func ListPaymentIntentsHandler(c *fiber.Ctx) error {
 
 // SimulatePaymentHandler POST /payment/simulate/:session_id - 模拟支付处理
 func SimulatePaymentHandler(c *fiber.Ctx) error {
+	if err := requireSuperAdmin(c); err != nil {
+		return err
+	}
+
 	sessionID := c.Params("session_id")
 
 	var req struct {
@@ -151,6 +180,10 @@ func SimulatePaymentHandler(c *fiber.Ctx) error {
 
 // PaymentCheckoutHandler GET /payment/checkout/:session_id - 支付页面
 func PaymentCheckoutHandler(c *fiber.Ctx) error {
+	if err := requireSuperAdmin(c); err != nil {
+		return err
+	}
+
 	sessionID := c.Params("session_id")
 
 	// 获取session信息以获取success_url

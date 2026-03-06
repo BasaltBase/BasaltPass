@@ -6,6 +6,7 @@ import (
 	publicSecurity "basaltpass-backend/internal/handler/public/security"
 	publicSettings "basaltpass-backend/internal/handler/public/settings"
 	"basaltpass-backend/internal/handler/public/signup"
+	"basaltpass-backend/internal/middleware"
 	publicTenant "basaltpass-backend/internal/handler/public/tenant"
 	"basaltpass-backend/internal/middleware/ratelimit"
 
@@ -35,9 +36,15 @@ func RegisterPublicRoutes(v1 fiber.Router) {
 	signupGroup.Put("/change_email", signupHandler.ChangeEmailHandler)
 	signupGroup.Get("/status/:signup_id", signupHandler.GetSignupStatusHandler)
 
-	// 支付页面和模拟支付路由（无需认证，模拟真实Stripe行为）
-	v1.Get("/payment/checkout/:session_id", payment.PaymentCheckoutHandler)
-	v1.Post("/payment/simulate/:session_id", payment.SimulatePaymentHandler)
+	// 支付模拟/调试路由（高风险）：仅允许系统管理员访问
+	// 需要 JWT + admin scope + super admin 身份
+	adminPaymentGroup := v1.Group(
+		"/payment",
+		middleware.JWTMiddleware(),
+		middleware.SuperAdminMiddleware(),
+	)
+	adminPaymentGroup.Get("/checkout/:session_id", payment.PaymentCheckoutHandler)
+	adminPaymentGroup.Post("/simulate/:session_id", payment.SimulatePaymentHandler)
 
 	// 货币系统路由（公开API，不需要认证）
 	currencyGroup := v1.Group("/currencies")
