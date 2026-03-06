@@ -7,6 +7,9 @@ import TenantLogin from '../../../src/features/auth/TenantLogin'
 import TenantRegister from '../../../src/features/auth/TenantRegister'
 import OauthSuccess from '../../../src/features/auth/OauthSuccess'
 import OAuthConsent from '../../../src/features/auth/OAuthConsent'
+import ResetPassword from '../../../src/features/auth/ResetPassword'
+import Terms from '../../../src/features/auth/Terms'
+import Privacy from '../../../src/features/auth/Privacy'
 
 import Dashboard from '../../../src/features/user/Dashboard'
 import Profile from '../../../src/features/user/profile/Index'
@@ -102,6 +105,9 @@ export default function AppRouter() {
       />
       <Route path="/oauth-success" element={<OauthSuccess />} />
       <Route path="/oauth-consent" element={<OAuthConsent />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/terms" element={<Terms />} />
+      <Route path="/privacy" element={<Privacy />} />
 
       {/* User console */}
       <Route

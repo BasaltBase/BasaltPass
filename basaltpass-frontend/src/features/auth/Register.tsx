@@ -1,10 +1,23 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { ROUTES } from '@constants'
 import client from '@api/client'
-import { useNavigate } from 'react-router-dom'
-import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 import { PInput, PButton, PCheckbox } from '@ui'
+
+const getPasswordStrength = (value: string) => {
+  if (!value) return { label: '未设置', color: 'bg-gray-200', percent: 0 }
+
+  let score = 0
+  if (value.length >= 8) score += 1
+  if (/[A-Z]/.test(value) && /[a-z]/.test(value)) score += 1
+  if (/\d/.test(value)) score += 1
+  if (/[^A-Za-z0-9]/.test(value)) score += 1
+
+  if (score <= 1) return { label: '弱', color: 'bg-red-500', percent: 25 }
+  if (score === 2) return { label: '中', color: 'bg-yellow-500', percent: 50 }
+  if (score === 3) return { label: '良好', color: 'bg-blue-500', percent: 75 }
+  return { label: '强', color: 'bg-green-500', percent: 100 }
+}
 
 function Register() {
   const navigate = useNavigate()
@@ -18,46 +31,46 @@ function Register() {
   const [agreeTerms, setAgreeTerms] = useState(false)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  
-  // 验证码相关状态
+
   const [signupId, setSignupId] = useState('')
   const [verificationCode, setVerificationCode] = useState('')
   const [isVerifying, setIsVerifying] = useState(false)
   const [isSendingCode, setIsSendingCode] = useState(false)
   const [resendCooldown, setResendCooldown] = useState(0)
 
+  const usernamePreview = email.includes('@') ? email.split('@')[0] : email
+  const passwordStrength = getPasswordStrength(password)
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (password !== confirmPassword) {
       setError('密码确认不匹配')
       return
     }
-    
+
     if (!agreeTerms) {
       setError('请同意服务条款和隐私政策')
       return
     }
-    
+
     setIsLoading(true)
     setError('')
-    
+
     try {
-      // Step 1: 开始注册流程
-      const startResponse = await client.post('/api/v1/signup/start', { 
-        email, 
-        phone, 
-        username: email.split('@')[0], // 使用邮箱前缀作为默认用户名
-        password 
+      const startResponse = await client.post('/api/v1/signup/start', {
+        email,
+        phone,
+        username: email.split('@')[0],
+        password,
       })
-      
+
       setSignupId(startResponse.data.signup_id)
-      
-      // Step 2: 自动发送验证码
+
       await client.post('/api/v1/signup/send_email_code', {
-        signup_id: startResponse.data.signup_id
+        signup_id: startResponse.data.signup_id,
       })
-      
+
       setStep('verification')
       startResendCooldown()
     } catch (err: any) {
@@ -69,27 +82,25 @@ function Register() {
 
   const verifyCode = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!verificationCode) {
       setError('请输入验证码')
       return
     }
-    
+
     setIsVerifying(true)
     setError('')
-    
+
     try {
-      // 验证验证码
       await client.post('/api/v1/signup/verify_email_code', {
         signup_id: signupId,
-        code: verificationCode
+        code: verificationCode,
       })
-      
-      // 完成注册
+
       await client.post('/api/v1/signup/complete', {
-        signup_id: signupId
+        signup_id: signupId,
       })
-      
+
       setStep('complete')
     } catch (err: any) {
       setError(err.response?.data?.error || '验证码错误，请重试')
@@ -100,13 +111,13 @@ function Register() {
 
   const resendCode = async () => {
     if (resendCooldown > 0) return
-    
+
     setIsSendingCode(true)
     setError('')
-    
+
     try {
       await client.post('/api/v1/signup/resend_email_code', {
-        signup_id: signupId
+        signup_id: signupId,
       })
       startResendCooldown()
     } catch (err: any) {
@@ -119,7 +130,7 @@ function Register() {
   const startResendCooldown = () => {
     setResendCooldown(60)
     const timer = setInterval(() => {
-      setResendCooldown(prev => {
+      setResendCooldown((prev) => {
         if (prev <= 1) {
           clearInterval(timer)
           return 0
@@ -129,24 +140,15 @@ function Register() {
     }, 1000)
   }
 
-  // 完成步骤的渲染
   if (step === 'complete') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
-            <h2 className="mt-6 text-left text-4xl font-extrabold text-gray-900">
-              注册成功！
-            </h2>
-            <p className="mt-2 text-left text-sm text-gray-600">
-              您的账户已创建成功，现在可以登录了
-            </p>
+            <h2 className="mt-6 text-4xl font-extrabold text-gray-900">注册成功！</h2>
+            <p className="mt-2 text-sm text-gray-600">您的账户已创建成功，现在可以登录了</p>
             <div className="mt-6">
-              <PButton
-                onClick={() => navigate(ROUTES.user.login)}
-                variant="gradient"
-                fullWidth
-              >
+              <PButton onClick={() => navigate(ROUTES.user.login)} variant="gradient" fullWidth>
                 前往登录
               </PButton>
             </div>
@@ -156,23 +158,21 @@ function Register() {
     )
   }
 
-  // 验证码步骤的渲染
   if (step === 'verification') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           <div>
-            <h2 className="mt-6 text-left text-4xl font-extrabold text-gray-900">
-              验证您的邮箱
-            </h2>
+            <h2 className="mt-6 text-left text-4xl font-extrabold text-gray-900">验证您的邮箱</h2>
             <p className="mt-2 text-left text-sm text-gray-600">
               我们已向 <span className="font-medium text-gray-900">{email}</span> 发送了验证码
             </p>
+            <p className="mt-2 text-left text-xs text-gray-500">验证码有效期为 10 分钟</p>
           </div>
-          
+
           <form className="mt-8 space-y-6" onSubmit={verifyCode}>
             {error && (
-              <div className="rounded-md bg-red-50 p-4">
+              <div className="rounded-md bg-red-50 p-4" role="alert" aria-live="assertive">
                 <div className="flex">
                   <div className="ml-3">
                     <h3 className="text-sm font-medium text-red-800">验证失败</h3>
@@ -181,7 +181,7 @@ function Register() {
                 </div>
               </div>
             )}
-            
+
             <div>
               <PInput
                 id="verificationCode"
@@ -191,19 +191,15 @@ function Register() {
                 label="验证码"
                 placeholder="请输入6位验证码"
                 value={verificationCode}
-                onChange={(e) => setVerificationCode(e.target.value)}
+                onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 maxLength={6}
+                inputMode="numeric"
+                autoComplete="one-time-code"
               />
             </div>
 
             <div>
-              <PButton
-                type="submit"
-                disabled={isVerifying}
-                variant="gradient"
-                fullWidth
-                loading={isVerifying}
-              >
+              <PButton type="submit" disabled={isVerifying} variant="gradient" fullWidth loading={isVerifying}>
                 验证并完成注册
               </PButton>
             </div>
@@ -215,12 +211,25 @@ function Register() {
                 disabled={resendCooldown > 0 || isSendingCode}
                 className="text-sm text-blue-600 hover:text-blue-500 disabled:text-gray-400"
               >
-                {resendCooldown > 0 
+                {resendCooldown > 0
                   ? `${resendCooldown}秒后可重新发送`
-                  : isSendingCode 
+                  : isSendingCode
                     ? '正在发送...'
-                    : '重新发送验证码'
-                }
+                    : '重新发送验证码'}
+              </button>
+            </div>
+
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setStep('form')
+                  setVerificationCode('')
+                  setError('')
+                }}
+                className="text-sm text-gray-600 hover:text-gray-800"
+              >
+                返回修改邮箱
               </button>
             </div>
           </form>
@@ -229,14 +238,11 @@ function Register() {
     )
   }
 
-  // 默认注册表单步骤
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-left text-4xl font-extrabold text-gray-900">
-            创建您的账户
-          </h2>
+          <h2 className="mt-6 text-left text-4xl font-extrabold text-gray-900">创建您的账户</h2>
           <p className="mt-2 text-left text-sm text-gray-600">
             或者{' '}
             <Link to={ROUTES.user.login} className="font-medium text-blue-600 hover:text-blue-500">
@@ -244,10 +250,10 @@ function Register() {
             </Link>
           </p>
         </div>
-        
+
         <form className="mt-8 space-y-6" onSubmit={submit}>
           {error && (
-            <div className="rounded-md bg-red-50 p-4">
+            <div className="rounded-md bg-red-50 p-4" role="alert" aria-live="assertive">
               <div className="flex">
                 <div className="ml-3">
                   <h3 className="text-sm font-medium text-red-800">注册失败</h3>
@@ -256,7 +262,7 @@ function Register() {
               </div>
             </div>
           )}
-          
+
           <div className="space-y-4">
             <PInput
               id="email"
@@ -268,7 +274,10 @@ function Register() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
-            
+            <p className="text-xs text-gray-500">
+              注册后默认用户名将为: <span className="font-medium text-gray-700">{usernamePreview || '（等待输入邮箱）'}</span>
+            </p>
+
             <PInput
               id="phone"
               name="phone"
@@ -278,7 +287,7 @@ function Register() {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
             />
-            
+
             <PInput
               id="password"
               name="password"
@@ -291,7 +300,18 @@ function Register() {
               showPassword={showPassword}
               onTogglePassword={() => setShowPassword(!showPassword)}
             />
-            
+            <div className="space-y-1">
+              <div className="h-2 w-full rounded-full bg-gray-100">
+                <div
+                  className={`h-2 rounded-full transition-all ${passwordStrength.color}`}
+                  style={{ width: `${passwordStrength.percent}%` }}
+                />
+              </div>
+              <p className="text-xs text-gray-500">
+                密码强度: {passwordStrength.label}（建议包含大小写字母、数字和特殊字符，至少 8 位）
+              </p>
+            </div>
+
             <PInput
               id="confirmPassword"
               name="confirmPassword"
@@ -315,25 +335,19 @@ function Register() {
             label={
               <>
                 我同意{' '}
-                <a href="#" className="text-blue-600 hover:text-blue-500">
+                <Link to="/terms" className="text-blue-600 hover:text-blue-500">
                   服务条款
-                </a>
+                </Link>
                 {' '}和{' '}
-                <a href="#" className="text-blue-600 hover:text-blue-500">
+                <Link to="/privacy" className="text-blue-600 hover:text-blue-500">
                   隐私政策
-                </a>
+                </Link>
               </>
             }
           />
 
           <div>
-            <PButton
-              type="submit"
-              disabled={isLoading || !agreeTerms}
-              variant="gradient"
-              fullWidth
-              loading={isLoading}
-            >
+            <PButton type="submit" disabled={isLoading || !agreeTerms} variant="gradient" fullWidth loading={isLoading}>
               发送验证码
             </PButton>
           </div>
@@ -373,4 +387,4 @@ function Register() {
   )
 }
 
-export default Register 
+export default Register

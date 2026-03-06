@@ -14,6 +14,7 @@ import {
   ArrowsRightLeftIcon,
   CreditCardIcon,
   CubeIcon,
+  Squares2X2Icon,
   InformationCircleIcon,
   ChevronDownIcon,
   ArrowRightOnRectangleIcon
@@ -32,7 +33,7 @@ const navigation = [
   { name: '钱包', href: ROUTES.user.wallet, icon: WalletIcon, requiresMarket: true },
   { name: '我的订阅', href: ROUTES.user.subscriptions, icon: CreditCardIcon, requiresMarket: true },
   { name: '产品与套餐', href: ROUTES.user.products, icon: CubeIcon, requiresMarket: true },
-  { name: '我的应用', href: ROUTES.user.myApps, icon: CubeIcon },
+  { name: '我的应用', href: ROUTES.user.myApps, icon: Squares2X2Icon },
   { name: '安全', href: ROUTES.user.security, icon: ShieldCheckIcon },
   { name: '设置', href: ROUTES.user.settings, icon: CogIcon },
   { name: '帮助', href: ROUTES.user.help, icon: QuestionMarkCircleIcon },
@@ -68,7 +69,8 @@ export default function Layout({ children }: LayoutProps) {
     return 'U'
   }
 
-  const isActive = (href: string) => location.pathname === href
+  const isActive = (href: string) =>
+    location.pathname === href || location.pathname.startsWith(`${href}/`)
 
   // 根据市场功能配置过滤导航项
   const filteredNavigation = navigation.filter(item => {
@@ -108,12 +110,13 @@ export default function Layout({ children }: LayoutProps) {
         <div className="fixed inset-0 !m-0 flex z-40 md:hidden">
           <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
           <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white">
-            <div className="absolute top-0 right-0 -mr-12 pt-2">
+            <div className="absolute right-3 top-3">
               <PButton
                 variant="ghost"
                 size="sm"
-                className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:ring-inset focus:ring-white text-white hover:text-white"
+                className="flex items-center justify-center h-10 w-10 rounded-full text-gray-700 hover:text-gray-900 hover:bg-gray-100"
                 onClick={() => setSidebarOpen(false)}
+                aria-label="关闭侧边栏"
               >
                 <XMarkIcon className="h-6 w-6" />
               </PButton>
@@ -175,16 +178,77 @@ export default function Layout({ children }: LayoutProps) {
       {/* 主内容区域 */}
       <div className="flex flex-col w-0 flex-1 overflow-hidden">
         {/* 顶部导航栏 */}
-        <div className="md:hidden pl-1 pt-1 sm:pl-3 sm:pt-3">
-          <PButton
-            variant="ghost"
-            size="md"
-            className="-ml-0.5 -mt-0.5 h-12 w-12 inline-flex items-center justify-center rounded-md text-gray-500 hover:text-gray-900 focus:ring-inset focus:ring-indigo-500"
-            onClick={() => setSidebarOpen(true)}
-          >
-            <Bars3Icon className="h-6 w-6" />
-          </PButton>
+        <div className="md:hidden border-b border-gray-200 bg-white px-3 py-2">
+          <div className="flex items-center justify-between">
+            <PButton
+              variant="ghost"
+              size="md"
+              className="h-11 w-11 inline-flex items-center justify-center rounded-md text-gray-500 hover:text-gray-900 focus:ring-inset focus:ring-indigo-500"
+              onClick={() => setSidebarOpen(true)}
+              aria-label="打开侧边栏"
+            >
+              <Bars3Icon className="h-6 w-6" />
+            </PButton>
+            <div className="flex items-center space-x-2">
+              <EnhancedNotificationIcon viewAllPath={ROUTES.user.notifications} />
+              <PButton
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                className="flex items-center rounded-full bg-white p-1 text-sm hover:bg-gray-50"
+                aria-label="打开用户菜单"
+              >
+                {user?.avatar_url ? (
+                  <img
+                    className="h-8 w-8 rounded-full object-cover"
+                    src={user.avatar_url}
+                    alt={user?.nickname || user?.email || 'User'}
+                  />
+                ) : (
+                  <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center">
+                    <span className="text-sm font-medium text-white">{getUserInitial()}</span>
+                  </div>
+                )}
+              </PButton>
+            </div>
+          </div>
         </div>
+
+        {isUserMenuOpen && (
+          <div className="md:hidden relative z-50 bg-white border-b border-gray-200 shadow-sm">
+            <div className="px-4 py-3 border-b border-gray-200">
+              <p className="text-sm text-gray-900 font-medium">{user?.nickname || '用户'}</p>
+              <p className="text-sm text-gray-500 truncate">{user?.email}</p>
+            </div>
+            <Link
+              to={ROUTES.user.profile}
+              className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+              onClick={() => setIsUserMenuOpen(false)}
+            >
+              <UserIcon className="mr-3 h-4 w-4" />
+              个人资料
+            </Link>
+            <Link
+              to={ROUTES.user.settings}
+              className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+              onClick={() => setIsUserMenuOpen(false)}
+            >
+              <CogIcon className="mr-3 h-4 w-4" />
+              设置
+            </Link>
+            <PButton
+              variant="ghost"
+              onClick={() => {
+                setIsUserMenuOpen(false)
+                handleLogout()
+              }}
+              className="flex w-full items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 justify-start"
+            >
+              <ArrowRightOnRectangleIcon className="mr-3 h-4 w-4" />
+              登出
+            </PButton>
+          </div>
+        )}
         
         {/* 桌面端顶部栏 */}
         <div className="hidden md:flex md:items-center md:justify-end md:px-6 md:py-4 bg-white border-b border-gray-200">

@@ -45,6 +45,8 @@ import NotFound from '@pages/NotFound'
 import LoginHistory from '@pages/user/security/LoginHistory'
 import OAuthClients from '@pages/admin/oauth/OAuthClients'
 import OAuthConsent from '@pages/auth/OAuthConsent'
+import Terms from '@pages/auth/Terms'
+import Privacy from '@pages/auth/Privacy'
 import SubscriptionIndex from '@pages/user/subscription/Index'
 import ProductsPage from '@pages/user/subscription/Products'
 import AdminSubscriptions from '@pages/admin/subscription/Subscriptions'
@@ -121,6 +123,8 @@ export default function AppRouter() {
       } />
       <Route path="/oauth-success" element={<OauthSuccess />} />
       <Route path="/oauth-consent" element={<OAuthConsent />} />
+      <Route path="/terms" element={<Terms />} />
+      <Route path="/privacy" element={<Privacy />} />
       
       {/* 密码重置和邮箱变更 - 公开页面 */}
       <Route path="/reset-password" element={<ResetPassword />} />

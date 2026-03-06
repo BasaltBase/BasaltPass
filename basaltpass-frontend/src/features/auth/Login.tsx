@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ROUTES } from '@constants'
 import client from '@api/client'
@@ -6,7 +6,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@contexts/AuthContext'
 import { loginWithPasskeyFlow } from '@api/oauth/passkey'
 import { isPasskeySupported } from '@utils/webauthn'
-import { EyeIcon, EyeSlashIcon, ShieldCheckIcon, EnvelopeIcon, KeyIcon } from '@heroicons/react/24/outline'
+import { ShieldCheckIcon, EnvelopeIcon, KeyIcon } from '@heroicons/react/24/outline'
 import { PInput, PButton, PCheckbox } from '@ui'
 
 function Login() {
@@ -27,20 +27,15 @@ function Login() {
   const [twoFACode, setTwoFACode] = useState('')
   const [emailCode, setEmailCode] = useState('')
   const [rememberMe, setRememberMe] = useState(false)
+  const totpInputRef = useRef<HTMLInputElement>(null)
 
   const redirectParam = searchParams.get('redirect') || ''
   const authRequestTimeout = Number((import.meta as any).env?.VITE_AUTH_TIMEOUT_MS || 12000)
   const resolvedApiBase = String(
     client.defaults.baseURL || (import.meta as any).env?.VITE_API_BASE || 'http://localhost:8101'
   ).replace(/\/$/, '')
-  console.log('[OAuth Debug] redirectParam:', redirectParam)
-  console.log('[OAuth Debug] redirectParam length:', redirectParam.length)
-  
   const redirectAfterLogin = () => {
-    console.log('[OAuth Debug] redirectAfterLogin called')
-    console.log('[OAuth Debug] redirectParam:', redirectParam)
     if (!redirectParam) {
-      console.log('[OAuth Debug] No redirect param, returning false')
       return false
     }
 
@@ -51,10 +46,15 @@ function Login() {
         ? base + redirectParam
         : base + '/' + redirectParam
 
-    console.log('[OAuth Debug] Redirecting to:', target)
     window.location.href = target
     return true
   }
+
+  useEffect(() => {
+    if (step === 2 && twoFAType === 'totp') {
+      totpInputRef.current?.focus()
+    }
+  }, [step, twoFAType])
 
   // 登录第一步：用户名密码
   const submitPasswordLogin = async (e: React.FormEvent) => {
@@ -74,11 +74,8 @@ function Login() {
 
         setStep(2)
       } else if (res.data.access_token) {
-        console.log('[OAuth Debug] Login successful, checking redirect...')
         await login(res.data.access_token)
-        console.log('[OAuth Debug] Calling redirectAfterLogin...')
         if (!redirectAfterLogin()) {
-          console.log('[OAuth Debug] No redirect, navigating to dashboard')
           navigate(ROUTES.user.dashboard)
         }
       } else {
@@ -139,9 +136,8 @@ function Login() {
     }
   }
 
-  // 登录第二步：二次验证
-  const submit2FAVerify = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const verifySecondFactor = async (totpCode?: string) => {
+    if (isLoading) return
     setIsLoading(true)
     setError('')
     try {
@@ -150,18 +146,15 @@ function Login() {
         two_fa_type: twoFAType,
       }
       if (twoFAType === 'totp') {
-        payload.code = twoFACode
+        payload.code = totpCode ?? twoFACode
       } else if (twoFAType === 'email') {
         payload.code = emailCode
       } else if (twoFAType === 'passkey') {
         // 进行真正的Passkey验证
         try {
           const passkeyResult = await loginWithPasskeyFlow(identifier)
-          console.log('[OAuth Debug] Passkey login successful')
           await login(passkeyResult.access_token)
-          console.log('[OAuth Debug] Calling redirectAfterLogin (passkey)...')
           if (!redirectAfterLogin()) {
-            console.log('[OAuth Debug] No redirect, navigating to dashboard')
             navigate(ROUTES.user.dashboard)
           }
           return // 直接返回，不需要调用verify-2fa API
@@ -172,11 +165,8 @@ function Login() {
         }
       }
       const res = await client.post('/api/v1/auth/verify-2fa', payload, { timeout: authRequestTimeout })
-      console.log('[OAuth Debug] 2FA verification successful')
       await login(res.data.access_token)
-      console.log('[OAuth Debug] Calling redirectAfterLogin (2FA)...')
       if (!redirectAfterLogin()) {
-        console.log('[OAuth Debug] No redirect, navigating to dashboard')
         navigate(ROUTES.user.dashboard)
       }
     } catch (err: any) {
@@ -190,6 +180,12 @@ function Login() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  // 登录第二步：二次验证
+  const submit2FAVerify = async (e: React.FormEvent) => {
+    e.preventDefault()
+    await verifySecondFactor()
   }
 
   // 渲染二次验证表单
@@ -277,8 +273,17 @@ function Login() {
               maxLength={6}
               label="二步验证码"
               placeholder="请输入6位验证码"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              ref={totpInputRef}
               value={twoFACode}
-              onChange={(e) => setTwoFACode(e.target.value)}
+              onChange={(e) => {
+                const sanitized = e.target.value.replace(/\D/g, '').slice(0, 6)
+                setTwoFACode(sanitized)
+                if (sanitized.length === 6) {
+                  void verifySecondFactor(sanitized)
+                }
+              }}
             />
           </div>
           <div>
@@ -375,7 +380,7 @@ function Login() {
           </p>
         </div>
         {error && (
-          <div className="rounded-md bg-red-50 p-4">
+        <div className="rounded-md bg-red-50 p-4" role="alert" aria-live="assertive">
             <div className="flex">
               <div className="ml-3">
                 <h3 className="text-sm font-medium text-red-800">登录失败</h3>
@@ -411,15 +416,18 @@ function Login() {
               />
             </div>
             <div className="flex items-center justify-between">
-              <PCheckbox
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                label="记住我"
-              />
+              <div>
+                <PCheckbox
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  label="记住我"
+                />
+                <p className="mt-1 text-xs text-gray-500">在此设备保持 30 天登录状态</p>
+              </div>
               <div className="text-sm">
-                <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
+                <Link to="/reset-password" className="font-medium text-blue-600 hover:text-blue-500">
                   忘记密码？
-                </a>
+                </Link>
               </div>
             </div>
             <div>
@@ -435,7 +443,26 @@ function Login() {
             </div>
           </form>
         )}
-        {step === 2 && render2FAForm()}
+        {step === 2 && (
+          <>
+            {render2FAForm()}
+            <div className="mt-4">
+              <PButton
+                type="button"
+                variant="ghost"
+                fullWidth
+                onClick={() => {
+                  setStep(1)
+                  setTwoFACode('')
+                  setEmailCode('')
+                  setError('')
+                }}
+              >
+                返回重新输入账号信息
+              </PButton>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )

@@ -84,6 +84,7 @@ const PButton = forwardRef<HTMLButtonElement, PButtonProps>(
         ref={ref}
         className={buttonClasses}
         disabled={isDisabled}
+        aria-busy={loading}
         {...props}
       >
         {loading && (

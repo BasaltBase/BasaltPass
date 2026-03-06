@@ -24,6 +24,8 @@ const PInput = forwardRef<HTMLInputElement, PInputProps>(
     type,
     ...props 
   }, ref) => {
+    const generatedId = React.useId();
+    const inputId = props.id || generatedId;
     const isPassword = type === 'password';
     const inputType = isPassword && showPassword ? 'text' : type;
 
@@ -68,7 +70,7 @@ const PInput = forwardRef<HTMLInputElement, PInputProps>(
     return (
       <div className="space-y-1">
         {label && (
-          <label className="block text-sm font-medium text-gray-700">
+          <label htmlFor={inputId} className="block text-sm font-medium text-gray-700">
             {label}
           </label>
         )}
@@ -82,6 +84,7 @@ const PInput = forwardRef<HTMLInputElement, PInputProps>(
           )}
           <input
             ref={ref}
+            id={inputId}
             type={inputType}
             className={inputClasses}
             {...props}
@@ -91,6 +94,7 @@ const PInput = forwardRef<HTMLInputElement, PInputProps>(
               type="button"
               className="absolute inset-y-0 right-0 pr-3 flex items-center"
               onClick={onTogglePassword}
+              aria-label={showPassword ? '隐藏密码' : '显示密码'}
             >
               {showPassword ? (
                 <EyeSlashIcon className="h-4 w-4 text-gray-400 hover:text-gray-600" />
@@ -101,7 +105,7 @@ const PInput = forwardRef<HTMLInputElement, PInputProps>(
           )}
         </div>
         {error && (
-          <p className="text-sm text-red-600">{error}</p>
+          <p className="text-sm text-red-600" role="alert" aria-live="assertive">{error}</p>
         )}
       </div>
     );
