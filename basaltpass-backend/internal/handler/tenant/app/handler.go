@@ -1,8 +1,10 @@
 package app
 
 import (
+	"basaltpass-backend/internal/model"
 	app2 "basaltpass-backend/internal/service/app"
 	"strconv"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -35,6 +37,34 @@ func getUserIDFromContext(c *fiber.Ctx) uint {
 	}
 
 	return 0
+}
+
+func requireTenantAdminRole(c *fiber.Ctx) error {
+	roleAny := c.Locals("tenantRole")
+	if roleAny == nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Missing tenant role context",
+		})
+	}
+
+	var role string
+	switch v := roleAny.(type) {
+	case model.TenantRole:
+		role = string(v)
+	case string:
+		role = v
+	default:
+		role = ""
+	}
+
+	role = strings.ToLower(strings.TrimSpace(role))
+	if role != "owner" && role != "admin" {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error": "Tenant admin access required",
+		})
+	}
+
+	return nil
 }
 
 // TenantListAppsHandler 租户获取应用列表
@@ -153,6 +183,10 @@ func TenantGetAppStatsHandler(c *fiber.Ctx) error {
 // TenantCreateAppHandler 租户创建应用
 // POST /api/v1/tenant/apps
 func TenantCreateAppHandler(c *fiber.Ctx) error {
+	if err := requireTenantAdminRole(c); err != nil {
+		return err
+	}
+
 	// 从JWT中获取租户ID
 	tenantID := getTenantIDFromContext(c)
 	if tenantID == 0 {

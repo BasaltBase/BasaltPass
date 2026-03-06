@@ -78,6 +78,10 @@ type TenantUserInfo struct {
 
 // CreateTenantRole 创建租户角色
 func CreateTenantRole(c *fiber.Ctx) error {
+	if err := requireTenantAdminRole(c); err != nil {
+		return err
+	}
+
 	var req RoleRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
@@ -249,6 +253,10 @@ func UpdateTenantRole(c *fiber.Ctx) error {
 
 // DeleteTenantRole 删除租户角色
 func DeleteTenantRole(c *fiber.Ctx) error {
+	if err := requireTenantAdminRole(c); err != nil {
+		return err
+	}
+
 	roleID, err := strconv.ParseUint(c.Params("id"), 10, 32)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "无效的角色ID"})
@@ -308,6 +316,10 @@ func DeleteTenantRole(c *fiber.Ctx) error {
 
 // AssignUserRoles 分配用户角色
 func AssignUserRoles(c *fiber.Ctx) error {
+	if err := requireTenantAdminRole(c); err != nil {
+		return err
+	}
+
 	var req UserRoleRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})

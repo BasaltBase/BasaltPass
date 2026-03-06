@@ -21,12 +21,13 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 	 * 所有租户管理员
 	 */
 	tenantGroup := v1.Group("/tenant", middleware.JWTMiddleware(), middleware.RequireConsoleScope("tenant"), middleware.TenantMiddleware())
+	tenantAdminGroup := tenantGroup.Group("", middleware.TenantUserMiddleware())
 
 	// 租户信息管理
 	tenantGroup.Get("/info", tenant2.TenantGetInfoHandler)
 
 	// 租户用户管理路由
-	tenantUserGroup := tenantGroup.Group("/users")
+	tenantUserGroup := tenantAdminGroup.Group("/users")
 	tenantUserGroup.Get("/", tenant2.GetTenantUsersHandler) // 获取tenant的全部app的全部用户
 	tenantUserGroup.Get("/app-linked", tenant2.GetTenantAppLinkedUsersHandler)
 	tenantUserGroup.Get("/stats", tenant2.GetTenantUserStatsHandler)
@@ -37,7 +38,7 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 	tenantUserGroup.Post("/:id/resend-invitation", tenant2.ResendInvitationHandler)
 
 	// 租户权限管理路由
-	tenantPermissionGroup := tenantGroup.Group("/permissions")
+	tenantPermissionGroup := tenantAdminGroup.Group("/permissions")
 	tenantPermissionGroup.Get("/", tenant2.GetTenantPermissions)
 	tenantPermissionGroup.Post("/", tenant2.CreateTenantPermission)
 	tenantPermissionGroup.Post("/import", tenant2.ImportTenantPermissions)
@@ -47,7 +48,7 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 	tenantPermissionGroup.Get("/categories", tenant2.GetTenantPermissionCategories)
 
 	// 租户角色管理路由
-	tenantRoleGroupV2 := tenantGroup.Group("/roles")
+	tenantRoleGroupV2 := tenantAdminGroup.Group("/roles")
 	tenantRoleGroupV2.Get("/", tenant2.GetTenantRoles)
 	tenantRoleGroupV2.Post("/", tenant2.CreateTenantRole)
 	tenantRoleGroupV2.Post("/import", tenant2.ImportTenantRoles)
@@ -62,7 +63,7 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 	tenantRoleGroupV2.Delete("/:id/permissions/:permission_id", tenant2.RemovePermissionFromRole)
 
 	// 租户团队管理路由
-	tenantTeamGroup := tenantGroup.Group("/teams")
+	tenantTeamGroup := tenantAdminGroup.Group("/teams")
 	tenantTeamGroup.Get("/", tenant2.ListTenantTeamsHandler)
 	tenantTeamGroup.Post("/", tenant2.CreateTenantTeamHandler)
 	tenantTeamGroup.Get("/:id", tenant2.GetTenantTeamHandler)
@@ -76,7 +77,7 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 	tenantTeamGroup.Post("/:id/active", tenant2.ToggleTenantTeamActiveHandler)
 
 	// 租户通知管理
-	tenantNotifGroup := tenantGroup.Group("/notifications")
+	tenantNotifGroup := tenantAdminGroup.Group("/notifications")
 	tenantNotifGroup.Post("/", tenantNotif.TenantCreateHandler)
 	tenantNotifGroup.Get("/", tenantNotif.TenantListHandler)
 	tenantNotifGroup.Get("/stats", tenantNotif.TenantGetNotificationStatsHandler)
@@ -87,7 +88,7 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 	tenantNotifGroup.Get("/users/search", tenantNotif.TenantSearchUsersHandler)
 
 	// 租户OAuth客户端管理路由
-	tenantOAuthGroup := tenantGroup.Group("/oauth/clients")
+	tenantOAuthGroup := tenantAdminGroup.Group("/oauth/clients")
 	tenantOAuthGroup.Get("/", oauth.TenantListOAuthClientsHandler)
 	tenantOAuthGroup.Post("/", oauth.TenantCreateOAuthClientHandler)
 	tenantOAuthGroup.Put("/:client_id", oauth.TenantUpdateOAuthClientHandler)
@@ -98,7 +99,7 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 	tenantGroup.Get("/oauth/scopes", oauth.TenantListOAuthScopesHandler)
 
 	// 租户订阅管理（读写，所有租户成员可访问）
-	tenantSubscriptionMgmtGroup := tenantGroup.Group("/subscription")
+	tenantSubscriptionMgmtGroup := tenantAdminGroup.Group("/subscription")
 
 	// 租户产品管理
 	tenantProductMgmtGroup := tenantSubscriptionMgmtGroup.Group("/products")
@@ -167,7 +168,7 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 	tenantSubscriptionMgmtGroup.Delete("/price-templates/:id", subscription.DeleteTenantPriceTemplateHandler)
 
 	// 租户应用管理路由
-	tenantAppGroup := tenantGroup.Group("/apps")
+	tenantAppGroup := tenantAdminGroup.Group("/apps")
 
 	// 租户基础应用管理路由
 	tenantAppGroup.Get("/", app.TenantListAppsHandler)

@@ -520,6 +520,10 @@ func RemoveTenantUserHandler(c *fiber.Ctx) error {
 // InviteTenantUserHandler 邀请租户用户
 // POST /api/v1/tenant/users/invite
 func InviteTenantUserHandler(c *fiber.Ctx) error {
+	if err := requireTenantAdminRole(c); err != nil {
+		return err
+	}
+
 	tenantID := c.Locals("tenantID").(uint)
 
 	var req InviteTenantUserRequest

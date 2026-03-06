@@ -47,6 +47,10 @@ type TenantPermissionResponse struct {
 // CreateTenantPermission 创建租户权限
 // POST /api/v1/tenant/permissions
 func CreateTenantPermission(c *fiber.Ctx) error {
+	if err := requireTenantAdminRole(c); err != nil {
+		return err
+	}
+
 	tenantID := c.Locals("tenantID").(uint)
 
 	var req PermissionRequest
@@ -248,6 +252,10 @@ func UpdateTenantPermission(c *fiber.Ctx) error {
 // DeleteTenantPermission 删除租户权限
 // DELETE /api/v1/tenant/permissions/:id
 func DeleteTenantPermission(c *fiber.Ctx) error {
+	if err := requireTenantAdminRole(c); err != nil {
+		return err
+	}
+
 	tenantID := c.Locals("tenantID").(uint)
 	permissionID, err := strconv.ParseUint(c.Params("id"), 10, 32)
 	if err != nil {

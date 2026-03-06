@@ -121,6 +121,32 @@ func userHasTenant(userID uint, tenantID uint) (bool, error) {
 	return cnt > 0, nil
 }
 
+func userHasTenantAdminAccess(userID uint, tenantID uint) (bool, error) {
+	if tenantID == 0 {
+		return false, nil
+	}
+
+	var cnt int64
+	err := common.DB().Model(&model.TenantUser{}).
+		Where("user_id = ? AND tenant_id = ? AND role IN ?", userID, tenantID, []model.TenantRole{model.TenantRoleOwner, model.TenantRoleAdmin}).
+		Count(&cnt).Error
+	if err != nil {
+		return false, err
+	}
+	return cnt > 0, nil
+}
+
+func userDefaultTenantIDForAdminConsole(userID uint) (uint, error) {
+	var tenantUser model.TenantUser
+	if err := common.DB().
+		Where("user_id = ? AND role IN ?", userID, []model.TenantRole{model.TenantRoleOwner, model.TenantRoleAdmin}).
+		Order("created_at ASC").
+		First(&tenantUser).Error; err != nil {
+		return 0, err
+	}
+	return tenantUser.TenantID, nil
+}
+
 func mustGetUserID(c *fiber.Ctx) (uint, error) {
 	uidVal := c.Locals("userID")
 	if uidVal == nil {
@@ -159,17 +185,17 @@ func ConsoleAuthorizeHandler(c *fiber.Ctx) error {
 	if req.Target == authsvc.ConsoleScopeTenant {
 		if req.TenantID != nil {
 			tenantID = *req.TenantID
-			ok, err := userHasTenant(uid, tenantID)
+			ok, err := userHasTenantAdminAccess(uid, tenantID)
 			if err != nil {
 				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to validate tenant access"})
 			}
 			if !ok {
-				return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "tenant access required"})
+				return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "tenant admin access required"})
 			}
 		} else {
-			tid, err := userDefaultTenantID(uid)
+			tid, err := userDefaultTenantIDForAdminConsole(uid)
 			if err != nil {
-				return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "tenant access required"})
+				return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "tenant admin access required"})
 			}
 			tenantID = tid
 		}
@@ -266,18 +292,18 @@ func ConsoleExchangeHandler(c *fiber.Ctx) error {
 	// Re-check authorization at exchange time
 	if scope == authsvc.ConsoleScopeTenant {
 		if tenantID == 0 {
-			tid, err := userDefaultTenantID(uid)
+			tid, err := userDefaultTenantIDForAdminConsole(uid)
 			if err != nil {
-				return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "tenant access required"})
+				return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "tenant admin access required"})
 			}
 			tenantID = tid
 		}
-		ok, err := userHasTenant(uid, tenantID)
+		ok, err := userHasTenantAdminAccess(uid, tenantID)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to validate tenant access"})
 		}
 		if !ok {
-			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "tenant access required"})
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "tenant admin access required"})
 		}
 	} else {
 		var user model.User
