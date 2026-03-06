@@ -149,23 +149,23 @@ func SilentAuthHandler(c *fiber.Ctx) error {
 	scope := c.Query("scope")
 
 	if prompt != "none" {
-		return renderSilentAuthError(c, fiber.StatusBadRequest, redirectURI, state, "invalid_request")
+		return renderSilentAuthError(c, fiber.StatusBadRequest, clientID, redirectURI, state, "invalid_request")
 	}
 
 	client, err := validateOAuthClient(clientID, redirectURI)
 	if err != nil {
 		if oe, ok := err.(*oauthError); ok {
-			return renderSilentAuthError(c, oe.status, redirectURI, state, oe.code)
+			return renderSilentAuthError(c, oe.status, clientID, redirectURI, state, oe.code)
 		}
-		return renderSilentAuthError(c, fiber.StatusInternalServerError, redirectURI, state, "server_error")
+		return renderSilentAuthError(c, fiber.StatusInternalServerError, clientID, redirectURI, state, "server_error")
 	}
 
 	user, err := getUserFromSession(c)
 	if err != nil {
-		return renderSilentAuthError(c, fiber.StatusUnauthorized, redirectURI, state, "login_required")
+		return renderSilentAuthError(c, fiber.StatusUnauthorized, clientID, redirectURI, state, "login_required")
 	}
 	if err := oauthServerService.ValidateUserTenant(user.ID, client); err != nil {
-		return renderSilentAuthError(c, fiber.StatusForbidden, redirectURI, state, "access_denied")
+		return renderSilentAuthError(c, fiber.StatusForbidden, clientID, redirectURI, state, "access_denied")
 	}
 	authReq := &AuthorizeRequest{
 		ClientID:     clientID,
@@ -176,17 +176,17 @@ func SilentAuthHandler(c *fiber.Ctx) error {
 	}
 	validatedClient, err := oauthServerService.ValidateAuthorizeRequest(authReq)
 	if err != nil {
-		return renderSilentAuthError(c, fiber.StatusBadRequest, redirectURI, state, "invalid_request")
+		return renderSilentAuthError(c, fiber.StatusBadRequest, clientID, redirectURI, state, "invalid_request")
 	}
 	if err := oauthServerService.ValidateUserTenant(user.ID, validatedClient); err != nil {
-		return renderSilentAuthError(c, fiber.StatusForbidden, redirectURI, state, "access_denied")
+		return renderSilentAuthError(c, fiber.StatusForbidden, clientID, redirectURI, state, "access_denied")
 	}
 	if err := ensurePriorAppAuthorization(user.ID, validatedClient, authReq.Scope); err != nil {
-		return renderSilentAuthError(c, fiber.StatusForbidden, redirectURI, state, "interaction_required")
+		return renderSilentAuthError(c, fiber.StatusForbidden, clientID, redirectURI, state, "interaction_required")
 	}
 	code, err := oauthServerService.GenerateAuthorizationCode(user.ID, authReq, validatedClient)
 	if err != nil {
-		return renderSilentAuthError(c, fiber.StatusInternalServerError, redirectURI, state, "server_error")
+		return renderSilentAuthError(c, fiber.StatusInternalServerError, clientID, redirectURI, state, "server_error")
 	}
 
 	// 记录登录成功
@@ -336,7 +336,7 @@ func renderSilentAuthSuccess(c *fiber.Ctx, redirectURI, state, code string) erro
 	redirectURIJSON := jsonStringLiteral(redirectURI)
 	targetOrigin, err := resolveOriginFromRedirectURI(redirectURI)
 	if err != nil {
-		return renderSilentAuthError(c, fiber.StatusBadRequest, redirectURI, state, "invalid_request")
+		return renderSilentAuthError(c, fiber.StatusBadRequest, "", redirectURI, state, "invalid_request")
 	}
 	targetOriginJSON := jsonStringLiteral(targetOrigin)
 
@@ -379,14 +379,18 @@ func renderSilentAuthSuccess(c *fiber.Ctx, redirectURI, state, code string) erro
 }
 
 // renderSilentAuthError 渲染静默认证错误页面
-func renderSilentAuthError(c *fiber.Ctx, status int, redirectURI, state, errorCode string) error {
+func renderSilentAuthError(c *fiber.Ctx, status int, clientID, redirectURI, state, errorCode string) error {
 	errorCodeJSON := jsonStringLiteral(errorCode)
 	stateJSON := jsonStringLiteral(state)
-	redirectURIJSON := jsonStringLiteral(redirectURI)
+	safeRedirectURI := ""
 	targetOrigin := ""
-	if origin, err := resolveOriginFromRedirectURI(redirectURI); err == nil {
-		targetOrigin = origin
+	if isRedirectURIAllowedForClient(clientID, redirectURI) {
+		safeRedirectURI = redirectURI
+		if origin, err := resolveOriginFromRedirectURI(redirectURI); err == nil {
+			targetOrigin = origin
+		}
 	}
+	redirectURIJSON := jsonStringLiteral(safeRedirectURI)
 	targetOriginJSON := jsonStringLiteral(targetOrigin)
 
 	html := fmt.Sprintf(`

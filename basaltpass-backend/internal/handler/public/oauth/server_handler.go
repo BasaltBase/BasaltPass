@@ -35,7 +35,7 @@ func AuthorizeHandler(c *fiber.Ctx) error {
 	// 验证授权请求
 	client, err := oauthServerService.ValidateAuthorizeRequest(req)
 	if err != nil {
-		return redirectWithError(c, req.RedirectURI, err.Error(), req.State)
+		return redirectWithErrorIfAllowed(c, req.ClientID, req.RedirectURI, err.Error(), req.State)
 	}
 
 	// 检查用户是否已登录
@@ -223,7 +223,7 @@ func ConsentHandler(c *fiber.Ctx) error {
 
 	if action != "allow" {
 		// 用户拒绝授权
-		return redirectWithError(c, redirectURI, "access_denied", state)
+		return redirectWithErrorIfAllowed(c, clientID, redirectURI, "access_denied", state)
 	}
 
 	// 构建授权请求
@@ -240,7 +240,7 @@ func ConsentHandler(c *fiber.Ctx) error {
 	// 验证请求
 	client, err := oauthServerService.ValidateAuthorizeRequest(req)
 	if err != nil {
-		return redirectWithError(c, redirectURI, err.Error(), state)
+		return redirectWithErrorIfAllowed(c, clientID, redirectURI, err.Error(), state)
 	}
 
 	// 验证用户是否属于该租户
@@ -515,6 +515,35 @@ func redirectWithError(c *fiber.Ctx, redirectURI, errorCode, state string) error
 
 	u.RawQuery = q.Encode()
 	return c.Redirect(u.String(), http.StatusFound)
+}
+
+// redirectWithErrorIfAllowed redirects only when redirect_uri is registered on the client.
+// Per OAuth2 security recommendations, invalid client/redirect_uri errors must not redirect.
+func redirectWithErrorIfAllowed(c *fiber.Ctx, clientID, redirectURI, errorCode, state string) error {
+	if !isRedirectURIAllowedForClient(clientID, redirectURI) {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error":             errorCode,
+			"error_description": "invalid redirect_uri",
+		})
+	}
+	return redirectWithError(c, redirectURI, errorCode, state)
+}
+
+func isRedirectURIAllowedForClient(clientID, redirectURI string) bool {
+	clientID = strings.TrimSpace(clientID)
+	redirectURI = strings.TrimSpace(redirectURI)
+	if clientID == "" || redirectURI == "" {
+		return false
+	}
+
+	var client model.OAuthClient
+	if err := oauthServerService.db.Select("client_id", "redirect_uris").
+		Where("client_id = ?", clientID).
+		First(&client).Error; err != nil {
+		return false
+	}
+
+	return client.ValidateRedirectURI(redirectURI)
 }
 
 // redirectWithCode 带授权码重定向
