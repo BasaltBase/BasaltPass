@@ -13,6 +13,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"log"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -135,14 +136,14 @@ func GetTenantUsersHandler(c *fiber.Ctx) error {
 	// 列表查询并聚合
 	// 注意：SQLite 中时间字段需要特殊处理
 	type tenantUserRow struct {
-		ID               uint    `json:"id"`
-		Email            string  `json:"email"`
-		Nickname         string  `json:"nickname"`
-		Avatar           string  `json:"avatar"`
-		Role             string  `json:"role"`
-		Status           string  `json:"status"`
-		CreatedAt        string  `json:"created_at"`    // 改为字符串接收
-		UpdatedAt        string  `json:"updated_at"`    // 改为字符串接收
+		ID        uint   `json:"id"`
+		Email     string `json:"email"`
+		Nickname  string `json:"nickname"`
+		Avatar    string `json:"avatar"`
+		Role      string `json:"role"`
+		Status    string `json:"status"`
+		CreatedAt string `json:"created_at"` // 改为字符串接收
+		UpdatedAt string `json:"updated_at"` // 改为字符串接收
 	}
 
 	var rows []tenantUserRow
@@ -173,12 +174,12 @@ func GetTenantUsersHandler(c *fiber.Ctx) error {
 	users := make([]TenantUserResponse, 0, len(rows))
 	for _, r := range rows {
 		user := TenantUserResponse{
-			ID:           r.ID,
-			Email:        r.Email,
-			Nickname:     r.Nickname,
-			Avatar:       r.Avatar,
-			Role:         r.Role,
-			Status:       r.Status,
+			ID:       r.ID,
+			Email:    r.Email,
+			Nickname: r.Nickname,
+			Avatar:   r.Avatar,
+			Role:     r.Role,
+			Status:   r.Status,
 		}
 
 		// 转换时间字段
@@ -710,12 +711,10 @@ func InviteTenantUserHandler(c *fiber.Ctx) error {
 				}
 				_, sendErr := emailSvc.SendWithLogging(context.Background(), msg, &inviterID, "tenant_invitation")
 				if sendErr != nil {
-					fmt.Printf("[Email Debug] SendWithLogging failed: %v\n", sendErr)
-				} else {
-					fmt.Printf("[Email Debug] SendWithLogging succeeded\n")
+					log.Printf("[tenant_user] invitation email send failed: %v", sendErr)
 				}
 			} else {
-				fmt.Printf("[Email Debug] Failed to init email service: %v\n", err)
+				log.Printf("[tenant_user] init email service failed: %v", err)
 			}
 		}()
 

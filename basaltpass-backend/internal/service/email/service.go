@@ -3,6 +3,7 @@ package email
 import (
 	"context"
 	"fmt"
+	"log"
 )
 
 // Service provides email sending functionality
@@ -87,7 +88,7 @@ func (s *Service) SendWithLogging(ctx context.Context, msg *Message, userID *uin
 	// Update the log with the result
 	if updateErr := s.logService.UpdateEmailSendStatus(ctx, emailLog.ID, result, sendErr); updateErr != nil {
 		// Don't fail the send operation if logging fails, but log the error
-		fmt.Printf("Warning: failed to update email log: %v\n", updateErr)
+		log.Printf("[email] failed to update email log: %v", updateErr)
 	}
 
 	return result, sendErr

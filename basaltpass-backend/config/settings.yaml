@@ -341,6 +341,10 @@ settings:
         value: ""
         category: smtp
         description: SMTP 密码
+    smtp.skip_cert_verify:
+        value: false
+        category: smtp
+        description: 是否跳过 SMTP TLS 证书校验（不推荐在生产开启）
     smtp.port:
         value: 587
         category: smtp

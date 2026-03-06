@@ -40,12 +40,13 @@ type Config struct {
 	Email struct {
 		Provider string `mapstructure:"provider"`
 		SMTP     struct {
-			Host     string `mapstructure:"host"`
-			Port     int    `mapstructure:"port"`
-			Username string `mapstructure:"username"`
-			Password string `mapstructure:"password"`
-			UseTLS   bool   `mapstructure:"use_tls"`
-			UseSSL   bool   `mapstructure:"use_ssl"`
+			Host           string `mapstructure:"host"`
+			Port           int    `mapstructure:"port"`
+			Username       string `mapstructure:"username"`
+			Password       string `mapstructure:"password"`
+			UseTLS         bool   `mapstructure:"use_tls"`
+			UseSSL         bool   `mapstructure:"use_ssl"`
+			SkipCertVerify bool   `mapstructure:"skip_cert_verify"`
 		} `mapstructure:"smtp"`
 		AWSSES struct {
 			Region           string `mapstructure:"region"`
@@ -169,6 +170,7 @@ func Load(path string) (*Config, error) {
 	v.SetDefault("email.smtp.port", 587)
 	v.SetDefault("email.smtp.use_tls", true)
 	v.SetDefault("email.smtp.use_ssl", false)
+	v.SetDefault("email.smtp.skip_cert_verify", false)
 
 	// Environment variables
 	v.SetEnvPrefix("basaltpass")

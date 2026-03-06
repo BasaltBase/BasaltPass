@@ -41,3 +41,4 @@ basaltpass-backend/config.yaml
 # log
 .logs
 
+.gocache/

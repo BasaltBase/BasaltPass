@@ -35,7 +35,7 @@ func DB() *gorm.DB {
 		switch driver {
 		case "mysql":
 			dsn := cfg.Database.DSN
-			log.Printf("Database (mysql) DSN: %s", dsn)
+			log.Printf("Database driver: mysql")
 			db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
 				DisableForeignKeyConstraintWhenMigrating: true, // 防止复杂的循环依赖导致迁移失败
 			})
@@ -68,7 +68,7 @@ func DB() *gorm.DB {
 				}
 				dsn = filepath.Join(projectRoot, dbPath)
 			}
-			log.Printf("Database (sqlite) DSN: %s", dsn)
+			log.Printf("Database driver: sqlite")
 			db, err = gorm.Open(sqlite.Open(dsn), &gorm.Config{})
 		default:
 			err = fmt.Errorf("unsupported database driver: %s", driver)

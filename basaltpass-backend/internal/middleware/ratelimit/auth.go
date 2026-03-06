@@ -2,6 +2,9 @@ package ratelimit
 
 import (
 	"basaltpass-backend/internal/common"
+	authsvc "basaltpass-backend/internal/service/auth"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"strings"
 	"time"
@@ -199,12 +202,28 @@ func extractLoginIdentifier(c *fiber.Ctx) string {
 	return ""
 }
 
-// extractUserID 从请求体中提取 user_id（verify-2fa 端点）
+// extractUserID 从 verify-2fa 请求体提取限流主键：
+// 1) 新协议：pre_auth_token -> 解析得到 user_id
+// 2) 兼容旧协议：user_id
+// 3) 如果 pre_auth_token 无法解析，退化为 token 指纹（避免第二层完全失效）
 func extractUserID(c *fiber.Ctx) string {
 	var body struct {
-		UserID uint `json:"user_id"`
+		PreAuthToken string `json:"pre_auth_token"`
+		UserID       uint   `json:"user_id"`
 	}
 	_ = c.BodyParser(&body)
+
+	preAuthToken := strings.TrimSpace(body.PreAuthToken)
+	if preAuthToken != "" {
+		if uid, _, err := authsvc.ParsePreAuthToken(preAuthToken); err == nil && uid > 0 {
+			return fmt.Sprintf("%d", uid)
+		}
+
+		// Invalid token fallback: still keep a stable second-layer key per token blob.
+		sum := sha256.Sum256([]byte(preAuthToken))
+		return "preauth:" + hex.EncodeToString(sum[:8])
+	}
+
 	if body.UserID == 0 {
 		return ""
 	}

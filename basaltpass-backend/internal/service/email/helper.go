@@ -2,6 +2,7 @@ package email
 
 import (
 	"basaltpass-backend/internal/config"
+	settingssvc "basaltpass-backend/internal/service/settings"
 )
 
 // NewServiceFromConfig creates an email service from the application config
@@ -13,12 +14,13 @@ func NewServiceFromConfig(cfg *config.Config) (*Service, error) {
 	// SMTP config
 	if cfg.Email.Provider == "smtp" {
 		emailCfg.SMTP = &SMTPConfig{
-			Host:     cfg.Email.SMTP.Host,
-			Port:     cfg.Email.SMTP.Port,
-			Username: cfg.Email.SMTP.Username,
-			Password: cfg.Email.SMTP.Password,
-			UseTLS:   cfg.Email.SMTP.UseTLS,
-			UseSSL:   cfg.Email.SMTP.UseSSL,
+			Host:           cfg.Email.SMTP.Host,
+			Port:           cfg.Email.SMTP.Port,
+			Username:       cfg.Email.SMTP.Username,
+			Password:       cfg.Email.SMTP.Password,
+			UseTLS:         cfg.Email.SMTP.UseTLS,
+			UseSSL:         cfg.Email.SMTP.UseSSL,
+			SkipCertVerify: settingssvc.GetBool("smtp.skip_cert_verify", cfg.Email.SMTP.SkipCertVerify),
 		}
 	}
 

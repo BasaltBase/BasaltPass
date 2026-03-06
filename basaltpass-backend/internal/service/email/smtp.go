@@ -94,16 +94,20 @@ func (s *SMTPSender) Send(ctx context.Context, msg *Message) (*SendResult, error
 	// Configure TLS
 	if s.config.UseSSL {
 		d.SSL = true
+		d.TLSConfig = &tls.Config{
+			ServerName:         s.config.Host,
+			MinVersion:         tls.VersionTLS12,
+			InsecureSkipVerify: s.config.SkipCertVerify,
+		}
 	} else if s.config.UseTLS {
 		d.TLSConfig = &tls.Config{
-			ServerName: s.config.Host,
-			MinVersion: tls.VersionTLS12,
+			ServerName:         s.config.Host,
+			MinVersion:         tls.VersionTLS12,
+			InsecureSkipVerify: s.config.SkipCertVerify,
 		}
 	} else {
-		// Disable TLS entirely for local/testing
-		d.TLSConfig = &tls.Config{
-			InsecureSkipVerify: true,
-		}
+		// Plain SMTP (no TLS). Do not set insecure TLS fallback.
+		d.TLSConfig = nil
 	}
 
 	// Send the email
@@ -140,8 +144,9 @@ func (s *SMTPSender) Verify(ctx context.Context) error {
 		// Start TLS if required
 		if s.config.UseTLS {
 			tlsConfig := &tls.Config{
-				ServerName: s.config.Host,
-				MinVersion: tls.VersionTLS12,
+				ServerName:         s.config.Host,
+				MinVersion:         tls.VersionTLS12,
+				InsecureSkipVerify: s.config.SkipCertVerify,
 			}
 			if err := client.StartTLS(tlsConfig); err != nil {
 				return fmt.Errorf("failed to start TLS: %w", err)

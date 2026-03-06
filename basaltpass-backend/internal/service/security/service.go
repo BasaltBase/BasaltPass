@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"log"
 	"net"
 	"strings"
 	"time"
@@ -132,13 +133,13 @@ func (s *Service) StartEmailChange(userID uint, req *EmailChangeRequest, clientI
 	// 8. 发送验证邮件到新邮箱
 	if err := s.sendEmailChangeVerificationEmail(req.NewEmail, token, user.Email); err != nil {
 		// 邮件发送失败但不要影响流程，记录错误
-		fmt.Printf("发送验证邮件失败: %v\n", err)
+		log.Printf("[security] failed to send email change verification: %v", err)
 	}
 
 	// 9. 发送通知邮件到旧邮箱
 	if err := s.sendEmailChangeNotificationEmail(user.Email, req.NewEmail, token); err != nil {
 		// 邮件发送失败但不要影响流程，记录错误
-		fmt.Printf("发送通知邮件失败: %v\n", err)
+		log.Printf("[security] failed to send email change notification: %v", err)
 	}
 
 	// 10. 记录成功的安全操作

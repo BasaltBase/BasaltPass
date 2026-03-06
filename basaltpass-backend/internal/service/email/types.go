@@ -74,6 +74,9 @@ type SMTPConfig struct {
 	Password string `mapstructure:"password" yaml:"password" json:"password"`
 	UseTLS   bool   `mapstructure:"use_tls" yaml:"use_tls" json:"use_tls"`
 	UseSSL   bool   `mapstructure:"use_ssl" yaml:"use_ssl" json:"use_ssl"`
+	// SkipCertVerify disables SMTP TLS certificate validation when true.
+	// Keep false in production unless you fully trust the SMTP network path.
+	SkipCertVerify bool `mapstructure:"skip_cert_verify" yaml:"skip_cert_verify" json:"skip_cert_verify"`
 }
 
 // AWSSESConfig represents AWS SES configuration
