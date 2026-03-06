@@ -28,6 +28,27 @@ BasaltPass 实现了标准的 OAuth 2.0 和 OpenID Connect 1.0 协议。
 -   **Usage**: 用 `authorization_code` 交换令牌 (tokens)。
 -   **Auth**: Basic Auth (client_id:client_secret) 或在 body 中传递参数。
 
+### One-Tap / Silent-Auth（安全加固后）
+-   **路径**：
+  -   `POST /oauth/one-tap/login`
+  -   `GET /oauth/silent-auth?prompt=none`
+-   **重要变更**：以上端点现在只返回 OAuth2 `authorization_code`，不再直接返回 `id_token`。
+-   **安全校验**：
+  -   client 必须已注册且处于激活状态。
+  -   `redirect_uri` 必须与已注册地址精确匹配。
+  -   当前用户必须属于该 client 对应的租户。
+  -   用户必须已经对该应用完成过授权同意（否则返回 `interaction_required`）。
+-   **对接流程**：
+  -   从 One-Tap / Silent-Auth 获取 `code`（及可选 `state`）。
+  -   使用标准 OAuth2 流程调用 `/oauth/token` 交换令牌。
+  -   使用返回的 `access_token` 调用 `/oauth/userinfo`。
+
+### 社交 OAuth 回调交付方式
+-   **重要变更**：社交登录成功回调不再在 URL 上拼接 `?token=...`。
+-   **当前行为**：
+  -   后端通过 `HttpOnly` Cookie（`access_token`、`refresh_token`，`SameSite=Lax`）下发会话。
+  -   前端成功页应调用 `POST /api/v1/auth/refresh` 获取 `access_token` 供 SPA 使用。
+
 ### 用户信息端点 (UserInfo Endpoint)
 -   **Path**: `/oauth/userinfo`
 -   **Method**: `GET`

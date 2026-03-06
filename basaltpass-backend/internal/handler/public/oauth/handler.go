@@ -63,6 +63,23 @@ func clearOAuthStateCookie(c *fiber.Ctx, provider string) {
 	})
 }
 
+func setOAuthSessionCookie(c *fiber.Ctx, name, value string, maxAge int) {
+	c.Cookie(&fiber.Cookie{
+		Name:     name,
+		Value:    value,
+		HTTPOnly: true,
+		Secure:   config.IsProduction(),
+		SameSite: "Lax",
+		Path:     "/",
+		MaxAge:   maxAge,
+	})
+}
+
+func setOAuthSessionCookies(c *fiber.Ctx, accessToken, refreshToken string) {
+	setOAuthSessionCookie(c, "access_token", accessToken, 15*60)
+	setOAuthSessionCookie(c, "refresh_token", refreshToken, 7*24*60*60)
+}
+
 func validateOAuthState(c *fiber.Ctx, provider string) bool {
 	queryState := strings.TrimSpace(c.Query("state"))
 	cookieState := strings.TrimSpace(c.Cookies(oauthStateCookieName(provider)))
@@ -170,8 +187,8 @@ func CallbackHandler(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to generate tokens"})
 	}
-	// set refresh cookie
-	c.Cookie(&fiber.Cookie{Name: "refresh_token", Value: tokens.RefreshToken, HTTPOnly: true, Path: "/", MaxAge: 7 * 24 * 60 * 60})
+	// Set secure HTTP-only session cookies; do not expose tokens via URL.
+	setOAuthSessionCookies(c, tokens.AccessToken, tokens.RefreshToken)
 
 	// 记录登录成功
 	if err := security.RecordLoginSuccess(oa.UserID, c.IP(), c.Get("User-Agent")); err != nil {
@@ -182,7 +199,6 @@ func CallbackHandler(c *fiber.Ctx) error {
 	if redirectURL == "" {
 		redirectURL = "http://localhost:5173/oauth-success"
 	}
-	redirectURL = redirectURL + "?token=" + tokens.AccessToken
 	return c.Redirect(redirectURL, http.StatusTemporaryRedirect)
 }
 

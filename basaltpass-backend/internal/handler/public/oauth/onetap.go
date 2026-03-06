@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -22,16 +23,16 @@ import (
 // OneTapAuthRequest One-Tap认证请求
 type OneTapAuthRequest struct {
 	ClientID     string `json:"client_id" validate:"required"`
-	Nonce        string `json:"nonce,omitempty"`
+	Scope        string `json:"scope,omitempty"`
 	State        string `json:"state,omitempty"`
 	RedirectURI  string `json:"redirect_uri,omitempty"`
-	ResponseType string `json:"response_type,omitempty"` // 默认 "id_token"
+	ResponseType string `json:"response_type,omitempty"` // must be "code" when provided
 }
 
 // OneTapAuthResponse One-Tap认证响应
 type OneTapAuthResponse struct {
 	Success   bool   `json:"success"`
-	IDToken   string `json:"id_token,omitempty"`
+	Code      string `json:"code,omitempty"`
 	State     string `json:"state,omitempty"`
 	Error     string `json:"error,omitempty"`
 	ErrorDesc string `json:"error_description,omitempty"`
@@ -63,6 +64,14 @@ func OneTapLoginHandler(c *fiber.Ctx) error {
 	if err != nil {
 		return handleOneTapError(c, err, req.State)
 	}
+	if strings.TrimSpace(req.ResponseType) != "" && strings.TrimSpace(req.ResponseType) != "code" {
+		return c.Status(fiber.StatusBadRequest).JSON(OneTapAuthResponse{
+			Success:   false,
+			State:     req.State,
+			Error:     "unsupported_response_type",
+			ErrorDesc: "One-Tap only supports response_type=code",
+		})
+	}
 
 	user, err := getUserFromSession(c)
 	if err != nil {
@@ -73,7 +82,25 @@ func OneTapLoginHandler(c *fiber.Ctx) error {
 			ErrorDesc: "User not authenticated",
 		})
 	}
-	if err := oauthServerService.ValidateUserTenant(user.ID, client); err != nil {
+
+	scope := normalizeRequestedScope(req.Scope, client)
+	authReq := &AuthorizeRequest{
+		ClientID:     req.ClientID,
+		RedirectURI:  req.RedirectURI,
+		ResponseType: "code",
+		Scope:        scope,
+		State:        req.State,
+	}
+	validatedClient, err := oauthServerService.ValidateAuthorizeRequest(authReq)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(OneTapAuthResponse{
+			Success:   false,
+			State:     req.State,
+			Error:     "invalid_request",
+			ErrorDesc: err.Error(),
+		})
+	}
+	if err := oauthServerService.ValidateUserTenant(user.ID, validatedClient); err != nil {
 		return c.Status(fiber.StatusForbidden).JSON(OneTapAuthResponse{
 			Success:   false,
 			State:     req.State,
@@ -81,14 +108,22 @@ func OneTapLoginHandler(c *fiber.Ctx) error {
 			ErrorDesc: "User does not belong to this tenant",
 		})
 	}
+	if err := ensurePriorAppAuthorization(user.ID, validatedClient, scope); err != nil {
+		return c.Status(fiber.StatusForbidden).JSON(OneTapAuthResponse{
+			Success:   false,
+			State:     req.State,
+			Error:     "interaction_required",
+			ErrorDesc: err.Error(),
+		})
+	}
 
-	idToken, err := generateIDToken(c, user, client, req.Nonce)
+	code, err := oauthServerService.GenerateAuthorizationCode(user.ID, authReq, validatedClient)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(OneTapAuthResponse{
 			Success:   false,
 			State:     req.State,
 			Error:     "server_error",
-			ErrorDesc: "Failed to generate ID token",
+			ErrorDesc: "Failed to generate authorization code",
 		})
 	}
 
@@ -99,7 +134,7 @@ func OneTapLoginHandler(c *fiber.Ctx) error {
 
 	return c.JSON(OneTapAuthResponse{
 		Success: true,
-		IDToken: idToken,
+		Code:    code,
 		State:   req.State,
 	})
 }
@@ -111,7 +146,7 @@ func SilentAuthHandler(c *fiber.Ctx) error {
 	prompt := c.Query("prompt")
 	redirectURI := c.Query("redirect_uri")
 	state := c.Query("state")
-	nonce := c.Query("nonce")
+	scope := c.Query("scope")
 
 	if prompt != "none" {
 		return renderSilentAuthError(c, fiber.StatusBadRequest, redirectURI, state, "invalid_request")
@@ -132,8 +167,24 @@ func SilentAuthHandler(c *fiber.Ctx) error {
 	if err := oauthServerService.ValidateUserTenant(user.ID, client); err != nil {
 		return renderSilentAuthError(c, fiber.StatusForbidden, redirectURI, state, "access_denied")
 	}
-
-	idToken, err := generateIDToken(c, user, client, nonce)
+	authReq := &AuthorizeRequest{
+		ClientID:     clientID,
+		RedirectURI:  redirectURI,
+		ResponseType: "code",
+		Scope:        normalizeRequestedScope(scope, client),
+		State:        state,
+	}
+	validatedClient, err := oauthServerService.ValidateAuthorizeRequest(authReq)
+	if err != nil {
+		return renderSilentAuthError(c, fiber.StatusBadRequest, redirectURI, state, "invalid_request")
+	}
+	if err := oauthServerService.ValidateUserTenant(user.ID, validatedClient); err != nil {
+		return renderSilentAuthError(c, fiber.StatusForbidden, redirectURI, state, "access_denied")
+	}
+	if err := ensurePriorAppAuthorization(user.ID, validatedClient, authReq.Scope); err != nil {
+		return renderSilentAuthError(c, fiber.StatusForbidden, redirectURI, state, "interaction_required")
+	}
+	code, err := oauthServerService.GenerateAuthorizationCode(user.ID, authReq, validatedClient)
 	if err != nil {
 		return renderSilentAuthError(c, fiber.StatusInternalServerError, redirectURI, state, "server_error")
 	}
@@ -143,7 +194,7 @@ func SilentAuthHandler(c *fiber.Ctx) error {
 		log.Printf("failed to record login history: %v", err)
 	}
 
-	return renderSilentAuthSuccess(c, redirectURI, state, idToken)
+	return renderSilentAuthSuccess(c, redirectURI, state, code)
 }
 
 // CheckSessionHandler 检查会话状态
@@ -151,24 +202,25 @@ func SilentAuthHandler(c *fiber.Ctx) error {
 func CheckSessionHandler(c *fiber.Ctx) error {
 	clientID := strings.TrimSpace(c.Query("client_id"))
 	redirectURI := strings.TrimSpace(c.Query("redirect_uri"))
+	scope := strings.TrimSpace(c.Query("scope"))
 
 	user, err := getUserFromSession(c)
 	if err != nil {
 		return c.JSON(fiber.Map{
-			"authenticated": false,
+			"authenticated":     false,
 			"one_tap_available": false,
-			"reason":        "login_required",
-			"user_id":       nil,
-			"session_time":  time.Now().Unix(),
+			"reason":            "login_required",
+			"user_id":           nil,
+			"session_time":      time.Now().Unix(),
 		})
 	}
 
 	if clientID == "" {
 		return c.JSON(fiber.Map{
-			"authenticated": true,
+			"authenticated":     true,
 			"one_tap_available": true,
-			"user_id":       user.ID,
-			"session_time":  time.Now().Unix(),
+			"user_id":           user.ID,
+			"session_time":      time.Now().Unix(),
 		})
 	}
 
@@ -176,37 +228,46 @@ func CheckSessionHandler(c *fiber.Ctx) error {
 	if err != nil {
 		if oe, ok := err.(*oauthError); ok {
 			return c.Status(oe.status).JSON(fiber.Map{
-				"authenticated": true,
+				"authenticated":     true,
 				"one_tap_available": false,
-				"reason":           oe.code,
-				"user_id":          user.ID,
-				"session_time":     time.Now().Unix(),
+				"reason":            oe.code,
+				"user_id":           user.ID,
+				"session_time":      time.Now().Unix(),
 			})
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"authenticated": true,
+			"authenticated":     true,
 			"one_tap_available": false,
-			"reason":           "server_error",
-			"user_id":          user.ID,
-			"session_time":     time.Now().Unix(),
+			"reason":            "server_error",
+			"user_id":           user.ID,
+			"session_time":      time.Now().Unix(),
 		})
 	}
 
 	if err := oauthServerService.ValidateUserTenant(user.ID, client); err != nil {
 		return c.JSON(fiber.Map{
-			"authenticated": true,
+			"authenticated":     true,
 			"one_tap_available": false,
-			"reason":           "tenant_mismatch",
-			"user_id":          user.ID,
-			"session_time":     time.Now().Unix(),
+			"reason":            "tenant_mismatch",
+			"user_id":           user.ID,
+			"session_time":      time.Now().Unix(),
+		})
+	}
+	if err := ensurePriorAppAuthorization(user.ID, client, normalizeRequestedScope(scope, client)); err != nil {
+		return c.JSON(fiber.Map{
+			"authenticated":     true,
+			"one_tap_available": false,
+			"reason":            "interaction_required",
+			"user_id":           user.ID,
+			"session_time":      time.Now().Unix(),
 		})
 	}
 
 	return c.JSON(fiber.Map{
-		"authenticated": true,
+		"authenticated":     true,
 		"one_tap_available": true,
-		"user_id":       user.ID,
-		"session_time":  time.Now().Unix(),
+		"user_id":           user.ID,
+		"session_time":      time.Now().Unix(),
 	})
 }
 
@@ -268,49 +329,16 @@ func getUserFromSession(c *fiber.Ctx) (*model.User, error) {
 	return loadActiveUser(userID)
 }
 
-// generateIDToken 生成ID Token
-func generateIDToken(c *fiber.Ctx, user *model.User, client *model.OAuthClient, nonce string) (string, error) {
-	now := time.Now()
-	issuer := fmt.Sprintf("%s://%s", c.Protocol(), c.Hostname())
-
-	claims := jwt.MapClaims{
-		"iss":                issuer,
-		"sub":                fmt.Sprintf("%d", user.ID),
-		"aud":                client.ClientID,
-		"azp":                client.ClientID,
-		"exp":                now.Add(time.Hour).Unix(),
-		"iat":                now.Unix(),
-		"auth_time":          now.Unix(),
-		"preferred_username": preferredUsername(user),
-	}
-
-	if nonce != "" {
-		claims["nonce"] = nonce
-	}
-	if user.Email != "" {
-		claims["email"] = user.Email
-		claims["email_verified"] = user.EmailVerified
-	}
-	if user.Nickname != "" {
-		claims["name"] = user.Nickname
-	}
-
-	privateKey, err := GetPrivateKey()
-	if err != nil {
-		return "", err
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	token.Header["kid"] = GetKeyID()
-
-	return token.SignedString(privateKey)
-}
-
 // renderSilentAuthSuccess 渲染静默认证成功页面
-func renderSilentAuthSuccess(c *fiber.Ctx, redirectURI, state, idToken string) error {
-	idTokenJSON := jsonStringLiteral(idToken)
+func renderSilentAuthSuccess(c *fiber.Ctx, redirectURI, state, code string) error {
+	codeJSON := jsonStringLiteral(code)
 	stateJSON := jsonStringLiteral(state)
 	redirectURIJSON := jsonStringLiteral(redirectURI)
+	targetOrigin, err := resolveOriginFromRedirectURI(redirectURI)
+	if err != nil {
+		return renderSilentAuthError(c, fiber.StatusBadRequest, redirectURI, state, "invalid_request")
+	}
+	targetOriginJSON := jsonStringLiteral(targetOrigin)
 
 	html := fmt.Sprintf(`
 <!DOCTYPE html>
@@ -323,27 +351,28 @@ func renderSilentAuthSuccess(c *fiber.Ctx, redirectURI, state, idToken string) e
         // 向父窗口发送认证结果
         const result = {
             success: true,
-            id_token: %s,
+            code: %s,
             state: %s
         };
 
         if (window.parent && window.parent !== window) {
-            window.parent.postMessage(result, '*');
+            window.parent.postMessage(result, %s);
         }
 
-        // 如果有redirect_uri，也可以重定向
+        // 如果有redirect_uri，重定向携带授权码
         const redirectUri = %s;
         if (redirectUri) {
-            const params = new URLSearchParams({
-                id_token: result.id_token,
-                state: result.state || ''
-            });
-            window.location.href = redirectUri + '#' + params.toString();
+            const u = new URL(redirectUri);
+            u.searchParams.set('code', result.code);
+            if (result.state) {
+                u.searchParams.set('state', result.state);
+            }
+            window.location.replace(u.toString());
         }
     </script>
 </body>
 </html>
-        `, idTokenJSON, stateJSON, redirectURIJSON)
+        `, codeJSON, stateJSON, targetOriginJSON, redirectURIJSON)
 
 	c.Set("Content-Type", "text/html")
 	return c.SendString(html)
@@ -354,6 +383,11 @@ func renderSilentAuthError(c *fiber.Ctx, status int, redirectURI, state, errorCo
 	errorCodeJSON := jsonStringLiteral(errorCode)
 	stateJSON := jsonStringLiteral(state)
 	redirectURIJSON := jsonStringLiteral(redirectURI)
+	targetOrigin := ""
+	if origin, err := resolveOriginFromRedirectURI(redirectURI); err == nil {
+		targetOrigin = origin
+	}
+	targetOriginJSON := jsonStringLiteral(targetOrigin)
 
 	html := fmt.Sprintf(`
 <!DOCTYPE html>
@@ -371,22 +405,25 @@ func renderSilentAuthError(c *fiber.Ctx, status int, redirectURI, state, errorCo
         };
 
         if (window.parent && window.parent !== window) {
-            window.parent.postMessage(result, '*');
+            if (%s) {
+                window.parent.postMessage(result, %s);
+            }
         }
 
-        // 如果有redirect_uri，重定向到错误页面
+        // 如果有redirect_uri，重定向到错误页面（query）
         const redirectUri = %s;
         if (redirectUri) {
-            const params = new URLSearchParams({
-                error: result.error,
-                state: result.state || ''
-            });
-            window.location.href = redirectUri + '#' + params.toString();
+            const u = new URL(redirectUri);
+            u.searchParams.set('error', result.error);
+            if (result.state) {
+                u.searchParams.set('state', result.state);
+            }
+            window.location.replace(u.toString());
         }
     </script>
 </body>
 </html>
-        `, errorCodeJSON, stateJSON, redirectURIJSON)
+        `, errorCodeJSON, stateJSON, targetOriginJSON, targetOriginJSON, redirectURIJSON)
 
 	c.Set("Content-Type", "text/html")
 	c.Status(status)
@@ -447,11 +484,94 @@ func (e *oauthError) Error() string {
 	return e.description
 }
 
-func preferredUsername(user *model.User) string {
-	if user.Nickname != "" {
-		return user.Nickname
+func normalizeRequestedScope(raw string, client *model.OAuthClient) string {
+	scope := strings.TrimSpace(raw)
+	if scope != "" {
+		return scope
 	}
-	return user.Email
+	if client == nil {
+		return ""
+	}
+	return strings.Join(client.GetScopeList(), " ")
+}
+
+func ensurePriorAppAuthorization(userID uint, client *model.OAuthClient, requestedScope string) error {
+	if client == nil {
+		return errors.New("invalid client")
+	}
+	if client.AppID == 0 {
+		return errors.New("interaction required")
+	}
+
+	var appUser model.AppUser
+	err := common.DB().
+		Where("app_id = ? AND user_id = ?", client.AppID, userID).
+		First(&appUser).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("user consent required")
+		}
+		return err
+	}
+	if appUser.Status != model.AppUserStatusActive {
+		return errors.New("application access not active")
+	}
+
+	requested := parseScopeList(requestedScope)
+	granted := parseScopeList(appUser.Scopes)
+	if len(requested) > 0 && !scopeSetContainsAll(granted, requested) {
+		return errors.New("requested scope requires consent")
+	}
+	return nil
+}
+
+func parseScopeList(scope string) []string {
+	normalized := strings.TrimSpace(strings.ReplaceAll(scope, ",", " "))
+	if normalized == "" {
+		return nil
+	}
+	parts := strings.Fields(normalized)
+	out := make([]string, 0, len(parts))
+	seen := map[string]struct{}{}
+	for _, part := range parts {
+		p := strings.TrimSpace(part)
+		if p == "" {
+			continue
+		}
+		if _, ok := seen[p]; ok {
+			continue
+		}
+		seen[p] = struct{}{}
+		out = append(out, p)
+	}
+	return out
+}
+
+func scopeSetContainsAll(granted, requested []string) bool {
+	if len(requested) == 0 {
+		return true
+	}
+	set := map[string]struct{}{}
+	for _, s := range granted {
+		set[s] = struct{}{}
+	}
+	for _, s := range requested {
+		if _, ok := set[s]; !ok {
+			return false
+		}
+	}
+	return true
+}
+
+func resolveOriginFromRedirectURI(redirectURI string) (string, error) {
+	u, err := url.Parse(strings.TrimSpace(redirectURI))
+	if err != nil {
+		return "", err
+	}
+	if u.Scheme == "" || u.Host == "" {
+		return "", errors.New("invalid redirect_uri")
+	}
+	return u.Scheme + "://" + u.Host, nil
 }
 
 func jsonStringLiteral(v string) string {
