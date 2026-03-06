@@ -64,6 +64,25 @@ func AuthorizeHandler(c *fiber.Ctx) error {
 	}
 
 	// 用户已登录且属于正确的租户，重定向到前端托管的授权同意页面
+	alreadyAuthorized, err := oauthServerService.HasAppUserAuthorization(client.AppID, uid)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":             "server_error",
+			"error_description": "Failed to check existing app authorization",
+		})
+	}
+
+	// Skip consent when the user has already authorized this app.
+	if alreadyAuthorized {
+		code, err := oauthServerService.GenerateAuthorizationCode(uid, req, client)
+		if err != nil {
+			return redirectWithError(c, req.RedirectURI, "server_error", req.State)
+		}
+
+		aduit.LogAudit(uid, "OAuth2授权(免再次确认)", "oauth_client", req.ClientID, c.IP(), c.Get("User-Agent"))
+		return redirectWithCode(c, req.RedirectURI, code, req.State)
+	}
+
 	consentURL := buildConsentURL(req, client)
 	return c.Redirect(consentURL, http.StatusFound)
 }

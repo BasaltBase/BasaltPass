@@ -248,3 +248,47 @@ CMD ["./main"]
 ## 许可证
 
 MIT License 
+
+## One-Tap Integration (Third-Party Tenant Client)
+
+Goal: when a user is already signed in to BasaltPass and belongs to the tenant of the current OAuth client, your app can show a confirmation popup ("Continue with BasaltPass?").
+
+Recommended flow:
+
+1. Probe session first
+
+```http
+GET /api/v1/oauth/check-session?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}
+```
+
+Response fields:
+
+- `authenticated`: whether user already has a BasaltPass session
+- `one_tap_available`: whether One-Tap can be used for this client
+- `reason`: unavailable reason (`login_required`, `tenant_mismatch`, `invalid_client`, etc.)
+
+Show popup only when `authenticated=true` and `one_tap_available=true`.
+
+2. On user confirmation, call One-Tap login
+
+```http
+POST /api/v1/oauth/one-tap/login
+Content-Type: application/json
+
+{
+  "client_id": "{CLIENT_ID}",
+  "redirect_uri": "{REDIRECT_URI}",
+  "state": "{STATE}",
+  "nonce": "{NONCE}"
+}
+```
+
+Success response contains `id_token`.
+
+3. Optional silent check in iframe
+
+```http
+GET /api/v1/oauth/silent-auth?prompt=none&client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}&state={STATE}&nonce={NONCE}
+```
+
+Tenant safety: both `/oauth/one-tap/login` and `/oauth/silent-auth` now enforce tenant membership for the OAuth client. Non-matching users are rejected (`access_denied` / `tenant_mismatch`).

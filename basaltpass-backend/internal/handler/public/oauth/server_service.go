@@ -212,6 +212,22 @@ func (s *OAuthServerService) GenerateAuthorizationCode(userID uint, req *Authori
 	return code, nil
 }
 
+// HasAppUserAuthorization checks whether a user has already authorized an app.
+func (s *OAuthServerService) HasAppUserAuthorization(appID, userID uint) (bool, error) {
+	if appID == 0 || userID == 0 {
+		return false, nil
+	}
+
+	var count int64
+	if err := s.db.Model(&model.AppUser{}).
+		Where("app_id = ? AND user_id = ?", appID, userID).
+		Count(&count).Error; err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
+
 // ExchangeCodeForToken 用授权码换取访问令牌
 func (s *OAuthServerService) ExchangeCodeForToken(req *TokenRequest, clientID string, clientSecret string) (*TokenResponse, error) {
 	// 1. 验证grant_type

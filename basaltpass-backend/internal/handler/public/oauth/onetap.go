@@ -73,6 +73,14 @@ func OneTapLoginHandler(c *fiber.Ctx) error {
 			ErrorDesc: "User not authenticated",
 		})
 	}
+	if err := oauthServerService.ValidateUserTenant(user.ID, client); err != nil {
+		return c.Status(fiber.StatusForbidden).JSON(OneTapAuthResponse{
+			Success:   false,
+			State:     req.State,
+			Error:     "access_denied",
+			ErrorDesc: "User does not belong to this tenant",
+		})
+	}
 
 	idToken, err := generateIDToken(c, user, client, req.Nonce)
 	if err != nil {
@@ -121,6 +129,9 @@ func SilentAuthHandler(c *fiber.Ctx) error {
 	if err != nil {
 		return renderSilentAuthError(c, fiber.StatusUnauthorized, redirectURI, state, "login_required")
 	}
+	if err := oauthServerService.ValidateUserTenant(user.ID, client); err != nil {
+		return renderSilentAuthError(c, fiber.StatusForbidden, redirectURI, state, "access_denied")
+	}
 
 	idToken, err := generateIDToken(c, user, client, nonce)
 	if err != nil {
@@ -138,17 +149,62 @@ func SilentAuthHandler(c *fiber.Ctx) error {
 // CheckSessionHandler 检查会话状态
 // GET /oauth/check-session
 func CheckSessionHandler(c *fiber.Ctx) error {
+	clientID := strings.TrimSpace(c.Query("client_id"))
+	redirectURI := strings.TrimSpace(c.Query("redirect_uri"))
+
 	user, err := getUserFromSession(c)
 	if err != nil {
 		return c.JSON(fiber.Map{
 			"authenticated": false,
+			"one_tap_available": false,
+			"reason":        "login_required",
 			"user_id":       nil,
 			"session_time":  time.Now().Unix(),
 		})
 	}
 
+	if clientID == "" {
+		return c.JSON(fiber.Map{
+			"authenticated": true,
+			"one_tap_available": true,
+			"user_id":       user.ID,
+			"session_time":  time.Now().Unix(),
+		})
+	}
+
+	client, err := validateOAuthClient(clientID, redirectURI)
+	if err != nil {
+		if oe, ok := err.(*oauthError); ok {
+			return c.Status(oe.status).JSON(fiber.Map{
+				"authenticated": true,
+				"one_tap_available": false,
+				"reason":           oe.code,
+				"user_id":          user.ID,
+				"session_time":     time.Now().Unix(),
+			})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"authenticated": true,
+			"one_tap_available": false,
+			"reason":           "server_error",
+			"user_id":          user.ID,
+			"session_time":     time.Now().Unix(),
+		})
+	}
+
+	if err := oauthServerService.ValidateUserTenant(user.ID, client); err != nil {
+		return c.JSON(fiber.Map{
+			"authenticated": true,
+			"one_tap_available": false,
+			"reason":           "tenant_mismatch",
+			"user_id":          user.ID,
+			"session_time":     time.Now().Unix(),
+		})
+	}
+
 	return c.JSON(fiber.Map{
 		"authenticated": true,
+		"one_tap_available": true,
 		"user_id":       user.ID,
 		"session_time":  time.Now().Unix(),
 	})
