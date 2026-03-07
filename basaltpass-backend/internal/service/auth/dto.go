@@ -20,10 +20,10 @@ type LoginRequest struct {
 // succeeds. The server extracts user_id and tenant_id from the token; the client
 // must never submit these values directly.
 type Verify2FARequest struct {
-	PreAuthToken string `json:"pre_auth_token"`      // replaces user_id / tenant_id
+	PreAuthToken string `json:"pre_auth_token"` // replaces user_id / tenant_id
 	TwoFAType    string `json:"two_fa_type"`
-	Code         string `json:"code,omitempty"`      // TOTP / email OTP
-	Passkey      string `json:"passkey,omitempty"`   // passkey data if any
+	Code         string `json:"code,omitempty"`    // TOTP / email OTP
+	Passkey      string `json:"passkey,omitempty"` // passkey data if any
 
 	// WebAuthn verification fields for passkey flow
 	Email     string `json:"email,omitempty"`     // user email (passkey)

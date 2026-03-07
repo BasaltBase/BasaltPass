@@ -6,7 +6,7 @@ import (
 
 func TestPhoneValidator_ValidateE164(t *testing.T) {
 	pv := NewPhoneValidator("+86")
-	
+
 	tests := []struct {
 		name    string
 		phone   string
@@ -35,7 +35,7 @@ func TestPhoneValidator_ValidateE164(t *testing.T) {
 
 func TestPhoneValidator_NormalizeToE164(t *testing.T) {
 	pv := NewPhoneValidator("+86")
-	
+
 	tests := []struct {
 		name     string
 		phone    string
@@ -70,7 +70,7 @@ func TestPhoneValidator_NormalizeToE164(t *testing.T) {
 
 func TestPhoneValidator_FormatForDisplay(t *testing.T) {
 	pv := NewPhoneValidator("+86")
-	
+
 	tests := []struct {
 		name     string
 		phone    string
@@ -96,7 +96,7 @@ func TestPhoneValidator_FormatForDisplay(t *testing.T) {
 
 func TestPhoneValidator_GetCountryCode(t *testing.T) {
 	pv := NewPhoneValidator("+86")
-	
+
 	tests := []struct {
 		name     string
 		phone    string
@@ -121,7 +121,7 @@ func TestPhoneValidator_GetCountryCode(t *testing.T) {
 
 func TestPhoneValidator_isChinaMobileNumber(t *testing.T) {
 	pv := NewPhoneValidator("+86")
-	
+
 	tests := []struct {
 		name     string
 		phone    string
@@ -148,7 +148,7 @@ func TestPhoneValidator_isChinaMobileNumber(t *testing.T) {
 
 func TestPhoneValidator_isNorthAmericaMobileNumber(t *testing.T) {
 	pv := NewPhoneValidator("+86")
-	
+
 	tests := []struct {
 		name     string
 		phone    string
@@ -174,7 +174,7 @@ func TestPhoneValidator_isNorthAmericaMobileNumber(t *testing.T) {
 
 func TestPhoneValidator_IsValidPhoneForCountry(t *testing.T) {
 	pv := NewPhoneValidator("+86")
-	
+
 	tests := []struct {
 		name        string
 		phone       string

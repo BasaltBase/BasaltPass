@@ -11,7 +11,14 @@ import (
 	"basaltpass-backend/internal/middleware"
 
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
+
+// InitTenantRouteDependencies 初始化租户路由依赖
+func InitTenantRouteDependencies(db *gorm.DB) {
+	subscription.InitTenantHandler(db)
+	subscription.InitTenantCatalogHandler(db)
+}
 
 // RegisterTenantRoutes 注册租户相关路由
 func RegisterTenantRoutes(v1 fiber.Router) {

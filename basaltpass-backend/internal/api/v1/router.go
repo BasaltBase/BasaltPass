@@ -2,6 +2,7 @@ package v1
 
 import (
 	routes2 "basaltpass-backend/internal/api/v1/routes"
+	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/middleware"
 
 	"github.com/gofiber/fiber/v2"
@@ -21,6 +22,9 @@ func RegisterRoutes(app *fiber.App) {
 
 	// 注册OAuth相关路由
 	routes2.RegisterOAuthRoutes(v1)
+
+	// 初始化路由依赖（用户团队、订阅等）
+	routes2.InitRouteDependencies(common.DB())
 
 	// 注册用户控制台前端相关路由
 	routes2.RegisterUserRoutes(v1)

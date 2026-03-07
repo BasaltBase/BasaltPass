@@ -96,7 +96,7 @@ func (r *PasswordResetToken) MarkAsUsed() {
 //  1. 调用 POST /security/email/send → 生成6位随机数字码，SHA-256 哈希后存此表，明文发至用户邮箱
 //  2. 调用 POST /security/email/verify + {"code":"XXXXXX"} → 哈希比对，通过则将 users.email_verified 置 true
 type EmailVerificationToken struct {
-	ID           uint       `gorm:"primaryKey"`
+	ID           uint `gorm:"primaryKey"`
 	CreatedAt    time.Time
 	UserID       uint       `gorm:"not null;index"`
 	Email        string     `gorm:"size:128;not null"` // 待验证的邮箱地址
@@ -114,7 +114,7 @@ func (EmailVerificationToken) TableName() string {
 }
 
 const EmailVerificationMaxAttempts = 5
-const EmailVerificationTTL = 30 // 分钟
+const EmailVerificationTTL = 30            // 分钟
 const EmailVerificationResendCooldown = 60 // 秒，重发冷却
 
 // IsExpired 是否已过期
@@ -156,7 +156,7 @@ func (SecurityOperation) TableName() string {
 //  1. 调用 POST /security/phone/resend → 生成6位随机数字码，SHA-256 哈希后存此表，明文发至用户手机
 //  2. 调用 POST /security/phone/verify + {"code":"XXXXXX"} → 哈希比对，通过则将 users.phone_verified 置 true
 type PhoneVerificationToken struct {
-	ID           uint       `gorm:"primaryKey"`
+	ID           uint `gorm:"primaryKey"`
 	CreatedAt    time.Time
 	UserID       uint       `gorm:"not null;index"`
 	Phone        string     `gorm:"size:32;not null"` // E.164 格式手机号
@@ -174,8 +174,8 @@ func (PhoneVerificationToken) TableName() string {
 }
 
 const PhoneVerificationMaxAttempts = 5
-const PhoneVerificationTTL = 10              // 分钟（短信验证码有效期比邮件短）
-const PhoneVerificationResendCooldown = 60   // 秒，重发冷却
+const PhoneVerificationTTL = 10            // 分钟（短信验证码有效期比邮件短）
+const PhoneVerificationResendCooldown = 60 // 秒，重发冷却
 
 // IsExpired 是否已过期
 func (t *PhoneVerificationToken) IsExpired() bool {

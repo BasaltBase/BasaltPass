@@ -16,16 +16,16 @@ import (
 // loginRateLimitConfig 登录限速的两层策略
 const (
 	// 第一层：IP 维度，防止单 IP 的大规模扫描
-	loginIPLimit      = 20             // 每分钟最多 20 次（宽松，只阻断明显的扫射）
-	loginIPWindow     = time.Minute
+	loginIPLimit  = 20 // 每分钟最多 20 次（宽松，只阻断明显的扫射）
+	loginIPWindow = time.Minute
 
 	// 第二层：IP + 账号标识符，精准防暴力破解
-	loginComboLimit   = 5              // 5 次失败后锁定
-	loginComboWindow  = 15 * time.Minute // 锁定窗口 15 分钟
+	loginComboLimit  = 5                // 5 次失败后锁定
+	loginComboWindow = 15 * time.Minute // 锁定窗口 15 分钟
 
 	// 第三层：verify-2fa IP + user_id，防 TOTP/SMS 枚举
-	twoFAComboLimit   = 5
-	twoFAComboWindow  = 15 * time.Minute
+	twoFAComboLimit  = 5
+	twoFAComboWindow = 15 * time.Minute
 )
 
 // checkRateLimitDetailed 扩展版限速检查，额外返回剩余封锁时间（秒）。

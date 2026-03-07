@@ -82,7 +82,7 @@ func QuickCheckoutHandler(c *fiber.Ctx) error {
 
 	// 构建完整的checkout请求
 	checkoutReq := CheckoutRequest{
-		UserID: userID,
+		UserID:     userID,
 		PriceID:    req.PriceID,
 		Quantity:   req.Quantity,
 		CouponCode: req.CouponCode,

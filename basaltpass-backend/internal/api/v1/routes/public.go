@@ -6,12 +6,16 @@ import (
 	publicSecurity "basaltpass-backend/internal/handler/public/security"
 	publicSettings "basaltpass-backend/internal/handler/public/settings"
 	"basaltpass-backend/internal/handler/public/signup"
-	"basaltpass-backend/internal/middleware"
 	publicTenant "basaltpass-backend/internal/handler/public/tenant"
+	"basaltpass-backend/internal/middleware"
 	"basaltpass-backend/internal/middleware/ratelimit"
 
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
+
+// InitPublicRouteDependencies 初始化公开路由依赖
+func InitPublicRouteDependencies(_ *gorm.DB) {}
 
 // RegisterPublicRoutes 注册公开路由（无需认证）
 func RegisterPublicRoutes(v1 fiber.Router) {

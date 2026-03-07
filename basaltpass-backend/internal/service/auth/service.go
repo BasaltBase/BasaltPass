@@ -202,9 +202,9 @@ func (s Service) LoginV2(req LoginRequest) (LoginResult, error) {
 	}
 
 	// 读取管理员配置的 2FA 方式开关
-	totpMethodEnabled   := settingssvc.GetBool("auth.2fa.totp_enabled", true)
+	totpMethodEnabled := settingssvc.GetBool("auth.2fa.totp_enabled", true)
 	passkeyMethodEnabled := settingssvc.GetBool("auth.2fa.passkey_enabled", true)
-	smsMethodEnabled    := settingssvc.GetBool("auth.2fa.sms_enabled", false)
+	smsMethodEnabled := settingssvc.GetBool("auth.2fa.sms_enabled", false)
 
 	// 收集用户可用的所有2FA方式
 	var availableMethods []string
@@ -438,7 +438,7 @@ func (s Service) setupFirstUserAsGlobalAdmin(tx *gorm.DB, user *model.User) erro
 		return err
 	}
 
-	aduit.LogAudit(user.ID, "首位用户注册", "user", string(rune(user.ID)), "", "自动设置为全局管理员")
+	aduit.LogAudit(user.ID, "首位用户注册", "user", fmt.Sprint(user.ID), "", "自动设置为全局管理员")
 
 	return nil
 }

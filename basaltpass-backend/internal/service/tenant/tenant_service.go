@@ -1,6 +1,7 @@
 package tenant
 
 import (
+	"fmt"
 	"basaltpass-backend/internal/service/aduit"
 	"errors"
 	"time"
@@ -161,7 +162,7 @@ func (s *TenantService) CreateTenant(ownerUserID uint, req *CreateTenantRequest)
 	tx.Commit()
 
 	// 审计日志
-	aduit.LogAudit(ownerUserID, "创建租户", "tenant", string(rune(tenant.ID)), "", "")
+	aduit.LogAudit(ownerUserID, "创建租户", "tenant", fmt.Sprint(tenant.ID), "", "")
 
 	return s.tenantToResponse(tenant, nil), nil
 }
@@ -340,7 +341,7 @@ func (s *TenantService) DeleteTenant(tenantID uint) error {
 	}
 
 	// 审计日志
-	aduit.LogAudit(0, "删除租户", "tenant", string(rune(tenantID)), "", "")
+	aduit.LogAudit(0, "删除租户", "tenant", fmt.Sprint(tenantID), "", "")
 
 	return nil
 }
@@ -387,7 +388,7 @@ func (s *TenantService) InviteUserToTenant(tenantID, inviterUserID, userID uint,
 	}
 
 	// 审计日志
-	aduit.LogAudit(userID, "加入租户", "tenant", string(rune(tenantID)), "", "")
+	aduit.LogAudit(userID, "加入租户", "tenant", fmt.Sprint(tenantID), "", "")
 
 	return nil
 }

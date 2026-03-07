@@ -51,7 +51,7 @@ const (
 	TenantRoleAdmin  TenantRole = "admin"
 	TenantRoleMember TenantRole = "member"
 	TenantRoleUser   TenantRole = "user"
-	TenantRoleBanned  TenantRole = "banned"
+	TenantRoleBanned TenantRole = "banned"
 )
 
 // TenantUser 租户管理员关联模型（原UserTenant重命名）

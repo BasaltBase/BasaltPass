@@ -35,10 +35,10 @@ type TenantUserRbacPermission struct {
 	ExpiresAt    *time.Time `json:"expires_at,omitempty"`
 
 	// 关联
-	User          User             `gorm:"foreignKey:UserID" json:"user,omitempty"`
-	Tenant        Tenant           `gorm:"foreignKey:TenantID" json:"tenant,omitempty"`
+	User          User                 `gorm:"foreignKey:UserID" json:"user,omitempty"`
+	Tenant        Tenant               `gorm:"foreignKey:TenantID" json:"tenant,omitempty"`
 	Permission    TenantRbacPermission `gorm:"foreignKey:PermissionID" json:"permission,omitempty"`
-	GrantedByUser User             `gorm:"foreignKey:GrantedBy" json:"granted_by_user,omitempty"`
+	GrantedByUser User                 `gorm:"foreignKey:GrantedBy" json:"granted_by_user,omitempty"`
 }
 
 // TableName 设置表名

@@ -70,6 +70,11 @@ type Config struct {
 		Enabled bool `mapstructure:"enabled"`
 	} `mapstructure:"seeding"`
 
+	Admin struct {
+		Email    string `mapstructure:"email"`
+		Password string `mapstructure:"password"`
+	} `mapstructure:"admin"`
+
 	S2S struct {
 		// AllowQueryCredentials controls whether client_id/client_secret may be passed via query string.
 		// Strongly recommended to disable in production.

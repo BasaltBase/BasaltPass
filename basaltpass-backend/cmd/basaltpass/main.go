@@ -1,24 +1,37 @@
 package main
 
+// Reviewed by zeturn 2026
+
 import (
 	v1 "basaltpass-backend/internal/api/v1"
-	"basaltpass-backend/internal/handler/public/subscription"
-	userTeam "basaltpass-backend/internal/handler/user/team"
-	common2 "basaltpass-backend/internal/middleware"
-	"basaltpass-backend/internal/migration"
+	config "basaltpass-backend/internal/config"
+	middleware "basaltpass-backend/internal/middleware"
+	migration "basaltpass-backend/internal/migration"
 	usersettings "basaltpass-backend/internal/service/settings"
+	utils "basaltpass-backend/internal/utils"
+
+	"fmt"
 	"log"
-
-	"basaltpass-backend/internal/common"
-	"basaltpass-backend/internal/config"
-	"basaltpass-backend/internal/utils"
-
 	"os"
 
 	"github.com/gofiber/fiber/v2"
 )
 
+func printBanner() {
+	banner := `
+ ____                  _ _   ____               
+| __ )  __ _ ___  __ _| | |_|  _ \ __ _ ___ ___ 
+|  _ \ / _' / __|/ _' | | __| |_) / _' / __/ __|
+| |_) | (_| \__ \ (_| | | |_|  __/ (_| \__ \__ \
+|____/ \__,_|___/\__,_|_|\__|_|   \__,_|___/___/
+                        by HollowData
+`
+	fmt.Print(banner)
+}
+
 func main() {
+	printBanner()
+
 	// Load configuration (config file optional; env vars supported)
 	cfgPath := os.Getenv("BASALTPASS_CONFIG")
 	if _, err := config.Load(cfgPath); err != nil {
@@ -30,30 +43,18 @@ func main() {
 
 	// Load file-based system settings into cache
 	if err := usersettings.Reload(); err != nil {
-		log.Printf("[main][warn] settings reload failed: %v", err)
+		log.Printf("[main][warn] Settings reload failed: %v", err)
 	}
 
 	app := fiber.New(fiber.Config{
-		ErrorHandler: common2.ErrorHandler,
+		ErrorHandler: middleware.ErrorHandler,
 	})
 
 	// Register global middlewares
-	common2.RegisterMiddlewares(app)
+	middleware.RegisterMiddlewares(app)
 
 	// Run DB migrations
 	migration.RunMigrations()
-
-	// 初始化团队处理器（用户侧）
-	userTeam.InitHandler(common.DB())
-
-	// 初始化订阅处理器
-	subscription.InitHandler(common.DB())
-
-	// 初始化租户订阅处理器
-	subscription.InitTenantHandler(common.DB())
-
-	// 初始化租户目录/定价模板处理器（分类/标签/price templates）
-	subscription.InitTenantCatalogHandler(common.DB())
 
 	// Register API routes
 	v1.RegisterRoutes(app)
@@ -68,9 +69,9 @@ func main() {
 		// scripts/dev.sh runs the backend with CWD=basaltpass-backend.
 		// Export to the repo-level docs folder.
 		if err := utils.DumpRoutes(app, "../docs/ROUTES.md"); err != nil {
-			log.Printf("[main][warn] route dump failed: %v", err)
+			log.Printf("[main][warn] Route dump failed: %v", err)
 		} else {
-			log.Printf("[main][info] route map exported to ../docs/ROUTES.md")
+			log.Printf("[main][info] Route map exported to ../docs/ROUTES.md")
 		}
 	}
 

@@ -54,3 +54,14 @@ cors:
     - "Last-Modified"
     - "Pragma"
   max_age_seconds: 86400
+
+# 默认初始管理员账户设置
+# 如果配置了 email，系统会在每次启动（或执行迁移）时尝试注入/确保此用户为超级管理员，并绑定为默认租户Owner
+# 可以通过环境变量 BASALTPASS_ADMIN_EMAIL 和 BASALTPASS_ADMIN_PASSWORD 覆盖
+admin:
+  email: ""
+  password: ""
+
+# 数据填充
+seeding:
+  # 是否在空数据库首次启动时注入演示数据

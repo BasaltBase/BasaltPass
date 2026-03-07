@@ -204,6 +204,8 @@ func handleSpecialMigrations() {
 				log.Println("[Migration] Seeded development superadmin user")
 			}
 		}
+
+		seedConfiguredAdmin()
 		return
 	}
 
@@ -224,6 +226,8 @@ func handleSpecialMigrations() {
 			}
 		}
 	}
+
+	seedConfiguredAdmin()
 }
 
 // dropLegacySystemSettingsTable removes the legacy DB table for system settings
@@ -236,6 +240,64 @@ func dropLegacySystemSettingsTable() {
 			log.Printf("[Migration] Failed to drop legacy system_settings: %v", err)
 		} else {
 			log.Println("[Migration] Dropped legacy system_settings table")
+		}
+	}
+}
+
+// seedConfiguredAdmin checks if an admin email is configured and ensures the user exists as a SuperAdmin.
+func seedConfiguredAdmin() {
+	cfg := config.Get()
+	if cfg.Admin.Email == "" {
+		return
+	}
+
+	db := common.DB()
+	email := cfg.Admin.Email
+	password := cfg.Admin.Password
+	if password == "" {
+		password = "Admin@12345" // Default password
+	}
+
+	var u model.User
+	err := db.Where("email = ?", email).First(&u).Error
+	if err != nil {
+		// User does not exist, create it
+		hash, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		u = model.User{
+			Email:         email,
+			PasswordHash:  string(hash),
+			Nickname:      "admin",
+			EmailVerified: true,
+		}
+		if err := db.Create(&u).Error; err != nil {
+			log.Printf("[Migration] Failed to create configured admin: %v", err)
+			return
+		}
+		log.Printf("[Migration] Created configured admin user: %s", email)
+	}
+
+	// Ensure global role (role_id = 1 for superadmin)
+	var ur model.UserRole
+	if err := db.Where("user_id = ? AND role_id = ?", u.ID, 1).First(&ur).Error; err != nil {
+		ur = model.UserRole{UserID: u.ID, RoleID: 1}
+		if err := db.Create(&ur).Error; err != nil {
+			log.Printf("[Migration] Failed to assign superadmin role to configured admin: %v", err)
+		} else {
+			log.Printf("[Migration] Assigned superadmin role to configured admin: %s", email)
+		}
+	}
+
+	// Bind to default tenant as owner
+	var tenant model.Tenant
+	if err := db.Where("code = ?", "default").First(&tenant).Error; err == nil {
+		var cnt int64
+		db.Model(&model.TenantUser{}).Where("user_id = ? AND tenant_id = ?", u.ID, tenant.ID).Count(&cnt)
+		if cnt == 0 {
+			if err := db.Create(&model.TenantUser{UserID: u.ID, TenantID: tenant.ID, Role: model.TenantRoleOwner}).Error; err != nil {
+				log.Printf("[Migration] Failed to bind configured admin to default tenant: %v", err)
+			} else {
+				log.Printf("[Migration] Bound configured admin to default tenant as owner")
+			}
 		}
 	}
 }

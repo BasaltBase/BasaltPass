@@ -57,10 +57,10 @@ type OAuthAuthorizationCode struct {
 	AppID               uint      `gorm:"not null;index" json:"app_id"`
 	RedirectURI         string    `gorm:"size:500;not null" json:"redirect_uri"`
 	Scopes              string    `gorm:"type:text" json:"scopes"`
-	CodeChallenge       string    `gorm:"size:128" json:"code_challenge"`        // PKCE支持
-	CodeChallengeMethod string    `gorm:"size:16" json:"code_challenge_method"`  // PKCE方法
+	CodeChallenge       string    `gorm:"size:128" json:"code_challenge"`       // PKCE支持
+	CodeChallengeMethod string    `gorm:"size:16" json:"code_challenge_method"` // PKCE方法
 	ExpiresAt           time.Time `gorm:"not null;index" json:"expires_at"`
-	Used                bool      `gorm:"default:false;index" json:"used"`       // 是否已使用
+	Used                bool      `gorm:"default:false;index" json:"used"` // 是否已使用
 	CreatedAt           time.Time `json:"created_at"`
 
 	// 关联
@@ -122,7 +122,7 @@ func (t *OAuthAccessToken) GetScopeList() []string {
 	return strings.Split(t.Scopes, " ")
 }
 
-// GetScopeList 获取权限范围列表  
+// GetScopeList 获取权限范围列表
 func (c *OAuthAuthorizationCode) GetScopeList() []string {
 	if c.Scopes == "" {
 		return []string{}

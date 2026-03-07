@@ -441,15 +441,15 @@ func CheckUserAccess(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{
 		"data": fiber.Map{
-			"user_id":                        userID,
-			"app_id":                         appID,
-			"tenant_id":                      tenantID,
-			"permissions":                    permissionResult,
-			"roles":                          roleResult,
-			"has_all_permissions":            hasAllPermissions,
-			"has_all_roles":                  hasAllRoles,
-			"permission_input_dup_filtered":  permissionInputDuplicates,
-			"role_input_dup_filtered":        roleInputDuplicates,
+			"user_id":                       userID,
+			"app_id":                        appID,
+			"tenant_id":                     tenantID,
+			"permissions":                   permissionResult,
+			"roles":                         roleResult,
+			"has_all_permissions":           hasAllPermissions,
+			"has_all_roles":                 hasAllRoles,
+			"permission_input_dup_filtered": permissionInputDuplicates,
+			"role_input_dup_filtered":       roleInputDuplicates,
 		},
 		"message": "应用访问校验完成",
 	})

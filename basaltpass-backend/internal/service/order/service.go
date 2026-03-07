@@ -22,26 +22,26 @@ type CreateOrderRequest struct {
 
 // OrderResponse 订单响应
 type OrderResponse struct {
-	ID             uint                   `json:"id"`
-	OrderNumber    string                 `json:"order_number"`
-	UserID         uint                   `json:"user_id"`
-	PriceID        uint                   `json:"price_id"`
-	CouponID       *uint                  `json:"coupon_id"`
-	Status         model.OrderStatus      `json:"status"`
-	Quantity       float64                `json:"quantity"`
-	BaseAmount     int64                  `json:"base_amount"`
-	DiscountAmount int64                  `json:"discount_amount"`
-	TotalAmount    int64                  `json:"total_amount"`
-	Currency       string                 `json:"currency"`
-	Description    string                 `json:"description"`
-	ExpiresAt      time.Time              `json:"expires_at"`
-	PaidAt         *time.Time             `json:"paid_at"`
-	CreatedAt      time.Time              `json:"created_at"`
-	UpdatedAt      time.Time              `json:"updated_at"`
-	
+	ID             uint              `json:"id"`
+	OrderNumber    string            `json:"order_number"`
+	UserID         uint              `json:"user_id"`
+	PriceID        uint              `json:"price_id"`
+	CouponID       *uint             `json:"coupon_id"`
+	Status         model.OrderStatus `json:"status"`
+	Quantity       float64           `json:"quantity"`
+	BaseAmount     int64             `json:"base_amount"`
+	DiscountAmount int64             `json:"discount_amount"`
+	TotalAmount    int64             `json:"total_amount"`
+	Currency       string            `json:"currency"`
+	Description    string            `json:"description"`
+	ExpiresAt      time.Time         `json:"expires_at"`
+	PaidAt         *time.Time        `json:"paid_at"`
+	CreatedAt      time.Time         `json:"created_at"`
+	UpdatedAt      time.Time         `json:"updated_at"`
+
 	// 关联数据
-	Price          *model.Price           `json:"price,omitempty"`
-	Coupon         *model.Coupon          `json:"coupon,omitempty"`
+	Price  *model.Price  `json:"price,omitempty"`
+	Coupon *model.Coupon `json:"coupon,omitempty"`
 }
 
 // OrderService 订单服务
@@ -176,7 +176,7 @@ func (s *OrderService) CreateOrder(req *CreateOrderRequest) (*OrderResponse, err
 		}
 		return nil
 	})
-	
+
 	if err != nil {
 		return nil, err
 	}
@@ -269,7 +269,7 @@ func (s *OrderService) ListUserOrders(userID uint, limit int) ([]*OrderResponse,
 	var orders []model.Order
 	query := s.db.Preload("Price.Plan.Product").Preload("Coupon").
 		Where("user_id = ?", userID).Order("created_at desc")
-	
+
 	if limit > 0 {
 		query = query.Limit(limit)
 	}
@@ -310,4 +310,4 @@ func (s *OrderService) ExpireOrders() error {
 	return s.db.Model(&model.Order{}).
 		Where("status = ? AND expires_at < ?", model.OrderStatusPending, time.Now()).
 		Update("status", model.OrderStatusExpired).Error
-} 
+}

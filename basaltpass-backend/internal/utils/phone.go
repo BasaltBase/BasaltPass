@@ -31,7 +31,7 @@ func (pv *PhoneValidator) ValidateE164(phone string) error {
 
 	// E.164格式正则表达式：以+开头，后跟1-15位数字
 	e164Regex := regexp.MustCompile(`^\+[1-9]\d{6,14}$`)
-	
+
 	if !e164Regex.MatchString(phone) {
 		return errors.New("手机号格式不正确，应为E.164格式（例：+8613812345678）")
 	}
@@ -47,7 +47,7 @@ func (pv *PhoneValidator) NormalizeToE164(phone string) (string, error) {
 
 	// 去除空格、连字符等分隔符
 	cleaned := pv.cleanPhone(phone)
-	
+
 	// 如果已经是E.164格式，直接验证并返回
 	if strings.HasPrefix(cleaned, "+") {
 		if err := pv.ValidateE164(cleaned); err != nil {
@@ -233,7 +233,7 @@ func (pv *PhoneValidator) IsValidPhoneForCountry(phone, countryCode string) bool
 	}
 
 	number := phone[len(countryCode):]
-	
+
 	switch countryCode {
 	case "+86":
 		// 中国手机号：11位，以1开头

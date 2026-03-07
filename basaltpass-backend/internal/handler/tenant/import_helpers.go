@@ -70,4 +70,3 @@ func normalizeCodesFromRaw(raw string) ([]string, int) {
 	}
 	return normalized, duplicateCount
 }
-

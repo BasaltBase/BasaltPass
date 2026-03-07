@@ -475,7 +475,7 @@ func SendEmailVerificationHandler(c *fiber.Ctx) error {
 		remaining := int(time.Until(recent.CreatedAt.Add(
 			time.Duration(model.EmailVerificationResendCooldown) * time.Second)).Seconds())
 		return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
-			"error":              fmt.Sprintf("请等待 %d 秒后再重新发送", remaining),
+			"error":               fmt.Sprintf("请等待 %d 秒后再重新发送", remaining),
 			"retry_after_seconds": remaining,
 		})
 	}
@@ -641,7 +641,7 @@ func VerifyEmailHandler(c *fiber.Ctx) error {
 	if hashEmailVerificationCode(body.Code) != token.CodeHash {
 		remaining := model.EmailVerificationMaxAttempts - (token.AttemptCount + 1)
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error":             "验证码错误",
+			"error":              "验证码错误",
 			"attempts_remaining": remaining,
 		})
 	}

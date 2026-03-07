@@ -18,7 +18,13 @@ import (
 	"basaltpass-backend/internal/middleware"
 
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
+
+// InitAdminRouteDependencies 初始化管理员路由依赖
+func InitAdminRouteDependencies(db *gorm.DB) {
+	subscription.InitHandler(db)
+}
 
 // RegisterAdminRoutes 注册系统级管理员路由
 func RegisterAdminRoutes(v1 fiber.Router) {

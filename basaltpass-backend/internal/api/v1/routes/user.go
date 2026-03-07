@@ -13,7 +13,13 @@ import (
 	"basaltpass-backend/internal/middleware"
 
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
+
+// InitUserRouteDependencies 初始化用户路由所需依赖
+func InitUserRouteDependencies(db *gorm.DB) {
+	userTeam.InitHandler(db)
+}
 
 // RegisterUserRoutes 注册用户相关路由
 func RegisterUserRoutes(v1 fiber.Router) {
