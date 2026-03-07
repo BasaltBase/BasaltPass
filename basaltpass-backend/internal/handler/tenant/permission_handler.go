@@ -369,12 +369,12 @@ func CheckTenantUserPermissions(c *fiber.Ctx) error {
 
 	var directCodes []string
 	if err := common.DB().
-		Table("tenant_user_rbac_permissions").
-		Select("tenant_rbac_permissions.code").
-		Joins("JOIN tenant_rbac_permissions ON tenant_rbac_permissions.id = tenant_user_rbac_permissions.permission_id").
-		Where("tenant_user_rbac_permissions.user_id = ? AND tenant_user_rbac_permissions.tenant_id = ?", req.UserID, tenantID).
-		Where("tenant_user_rbac_permissions.expires_at IS NULL OR tenant_user_rbac_permissions.expires_at > ?", now).
-		Pluck("tenant_rbac_permissions.code", &directCodes).Error; err != nil {
+		Table("tenant_user_permissions").
+		Select("tenant_permissions.code").
+		Joins("JOIN tenant_permissions ON tenant_permissions.id = tenant_user_permissions.permission_id").
+		Where("tenant_user_permissions.user_id = ? AND tenant_user_permissions.tenant_id = ?", req.UserID, tenantID).
+		Where("tenant_user_permissions.expires_at IS NULL OR tenant_user_permissions.expires_at > ?", now).
+		Pluck("tenant_permissions.code", &directCodes).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "查询用户直接权限失败"})
 	}
 	for _, code := range directCodes {
@@ -383,13 +383,13 @@ func CheckTenantUserPermissions(c *fiber.Ctx) error {
 
 	var roleCodes []string
 	if err := common.DB().
-		Table("tenant_user_rbac_roles").
-		Select("distinct tenant_rbac_permissions.code").
-		Joins("JOIN tenant_rbac_role_permissions ON tenant_rbac_role_permissions.role_id = tenant_user_rbac_roles.role_id").
-		Joins("JOIN tenant_rbac_permissions ON tenant_rbac_permissions.id = tenant_rbac_role_permissions.permission_id").
-		Where("tenant_user_rbac_roles.user_id = ? AND tenant_user_rbac_roles.tenant_id = ?", req.UserID, tenantID).
-		Where("tenant_user_rbac_roles.expires_at IS NULL OR tenant_user_rbac_roles.expires_at > ?", now).
-		Pluck("tenant_rbac_permissions.code", &roleCodes).Error; err != nil {
+		Table("tenant_user_roles").
+		Select("distinct tenant_permissions.code").
+		Joins("JOIN tenant_role_permissions ON tenant_role_permissions.role_id = tenant_user_roles.role_id").
+		Joins("JOIN tenant_permissions ON tenant_permissions.id = tenant_role_permissions.permission_id").
+		Where("tenant_user_roles.user_id = ? AND tenant_user_roles.tenant_id = ?", req.UserID, tenantID).
+		Where("tenant_user_roles.expires_at IS NULL OR tenant_user_roles.expires_at > ?", now).
+		Pluck("tenant_permissions.code", &roleCodes).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "查询用户角色权限失败"})
 	}
 	for _, code := range roleCodes {
@@ -670,8 +670,8 @@ func GetRolePermissions(c *fiber.Ctx) error {
 	// 获取角色的权限
 	var permissions []model.TenantRbacPermission
 	if err := common.DB().
-		Joins("JOIN tenant_rbac_role_permissions ON tenant_rbac_role_permissions.permission_id = tenant_rbac_permissions.id").
-		Where("tenant_rbac_role_permissions.role_id = ? AND tenant_rbac_permissions.tenant_id = ?", roleID, tenantID).
+		Joins("JOIN tenant_role_permissions ON tenant_role_permissions.permission_id = tenant_permissions.id").
+		Where("tenant_role_permissions.role_id = ? AND tenant_permissions.tenant_id = ?", roleID, tenantID).
 		Find(&permissions).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "获取权限列表失败",

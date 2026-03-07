@@ -21,7 +21,7 @@ type TenantRbacPermission struct {
 
 // TableName 设置表名
 func (TenantRbacPermission) TableName() string {
-	return "tenant_rbac_permissions"
+	return "tenant_permissions"
 }
 
 // TenantUserRbacPermission 用户-租户权限关联
@@ -43,7 +43,7 @@ type TenantUserRbacPermission struct {
 
 // TableName 设置表名
 func (TenantUserRbacPermission) TableName() string {
-	return "tenant_user_rbac_permissions"
+	return "tenant_user_permissions"
 }
 
 // TenantRbacRolePermission 租户角色-权限关联
@@ -54,5 +54,5 @@ type TenantRbacRolePermission struct {
 
 // TableName 设置表名
 func (TenantRbacRolePermission) TableName() string {
-	return "tenant_rbac_role_permissions"
+	return "tenant_role_permissions"
 }

@@ -15,13 +15,13 @@ type TenantRbacRole struct {
 
 	// 关联
 	Tenant      Tenant                 `gorm:"foreignKey:TenantID" json:"tenant,omitempty"`
-	Permissions []TenantRbacPermission `gorm:"many2many:tenant_rbac_role_permissions;" json:"permissions,omitempty"`
+	Permissions []TenantRbacPermission `gorm:"many2many:tenant_role_permissions;" json:"permissions,omitempty"`
 	UserRoles   []TenantUserRbacRole   `gorm:"foreignKey:RoleID" json:"user_roles,omitempty"`
 }
 
 // TableName 设置表名
 func (TenantRbacRole) TableName() string {
-	return "tenant_rbac_roles"
+	return "tenant_roles"
 }
 
 // TenantUserRole 用户-租户角色关联
@@ -43,5 +43,5 @@ type TenantUserRbacRole struct {
 
 // TableName 设置表名
 func (TenantUserRbacRole) TableName() string {
-	return "tenant_user_rbac_roles"
+	return "tenant_user_roles"
 }

@@ -531,12 +531,12 @@ func CheckTenantUserRoles(c *fiber.Ctx) error {
 	now := time.Now()
 	var roleCodes []string
 	if err := common.DB().
-		Table("tenant_user_rbac_roles").
-		Select("tenant_rbac_roles.code").
-		Joins("JOIN tenant_rbac_roles ON tenant_rbac_roles.id = tenant_user_rbac_roles.role_id").
-		Where("tenant_user_rbac_roles.user_id = ? AND tenant_user_rbac_roles.tenant_id = ?", req.UserID, tenantID).
-		Where("tenant_user_rbac_roles.expires_at IS NULL OR tenant_user_rbac_roles.expires_at > ?", now).
-		Pluck("tenant_rbac_roles.code", &roleCodes).Error; err != nil {
+		Table("tenant_user_roles").
+		Select("tenant_roles.code").
+		Joins("JOIN tenant_roles ON tenant_roles.id = tenant_user_roles.role_id").
+		Where("tenant_user_roles.user_id = ? AND tenant_user_roles.tenant_id = ?", req.UserID, tenantID).
+		Where("tenant_user_roles.expires_at IS NULL OR tenant_user_roles.expires_at > ?", now).
+		Pluck("tenant_roles.code", &roleCodes).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "查询用户角色失败"})
 	}
 
