@@ -20,6 +20,10 @@ type RateLimitRecord struct {
 	UpdatedAt time.Time
 }
 
+func (RateLimitRecord) TableName() string {
+	return "system_rate_limit_records"
+}
+
 // RateLimitConfig 速率限制配置
 type RateLimitConfig struct {
 	Limit    int           // 限制次数

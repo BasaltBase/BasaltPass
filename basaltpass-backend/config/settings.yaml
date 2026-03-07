@@ -15,6 +15,18 @@ settings:
         value: 90
         category: audit
         description: 审计日志保留天数
+    auth.2fa.passkey_enabled:
+        value: true
+        category: auth
+        description: 是否允许使用 Passkey（WebAuthn）作为二次验证方式
+    auth.2fa.sms_enabled:
+        value: false
+        category: auth
+        description: 是否允许使用短信验证码作为二次验证方式
+    auth.2fa.totp_enabled:
+        value: true
+        category: auth
+        description: 是否允许使用 TOTP（身份验证器 App）作为二次验证方式
     auth.enable_register:
         value: false
         category: auth
@@ -341,14 +353,14 @@ settings:
         value: ""
         category: smtp
         description: SMTP 密码
-    smtp.skip_cert_verify:
-        value: false
-        category: smtp
-        description: 是否跳过 SMTP TLS 证书校验（不推荐在生产开启）
     smtp.port:
         value: 587
         category: smtp
         description: SMTP 端口
+    smtp.skip_cert_verify:
+        value: false
+        category: smtp
+        description: 是否跳过 SMTP TLS 证书校验（不推荐在生产开启）
     smtp.username:
         value: ""
         category: smtp

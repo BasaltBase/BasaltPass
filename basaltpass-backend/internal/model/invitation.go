@@ -23,3 +23,7 @@ type Invitation struct {
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 }
+
+func (Invitation) TableName() string {
+	return "system_auth_team_invitations"
+}

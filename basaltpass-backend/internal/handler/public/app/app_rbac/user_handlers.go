@@ -45,8 +45,8 @@ func GetAppUsers(c *fiber.Ctx) error {
 	// 获取应用的所有用户
 	var users []AppUser
 	err = common.DB().Table("app_users").
-		Select("users.id, users.email, users.nickname, app_users.status").
-		Joins("JOIN users ON users.id = app_users.user_id").
+		Select("system_auth_users.id, system_auth_users.email, system_auth_users.nickname, app_users.status").
+		Joins("JOIN system_auth_users ON system_auth_users.id = app_users.user_id").
 		Where("app_users.app_id = ?", appID).
 		Find(&users).Error
 

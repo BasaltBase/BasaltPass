@@ -366,8 +366,8 @@ func (s *AdminUserService) convertToAdminUserListResponse(user model.User) Admin
 // getGlobalRoles 获取用户的全局角色
 func (s *AdminUserService) getGlobalRoles(userID uint) []GlobalRole {
 	var roles []model.Role
-	s.db.Joins("JOIN user_roles ON roles.id = user_roles.role_id").
-		Where("user_roles.user_id = ? AND (roles.tenant_id = 0 OR roles.tenant_id IS NULL)", userID).
+	s.db.Joins("JOIN system_auth_user_roles ON system_auth_roles.id = system_auth_user_roles.role_id").
+		Where("system_auth_user_roles.user_id = ? AND (system_auth_roles.tenant_id = 0 OR system_auth_roles.tenant_id IS NULL)", userID).
 		Find(&roles)
 
 	globalRoles := make([]GlobalRole, len(roles))

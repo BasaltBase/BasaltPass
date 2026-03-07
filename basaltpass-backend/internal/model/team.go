@@ -18,6 +18,10 @@ type Team struct {
 	Wallets []Wallet `gorm:"foreignKey:TeamID"`
 }
 
+func (Team) TableName() string {
+	return "system_auth_teams"
+}
+
 // TeamMember represents a user's membership in a team
 type TeamMember struct {
 	gorm.Model
@@ -30,6 +34,10 @@ type TeamMember struct {
 	// 关联
 	Team Team `gorm:"foreignKey:TeamID"`
 	User User `gorm:"foreignKey:UserID"`
+}
+
+func (TeamMember) TableName() string {
+	return "system_auth_team_members"
 }
 
 // TeamRole defines the role of a team member

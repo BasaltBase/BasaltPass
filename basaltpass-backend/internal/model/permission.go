@@ -11,8 +11,16 @@ type Permission struct {
 	Desc string `gorm:"size:255"`
 }
 
+func (Permission) TableName() string {
+	return "system_auth_permissions"
+}
+
 // RolePermission pivot for global roles and permissions
 type RolePermission struct {
 	RoleID       uint `gorm:"primaryKey"`
 	PermissionID uint `gorm:"primaryKey"`
+}
+
+func (RolePermission) TableName() string {
+	return "system_auth_role_permissions"
 }

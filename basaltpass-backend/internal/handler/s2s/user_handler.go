@@ -54,9 +54,9 @@ func s2sTenantID(c *fiber.Ctx) (uint, error) {
 
 func userInTenant(userID uint, tenantID uint) (bool, error) {
 	var count int64
-	err := common.DB().Table("user_roles").
-		Joins("JOIN roles ON user_roles.role_id = roles.id").
-		Where("user_roles.user_id = ? AND roles.tenant_id = ?", userID, tenantID).
+	err := common.DB().Table("system_auth_user_roles").
+		Joins("JOIN system_auth_roles ON system_auth_user_roles.role_id = system_auth_roles.id").
+		Where("system_auth_user_roles.user_id = ? AND system_auth_roles.tenant_id = ?", userID, tenantID).
 		Count(&count).Error
 	return count > 0, err
 }
@@ -184,8 +184,8 @@ func LookupUsersHandler(c *fiber.Ctx) error {
 	}
 
 	db := common.DB().Model(&model.User{}).
-		Joins("JOIN user_roles ur ON ur.user_id = users.id").
-		Joins("JOIN roles r ON r.id = ur.role_id").
+		Joins("JOIN system_auth_user_roles ur ON ur.user_id = system_auth_users.id").
+		Joins("JOIN system_auth_roles r ON r.id = ur.role_id").
 		Where("r.tenant_id = ?", tenantID)
 
 	page, _ := strconv.Atoi(c.Query("page", "1"))
@@ -199,14 +199,14 @@ func LookupUsersHandler(c *fiber.Ctx) error {
 
 	if email != "" {
 		var u model.User
-		if err := db.Where("lower(users.email) = lower(?)", email).First(&u).Error; err != nil {
+		if err := db.Where("lower(system_auth_users.email) = lower(?)", email).First(&u).Error; err != nil {
 			return unifiedResponse(c, fiber.StatusOK, fiber.Map{"users": []fiber.Map{}}, nil)
 		}
 		return unifiedResponse(c, fiber.StatusOK, fiber.Map{"users": []fiber.Map{userSummary(u)}}, nil)
 	}
 	if phone != "" {
 		var u model.User
-		if err := db.Where("users.phone = ?", phone).First(&u).Error; err != nil {
+		if err := db.Where("system_auth_users.phone = ?", phone).First(&u).Error; err != nil {
 			return unifiedResponse(c, fiber.StatusOK, fiber.Map{"users": []fiber.Map{}}, nil)
 		}
 		return unifiedResponse(c, fiber.StatusOK, fiber.Map{"users": []fiber.Map{userSummary(u)}}, nil)
@@ -214,13 +214,13 @@ func LookupUsersHandler(c *fiber.Ctx) error {
 
 	like := "%" + strings.ToLower(q) + "%"
 	var total int64
-	if err := db.Where("lower(users.email) LIKE ? OR lower(users.nickname) LIKE ?", like, like).Distinct("users.id").Count(&total).Error; err != nil {
+	if err := db.Where("lower(system_auth_users.email) LIKE ? OR lower(system_auth_users.nickname) LIKE ?", like, like).Distinct("system_auth_users.id").Count(&total).Error; err != nil {
 		return unifiedResponse(c, fiber.StatusInternalServerError, nil, fiber.Map{"code": "server_error", "message": err.Error()})
 	}
 	var users []model.User
-	if err := db.Where("lower(users.email) LIKE ? OR lower(users.nickname) LIKE ?", like, like).
-		Distinct("users.id").
-		Order("users.id desc").
+	if err := db.Where("lower(system_auth_users.email) LIKE ? OR lower(system_auth_users.nickname) LIKE ?", like, like).
+		Distinct("system_auth_users.id").
+		Order("system_auth_users.id desc").
 		Offset((page - 1) * pageSize).
 		Limit(pageSize).
 		Find(&users).Error; err != nil {

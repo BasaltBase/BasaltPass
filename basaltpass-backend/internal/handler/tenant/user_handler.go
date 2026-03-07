@@ -98,7 +98,7 @@ func GetTenantUsersHandler(c *fiber.Ctx) error {
 
 	// 基于 tenant_users 查询当前租户的所有用户
 	base := common.DB().Table("tenant_users ta").
-		Joins("JOIN users u ON u.id = ta.user_id").
+		Joins("JOIN system_auth_users u ON u.id = ta.user_id").
 		Where("ta.tenant_id = ?", tenantID)
 
 	// 搜索条件（邮箱/昵称）
@@ -238,13 +238,13 @@ func GetTenantAppLinkedUsersHandler(c *fiber.Ctx) error {
 	offset := (page - 1) * limit
 
 	// 基础联结：租户下的应用(apps.tenant_id = tenantID) 与 app_users、users
-	base := common.DB().Table("users").
-		Joins("JOIN app_users au ON au.user_id = users.id").
+	base := common.DB().Table("system_auth_users").
+		Joins("JOIN app_users au ON au.user_id = system_auth_users.id").
 		Joins("JOIN apps a ON a.id = au.app_id").
 		Where("a.tenant_id = ?", tenantID)
 
 	if search != "" {
-		base = base.Where("LOWER(users.email) LIKE LOWER(?) OR LOWER(users.nickname) LIKE LOWER(?)", "%"+search+"%", "%"+search+"%")
+		base = base.Where("LOWER(system_auth_users.email) LIKE LOWER(?) OR LOWER(system_auth_users.nickname) LIKE LOWER(?)", "%"+search+"%", "%"+search+"%")
 	}
 	if status != "" {
 		base = base.Where("au.status = ?", status)
@@ -252,7 +252,7 @@ func GetTenantAppLinkedUsersHandler(c *fiber.Ctx) error {
 
 	// 统计去重后的用户数量
 	var total int64
-	if err := base.Distinct("users.id").Count(&total).Error; err != nil {
+	if err := base.Distinct("system_auth_users.id").Count(&total).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "统计用户数量失败",
 		})
@@ -261,14 +261,14 @@ func GetTenantAppLinkedUsersHandler(c *fiber.Ctx) error {
 	// 查询列表：按用户分组聚合（最近授权/活跃时间、涉及应用数）
 	var users []TenantAppLinkedUserResponse
 	listQuery := base.Select(`
-			users.id,
-			users.email,
-			users.nickname,
-			users.avatar_url as avatar,
+			system_auth_users.id,
+			system_auth_users.email,
+			system_auth_users.nickname,
+			system_auth_users.avatar_url as avatar,
 			COUNT(DISTINCT au.app_id) as app_count,
 			MAX(au.last_authorized_at) as last_authorized_at,
 			MAX(au.last_active_at) as last_active_at`).
-		Group("users.id, users.email, users.nickname, users.avatar_url").
+		Group("system_auth_users.id, system_auth_users.email, system_auth_users.nickname, system_auth_users.avatar_url").
 		Order("MAX(au.last_authorized_at) DESC").
 		Offset(offset).Limit(limit)
 
@@ -305,7 +305,7 @@ func GetTenantUserStatsHandler(c *fiber.Ctx) error {
 
 	// 活跃用户
 	if err := common.DB().Table("tenant_users ta").
-		Joins("JOIN users u ON u.id = ta.user_id").
+		Joins("JOIN system_auth_users u ON u.id = ta.user_id").
 		Where("ta.tenant_id = ? AND u.email_verified = 1 AND u.deleted_at IS NULL AND ta.role != 'baned'", tenantID).
 		Count(&stats.ActiveUsers).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "统计活跃用户数失败"})
@@ -313,7 +313,7 @@ func GetTenantUserStatsHandler(c *fiber.Ctx) error {
 
 	// 暂停/封禁用户
 	if err := common.DB().Table("tenant_users ta").
-		Joins("JOIN users u ON u.id = ta.user_id").
+		Joins("JOIN system_auth_users u ON u.id = ta.user_id").
 		Where("ta.tenant_id = ? AND (u.deleted_at IS NOT NULL OR ta.role = 'baned')", tenantID).
 		Count(&stats.SuspendedUsers).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "统计暂停用户数失败"})

@@ -38,6 +38,10 @@ type PendingSignup struct {
 	Challenges []VerificationChallenge `gorm:"foreignKey:SignupID"`
 }
 
+func (PendingSignup) TableName() string {
+	return "system_pending_signups"
+}
+
 // ChallengeStatus 验证码状态
 type ChallengeStatus string
 
@@ -81,6 +85,10 @@ type VerificationChallenge struct {
 
 	// 关联
 	PendingSignup PendingSignup `gorm:"foreignKey:SignupID;references:ID"`
+}
+
+func (VerificationChallenge) TableName() string {
+	return "system_verification_challenges"
 }
 
 // IsExpired 检查验证码是否已过期

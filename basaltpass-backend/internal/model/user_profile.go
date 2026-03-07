@@ -50,5 +50,5 @@ type UserProfile struct {
 
 // TableName returns the table name for UserProfile model
 func (UserProfile) TableName() string {
-	return "user_profiles"
+	return "system_user_profiles"
 }

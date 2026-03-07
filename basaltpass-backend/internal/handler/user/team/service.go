@@ -150,8 +150,8 @@ func (s *Service) GetUserTeams(userID uint) ([]UserTeamResponse, error) {
 	var members []model.TeamMember
 	// 通过JOIN确保只返回同一租户的团队
 	if err := s.db.Preload("Team").
-		Joins("JOIN teams ON teams.id = team_members.team_id").
-		Where("team_members.user_id = ? AND teams.tenant_id = ?", userID, user.TenantID).
+		Joins("JOIN system_auth_teams ON system_auth_teams.id = system_auth_team_members.team_id").
+		Where("system_auth_team_members.user_id = ? AND system_auth_teams.tenant_id = ?", userID, user.TenantID).
 		Find(&members).Error; err != nil {
 		return nil, fmt.Errorf("获取用户团队失败: %w", err)
 	}

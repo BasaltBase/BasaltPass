@@ -27,3 +27,7 @@ type Notification struct {
 	CreatedAt  time.Time      `json:"created_at"`
 	DeletedAt  gorm.DeletedAt `gorm:"index" json:"-"`
 }
+
+func (Notification) TableName() string {
+	return "system_notifications"
+}

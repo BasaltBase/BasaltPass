@@ -60,6 +60,10 @@ type User struct {
 	AppAuthorizations []AppUser `gorm:"foreignKey:UserID"`
 }
 
+func (User) TableName() string {
+	return "system_auth_users"
+}
+
 // IsSuperAdmin 检查用户是否为系统最高管理员，以 is_system_admin 字段为唯一依据。
 func (u *User) IsSuperAdmin() bool {
 	return u.IsSystemAdmin != nil && *u.IsSystemAdmin
@@ -145,9 +149,9 @@ func (u *User) HasRole(roleID uint) bool {
 // HasRoleInTenant 检查用户在指定租户中是否具有指定角色代码
 func (u *User) HasRoleInTenant(tenantID uint, roleCode string) bool {
 	var count int64
-	common.DB().Table("user_roles").
-		Joins("JOIN roles ON user_roles.role_id = roles.id").
-		Where("user_roles.user_id = ? AND roles.tenant_id = ? AND roles.code = ?", u.ID, tenantID, roleCode).
+	common.DB().Table("system_auth_user_roles").
+		Joins("JOIN system_auth_roles ON system_auth_user_roles.role_id = system_auth_roles.id").
+		Where("system_auth_user_roles.user_id = ? AND system_auth_roles.tenant_id = ? AND system_auth_roles.code = ?", u.ID, tenantID, roleCode).
 		Count(&count)
 	return count > 0
 }
@@ -156,8 +160,8 @@ func (u *User) HasRoleInTenant(tenantID uint, roleCode string) bool {
 func (u *User) GetRolesInTenant(tenantID uint) ([]Role, error) {
 	var roles []Role
 	err := common.DB().
-		Joins("JOIN user_roles ON roles.id = user_roles.role_id").
-		Where("user_roles.user_id = ? AND roles.tenant_id = ?", u.ID, tenantID).
+		Joins("JOIN system_auth_user_roles ON system_auth_roles.id = system_auth_user_roles.role_id").
+		Where("system_auth_user_roles.user_id = ? AND system_auth_roles.tenant_id = ?", u.ID, tenantID).
 		Preload("App").
 		Find(&roles).Error
 	return roles, err
@@ -166,10 +170,10 @@ func (u *User) GetRolesInTenant(tenantID uint) ([]Role, error) {
 // GetRoleCodesInTenant 获取用户在指定租户中的所有角色代码
 func (u *User) GetRoleCodesInTenant(tenantID uint) ([]string, error) {
 	var codes []string
-	err := common.DB().Table("user_roles").
-		Select("roles.code").
-		Joins("JOIN roles ON user_roles.role_id = roles.id").
-		Where("user_roles.user_id = ? AND roles.tenant_id = ?", u.ID, tenantID).
-		Pluck("roles.code", &codes).Error
+	err := common.DB().Table("system_auth_user_roles").
+		Select("system_auth_roles.code").
+		Joins("JOIN system_auth_roles ON system_auth_user_roles.role_id = system_auth_roles.id").
+		Where("system_auth_user_roles.user_id = ? AND system_auth_roles.tenant_id = ?", u.ID, tenantID).
+		Pluck("system_auth_roles.code", &codes).Error
 	return codes, err
 }

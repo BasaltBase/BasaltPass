@@ -463,32 +463,32 @@ func GetTenantUsersForRole(c *fiber.Ctx) error {
 	offset := (page - 1) * pageSize
 
 	// 构建查询 - 以 users.tenant_id 为主，tenant_users 仅补充角色
-	query := common.DB().Table("users").
-		Select("DISTINCT users.id, users.email, users.nickname, COALESCE(tenant_users.role, 'member') as role, users.created_at").
-		Joins("LEFT JOIN tenant_users ON tenant_users.user_id = users.id AND tenant_users.tenant_id = ?", tenantID).
-		Where("users.tenant_id = ? OR tenant_users.tenant_id = ?", tenantID, tenantID)
+	query := common.DB().Table("system_auth_users").
+		Select("DISTINCT system_auth_users.id, system_auth_users.email, system_auth_users.nickname, COALESCE(tenant_users.role, 'member') as role, system_auth_users.created_at").
+		Joins("LEFT JOIN tenant_users ON tenant_users.user_id = system_auth_users.id AND tenant_users.tenant_id = ?", tenantID).
+		Where("system_auth_users.tenant_id = ? OR tenant_users.tenant_id = ?", tenantID, tenantID)
 
 	if search != "" {
-		query = query.Where("(users.email LIKE ? OR users.nickname LIKE ?)",
+		query = query.Where("(system_auth_users.email LIKE ? OR system_auth_users.nickname LIKE ?)",
 			"%"+search+"%", "%"+search+"%")
 	}
 
 	// 获取总数
 	var total int64
-	countQuery := common.DB().Table("users").
-		Joins("LEFT JOIN tenant_users ON tenant_users.user_id = users.id AND tenant_users.tenant_id = ?", tenantID).
-		Where("users.tenant_id = ? OR tenant_users.tenant_id = ?", tenantID, tenantID)
+	countQuery := common.DB().Table("system_auth_users").
+		Joins("LEFT JOIN tenant_users ON tenant_users.user_id = system_auth_users.id AND tenant_users.tenant_id = ?", tenantID).
+		Where("system_auth_users.tenant_id = ? OR tenant_users.tenant_id = ?", tenantID, tenantID)
 	if search != "" {
-		countQuery = countQuery.Where("(users.email LIKE ? OR users.nickname LIKE ?)",
+		countQuery = countQuery.Where("(system_auth_users.email LIKE ? OR system_auth_users.nickname LIKE ?)",
 			"%"+search+"%", "%"+search+"%")
 	}
-	countQuery.Distinct("users.id").Count(&total)
+	countQuery.Distinct("system_auth_users.id").Count(&total)
 
 	// 获取用户列表
 	var users []TenantUserInfo
 	err := query.Offset(offset).
 		Limit(pageSize).
-		Order("users.created_at DESC").
+		Order("system_auth_users.created_at DESC").
 		Scan(&users).Error
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "获取用户列表失败"})

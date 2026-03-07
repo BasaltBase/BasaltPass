@@ -5,3 +5,7 @@ type UserRole struct {
 	UserID uint `gorm:"primaryKey"`
 	RoleID uint `gorm:"primaryKey"`
 }
+
+func (UserRole) TableName() string {
+	return "system_auth_user_roles"
+}

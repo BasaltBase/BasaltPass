@@ -9,3 +9,7 @@ type PasswordReset struct {
 	Code      string `gorm:"size:16"`
 	ExpiresAt time.Time
 }
+
+func (PasswordReset) TableName() string {
+	return "system_password_resets"
+}

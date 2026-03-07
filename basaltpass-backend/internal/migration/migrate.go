@@ -772,7 +772,7 @@ func ensurePasskeyTenantIndex() {
 
 	// 创建 (credential_id, tenant_id) 复合唯一索引，保证同一租户内凭证唯一
 	if err := db.Exec(
-		"CREATE UNIQUE INDEX IF NOT EXISTS idx_passkeys_credential_tenant ON passkeys (credential_id, tenant_id)",
+		"CREATE UNIQUE INDEX IF NOT EXISTS idx_passkeys_credential_tenant ON system_passkeys (credential_id, tenant_id)",
 	).Error; err != nil {
 		log.Printf("[Migration] Failed to create idx_passkeys_credential_tenant: %v", err)
 	} else {
@@ -780,7 +780,7 @@ func ensurePasskeyTenantIndex() {
 	}
 
 	// 为现有 passkeys 中 tenant_id=NULL 的记录设置默认值 0（系统租户）
-	db.Exec("UPDATE passkeys SET tenant_id = 0 WHERE tenant_id IS NULL")
+	db.Exec("UPDATE system_passkeys SET tenant_id = 0 WHERE tenant_id IS NULL")
 }
 
 // ensureSystemTenantWebAuthnConfig 为系统租户(tenant_id=0)创建默认 WebAuthn 配置（幂等）。
@@ -814,7 +814,7 @@ func ensureSystemTenantWebAuthnConfig() {
 func ensureUserTenantTOTPIndex() {
 	db := common.DB()
 	if err := db.Exec(
-		"CREATE UNIQUE INDEX IF NOT EXISTS idx_user_tenant_totps_user_tenant ON user_tenant_totps (user_id, tenant_id)",
+		"CREATE UNIQUE INDEX IF NOT EXISTS idx_user_tenant_totps_user_tenant ON system_user_tenant_totps (user_id, tenant_id)",
 	).Error; err != nil {
 		log.Printf("[Migration] Failed to create idx_user_tenant_totps_user_tenant: %v", err)
 	} else {
@@ -1208,23 +1208,23 @@ func ensureUserTenantScopedUniqueIndexes() {
 
 	// 再创建期望的复合唯一索引
 	if dialect == "sqlite" || dialect == "postgres" || dialect == "postgresql" {
-		if err := db.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_email_tenant ON users (email, tenant_id) WHERE email != ''").Error; err != nil {
+		if err := db.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_email_tenant ON system_auth_users (email, tenant_id) WHERE email != ''").Error; err != nil {
 			log.Printf("[Migration] Failed to create idx_email_tenant: %v", err)
 		}
-		if err := db.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_phone_tenant ON users (phone, tenant_id) WHERE phone != ''").Error; err != nil {
+		if err := db.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_phone_tenant ON system_auth_users (phone, tenant_id) WHERE phone != ''").Error; err != nil {
 			log.Printf("[Migration] Failed to create idx_phone_tenant: %v", err)
 		}
 	} else {
-		if err := db.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_email_tenant ON users (email, tenant_id)").Error; err != nil {
+		if err := db.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_email_tenant ON system_auth_users (email, tenant_id)").Error; err != nil {
 			log.Printf("[Migration] Failed to create idx_email_tenant: %v", err)
 		}
-		if err := db.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_phone_tenant ON users (phone, tenant_id)").Error; err != nil {
+		if err := db.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_phone_tenant ON system_auth_users (phone, tenant_id)").Error; err != nil {
 			log.Printf("[Migration] Failed to create idx_phone_tenant: %v", err)
 		}
 	}
 
 	// tenant_id 普通索引
-	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_users_tenant_id ON users (tenant_id)").Error; err != nil {
+	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_users_tenant_id ON system_auth_users (tenant_id)").Error; err != nil {
 		log.Printf("[Migration] Failed to create idx_users_tenant_id: %v", err)
 	}
 }
@@ -1255,7 +1255,7 @@ func ensureIsSystemAdminNonUniqueIndex() {
 	db.Exec("DROP INDEX IF EXISTS users_is_system_admin_key")
 
 	// 再创建普通索引（非 unique）
-	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_users_is_system_admin ON users (is_system_admin)").Error; err != nil {
+	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_users_is_system_admin ON system_auth_users (is_system_admin)").Error; err != nil {
 		log.Printf("[Migration] Failed to create idx_users_is_system_admin: %v", err)
 	}
 }

@@ -21,5 +21,5 @@ type UserTenantTOTP struct {
 }
 
 func (UserTenantTOTP) TableName() string {
-	return "user_tenant_totps"
+	return "system_user_tenant_totps"
 }

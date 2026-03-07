@@ -34,6 +34,10 @@ type EmailChangeRequest struct {
 	User *User `gorm:"foreignKey:UserID"`
 }
 
+func (EmailChangeRequest) TableName() string {
+	return "system_email_change_requests"
+}
+
 // IsExpired 检查请求是否过期
 func (r *EmailChangeRequest) IsExpired() bool {
 	return time.Now().After(r.ExpiresAt)
@@ -59,6 +63,10 @@ type PasswordResetToken struct {
 
 	// 关联关系
 	User *User `gorm:"foreignKey:UserID"`
+}
+
+func (PasswordResetToken) TableName() string {
+	return "system_password_reset_tokens"
 }
 
 // IsExpired 检查令牌是否过期
@@ -101,6 +109,10 @@ type EmailVerificationToken struct {
 	User *User `gorm:"foreignKey:UserID"`
 }
 
+func (EmailVerificationToken) TableName() string {
+	return "system_email_verification_tokens"
+}
+
 const EmailVerificationMaxAttempts = 5
 const EmailVerificationTTL = 30 // 分钟
 const EmailVerificationResendCooldown = 60 // 秒，重发冷却
@@ -134,6 +146,10 @@ type SecurityOperation struct {
 	User *User `gorm:"foreignKey:UserID"`
 }
 
+func (SecurityOperation) TableName() string {
+	return "system_security_operations"
+}
+
 // PhoneVerificationToken 手机号验证令牌
 // 用于已登录用户通过短信验证码验证自己绑定的手机号。
 // 流程：
@@ -151,6 +167,10 @@ type PhoneVerificationToken struct {
 	RequestedIP  string     `gorm:"size:45"`
 
 	User *User `gorm:"foreignKey:UserID"`
+}
+
+func (PhoneVerificationToken) TableName() string {
+	return "system_phone_verification_tokens"
 }
 
 const PhoneVerificationMaxAttempts = 5

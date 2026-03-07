@@ -28,5 +28,5 @@ type Passkey struct {
 
 // TableName 指定表名
 func (Passkey) TableName() string {
-	return "passkeys"
+	return "system_passkeys"
 }

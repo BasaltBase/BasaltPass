@@ -12,3 +12,7 @@ type AuditLog struct {
 	Data      string `gorm:"type:text"` // arbitrary JSON or text payload
 	User      User   `gorm:"foreignKey:UserID"`
 }
+
+func (AuditLog) TableName() string {
+	return "system_audit_logs"
+}

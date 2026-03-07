@@ -29,7 +29,7 @@ func (s *AdminService) List(req admindto.AdminListInvitationsRequest) (admindto.
 	}
 	if req.Keyword != "" {
 		like := "%" + req.Keyword + "%"
-		q = q.Joins("LEFT JOIN teams ON teams.id = invitations.team_id").Where("invitations.remark LIKE ? OR teams.name LIKE ?", like, like)
+		q = q.Joins("LEFT JOIN system_auth_teams ON system_auth_teams.id = system_auth_team_invitations.team_id").Where("system_auth_team_invitations.remark LIKE ? OR system_auth_teams.name LIKE ?", like, like)
 	}
 	var total int64
 	if err := q.Count(&total).Error; err != nil {

@@ -16,6 +16,10 @@ type LoginLog struct {
 	Success   bool      `gorm:"index"`
 }
 
+func (LoginLog) TableName() string {
+	return "system_login_logs"
+}
+
 // BeforeCreate 设置默认的 LoggedAt
 func (l *LoginLog) BeforeCreate(tx *gorm.DB) error {
 	if l.LoggedAt.IsZero() {

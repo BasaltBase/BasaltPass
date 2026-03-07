@@ -78,9 +78,9 @@ func DeletePermissionHandler(c *fiber.Ctx) error {
 func GetRolePermissionsHandler(c *fiber.Ctx) error {
 	roleID := c.Params("id")
 	var permissions []model.Permission
-	err := common.DB().Table("permissions").
-		Joins("JOIN role_permissions ON role_permissions.permission_id = permissions.id").
-		Where("role_permissions.role_id = ?", roleID).
+	err := common.DB().Table("system_auth_permissions").
+		Joins("JOIN system_auth_role_permissions ON system_auth_role_permissions.permission_id = system_auth_permissions.id").
+		Where("system_auth_role_permissions.role_id = ?", roleID).
 		Find(&permissions).Error
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
@@ -106,7 +106,7 @@ func SetRolePermissionsHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 	for _, pid := range req.PermissionIDs {
-		if err := tx.Exec("INSERT INTO role_permissions(role_id, permission_id) VALUES(?, ?)", roleID, pid).Error; err != nil {
+		if err := tx.Exec("INSERT INTO system_auth_role_permissions(role_id, permission_id) VALUES(?, ?)", roleID, pid).Error; err != nil {
 			tx.Rollback()
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 		}

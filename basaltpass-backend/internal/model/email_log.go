@@ -48,5 +48,5 @@ type EmailLog struct {
 
 // TableName specifies the table name for EmailLog
 func (EmailLog) TableName() string {
-	return "email_logs"
+	return "system_email_logs"
 }

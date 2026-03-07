@@ -19,3 +19,7 @@ type LoginHistory struct {
 	Status    string `gorm:"size:32" json:"status"`
 	Location  string `gorm:"size:255" json:"location,omitempty"`
 }
+
+func (LoginHistory) TableName() string {
+	return "system_login_histories"
+}
