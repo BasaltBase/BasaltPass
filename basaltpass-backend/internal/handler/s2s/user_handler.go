@@ -35,28 +35,34 @@ func userSummary(u model.User) fiber.Map {
 }
 
 func s2sTenantID(c *fiber.Ctx) (uint, error) {
-	// Explicit tenant_id is allowed for RBAC endpoints; default to client's tenant.
+	// tenant_id can be omitted (defaults to authenticated client's tenant).
+	// If explicitly provided, it must exactly match the authenticated tenant
+	// to prevent cross-tenant probing.
+	clientTenantAny := c.Locals("s2s_tenant_id")
+	clientTenantID, ok := clientTenantAny.(uint)
+	if !ok || clientTenantID == 0 {
+		return 0, fiber.NewError(fiber.StatusBadRequest, "invalid tenant context")
+	}
+
 	tenantStr := strings.TrimSpace(c.Query("tenant_id"))
 	if tenantStr == "" {
-		if v := c.Locals("s2s_tenant_id"); v != nil {
-			if tid, ok := v.(uint); ok {
-				return tid, nil
-			}
-		}
-		return 0, fiber.NewError(fiber.StatusBadRequest, "invalid tenant id")
+		return clientTenantID, nil
 	}
 	tid64, err := strconv.ParseUint(tenantStr, 10, 64)
 	if err != nil || tid64 == 0 {
 		return 0, fiber.NewError(fiber.StatusBadRequest, "invalid tenant id")
 	}
-	return uint(tid64), nil
+	requestedTenantID := uint(tid64)
+	if requestedTenantID != clientTenantID {
+		return 0, fiber.NewError(fiber.StatusForbidden, "tenant mismatch")
+	}
+	return requestedTenantID, nil
 }
 
 func userInTenant(userID uint, tenantID uint) (bool, error) {
 	var count int64
-	err := common.DB().Table("system_auth_user_roles").
-		Joins("JOIN system_auth_roles ON system_auth_user_roles.role_id = system_auth_roles.id").
-		Where("system_auth_user_roles.user_id = ? AND system_auth_roles.tenant_id = ?", userID, tenantID).
+	err := common.DB().Table("tenant_users").
+		Where("user_id = ? AND tenant_id = ?", userID, tenantID).
 		Count(&count).Error
 	return count > 0, err
 }
@@ -67,6 +73,23 @@ func GetUserByIDHandler(c *fiber.Ctx) error {
 	uid64, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil || uid64 == 0 {
 		return unifiedResponse(c, fiber.StatusBadRequest, nil, fiber.Map{"code": "invalid_parameter", "message": "invalid user id"})
+	}
+
+	tenantID, err := s2sTenantID(c)
+	if err != nil {
+		status := fiber.StatusBadRequest
+		if ferr, ok := err.(*fiber.Error); ok {
+			status = ferr.Code
+		}
+		return unifiedResponse(c, status, nil, fiber.Map{"code": "invalid_parameter", "message": err.Error()})
+	}
+
+	ok, err := userInTenant(uint(uid64), tenantID)
+	if err != nil {
+		return unifiedResponse(c, fiber.StatusInternalServerError, nil, fiber.Map{"code": "server_error", "message": err.Error()})
+	}
+	if !ok {
+		return unifiedResponse(c, fiber.StatusNotFound, nil, fiber.Map{"code": "not_found", "message": "user not found"})
 	}
 
 	var user model.User
@@ -87,7 +110,18 @@ func GetUserRolesHandler(c *fiber.Ctx) error {
 	}
 	tenantID, err := s2sTenantID(c)
 	if err != nil {
-		return unifiedResponse(c, fiber.StatusBadRequest, nil, fiber.Map{"code": "invalid_parameter", "message": "invalid tenant id"})
+		status := fiber.StatusBadRequest
+		if ferr, ok := err.(*fiber.Error); ok {
+			status = ferr.Code
+		}
+		return unifiedResponse(c, status, nil, fiber.Map{"code": "invalid_parameter", "message": err.Error()})
+	}
+	ok, err := userInTenant(uint(uid64), tenantID)
+	if err != nil {
+		return unifiedResponse(c, fiber.StatusInternalServerError, nil, fiber.Map{"code": "server_error", "message": err.Error()})
+	}
+	if !ok {
+		return unifiedResponse(c, fiber.StatusNotFound, nil, fiber.Map{"code": "not_found", "message": "user not found"})
 	}
 
 	roles, err := rbac.GetUserRoles(uint(uid64), tenantID)
@@ -111,7 +145,18 @@ func GetUserPermissionsHandler(c *fiber.Ctx) error {
 	}
 	tenantID, err := s2sTenantID(c)
 	if err != nil {
-		return unifiedResponse(c, fiber.StatusBadRequest, nil, fiber.Map{"code": "invalid_parameter", "message": "invalid tenant id"})
+		status := fiber.StatusBadRequest
+		if ferr, ok := err.(*fiber.Error); ok {
+			status = ferr.Code
+		}
+		return unifiedResponse(c, status, nil, fiber.Map{"code": "invalid_parameter", "message": err.Error()})
+	}
+	ok, err := userInTenant(uint(uid64), tenantID)
+	if err != nil {
+		return unifiedResponse(c, fiber.StatusInternalServerError, nil, fiber.Map{"code": "server_error", "message": err.Error()})
+	}
+	if !ok {
+		return unifiedResponse(c, fiber.StatusNotFound, nil, fiber.Map{"code": "not_found", "message": "user not found"})
 	}
 
 	permissionCodes, err := rbac.GetUserPermissionCodes(uint(uid64), tenantID)
@@ -141,7 +186,18 @@ func GetUserRoleCodesHandler(c *fiber.Ctx) error {
 	}
 	tenantID, err := s2sTenantID(c)
 	if err != nil {
-		return unifiedResponse(c, fiber.StatusBadRequest, nil, fiber.Map{"code": "invalid_parameter", "message": "invalid tenant id"})
+		status := fiber.StatusBadRequest
+		if ferr, ok := err.(*fiber.Error); ok {
+			status = ferr.Code
+		}
+		return unifiedResponse(c, status, nil, fiber.Map{"code": "invalid_parameter", "message": err.Error()})
+	}
+	ok, err := userInTenant(uint(uid64), tenantID)
+	if err != nil {
+		return unifiedResponse(c, fiber.StatusInternalServerError, nil, fiber.Map{"code": "server_error", "message": err.Error()})
+	}
+	if !ok {
+		return unifiedResponse(c, fiber.StatusNotFound, nil, fiber.Map{"code": "not_found", "message": "user not found"})
 	}
 	roleCodes, err := rbac.GetUserRoleCodes(uint(uid64), tenantID)
 	if err != nil {
@@ -299,6 +355,22 @@ func GetUserWalletHandler(c *fiber.Ctx) error {
 	if err != nil || uid64 == 0 {
 		return unifiedResponse(c, fiber.StatusBadRequest, nil, fiber.Map{"code": "invalid_parameter", "message": "invalid user id"})
 	}
+	tenantID, err := s2sTenantID(c)
+	if err != nil {
+		status := fiber.StatusBadRequest
+		if ferr, ok := err.(*fiber.Error); ok {
+			status = ferr.Code
+		}
+		return unifiedResponse(c, status, nil, fiber.Map{"code": "invalid_parameter", "message": err.Error()})
+	}
+	ok, err := userInTenant(uint(uid64), tenantID)
+	if err != nil {
+		return unifiedResponse(c, fiber.StatusInternalServerError, nil, fiber.Map{"code": "server_error", "message": err.Error()})
+	}
+	if !ok {
+		return unifiedResponse(c, fiber.StatusNotFound, nil, fiber.Map{"code": "not_found", "message": "user not found"})
+	}
+
 	currency := c.Query("currency")
 	limit, _ := strconv.Atoi(c.Query("limit", "20"))
 	if limit <= 0 {

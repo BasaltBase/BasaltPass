@@ -31,8 +31,8 @@ func VerifyPassword(password, hash string) error {
 
 // totpEncryptionKey 返回用于 AES-256-GCM 加密 TOTP 密钥的 32 字节密钥。
 // 优先使用环境变量 TOTP_ENCRYPTION_KEY（原始 32 字节，或 64 字符十六进制，
-// 或任意字符串将被 SHA-256 截断为 32 字节）；
-// 未设置时回落到 SHA-256(JWT_SECRET + ":totp_key") 派生。
+// 或任意字符串将被 SHA-256 截断为 32 字节）。
+// 否则从 JWT_SECRET 派生；若两者都缺失则返回错误，避免可预测默认值。
 func totpEncryptionKey() ([]byte, error) {
 	if raw := os.Getenv("TOTP_ENCRYPTION_KEY"); raw != "" {
 		b := []byte(raw)
@@ -53,7 +53,7 @@ func totpEncryptionKey() ([]byte, error) {
 	// 回落：从 JWT_SECRET 派生
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
-		jwtSecret = "basaltpass_default_jwt_secret"
+		return nil, errors.New("missing encryption key: set TOTP_ENCRYPTION_KEY or JWT_SECRET")
 	}
 	h := sha256.Sum256([]byte(jwtSecret + ":totp_key_v1"))
 	return h[:], nil

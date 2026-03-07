@@ -16,6 +16,21 @@ func GetUserMessagesHandler(c *fiber.Ctx) error {
 	if err != nil || uid64 == 0 {
 		return unifiedResponse(c, fiber.StatusBadRequest, nil, fiber.Map{"code": "invalid_parameter", "message": "invalid user id"})
 	}
+	tenantID, err := s2sTenantID(c)
+	if err != nil {
+		status := fiber.StatusBadRequest
+		if ferr, ok := err.(*fiber.Error); ok {
+			status = ferr.Code
+		}
+		return unifiedResponse(c, status, nil, fiber.Map{"code": "invalid_parameter", "message": err.Error()})
+	}
+	ok, err := userInTenant(uint(uid64), tenantID)
+	if err != nil {
+		return unifiedResponse(c, fiber.StatusInternalServerError, nil, fiber.Map{"code": "server_error", "message": err.Error()})
+	}
+	if !ok {
+		return unifiedResponse(c, fiber.StatusNotFound, nil, fiber.Map{"code": "not_found", "message": "user not found"})
+	}
 	status := c.Query("status", "all")
 	page, _ := strconv.Atoi(c.Query("page", "1"))
 	pageSize, _ := strconv.Atoi(c.Query("page_size", "20"))
@@ -55,6 +70,21 @@ func GetUserPurchasedProductsHandler(c *fiber.Ctx) error {
 	uid64, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil || uid64 == 0 {
 		return unifiedResponse(c, fiber.StatusBadRequest, nil, fiber.Map{"code": "invalid_parameter", "message": "invalid user id"})
+	}
+	tenantID, err := s2sTenantID(c)
+	if err != nil {
+		status := fiber.StatusBadRequest
+		if ferr, ok := err.(*fiber.Error); ok {
+			status = ferr.Code
+		}
+		return unifiedResponse(c, status, nil, fiber.Map{"code": "invalid_parameter", "message": err.Error()})
+	}
+	ok, err := userInTenant(uint(uid64), tenantID)
+	if err != nil {
+		return unifiedResponse(c, fiber.StatusInternalServerError, nil, fiber.Map{"code": "server_error", "message": err.Error()})
+	}
+	if !ok {
+		return unifiedResponse(c, fiber.StatusNotFound, nil, fiber.Map{"code": "not_found", "message": "user not found"})
 	}
 	db := common.DB()
 
@@ -114,6 +144,21 @@ func CheckUserProductOwnershipHandler(c *fiber.Ctx) error {
 	uid64, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil || uid64 == 0 {
 		return unifiedResponse(c, fiber.StatusBadRequest, nil, fiber.Map{"code": "invalid_parameter", "message": "invalid user id"})
+	}
+	tenantID, err := s2sTenantID(c)
+	if err != nil {
+		status := fiber.StatusBadRequest
+		if ferr, ok := err.(*fiber.Error); ok {
+			status = ferr.Code
+		}
+		return unifiedResponse(c, status, nil, fiber.Map{"code": "invalid_parameter", "message": err.Error()})
+	}
+	ok, err := userInTenant(uint(uid64), tenantID)
+	if err != nil {
+		return unifiedResponse(c, fiber.StatusInternalServerError, nil, fiber.Map{"code": "server_error", "message": err.Error()})
+	}
+	if !ok {
+		return unifiedResponse(c, fiber.StatusNotFound, nil, fiber.Map{"code": "not_found", "message": "user not found"})
 	}
 	pidStr := c.Params("product_id")
 	pid64, err := strconv.ParseUint(pidStr, 10, 64)

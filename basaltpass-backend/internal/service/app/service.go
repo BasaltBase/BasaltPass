@@ -210,6 +210,8 @@ func (s *AppService) CreateApp(tenantID, creatorUserID uint, req *CreateAppReque
 		tx.Rollback()
 		return nil, err
 	}
+	plainSecret := oauthClient.ClientSecret
+	oauthClient.HashClientSecret()
 
 	// 设置重定向URI和权限范围
 	oauthClient.SetRedirectURIList(req.RedirectURIs)
@@ -239,7 +241,7 @@ func (s *AppService) CreateApp(tenantID, creatorUserID uint, req *CreateAppReque
 
 	resp := s.appToResponse(app, clients)
 	if len(resp.OAuthClients) > 0 {
-		resp.OAuthClients[0].ClientSecret = oauthClient.ClientSecret
+		resp.OAuthClients[0].ClientSecret = plainSecret
 	}
 	return resp, nil
 }
@@ -741,6 +743,8 @@ func (s *AppService) AdminCreateApp(req *AdminCreateAppRequest) (*AppResponse, e
 		tx.Rollback()
 		return nil, err
 	}
+	plainSecret := oauthClient.ClientSecret
+	oauthClient.HashClientSecret()
 
 	// 设置重定向URI和作用域
 	oauthClient.SetRedirectURIList(req.RedirectURIs)
@@ -767,7 +771,7 @@ func (s *AppService) AdminCreateApp(req *AdminCreateAppRequest) (*AppResponse, e
 
 	resp := s.appToResponse(&createdApp, createdApp.OAuthClients)
 	if len(resp.OAuthClients) > 0 {
-		resp.OAuthClients[0].ClientSecret = oauthClient.ClientSecret
+		resp.OAuthClients[0].ClientSecret = plainSecret
 	}
 	return resp, nil
 }
