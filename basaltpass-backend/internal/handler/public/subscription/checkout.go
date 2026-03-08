@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"basaltpass-backend/internal/model"
+
 	"gorm.io/gorm"
 )
 

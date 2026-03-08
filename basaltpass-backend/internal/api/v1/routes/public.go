@@ -7,7 +7,6 @@ import (
 	publicSettings "basaltpass-backend/internal/handler/public/settings"
 	"basaltpass-backend/internal/handler/public/signup"
 	publicTenant "basaltpass-backend/internal/handler/public/tenant"
-	"basaltpass-backend/internal/middleware"
 	"basaltpass-backend/internal/middleware/ratelimit"
 
 	"github.com/gofiber/fiber/v2"
@@ -44,8 +43,7 @@ func RegisterPublicRoutes(v1 fiber.Router) {
 	// 需要 JWT + admin scope + super admin 身份
 	adminPaymentGroup := v1.Group(
 		"/payment",
-		middleware.JWTMiddleware(),
-		middleware.SuperAdminMiddleware(),
+		profileSuperAdminConsole()...,
 	)
 	adminPaymentGroup.Get("/checkout/:session_id", payment.PaymentCheckoutHandler)
 	adminPaymentGroup.Post("/simulate/:session_id", payment.SimulatePaymentHandler)

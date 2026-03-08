@@ -12,11 +12,7 @@ import (
 // 认证：基于 OAuth Client 的 client_id + client_secret
 // 权限：默认要求具备 s2s.read scope（可在租户中为Client配置）
 func RegisterS2SRoutes(v1 fiber.Router) {
-	group := v1.Group("/s2s",
-		middleware.ClientAuthMiddleware(),
-		middleware.S2SAuditMiddleware(),
-		middleware.ClientRateLimitMiddleware(),
-	)
+	group := v1.Group("/s2s", profileS2SBase()...)
 
 	// 基础元信息
 	group.Get("/health", s2sHandler.GetHealthHandler)

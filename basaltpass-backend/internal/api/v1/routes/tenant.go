@@ -27,7 +27,7 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 	 * 这些路由需要租户上下文，但不需要全局管理员权限
 	 * 所有租户管理员
 	 */
-	tenantGroup := v1.Group("/tenant", middleware.JWTMiddleware(), middleware.RequireConsoleScope("tenant"), middleware.TenantMiddleware())
+	tenantGroup := v1.Group("/tenant", profileTenantConsole()...)
 	tenantAdminGroup := tenantGroup.Group("", middleware.TenantUserMiddleware())
 
 	// 租户信息管理
@@ -215,7 +215,7 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 	tenantAppGroup.Delete("/:app_id/users/:user_id/roles/:role_id", app_rbac2.RevokeUserRole)
 
 	// 租户用户订阅查看路由（需要租户上下文但不需要管理员权限）
-	tenantUserSubscriptionGroup := v1.Group("/tenant", middleware.JWTMiddleware(), middleware.TenantMiddleware()).Group("/subscriptions")
+	tenantUserSubscriptionGroup := v1.Group("/tenant", profileTenantContext()...).Group("/subscriptions")
 	tenantUserSubscriptionGroup.Get("/", subscription.ListTenantUserSubscriptionsHandler)
 	tenantUserSubscriptionGroup.Get("/:id", subscription.GetTenantUserSubscriptionHandler)
 }

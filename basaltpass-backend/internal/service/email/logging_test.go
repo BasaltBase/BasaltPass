@@ -1,6 +1,8 @@
 package email
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestBuildEmailLogOrderClause(t *testing.T) {
 	tests := []struct {

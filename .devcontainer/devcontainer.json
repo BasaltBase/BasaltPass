@@ -14,6 +14,11 @@
     },
     "ghcr.io/devcontainers/features/node:1": {
       "version": "20"
+    },
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "installOhMyZsh": false,
+      "upgradePackages": true
     }
   },
   "postCreateCommand": "corepack enable",
@@ -27,6 +32,12 @@
         "dbaeumer.vscode-eslint"
       ]
     }
-  }
+  },
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+  ],
+  "runArgs": [
+    "--init"
+  ]
 }
 

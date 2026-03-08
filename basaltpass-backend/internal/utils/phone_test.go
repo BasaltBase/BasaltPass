@@ -2,6 +2,8 @@ package utils
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestPhoneValidator_ValidateE164(t *testing.T) {
@@ -26,8 +28,10 @@ func TestPhoneValidator_ValidateE164(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := pv.ValidateE164(tt.phone)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("ValidateE164() error = %v, wantErr %v", err, tt.wantErr)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
 			}
 		})
 	}

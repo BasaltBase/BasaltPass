@@ -15,7 +15,6 @@ import (
 	"basaltpass-backend/internal/handler/public/oauth"
 	"basaltpass-backend/internal/handler/public/rbac"
 	"basaltpass-backend/internal/handler/public/subscription"
-	"basaltpass-backend/internal/middleware"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -29,9 +28,9 @@ func InitAdminRouteDependencies(db *gorm.DB) {
 // RegisterAdminRoutes 注册系统级管理员路由
 func RegisterAdminRoutes(v1 fiber.Router) {
 	// 原有的系统级管理员路由（保持向后兼容）
-	adminGroup := v1.Group("/tenant", middleware.JWTMiddleware(), middleware.SuperAdminMiddleware())
+	adminGroup := v1.Group("/tenant", profileSuperAdminConsole()...)
 	// 新增 /admin 前缀别名，逐步迁移
-	adminAliasGroup := v1.Group("/admin", middleware.JWTMiddleware(), middleware.SuperAdminMiddleware())
+	adminAliasGroup := v1.Group("/admin", profileSuperAdminConsole()...)
 
 	adminGroup.Get("/dashboard/stats", admin2.DashboardStatsHandler)        // /tenant/dashboard/stats
 	adminGroup.Get("/dashboard/activities", admin2.RecentActivitiesHandler) // /tenant/dashboard/activities

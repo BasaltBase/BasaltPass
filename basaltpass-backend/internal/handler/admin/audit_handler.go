@@ -3,6 +3,7 @@ package admin
 import (
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
+
 	"github.com/gofiber/fiber/v2"
 )
 

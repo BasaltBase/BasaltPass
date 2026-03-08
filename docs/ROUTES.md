@@ -1,5 +1,28 @@
 # API Route Map
 
+## Middleware Profiles (v1)
+
+The v1 router uses middleware profiles defined in `internal/api/v1/routes/middleware_profiles.go`.
+
+| Profile | Chain |
+|---|---|
+| `profileSuperAdminConsole` | `authn.JWTMiddleware` → `authz.SuperAdminMiddleware` |
+| `profileTenantConsole` | `authn.JWTMiddleware` → `authz.RequireConsoleScope("tenant")` → `authz.TenantMiddleware` |
+| `profileTenantContext` | `authn.JWTMiddleware` → `authz.TenantMiddleware` |
+| `profileS2SBase` | `s2s.ClientAuthMiddleware` → `s2s.S2SAuditMiddleware` → `s2s.ClientRateLimitMiddleware` |
+
+### Profile Usage
+
+- `profileSuperAdminConsole`
+	- `internal/api/v1/routes/admin.go` (`/api/v1/tenant`, `/api/v1/admin`)
+	- `internal/api/v1/routes/public.go` (`/api/v1/payment`)
+- `profileTenantConsole`
+	- `internal/api/v1/routes/tenant.go` (`/api/v1/tenant` admin management routes)
+- `profileTenantContext`
+	- `internal/api/v1/routes/tenant.go` (`/api/v1/tenant/subscriptions`)
+- `profileS2SBase`
+	- `internal/api/v1/routes/s2s.go` (`/api/v1/s2s`)
+
 | Method | Path |
 |---|---|
 | CONNECT | / |

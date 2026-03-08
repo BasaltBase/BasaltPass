@@ -148,6 +148,16 @@ func asUint(t *testing.T, v interface{}) uint {
 	return uint(f)
 }
 
+func assertErrorCode(t *testing.T, body map[string]interface{}, expected string) {
+	t.Helper()
+	if body == nil {
+		t.Fatalf("expected json body, got nil")
+	}
+	if got := body["code"]; got != expected {
+		t.Fatalf("expected error code %q, got %#v", expected, got)
+	}
+}
+
 func TestTenantMiddleware_MissingUserContext(t *testing.T) {
 	setupTenantMiddlewareTestDB(t)
 	app := testAppWithTenantMiddleware(map[string]interface{}{})
@@ -156,6 +166,7 @@ func TestTenantMiddleware_MissingUserContext(t *testing.T) {
 	if resp.StatusCode != fiber.StatusUnauthorized {
 		t.Fatalf("expected status 401, got %d", resp.StatusCode)
 	}
+	assertErrorCode(t, body, "tenant_missing_user_context")
 	if body["error"] != "Missing user context" {
 		t.Fatalf("unexpected error message: %#v", body["error"])
 	}
@@ -178,6 +189,7 @@ func TestTenantMiddleware_RejectsSpoofedTenantID(t *testing.T) {
 	if resp.StatusCode != fiber.StatusUnauthorized {
 		t.Fatalf("expected status 401, got %d", resp.StatusCode)
 	}
+	assertErrorCode(t, body, "tenant_missing_association")
 	if body["error"] != "Missing tenant association" {
 		t.Fatalf("unexpected error message: %#v", body["error"])
 	}
@@ -226,6 +238,7 @@ func TestTenantMiddleware_RejectsInactiveTenant(t *testing.T) {
 	if resp.StatusCode != fiber.StatusForbidden {
 		t.Fatalf("expected status 403, got %d", resp.StatusCode)
 	}
+	assertErrorCode(t, body, "tenant_inactive")
 	if body["error"] != "Tenant is not active" {
 		t.Fatalf("unexpected error message: %#v", body["error"])
 	}
@@ -245,6 +258,7 @@ func TestTenantMiddleware_RejectsInvalidTenantAssociation(t *testing.T) {
 	if resp.StatusCode != fiber.StatusUnauthorized {
 		t.Fatalf("expected status 401, got %d", resp.StatusCode)
 	}
+	assertErrorCode(t, body, "tenant_invalid_association")
 	if body["error"] != "Invalid tenant association" {
 		t.Fatalf("unexpected error message: %#v", body["error"])
 	}
@@ -281,6 +295,7 @@ func TestTenantOwnerMiddleware_AllowsOwnerOnly(t *testing.T) {
 		if resp.StatusCode != fiber.StatusForbidden {
 			t.Fatalf("expected status 403, got %d", resp.StatusCode)
 		}
+		assertErrorCode(t, body, "tenant_owner_required")
 		if body["error"] != "Tenant owner access required" {
 			t.Fatalf("unexpected error message: %#v", body["error"])
 		}
@@ -295,6 +310,7 @@ func TestTenantOwnerMiddleware_AllowsOwnerOnly(t *testing.T) {
 		if resp.StatusCode != fiber.StatusUnauthorized {
 			t.Fatalf("expected status 401, got %d", resp.StatusCode)
 		}
+		assertErrorCode(t, body, "tenant_missing_context")
 		if body["error"] != "Missing user or tenant context" {
 			t.Fatalf("unexpected error message: %#v", body["error"])
 		}
@@ -348,6 +364,7 @@ func TestTenantUserMiddleware_AllowsOwnerAndAdminOnly(t *testing.T) {
 		if resp.StatusCode != fiber.StatusForbidden {
 			t.Fatalf("expected status 403, got %d", resp.StatusCode)
 		}
+		assertErrorCode(t, body, "tenant_admin_required")
 		if body["error"] != "Tenant tenant access required" {
 			t.Fatalf("unexpected error message: %#v", body["error"])
 		}
@@ -363,6 +380,7 @@ func TestTenantUserMiddleware_AllowsOwnerAndAdminOnly(t *testing.T) {
 		if resp.StatusCode != fiber.StatusForbidden {
 			t.Fatalf("expected status 403, got %d", resp.StatusCode)
 		}
+		assertErrorCode(t, body, "tenant_access_denied")
 		if body["error"] != "Access denied" {
 			t.Fatalf("unexpected error message: %#v", body["error"])
 		}
@@ -377,6 +395,7 @@ func TestTenantUserMiddleware_AllowsOwnerAndAdminOnly(t *testing.T) {
 		if resp.StatusCode != fiber.StatusUnauthorized {
 			t.Fatalf("expected status 401, got %d", resp.StatusCode)
 		}
+		assertErrorCode(t, body, "tenant_missing_context")
 		if body["error"] != "Missing user or tenant context" {
 			t.Fatalf("unexpected error message: %#v", body["error"])
 		}

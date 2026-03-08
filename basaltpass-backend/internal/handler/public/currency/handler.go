@@ -2,6 +2,7 @@ package currency
 
 import (
 	currency2 "basaltpass-backend/internal/service/currency"
+
 	"github.com/gofiber/fiber/v2"
 )
 
