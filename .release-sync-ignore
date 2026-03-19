@@ -1,0 +1,12 @@
+.git
+.github/workflows/release-sync.yml
+.github/workflows/deploy-tag.yml
+.env
+.env.local
+.env.*.local
+deploy/.env.prod
+deploy/.env.server
+node_modules
+.cursor
+.vscode
+.basaltpass-dev

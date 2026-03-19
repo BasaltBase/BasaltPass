@@ -1,0 +1,23 @@
+services:
+  backend:
+    image: ${BACKEND_IMAGE}
+    restart: unless-stopped
+    ports:
+      - "8101:8101"
+    volumes:
+      - data:/data
+    env_file:
+      - .env
+    environment:
+      JWT_SECRET: ${JWT_SECRET}
+
+  frontend:
+    image: ${FRONTEND_IMAGE}
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "5104:80"
+
+volumes:
+  data:

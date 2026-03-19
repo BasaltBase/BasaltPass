@@ -1,0 +1,124 @@
+name: Build And Deploy From Tag
+
+on:
+  push:
+    tags:
+      - "deploy-prod-v*.*.*"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    env:
+      DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+      DEPLOY_PORT: ${{ vars.DEPLOY_PORT || '22' }}
+      DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+      DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '/opt/basaltpass' }}
+      GHCR_NAMESPACE: ${{ vars.GHCR_NAMESPACE || github.repository_owner }}
+    steps:
+      - name: Checkout source repo
+        uses: actions/checkout@v4
+
+      - name: Validate deployment configuration
+        run: |
+          for required_var in DEPLOY_HOST DEPLOY_USER DEPLOY_PATH GHCR_NAMESPACE; do
+            value="$(printenv "$required_var" || true)"
+            if [ -z "$value" ]; then
+              echo "Missing repository variable: $required_var"
+              exit 1
+            fi
+          done
+
+          for required_secret in DEPLOY_SSH_PRIVATE_KEY DEPLOY_GHCR_USERNAME DEPLOY_GHCR_TOKEN; do
+            case "$required_secret" in
+              DEPLOY_SSH_PRIVATE_KEY)
+                value="${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}"
+                ;;
+              DEPLOY_GHCR_USERNAME)
+                value="${{ secrets.DEPLOY_GHCR_USERNAME }}"
+                ;;
+              DEPLOY_GHCR_TOKEN)
+                value="${{ secrets.DEPLOY_GHCR_TOKEN }}"
+                ;;
+            esac
+
+            if [ -z "$value" ]; then
+              echo "Missing repository secret: $required_secret"
+              exit 1
+            fi
+          done
+
+      - name: Parse deploy version
+        id: version
+        run: |
+          RAW_TAG="${GITHUB_REF_NAME}"
+          VERSION="${RAW_TAG#deploy-prod-v}"
+          echo "raw_tag=${RAW_TAG}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "backend_image=ghcr.io/${GHCR_NAMESPACE}/basaltpass-backend:${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "frontend_image=ghcr.io/${GHCR_NAMESPACE}/basaltpass-frontend:${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./backend.Dockerfile
+          push: true
+          tags: |
+            ${{ steps.version.outputs.backend_image }}
+            ghcr.io/${{ env.GHCR_NAMESPACE }}/basaltpass-backend:latest
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./frontend.Dockerfile
+          push: true
+          tags: |
+            ${{ steps.version.outputs.frontend_image }}
+            ghcr.io/${{ env.GHCR_NAMESPACE }}/basaltpass-frontend:latest
+
+      - name: Prepare SSH key
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p "${DEPLOY_PORT}" -H "${DEPLOY_HOST}" >> ~/.ssh/known_hosts
+
+      - name: Upload compose file
+        run: |
+          ssh -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOST}" "mkdir -p '${DEPLOY_PATH}'"
+          scp -P "${DEPLOY_PORT}" ./deploy/docker-compose.prod.yml "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/docker-compose.yml"
+
+      - name: Deploy on Docker server
+        env:
+          BACKEND_IMAGE: ${{ steps.version.outputs.backend_image }}
+          FRONTEND_IMAGE: ${{ steps.version.outputs.frontend_image }}
+          DEPLOY_GHCR_USERNAME: ${{ secrets.DEPLOY_GHCR_USERNAME }}
+          DEPLOY_GHCR_TOKEN: ${{ secrets.DEPLOY_GHCR_TOKEN }}
+        run: |
+          BACKEND_IMAGE_ESCAPED="$(printf '%q' "${BACKEND_IMAGE}")"
+          FRONTEND_IMAGE_ESCAPED="$(printf '%q' "${FRONTEND_IMAGE}")"
+          DEPLOY_GHCR_USERNAME_ESCAPED="$(printf '%q' "${DEPLOY_GHCR_USERNAME}")"
+          DEPLOY_GHCR_TOKEN_ESCAPED="$(printf '%q' "${DEPLOY_GHCR_TOKEN}")"
+
+          ssh -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOST}" \
+            "export BACKEND_IMAGE=${BACKEND_IMAGE_ESCAPED} FRONTEND_IMAGE=${FRONTEND_IMAGE_ESCAPED} DEPLOY_GHCR_USERNAME=${DEPLOY_GHCR_USERNAME_ESCAPED} DEPLOY_GHCR_TOKEN=${DEPLOY_GHCR_TOKEN_ESCAPED} && \
+            cd '${DEPLOY_PATH}' && \
+            echo \"\$DEPLOY_GHCR_TOKEN\" | docker login ghcr.io -u \"\$DEPLOY_GHCR_USERNAME\" --password-stdin && \
+            docker compose pull && \
+            docker compose up -d --remove-orphans"

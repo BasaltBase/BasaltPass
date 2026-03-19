@@ -43,6 +43,7 @@ Default admin login: create via API then assign `admin` role.
 - Docs entry: [BasaltPass Documentation](https://basaltbase.github.io/BasaltPass/)
 - Developer docs: ./docs/developer/README.md
 - User/API docs: ./docs/user/README.md
+- Release/Deploy automation: `docs/GITHUB_RELEASE_DEPLOY.md`
 
 推荐从这些文档开始：
 
