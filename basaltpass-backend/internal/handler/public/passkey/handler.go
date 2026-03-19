@@ -1,9 +1,11 @@
 package passkey
 
 import (
+	authsvc "basaltpass-backend/internal/service/auth"
 	passkey2 "basaltpass-backend/internal/service/passkey"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 
 	"log"
@@ -49,6 +51,16 @@ func newRequestContext(c *fiber.Ctx, data map[string]interface{}) *passkey2.Requ
 		IP:        c.IP(),
 		UserAgent: c.Get(fiber.HeaderUserAgent),
 		Data:      data,
+	}
+}
+
+func normalizeScope(raw string) string {
+	scope := strings.ToLower(strings.TrimSpace(raw))
+	switch scope {
+	case authsvc.ConsoleScopeTenant, authsvc.ConsoleScopeAdmin, authsvc.ConsoleScopeUser:
+		return scope
+	default:
+		return authsvc.ConsoleScopeUser
 	}
 }
 
@@ -248,8 +260,9 @@ func FinishLoginHandler(c *fiber.Ctx) error {
 		log.Printf("failed to update passkey usage: %v", err)
 	}
 
+	scope := normalizeScope(c.Get("X-Auth-Scope"))
 	ctx := newRequestContext(c, map[string]interface{}{"email": req.Email, "tenant_id": tenantID})
-	tokens, err := svc.GenerateTokensForUser(user.ID, ctx)
+	tokens, err := svc.GenerateTokensForUser(user.ID, tenantID, scope, ctx)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -278,22 +291,17 @@ func FinishLoginHandler(c *fiber.Ctx) error {
 // POST /api/v1/passkey/2fa/begin
 func Begin2FAHandler(c *fiber.Ctx) error {
 	var req struct {
-		UserID   uint `json:"user_id"`
-		TenantID uint `json:"tenant_id"`
+		PreAuthToken string `json:"pre_auth_token"`
 	}
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 	}
-	if req.UserID == 0 {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "user_id required"})
+	userID, tenantID, err := authsvc.ParsePreAuthToken(strings.TrimSpace(req.PreAuthToken))
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "invalid or expired 2FA session token"})
 	}
 
-	tenantID := req.TenantID
-	if tenantID == 0 {
-		tenantID = getTenantID(c)
-	}
-
-	user, err := svc.PrepareUserForWebAuthn(req.UserID, tenantID)
+	user, err := svc.PrepareUserForWebAuthn(userID, tenantID)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "User not found"})
 	}
@@ -326,20 +334,18 @@ func Begin2FAHandler(c *fiber.Ctx) error {
 // POST /api/v1/passkey/2fa/finish
 func Finish2FAHandler(c *fiber.Ctx) error {
 	var req struct {
-		UserID    uint   `json:"user_id"`
-		TenantID  uint   `json:"tenant_id"`
-		Challenge string `json:"challenge"`
+		PreAuthToken string `json:"pre_auth_token"`
+		Challenge    string `json:"challenge"`
 	}
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 	}
-	if req.UserID == 0 || req.Challenge == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "user_id and challenge required"})
+	if strings.TrimSpace(req.Challenge) == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "challenge required"})
 	}
-
-	tenantID := req.TenantID
-	if tenantID == 0 {
-		tenantID = getTenantID(c)
+	userID, tenantID, err := authsvc.ParsePreAuthToken(strings.TrimSpace(req.PreAuthToken))
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "invalid or expired 2FA session token"})
 	}
 
 	sessionKey := "2fa:" + req.Challenge
@@ -348,7 +354,7 @@ func Finish2FAHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid or expired 2FA session"})
 	}
 
-	user, err := svc.PrepareUserForWebAuthn(req.UserID, tenantID)
+	user, err := svc.PrepareUserForWebAuthn(userID, tenantID)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "User not found"})
 	}
@@ -368,11 +374,12 @@ func Finish2FAHandler(c *fiber.Ctx) error {
 	}
 
 	ctx := newRequestContext(c, map[string]interface{}{
-		"user_id":   req.UserID,
+		"user_id":   userID,
 		"tenant_id": tenantID,
 		"2fa_type":  "passkey",
 	})
-	tokens, err := svc.GenerateTokensForUser(user.ID, ctx)
+	scope := normalizeScope(c.Get("X-Auth-Scope"))
+	tokens, err := svc.GenerateTokensForUser(user.ID, tenantID, scope, ctx)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}

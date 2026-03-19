@@ -4,8 +4,9 @@ import { ROUTES } from '@constants'
 import client from '@api/client'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@contexts/AuthContext'
-import { loginWithPasskeyFlow } from '@api/oauth/passkey'
+import { loginWithPasskey2FAFlow } from '@api/oauth/passkey'
 import { isPasskeySupported } from '@utils/webauthn'
+import { resolveSafeRedirectTarget } from '@utils/redirect'
 import { fetchPublicTenantByCode } from '@api/publicTenant'
 import { EyeIcon, EyeSlashIcon, ShieldCheckIcon, EnvelopeIcon, KeyIcon } from '@heroicons/react/24/outline'
 import { PInput, PButton, PCheckbox } from '@ui'
@@ -46,7 +47,7 @@ function TenantLogin() {
   const [isLoading, setIsLoading] = useState(false)
   
   // 二次验证相关
-  const [userId, setUserId] = useState<number | null>(null)
+  const [preAuthToken, setPreAuthToken] = useState('')
   const [twoFAType, setTwoFAType] = useState<string>('')
   const [available2FAMethods, setAvailable2FAMethods] = useState<string[]>([])
   const [twoFACode, setTwoFACode] = useState('')
@@ -87,14 +88,8 @@ function TenantLogin() {
   }, [tenantCode])
 
   const redirectAfterLogin = () => {
-    if (!redirectParam) return false
-
-    const base = resolvedApiBase
-    const target = redirectParam.startsWith('http://') || redirectParam.startsWith('https://')
-      ? redirectParam
-      : redirectParam.startsWith('/')
-        ? base + redirectParam
-        : base + '/' + redirectParam
+    const target = resolveSafeRedirectTarget(redirectParam, resolvedApiBase)
+    if (!target) return false
 
     window.location.href = target
     return true
@@ -117,7 +112,7 @@ function TenantLogin() {
         tenant_id: tenantInfo.id, // 带上租户ID
       }, { timeout: authRequestTimeout })
       if (res.data.need_2fa) {
-        setUserId(res.data.user_id)
+        setPreAuthToken(res.data.pre_auth_token || '')
         setTwoFAType(res.data['2fa_type'])
         setAvailable2FAMethods(res.data.available_2fa_methods || [])
         setStep(2)
@@ -136,7 +131,7 @@ function TenantLogin() {
         setError('邮箱或手机号或密码错误')
         setStep(1)
         setPassword('')
-        setUserId(null)
+        setPreAuthToken('')
         setTwoFAType('')
         setAvailable2FAMethods([])
         setTwoFACode('')
@@ -186,7 +181,7 @@ function TenantLogin() {
     setError('')
     try {
       let payload: any = {
-        user_id: userId,
+        pre_auth_token: preAuthToken,
         two_fa_type: twoFAType,
       }
       if (twoFAType === 'totp') {
@@ -195,7 +190,7 @@ function TenantLogin() {
         payload.code = emailCode
       } else if (twoFAType === 'passkey') {
         try {
-          const passkeyResult = await loginWithPasskeyFlow(identifier)
+          const passkeyResult = await loginWithPasskey2FAFlow(preAuthToken)
           await login(passkeyResult.access_token)
           if (!redirectAfterLogin()) {
             navigate(ROUTES.user.dashboard)

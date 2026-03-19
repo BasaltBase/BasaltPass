@@ -14,7 +14,7 @@ func RegisterRoutes(app *fiber.App) {
 	// API v1 路由
 	v1 := app.Group("/api/v1")
 
-	// Apply maintenance mode check to all API routes
+	// 注册中间件
 	v1.Use(middleware.MaintenanceMiddleware())
 
 	// 注册公开路由（无需认证）

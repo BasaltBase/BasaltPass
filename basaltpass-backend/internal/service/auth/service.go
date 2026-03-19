@@ -293,13 +293,20 @@ func (s Service) Refresh(refreshToken string) (TokenPair, error) {
 	if !ok {
 		return TokenPair{}, errors.New("invalid subject")
 	}
+	var claimedTenantID uint
+	if tidFloat, ok := claims["tid"].(float64); ok && tidFloat > 0 {
+		claimedTenantID = uint(tidFloat)
+	}
 	// Preserve console scope, but do not trust tenant context from token.
 	scope := ConsoleScopeUser
 	if scp, ok := claims["scp"].(string); ok && scp != "" {
 		scope = scp
 	}
-	// Refresh: tenant context is re-derived from DB for non-admin scopes.
-	return GenerateTokenPairWithTenantAndScope(uint(userIDFloat), 0, scope)
+	tenantID, err := resolveTokenTenantID(uint(userIDFloat), claimedTenantID, scope)
+	if err != nil {
+		return TokenPair{}, err
+	}
+	return GenerateTokenPairWithTenantAndScope(uint(userIDFloat), tenantID, scope)
 }
 
 // Verify2FA 校验二次验证信息，成功返回token。

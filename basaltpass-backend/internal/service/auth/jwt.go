@@ -49,7 +49,11 @@ func GenerateTokenPair(userID uint) (TokenPair, error) {
 	if err := common.DB().Select("id", "tenant_id").First(&user, userID).Error; err != nil {
 		return TokenPair{}, err
 	}
-	return GenerateTokenPairWithTenantAndScope(userID, user.TenantID, ConsoleScopeUser)
+	tenantID, err := resolveTokenTenantID(userID, user.TenantID, ConsoleScopeUser)
+	if err != nil {
+		return TokenPair{}, err
+	}
+	return GenerateTokenPairWithTenantAndScope(userID, tenantID, ConsoleScopeUser)
 }
 
 // GenerateTokenPairWithTenant creates JWT tokens with tenant context
@@ -94,16 +98,44 @@ func GenerateTokenPairWithTenantAndScope(userID uint, tenantID uint, scope strin
 	return TokenPair{AccessToken: accessToken, RefreshToken: refreshToken}, nil
 }
 
-// getUserDefaultTenant 获取用户的默认租户ID
+func resolveTokenTenantID(userID uint, claimedTenantID uint, scope string) (uint, error) {
+	if scope == ConsoleScopeAdmin {
+		return 0, nil
+	}
+
+	var user model.User
+	if err := common.DB().Select("id", "tenant_id").First(&user, userID).Error; err != nil {
+		return 0, err
+	}
+
+	if claimedTenantID > 0 {
+		if user.TenantID == claimedTenantID {
+			return claimedTenantID, nil
+		}
+
+		var membershipCount int64
+		if err := common.DB().Model(&model.TenantUser{}).
+			Where("user_id = ? AND tenant_id = ?", userID, claimedTenantID).
+			Count(&membershipCount).Error; err != nil {
+			return 0, err
+		}
+		if membershipCount > 0 {
+			return claimedTenantID, nil
+		}
+	}
+
+	if user.TenantID > 0 {
+		return user.TenantID, nil
+	}
+
+	return getUserDefaultTenant(userID), nil
+}
+
+// getUserDefaultTenant 获取用户的首个有效租户ID。
 func getUserDefaultTenant(userID uint) uint {
 	var tenantUser model.TenantUser
 	if err := common.DB().Where("user_id = ?", userID).Order("created_at ASC").First(&tenantUser).Error; err != nil {
-		// 如果没有找到用户租户关联，返回默认租户ID
-		var defaultTenant model.Tenant
-		if err := common.DB().Where("code = ?", "default").First(&defaultTenant).Error; err == nil {
-			return defaultTenant.ID
-		}
-		return 1 // 最后的兜底值
+		return 0
 	}
 	return tenantUser.TenantID
 }

@@ -188,16 +188,17 @@ func handleSpecialMigrations() {
 	if count == 0 {
 		log.Println("[Migration] Fresh database detected, ensuring default tenant...")
 		ensureDefaultTenant()
+		cfg := config.Get()
 		// 仅当配置启用时注入演示数据
-		if cfg := config.Get(); cfg.Seeding.Enabled {
+		if cfg.Seeding.Enabled {
 			if err := seedDevData(); err != nil {
 				log.Printf("[Migration] Seed dev data failed: %v", err)
 			} else {
 				log.Println("[Migration] Seeded development demo data")
 			}
 		}
-		// 开发环境：创建一个超级管理员账户（邮箱 a@.a / 手机 101 / 密码 123456）并赋予超管角色
-		if config.IsDevelop() {
+		// 开发超管种子仅允许在显式启用 seeding 时创建，避免误配环境留下弱口令高权限账户。
+		if config.IsDevelop() && cfg.Seeding.Enabled {
 			if err := seedDevSuperAdmin(); err != nil {
 				log.Printf("[Migration] Seed dev superadmin failed: %v", err)
 			} else {
@@ -255,7 +256,8 @@ func seedConfiguredAdmin() {
 	email := cfg.Admin.Email
 	password := cfg.Admin.Password
 	if password == "" {
-		password = "Admin@12345" // Default password
+		log.Printf("[Migration] Refusing to create configured admin %s: admin password is empty", email)
+		return
 	}
 
 	var u model.User

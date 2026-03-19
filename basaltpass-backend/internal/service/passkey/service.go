@@ -179,9 +179,9 @@ func (s *Service) UpdatePasskeyUsage(credentialID []byte, tenantID uint, signCou
 		}).Error
 }
 
-// GenerateTokensForUser 为用户生成JWT tokens并记录审计日志
-func (s *Service) GenerateTokensForUser(userID uint, ctx *RequestContext) (*auth.TokenPair, error) {
-	tokens, err := auth.GenerateTokenPair(userID)
+// GenerateTokensForUser 为用户生成JWT tokens并记录审计日志。
+func (s *Service) GenerateTokensForUser(userID uint, tenantID uint, scope string, ctx *RequestContext) (*auth.TokenPair, error) {
+	tokens, err := auth.GenerateTokenPairWithTenantAndScope(userID, tenantID, scope)
 	if err != nil {
 		return nil, err
 	}

@@ -4,8 +4,9 @@ import { ROUTES } from '@constants'
 import client from '@api/client'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@contexts/AuthContext'
-import { loginWithPasskeyFlow } from '@api/oauth/passkey'
+import { loginWithPasskey2FAFlow } from '@api/oauth/passkey'
 import { isPasskeySupported } from '@utils/webauthn'
+import { resolveSafeRedirectTarget } from '@utils/redirect'
 import { ShieldCheckIcon, EnvelopeIcon, KeyIcon } from '@heroicons/react/24/outline'
 import { PInput, PButton, PCheckbox } from '@ui'
 
@@ -21,7 +22,7 @@ function Login() {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   // 二次验证相关
-  const [userId, setUserId] = useState<number | null>(null)
+  const [preAuthToken, setPreAuthToken] = useState('')
   const [twoFAType, setTwoFAType] = useState<string>('')
   const [available2FAMethods, setAvailable2FAMethods] = useState<string[]>([])
   const [twoFACode, setTwoFACode] = useState('')
@@ -35,16 +36,10 @@ function Login() {
     client.defaults.baseURL || (import.meta as any).env?.VITE_API_BASE || 'http://localhost:8101'
   ).replace(/\/$/, '')
   const redirectAfterLogin = () => {
-    if (!redirectParam) {
+    const target = resolveSafeRedirectTarget(redirectParam, resolvedApiBase)
+    if (!target) {
       return false
     }
-
-    const base = resolvedApiBase
-    const target = redirectParam.startsWith('http://') || redirectParam.startsWith('https://')
-      ? redirectParam
-      : redirectParam.startsWith('/')
-        ? base + redirectParam
-        : base + '/' + redirectParam
 
     window.location.href = target
     return true
@@ -68,7 +63,7 @@ function Login() {
         tenant_id: 0, // 平台登录，tenant_id=0
       }, { timeout: authRequestTimeout })
       if (res.data.need_2fa) {
-        setUserId(res.data.user_id)
+        setPreAuthToken(res.data.pre_auth_token || '')
         setTwoFAType(res.data['2fa_type'])
         setAvailable2FAMethods(res.data.available_2fa_methods || [])
 
@@ -91,7 +86,7 @@ function Login() {
         setStep(1)
         // 保留邮箱/手机号，便于用户仅重新输入密码
         setPassword('')
-        setUserId(null)
+        setPreAuthToken('')
         setTwoFAType('')
         setAvailable2FAMethods([])
         setTwoFACode('')
@@ -142,7 +137,7 @@ function Login() {
     setError('')
     try {
       let payload: any = {
-        user_id: userId,
+        pre_auth_token: preAuthToken,
         two_fa_type: twoFAType,
       }
       if (twoFAType === 'totp') {
@@ -152,7 +147,7 @@ function Login() {
       } else if (twoFAType === 'passkey') {
         // 进行真正的Passkey验证
         try {
-          const passkeyResult = await loginWithPasskeyFlow(identifier)
+          const passkeyResult = await loginWithPasskey2FAFlow(preAuthToken)
           await login(passkeyResult.access_token)
           if (!redirectAfterLogin()) {
             navigate(ROUTES.user.dashboard)

@@ -74,6 +74,6 @@ func RegisterOAuthRoutes(v1 fiber.Router) {
 	// Passkey 2FA routes - 用于密码登录后的 Passkey 二次验证
 	// 1. POST /api/v1/passkey/2fa/begin  → 获取 WebAuthn challenge
 	// 2. POST /api/v1/passkey/2fa/finish → 验证签名并颁发 token
-	passkeyGroup.Post("/2fa/begin", passkey2.Begin2FAHandler)
-	passkeyGroup.Post("/2fa/finish", passkey2.Finish2FAHandler)
+	passkeyGroup.Post("/2fa/begin", ratelimit.Verify2FARateLimit(), passkey2.Begin2FAHandler)
+	passkeyGroup.Post("/2fa/finish", ratelimit.Verify2FARateLimit(), passkey2.Finish2FAHandler)
 }
