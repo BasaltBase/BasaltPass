@@ -8,6 +8,7 @@ on:
 permissions:
   contents: read
   packages: write
+  deployments: write
 
 jobs:
   build-and-deploy:
@@ -18,13 +19,17 @@ jobs:
       DEPLOY_USER: ${{ vars.DEPLOY_USER }}
       DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '/opt/basaltpass' }}
       GHCR_NAMESPACE: ${{ vars.GHCR_NAMESPACE || github.repository_owner }}
+      SERVICE_URL: ${{ vars.SERVICE_URL }}
+      HEALTHCHECK_URL: ${{ vars.HEALTHCHECK_URL }}
+      BASALTPASS_DATABASE_DRIVER: ${{ vars.BASALTPASS_DATABASE_DRIVER || 'sqlite' }}
+      BASALTPASS_CORS_ALLOW_ORIGINS: ${{ vars.BASALTPASS_CORS_ALLOW_ORIGINS }}
     steps:
       - name: Checkout source repo
         uses: actions/checkout@v4
 
       - name: Validate deployment configuration
         run: |
-          for required_var in DEPLOY_HOST DEPLOY_USER DEPLOY_PATH GHCR_NAMESPACE; do
+          for required_var in DEPLOY_HOST DEPLOY_USER DEPLOY_PATH GHCR_NAMESPACE SERVICE_URL HEALTHCHECK_URL BASALTPASS_DATABASE_DRIVER BASALTPASS_CORS_ALLOW_ORIGINS; do
             value="$(printenv "$required_var" || true)"
             if [ -z "$value" ]; then
               echo "Missing repository variable: $required_var"
@@ -32,16 +37,19 @@ jobs:
             fi
           done
 
-          for required_secret in DEPLOY_SSH_PRIVATE_KEY DEPLOY_GHCR_USERNAME DEPLOY_GHCR_TOKEN; do
+          for required_secret in DEPLOY_GHCR_USERNAME DEPLOY_GHCR_TOKEN PROD_JWT_SECRET BASALTPASS_DATABASE_DSN; do
             case "$required_secret" in
-              DEPLOY_SSH_PRIVATE_KEY)
-                value="${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}"
-                ;;
               DEPLOY_GHCR_USERNAME)
                 value="${{ secrets.DEPLOY_GHCR_USERNAME }}"
                 ;;
               DEPLOY_GHCR_TOKEN)
                 value="${{ secrets.DEPLOY_GHCR_TOKEN }}"
+                ;;
+              PROD_JWT_SECRET)
+                value="${{ secrets.PROD_JWT_SECRET }}"
+                ;;
+              BASALTPASS_DATABASE_DSN)
+                value="${{ secrets.BASALTPASS_DATABASE_DSN }}"
                 ;;
             esac
 
@@ -50,6 +58,11 @@ jobs:
               exit 1
             fi
           done
+
+          if [ -z "${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}" ] && [ -z "${{ secrets.DEPLOY_SSH_PASSWORD }}" ]; then
+            echo "Either DEPLOY_SSH_PRIVATE_KEY or DEPLOY_SSH_PASSWORD is required."
+            exit 1
+          fi
 
       - name: Parse deploy version
         id: version
@@ -60,6 +73,21 @@ jobs:
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "backend_image=ghcr.io/${GHCR_NAMESPACE}/basaltpass-backend:${VERSION}" >> "$GITHUB_OUTPUT"
           echo "frontend_image=ghcr.io/${GHCR_NAMESPACE}/basaltpass-frontend:${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub deployment
+        id: create_deployment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const response = await github.rest.repos.createDeployment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.ref,
+              environment: 'production',
+              auto_merge: false,
+              required_contexts: []
+            });
+            core.setOutput('deployment_id', String(response.data.id));
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -87,22 +115,54 @@ jobs:
           context: .
           file: ./frontend.Dockerfile
           push: true
+          build-args: |
+            VITE_API_BASE=${{ vars.SERVICE_URL }}
+            VITE_CONSOLE_USER_URL=${{ vars.SERVICE_URL }}
+            VITE_CONSOLE_TENANT_URL=${{ vars.SERVICE_URL }}
+            VITE_CONSOLE_ADMIN_URL=${{ vars.SERVICE_URL }}
           tags: |
             ${{ steps.version.outputs.frontend_image }}
             ghcr.io/${{ env.GHCR_NAMESPACE }}/basaltpass-frontend:latest
 
-      - name: Prepare SSH key
+      - name: Create deployment env file
+        run: |
+          cat > .deploy.env <<EOF
+          JWT_SECRET=${{ secrets.PROD_JWT_SECRET }}
+          BASALTPASS_ENV=production
+          BASALTPASS_SERVER_ADDRESS=:8101
+          BASALTPASS_DATABASE_DRIVER=${{ env.BASALTPASS_DATABASE_DRIVER }}
+          BASALTPASS_DATABASE_DSN=${{ secrets.BASALTPASS_DATABASE_DSN }}
+          BASALTPASS_CORS_ALLOW_ORIGINS=${{ env.BASALTPASS_CORS_ALLOW_ORIGINS }}
+          EOF
+
+      - name: Prepare SSH access
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          printf '%s\n' "${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -p "${DEPLOY_PORT}" -H "${DEPLOY_HOST}" >> ~/.ssh/known_hosts
 
-      - name: Upload compose file
+          if [ -n "${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}" ]; then
+            printf '%s\n' "${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+            chmod 600 ~/.ssh/id_ed25519
+          else
+            sudo apt-get update
+            sudo apt-get install -y sshpass
+          fi
+
+      - name: Upload compose and env files
+        env:
+          DEPLOY_SSH_PASSWORD: ${{ secrets.DEPLOY_SSH_PASSWORD }}
         run: |
-          ssh -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOST}" "mkdir -p '${DEPLOY_PATH}'"
-          scp -P "${DEPLOY_PORT}" ./deploy/docker-compose.prod.yml "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/docker-compose.yml"
+          if [ -n "${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}" ]; then
+            ssh -i ~/.ssh/id_ed25519 -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOST}" "mkdir -p '${DEPLOY_PATH}'"
+            scp -i ~/.ssh/id_ed25519 -P "${DEPLOY_PORT}" ./deploy/docker-compose.prod.yml "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/docker-compose.yml"
+            scp -i ~/.ssh/id_ed25519 -P "${DEPLOY_PORT}" ./.deploy.env "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/.env"
+          else
+            export SSHPASS="${DEPLOY_SSH_PASSWORD}"
+            sshpass -e ssh -p "${DEPLOY_PORT}" -o StrictHostKeyChecking=yes "${DEPLOY_USER}@${DEPLOY_HOST}" "mkdir -p '${DEPLOY_PATH}'"
+            sshpass -e scp -P "${DEPLOY_PORT}" -o StrictHostKeyChecking=yes ./deploy/docker-compose.prod.yml "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/docker-compose.yml"
+            sshpass -e scp -P "${DEPLOY_PORT}" -o StrictHostKeyChecking=yes ./.deploy.env "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/.env"
+          fi
 
       - name: Deploy on Docker server
         env:
@@ -110,15 +170,60 @@ jobs:
           FRONTEND_IMAGE: ${{ steps.version.outputs.frontend_image }}
           DEPLOY_GHCR_USERNAME: ${{ secrets.DEPLOY_GHCR_USERNAME }}
           DEPLOY_GHCR_TOKEN: ${{ secrets.DEPLOY_GHCR_TOKEN }}
+          DEPLOY_SSH_PASSWORD: ${{ secrets.DEPLOY_SSH_PASSWORD }}
         run: |
           BACKEND_IMAGE_ESCAPED="$(printf '%q' "${BACKEND_IMAGE}")"
           FRONTEND_IMAGE_ESCAPED="$(printf '%q' "${FRONTEND_IMAGE}")"
           DEPLOY_GHCR_USERNAME_ESCAPED="$(printf '%q' "${DEPLOY_GHCR_USERNAME}")"
           DEPLOY_GHCR_TOKEN_ESCAPED="$(printf '%q' "${DEPLOY_GHCR_TOKEN}")"
 
-          ssh -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOST}" \
-            "export BACKEND_IMAGE=${BACKEND_IMAGE_ESCAPED} FRONTEND_IMAGE=${FRONTEND_IMAGE_ESCAPED} DEPLOY_GHCR_USERNAME=${DEPLOY_GHCR_USERNAME_ESCAPED} DEPLOY_GHCR_TOKEN=${DEPLOY_GHCR_TOKEN_ESCAPED} && \
-            cd '${DEPLOY_PATH}' && \
-            echo \"\$DEPLOY_GHCR_TOKEN\" | docker login ghcr.io -u \"\$DEPLOY_GHCR_USERNAME\" --password-stdin && \
-            docker compose pull && \
-            docker compose up -d --remove-orphans"
+          REMOTE_COMMAND="export BACKEND_IMAGE=${BACKEND_IMAGE_ESCAPED} FRONTEND_IMAGE=${FRONTEND_IMAGE_ESCAPED} DEPLOY_GHCR_USERNAME=${DEPLOY_GHCR_USERNAME_ESCAPED} DEPLOY_GHCR_TOKEN=${DEPLOY_GHCR_TOKEN_ESCAPED} && cd '${DEPLOY_PATH}' && echo \"\$DEPLOY_GHCR_TOKEN\" | docker login ghcr.io -u \"\$DEPLOY_GHCR_USERNAME\" --password-stdin && docker compose pull && docker compose up -d --remove-orphans"
+
+          if [ -n "${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}" ]; then
+            ssh -i ~/.ssh/id_ed25519 -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOST}" "${REMOTE_COMMAND}"
+          else
+            export SSHPASS="${DEPLOY_SSH_PASSWORD}"
+            sshpass -e ssh -p "${DEPLOY_PORT}" -o StrictHostKeyChecking=yes "${DEPLOY_USER}@${DEPLOY_HOST}" "${REMOTE_COMMAND}"
+          fi
+
+      - name: Verify health check
+        run: |
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            if curl -fsS "${HEALTHCHECK_URL}" >/dev/null; then
+              exit 0
+            fi
+            sleep 5
+          done
+
+          echo "Health check failed: ${HEALTHCHECK_URL}"
+          exit 1
+
+      - name: Mark deployment success
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: Number('${{ steps.create_deployment.outputs.deployment_id }}'),
+              state: 'success',
+              environment: 'production',
+              environment_url: '${{ vars.SERVICE_URL }}',
+              log_url: `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
+            });
+
+      - name: Mark deployment failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: Number('${{ steps.create_deployment.outputs.deployment_id }}'),
+              state: 'failure',
+              environment: 'production',
+              environment_url: '${{ vars.SERVICE_URL }}',
+              log_url: `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
+            });
