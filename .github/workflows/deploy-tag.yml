@@ -236,7 +236,33 @@ jobs:
         env:
           DEPLOY_SSH_PASSWORD: ${{ secrets.DEPLOY_SSH_PASSWORD }}
         run: |
-          REMOTE_HEALTHCHECK_COMMAND="for i in 1 2 3 4 5 6 7 8 9 10; do if curl -fsS http://127.0.0.1:5104/health >/dev/null; then exit 0; fi; sleep 5; done; echo 'Health check failed: http://127.0.0.1:5104/health'; exit 1"
+          DEPLOY_PATH_ESCAPED="$(printf '%q' "${DEPLOY_PATH}")"
+          REMOTE_HEALTHCHECK_COMMAND="$(cat <<EOF
+          set -eu
+          cd ${DEPLOY_PATH_ESCAPED}
+
+          attempt=1
+          max_attempts=36
+          sleep_seconds=10
+
+          while [ "\$attempt" -le "\$max_attempts" ]; do
+            health_status="\$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:5104/health || true)"
+            if [ "\$health_status" = "200" ]; then
+              echo "Health check passed on attempt \$attempt/\$max_attempts"
+              exit 0
+            fi
+
+            echo "Health check pending on attempt \$attempt/\$max_attempts: status=\$health_status"
+            sleep "\$sleep_seconds"
+            attempt=\$((attempt + 1))
+          done
+
+          echo "Health check failed after \$max_attempts attempts: http://127.0.0.1:5104/health"
+          docker compose ps || true
+          docker compose logs --tail=100 backend frontend || true
+          exit 1
+          EOF
+          )"
 
           if [ -n "${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}" ]; then
             ssh -i ~/.ssh/id_ed25519 -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOST}" "${REMOTE_HEALTHCHECK_COMMAND}"

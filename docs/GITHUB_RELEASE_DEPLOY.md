@@ -105,6 +105,7 @@ git push origin deploy-prod-v0.1.0
 3. 推送到 GHCR
 4. 通过 SSH 登录你的 Docker 服务器
 5. 执行 `docker compose pull && docker compose up -d --remove-orphans`
+6. 最长等待约 6 分钟，轮询 `http://127.0.0.1:5104/health`；如果启动期短暂返回 `502`，工作流会继续重试，只有超时后才判定失败并输出容器状态与日志
 
 ## 公开版过滤规则
 

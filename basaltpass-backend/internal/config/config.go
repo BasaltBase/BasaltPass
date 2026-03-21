@@ -176,6 +176,15 @@ func Load(path string) (*Config, error) {
 	v.SetDefault("email.smtp.use_tls", true)
 	v.SetDefault("email.smtp.use_ssl", false)
 	v.SetDefault("email.smtp.skip_cert_verify", false)
+	v.SetDefault("email.aws_ses.region", "")
+	v.SetDefault("email.aws_ses.access_key_id", "")
+	v.SetDefault("email.aws_ses.secret_access_key", "")
+	v.SetDefault("email.aws_ses.configuration_set", "")
+	v.SetDefault("email.brevo.api_key", "")
+	v.SetDefault("email.brevo.base_url", "https://api.brevo.com/v3")
+	v.SetDefault("email.mailgun.domain", "")
+	v.SetDefault("email.mailgun.api_key", "")
+	v.SetDefault("email.mailgun.base_url", "https://api.mailgun.net/v3")
 
 	// Environment variables
 	v.SetEnvPrefix("basaltpass")
