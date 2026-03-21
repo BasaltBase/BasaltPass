@@ -1,6 +1,7 @@
 package email
 
 import (
+	"os"
 	settingssvc "basaltpass-backend/internal/service/settings"
 	"strings"
 )
@@ -13,6 +14,14 @@ const (
 // DefaultFromAddress returns a default sender email address based on settings.
 // It uses email.from_suffix (or a full email address if provided there).
 func DefaultFromAddress() string {
+	if explicit := strings.TrimSpace(os.Getenv("BASALTPASS_EMAIL_FROM")); explicit != "" {
+		return explicit
+	}
+
+	if explicit := strings.TrimSpace(settingssvc.GetString("smtp.from", "")); explicit != "" {
+		return explicit
+	}
+
 	suffix := strings.TrimSpace(settingssvc.GetString("email.from_suffix", defaultFromSuffix))
 	if suffix == "" {
 		suffix = defaultFromSuffix

@@ -22,6 +22,13 @@ jobs:
       SERVICE_URL: ${{ vars.SERVICE_URL }}
       BASALTPASS_DATABASE_DRIVER: ${{ vars.BASALTPASS_DATABASE_DRIVER || 'sqlite' }}
       BASALTPASS_CORS_ALLOW_ORIGINS: ${{ vars.BASALTPASS_CORS_ALLOW_ORIGINS }}
+      BASALTPASS_EMAIL_PROVIDER: ${{ vars.BASALTPASS_EMAIL_PROVIDER }}
+      BASALTPASS_EMAIL_FROM: ${{ vars.BASALTPASS_EMAIL_FROM }}
+      BASALTPASS_EMAIL_SMTP_PORT: ${{ vars.BASALTPASS_EMAIL_SMTP_PORT }}
+      BASALTPASS_EMAIL_SMTP_USE_TLS: ${{ vars.BASALTPASS_EMAIL_SMTP_USE_TLS }}
+      BASALTPASS_EMAIL_SMTP_USE_SSL: ${{ vars.BASALTPASS_EMAIL_SMTP_USE_SSL }}
+      BASALTPASS_EMAIL_SMTP_SKIP_CERT_VERIFY: ${{ vars.BASALTPASS_EMAIL_SMTP_SKIP_CERT_VERIFY }}
+      BASALTPASS_EMAIL_AWS_SES_REGION: ${{ vars.BASALTPASS_EMAIL_AWS_SES_REGION }}
     steps:
       - name: Checkout source repo
         uses: actions/checkout@v4
@@ -133,6 +140,46 @@ jobs:
           BASALTPASS_DATABASE_DSN=${{ secrets.BASALTPASS_DATABASE_DSN }}
           BASALTPASS_CORS_ALLOW_ORIGINS=${{ env.BASALTPASS_CORS_ALLOW_ORIGINS }}
           EOF
+
+          if [ -n "${BASALTPASS_EMAIL_PROVIDER}" ]; then
+            echo "BASALTPASS_EMAIL_PROVIDER=${BASALTPASS_EMAIL_PROVIDER}" >> .deploy.env
+          fi
+          if [ -n "${BASALTPASS_EMAIL_FROM}" ]; then
+            echo "BASALTPASS_EMAIL_FROM=${BASALTPASS_EMAIL_FROM}" >> .deploy.env
+          fi
+          if [ -n "${{ secrets.BASALTPASS_EMAIL_SMTP_HOST }}" ]; then
+            echo "BASALTPASS_EMAIL_SMTP_HOST=${{ secrets.BASALTPASS_EMAIL_SMTP_HOST }}" >> .deploy.env
+          fi
+          if [ -n "${BASALTPASS_EMAIL_SMTP_PORT}" ]; then
+            echo "BASALTPASS_EMAIL_SMTP_PORT=${BASALTPASS_EMAIL_SMTP_PORT}" >> .deploy.env
+          fi
+          if [ -n "${{ secrets.BASALTPASS_EMAIL_SMTP_USERNAME }}" ]; then
+            echo "BASALTPASS_EMAIL_SMTP_USERNAME=${{ secrets.BASALTPASS_EMAIL_SMTP_USERNAME }}" >> .deploy.env
+          fi
+          if [ -n "${{ secrets.BASALTPASS_EMAIL_SMTP_PASSWORD }}" ]; then
+            echo "BASALTPASS_EMAIL_SMTP_PASSWORD=${{ secrets.BASALTPASS_EMAIL_SMTP_PASSWORD }}" >> .deploy.env
+          fi
+          if [ -n "${BASALTPASS_EMAIL_SMTP_USE_TLS}" ]; then
+            echo "BASALTPASS_EMAIL_SMTP_USE_TLS=${BASALTPASS_EMAIL_SMTP_USE_TLS}" >> .deploy.env
+          fi
+          if [ -n "${BASALTPASS_EMAIL_SMTP_USE_SSL}" ]; then
+            echo "BASALTPASS_EMAIL_SMTP_USE_SSL=${BASALTPASS_EMAIL_SMTP_USE_SSL}" >> .deploy.env
+          fi
+          if [ -n "${BASALTPASS_EMAIL_SMTP_SKIP_CERT_VERIFY}" ]; then
+            echo "BASALTPASS_EMAIL_SMTP_SKIP_CERT_VERIFY=${BASALTPASS_EMAIL_SMTP_SKIP_CERT_VERIFY}" >> .deploy.env
+          fi
+          if [ -n "${BASALTPASS_EMAIL_AWS_SES_REGION}" ]; then
+            echo "BASALTPASS_EMAIL_AWS_SES_REGION=${BASALTPASS_EMAIL_AWS_SES_REGION}" >> .deploy.env
+          fi
+          if [ -n "${{ secrets.BASALTPASS_EMAIL_AWS_SES_ACCESS_KEY_ID }}" ]; then
+            echo "BASALTPASS_EMAIL_AWS_SES_ACCESS_KEY_ID=${{ secrets.BASALTPASS_EMAIL_AWS_SES_ACCESS_KEY_ID }}" >> .deploy.env
+          fi
+          if [ -n "${{ secrets.BASALTPASS_EMAIL_AWS_SES_SECRET_ACCESS_KEY }}" ]; then
+            echo "BASALTPASS_EMAIL_AWS_SES_SECRET_ACCESS_KEY=${{ secrets.BASALTPASS_EMAIL_AWS_SES_SECRET_ACCESS_KEY }}" >> .deploy.env
+          fi
+          if [ -n "${{ secrets.BASALTPASS_EMAIL_AWS_SES_CONFIGURATION_SET }}" ]; then
+            echo "BASALTPASS_EMAIL_AWS_SES_CONFIGURATION_SET=${{ secrets.BASALTPASS_EMAIL_AWS_SES_CONFIGURATION_SET }}" >> .deploy.env
+          fi
 
       - name: Prepare SSH access
         run: |

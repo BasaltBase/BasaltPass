@@ -13,6 +13,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"log"
 	"math/big"
 	mathrand "math/rand"
 	"strings"
@@ -34,7 +35,10 @@ type Service struct {
 // NewService 创建验证码服务
 func NewService() *Service {
 	cfg := config.Get()
-	emailSvc, _ := emailservice.NewServiceFromConfig(cfg) // 使用全局配置
+	emailSvc, err := emailservice.NewServiceFromConfig(cfg) // 使用全局配置
+	if err != nil {
+		log.Printf("[verification] email service unavailable: %v", err)
+	}
 	return &Service{
 		config:   DefaultConfig(),
 		emailSvc: emailSvc,
@@ -618,6 +622,10 @@ func (s *Service) generateSalt() (string, error) {
 
 // sendVerificationEmail 发送验证邮件
 func (s *Service) sendVerificationEmail(email, code string, expiresAt time.Time) error {
+	if s.emailSvc == nil {
+		return errors.New("email service not configured")
+	}
+
 	subject := "BasaltPass - Verification Code"
 
 	// 计算剩余有效时间
