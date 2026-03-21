@@ -39,7 +39,7 @@ func checkRateLimitDetailed(key string, cfg RateLimitConfig) (bool, int, error) 
 		Delete(&RateLimitRecord{})
 
 	var record RateLimitRecord
-	err := db.Where("key = ? AND category = ?", key, cfg.Category).First(&record).Error
+	err := db.Where("`key` = ? AND category = ?", key, cfg.Category).First(&record).Error
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {

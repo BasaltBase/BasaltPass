@@ -140,7 +140,7 @@ func checkRateLimit(key string, config RateLimitConfig) (bool, error) {
 
 	// 查找或创建记录
 	var record RateLimitRecord
-	err := common.DB().Where("key = ? AND category = ?", key, config.Category).First(&record).Error
+	err := common.DB().Where("`key` = ? AND category = ?", key, config.Category).First(&record).Error
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
