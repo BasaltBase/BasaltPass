@@ -30,6 +30,17 @@ interface Profile {
   updated_at: string
 }
 
+const formatDisplayDate = (value?: string | null) => {
+  if (!value) return '未设置'
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return '未设置'
+  }
+
+  return date.toLocaleDateString('zh-CN')
+}
+
 function Profile() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
@@ -60,7 +71,7 @@ function Profile() {
         phone: profileRes.data.phone || ''
       })
     } catch {
-      setLoadError('åŠ è½½ä¸ªäººèµ„æ–™å¤±è´¥ï¼Œè¯·æ£€æŸ¥ç½‘ç»œåŽé‡è¯•')
+      setLoadError('加载个人资料失败，请检查网络后重试')
     } finally {
       setIsLoading(false)
     }
@@ -81,7 +92,7 @@ function Profile() {
       setProfile(prev => prev ? { ...prev, nickname: editForm.nickname, phone: editForm.phone } : null)
       setIsEditing(false)
     } catch (error: any) {
-      setSaveError(error?.response?.data?.error || 'ä¿å­˜å¤±è´¥ï¼Œè¯·ç¨åŽé‡è¯•')
+      setSaveError(error?.response?.data?.error || '保存失败，请稍后重试')
     } finally {
       setIsSaving(false)
     }
@@ -114,7 +125,7 @@ function Profile() {
           <div className="space-y-4 text-center">
             <div className="text-red-600" role="alert">{loadError}</div>
             <PButton onClick={() => void loadProfile()} variant="secondary">
-              é‡è¯•
+                重试
             </PButton>
           </div>
         </div>
@@ -127,7 +138,7 @@ function Profile() {
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">{/* å¤´åƒå’ŒåŸºæœ¬ä¿¡æ¯ */}
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">{/* 头像和基本信息 */}
           <div className="lg:col-span-1">
             <PCard variant="bordered" size="lg">
               <div className="flex flex-col items-center">
@@ -137,45 +148,45 @@ function Profile() {
                   </div>
                 </div>
                 <h3 className="mt-4 text-lg font-medium text-gray-900">
-                  {profile.nickname || 'æœªè®¾ç½®æ˜µç§°'}
+                  {profile.nickname || '未设置昵称'}
                 </h3>
-                <p className="text-sm text-gray-500">ç”¨æˆ· ID: {profile.id}</p>
+                <p className="text-sm text-gray-500">用户 ID: {profile.id}</p>
                 <div className="mt-4 flex space-x-3">
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    å·²éªŒè¯
+                    已验证
                   </span>
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    æ´»è·ƒç”¨æˆ·
+                    活跃用户
                   </span>
                 </div>
               </div>
             </PCard>
 
-            {/* è´¦æˆ·ç»Ÿè®¡ */}
+            {/* 账户统计 */}
             <PCard variant="bordered" className="mt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">è´¦æˆ·ç»Ÿè®¡</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">账户统计</h3>
               <div className="space-y-4">
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-500">æ³¨å†Œæ—¶é—´</span>
+                  <span className="text-sm text-gray-500">注册时间</span>
                   <span className="text-sm text-gray-900">
-                    {new Date(profile.created_at).toLocaleDateString('zh-CN')}
+                    {formatDisplayDate(profile.created_at)}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-500">æœ€åŽæ›´æ–°</span>
+                  <span className="text-sm text-gray-500">最后更新</span>
                   <span className="text-sm text-gray-900">
-                    {new Date(profile.updated_at).toLocaleDateString('zh-CN')}
+                    {formatDisplayDate(profile.updated_at)}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-500">è´¦æˆ·çŠ¶æ€</span>
-                  <span className="text-sm text-green-600">æ­£å¸¸</span>
+                  <span className="text-sm text-gray-500">账户状态</span>
+                  <span className="text-sm text-green-600">正常</span>
                 </div>
               </div>
             </PCard>
           </div>
 
-          {/* è¯¦ç»†ä¿¡æ¯ */}
+          {/* 详细信息 */}
           <div className="lg:col-span-2">
             <PCard variant="bordered" size="lg">
               <div className="mb-8 flex items-center justify-between">
@@ -290,16 +301,16 @@ function Profile() {
               )}
             </PCard>
 
-            {/* è¯¦ç»†èµ„æ–™ */}
+            {/* 详细资料 */}
             {userProfile && (
               <PCard variant="bordered" size="lg" className="mt-6">
-                <h3 className="text-xl font-semibold text-gray-900 mb-6">è¯¦ç»†èµ„æ–™</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-6">详细资料</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {userProfile.gender && (
                     <div className="space-y-2">
                       <label className="flex items-center text-sm font-medium text-gray-500">
                         <UserIcon className="h-4 w-4 mr-2" />
-                        æ€§åˆ«
+                        性别
                       </label>
                       <p className="text-sm text-gray-900">{userProfile.gender.name_cn || userProfile.gender.name}</p>
                     </div>
@@ -308,16 +319,16 @@ function Profile() {
                     <div className="space-y-2">
                       <label className="flex items-center text-sm font-medium text-gray-500">
                         <CalendarIcon className="h-4 w-4 mr-2" />
-                        å‡ºç”Ÿæ—¥æœŸ
+                        出生日期
                       </label>
-                      <p className="text-sm text-gray-900">{new Date(userProfile.birth_date).toLocaleDateString('zh-CN')}</p>
+                      <p className="text-sm text-gray-900">{formatDisplayDate(userProfile.birth_date)}</p>
                     </div>
                   )}
                   {userProfile.language && (
                     <div className="space-y-2">
                       <label className="flex items-center text-sm font-medium text-gray-500">
                         <GlobeAltIcon className="h-4 w-4 mr-2" />
-                        è¯­è¨€
+                        语言
                       </label>
                       <p className="text-sm text-gray-900">{userProfile.language.name_local || userProfile.language.name}</p>
                     </div>
@@ -326,7 +337,7 @@ function Profile() {
                     <div className="space-y-2">
                       <label className="flex items-center text-sm font-medium text-gray-500">
                         <GlobeAltIcon className="h-4 w-4 mr-2" />
-                        æ—¶åŒº
+                        时区
                       </label>
                       <p className="text-sm text-gray-900">{userProfile.timezone}</p>
                     </div>
@@ -335,7 +346,7 @@ function Profile() {
                     <div className="space-y-2">
                       <label className="flex items-center text-sm font-medium text-gray-500">
                         <CurrencyDollarIcon className="h-4 w-4 mr-2" />
-                        ä¸»è¦è´§å¸
+                        主要货币
                       </label>
                       <p className="text-sm text-gray-900">
                         {userProfile.currency.name_cn || userProfile.currency.name} ({userProfile.currency.code})
@@ -346,7 +357,7 @@ function Profile() {
                     <div className="space-y-2">
                       <label className="flex items-center text-sm font-medium text-gray-500">
                         <MapPinIcon className="h-4 w-4 mr-2" />
-                        æ‰€åœ¨åœ°
+                        所在地
                       </label>
                       <p className="text-sm text-gray-900">{userProfile.location}</p>
                     </div>
@@ -355,7 +366,7 @@ function Profile() {
                     <div className="space-y-2">
                       <label className="flex items-center text-sm font-medium text-gray-500">
                         <BriefcaseIcon className="h-4 w-4 mr-2" />
-                        å…¬å¸
+                        公司
                       </label>
                       <p className="text-sm text-gray-900">{userProfile.company}</p>
                     </div>
@@ -364,7 +375,7 @@ function Profile() {
                     <div className="space-y-2">
                       <label className="flex items-center text-sm font-medium text-gray-500">
                         <BriefcaseIcon className="h-4 w-4 mr-2" />
-                        èŒä½
+                        职位
                       </label>
                       <p className="text-sm text-gray-900">{userProfile.job_title}</p>
                     </div>
@@ -373,7 +384,7 @@ function Profile() {
                     <div className="space-y-2">
                       <label className="flex items-center text-sm font-medium text-gray-500">
                         <LinkIcon className="h-4 w-4 mr-2" />
-                        ä¸ªäººç½‘ç«™
+                        个人网站
                       </label>
                       <a 
                         href={userProfile.website} 
@@ -389,7 +400,7 @@ function Profile() {
                     <div className="space-y-2 md:col-span-2">
                       <label className="flex items-center text-sm font-medium text-gray-500">
                         <UserIcon className="h-4 w-4 mr-2" />
-                        ä¸ªäººç®€ä»‹
+                        个人简介
                       </label>
                       <p className="text-sm text-gray-900 whitespace-pre-wrap">{userProfile.bio}</p>
                     </div>
@@ -400,7 +411,7 @@ function Profile() {
                     href={ROUTES.user.settings}
                     className="text-sm text-blue-600 hover:underline"
                   >
-                    åœ¨è®¾ç½®ä¸­ç¼–è¾‘è¯¦ç»†èµ„æ–™ â†’
+                    在设置中编辑详细资料 →
                   </a>
                 </div>
               </PCard>
