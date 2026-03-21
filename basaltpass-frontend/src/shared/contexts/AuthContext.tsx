@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getAccessToken, clearAccessToken, setAccessToken } from '../utils/auth'
+import { getAccessToken, clearAccessToken, setAccessToken, getAuthScope } from '../utils/auth'
 import { debugAuth } from '../utils/debug'
 import client from '../api/client'
 import { decodeJWT } from '../utils/jwt'
@@ -51,7 +51,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [hasChecked, setHasChecked] = useState(false)
   const navigate = useNavigate()
 
-  const expectedScope = (import.meta as any).env?.VITE_AUTH_SCOPE || 'user'
+  const expectedScope = getAuthScope()
 
   const tokenMatchesScope = useCallback((token: string) => {
     const decoded = decodeJWT(token)

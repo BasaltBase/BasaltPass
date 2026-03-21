@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { getAccessToken, clearAccessToken } from '../utils/auth'
+import { getAccessToken, clearAccessToken, getAuthScope, setAccessToken } from '../utils/auth'
 
 const inferDefaultApiBase = () => {
   if (typeof window !== 'undefined' && window.location?.hostname) {
@@ -64,7 +64,7 @@ client.interceptors.request.use((config) => {
 
   // Scope header: user/tenant/admin (defaults to user)
   config.headers = config.headers || {}
-  const scope = (import.meta as any).env?.VITE_AUTH_SCOPE || 'user'
+  const scope = getAuthScope()
   ;(config.headers as any)['X-Auth-Scope'] = scope
   
   return config
@@ -108,7 +108,7 @@ client.interceptors.response.use(
         const { access_token } = response.data
         
         // 更新本地存储的token
-        localStorage.setItem('access_token', access_token)
+        setAccessToken(access_token)
         
         // 处理队列中的请求
         processQueue(null, access_token)
