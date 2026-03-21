@@ -43,7 +43,7 @@ function ConsoleCodeGate({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <ConsoleCodeGate>
-      <BrowserRouter basename={import.meta.env.BASE_URL}>
+      <BrowserRouter>
         <ConfigProvider>
           <AuthProvider>
             <DialogProvider>
