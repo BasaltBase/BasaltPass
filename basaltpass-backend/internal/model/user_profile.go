@@ -9,7 +9,7 @@ import (
 // Gender 性别表
 type Gender struct {
 	gorm.Model
-	Code      string `gorm:"size:16;uniqueIndex;not null" json:"code"` // 性别代码：male, female, other, prefer_not_to_say
+	Code      string `gorm:"size:32;uniqueIndex;not null" json:"code"` // 性别代码：male, female, other, prefer_not_to_say
 	Name      string `gorm:"size:32;not null" json:"name"`             // 英文名称
 	NameCN    string `gorm:"size:32" json:"name_cn"`                   // 中文名称
 	SortOrder int    `gorm:"default:0" json:"sort_order"`              // 排序顺序

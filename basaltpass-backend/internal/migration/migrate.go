@@ -17,6 +17,53 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+func indexExists(tableName, indexName string) bool {
+	db := common.DB()
+
+	switch strings.ToLower(db.Dialector.Name()) {
+	case "mysql":
+		var count int64
+		if err := db.Raw(
+			`SELECT COUNT(1)
+			 FROM information_schema.statistics
+			 WHERE table_schema = DATABASE() AND table_name = ? AND index_name = ?`,
+			tableName,
+			indexName,
+		).Scan(&count).Error; err == nil {
+			return count > 0
+		}
+	}
+
+	return db.Migrator().HasIndex(tableName, indexName)
+}
+
+func dropIndexIfExists(tableName, indexName string) {
+	if !indexExists(tableName, indexName) {
+		return
+	}
+
+	db := common.DB()
+	var err error
+
+	switch strings.ToLower(db.Dialector.Name()) {
+	case "mysql":
+		err = db.Exec(fmt.Sprintf("DROP INDEX %s ON %s", indexName, tableName)).Error
+	default:
+		err = db.Exec(fmt.Sprintf("DROP INDEX IF EXISTS %s", indexName)).Error
+	}
+
+	if err != nil {
+		log.Printf("[Migration] Failed to drop index %s on %s: %v", indexName, tableName, err)
+	}
+}
+
+func createIndexIfMissing(tableName, indexName, createSQL string) error {
+	if indexExists(tableName, indexName) {
+		return nil
+	}
+	return common.DB().Exec(createSQL).Error
+}
+
 // 迁移数据库，自动迁移数据库表结构
 // RunMigrations performs GORM auto migration for all models.
 func RunMigrations() {
@@ -454,26 +501,48 @@ func seedSystemApps() {
 
 // createSubscriptionIndexes 创建订阅系统相关的数据库索引
 func createSubscriptionIndexes() {
-	db := common.DB()
-
-	// 检查数据库类型并创建相应的索引
-	// 注意：GORM 会自动创建大部分索引，这里只处理特殊的复合索引
-
-	// 为 market_subscriptions 表创建复合索引
-	db.Exec("CREATE INDEX IF NOT EXISTS idx_subscriptions_user_status ON market_subscriptions(user_id, status)")
-	db.Exec("CREATE INDEX IF NOT EXISTS idx_subscriptions_current_period_end ON market_subscriptions(current_period_end)")
-
-	// 为 market_usage_records 表创建复合索引
-	db.Exec("CREATE INDEX IF NOT EXISTS idx_usage_records_subscription_item_ts ON market_usage_records(subscription_item_id, ts)")
-
-	// 为 market_subscription_events 表创建复合索引
-	db.Exec("CREATE INDEX IF NOT EXISTS idx_subscription_events_subscription_created ON market_subscription_events(subscription_id, created_at)")
-
-	// 为 market_plan_features 表创建唯一约束
-	db.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_plan_features_plan_key ON market_plan_features(plan_id, feature_key)")
-
-	// 为 market_plans 表创建唯一约束
-	db.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_plans_product_code_version ON market_plans(product_id, code, plan_version)")
+	if err := createIndexIfMissing(
+		"market_subscriptions",
+		"idx_subscriptions_user_status",
+		"CREATE INDEX idx_subscriptions_user_status ON market_subscriptions(user_id, status)",
+	); err != nil {
+		log.Printf("[Migration] Failed to create idx_subscriptions_user_status: %v", err)
+	}
+	if err := createIndexIfMissing(
+		"market_subscriptions",
+		"idx_subscriptions_current_period_end",
+		"CREATE INDEX idx_subscriptions_current_period_end ON market_subscriptions(current_period_end)",
+	); err != nil {
+		log.Printf("[Migration] Failed to create idx_subscriptions_current_period_end: %v", err)
+	}
+	if err := createIndexIfMissing(
+		"market_usage_records",
+		"idx_usage_records_subscription_item_ts",
+		"CREATE INDEX idx_usage_records_subscription_item_ts ON market_usage_records(subscription_item_id, ts)",
+	); err != nil {
+		log.Printf("[Migration] Failed to create idx_usage_records_subscription_item_ts: %v", err)
+	}
+	if err := createIndexIfMissing(
+		"market_subscription_events",
+		"idx_subscription_events_subscription_created",
+		"CREATE INDEX idx_subscription_events_subscription_created ON market_subscription_events(subscription_id, created_at)",
+	); err != nil {
+		log.Printf("[Migration] Failed to create idx_subscription_events_subscription_created: %v", err)
+	}
+	if err := createIndexIfMissing(
+		"market_plan_features",
+		"idx_plan_features_plan_key",
+		"CREATE UNIQUE INDEX idx_plan_features_plan_key ON market_plan_features(plan_id, feature_key)",
+	); err != nil {
+		log.Printf("[Migration] Failed to create idx_plan_features_plan_key: %v", err)
+	}
+	if err := createIndexIfMissing(
+		"market_plans",
+		"idx_plans_product_code_version",
+		"CREATE UNIQUE INDEX idx_plans_product_code_version ON market_plans(product_id, code, plan_version)",
+	); err != nil {
+		log.Printf("[Migration] Failed to create idx_plans_product_code_version: %v", err)
+	}
 }
 
 // seedSystemPermissions 创建（若不存在）系统级权限清单
@@ -611,32 +680,36 @@ func assignPermissionsToAdminRole() {
 		}
 	}
 
-	// 查找默认租户的 tenant 角色
-	var adminRole model.Role
-	if err := db.Where("code = ? AND tenant_id = ?", "tenant", tenant.ID).First(&adminRole).Error; err != nil {
+	// 查找默认租户的 admin 角色
+	var adminRole model.TenantRbacRole
+	if err := db.Where("code = ? AND tenant_id = ?", "admin", tenant.ID).First(&adminRole).Error; err != nil {
 		log.Printf("[Migration] Admin role not found for tenant %d, skip permission binding", tenant.ID)
 		return
 	}
 
-	// 取回所有系统权限
-	var perms []model.Permission
-	if err := db.Find(&perms).Error; err != nil {
-		log.Printf("[Migration] Failed to load permissions: %v", err)
+	// 取回当前租户下的全部租户权限
+	var perms []model.TenantRbacPermission
+	if err := db.Where("tenant_id = ?", tenant.ID).Find(&perms).Error; err != nil {
+		log.Printf("[Migration] Failed to load tenant permissions: %v", err)
+		return
+	}
+	if len(perms) == 0 {
+		log.Printf("[Migration] No tenant permissions found for tenant %d, skip admin role binding", tenant.ID)
 		return
 	}
 
-	// 为 tenant 角色绑定权限（若未绑定）
+	// 为 admin 角色绑定权限（若未绑定）
 	for _, p := range perms {
 		var cnt int64
-		if err := db.Model(&model.RolePermission{}).
+		if err := db.Model(&model.TenantRbacRolePermission{}).
 			Where("role_id = ? AND permission_id = ?", adminRole.ID, p.ID).
 			Count(&cnt).Error; err != nil {
 			log.Printf("[Migration] Failed to check role_permission for role %d perm %d: %v", adminRole.ID, p.ID, err)
 			continue
 		}
 		if cnt == 0 {
-			if err := db.Create(&model.RolePermission{RoleID: adminRole.ID, PermissionID: p.ID}).Error; err != nil {
-				log.Printf("[Migration] Failed to bind permission %s to tenant role: %v", p.Code, err)
+			if err := db.Create(&model.TenantRbacRolePermission{RoleID: adminRole.ID, PermissionID: p.ID}).Error; err != nil {
+				log.Printf("[Migration] Failed to bind tenant permission %s to admin role: %v", p.Code, err)
 			}
 		}
 	}
@@ -698,13 +771,17 @@ func assignPermissionsToPredefinedRoles() {
 		}
 	}
 
-	// 加载全部权限，构建索引
-	var perms []model.Permission
-	if err := db.Find(&perms).Error; err != nil {
-		log.Printf("[Migration] Failed to load permissions for predefined roles: %v", err)
+	// 加载当前租户下的全部租户权限，构建索引
+	var perms []model.TenantRbacPermission
+	if err := db.Where("tenant_id = ?", tenant.ID).Find(&perms).Error; err != nil {
+		log.Printf("[Migration] Failed to load tenant permissions for predefined roles: %v", err)
 		return
 	}
-	codeToPerm := make(map[string]model.Permission, len(perms))
+	if len(perms) == 0 {
+		log.Printf("[Migration] No tenant permissions found for tenant %d, skip predefined role binding", tenant.ID)
+		return
+	}
+	codeToPerm := make(map[string]model.TenantRbacPermission, len(perms))
 	for _, p := range perms {
 		codeToPerm[p.Code] = p
 	}
@@ -778,7 +855,7 @@ func assignPermissionsToPredefinedRoles() {
 	// 绑定函数（幂等）
 	bind := func(roleCode string, codes []string) {
 		// 查角色
-		var role model.Role
+		var role model.TenantRbacRole
 		if err := db.Where("code = ? AND tenant_id = ?", roleCode, tenant.ID).First(&role).Error; err != nil {
 			log.Printf("[Migration] Role %s not found for tenant %d, skip", roleCode, tenant.ID)
 			return
@@ -805,14 +882,14 @@ func assignPermissionsToPredefinedRoles() {
 				continue
 			}
 			var cnt int64
-			if err := db.Model(&model.RolePermission{}).
+			if err := db.Model(&model.TenantRbacRolePermission{}).
 				Where("role_id = ? AND permission_id = ?", role.ID, p.ID).
 				Count(&cnt).Error; err != nil {
 				log.Printf("[Migration] Failed checking role_permission for role %d code %s: %v", role.ID, code, err)
 				continue
 			}
 			if cnt == 0 {
-				if err := db.Create(&model.RolePermission{RoleID: role.ID, PermissionID: p.ID}).Error; err != nil {
+				if err := db.Create(&model.TenantRbacRolePermission{RoleID: role.ID, PermissionID: p.ID}).Error; err != nil {
 					log.Printf("[Migration] Failed binding perm %s to role %s: %v", code, roleCode, err)
 				}
 			}
@@ -831,13 +908,15 @@ func ensurePasskeyTenantIndex() {
 	db := common.DB()
 
 	// 移除旧的单列唯一索引（如果存在）
-	db.Exec("DROP INDEX IF EXISTS idx_passkeys_credential_id")
-	db.Exec("DROP INDEX IF EXISTS passkeys_credential_id_key")
+	dropIndexIfExists("system_passkeys", "idx_passkeys_credential_id")
+	dropIndexIfExists("system_passkeys", "passkeys_credential_id_key")
 
 	// 创建 (credential_id, tenant_id) 复合唯一索引，保证同一租户内凭证唯一
-	if err := db.Exec(
-		"CREATE UNIQUE INDEX IF NOT EXISTS idx_passkeys_credential_tenant ON system_passkeys (credential_id, tenant_id)",
-	).Error; err != nil {
+	if err := createIndexIfMissing(
+		"system_passkeys",
+		"idx_passkeys_credential_tenant",
+		"CREATE UNIQUE INDEX idx_passkeys_credential_tenant ON system_passkeys (credential_id, tenant_id)",
+	); err != nil {
 		log.Printf("[Migration] Failed to create idx_passkeys_credential_tenant: %v", err)
 	} else {
 		log.Println("[Migration] Ensured passkeys composite unique index (credential_id, tenant_id)")
@@ -876,10 +955,11 @@ func ensureSystemTenantWebAuthnConfig() {
 
 // ensureUserTenantTOTPIndex 在 user_tenant_totps 表上创建 (user_id, tenant_id) 复合唯一索引（幂等）。
 func ensureUserTenantTOTPIndex() {
-	db := common.DB()
-	if err := db.Exec(
-		"CREATE UNIQUE INDEX IF NOT EXISTS idx_user_tenant_totps_user_tenant ON system_user_tenant_totps (user_id, tenant_id)",
-	).Error; err != nil {
+	if err := createIndexIfMissing(
+		"system_user_tenant_totps",
+		"idx_user_tenant_totps_user_tenant",
+		"CREATE UNIQUE INDEX idx_user_tenant_totps_user_tenant ON system_user_tenant_totps (user_id, tenant_id)",
+	); err != nil {
 		log.Printf("[Migration] Failed to create idx_user_tenant_totps_user_tenant: %v", err)
 	} else {
 		log.Println("[Migration] Ensured user_tenant_totps composite unique index (user_id, tenant_id)")
@@ -1263,32 +1343,52 @@ func ensureUserTenantScopedUniqueIndexes() {
 	log.Println("[Migration] Ensuring tenant-scoped unique indexes on users(email, tenant_id) and users(phone, tenant_id)...")
 
 	// 先删除历史上可能存在的单列唯一索引（以及错误的同名索引定义）
-	db.Exec("DROP INDEX IF EXISTS idx_users_email")
-	db.Exec("DROP INDEX IF EXISTS users_email_key")
-	db.Exec("DROP INDEX IF EXISTS idx_users_phone")
-	db.Exec("DROP INDEX IF EXISTS users_phone_key")
-	db.Exec("DROP INDEX IF EXISTS idx_email_tenant")
-	db.Exec("DROP INDEX IF EXISTS idx_phone_tenant")
+	dropIndexIfExists("system_auth_users", "idx_users_email")
+	dropIndexIfExists("system_auth_users", "users_email_key")
+	dropIndexIfExists("system_auth_users", "idx_users_phone")
+	dropIndexIfExists("system_auth_users", "users_phone_key")
+	dropIndexIfExists("system_auth_users", "idx_email_tenant")
+	dropIndexIfExists("system_auth_users", "idx_phone_tenant")
 
 	// 再创建期望的复合唯一索引
 	if dialect == "sqlite" || dialect == "postgres" || dialect == "postgresql" {
-		if err := db.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_email_tenant ON system_auth_users (email, tenant_id) WHERE email != ''").Error; err != nil {
+		if err := createIndexIfMissing(
+			"system_auth_users",
+			"idx_email_tenant",
+			"CREATE UNIQUE INDEX idx_email_tenant ON system_auth_users (email, tenant_id) WHERE email != ''",
+		); err != nil {
 			log.Printf("[Migration] Failed to create idx_email_tenant: %v", err)
 		}
-		if err := db.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_phone_tenant ON system_auth_users (phone, tenant_id) WHERE phone != ''").Error; err != nil {
+		if err := createIndexIfMissing(
+			"system_auth_users",
+			"idx_phone_tenant",
+			"CREATE UNIQUE INDEX idx_phone_tenant ON system_auth_users (phone, tenant_id) WHERE phone != ''",
+		); err != nil {
 			log.Printf("[Migration] Failed to create idx_phone_tenant: %v", err)
 		}
 	} else {
-		if err := db.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_email_tenant ON system_auth_users (email, tenant_id)").Error; err != nil {
+		if err := createIndexIfMissing(
+			"system_auth_users",
+			"idx_email_tenant",
+			"CREATE UNIQUE INDEX idx_email_tenant ON system_auth_users (email, tenant_id)",
+		); err != nil {
 			log.Printf("[Migration] Failed to create idx_email_tenant: %v", err)
 		}
-		if err := db.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_phone_tenant ON system_auth_users (phone, tenant_id)").Error; err != nil {
+		if err := createIndexIfMissing(
+			"system_auth_users",
+			"idx_phone_tenant",
+			"CREATE UNIQUE INDEX idx_phone_tenant ON system_auth_users (phone, tenant_id)",
+		); err != nil {
 			log.Printf("[Migration] Failed to create idx_phone_tenant: %v", err)
 		}
 	}
 
 	// tenant_id 普通索引
-	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_users_tenant_id ON system_auth_users (tenant_id)").Error; err != nil {
+	if err := createIndexIfMissing(
+		"system_auth_users",
+		"idx_users_tenant_id",
+		"CREATE INDEX idx_users_tenant_id ON system_auth_users (tenant_id)",
+	); err != nil {
 		log.Printf("[Migration] Failed to create idx_users_tenant_id: %v", err)
 	}
 }
@@ -1296,8 +1396,6 @@ func ensureUserTenantScopedUniqueIndexes() {
 // ensureIsSystemAdminNonUniqueIndex removes legacy unique index on users.is_system_admin
 // and keeps a normal non-unique index for query performance.
 func ensureIsSystemAdminNonUniqueIndex() {
-	db := common.DB()
-
 	log.Println("[Migration] Ensuring non-unique index on users(is_system_admin)...")
 
 	// 先尝试删除历史上的唯一索引（不同数据库/版本命名可能不同）
@@ -1307,19 +1405,15 @@ func ensureIsSystemAdminNonUniqueIndex() {
 		"users_is_system_admin_key",
 	}
 	for _, name := range legacyIndexes {
-		if db.Migrator().HasIndex(&model.User{}, name) {
-			if err := db.Migrator().DropIndex(&model.User{}, name); err != nil {
-				log.Printf("[Migration] Failed to drop legacy index %s: %v", name, err)
-			}
-		}
+		dropIndexIfExists("system_auth_users", name)
 	}
-	// 兜底：处理部分数据库驱动无法识别 HasIndex 的情况。
-	db.Exec("DROP INDEX IF EXISTS idx_users_is_system_admin")
-	db.Exec("DROP INDEX IF EXISTS is_system_admin")
-	db.Exec("DROP INDEX IF EXISTS users_is_system_admin_key")
 
 	// 再创建普通索引（非 unique）
-	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_users_is_system_admin ON system_auth_users (is_system_admin)").Error; err != nil {
+	if err := createIndexIfMissing(
+		"system_auth_users",
+		"idx_users_is_system_admin",
+		"CREATE INDEX idx_users_is_system_admin ON system_auth_users (is_system_admin)",
+	); err != nil {
 		log.Printf("[Migration] Failed to create idx_users_is_system_admin: %v", err)
 	}
 }

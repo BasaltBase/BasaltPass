@@ -523,50 +523,44 @@ func (s *Service) handleResend(challenge *model.VerificationChallenge, config *V
 	challenge.ResendCount++
 	challenge.NextSendAt = now.Add(config.GetResendCooldownDuration())
 
-	// 根据配置决定是否换码
-	if config.RotateCodeOnResend {
-		// 生成新验证码
-		newCode, err := s.generateCode(config.CodeLength, config.CodeCharset)
-		if err != nil {
-			return err
-		}
-
-		// 生成新的盐值
-		salt, err := s.generateSalt()
-		if err != nil {
-			return err
-		}
-
-		challenge.CodeHash = s.hashCode(newCode, salt)
-		challenge.CodeSalt = salt
-
-		// 根据配置调整过期时间
-		switch config.ExtendTTLOnResend {
-		case "reset_to_full":
-			challenge.ExpiresAt = now.Add(config.GetTTLDuration())
-		case "add_small":
-			if time.Until(challenge.ExpiresAt) < 2*time.Minute {
-				challenge.ExpiresAt = now.Add(2 * time.Minute)
-			}
-		}
-
-		// 根据配置重置尝试次数
-		if config.ResetAttemptsOnResend {
-			challenge.AttemptCount = 0
-			challenge.LockedUntil = nil
-		}
-
-		// 发送新验证码
-		if err := common.DB().Save(challenge).Error; err != nil {
-			return err
-		}
-		return s.sendVerificationEmail(challenge.Target, newCode, challenge.ExpiresAt)
+	// 当前系统只保存验证码哈希，无法取回旧码做“原样重发”。
+	// 因此重发时统一签发一个新码，避免接口返回成功但实际上没有任何邮件发送。
+	newCode, err := s.generateCode(config.CodeLength, config.CodeCharset)
+	if err != nil {
+		return err
 	}
 
-	// 不换码，直接重发
-	// 注意：这里无法获取原始验证码，需要重新设计
-	// 在实际实现中，可以考虑存储加密的验证码用于重发
-	return nil
+	// 生成新的盐值
+	salt, err := s.generateSalt()
+	if err != nil {
+		return err
+	}
+
+	challenge.CodeHash = s.hashCode(newCode, salt)
+	challenge.CodeSalt = salt
+
+	// 根据配置调整过期时间
+	switch config.ExtendTTLOnResend {
+	case "reset_to_full":
+		challenge.ExpiresAt = now.Add(config.GetTTLDuration())
+	case "add_small":
+		if time.Until(challenge.ExpiresAt) < 2*time.Minute {
+			challenge.ExpiresAt = now.Add(2 * time.Minute)
+		}
+	default:
+		// 当配置要求“不换码”时，保留现有 TTL，仅发送新的验证码。
+	}
+
+	// 根据配置重置尝试次数
+	if config.ResetAttemptsOnResend {
+		challenge.AttemptCount = 0
+		challenge.LockedUntil = nil
+	}
+
+	if err := common.DB().Save(challenge).Error; err != nil {
+		return err
+	}
+	return s.sendVerificationEmail(challenge.Target, newCode, challenge.ExpiresAt)
 }
 
 // createNewChallenge 创建新的验证码挑战
