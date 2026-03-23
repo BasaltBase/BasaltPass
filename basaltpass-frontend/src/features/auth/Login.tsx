@@ -6,7 +6,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@contexts/AuthContext'
 import { useConfig } from '@contexts/ConfigContext'
 import { loginWithPasskey2FAFlow } from '@api/oauth/passkey'
-import { isPasskeySupported } from '@utils/webauthn'
 import { resolveSafeRedirectTarget } from '@utils/redirect'
 import { ShieldCheckIcon, EnvelopeIcon, KeyIcon } from '@heroicons/react/24/outline'
 import { PInput, PButton, PCheckbox } from '@ui'
@@ -196,7 +195,7 @@ function Login() {
     // 如果有多种2FA方式，显示选择界面
     if (available2FAMethods.length > 1) {
       return (
-        <div className="mt-8 space-y-6">
+        <div className="space-y-6">
           <div>
             <h3 className="text-lg font-medium text-gray-900 mb-4">选择验证方式</h3>
             <div className="space-y-3">
@@ -207,7 +206,7 @@ function Login() {
                   <PButton
                     key={method}
                     type="button"
-                    variant={isSelected ? "primary" : "ghost"}
+                    variant={isSelected ? "primary" : "secondary"}
                     fullWidth
                     onClick={() => switch2FAMethod(method)}
                     leftIcon={<IconComponent className={`h-5 w-5 ${
@@ -216,7 +215,7 @@ function Login() {
                     className={`justify-start ${
                       isSelected
                         ? 'border-blue-500 bg-blue-600'
-                        : 'border-gray-300 hover:border-gray-400'
+                        : 'border-gray-200 text-gray-700 hover:border-gray-300'
                     }`}
                   >
                     <span className={`font-medium ${
@@ -248,8 +247,8 @@ function Login() {
     
     // 只有一种2FA方式，直接显示表单
     return (
-      <div className="mt-8 space-y-6">
-        <div className="text-center">
+      <div className="space-y-6">
+        <div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">二次验证</h3>
           <p className="text-sm text-gray-600">
             请使用 {get2FAMethodName(twoFAType)} 完成验证
@@ -291,7 +290,7 @@ function Login() {
             <PButton
               type="submit"
               disabled={isLoading}
-              variant="gradient"
+              variant="primary"
               fullWidth
               loading={isLoading}
             >
@@ -319,7 +318,7 @@ function Login() {
             <PButton
               type="submit"
               disabled={isLoading}
-              variant="gradient"
+              variant="primary"
               fullWidth
               loading={isLoading}
             >
@@ -332,16 +331,16 @@ function Login() {
       return (
         <form className="space-y-6" onSubmit={submit2FAVerify}>
           <div className="space-y-4">
-            <div className="bg-blue-50 p-4 rounded-md">
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
               <div className="flex">
                 <div className="flex-shrink-0">
-                  <ShieldCheckIcon className="h-5 w-5 text-blue-400" />
+                  <ShieldCheckIcon className="h-5 w-5 text-gray-500" />
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-blue-800">
+                  <h3 className="text-sm font-medium text-gray-900">
                     使用Passkey进行二次验证
                   </h3>
-                  <div className="mt-2 text-sm text-blue-700">
+                  <div className="mt-2 text-sm text-gray-600">
                     <p>点击验证后，您的设备将提示您进行生物识别验证或使用安全密钥。</p>
                   </div>
                 </div>
@@ -352,7 +351,7 @@ function Login() {
             <PButton
               type="submit"
               disabled={isLoading}
-              variant="gradient"
+              variant="primary"
               fullWidth
               loading={isLoading}
               leftIcon={<ShieldCheckIcon className="h-5 w-5" />}
@@ -367,112 +366,117 @@ function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-xl bg-indigo-600 flex items-center justify-center">
-              <span className="text-xl font-bold text-white">{siteInitial}</span>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-indigo-600">管理员登录</p>
-              <p className="text-lg font-semibold text-gray-900">{siteName}</p>
-            </div>
-          </div>
-          <h2 className="mt-6 text-left text-4xl font-extrabold text-gray-900">
-            欢迎回到 {siteName}
-          </h2>
-          <p className="mt-2 text-left text-sm text-gray-600">
-            或者{' '}
-            <Link to={ROUTES.user.register} className="font-medium text-blue-600 hover:text-blue-500">
-              创建新账户
-            </Link>
-          </p>
-        </div>
-        {error && (
-        <div className="rounded-md bg-red-50 p-4" role="alert" aria-live="assertive">
-            <div className="flex">
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">登录失败</h3>
-                <div className="mt-2 text-sm text-red-700">{error}</div>
+    <div className="min-h-screen bg-gray-50 px-4 py-10 sm:px-6 lg:px-8">
+      <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-md items-center">
+        <div className="w-full rounded-2xl border border-gray-200 bg-white px-6 py-8 shadow-sm sm:px-8">
+          <div className="space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-900">
+                <span className="text-sm font-semibold text-white">{siteInitial}</span>
               </div>
-            </div>
-          </div>
-        )}
-        {step === 1 && (
-          <form className="mt-8 space-y-6" onSubmit={submitPasswordLogin}>
-            <div className="space-y-4">
-              <PInput
-                id="identifier"
-                name="identifier"
-                type="text"
-                required
-                label="邮箱或手机号"
-                placeholder="请输入邮箱或手机号"
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
-              />
-              <PInput
-                id="password"
-                name="password"
-                type="password"
-                required
-                label="密码"
-                placeholder="请输入密码"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                showPassword={showPassword}
-                onTogglePassword={() => setShowPassword(!showPassword)}
-              />
-            </div>
-            <div className="flex items-center justify-between">
               <div>
-                <PCheckbox
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  label="记住我"
-                />
-                <p className="mt-1 text-xs text-gray-500">在此设备保持 30 天登录状态</p>
-              </div>
-              <div className="text-sm">
-                <Link to="/reset-password" className="font-medium text-blue-600 hover:text-blue-500">
-                  忘记密码？
-                </Link>
+                <p className="text-sm font-medium text-gray-900">{siteName}</p>
+                <p className="text-xs text-gray-500">管理员登录</p>
               </div>
             </div>
+
             <div>
+              <h2 className="text-2xl font-semibold text-gray-900">欢迎回来</h2>
+              <p className="mt-2 text-sm text-gray-600">
+                使用邮箱或手机号登录，继续访问您的账户。
+              </p>
+              <p className="mt-2 text-sm text-gray-600">
+                还没有账户？{' '}
+                <Link to={ROUTES.user.register} className="font-medium text-blue-600 hover:text-blue-500">
+                  创建新账户
+                </Link>
+              </p>
+            </div>
+          </div>
+
+          {error && (
+            <div className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3" role="alert" aria-live="assertive">
+              <h3 className="text-sm font-medium text-red-800">登录失败</h3>
+              <div className="mt-1 text-sm text-red-700">{error}</div>
+            </div>
+          )}
+
+          {step === 1 && (
+            <form className="mt-6 space-y-5" onSubmit={submitPasswordLogin}>
+              <div className="space-y-4">
+                <PInput
+                  id="identifier"
+                  name="identifier"
+                  type="text"
+                  required
+                  label="邮箱或手机号"
+                  placeholder="请输入邮箱或手机号"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                />
+                <PInput
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  label="密码"
+                  placeholder="请输入密码"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  showPassword={showPassword}
+                  onTogglePassword={() => setShowPassword(!showPassword)}
+                />
+              </div>
+
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <PCheckbox
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    label="记住我"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">在此设备保持 30 天登录状态</p>
+                </div>
+                <div className="pt-1 text-sm">
+                  <Link to="/reset-password" className="font-medium text-blue-600 hover:text-blue-500">
+                    忘记密码？
+                  </Link>
+                </div>
+              </div>
+
               <PButton
                 type="submit"
                 disabled={isLoading}
-                variant="gradient"
+                variant="primary"
                 fullWidth
                 loading={isLoading}
               >
                 登录
               </PButton>
+            </form>
+          )}
+
+          {step === 2 && (
+            <div className="mt-6">
+              {render2FAForm()}
+              <div className="mt-4">
+                <PButton
+                  type="button"
+                  variant="ghost"
+                  fullWidth
+                  onClick={() => {
+                    setStep(1)
+                    setTwoFACode('')
+                    setEmailCode('')
+                    setError('')
+                  }}
+                >
+                  返回重新输入账号信息
+                </PButton>
+              </div>
             </div>
-          </form>
-        )}
-        {step === 2 && (
-          <>
-            {render2FAForm()}
-            <div className="mt-4">
-              <PButton
-                type="button"
-                variant="ghost"
-                fullWidth
-                onClick={() => {
-                  setStep(1)
-                  setTwoFACode('')
-                  setEmailCode('')
-                  setError('')
-                }}
-              >
-                返回重新输入账号信息
-              </PButton>
-            </div>
-          </>
-        )}
+          )}
+        </div>
       </div>
     </div>
   )

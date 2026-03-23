@@ -20,7 +20,8 @@ import {
   type Gender,
   type Language,
   type Currency,
-  type Timezone
+  type Timezone,
+  type UpdateProfileData
 } from '@api/user/profile'
 
 const normalizeDateInput = (value?: string | null) => {
@@ -113,29 +114,35 @@ export default function Settings() {
     fetchData()
   }, [])
 
-  const handleSave = async () => {
+  const persistProfileChanges = async (changes: UpdateProfileData, silent = false) => {
     try {
       setSaving(true)
-      const response = await updateUserProfile({
-        gender_id: profile.gender_id || null,
-        language_id: profile.language_id || null,
-        currency_id: profile.currency_id || null,
-        timezone: profile.timezone,
-        birth_date: profile.birth_date || null,
-        bio: profile.bio,
-        location: profile.location,
-        website: profile.website,
-        company: profile.company,
-        job_title: profile.job_title
-      })
+      const response = await updateUserProfile(changes)
       setProfile(toSettingsProfile(response.data.profile))
-      uiAlert('设置已保存')
+      if (!silent) {
+        uiAlert('设置已保存')
+      }
     } catch (err) {
       console.error('Failed to save settings:', err)
       uiAlert('保存失败，请重试')
     } finally {
       setSaving(false)
     }
+  }
+
+  const handleSave = async () => {
+    await persistProfileChanges({
+      gender_id: profile.gender_id || null,
+      language_id: profile.language_id || null,
+      currency_id: profile.currency_id || null,
+      timezone: profile.timezone,
+      birth_date: profile.birth_date || null,
+      bio: profile.bio,
+      location: profile.location,
+      website: profile.website,
+      company: profile.company,
+      job_title: profile.job_title
+    })
   }
 
   const handleNotificationChange = (key: keyof typeof notifications) => {
@@ -178,7 +185,11 @@ export default function Settings() {
               <div>
                 <PSelect
                   value={profile.gender_id?.toString() || ''}
-                  onChange={(e) => setProfile(prev => ({ ...prev, gender_id: e.target.value ? Number(e.target.value) : undefined }))}
+                  onChange={(e) => {
+                    const genderId = e.target.value ? Number(e.target.value) : undefined
+                    setProfile(prev => ({ ...prev, gender_id: genderId }))
+                    void persistProfileChanges({ gender_id: genderId || null }, true)
+                  }}
                   label="性别"
                 >
                   <option value="">请选择</option>
@@ -250,7 +261,11 @@ export default function Settings() {
               <div>
                 <PSelect
                   value={profile.language_id?.toString() || ''}
-                  onChange={(e) => setProfile(prev => ({ ...prev, language_id: e.target.value ? Number(e.target.value) : undefined }))}
+                  onChange={(e) => {
+                    const languageId = e.target.value ? Number(e.target.value) : undefined
+                    setProfile(prev => ({ ...prev, language_id: languageId }))
+                    void persistProfileChanges({ language_id: languageId || null }, true)
+                  }}
                   label="语言"
                 >
                   <option value="">请选择</option>
@@ -262,7 +277,10 @@ export default function Settings() {
               <div>
                 <PSelect
                   value={profile.timezone}
-                  onChange={(e) => setProfile(prev => ({ ...prev, timezone: e.target.value }))}
+                  onChange={(e) => {
+                    setProfile(prev => ({ ...prev, timezone: e.target.value }))
+                    void persistProfileChanges({ timezone: e.target.value }, true)
+                  }}
                   label="时区"
                 >
                   {timezones.map(tz => (
@@ -275,7 +293,11 @@ export default function Settings() {
               <div>
                 <PSelect
                   value={profile.currency_id?.toString() || ''}
-                  onChange={(e) => setProfile(prev => ({ ...prev, currency_id: e.target.value ? Number(e.target.value) : undefined }))}
+                  onChange={(e) => {
+                    const currencyId = e.target.value ? Number(e.target.value) : undefined
+                    setProfile(prev => ({ ...prev, currency_id: currencyId }))
+                    void persistProfileChanges({ currency_id: currencyId || null }, true)
+                  }}
                   label="主要货币"
                 >
                   <option value="">请选择</option>

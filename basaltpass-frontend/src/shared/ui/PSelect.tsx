@@ -1,13 +1,7 @@
 import React, {
-  Children,
   forwardRef,
-  isValidElement,
   SelectHTMLAttributes,
-  useEffect,
   useId,
-  useMemo,
-  useRef,
-  useState,
 } from 'react';
 import { ChevronDownIcon } from '@heroicons/react/24/outline';
 
@@ -18,12 +12,6 @@ interface PSelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'si
   size?: 'sm' | 'md' | 'lg';
   fullWidth?: boolean;
   children: React.ReactNode;
-}
-
-interface SelectOption {
-  value: string;
-  label: React.ReactNode;
-  disabled?: boolean;
 }
 
 const PSelect = forwardRef<HTMLSelectElement, PSelectProps>(
@@ -45,30 +33,6 @@ const PSelect = forwardRef<HTMLSelectElement, PSelectProps>(
   }, ref) => {
     const generatedId = useId();
     const selectId = id || generatedId;
-    const wrapperRef = useRef<HTMLDivElement | null>(null);
-    const hiddenSelectRef = useRef<HTMLSelectElement | null>(null);
-    const [isOpen, setIsOpen] = useState(false);
-
-    const options = useMemo<SelectOption[]>(() => {
-      const items: SelectOption[] = [];
-
-      Children.forEach(children, (child) => {
-        if (!isValidElement(child) || child.type !== 'option') {
-          return;
-        }
-
-        items.push({
-          value: String(child.props.value ?? ''),
-          label: child.props.children,
-          disabled: Boolean(child.props.disabled),
-        });
-      });
-
-      return items;
-    }, [children]);
-
-    const selectedValue = String(value ?? defaultValue ?? '');
-    const selectedOption = options.find((option) => option.value === selectedValue);
 
     const baseStyles = `
       border transition-all duration-200 bg-white text-left
@@ -112,78 +76,6 @@ const PSelect = forwardRef<HTMLSelectElement, PSelectProps>(
       lg: 'right-4'
     };
 
-    useEffect(() => {
-      if (!isOpen) {
-        return;
-      }
-
-      const handleOutsideClick = (event: MouseEvent) => {
-        if (!wrapperRef.current?.contains(event.target as Node)) {
-          setIsOpen(false);
-        }
-      };
-
-      const handleEscape = (event: KeyboardEvent) => {
-        if (event.key === 'Escape') {
-          setIsOpen(false);
-        }
-      };
-
-      document.addEventListener('mousedown', handleOutsideClick);
-      document.addEventListener('keydown', handleEscape);
-
-      return () => {
-        document.removeEventListener('mousedown', handleOutsideClick);
-        document.removeEventListener('keydown', handleEscape);
-      };
-    }, [isOpen]);
-
-    const setSelectRef = (node: HTMLSelectElement | null) => {
-      hiddenSelectRef.current = node;
-
-      if (!ref) {
-        return;
-      }
-
-      if (typeof ref === 'function') {
-        ref(node);
-        return;
-      }
-
-      ref.current = node;
-    };
-
-    const triggerChange = (nextValue: string) => {
-      const selectElement = hiddenSelectRef.current;
-
-      if (selectElement) {
-        const valueSetter = Object.getOwnPropertyDescriptor(
-          HTMLSelectElement.prototype,
-          'value'
-        )?.set;
-
-        valueSetter?.call(selectElement, nextValue);
-        selectElement.dispatchEvent(new Event('change', { bubbles: true }));
-        return;
-      }
-
-      const syntheticEvent = {
-        target: { value: nextValue, name },
-        currentTarget: { value: nextValue, name },
-      } as React.ChangeEvent<HTMLSelectElement>;
-
-      onChange?.(syntheticEvent);
-    };
-
-    const handleSelect = (nextValue: string) => {
-      if (disabled) {
-        return;
-      }
-
-      triggerChange(nextValue);
-      setIsOpen(false);
-    };
-
     return (
       <div className="space-y-1">
         {label && (
@@ -191,73 +83,24 @@ const PSelect = forwardRef<HTMLSelectElement, PSelectProps>(
             {label}
           </label>
         )}
-        <div ref={wrapperRef} className="relative">
+        <div className="relative">
           <select
-            ref={setSelectRef}
+            ref={ref}
             id={selectId}
             name={name}
-            value={selectedValue}
+            value={value}
+            defaultValue={defaultValue}
             disabled={disabled}
             onChange={onChange}
-            className="sr-only"
-            tabIndex={-1}
-            aria-hidden="true"
+            className={`${selectClasses} appearance-none`}
             {...props}
           >
             {children}
           </select>
 
-          <button
-            id={`${selectId}-trigger`}
-            type="button"
-            className={`${selectClasses} ${disabled ? '' : 'cursor-pointer'}`}
-            disabled={disabled}
-            onClick={() => setIsOpen((prev) => !prev)}
-            aria-haspopup="listbox"
-            aria-expanded={isOpen}
-            aria-labelledby={`${selectId}-trigger`}
-          >
-            <span className="block truncate">
-              {selectedOption?.label ?? options[0]?.label ?? ''}
-            </span>
-          </button>
-
           <div className={`absolute inset-y-0 ${iconPosition[size]} flex items-center pointer-events-none`}>
-            <ChevronDownIcon className={`${iconSize[size]} text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+            <ChevronDownIcon className={`${iconSize[size]} text-gray-400`} />
           </div>
-
-          {isOpen && !disabled && (
-            <div className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border border-gray-200 bg-white shadow-lg">
-              <ul role="listbox" aria-labelledby={`${selectId}-trigger`} className="py-1">
-                {options.map((option) => {
-                  const isSelected = option.value === selectedValue;
-
-                  return (
-                    <li key={`${selectId}-${option.value || 'empty'}`} role="option" aria-selected={isSelected}>
-                      <button
-                        type="button"
-                        className={`flex w-full items-center px-3 py-2 text-left text-sm ${
-                          option.disabled
-                            ? 'cursor-not-allowed text-gray-300'
-                            : isSelected
-                              ? 'bg-indigo-600 text-white'
-                              : 'text-gray-900 hover:bg-indigo-50'
-                        }`}
-                        disabled={option.disabled}
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          handleSelect(option.value);
-                        }}
-                      >
-                        <span className="truncate">{option.label}</span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          )}
         </div>
         {error && (
           <p className="text-sm text-red-600">{error}</p>
