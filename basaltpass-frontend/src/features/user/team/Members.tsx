@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import Layout from '@features/user/components/Layout';
-import { PCard, PButton } from '@ui';
+import { PCard, PButton, PSkeleton } from '@ui';
 import PTable, { PTableColumn, PTableAction } from '@ui/PTable';
 import { teamApi } from '@api/user/team';
 
@@ -73,8 +73,8 @@ const TeamMembers: React.FC = () => {
   if (loading) {
     return (
       <Layout>
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="py-4">
+          <PSkeleton.List items={4} />
         </div>
       </Layout>
     );

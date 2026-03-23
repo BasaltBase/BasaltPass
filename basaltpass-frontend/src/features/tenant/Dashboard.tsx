@@ -14,6 +14,7 @@ import {
   InformationCircleIcon
 } from '@heroicons/react/24/outline'
 import TenantLayout from '@features/tenant/components/TenantLayout'
+import { PSkeleton } from '@ui'
 import { tenantAppApi } from '@api/tenant/tenantApp'
 import { tenantNotificationApi } from '@api/tenant/notification'
 import { tenantUserManagementApi } from '@api/tenant/tenantUserManagement'
@@ -213,9 +214,7 @@ export default function TenantDashboard() {
   if (loading) {
     return (
       <TenantLayout title="仪表板">
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
+        <PSkeleton.Dashboard statsCount={4} />
       </TenantLayout>
     )
   }

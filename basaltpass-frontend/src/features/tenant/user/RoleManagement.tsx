@@ -14,7 +14,7 @@ import {
   ChevronRightIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
-import { PSelect, EntitySearchSelect } from '@ui';
+import { PSelect, EntitySearchSelect, PSkeleton } from '@ui';
 import {
   Role,
   CreateRoleRequest,
@@ -285,10 +285,7 @@ const TenantRoleManagement: React.FC = () => {
           </div>
           
           {loading ? (
-            <div className="p-8 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-2 text-gray-500">加载中...</p>
-            </div>
+            <PSkeleton.List items={3} />
           ) : roles.length === 0 ? (
             <div className="p-8 text-center text-gray-500">
               <ShieldCheckIcon className="w-12 h-12 mx-auto mb-4 text-gray-300" />

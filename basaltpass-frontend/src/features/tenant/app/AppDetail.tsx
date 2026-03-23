@@ -21,7 +21,7 @@ import { tenantAppApi, TenantApp } from '@api/tenant/tenantApp'
 import { ROUTES } from '@constants'
 import CreateOAuthClientModal from '@features/tenant/app/components/CreateOAuthClientModal'
 import OAuthClientDetailModal from '@features/tenant/app/components/OAuthClientDetailModal'
-import { PButton } from '@ui'
+import { PButton, PSkeleton } from '@ui'
 import type { TenantOAuthClientSummary } from '@api/tenant/tenantApp'
 
 export default function AppDetail() {
@@ -96,12 +96,7 @@ export default function AppDetail() {
   if (loading && !app) {
     return (
       <TenantLayout title="应用详情">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-            <p className="mt-4 text-gray-600">加载中...</p>
-          </div>
-        </div>
+        <PSkeleton.DetailPage />
       </TenantLayout>
     )
   }

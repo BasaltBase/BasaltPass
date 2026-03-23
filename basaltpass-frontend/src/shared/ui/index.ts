@@ -1,3 +1,4 @@
+export { default as PSkeleton } from '@ui/PSkeleton'
 export { default as PInput } from '@ui/PInput'
 export { default as PButton } from '@ui/PButton'
 export { default as PCheckbox } from '@ui/PCheckbox'

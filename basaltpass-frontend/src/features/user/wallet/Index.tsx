@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import Layout from '@features/user/components/Layout'
 import CurrencySelector from '@features/user/components/CurrencySelector'
 import { ROUTES } from '@constants'
+import { PSkeleton } from '@ui'
 import { 
   WalletIcon, 
   ArrowUpIcon, 
@@ -144,8 +145,8 @@ export default function WalletIndex() {
   if (isLoading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="py-6">
+          <PSkeleton.Content cards={3} />
         </div>
       </Layout>
     )

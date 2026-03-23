@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '@features/user/components/Layout';
-import { PCard, PInput, PButton } from '@ui';
+import { PCard, PInput, PButton, PSkeleton } from '@ui';
 import { teamApi, TeamResponse, CreateTeamRequest } from '@api/user/team';
 import { UserGroupIcon, DocumentTextIcon, PhotoIcon } from '@heroicons/react/24/outline';
 
@@ -79,8 +79,8 @@ const EditTeam: React.FC = () => {
   if (loading) {
     return (
       <Layout>
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="py-6">
+          <PSkeleton.Content cards={2} />
         </div>
       </Layout>
     );

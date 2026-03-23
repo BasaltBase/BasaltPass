@@ -16,6 +16,7 @@ import {
 } from '@heroicons/react/24/outline'
 import TenantLayout from '@features/tenant/components/TenantLayout'
 import { tenantApi, TenantInfo } from '@api/tenant/tenant'
+import { PSkeleton } from '@ui'
 
 export default function TenantInfoPage() {
   const [tenantInfo, setTenantInfo] = useState<TenantInfo | null>(null)
@@ -112,8 +113,8 @@ export default function TenantInfoPage() {
   if (loading) {
     return (
       <TenantLayout title="租户信息">
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="py-6">
+          <PSkeleton.Content cards={3} />
         </div>
       </TenantLayout>
     )

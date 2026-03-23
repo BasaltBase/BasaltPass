@@ -14,6 +14,7 @@ import {
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { adminTenantApi, AdminTenantResponse, AdminTenantListRequest } from '@api/admin/tenant'
 import { ROUTES } from '@constants'
+import { PSkeleton } from '@ui'
 
 export default function TenantList() {
   const [tenants, setTenants] = useState<AdminTenantResponse[]>([])
@@ -119,11 +120,8 @@ export default function TenantList() {
   if (loading) {
     return (
       <AdminLayout title="租户管理">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
-            <p className="mt-4 text-gray-600">加载中...</p>
-          </div>
+        <div className="py-6">
+          <PSkeleton.Management />
         </div>
       </AdminLayout>
     )

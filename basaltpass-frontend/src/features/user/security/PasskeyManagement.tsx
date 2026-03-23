@@ -15,6 +15,7 @@ import {
   CheckCircleIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline'
+import { PSkeleton } from '@ui'
 
 function PasskeyManagement() {
   const [passkeys, setPasskeys] = useState<PasskeyInfo[]>([])
@@ -284,9 +285,7 @@ function PasskeyManagement() {
               </div>
               
               {isLoading ? (
-                <div className="mt-6 flex justify-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                </div>
+                <PSkeleton.List items={3} />
               ) : (passkeys?.length || 0) === 0 ? (
                 <div className="mt-6 text-center">
                   <ShieldCheckIcon className="mx-auto h-12 w-12 text-gray-400" />

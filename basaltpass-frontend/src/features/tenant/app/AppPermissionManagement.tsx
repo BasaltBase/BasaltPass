@@ -21,6 +21,7 @@ import PTable, { type PTableColumn, type PTableAction } from '@ui/PTable'
 import { tenantAppApi } from '@api/tenant/tenantApp'
 import userPermissionsApi, { type Permission } from '@api/tenant/appPermissions'
 import useDebounce from '@hooks/useDebounce'
+import { PSkeleton } from '@ui'
 
 export default function AppPermissionManagement() {
   const { id: appId } = useParams<{ id: string }>()
@@ -185,11 +186,8 @@ export default function AppPermissionManagement() {
   if (loading) {
     return (
       <TenantLayout title="权限管理">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-            <p className="mt-4 text-gray-600">加载中...</p>
-          </div>
+        <div className="py-6">
+          <PSkeleton.Management />
         </div>
       </TenantLayout>
     )

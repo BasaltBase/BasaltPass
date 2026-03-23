@@ -4,7 +4,8 @@ import {
   PButton,
   PInput,
   PTextarea,
-  PCheckbox
+  PCheckbox,
+  PSkeleton
 } from '@ui'
 import { getEmailConfig, sendTestEmail, EmailConfig } from '@api/admin/email'
 import { CheckCircleIcon, XCircleIcon, PaperAirplaneIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline'
@@ -94,9 +95,7 @@ export default function EmailTest() {
                 System Configuration
               </h3>
               {configLoading ? (
-                <div className="flex justify-center py-4">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-                </div>
+                <PSkeleton variant="rect" width="100%" height="3rem" />
               ) : config ? (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">

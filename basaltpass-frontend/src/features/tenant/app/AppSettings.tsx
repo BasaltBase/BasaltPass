@@ -17,6 +17,7 @@ import PSelect from '@ui/PSelect'
 import PButton from '@ui/PButton'
 import { tenantAppApi, TenantApp, UpdateTenantAppRequest } from '@api/tenant/tenantApp'
 import { ROUTES } from '@constants'
+import { PSkeleton } from '@ui'
 
 export default function AppSettings() {
   const { id } = useParams<{ id: string }>()
@@ -187,11 +188,8 @@ export default function AppSettings() {
   if (loading) {
     return (
       <TenantLayout title="应用设置">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-            <p className="mt-4 text-gray-600">加载中...</p>
-          </div>
+        <div className="py-6">
+          <PSkeleton.Content cards={3} />
         </div>
       </TenantLayout>
     )

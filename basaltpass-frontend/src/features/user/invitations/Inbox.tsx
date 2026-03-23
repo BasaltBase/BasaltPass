@@ -2,7 +2,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } 
 import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { Link } from 'react-router-dom'
 import Layout from '@features/user/components/Layout'
-import { PButton } from '@ui'
+import { PButton, PSkeleton } from '@ui'
 import { invitationApi, Invitation } from '@api/user/invitation'
 import { CheckIcon, XMarkIcon, ClockIcon, UserGroupIcon, EnvelopeIcon, CalendarIcon, UserIcon, ArrowLeftIcon } from '@heroicons/react/24/outline'
 import { useAuth } from '@contexts/AuthContext'
@@ -159,15 +159,7 @@ const Inbox: React.FC = () => {
 
         {/* 邀请列表 */}
         {loading ? (
-          <div className="flex flex-col items-center justify-center h-64 space-y-4">
-            <div className="relative">
-              <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <EnvelopeIcon className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-            <p className="text-gray-600 font-medium">正在加载邀请...</p>
-          </div>
+          <PSkeleton.List items={3} />
         ) : invitations.length === 0 ? (
           <div className="text-center py-16">
             <div className="bg-gradient-to-r from-gray-50 to-slate-50 rounded-2xl p-12 border border-gray-200">

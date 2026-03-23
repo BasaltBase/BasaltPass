@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { setup2FA, verify2FA } from '@api/user/security'
 import { Link } from 'react-router-dom'
 import Layout from '@features/user/components/Layout'
-import { PInput, PButton } from '@ui'
+import { PInput, PButton, PSkeleton } from '@ui'
 import { ROUTES } from '@constants'
 import { 
   ShieldCheckIcon,
@@ -65,9 +65,7 @@ export default function TwoFA() {
     return (
       <Layout>
         <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          </div>
+          <PSkeleton.Content cards={1} />
         </div>
       </Layout>
     )

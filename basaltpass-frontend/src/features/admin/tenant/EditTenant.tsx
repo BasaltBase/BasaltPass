@@ -11,7 +11,7 @@ import {
   ArrowLeftIcon
 } from '@heroicons/react/24/outline'
 import AdminLayout from '@features/admin/components/AdminLayout'
-import { PInput, PSelect, PTextarea, PCheckbox, PButton } from '@ui'
+import { PInput, PSelect, PTextarea, PCheckbox, PButton, PSkeleton } from '@ui'
 import { adminTenantApi, AdminTenantDetailResponse, AdminUpdateTenantRequest, TenantSettings } from '@api/admin/tenant'
 import { ROUTES } from '@constants'
 
@@ -153,8 +153,8 @@ const EditTenant: React.FC = () => {
   if (loading) {
     return (
       <AdminLayout title="编辑租户">
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
+        <div className="py-6">
+          <PSkeleton.Content cards={3} />
         </div>
       </AdminLayout>
     )

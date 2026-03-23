@@ -3,7 +3,7 @@ import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import Layout from '@features/user/components/Layout'
 import { userAppsApi, UserApp } from '@api/user/apps'
-import { PCard } from '@ui'
+import { PCard, PSkeleton } from '@ui'
 import { 
   ArrowLeftIcon, 
   CubeIcon, 
@@ -61,8 +61,8 @@ export default function UserAppDetail() {
   if (loading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="py-6">
+          <PSkeleton.DetailPage />
         </div>
       </Layout>
     )

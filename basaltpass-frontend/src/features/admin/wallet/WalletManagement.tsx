@@ -18,7 +18,7 @@ import {
 import { adminWalletApi, Wallet, Currency, CreateWalletRequest, AdjustBalanceRequest } from '@api/adminWallet';
 import AdminLayout from '@features/admin/components/AdminLayout';
 import WalletStatsCard from '@features/admin/components/WalletStatsCard';
-import { PInput, PSelect, PButton, PCard } from '@ui';
+import { PInput, PSelect, PButton, PCard, PSkeleton } from '@ui';
 
 interface WalletManagementProps {}
 
@@ -430,9 +430,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                 </div>
               </div>
             </div>            {loading ? (
-              <div className="flex items-center justify-center h-32">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-              </div>
+              <PSkeleton.List items={3} />
             ) : (
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">

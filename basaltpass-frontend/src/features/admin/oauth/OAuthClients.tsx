@@ -16,6 +16,7 @@ import { Link } from 'react-router-dom'
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { ROUTES } from '@constants'
 import { OAuthScopePicker } from '@components'
+import { PSkeleton } from '@ui'
 
 interface CreateClientModalProps {
   isOpen: boolean
@@ -556,10 +557,7 @@ export default function OAuthClients() {
         {/* 客户端列表 */}
         <div className="bg-white shadow rounded-lg">
           {loading ? (
-            <div className="p-8 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-2 text-gray-500">加载中...</p>
-            </div>
+            <PSkeleton.List items={4} />
           ) : error ? (
             <div className="p-8 text-center">
               <ExclamationTriangleIcon className="h-8 w-8 text-red-500 mx-auto" />

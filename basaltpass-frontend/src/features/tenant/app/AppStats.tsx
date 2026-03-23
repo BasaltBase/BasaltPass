@@ -14,6 +14,7 @@ import {
 import TenantLayout from '@features/tenant/components/TenantLayout'
 import { tenantAppApi, TenantApp } from '@api/tenant/tenantApp'
 import { ROUTES } from '@constants'
+import { PSkeleton } from '@ui'
 
 interface AppStatsData {
   period: string
@@ -132,11 +133,8 @@ export default function AppStats() {
   if (loading && !stats) {
     return (
       <TenantLayout title="应用统计">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-            <p className="mt-4 text-gray-600">加载中...</p>
-          </div>
+        <div className="py-6">
+          <PSkeleton.Dashboard statsCount={2} />
         </div>
       </TenantLayout>
     )

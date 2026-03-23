@@ -31,7 +31,7 @@ import {
   LockClosedIcon,
   FingerPrintIcon
 } from '@heroicons/react/24/outline'
-import { PInput, PButton, PCard } from '@ui'
+import { PInput, PButton, PCard, PSkeleton } from '@ui'
 import { ROUTES } from '@constants'
 
 export default function SecuritySettings() {
@@ -190,9 +190,7 @@ export default function SecuritySettings() {
   if (isLoading) {
     return (
       <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
+        <PSkeleton.Content cards={2} />
       </div>
     )
   }

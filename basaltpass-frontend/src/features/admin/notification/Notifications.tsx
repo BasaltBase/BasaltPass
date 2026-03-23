@@ -14,6 +14,7 @@ import {
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { Link } from 'react-router-dom'
 import { ROUTES } from '@constants'
+import { PSkeleton } from '@ui'
 
 const AdminNotifications: React.FC = () => {
   const [notifications, setNotifications] = useState<TenantNotification[]>([])
@@ -157,9 +158,7 @@ const AdminNotifications: React.FC = () => {
         {/* 通知列表 */}
         <div className="bg-white shadow rounded-lg">
           {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            </div>
+            <PSkeleton.List items={5} />
           ) : notifications.length === 0 ? (
             <div className="text-center py-12">
               <BellIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />

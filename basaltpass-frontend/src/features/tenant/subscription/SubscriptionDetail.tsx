@@ -5,6 +5,7 @@ import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import TenantLayout from '@features/tenant/components/TenantLayout'
 import { getTenantUserSubscription, Subscription, tenantSubscriptionAPI } from '@api/tenant/subscription'
 import { ROUTES } from '@constants/routes'
+import { PSkeleton } from '@ui'
 
 function fmtDate(value?: string | null) {
   if (!value) return '-'
@@ -69,8 +70,8 @@ export default function TenantSubscriptionDetail() {
   if (loading) {
     return (
       <TenantLayout title="订阅详情">
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="py-6">
+          <PSkeleton.DetailPage />
         </div>
       </TenantLayout>
     )

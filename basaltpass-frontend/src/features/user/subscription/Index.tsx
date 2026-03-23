@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import Layout from '@features/user/components/Layout'
-import { PCard, PButton } from '@ui'
+import { PCard, PButton, PSkeleton } from '@ui'
 import { listSubscriptions, cancelSubscription } from '@api/subscription/subscription'
 import { SubscriptionResponse } from '@types/domain/subscription'
 import { Link } from 'react-router-dom'
@@ -101,8 +101,8 @@ export default function SubscriptionIndex() {
   if (loading) {
     return (
       <Layout>
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="py-6">
+          <PSkeleton.Content cards={2} />
         </div>
       </Layout>
     )

@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import Layout from '@features/user/components/Layout'
-import { PSelect, PCard, PToggle, PButton, PInput } from '@ui'
+import { PSelect, PCard, PToggle, PButton, PInput, PSkeleton } from '@ui'
 import { 
   UserIcon, 
   BellIcon, 
@@ -118,10 +118,13 @@ export default function Settings() {
     try {
       setSaving(true)
       const response = await updateUserProfile(changes)
-      setProfile(toSettingsProfile(response.data.profile))
       if (!silent) {
+        // 全量保存时才用服务端响应覆盖本地 state
+        setProfile(toSettingsProfile(response.data.profile))
         uiAlert('设置已保存')
       }
+      // silent=true 的 inline 保存：本地 state 已由调用方乐观更新，不用服务端响应覆盖
+      // 否则服务端若返回不完整 profile 会把用户刚选的值清回 null
     } catch (err) {
       console.error('Failed to save settings:', err)
       uiAlert('保存失败，请重试')
@@ -155,8 +158,8 @@ export default function Settings() {
   if (loading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="py-6">
+          <PSkeleton.Content cards={3} />
         </div>
       </Layout>
     )

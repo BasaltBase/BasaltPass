@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import Layout from '@features/user/components/Layout'
-import { PCard, PButton, PSelect } from '@ui'
+import { PCard, PButton, PSelect, PSkeleton } from '@ui'
 import { useNotifications } from '@contexts/NotificationContext'
 import { notificationApi, TenantNotification } from '@api/tenant/tenantNotification'
 import { 
@@ -174,9 +174,7 @@ const Notifications: React.FC = () => {
         {/* 通知列表 */}
         <PCard>
           {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            </div>
+            <PSkeleton.List items={5} />
           ) : filteredNotifications.length === 0 ? (
             <div className="text-center py-12">
               <BellIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />

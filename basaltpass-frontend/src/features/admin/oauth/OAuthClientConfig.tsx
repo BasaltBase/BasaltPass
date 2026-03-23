@@ -16,6 +16,7 @@ import { oauthApi, type OAuthScopeMeta } from '@api/oauth/oauth'
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { ROUTES } from '@constants'
 import { OAuthScopePicker } from '@components'
+import { PSkeleton } from '@ui'
 
 export default function OAuthClientConfig() {
   const { appId } = useParams<{ appId: string }>()
@@ -195,11 +196,8 @@ export default function OAuthClientConfig() {
   if (loading) {
     return (
       <AdminLayout title="OAuth客户端配置">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
-            <p className="mt-4 text-gray-600">加载中...</p>
-          </div>
+        <div className="py-6">
+          <PSkeleton.Content cards={3} />
         </div>
       </AdminLayout>
     )

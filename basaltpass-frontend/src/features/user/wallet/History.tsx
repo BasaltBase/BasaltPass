@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { history } from '@api/user/wallet'
 import { Link } from 'react-router-dom'
 import Layout from '@features/user/components/Layout'
-import { PInput, PSelect } from '@ui'
+import { PInput, PSelect, PSkeleton } from '@ui'
 import useDebounce from '@hooks/useDebounce'
 import { ROUTES } from '@constants'
 import { 
@@ -143,8 +143,8 @@ export default function History() {
   if (isLoading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="py-6">
+          <PSkeleton.Management />
         </div>
       </Layout>
     )

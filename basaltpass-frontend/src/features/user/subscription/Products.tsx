@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import Layout from '@features/user/components/Layout'
-import { PCard, PButton } from '@ui'
+import { PCard, PButton, PSkeleton } from '@ui'
 import { listProducts } from '@api/subscription/subscription'
 import { createOrder, CreateOrderRequest } from '@api/subscription/payment/order'
 import { Product, Price } from '@types/domain/subscription'
@@ -116,8 +116,8 @@ export default function ProductsPage() {
   if (loading) {
     return (
       <Layout>
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="py-6">
+          <PSkeleton.AppCardGrid count={6} />
         </div>
       </Layout>
     )

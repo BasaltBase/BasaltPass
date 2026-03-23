@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import Layout from '@features/user/components/Layout'
+import { PSkeleton } from '@ui'
 import { PCard, PButton } from '@ui'
 import { history as getWalletHistory } from '@api/user/wallet'
 import { getSecurityStatus, SecurityStatus } from '@api/user/security'
@@ -111,9 +112,7 @@ export default function Dashboard() {
   if (isLoading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
+        <PSkeleton.Dashboard statsCount={4} />
       </Layout>
     )
   }

@@ -12,6 +12,7 @@ import {
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import * as tenantSubscriptionAPI from '@api/tenant/subscription';
+import { PSkeleton } from '@ui'
 
 interface SubscriptionWithDetails {
   ID: number;
@@ -166,8 +167,8 @@ const SubscriptionStatusManagement: React.FC = () => {
   if (loading) {
     return (
       <TenantLayout title="订阅状态管理">
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="py-6">
+          <PSkeleton.Management />
         </div>
       </TenantLayout>
     );

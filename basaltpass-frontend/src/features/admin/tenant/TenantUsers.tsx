@@ -27,6 +27,7 @@ import {
 } from '@api/admin/tenant'
 import TenantUserDetailDrawer from '@features/admin/components/TenantUserDetailDrawer'
 import Modal from '@ui/common/Modal'
+import { PSkeleton } from '@ui'
 
 // 类型定义
 interface TenantUser extends AdminTenantUser {
@@ -281,8 +282,8 @@ const TenantUsers: React.FC = () => {
   if (loading && !tenant) {
     return (
       <AdminLayout title="租户用户管理">
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
+        <div className="py-6">
+          <PSkeleton.Management />
         </div>
       </AdminLayout>
     )
@@ -396,8 +397,8 @@ const TenantUsers: React.FC = () => {
         {/* 用户列表 */}
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
           {loading ? (
-            <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+            <div className="py-4">
+              <PSkeleton.List items={3} />
             </div>
           ) : (
             <ul className="divide-y divide-gray-200">

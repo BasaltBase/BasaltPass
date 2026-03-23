@@ -2,7 +2,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } 
 import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import Layout from '@features/user/components/Layout';
-import { PCard, PButton } from '@ui';
+import { PCard, PButton, PSkeleton } from '@ui';
 import { teamApi, TeamResponse } from '@api/user/team';
 import { invitationApi, Invitation } from '@api/user/invitation';
 import { XMarkIcon, ClockIcon } from '@heroicons/react/24/outline';
@@ -131,8 +131,8 @@ const TeamDetail: React.FC = () => {
   if (loading) {
     return (
       <Layout>
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="py-6">
+          <PSkeleton.DetailPage />
         </div>
       </Layout>
     );
@@ -304,9 +304,7 @@ const TeamDetail: React.FC = () => {
             </div>
             <div className="px-6 py-4">
               {invitationsLoading ? (
-                <div className="flex justify-center py-4">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
-                </div>
+                <PSkeleton variant="rect" width="100%" height="1.5rem" />
               ) : outgoingInvitations.length === 0 ? (
                 <p className="text-gray-500 text-center py-4">暂无已发出的邀请</p>
               ) : (

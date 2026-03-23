@@ -131,8 +131,9 @@ const PSelect = forwardRef<HTMLSelectElement, PSelectProps>(
           setIsOpen(false);
         }
       };
-      document.addEventListener('mousedown', handleOutside);
-      return () => document.removeEventListener('mousedown', handleOutside);
+      // 用 click（而非 mousedown）监听外部关闭，避免与选项 onClick 冲突
+      document.addEventListener('click', handleOutside);
+      return () => document.removeEventListener('click', handleOutside);
     }, [isOpen]);
 
     // ------- close on Escape -------
@@ -211,9 +212,7 @@ const PSelect = forwardRef<HTMLSelectElement, PSelectProps>(
                     id={`${selectId}-opt-${opt.value}`}
                     role="option"
                     aria-selected={isSelected}
-                    onMouseDown={(e) => {
-                      // use mousedown to fire before the button's blur
-                      e.preventDefault();
+                    onClick={() => {
                       handleSelect(opt.value, opt.disabled);
                     }}
                     className={[

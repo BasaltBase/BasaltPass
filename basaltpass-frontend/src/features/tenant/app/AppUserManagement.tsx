@@ -23,6 +23,7 @@ import { tenantAppApi } from '@api/tenant/tenantApp'
 import { appUserApi, type AppUser, type AppUsersResponse } from '@api/tenant/appUser'
 import { userPermissionsApi, type Permission, type Role, type UserPermission, type UserRole } from '@api/tenant/appPermissions'
 import useDebounce from '@hooks/useDebounce'
+import { PSkeleton } from '@ui'
 
 export default function AppUserManagement() {
   const { id: appId } = useParams<{ id: string }>()
@@ -340,11 +341,8 @@ export default function AppUserManagement() {
   if (loading && users.length === 0) {
     return (
       <TenantLayout title="用户管理">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-            <p className="mt-4 text-gray-600">加载中...</p>
-          </div>
+        <div className="py-6">
+          <PSkeleton.Management />
         </div>
       </TenantLayout>
     )
@@ -713,8 +711,8 @@ export default function AppUserManagement() {
               </div>
 
               {loadingPermissions ? (
-                <div className="flex justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <div className="py-4">
+                  <PSkeleton.List items={3} showAvatar={false} />
                 </div>
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

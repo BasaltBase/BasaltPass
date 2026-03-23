@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import client from '@api/client'
 import { Link } from 'react-router-dom'
 import Layout from '@features/user/components/Layout'
-import { PCard, PButton } from '@ui'
+import { PCard, PButton, PSkeleton } from '@ui'
 import PhoneInput from '@ui/common/PhoneInput'
 import { formatPhoneForDisplay } from '@utils/phoneValidator'
 import { getUserProfile, type UserProfile } from '@api/user/profile'
@@ -111,8 +111,8 @@ function Profile() {
   if (isLoading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="py-6">
+          <PSkeleton.Content cards={2} />
         </div>
       </Layout>
     )

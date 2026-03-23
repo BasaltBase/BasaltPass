@@ -12,7 +12,7 @@ import {
 } from '@heroicons/react/24/outline'
 import TenantLayout from '@features/tenant/components/TenantLayout'
 import { tenantOAuthApi, TenantAppWithClients, TenantOAuthClient } from '@api/tenant/tenantOAuth'
-import { PButton, PInput } from '@ui'
+import { PButton, PInput, PSkeleton } from '@ui'
 import CreateOAuthClientModal from '@features/tenant/app/components/CreateOAuthClientModal'
 import OAuthClientDetailModal from '@features/tenant/app/components/OAuthClientDetailModal'
 
@@ -113,10 +113,7 @@ export default function TenantOAuthClients() {
         {/* 应用和客户端列表 */}
         <div className="bg-white shadow rounded-lg">
           {loading ? (
-            <div className="p-8 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-              <p className="mt-2 text-gray-500">加载中...</p>
-            </div>
+            <PSkeleton.List items={3} />
           ) : error ? (
             <div className="p-8 text-center">
               <ExclamationTriangleIcon className="h-8 w-8 text-red-500 mx-auto" />

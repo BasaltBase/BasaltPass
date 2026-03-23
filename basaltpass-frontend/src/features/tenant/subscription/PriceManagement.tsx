@@ -18,6 +18,7 @@ import PButton from '@ui/PButton';
 import PTextarea from '@ui/PTextarea';
 import PTable, { PTableColumn, PTableAction } from '@ui/PTable';
 import useDebounce from '@hooks/useDebounce';
+import { PSkeleton } from '@ui'
 
 interface PriceManagementProps {}
 
@@ -122,8 +123,8 @@ const PriceManagement: React.FC<PriceManagementProps> = () => {
   if (loading) {
     return (
       <TenantLayout title="定价管理">
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="py-6">
+          <PSkeleton.Management />
         </div>
       </TenantLayout>
     );

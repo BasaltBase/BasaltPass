@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import PSkeleton from '@ui/PSkeleton'
 import { Link, useParams } from 'react-router-dom'
 import { ROUTES } from '@constants'
 import client from '@api/client'
@@ -229,12 +230,7 @@ function TenantLogin() {
 
   if (loadingTenant) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">正在加载租户信息...</p>
-        </div>
-      </div>
+      <PSkeleton.PageLoader message="正在加载租户信息..." />
     )
   }
 

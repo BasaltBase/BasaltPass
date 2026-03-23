@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { debugAuth } from '../utils/debug'
+import PSkeleton from '@ui/PSkeleton'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -22,15 +23,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   // 如果正在加载，显示加载状态
   if (isLoading) {
     debugAuth.log('ProtectedRoute: showing loading state')
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">正在验证身份...</p>
-          <p className="mt-2 text-sm text-gray-500">当前路径: {window.location.pathname}</p>
-        </div>
-      </div>
-    )
+    return <PSkeleton.PageLoader message="正在验证身份..." />
   }
 
   // 如果已认证，显示子组件
@@ -41,15 +34,5 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   // 如果未认证且不在加载状态，返回null（会触发跳转）
   debugAuth.log('ProtectedRoute: returning null, will redirect')
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
-        <p className="mt-4 text-red-600">认证失败，正在跳转...</p>
-        <p className="mt-2 text-sm text-gray-500">当前路径: {window.location.pathname}</p>
-        <p className="mt-1 text-sm text-gray-500">认证状态: {isAuthenticated ? '已认证' : '未认证'}</p>
-        <p className="mt-1 text-sm text-gray-500">加载状态: {isLoading ? '加载中' : '已完成'}</p>
-      </div>
-    </div>
-  )
+  return <PSkeleton.PageLoader message="认证失败，正在跳转..." />
 } 

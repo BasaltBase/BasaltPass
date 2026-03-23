@@ -1,6 +1,7 @@
 import React from 'react'
 import { XMarkIcon, EnvelopeIcon, ClockIcon, ShieldCheckIcon, DevicePhoneMobileIcon } from '@heroicons/react/24/outline'
 import { AdminTenantUserDetail } from '@api/admin/tenant'
+import { PSkeleton } from '@ui'
 
 interface TenantUserDetailDrawerProps {
   open: boolean
@@ -37,9 +38,7 @@ const TenantUserDetailDrawer: React.FC<TenantUserDetailDrawerProps> = ({
 
         <div className="px-6 py-6 space-y-6">
           {loading && (
-            <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
-            </div>
+            <PSkeleton.List items={4} />
           )}
 
           {!loading && error && (
