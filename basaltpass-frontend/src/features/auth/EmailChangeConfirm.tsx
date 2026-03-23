@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useMemo, useState, useEffect } from 'react'
 import client from '@api/client'
 import { ROUTES } from '@constants'
 
 function EmailChangeConfirm() {
-  const [searchParams] = useSearchParams()
-  const token = searchParams.get('token')
+  const token = useMemo(() => {
+    const fragment = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash
+    const params = new URLSearchParams(fragment)
+    return params.get('token')
+  }, [])
   
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
   const [message, setMessage] = useState('')
@@ -19,7 +21,7 @@ function EmailChangeConfirm() {
       }
 
       try {
-        const response = await client.get(`/api/v1/security/email/confirm?token=${token}`)
+        const response = await client.post('/api/v1/security/email/confirm', { token })
         setStatus('success')
         setMessage(response.data.message || '邮箱变更成功')
       } catch (err: any) {

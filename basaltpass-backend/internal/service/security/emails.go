@@ -19,7 +19,7 @@ func getSiteURL() string {
 // sendEmailChangeVerificationEmail 发送邮箱变更验证邮件
 func (s *Service) sendEmailChangeVerificationEmail(newEmail, token, oldEmail string) error {
 	siteURL := getSiteURL()
-	confirmURL := fmt.Sprintf("%s/email-change-confirm?token=%s", siteURL, token)
+	confirmURL := fmt.Sprintf("%s/email-change/confirm#token=%s", siteURL, token)
 	subject := "🔄 BasaltPass 邮箱变更验证"
 
 	textBody := fmt.Sprintf(`
@@ -27,7 +27,7 @@ func (s *Service) sendEmailChangeVerificationEmail(newEmail, token, oldEmail str
 
 您正在将 BasaltPass 账户的邮箱从 %s 更改为 %s。
 
-请点击以下链接完成邮箱变更：
+请点击以下链接打开确认页面，页面会在前端通过 POST body 提交令牌完成邮箱变更：
 %s
 
 此链接将在30分钟后过期。
@@ -122,7 +122,7 @@ BasaltPass 团队
 // sendEmailChangeNotificationEmail 发送邮箱变更通知邮件到旧邮箱
 func (s *Service) sendEmailChangeNotificationEmail(oldEmail, newEmail, token string) error {
 	siteURL := getSiteURL()
-	cancelURL := fmt.Sprintf("%s/email-change-cancel?token=%s", siteURL, token)
+	cancelURL := fmt.Sprintf("%s/email-change/cancel#token=%s", siteURL, token)
 	subject := "⚠️ BasaltPass 邮箱变更通知"
 
 	textBody := fmt.Sprintf(`
@@ -130,7 +130,7 @@ func (s *Service) sendEmailChangeNotificationEmail(oldEmail, newEmail, token str
 
 我们收到了将您的 BasaltPass 账户邮箱更改为 %s 的请求。
 
-如果这不是您的操作，请立即点击以下链接取消此变更：
+如果这不是您的操作，请立即点击以下链接打开取消页面，页面会在前端通过 POST body 提交令牌取消此变更：
 %s
 
 此变更请求将在30分钟后过期。
