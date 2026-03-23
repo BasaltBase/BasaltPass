@@ -25,6 +25,14 @@ settings:
     value: true
     category: "auth"
     description: "允许新用户注册"
+  auth.passkey.session_ttl_seconds:
+    value: 300
+    category: "auth"
+    description: "Passkey challenge 会话 TTL（秒）"
+  auth.passkey.session_capacity:
+    value: 1024
+    category: "auth"
+    description: "Passkey challenge 会话最大容量"
   security.enforce_2fa:
     value: false
     category: "security"
