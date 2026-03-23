@@ -9,6 +9,35 @@ import (
 	"gorm.io/gorm"
 )
 
+func buildUserProfileResponse(profile model.UserProfile) fiber.Map {
+	response := fiber.Map{
+		"id":          profile.ID,
+		"user_id":     profile.UserID,
+		"gender_id":   profile.GenderID,
+		"language_id": profile.LanguageID,
+		"currency_id": profile.CurrencyID,
+		"timezone":    profile.Timezone,
+		"bio":         profile.Bio,
+		"location":    profile.Location,
+		"website":     profile.Website,
+		"company":     profile.Company,
+		"job_title":   profile.JobTitle,
+		"gender":      profile.Gender,
+		"language":    profile.Language,
+		"currency":    profile.Currency,
+		"created_at":  profile.CreatedAt,
+		"updated_at":  profile.UpdatedAt,
+	}
+
+	if profile.BirthDate != nil {
+		response["birth_date"] = profile.BirthDate.Format("2006-01-02")
+	} else {
+		response["birth_date"] = nil
+	}
+
+	return response
+}
+
 // GetUserProfileHandler 获取用户详细资料
 // GET /api/v1/user/profile-detail
 func GetUserProfileHandler(c *fiber.Ctx) error {
@@ -43,35 +72,8 @@ func GetUserProfileHandler(c *fiber.Ctx) error {
 		}
 	}
 
-	// 格式化响应数据
-	response := fiber.Map{
-		"id":          profile.ID,
-		"user_id":     profile.UserID,
-		"gender_id":   profile.GenderID,
-		"language_id": profile.LanguageID,
-		"currency_id": profile.CurrencyID,
-		"timezone":    profile.Timezone,
-		"bio":         profile.Bio,
-		"location":    profile.Location,
-		"website":     profile.Website,
-		"company":     profile.Company,
-		"job_title":   profile.JobTitle,
-		"gender":      profile.Gender,
-		"language":    profile.Language,
-		"currency":    profile.Currency,
-		"created_at":  profile.CreatedAt,
-		"updated_at":  profile.UpdatedAt,
-	}
-
-	// 格式化 birth_date 为 YYYY-MM-DD
-	if profile.BirthDate != nil {
-		response["birth_date"] = profile.BirthDate.Format("2006-01-02")
-	} else {
-		response["birth_date"] = nil
-	}
-
 	return c.JSON(fiber.Map{
-		"profile": response,
+		"profile": buildUserProfileResponse(profile),
 	})
 }
 
@@ -123,13 +125,13 @@ func UpdateUserProfileHandler(c *fiber.Ctx) error {
 	updates := make(map[string]interface{})
 
 	if req.GenderID != nil {
-		updates["gender_id"] = req.GenderID
+		updates["gender_id"] = *req.GenderID
 	}
 	if req.LanguageID != nil {
-		updates["language_id"] = req.LanguageID
+		updates["language_id"] = *req.LanguageID
 	}
 	if req.CurrencyID != nil {
-		updates["currency_id"] = req.CurrencyID
+		updates["currency_id"] = *req.CurrencyID
 	}
 	if req.Timezone != nil {
 		updates["timezone"] = *req.Timezone
@@ -174,7 +176,7 @@ func UpdateUserProfileHandler(c *fiber.Ctx) error {
 		Where("user_id = ?", userID).First(&profile)
 
 	return c.JSON(fiber.Map{
-		"profile": profile,
+		"profile": buildUserProfileResponse(profile),
 		"message": "Profile updated successfully",
 	})
 }

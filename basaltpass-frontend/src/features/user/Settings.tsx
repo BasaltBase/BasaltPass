@@ -23,6 +23,35 @@ import {
   type Timezone
 } from '@api/user/profile'
 
+const normalizeDateInput = (value?: string | null) => {
+  if (!value) return ''
+  return value.slice(0, 10)
+}
+
+const toSettingsProfile = (profile?: {
+  gender_id?: number
+  language_id?: number
+  currency_id?: number
+  timezone?: string
+  birth_date?: string | null
+  bio?: string
+  location?: string
+  website?: string
+  company?: string
+  job_title?: string
+} | null) => ({
+  gender_id: profile?.gender_id,
+  language_id: profile?.language_id,
+  currency_id: profile?.currency_id,
+  timezone: profile?.timezone || 'UTC',
+  birth_date: normalizeDateInput(profile?.birth_date),
+  bio: profile?.bio || '',
+  location: profile?.location || '',
+  website: profile?.website || '',
+  company: profile?.company || '',
+  job_title: profile?.job_title || ''
+})
+
 export default function Settings() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -67,19 +96,7 @@ export default function Settings() {
         ])
 
         if (profileRes.data.profile) {
-          const p = profileRes.data.profile
-          setProfile({
-            gender_id: p.gender_id,
-            language_id: p.language_id,
-            currency_id: p.currency_id,
-            timezone: p.timezone || 'UTC',
-            birth_date: p.birth_date || '',
-            bio: p.bio || '',
-            location: p.location || '',
-            website: p.website || '',
-            company: p.company || '',
-            job_title: p.job_title || ''
-          })
+          setProfile(toSettingsProfile(profileRes.data.profile))
         }
 
         setGenders(gendersRes.data.genders)
@@ -99,7 +116,7 @@ export default function Settings() {
   const handleSave = async () => {
     try {
       setSaving(true)
-      await updateUserProfile({
+      const response = await updateUserProfile({
         gender_id: profile.gender_id || null,
         language_id: profile.language_id || null,
         currency_id: profile.currency_id || null,
@@ -111,6 +128,7 @@ export default function Settings() {
         company: profile.company,
         job_title: profile.job_title
       })
+      setProfile(toSettingsProfile(response.data.profile))
       uiAlert('设置已保存')
     } catch (err) {
       console.error('Failed to save settings:', err)
