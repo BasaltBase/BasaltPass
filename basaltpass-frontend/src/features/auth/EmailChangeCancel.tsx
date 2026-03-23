@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useMemo, useState, useEffect } from 'react'
 import client from '@api/client'
 import { ROUTES } from '@constants'
 
 function EmailChangeCancel() {
-  const [searchParams] = useSearchParams()
-  const token = searchParams.get('token')
+  const token = useMemo(() => {
+    const fragment = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash
+    const params = new URLSearchParams(fragment)
+    return params.get('token')
+  }, [])
   
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
   const [message, setMessage] = useState('')
@@ -19,7 +21,7 @@ function EmailChangeCancel() {
       }
 
       try {
-        const response = await client.delete(`/api/v1/security/email/cancel?token=${token}`)
+        const response = await client.post('/api/v1/security/email/cancel', { token })
         setStatus('success')
         setMessage(response.data.message || '邮箱变更已取消')
       } catch (err: any) {

@@ -86,16 +86,6 @@ func setAuthCookies(c *fiber.Ctx, scope, accessToken, refreshToken string) {
 	}
 }
 
-// RegisterHandler handles POST /auth/register (DEPRECATED - use /signup/start instead)
-func RegisterHandler(c *fiber.Ctx) error {
-	// 旧的注册API已被弃用，重定向到新的验证码流程
-	return c.Status(fiber.StatusGone).JSON(fiber.Map{
-		"error":        "This registration endpoint has been deprecated. Please use the new verification-based registration flow.",
-		"message":      "The /auth/register endpoint is no longer available. To create an account, please start with the /signup/start endpoint which initiates the new verification-based registration process.",
-		"new_endpoint": "/api/v1/signup/start",
-	})
-}
-
 // LoginHandler handles POST /auth/login
 func LoginHandler(c *fiber.Ctx) error {
 	var req auth2.LoginRequest

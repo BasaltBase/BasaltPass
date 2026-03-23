@@ -1,50 +1,20 @@
 package passkey
 
 import (
+	security "basaltpass-backend/internal/handler/user/security"
 	authsvc "basaltpass-backend/internal/service/auth"
 	passkey2 "basaltpass-backend/internal/service/passkey"
 	"net/http"
 	"strconv"
 	"strings"
-	"sync"
 
 	"log"
 
-	security "basaltpass-backend/internal/handler/user/security"
-
-	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/gofiber/fiber/v2"
 	"github.com/valyala/fasthttp/fasthttpadaptor"
 )
 
 var svc = passkey2.Service{}
-
-// sessionStoreMap 并发安全的 session 存储，生产环境应替换为 Redis
-type sessionStoreMap struct {
-	mu sync.RWMutex
-	m  map[string]*webauthn.SessionData
-}
-
-func (s *sessionStoreMap) Set(key string, v *webauthn.SessionData) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.m[key] = v
-}
-
-func (s *sessionStoreMap) Get(key string) (*webauthn.SessionData, bool) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	v, ok := s.m[key]
-	return v, ok
-}
-
-func (s *sessionStoreMap) Delete(key string) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	delete(s.m, key)
-}
-
-var sessionStore = &sessionStoreMap{m: make(map[string]*webauthn.SessionData)}
 
 func newRequestContext(c *fiber.Ctx, data map[string]interface{}) *passkey2.RequestContext {
 	return &passkey2.RequestContext{
@@ -125,7 +95,9 @@ func BeginRegistrationHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	sessionStore.Set(sessionData.Challenge, sessionData)
+	if err := challengeSessions.Set(c.UserContext(), sessionData.Challenge, sessionData); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to persist passkey session"})
+	}
 	return c.JSON(options)
 }
 
@@ -146,8 +118,8 @@ func FinishRegistrationHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 	}
 
-	sessionData, exists := sessionStore.Get(req.Challenge)
-	if !exists {
+	sessionEnvelope, err := challengeSessions.Consume(c.UserContext(), req.Challenge)
+	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid or expired session"})
 	}
 
@@ -161,7 +133,7 @@ func FinishRegistrationHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to initialize WebAuthn"})
 	}
 
-	credential, err := webAuthn.FinishRegistration(user, *sessionData, convertFiberToHTTP(c))
+	credential, err := webAuthn.FinishRegistration(user, *sessionEnvelope.SessionData, convertFiberToHTTP(c))
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -170,8 +142,6 @@ func FinishRegistrationHandler(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
-
-	sessionStore.Delete(req.Challenge)
 
 	return c.JSON(fiber.Map{
 		"id":         passkey.ID,
@@ -215,7 +185,9 @@ func BeginLoginHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	sessionStore.Set(sessionData.Challenge, sessionData)
+	if err := challengeSessions.Set(c.UserContext(), sessionData.Challenge, sessionData); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to persist passkey session"})
+	}
 	return c.JSON(options)
 }
 
@@ -236,8 +208,8 @@ func FinishLoginHandler(c *fiber.Ctx) error {
 		tenantID = getTenantID(c)
 	}
 
-	sessionData, exists := sessionStore.Get(req.Challenge)
-	if !exists {
+	sessionEnvelope, err := challengeSessions.Consume(c.UserContext(), req.Challenge)
+	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid or expired session"})
 	}
 
@@ -251,7 +223,7 @@ func FinishLoginHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to initialize WebAuthn"})
 	}
 
-	credential, err := webAuthn.FinishLogin(user, *sessionData, convertFiberToHTTP(c))
+	credential, err := webAuthn.FinishLogin(user, *sessionEnvelope.SessionData, convertFiberToHTTP(c))
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "WebAuthn verification failed: " + err.Error()})
 	}
@@ -266,8 +238,6 @@ func FinishLoginHandler(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
-
-	sessionStore.Delete(req.Challenge)
 
 	c.Cookie(&fiber.Cookie{
 		Name:     "refresh_token",
@@ -322,7 +292,9 @@ func Begin2FAHandler(c *fiber.Ctx) error {
 
 	// 用 "2fa:" 前缀区分 2FA session 与独立登录 session，避免 key 碰撞
 	sessionKey := "2fa:" + sessionData.Challenge
-	sessionStore.Set(sessionKey, sessionData)
+	if err := challengeSessions.Set(c.UserContext(), sessionKey, sessionData); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to persist passkey session"})
+	}
 
 	return c.JSON(fiber.Map{
 		"options":   options,
@@ -349,8 +321,8 @@ func Finish2FAHandler(c *fiber.Ctx) error {
 	}
 
 	sessionKey := "2fa:" + req.Challenge
-	sessionData, exists := sessionStore.Get(sessionKey)
-	if !exists {
+	sessionEnvelope, err := challengeSessions.Consume(c.UserContext(), sessionKey)
+	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid or expired 2FA session"})
 	}
 
@@ -364,7 +336,7 @@ func Finish2FAHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to initialize WebAuthn"})
 	}
 
-	credential, err := webAuthn.FinishLogin(user, *sessionData, convertFiberToHTTP(c))
+	credential, err := webAuthn.FinishLogin(user, *sessionEnvelope.SessionData, convertFiberToHTTP(c))
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "WebAuthn verification failed: " + err.Error()})
 	}
@@ -383,8 +355,6 @@ func Finish2FAHandler(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
-
-	sessionStore.Delete(sessionKey)
 
 	c.Cookie(&fiber.Cookie{
 		Name:     "refresh_token",
