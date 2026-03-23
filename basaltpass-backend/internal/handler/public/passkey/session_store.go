@@ -29,7 +29,7 @@ type sessionEnvelope struct {
 	ExpiresAt   time.Time             `json:"expires_at"`
 }
 
-type sessionStore interface {
+type challengeSessionStore interface {
 	Set(ctx context.Context, key string, v *webauthn.SessionData) error
 	Get(ctx context.Context, key string) (*sessionEnvelope, error)
 	Consume(ctx context.Context, key string) (*sessionEnvelope, error)
@@ -267,7 +267,7 @@ func (s *dbSessionStore) Delete(_ context.Context, key string) error {
 
 type lazySessionStore struct {
 	once  sync.Once
-	store sessionStore
+	store challengeSessionStore
 	err   error
 }
 
@@ -306,9 +306,9 @@ func (s *lazySessionStore) Delete(ctx context.Context, key string) error {
 	return s.store.Delete(ctx, key)
 }
 
-var sessionStore sessionStore = &lazySessionStore{}
+var challengeSessions challengeSessionStore = &lazySessionStore{}
 
-func newConfiguredSessionStore() sessionStore {
+func newConfiguredSessionStore() challengeSessionStore {
 	ttl := time.Duration(settingssvc.GetInt("auth.passkey.session_ttl_seconds", int(defaultPasskeySessionTTL/time.Second))) * time.Second
 	if ttl <= 0 {
 		ttl = defaultPasskeySessionTTL
@@ -320,7 +320,7 @@ func newConfiguredSessionStore() sessionStore {
 	return newDBSessionStore(common.DB(), ttl, capacity)
 }
 
-func sessionStoreCapacity(store sessionStore) int {
+func sessionStoreCapacity(store challengeSessionStore) int {
 	switch t := store.(type) {
 	case *sessionStoreMap:
 		return t.capacity

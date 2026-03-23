@@ -11,7 +11,6 @@ import (
 
 	security "basaltpass-backend/internal/handler/user/security"
 
-	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/gofiber/fiber/v2"
 	"github.com/valyala/fasthttp/fasthttpadaptor"
 )
@@ -97,7 +96,7 @@ func BeginRegistrationHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	if err := sessionStore.Set(c.UserContext(), sessionData.Challenge, sessionData); err != nil {
+	if err := challengeSessions.Set(c.UserContext(), sessionData.Challenge, sessionData); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to persist passkey session"})
 	}
 	return c.JSON(options)
@@ -120,7 +119,7 @@ func FinishRegistrationHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 	}
 
-	sessionEnvelope, err := sessionStore.Consume(c.UserContext(), req.Challenge)
+	sessionEnvelope, err := challengeSessions.Consume(c.UserContext(), req.Challenge)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid or expired session"})
 	}
@@ -187,7 +186,7 @@ func BeginLoginHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	if err := sessionStore.Set(c.UserContext(), sessionData.Challenge, sessionData); err != nil {
+	if err := challengeSessions.Set(c.UserContext(), sessionData.Challenge, sessionData); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to persist passkey session"})
 	}
 	return c.JSON(options)
@@ -210,7 +209,7 @@ func FinishLoginHandler(c *fiber.Ctx) error {
 		tenantID = getTenantID(c)
 	}
 
-	sessionEnvelope, err := sessionStore.Consume(c.UserContext(), req.Challenge)
+	sessionEnvelope, err := challengeSessions.Consume(c.UserContext(), req.Challenge)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid or expired session"})
 	}
@@ -294,7 +293,7 @@ func Begin2FAHandler(c *fiber.Ctx) error {
 
 	// 用 "2fa:" 前缀区分 2FA session 与独立登录 session，避免 key 碰撞
 	sessionKey := "2fa:" + sessionData.Challenge
-	if err := sessionStore.Set(c.UserContext(), sessionKey, sessionData); err != nil {
+	if err := challengeSessions.Set(c.UserContext(), sessionKey, sessionData); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to persist passkey session"})
 	}
 
@@ -323,7 +322,7 @@ func Finish2FAHandler(c *fiber.Ctx) error {
 	}
 
 	sessionKey := "2fa:" + req.Challenge
-	sessionEnvelope, err := sessionStore.Consume(c.UserContext(), sessionKey)
+	sessionEnvelope, err := challengeSessions.Consume(c.UserContext(), sessionKey)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid or expired 2FA session"})
 	}

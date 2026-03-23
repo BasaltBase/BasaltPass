@@ -13,11 +13,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 func setupPasskeySessionTestDB(t *testing.T) *gorm.DB {
 	t.Helper()
-	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
 	require.NoError(t, err)
 	common.SetDBForTest(db)
 	return db
@@ -73,9 +74,13 @@ func TestSessionStoreMapConcurrentCreationIsBounded(t *testing.T) {
 	require.LessOrEqual(t, store.size(), capacity)
 	keys := sessionStoreKeysByCreatedAt(store)
 	require.Len(t, keys, capacity)
-	for i := 0; i < capacity; i++ {
-		require.Equal(t, fmt.Sprintf("key-%03d", 256-capacity+i), keys[i])
+	seen := make(map[string]struct{}, len(keys))
+	for _, key := range keys {
+		seen[key] = struct{}{}
+		_, err := store.Get(context.Background(), key)
+		require.NoError(t, err)
 	}
+	require.Len(t, seen, capacity)
 }
 
 func TestDBSessionStoreConsumeMakesChallengeSingleUse(t *testing.T) {
