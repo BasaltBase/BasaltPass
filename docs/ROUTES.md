@@ -387,8 +387,7 @@
 | POST | /api/v1/security/2fa/verify |
 | PUT | /api/v1/security/contact |
 | POST | /api/v1/security/email/cancel |
-| GET | /api/v1/security/email/confirm |
-| HEAD | /api/v1/security/email/confirm |
+| POST | /api/v1/security/email/confirm |
 | POST | /api/v1/security/email/resend |
 | POST | /api/v1/security/email/verify |
 | GET | /api/v1/security/login-history |

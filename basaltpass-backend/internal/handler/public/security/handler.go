@@ -7,22 +7,50 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+type emailChangeTokenRequest struct {
+	Token string `json:"token" form:"token"`
+}
+
+// PublicSecurityHandler 公共安全处理器（无需登录）
+type SecurityService interface {
+	ConfirmEmailChange(token string) error
+	CancelEmailChange(token string) error
+	StartPasswordReset(req *securityservice.PasswordResetRequest, clientIP, deviceHash string) error
+	ConfirmPasswordReset(req *securityservice.PasswordResetConfirmRequest, clientIP, deviceHash string) error
+}
+
 // PublicSecurityHandler 公共安全处理器（无需登录）
 type PublicSecurityHandler struct {
-	securitySvc *securityservice.Service
+	securitySvc SecurityService
 }
 
 // NewPublicSecurityHandler 创建公共安全处理器
 func NewPublicSecurityHandler() *PublicSecurityHandler {
-	return &PublicSecurityHandler{
-		securitySvc: securityservice.NewService(common.DB()),
+	return NewPublicSecurityHandlerWithService(securityservice.NewService(common.DB()))
+}
+
+// NewPublicSecurityHandlerWithService 创建带指定服务的公共安全处理器。
+func NewPublicSecurityHandlerWithService(securitySvc SecurityService) *PublicSecurityHandler {
+	return &PublicSecurityHandler{securitySvc: securitySvc}
+}
+
+func parseEmailChangeTokenRequest(c *fiber.Ctx) (string, error) {
+	var req emailChangeTokenRequest
+	if err := c.BodyParser(&req); err != nil {
+		return "", err
 	}
+	return req.Token, nil
 }
 
 // ConfirmEmailChangeHandler 确认邮箱变更
-// GET /api/v1/public/security/email/confirm
+// POST /api/v1/public/security/email/confirm
 func (h *PublicSecurityHandler) ConfirmEmailChangeHandler(c *fiber.Ctx) error {
-	token := c.Query("token")
+	token, err := parseEmailChangeTokenRequest(c)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "请求参数无效",
+		})
+	}
 	if token == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "缺少验证令牌",
@@ -43,7 +71,12 @@ func (h *PublicSecurityHandler) ConfirmEmailChangeHandler(c *fiber.Ctx) error {
 // CancelEmailChangeHandler 取消邮箱变更
 // POST /api/v1/public/security/email/cancel
 func (h *PublicSecurityHandler) CancelEmailChangeHandler(c *fiber.Ctx) error {
-	token := c.Query("token")
+	token, err := parseEmailChangeTokenRequest(c)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "请求参数无效",
+		})
+	}
 	if token == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "缺少取消令牌",

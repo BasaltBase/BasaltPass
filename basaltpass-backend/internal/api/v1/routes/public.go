@@ -61,8 +61,8 @@ func RegisterPublicRoutes(v1 fiber.Router) {
 	)
 
 	// 邮箱变更相关
-	securityGroup.Get("/email/confirm", publicSecurityHandler.ConfirmEmailChangeHandler) // 确认邮箱变更
-	securityGroup.Post("/email/cancel", publicSecurityHandler.CancelEmailChangeHandler)  // 取消邮箱变更
+	securityGroup.Post("/email/confirm", publicSecurityHandler.ConfirmEmailChangeHandler) // 确认邮箱变更
+	securityGroup.Post("/email/cancel", publicSecurityHandler.CancelEmailChangeHandler)   // 取消邮箱变更
 
 	// 密码重置相关
 	securityGroup.Post("/password/reset", publicSecurityHandler.StartPasswordResetHandler)           // 发起密码重置
