@@ -3,6 +3,7 @@ package authn
 import (
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/middleware/transport"
+	serviceauth "basaltpass-backend/internal/service/auth"
 	"errors"
 	"strconv"
 	"strings"
@@ -67,6 +68,9 @@ func JWTMiddleware() fiber.Handler {
 		}
 		if claims == nil {
 			return transport.APIErrorResponse(c, fiber.StatusUnauthorized, "auth_invalid_claims", "[Basalt Auth] invalid claims")
+		}
+		if err := serviceauth.ValidateAccessTokenType(claims); err != nil {
+			return transport.APIErrorResponse(c, fiber.StatusUnauthorized, "auth_invalid_token", "[Basalt Auth] invalid token")
 		}
 
 		if userID, exists := claims["sub"]; exists {

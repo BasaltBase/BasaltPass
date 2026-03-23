@@ -4,6 +4,7 @@ import (
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/config"
 	"basaltpass-backend/internal/service/aduit"
+	serviceauth "basaltpass-backend/internal/service/auth"
 	"encoding/base64"
 	"net/http"
 	"net/url"
@@ -95,11 +96,6 @@ func tryUserIDFromAccessTokenCookie(c *fiber.Ctx) (uint, bool) {
 		"access_token_user",
 		"access_token_tenant",
 		"access_token_admin",
-		// Fallback to refresh cookies when access token cookie already expired.
-		"refresh_token",
-		"refresh_token_user",
-		"refresh_token_tenant",
-		"refresh_token_admin",
 	}
 
 	for _, name := range cookieNames {
@@ -133,6 +129,9 @@ func parseUserIDFromJWT(tokenStr string) (uint, bool) {
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
+		return 0, false
+	}
+	if err := serviceauth.ValidateAccessTokenType(claims); err != nil {
 		return 0, false
 	}
 	sub, exists := claims["sub"]
