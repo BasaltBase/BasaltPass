@@ -122,3 +122,28 @@ func TestJWTMiddleware_ValidTokenSetsLocals(t *testing.T) {
 		t.Fatalf("expected scope=tenant, got %#v", body["scope"])
 	}
 }
+
+func TestJWTMiddleware_RejectsRefreshToken(t *testing.T) {
+	app := fiber.New()
+	app.Use(JWTMiddleware())
+	app.Get("/", func(c *fiber.Ctx) error { return c.SendStatus(fiber.StatusOK) })
+
+	token := createJWTForTest(t, jwt.MapClaims{
+		"sub": float64(42),
+		"tid": float64(7),
+		"scp": "tenant",
+		"typ": "refresh",
+		"exp": time.Now().Add(10 * time.Minute).Unix(),
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	resp, body := doRequestAndDecode(t, app, req)
+
+	if resp.StatusCode != fiber.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d", resp.StatusCode)
+	}
+	if body["code"] != "auth_invalid_token" {
+		t.Fatalf("expected code auth_invalid_token, got %#v", body["code"])
+	}
+}

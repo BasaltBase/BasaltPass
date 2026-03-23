@@ -286,7 +286,7 @@ func (s Service) Refresh(refreshToken string) (TokenPair, error) {
 		return TokenPair{}, errors.New("invalid token")
 	}
 	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok || claims["typ"] != "refresh" {
+	if !ok || claims["typ"] != TokenTypeRefresh {
 		return TokenPair{}, errors.New("invalid token type")
 	}
 	userIDFloat, ok := claims["sub"].(float64)

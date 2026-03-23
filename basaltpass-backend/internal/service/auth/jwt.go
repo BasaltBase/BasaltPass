@@ -39,6 +39,10 @@ const (
 	ConsoleScopeUser   = "user"
 	ConsoleScopeTenant = "tenant"
 	ConsoleScopeAdmin  = "admin"
+
+	TokenTypeAccess  = "access"
+	TokenTypeRefresh = "refresh"
+	TokenTypePreAuth = "pre_auth"
 )
 
 // GenerateTokenPair creates JWT access and refresh tokens for a user id.
@@ -76,6 +80,7 @@ func GenerateTokenPairWithTenantAndScope(userID uint, tenantID uint, scope strin
 		"sub": userID,
 		"tid": tenantID, // 租户ID - 现在直接使用user.tenant_id
 		"scp": scope,    // console scope
+		"typ": TokenTypeAccess,
 		"exp": time.Now().Add(15 * time.Minute).Unix(),
 	}
 	accessToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims).SignedString(common.MustJWTSecret())
@@ -88,7 +93,7 @@ func GenerateTokenPairWithTenantAndScope(userID uint, tenantID uint, scope strin
 		"tid": tenantID,
 		"scp": scope,
 		"exp": time.Now().Add(7 * 24 * time.Hour).Unix(),
-		"typ": "refresh",
+		"typ": TokenTypeRefresh,
 	}
 	refreshToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString(common.MustJWTSecret())
 	if err != nil {
@@ -150,6 +155,34 @@ func ParseToken(tokenStr string) (*jwt.Token, error) {
 	})
 }
 
+// ValidateAccessTokenType accepts explicit access tokens and, during the
+// compatibility window, legacy access tokens without a typ claim. Refresh
+// tokens and all other typed tokens are rejected.
+func ValidateAccessTokenType(claims jwt.MapClaims) error {
+	if claims == nil {
+		return errors.New("invalid token claims")
+	}
+
+	typ, hasType := claims["typ"]
+	if !hasType || typ == nil {
+		return nil
+	}
+
+	typStr, ok := typ.(string)
+	if !ok {
+		return errors.New("invalid token type")
+	}
+
+	switch typStr {
+	case "", TokenTypeAccess:
+		return nil
+	case TokenTypeRefresh:
+		return errors.New("refresh token not allowed")
+	default:
+		return errors.New("invalid token type")
+	}
+}
+
 // GeneratePreAuthToken issues a short-lived (5 min) one-time token emitted after the
 // first-factor (password) check succeeds when 2FA is required.
 // The token carries the verified user identity so the 2FA step never trusts a
@@ -158,7 +191,7 @@ func GeneratePreAuthToken(userID uint, tenantID uint) (string, error) {
 	claims := jwt.MapClaims{
 		"sub": userID,
 		"tid": tenantID,
-		"typ": "pre_auth",
+		"typ": TokenTypePreAuth,
 		"exp": time.Now().Add(5 * time.Minute).Unix(),
 	}
 	return jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(common.MustJWTSecret())
@@ -177,7 +210,7 @@ func ParsePreAuthToken(tokenStr string) (userID uint, tenantID uint, err error) 
 		return 0, 0, errors.New("invalid or expired 2FA session token")
 	}
 	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok || claims["typ"] != "pre_auth" {
+	if !ok || claims["typ"] != TokenTypePreAuth {
 		return 0, 0, errors.New("invalid token type")
 	}
 	subFloat, ok := claims["sub"].(float64)
