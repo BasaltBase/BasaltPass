@@ -1,9 +1,10 @@
-import { ReactNode, useState } from 'react'
+import { ReactNode, useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Bars3Icon, ChevronDownIcon, ArrowsRightLeftIcon } from '@heroicons/react/24/outline'
 import { UserIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline'
 import TenantNavigation from './TenantNavigation'
 import { useAuth } from '@contexts/AuthContext'
+import { useConfig } from '@contexts/ConfigContext'
 import EnhancedNotificationIcon from '@components/EnhancedNotificationIcon'
 import { PButton } from '@ui'
 import { authorizeConsole } from '@api/console'
@@ -17,6 +18,7 @@ interface TenantLayoutProps {
 
 export default function TenantLayout({ children, title, actions }: TenantLayoutProps) {
   const { user, logout, canAccessAdmin } = useAuth()
+  const { siteName, siteInitial, setPageTitle } = useConfig()
   const location = useLocation()
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -28,6 +30,10 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
   // 判断当前是否在tenant路径
   const isTenantPath = location.pathname.startsWith(ROUTES.tenant.root)
   const isAdminPath = location.pathname.startsWith(ROUTES.admin.root)
+
+  useEffect(() => {
+    setPageTitle(title ? `租户控制台 - ${title}` : '租户控制台')
+  }, [setPageTitle, title])
 
   const consoleUserUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || ''
   const consoleAdminUrl = (import.meta as any).env?.VITE_CONSOLE_ADMIN_URL || ''
@@ -74,8 +80,11 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
                 <Bars3Icon className="h-6 w-6" />
               </button>
               <Link to={ROUTES.tenant.dashboard} className="flex items-center">
+                <div className="h-8 w-8 bg-purple-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">{siteInitial}</span>
+                </div>
                 <div className="ml-2 flex items-baseline">
-                  <span className="text-xl font-bold text-gray-900">BasaltPass</span>
+                  <span className="text-xl font-bold text-gray-900">{siteName}</span>
                   <span className="ml-2 text-sm font-medium text-gray-500">租户控制台</span>
                 </div>
               </Link>
@@ -223,10 +232,10 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
               <div className="h-0 flex-1 overflow-y-auto pt-5 pb-4">
                 <div className="flex flex-shrink-0 items-center px-4">
                   <div className="h-8 w-8 bg-purple-600 rounded-lg flex items-center justify-center">
-                    <span className="text-white font-bold text-lg">B</span>
+                    <span className="text-white font-bold text-lg">{siteInitial}</span>
                   </div>
                   <div className="ml-2 flex items-baseline">
-                    <span className="text-xl font-bold text-gray-900">BasaltPass</span>
+                    <span className="text-xl font-bold text-gray-900">{siteName}</span>
                     <span className="ml-2 text-sm font-medium text-gray-500">租户控制台</span>
                   </div>
                 </div>

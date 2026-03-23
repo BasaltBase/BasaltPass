@@ -4,8 +4,29 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BasaltPass - Admin Console</title>
-    <script type="module" crossorigin src="/admin/assets/index-CsBwNz_I.js"></script>
-    <link rel="stylesheet" crossorigin href="/admin/assets/index-BwnfSXKM.css">
+    <script>
+      ;(function () {
+        var fallbackTitle = document.title
+        var envApiBase = 'http://localhost:8101'
+        var apiBase = envApiBase && envApiBase !== 'http://localhost:8101'
+          ? envApiBase
+          : window.location.protocol + '//' + window.location.hostname + ':8101'
+
+        fetch(String(apiBase).replace(/\/$/, '') + '/api/v1/config', { credentials: 'include' })
+          .then(function (response) {
+            if (!response.ok) throw new Error('failed to load branding')
+            return response.json()
+          })
+          .then(function (config) {
+            var siteName = config && typeof config.site_name === 'string' ? config.site_name.trim() : ''
+            if (!siteName) return
+            document.title = fallbackTitle.replace(/^BasaltPass/, siteName)
+          })
+          .catch(function () {})
+      })()
+    </script>
+    <script type="module" crossorigin src="/admin/assets/index-BlfUKU3P.js"></script>
+    <link rel="stylesheet" crossorigin href="/admin/assets/index-CqpgvJH_.css">
   </head>
   <body>
     <div id="root"></div>

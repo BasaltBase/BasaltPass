@@ -23,14 +23,6 @@ settings:
         value: false
         category: auth
         description: 是否允许使用短信验证码作为二次验证方式
-    auth.passkey.session_ttl_seconds:
-        value: 300
-        category: auth
-        description: Passkey challenge 会话 TTL（秒）
-    auth.passkey.session_capacity:
-        value: 1024
-        category: auth
-        description: Passkey challenge 会话最大容量
     auth.2fa.totp_enabled:
         value: true
         category: auth
@@ -39,6 +31,14 @@ settings:
         value: true
         category: auth
         description: 允许新用户注册
+    auth.passkey.session_capacity:
+        value: 1024
+        category: auth
+        description: Passkey challenge 会话最大容量
+    auth.passkey.session_ttl_seconds:
+        value: 300
+        category: auth
+        description: Passkey challenge 会话 TTL（秒）
     auth.password_policy.min_length:
         value: 8
         category: auth

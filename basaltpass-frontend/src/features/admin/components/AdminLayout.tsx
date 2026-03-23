@@ -1,9 +1,10 @@
-import { ReactNode, useState } from 'react'
+import { ReactNode, useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Bars3Icon, ChevronDownIcon, ArrowsRightLeftIcon } from '@heroicons/react/24/outline'
 import { UserIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline'
 import AdminNavigation from './AdminNavigation'
 import { useAuth } from '@contexts/AuthContext'
+import { useConfig } from '@contexts/ConfigContext'
 import EnhancedNotificationIcon from '@components/EnhancedNotificationIcon'
 import { PButton } from '@ui'
 import { authorizeConsole } from '@api/console'
@@ -17,6 +18,7 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children, title, actions }: AdminLayoutProps) {
   const { user, logout, canAccessTenant } = useAuth()
+  const { siteName, siteInitial, setPageTitle } = useConfig()
   const location = useLocation()
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -28,6 +30,10 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
   // 判断当前是否在admin路径
   const isAdminPath = location.pathname.startsWith(ROUTES.admin.root)
   const isPlatformPath = location.pathname.startsWith('/platform')
+
+  useEffect(() => {
+    setPageTitle(title ? `管理控制台 - ${title}` : '管理控制台')
+  }, [setPageTitle, title])
 
   const consoleUserUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || ''
   const consoleTenantUrl = (import.meta as any).env?.VITE_CONSOLE_TENANT_URL || ''
@@ -74,9 +80,9 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
               </button>
               <Link to={ROUTES.admin.dashboard} className="flex items-center">
                 <div className="h-8 w-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">B</span>
+                  <span className="text-white font-bold text-lg">{siteInitial}</span>
                 </div>
-                <span className="ml-2 text-xl font-bold text-gray-900">BasaltPass</span>
+                <span className="ml-2 text-xl font-bold text-gray-900">{siteName}</span>
               </Link>
               {title && (
                 <>
@@ -222,9 +228,9 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
               <div className="h-0 flex-1 overflow-y-auto pt-5 pb-4">
                 <div className="flex flex-shrink-0 items-center px-4">
                   <div className="h-8 w-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-                    <span className="text-white font-bold text-lg">B</span>
+                    <span className="text-white font-bold text-lg">{siteInitial}</span>
                   </div>
-                  <span className="ml-2 text-xl font-bold text-gray-900">BasaltPass</span>
+                  <span className="ml-2 text-xl font-bold text-gray-900">{siteName}</span>
                 </div>
                 <nav className="mt-5 space-y-1 px-2">
                   <AdminNavigation />

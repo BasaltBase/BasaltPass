@@ -1,16 +1,23 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react'
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react'
 import { getPublicConfig, PublicConfig } from '@api/config'
 
 interface ConfigContextType {
   config: PublicConfig | null
   loading: boolean
   marketEnabled: boolean
+  siteName: string
+  siteInitial: string
+  setPageTitle: (pageTitle?: string) => void
 }
 
 const ConfigContext = createContext<ConfigContextType | undefined>(undefined)
+const DEFAULT_SITE_NAME = 'BasaltPass'
 
 export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [config, setConfig] = useState<PublicConfig | null>({ market_enabled: true })
+  const [config, setConfig] = useState<PublicConfig | null>({
+    market_enabled: true,
+    site_name: DEFAULT_SITE_NAME,
+  })
   const [loading, setLoading] = useState(false)
   const hasFetchedRef = useRef(false)
 
@@ -26,7 +33,10 @@ export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const data = await getPublicConfig()
         setConfig(data)
       } catch {
-        setConfig({ market_enabled: true })
+        setConfig({
+          market_enabled: true,
+          site_name: DEFAULT_SITE_NAME,
+        })
       } finally {
         setLoading(false)
       }
@@ -36,9 +46,33 @@ export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [])
 
   const marketEnabled = config?.market_enabled ?? true
+  const siteName = config?.site_name?.trim() || DEFAULT_SITE_NAME
+  const siteInitial = siteName.charAt(0).toUpperCase() || 'B'
+
+  const setPageTitle = useCallback((pageTitle?: string) => {
+    if (typeof document === 'undefined') {
+      return
+    }
+    document.title = pageTitle ? `${siteName} - ${pageTitle}` : siteName
+  }, [siteName])
+
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return
+    }
+
+    const currentTitle = document.title.trim()
+    if (
+      !currentTitle ||
+      currentTitle === DEFAULT_SITE_NAME ||
+      currentTitle.startsWith(`${DEFAULT_SITE_NAME} -`)
+    ) {
+      setPageTitle()
+    }
+  }, [setPageTitle])
 
   return (
-    <ConfigContext.Provider value={{ config, loading, marketEnabled }}>
+    <ConfigContext.Provider value={{ config, loading, marketEnabled, siteName, siteInitial, setPageTitle }}>
       {children}
     </ConfigContext.Provider>
   )

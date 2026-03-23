@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import client from '@api/client'
+import { useConfig } from '@contexts/ConfigContext'
 import { fetchPublicTenantByCode } from '@api/publicTenant'
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 import { PInput, PButton, PCheckbox } from '@ui'
@@ -13,6 +14,7 @@ import { PInput, PButton, PCheckbox } from '@ui'
 function TenantRegister() {
   const { tenantCode } = useParams<{ tenantCode: string }>()
   const navigate = useNavigate()
+  const { setPageTitle } = useConfig()
   
   // 租户信息
   const [tenantInfo, setTenantInfo] = useState<{ id: number; name: string; code: string } | null>(null)
@@ -22,13 +24,13 @@ function TenantRegister() {
     if (tenantInfo?.name) {
       document.title = `${tenantInfo.name} - 注册`
     } else {
-      document.title = '租户注册'
+      setPageTitle('租户注册')
     }
 
     return () => {
-      document.title = 'BasaltPass - User Console'
+      setPageTitle('用户中心')
     }
-  }, [tenantInfo?.name])
+  }, [setPageTitle, tenantInfo?.name])
   
   // 注册流程状态
   const [step, setStep] = useState<'form' | 'verification' | 'complete'>('form')

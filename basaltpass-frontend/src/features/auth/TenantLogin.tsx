@@ -4,6 +4,7 @@ import { ROUTES } from '@constants'
 import client from '@api/client'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@contexts/AuthContext'
+import { useConfig } from '@contexts/ConfigContext'
 import { loginWithPasskey2FAFlow } from '@api/oauth/passkey'
 import { isPasskeySupported } from '@utils/webauthn'
 import { resolveSafeRedirectTarget } from '@utils/redirect'
@@ -20,6 +21,7 @@ function TenantLogin() {
   const { tenantCode } = useParams<{ tenantCode: string }>()
   const navigate = useNavigate()
   const { login } = useAuth()
+  const { siteName, setPageTitle } = useConfig()
   const [searchParams] = useSearchParams()
   
   // 租户信息
@@ -30,13 +32,13 @@ function TenantLogin() {
     if (tenantInfo?.name) {
       document.title = `${tenantInfo.name} - 登录`
     } else {
-      document.title = '租户登录'
+      setPageTitle('租户登录')
     }
 
     return () => {
-      document.title = 'BasaltPass - User Console'
+      setPageTitle('用户中心')
     }
-  }, [tenantInfo?.name])
+  }, [siteName, setPageTitle, tenantInfo?.name])
   
   // 登录状态
   const [step, setStep] = useState(1)
@@ -137,7 +139,7 @@ function TenantLogin() {
         setTwoFACode('')
         setEmailCode('')
       } else if (err?.code === 'ECONNABORTED' || msg.includes('timeout')) {
-        setError(`登录请求超时：请确认 BasaltPass 后端已运行在 ${resolvedApiBase}`)
+        setError(`登录请求超时：请确认 ${siteName} 后端已运行在 ${resolvedApiBase}`)
       } else {
         setError(raw || '登录失败，请检查您的凭据')
       }
@@ -216,7 +218,7 @@ function TenantLogin() {
       const raw = err?.response?.data?.error || err?.response?.data?.message || err?.message || ''
       const msg = typeof raw === 'string' ? raw.toLowerCase() : ''
       if (err?.code === 'ECONNABORTED' || msg.includes('timeout')) {
-        setError('二次验证请求超时：请确认 BasaltPass 后端可访问')
+        setError(`二次验证请求超时：请确认 ${siteName} 后端可访问`)
       } else {
         setError(raw || '验证失败')
       }

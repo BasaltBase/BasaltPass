@@ -4,6 +4,7 @@ import { ROUTES } from '@constants'
 import client from '@api/client'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@contexts/AuthContext'
+import { useConfig } from '@contexts/ConfigContext'
 import { loginWithPasskey2FAFlow } from '@api/oauth/passkey'
 import { isPasskeySupported } from '@utils/webauthn'
 import { resolveSafeRedirectTarget } from '@utils/redirect'
@@ -13,6 +14,7 @@ import { PInput, PButton, PCheckbox } from '@ui'
 function Login() {
   const navigate = useNavigate()
   const { login } = useAuth()
+  const { siteName, siteInitial, setPageTitle } = useConfig()
   const [searchParams] = useSearchParams()
   // step: 1-用户名密码，2-二次验证
   const [step, setStep] = useState(1)
@@ -44,6 +46,10 @@ function Login() {
     window.location.href = target
     return true
   }
+
+  useEffect(() => {
+    setPageTitle('管理员登录')
+  }, [setPageTitle])
 
   useEffect(() => {
     if (step === 2 && twoFAType === 'totp') {
@@ -94,7 +100,7 @@ function Login() {
       } else if (msg.includes('only administrators can login to platform')) {
         setError('普通用户不能登录平台，请使用租户登录')
       } else if (err?.code === 'ECONNABORTED' || msg.includes('timeout')) {
-        setError(`登录请求超时：请确认 BasaltPass 后端已运行在 ${resolvedApiBase}`)
+        setError(`登录请求超时：请确认 ${siteName} 后端已运行在 ${resolvedApiBase}`)
       } else {
         setError(raw || '登录失败，请检查您的凭据')
       }
@@ -168,7 +174,7 @@ function Login() {
       const raw = err?.response?.data?.error || err?.message || ''
       const msg = typeof raw === 'string' ? raw.toLowerCase() : ''
       if (err?.code === 'ECONNABORTED' || msg.includes('timeout')) {
-        setError('二次验证请求超时：请确认 BasaltPass 后端可访问')
+        setError(`二次验证请求超时：请确认 ${siteName} 后端可访问`)
       } else {
         setError(raw || '二次验证失败')
       }
@@ -364,8 +370,17 @@ function Login() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 rounded-xl bg-indigo-600 flex items-center justify-center">
+              <span className="text-xl font-bold text-white">{siteInitial}</span>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-indigo-600">管理员登录</p>
+              <p className="text-lg font-semibold text-gray-900">{siteName}</p>
+            </div>
+          </div>
           <h2 className="mt-6 text-left text-4xl font-extrabold text-gray-900">
-            欢迎回到 BasaltPass
+            欢迎回到 {siteName}
           </h2>
           <p className="mt-2 text-left text-sm text-gray-600">
             或者{' '}

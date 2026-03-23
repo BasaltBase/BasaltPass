@@ -2,6 +2,7 @@ import client from './client'
 
 export interface PublicConfig {
   market_enabled: boolean
+  site_name: string
 }
 
 class ConfigAPI {
