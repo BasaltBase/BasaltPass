@@ -1,6 +1,7 @@
 package passkey
 
 import (
+	security "basaltpass-backend/internal/handler/user/security"
 	authsvc "basaltpass-backend/internal/service/auth"
 	passkey2 "basaltpass-backend/internal/service/passkey"
 	"net/http"
@@ -8,8 +9,6 @@ import (
 	"strings"
 
 	"log"
-
-	security "basaltpass-backend/internal/handler/user/security"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/valyala/fasthttp/fasthttpadaptor"
