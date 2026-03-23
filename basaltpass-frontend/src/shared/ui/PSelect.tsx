@@ -46,6 +46,7 @@ const PSelect = forwardRef<HTMLSelectElement, PSelectProps>(
     const generatedId = useId();
     const selectId = id || generatedId;
     const wrapperRef = useRef<HTMLDivElement | null>(null);
+    const hiddenSelectRef = useRef<HTMLSelectElement | null>(null);
     const [isOpen, setIsOpen] = useState(false);
 
     const options = useMemo<SelectOption[]>(() => {
@@ -137,7 +138,35 @@ const PSelect = forwardRef<HTMLSelectElement, PSelectProps>(
       };
     }, [isOpen]);
 
+    const setSelectRef = (node: HTMLSelectElement | null) => {
+      hiddenSelectRef.current = node;
+
+      if (!ref) {
+        return;
+      }
+
+      if (typeof ref === 'function') {
+        ref(node);
+        return;
+      }
+
+      ref.current = node;
+    };
+
     const triggerChange = (nextValue: string) => {
+      const selectElement = hiddenSelectRef.current;
+
+      if (selectElement) {
+        const valueSetter = Object.getOwnPropertyDescriptor(
+          HTMLSelectElement.prototype,
+          'value'
+        )?.set;
+
+        valueSetter?.call(selectElement, nextValue);
+        selectElement.dispatchEvent(new Event('change', { bubbles: true }));
+        return;
+      }
+
       const syntheticEvent = {
         target: { value: nextValue, name },
         currentTarget: { value: nextValue, name },
@@ -164,7 +193,7 @@ const PSelect = forwardRef<HTMLSelectElement, PSelectProps>(
         )}
         <div ref={wrapperRef} className="relative">
           <select
-            ref={ref}
+            ref={setSelectRef}
             id={selectId}
             name={name}
             value={selectedValue}
@@ -215,8 +244,9 @@ const PSelect = forwardRef<HTMLSelectElement, PSelectProps>(
                               : 'text-gray-900 hover:bg-indigo-50'
                         }`}
                         disabled={option.disabled}
-                        onMouseDown={(event) => {
+                        onClick={(event) => {
                           event.preventDefault();
+                          event.stopPropagation();
                           handleSelect(option.value);
                         }}
                       >
