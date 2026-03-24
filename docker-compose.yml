@@ -7,7 +7,7 @@ services:
     ports:
       - "8101:8101"
     volumes:
-      - data:/data
+      - ./data:/data
     # Load environment variables from project .env (JWT_SECRET, BASALTPASS_*)
     env_file:
       - .env
@@ -22,5 +22,3 @@ services:
       - "5104:80"
     depends_on:
       - backend
-volumes:
-  data: 

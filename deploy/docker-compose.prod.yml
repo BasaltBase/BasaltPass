@@ -5,7 +5,7 @@ services:
     expose:
       - "8101"
     volumes:
-      - data:/data
+      - ../data:/data
     env_file:
       - .env
 
@@ -17,5 +17,3 @@ services:
     ports:
       - "127.0.0.1:5104:80"
 
-volumes:
-  data:
