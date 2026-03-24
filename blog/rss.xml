@@ -27,10 +27,10 @@
 <h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="whats-next">What's Next?<a href="https://basaltbase.github.io/BasaltPass/blog/welcome-to-basaltpass#whats-next" class="hash-link" aria-label="Direct link to What's Next?" title="Direct link to What's Next?" translate="no">​</a></h2>
 <p>We are constantly working to improve BasaltPass. Stay tuned to this blog for updates on new features, tutorials, and security best practices.</p>
 <p>Check out our <a class="" href="https://basaltbase.github.io/BasaltPass/docs/intro/what-is-basaltpass">Documentation</a> to get started today!</p>]]></content:encoded>
-            <category>introduction</category>
-            <category>basaltpass</category>
-            <category>security</category>
-            <category>multi-tenancy</category>
+            <category>Introduction</category>
+            <category>BasaltPass</category>
+            <category>Security</category>
+            <category>Multi-Tenancy</category>
         </item>
     </channel>
 </rss>

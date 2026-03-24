@@ -30,9 +30,9 @@
             <name>BasaltPass Team</name>
             <uri>https://basaltbase.github.io/BasaltPass</uri>
         </author>
-        <category label="introduction" term="introduction"/>
-        <category label="basaltpass" term="basaltpass"/>
-        <category label="security" term="security"/>
-        <category label="multi-tenancy" term="multi-tenancy"/>
+        <category label="Introduction" term="Introduction"/>
+        <category label="BasaltPass" term="BasaltPass"/>
+        <category label="Security" term="Security"/>
+        <category label="Multi-Tenancy" term="Multi-Tenancy"/>
     </entry>
 </feed>
