@@ -8,7 +8,7 @@ import { useConfig } from '@contexts/ConfigContext'
 import { loginWithPasskey2FAFlow } from '@api/oauth/passkey'
 import { resolveSafeRedirectTarget } from '@utils/redirect'
 import { ShieldCheckIcon, EnvelopeIcon, KeyIcon } from '@heroicons/react/24/outline'
-import { PInput, PButton, PCheckbox } from '@ui'
+import { PInput, PButton, PCheckbox, PAlert } from '@ui'
 
 function Login() {
   const navigate = useNavigate()
@@ -331,21 +331,7 @@ function Login() {
       return (
         <form className="space-y-6" onSubmit={submit2FAVerify}>
           <div className="space-y-4">
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <ShieldCheckIcon className="h-5 w-5 text-gray-500" />
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-gray-900">
-                    使用Passkey进行二次验证
-                  </h3>
-                  <div className="mt-2 text-sm text-gray-600">
-                    <p>点击验证后，您的设备将提示您进行生物识别验证或使用安全密钥。</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <PAlert variant="info" title="使用Passkey进行二次验证" message="点击验证后，您的设备将提示您进行生物识别验证或使用安全密钥。" />
           </div>
           <div>
             <PButton
@@ -395,9 +381,8 @@ function Login() {
           </div>
 
           {error && (
-            <div className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3" role="alert" aria-live="assertive">
-              <h3 className="text-sm font-medium text-red-800">登录失败</h3>
-              <div className="mt-1 text-sm text-red-700">{error}</div>
+            <div className="mt-6">
+              <PAlert variant="error" title="登录失败" message={error} />
             </div>
           )}
 

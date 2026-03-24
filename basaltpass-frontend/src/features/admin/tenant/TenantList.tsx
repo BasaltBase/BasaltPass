@@ -14,7 +14,7 @@ import {
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { adminTenantApi, AdminTenantResponse, AdminTenantListRequest } from '@api/admin/tenant'
 import { ROUTES } from '@constants'
-import { PSkeleton } from '@ui'
+import { PSkeleton, PBadge, PAlert, PPageHeader, PPagination, PButton } from '@ui'
 
 export default function TenantList() {
   const [tenants, setTenants] = useState<AdminTenantResponse[]>([])
@@ -65,29 +65,19 @@ export default function TenantList() {
     }
   }
 
-  const getPlanBadgeColor = (plan: string) => {
+  const getPlanVariant = (plan: string): 'default' | 'info' | 'purple' => {
     switch (plan) {
-      case 'free':
-        return 'bg-gray-100 text-gray-800'
-      case 'pro':
-        return 'bg-blue-100 text-blue-800'
-      case 'enterprise':
-        return 'bg-purple-100 text-purple-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
+      case 'pro': return 'info'
+      case 'enterprise': return 'purple'
+      default: return 'default'
     }
   }
 
-  const getStatusBadgeColor = (status: string) => {
+  const getStatusVariant = (status: string): 'success' | 'error' | 'default' => {
     switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-800'
-      case 'suspended':
-        return 'bg-red-100 text-red-800'
-      case 'deleted':
-        return 'bg-gray-100 text-gray-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
+      case 'active': return 'success'
+      case 'suspended': return 'error'
+      default: return 'default'
     }
   }
 
@@ -127,29 +117,20 @@ export default function TenantList() {
     )
   }
 
-  const actions = (
-    <Link
-      to={ROUTES.admin.tenantsCreate}
-      className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-    >
-      <PlusIcon className="h-4 w-4 mr-2" />
-      创建租户
-    </Link>
-  )
-
   return (
-    <AdminLayout title="租户管理" actions={actions}>
+    <AdminLayout title="租户管理">
       <div className="space-y-6">
         {/* 页面头部 */}
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-            <BuildingOfficeIcon className="h-8 w-8 mr-3 text-indigo-600" />
-            租户管理
-          </h1>
-          <p className="mt-1 text-sm text-gray-500">
-            管理平台上的所有租户
-          </p>
-        </div>
+        <PPageHeader
+          title="租户管理"
+          description="管理平台上的所有租户"
+          icon={<BuildingOfficeIcon className="h-8 w-8 text-indigo-600" />}
+          actions={
+            <Link to={ROUTES.admin.tenantsCreate}>
+              <PButton leftIcon={<PlusIcon className="h-4 w-4" />}>创建租户</PButton>
+            </Link>
+          }
+        />
 
         {/* 搜索和过滤 */}
         <div className="bg-white p-4 rounded-lg shadow">
@@ -196,11 +177,7 @@ export default function TenantList() {
         </div>
 
         {/* 错误提示 */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-4">
-            <p className="text-red-800">{error}</p>
-          </div>
-        )}
+        {error && <PAlert variant="error" message={error} />}
 
         {/* 租户列表 */}
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
@@ -220,12 +197,12 @@ export default function TenantList() {
                           <h3 className="text-lg font-medium text-gray-900 truncate">
                             {tenant.name}
                           </h3>
-                          <span className={`ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPlanBadgeColor(tenant.plan)}`}>
+                          <PBadge variant={getPlanVariant(tenant.plan)} className="ml-3">
                             {getPlanDisplayName(tenant.plan)}
-                          </span>
-                          <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeColor(tenant.status)}`}>
+                          </PBadge>
+                          <PBadge variant={getStatusVariant(tenant.status)} className="ml-2">
                             {getStatusDisplayName(tenant.status)}
-                          </span>
+                          </PBadge>
                         </div>
                         <div className="mt-1 flex items-center text-sm text-gray-500">
                           <span>代码: {tenant.code}</span>
@@ -304,27 +281,11 @@ export default function TenantList() {
 
         {/* 分页 */}
         {totalPages > 1 && (
-          <div className="flex justify-center">
-            <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-              <button
-                onClick={() => setPage(page - 1)}
-                disabled={page === 1}
-                className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                上一页
-              </button>
-              <span className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
-                {page} / {totalPages}
-              </span>
-              <button
-                onClick={() => setPage(page + 1)}
-                disabled={page === totalPages}
-                className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                下一页
-              </button>
-            </nav>
-          </div>
+          <PPagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
         )}
       </div>
     </AdminLayout>

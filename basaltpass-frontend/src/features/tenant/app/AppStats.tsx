@@ -14,7 +14,7 @@ import {
 import TenantLayout from '@features/tenant/components/TenantLayout'
 import { tenantAppApi, TenantApp } from '@api/tenant/tenantApp'
 import { ROUTES } from '@constants'
-import { PSkeleton } from '@ui'
+import { PSkeleton, PButton } from '@ui'
 
 interface AppStatsData {
   period: string
@@ -148,12 +148,7 @@ export default function AppStats() {
             <DocumentChartBarIcon className="mx-auto h-12 w-12 text-red-500" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">{error}</h3>
             <div className="mt-6">
-              <button
-                onClick={fetchAppStats}
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-              >
-                重试
-              </button>
+              <PButton onClick={fetchAppStats}>重试</PButton>
             </div>
           </div>
         </div>
@@ -169,11 +164,8 @@ export default function AppStats() {
             <ChartBarIcon className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">无数据</h3>
             <div className="mt-6">
-              <Link
-                to={ROUTES.tenant.apps}
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-              >
-                返回应用列表
+              <Link to={ROUTES.tenant.apps}>
+                <PButton>返回应用列表</PButton>
               </Link>
             </div>
           </div>
@@ -465,17 +457,11 @@ export default function AppStats() {
 
         {/* 操作按钮 */}
         <div className="mt-8 flex justify-end space-x-3">
-          <Link
-            to={`/tenant/apps/${app.id}`}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-          >
-            返回详情
+          <Link to={`/tenant/apps/${app.id}`}>
+            <PButton variant="secondary">返回详情</PButton>
           </Link>
-          <Link
-            to={`/tenant/apps/${app.id}/settings`}
-            className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-          >
-            应用设置
+          <Link to={`/tenant/apps/${app.id}/settings`}>
+            <PButton>应用设置</PButton>
           </Link>
         </div>
       </div>

@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import Layout from '@features/user/components/Layout'
-import { PSkeleton } from '@ui'
-import { PCard, PButton } from '@ui'
+import { PSkeleton, PCard, PButton, PAlert, PPageHeader, PBadge } from '@ui'
 import { history as getWalletHistory } from '@api/user/wallet'
 import { getSecurityStatus, SecurityStatus } from '@api/user/security'
 import { getProfile, UserBasicProfile } from '@api/user/profile'
@@ -120,18 +119,7 @@ export default function Dashboard() {
   if (error) {
     return (
       <Layout>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="text-red-600 text-lg font-medium mb-2">加载失败</div>
-            <div className="text-gray-500">{error}</div>
-            <PButton 
-              onClick={() => window.location.reload()} 
-              className="mt-4"
-            >
-              重试
-            </PButton>
-          </div>
-        </div>
+        <PAlert variant="error" title="加载失败" message={error} actions={[{ label: '重试', onClick: () => window.location.reload() }]} />
       </Layout>
     )
   }
@@ -140,12 +128,7 @@ export default function Dashboard() {
     <Layout>
       <div className="space-y-6">
         {/* 页面标题 */}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">仪表板</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            欢迎回来！这里是您的账户概览
-          </p>
-        </div>
+        <PPageHeader title="仪表板" description="欢迎回来！这里是您的账户概览" />
 
         {/* 统计卡片 */}
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
@@ -391,16 +374,13 @@ export default function Dashboard() {
                         }`}>
                           {transaction.type === 'recharge' ? '+' : '-'}¥{transaction.amount}
                         </p>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          transaction.status === 'completed'
-                            ? 'bg-green-100 text-green-800'
-                            : transaction.status === 'pending'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}>
+                        <PBadge variant={
+                          transaction.status === 'completed' ? 'success' :
+                          transaction.status === 'pending' ? 'warning' : 'error'
+                        }>
                           {transaction.status === 'completed' ? '已完成' : 
                            transaction.status === 'pending' ? '处理中' : '失败'}
-                        </span>
+                        </PBadge>
                       </div>
                     </div>
                   </li>

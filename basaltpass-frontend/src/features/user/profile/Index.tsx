@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import client from '@api/client'
 import { Link } from 'react-router-dom'
 import Layout from '@features/user/components/Layout'
-import { PCard, PButton, PSkeleton } from '@ui'
+import { PCard, PButton, PSkeleton, PAlert, PInput, PBadge } from '@ui'
 import PhoneInput from '@ui/common/PhoneInput'
 import { formatPhoneForDisplay } from '@utils/phoneValidator'
 import { getUserProfile, type UserProfile } from '@api/user/profile'
@@ -152,13 +152,10 @@ function Profile() {
                 </h3>
                 <p className="text-sm text-gray-500">用户 ID: {profile.id}</p>
                 <div className="mt-4 flex space-x-3">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    已验证
-                  </span>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    活跃用户
-                  </span>
+                  <PBadge variant="success">已验证</PBadge>
+                  <PBadge variant="info">活跃用户</PBadge>
                 </div>
+
               </div>
             </PCard>
 
@@ -205,20 +202,13 @@ function Profile() {
                     用户昵称
                   </label>
                   {isEditing ? (
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={editForm.nickname}
-                        onChange={(e) => setEditForm(prev => ({ ...prev, nickname: e.target.value }))}
-                        className="block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300"
-                        placeholder="请输入昵称"
-                      />
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                        <div className="h-5 w-5 text-gray-400">
-                          <IdentificationIcon className="h-5 w-5" />
-                        </div>
-                      </div>
-                    </div>
+                    <PInput
+                      type="text"
+                      value={editForm.nickname}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, nickname: e.target.value }))}
+                      placeholder="请输入昵称"
+                      icon={<IdentificationIcon className="h-5 w-5" />}
+                    />
                   ) : (
                     <div className="px-4 py-3 bg-gray-50 rounded-lg border border-gray-100">
                       <p className="text-sm text-gray-900">
@@ -276,11 +266,7 @@ function Profile() {
 
               {isEditing && (
                 <div className="mt-8 space-y-4 pt-8 border-t border-gray-100">
-                  {saveError && (
-                    <div className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700" role="alert" aria-live="assertive">
-                      {saveError}
-                    </div>
-                  )}
+                  {saveError && <PAlert variant="error" message={saveError} />}
                   <div className="flex justify-end space-x-4">
                     <PButton
                       onClick={handleCancel}

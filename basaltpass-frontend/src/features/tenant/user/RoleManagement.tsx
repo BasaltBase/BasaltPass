@@ -14,7 +14,7 @@ import {
   ChevronRightIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
-import { PSelect, EntitySearchSelect, PSkeleton } from '@ui';
+import { PSelect, EntitySearchSelect, PSkeleton, PBadge, PPageHeader, PButton, PInput, PCheckbox, PTextarea } from '@ui';
 import {
   Role,
   CreateRoleRequest,
@@ -29,7 +29,6 @@ import {
   UserRole
 } from '@api/tenant/tenantRole';
 import TenantLayout from '@features/tenant/components/TenantLayout';
-import { PCheckbox, PInput, PButton, PTextarea } from '@ui';
 import PTable, { PTableColumn } from '@ui/PTable';
 import useDebounce from '@hooks/useDebounce';
 
@@ -206,11 +205,8 @@ const TenantRoleManagement: React.FC = () => {
 
 
 
-  // 角色类型样式映射
-  const getRoleTypeStyle = (isSystem: boolean) => {
-    return isSystem 
-      ? 'bg-purple-100 text-purple-800 border-purple-200'
-      : 'bg-blue-100 text-blue-800 border-blue-200';
+  const getRoleTypeVariant = (isSystem: boolean) => {
+    return isSystem ? 'purple' : 'info';
   };
 
   const getRoleTypeText = (isSystem: boolean) => {
@@ -237,16 +233,16 @@ const TenantRoleManagement: React.FC = () => {
         )}
 
         {/* 页面标题与操作 */}
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center">
-            <ShieldCheckIcon className="w-8 h-8 text-blue-600 mr-3" />
-            <h1 className="text-2xl font-bold text-gray-900">角色权限管理</h1>
-          </div>
-          <div className="flex space-x-3">
-            <PButton onClick={() => setUserRoleModalVisible(true)} leftIcon={<UsersIcon className="w-5 h-5" />}>用户角色分配</PButton>
-            <PButton onClick={() => setModalVisible(true)} leftIcon={<PlusIcon className="w-5 h-5" />}>创建角色</PButton>
-          </div>
-        </div>
+        <PPageHeader
+          title="角色权限管理"
+          icon={<ShieldCheckIcon className="w-8 h-8 text-blue-600" />}
+          actions={
+            <div className="flex space-x-3">
+              <PButton onClick={() => setUserRoleModalVisible(true)} leftIcon={<UsersIcon className="w-5 h-5" />}>用户角色分配</PButton>
+              <PButton onClick={() => setModalVisible(true)} leftIcon={<PlusIcon className="w-5 h-5" />}>创建角色</PButton>
+            </div>
+          }
+        />
 
         {/* 搜索和筛选 */}
         <div className="bg-white p-4 rounded-lg shadow mb-6">
@@ -311,9 +307,7 @@ const TenantRoleManagement: React.FC = () => {
                   key: 'type',
                   title: '类型',
                   render: (role: Role) => (
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getRoleTypeStyle(role.is_system)}`}>
-                      {getRoleTypeText(role.is_system)}
-                    </span>
+                    <PBadge variant={getRoleTypeVariant(role.is_system) as any}>{getRoleTypeText(role.is_system)}</PBadge>
                   )
                 },
                 {
@@ -321,13 +315,9 @@ const TenantRoleManagement: React.FC = () => {
                   title: '应用范围',
                   render: (role: Role) => (
                     role.app_name ? (
-                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
-                        {role.app_name}
-                      </span>
+                      <PBadge variant="info">{role.app_name}</PBadge>
                     ) : (
-                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800 border border-gray-200">
-                        租户级
-                      </span>
+                      <PBadge variant="default">租户级</PBadge>
                     )
                   )
                 },
@@ -582,9 +572,7 @@ const TenantRoleManagement: React.FC = () => {
                                 <div className="flex-1">
                                   <div className="flex items-center space-x-2">
                                     <span className="text-sm font-medium text-gray-900">{role.name}</span>
-                                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getRoleTypeStyle(role.is_system)}`}>
-                                      {getRoleTypeText(role.is_system)}
-                                    </span>
+                                    <PBadge variant={getRoleTypeVariant(role.is_system) as any}>{getRoleTypeText(role.is_system)}</PBadge>
                                   </div>
                                   <div className="text-xs text-gray-500">{role.code}</div>
                                   {role.description && (

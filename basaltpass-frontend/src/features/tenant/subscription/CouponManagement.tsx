@@ -23,7 +23,7 @@ import {
   deleteTenantCoupon 
 } from '@api/tenant/subscription';
 import useDebounce from '@hooks/useDebounce';
-import { PSkeleton } from '@ui'
+import { PSkeleton, PBadge, PButton, PEmptyState } from '@ui'
 
 interface CouponManagementProps {}
 
@@ -281,30 +281,15 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
 
         {/* 优惠券列表 */}
         {filteredCoupons.length === 0 ? (
-          <div className="text-center py-12 bg-white shadow rounded-lg">
-            <GiftIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">
-              {searchTerm || filterStatus !== 'all' ? '没有找到匹配的优惠券' : '暂无优惠券'}
-            </h3>
-            <p className="mt-1 text-sm text-gray-500">
-              {searchTerm || filterStatus !== 'all' 
-                ? '请尝试调整搜索条件或筛选器' 
-                : '开始创建第一个优惠券来提升销售'
-              }
-            </p>
+          <PEmptyState
+            icon={GiftIcon}
+            title={searchTerm || filterStatus !== 'all' ? '没有找到匹配的优惠券' : '暂无优惠券'}
+            description={searchTerm || filterStatus !== 'all' ? '请尝试调整搜索条件或筛选器' : '开始创建第一个优惠券来提升销售'}
+          >
             {!searchTerm && filterStatus === 'all' && (
-              <div className="mt-6">
-                <button
-                  type="button"
-                  onClick={handleCreateCoupon}
-                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
-                  创建优惠券
-                </button>
-              </div>
+              <PButton onClick={handleCreateCoupon} leftIcon={<PlusIcon className="h-5 w-5" />}>创建优惠券</PButton>
             )}
-          </div>
+          </PEmptyState>
         ) : (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {filteredCoupons.map((coupon, index) => {
@@ -392,44 +377,29 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
                       )}
 
                       <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          status.color === 'green' ? 'bg-green-100 text-green-800' :
-                          status.color === 'red' ? 'bg-red-100 text-red-800' :
-                          status.color === 'orange' ? 'bg-orange-100 text-orange-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
+                        <PBadge variant={
+                          status.color === 'green' ? 'success' :
+                          status.color === 'red' ? 'error' :
+                          status.color === 'orange' ? 'orange' :
+                          'default'
+                        }>
                           {status.text}
-                        </span>
+                        </PBadge>
                         <div className="flex space-x-1">
-                          <button
+                          <PButton
+                            size="sm"
+                            variant={coupon.IsActive ? 'danger' : 'secondary'}
                             onClick={() => handleToggleStatus(coupon.Code, coupon.IsActive)}
-                            className={`inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded ${
-                              coupon.IsActive 
-                                ? 'text-red-700 bg-red-100 hover:bg-red-200' 
-                                : 'text-green-700 bg-green-100 hover:bg-green-200'
-                            }`}
                           >
                             {coupon.IsActive ? '停用' : '启用'}
-                          </button>
+                          </PButton>
                         </div>
                       </div>
                     </div>
 
                     <div className="mt-4 flex space-x-2">
-                      <button
-                        onClick={() => handleEditCoupon(coupon)}
-                        className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                      >
-                        <PencilIcon className="h-4 w-4 mr-1" />
-                        编辑
-                      </button>
-                      <button
-                        onClick={() => handleDeleteCoupon(coupon.Code)}
-                        className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                      >
-                        <TrashIcon className="h-4 w-4 mr-1" />
-                        删除
-                      </button>
+                      <PButton variant="secondary" className="flex-1" onClick={() => handleEditCoupon(coupon)} leftIcon={<PencilIcon className="h-4 w-4" />}>编辑</PButton>
+                      <PButton variant="danger" className="flex-1" onClick={() => handleDeleteCoupon(coupon.Code)} leftIcon={<TrashIcon className="h-4 w-4" />}>删除</PButton>
                     </div>
                   </div>
                 </div>

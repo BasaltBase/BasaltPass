@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { setup2FA, verify2FA } from '@api/user/security'
 import { Link } from 'react-router-dom'
 import Layout from '@features/user/components/Layout'
-import { PInput, PButton, PSkeleton } from '@ui'
+import { PInput, PButton, PSkeleton, PAlert } from '@ui'
 import { ROUTES } from '@constants'
 import { 
   ShieldCheckIcon,
@@ -93,28 +93,10 @@ export default function TwoFA() {
 
           {/* 消息提示 */}
           {msg && (
-            <div className={`rounded-md p-4 ${
-              msgType === 'success' 
-                ? 'bg-green-50 border border-green-200' 
-                : 'bg-red-50 border border-red-200'
-            }`}>
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  {msgType === 'success' ? (
-                    <CheckCircleIcon className="h-5 w-5 text-green-400" />
-                  ) : (
-                    <ExclamationTriangleIcon className="h-5 w-5 text-red-400" />
-                  )}
-                </div>
-                <div className="ml-3">
-                  <p className={`text-sm font-medium ${
-                    msgType === 'success' ? 'text-green-800' : 'text-red-800'
-                  }`}>
-                    {msg}
-                  </p>
-                </div>
-              </div>
-            </div>
+            <PAlert
+              variant={msgType === 'success' ? 'success' : 'error'}
+              message={msg}
+            />
           )}
 
           {msgType === 'success' && msg.includes('成功启用') ? (
@@ -129,11 +111,8 @@ export default function TwoFA() {
                   您的账户现在更加安全了。下次登录时，除了密码外，还需要输入验证器应用生成的验证码。
                 </p>
                 <div className="space-y-3">
-                  <Link
-                    to={ROUTES.user.security}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  >
-                    返回安全设置
+                  <Link to={ROUTES.user.security}>
+                    <PButton variant="primary">返回安全设置</PButton>
                   </Link>
                 </div>
               </div>
@@ -260,24 +239,14 @@ export default function TwoFA() {
               )}
 
               {/* 安全提示 */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <ShieldCheckIcon className="h-5 w-5 text-blue-400" />
-                  </div>
-                  <div className="ml-3">
-                    <h3 className="text-sm font-medium text-blue-800">安全提示</h3>
-                    <div className="mt-2 text-sm text-blue-700">
-                      <ul className="list-disc list-inside space-y-1">
-                        <li>请妥善保管您的验证器应用和设备</li>
-                        <li>不要将验证码分享给任何人</li>
-                        <li>建议在多个设备上设置验证器作为备份</li>
-                        <li>如果丢失验证器，请联系客服恢复账户</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <PAlert variant="info" title="安全提示">
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  <li>请妥善保管您的验证器应用和设备</li>
+                  <li>不要将验证码分享给任何人</li>
+                  <li>建议在多个设备上设置验证器作为备份</li>
+                  <li>如果丢失验证器，请联系客服恢复账户</li>
+                </ul>
+              </PAlert>
             </>
           )}
         </div>

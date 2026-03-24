@@ -31,7 +31,7 @@ import {
   LockClosedIcon,
   FingerPrintIcon
 } from '@heroicons/react/24/outline'
-import { PInput, PButton, PCard, PSkeleton } from '@ui'
+import { PInput, PButton, PCard, PSkeleton, PAlert, PPageHeader } from '@ui'
 import { ROUTES } from '@constants'
 
 export default function SecuritySettings() {
@@ -211,37 +211,11 @@ export default function SecuritySettings() {
       <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="space-y-6">
           {/* 页面标题 */}
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">安全设置</h1>
-            <p className="mt-2 text-sm text-gray-600">
-              管理您的账户安全设置和验证方式
-            </p>
-          </div>
+          <PPageHeader title="安全设置" description="管理您的账户安全设置和验证方式" />
 
           {/* 消息提示 */}
-          {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="flex">
-                <ExclamationTriangleIcon className="h-5 w-5 text-red-400" />
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">错误</h3>
-                  <div className="mt-2 text-sm text-red-700">{error}</div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {success && (
-            <div className="rounded-md bg-green-50 p-4">
-              <div className="flex">
-                <CheckCircleIcon className="h-5 w-5 text-green-400" />
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-green-800">成功</h3>
-                  <div className="mt-2 text-sm text-green-700">{success}</div>
-                </div>
-              </div>
-            </div>
-          )}
+          {error && <PAlert variant="error" message={error} dismissible onDismiss={() => setError('')} />}
+          {success && <PAlert variant="success" message={success} dismissible onDismiss={() => setSuccess('')} />}
 
           {/* 安全状态概览 */}
           <div className="bg-white shadow rounded-lg">
@@ -298,13 +272,14 @@ export default function SecuritySettings() {
                     {securityStatus.password_set && (
                       <CheckCircleIcon className="h-5 w-5 text-green-500" />
                     )}
-                    <button
+                    <PButton
+                      variant="secondary"
+                      size="sm"
                       onClick={() => setShowPasswordForm(!showPasswordForm)}
-                      className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      leftIcon={<CogIcon className="h-4 w-4" />}
                     >
-                      <CogIcon className="h-4 w-4 mr-1" />
                       {securityStatus.password_set ? '修改密码' : '设置密码'}
-                    </button>
+                    </PButton>
                   </div>
                 </div>
 
@@ -410,20 +385,19 @@ export default function SecuritySettings() {
                       <CheckCircleIcon className="h-5 w-5 text-green-500" />
                     )}
                     {securityStatus.two_fa_enabled ? (
-                      <button
+                      <PButton
+                        variant="danger"
+                        size="sm"
                         onClick={handleDisable2FA}
-                        className="inline-flex items-center px-3 py-2 border border-red-300 shadow-sm text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                        leftIcon={<TrashIcon className="h-4 w-4" />}
                       >
-                        <TrashIcon className="h-4 w-4 mr-1" />
                         禁用
-                      </button>
+                      </PButton>
                     ) : (
-                      <Link
-                        to={ROUTES.user.securityTwoFA}
-                        className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                      >
-                        <PlusIcon className="h-4 w-4 mr-1" />
-                        启用
+                      <Link to={ROUTES.user.securityTwoFA}>
+                        <PButton variant="secondary" size="sm" leftIcon={<PlusIcon className="h-4 w-4" />}>
+                          启用
+                        </PButton>
                       </Link>
                     )}
                   </div>
@@ -439,13 +413,14 @@ export default function SecuritySettings() {
                 <h3 className="text-lg leading-6 font-medium text-gray-900">
                   邮箱管理
                 </h3>
-                <button
+                <PButton
+                  variant="secondary"
+                  size="sm"
                   onClick={() => setShowEmailChangeForm(!showEmailChangeForm)}
-                  className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  leftIcon={<CogIcon className="h-4 w-4" />}
                 >
-                  <CogIcon className="h-4 w-4 mr-1" />
                   更换邮箱
-                </button>
+                </PButton>
               </div>
               
               <div className="space-y-4">
@@ -466,12 +441,9 @@ export default function SecuritySettings() {
                     ) : (
                       <>
                         <ExclamationTriangleIcon className="h-5 w-5 text-yellow-500" />
-                        <button
-                          onClick={() => handleResendVerification('email')}
-                          className="text-sm text-blue-600 hover:text-blue-500"
-                        >
+                        <PButton variant="ghost" size="sm" onClick={() => handleResendVerification('email')}>
                           发送验证邮件
-                        </button>
+                        </PButton>
                       </>
                     )}
                   </div>
@@ -495,12 +467,9 @@ export default function SecuritySettings() {
                       ) : (
                         <>
                           <ExclamationTriangleIcon className="h-5 w-5 text-yellow-500" />
-                          <button
-                            onClick={() => handleResendVerification('phone')}
-                            className="text-sm text-blue-600 hover:text-blue-500"
-                          >
+                          <PButton variant="ghost" size="sm" onClick={() => handleResendVerification('phone')}>
                             发送验证短信
-                          </button>
+                          </PButton>
                         </>
                       )}
                     </div>

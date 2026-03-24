@@ -12,12 +12,9 @@ import {
   TenantInvoice,
   CreateTenantInvoiceRequest,
 } from '@api/tenant/subscription'
-import PInput from '@ui/PInput'
-import PSelect from '@ui/PSelect'
-import PButton from '@ui/PButton'
+import { PInput, PSelect, PButton, PSkeleton, PBadge } from '@ui'
 import PTable, { PTableColumn } from '@ui/PTable'
 import { ROUTES } from '@constants'
-import { PSkeleton } from '@ui'
 
 export default function TenantInvoices() {
   const [searchParams] = useSearchParams()
@@ -82,20 +79,14 @@ export default function TenantInvoices() {
     return tenantSubscriptionAPI.formatPrice(amountCents, currency)
   }
 
-  const getStatusColor = (status: string) => {
+  const getStatusVariant = (status: string) => {
     switch (status) {
-      case 'paid':
-        return 'bg-green-100 text-green-800'
-      case 'posted':
-        return 'bg-blue-100 text-blue-800'
-      case 'draft':
-        return 'bg-gray-100 text-gray-800'
-      case 'void':
-        return 'bg-red-100 text-red-800'
-      case 'uncollectible':
-        return 'bg-orange-100 text-orange-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
+      case 'paid': return 'success'
+      case 'posted': return 'info'
+      case 'draft': return 'default'
+      case 'void': return 'error'
+      case 'uncollectible': return 'orange'
+      default: return 'default'
     }
   }
 
@@ -177,9 +168,7 @@ export default function TenantInvoices() {
                   key: 'status',
                   title: '状态',
                   render: (row) => (
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(row.status)}`}>
-                      {getStatusText(row.status)}
-                    </span>
+                    <PBadge variant={getStatusVariant(row.status) as any}>{getStatusText(row.status)}</PBadge>
                   )
                 },
                 { key: 'created', title: '创建时间', render: (row) => new Date(row.created_at).toLocaleString('zh-CN') },

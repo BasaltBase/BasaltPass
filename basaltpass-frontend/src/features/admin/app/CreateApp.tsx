@@ -5,6 +5,7 @@ import { ArrowLeftIcon, RocketLaunchIcon, PlusIcon, TrashIcon, CubeIcon, KeyIcon
 import { tenantAppApi, CreateTenantAppRequest } from '@api/tenant/tenantApp'
 import TenantLayout from '@features/tenant/components/TenantLayout'
 import { ROUTES } from '@constants'
+import { PInput, PTextarea, PButton } from '@ui'
 
 export default function CreateApp() {
   const navigate = useNavigate()
@@ -202,95 +203,53 @@ export default function CreateApp() {
               
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div className="sm:col-span-2">
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                    应用名称 <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
+                  <PInput
                     id="name"
+                    label={<>应用名称 <span className="text-red-500">*</span></>}
+                    type="text"
                     value={formData.name}
                     onChange={(e: any) => handleInputChange('name', e.target.value)}
-                    className={`block w-full px-4 py-3 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300 ${
-                      errors.name ? 'border-red-300 focus:border-red-500' : 'border-gray-200'
-                    }`}
                     placeholder="例如：我的网站"
+                    error={errors.name}
                   />
-                  {errors.name && (
-                    <p className="mt-2 text-sm text-red-600 flex items-center">
-                      <span className="w-1 h-1 bg-red-500 rounded-full mr-2"></span>
-                      {errors.name}
-                    </p>
-                  )}
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-                    应用描述 <span className="text-red-500">*</span>
-                  </label>
-                  <textarea
+                  <PTextarea
                     id="description"
+                    label={<>应用描述 <span className="text-red-500">*</span></>}
                     rows={4}
                     value={formData.description}
                     onChange={(e: any) => handleInputChange('description', e.target.value)}
-                    className={`block w-full px-4 py-3 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300 resize-none ${
-                      errors.description ? 'border-red-300 focus:border-red-500' : 'border-gray-200'
-                    }`}
                     placeholder="简要描述你的应用功能和用途..."
+                    error={errors.description}
                   />
-                  {errors.description && (
-                    <p className="mt-2 text-sm text-red-600 flex items-center">
-                      <span className="w-1 h-1 bg-red-500 rounded-full mr-2"></span>
-                      {errors.description}
-                    </p>
-                  )}
                 </div>
 
                 <div>
-                  <label htmlFor="logo_url" className="block text-sm font-medium text-gray-700 mb-2">
-                    Logo URL
-                  </label>
-                  <input
-                    type="url"
+                  <PInput
                     id="logo_url"
+                    label="Logo URL"
+                    type="url"
                     value={formData.logo_url}
                     onChange={(e: any) => handleInputChange('logo_url', e.target.value)}
-                    className={`block w-full px-4 py-3 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300 ${
-                      errors.logo_url ? 'border-red-300 focus:border-red-500' : 'border-gray-200'
-                    }`}
                     placeholder="https://example.com/logo.png"
+                    error={errors.logo_url}
                   />
-                  {errors.logo_url ? (
-                    <p className="mt-2 text-sm text-red-600 flex items-center">
-                      <span className="w-1 h-1 bg-red-500 rounded-full mr-2"></span>
-                      {errors.logo_url}
-                    </p>
-                  ) : (
-                    <p className="mt-2 text-xs text-gray-500">可选 - 应用的图标或徽标链接</p>
-                  )}
+                  {!errors.logo_url && <p className="mt-1 text-xs text-gray-500">可选 - 应用的图标或徽标链接</p>}
                 </div>
 
                 <div>
-                  <label htmlFor="homepage_url" className="block text-sm font-medium text-gray-700 mb-2">
-                    主页 URL
-                  </label>
-                  <input
-                    type="url"
+                  <PInput
                     id="homepage_url"
+                    label="主页 URL"
+                    type="url"
                     value={formData.homepage_url}
                     onChange={(e: any) => handleInputChange('homepage_url', e.target.value)}
-                    className={`block w-full px-4 py-3 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300 ${
-                      errors.homepage_url ? 'border-red-300 focus:border-red-500' : 'border-gray-200'
-                    }`}
                     placeholder="https://example.com"
+                    error={errors.homepage_url}
                   />
-                  {errors.homepage_url ? (
-                    <p className="mt-2 text-sm text-red-600 flex items-center">
-                      <span className="w-1 h-1 bg-red-500 rounded-full mr-2"></span>
-                      {errors.homepage_url}
-                    </p>
-                  ) : (
-                    <p className="mt-2 text-xs text-gray-500">可选 - 应用的官方网站地址</p>
-                  )}
+                  {!errors.homepage_url && <p className="mt-1 text-xs text-gray-500">可选 - 应用的官方网站地址</p>}
                 </div>
               </div>
             </div>
@@ -317,34 +276,34 @@ export default function CreateApp() {
                   {formData.redirect_uris.map((url, index) => (
                     <div key={index} className="flex items-center space-x-3">
                       <div className="flex-1">
-                        <input
+                        <PInput
                           type="url"
                           value={url}
                           onChange={(e: any) => updateCallbackUrl(index, e.target.value)}
-                          className="block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300"
                           placeholder="https://example.com/auth/callback"
                         />
                       </div>
                       {formData.redirect_uris.length > 1 && (
-                        <button
+                        <PButton
                           type="button"
+                          variant="danger"
+                          size="sm"
                           onClick={() => removeCallbackUrl(index)}
-                          className="inline-flex items-center p-2 border border-red-300 rounded-lg text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors duration-200"
                           title="删除回调地址"
                         >
                           <TrashIcon className="h-4 w-4" />
-                        </button>
+                        </PButton>
                       )}
                     </div>
                   ))}
-                  <button
+                  <PButton
                     type="button"
+                    variant="secondary"
                     onClick={addCallbackUrl}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
+                    leftIcon={<PlusIcon className="h-4 w-4" />}
                   >
-                    <PlusIcon className="h-4 w-4 mr-2" />
                     添加回调地址
-                  </button>
+                  </PButton>
                 </div>
                 {errors.redirect_uris && (
                   <p className="mt-2 text-sm text-red-600 flex items-center">
@@ -376,81 +335,50 @@ export default function CreateApp() {
               
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div>
-                  <label htmlFor="privacy_policy_url" className="block text-sm font-medium text-gray-700 mb-2">
-                    隐私政策 URL
-                  </label>
-                  <input
-                    type="url"
+                  <PInput
                     id="privacy_policy_url"
+                    label="隐私政策 URL"
+                    type="url"
                     value={formData.privacy_policy_url}
                     onChange={(e: any) => handleInputChange('privacy_policy_url', e.target.value)}
-                    className={`block w-full px-4 py-3 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300 ${
-                      errors.privacy_policy_url ? 'border-red-300 focus:border-red-500' : 'border-gray-200'
-                    }`}
                     placeholder="https://example.com/privacy"
+                    error={errors.privacy_policy_url}
                   />
-                  {errors.privacy_policy_url ? (
-                    <p className="mt-2 text-sm text-red-600 flex items-center">
-                      <span className="w-1 h-1 bg-red-500 rounded-full mr-2"></span>
-                      {errors.privacy_policy_url}
-                    </p>
-                  ) : (
-                    <p className="mt-2 text-xs text-gray-500">用户隐私保护政策的链接</p>
-                  )}
+                  {!errors.privacy_policy_url && <p className="mt-1 text-xs text-gray-500">用户隐私保护政策的链接</p>}
                 </div>
 
                 <div>
-                  <label htmlFor="terms_of_service_url" className="block text-sm font-medium text-gray-700 mb-2">
-                    服务条款 URL
-                  </label>
-                  <input
-                    type="url"
+                  <PInput
                     id="terms_of_service_url"
+                    label="服务条款 URL"
+                    type="url"
                     value={formData.terms_of_service_url}
                     onChange={(e: any) => handleInputChange('terms_of_service_url', e.target.value)}
-                    className={`block w-full px-4 py-3 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300 ${
-                      errors.terms_of_service_url ? 'border-red-300 focus:border-red-500' : 'border-gray-200'
-                    }`}
                     placeholder="https://example.com/terms"
+                    error={errors.terms_of_service_url}
                   />
-                  {errors.terms_of_service_url ? (
-                    <p className="mt-2 text-sm text-red-600 flex items-center">
-                      <span className="w-1 h-1 bg-red-500 rounded-full mr-2"></span>
-                      {errors.terms_of_service_url}
-                    </p>
-                  ) : (
-                    <p className="mt-2 text-xs text-gray-500">应用服务使用条款的链接</p>
-                  )}
+                  {!errors.terms_of_service_url && <p className="mt-1 text-xs text-gray-500">应用服务使用条款的链接</p>}
                 </div>
               </div>
             </div>
 
             {/* 提交按钮 */}
             <div className="flex flex-col sm:flex-row sm:justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-6 border-t border-gray-200">
-              <button
+              <PButton
                 type="button"
+                variant="secondary"
                 onClick={() => navigate(ROUTES.tenant.apps)}
-                className="w-full sm:w-auto px-6 py-3 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
               >
                 取消
-              </button>
-              <button
+              </PButton>
+              <PButton
                 type="submit"
                 disabled={loading}
-                className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                loading={loading}
+                leftIcon={<RocketLaunchIcon className="h-4 w-4" />}
               >
-                {loading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    创建中...
-                  </>
-                ) : (
-                  <>
-                    <RocketLaunchIcon className="h-4 w-4 mr-2" />
-                    创建应用
-                  </>
-                )}
-              </button>
+                创建应用
+              </PButton>
             </div>
           </form>
         </div>
@@ -488,13 +416,9 @@ export default function CreateApp() {
             </div>
             
             <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={handleCloseModal}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
+              <PButton type="button" onClick={handleCloseModal}>
                 我已保存，去应用列表
-              </button>
+              </PButton>
             </div>
           </div>
         </div>

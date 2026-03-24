@@ -15,7 +15,7 @@ import TenantLayout from '@features/tenant/components/TenantLayout'
 import { tenantAppApi } from '@api/tenant/tenantApp'
 import { userPermissionsApi, type Permission, type Role } from '@api/tenant/appPermissions'
 import useDebounce from '@hooks/useDebounce'
-import { PSkeleton } from '@ui'
+import { PSkeleton, PPageHeader, PEmptyState, PButton, PInput, PTextarea, PBadge } from '@ui'
 
 export default function AppRoleManagement() {
   const { id: appId } = useParams<{ id: string }>()
@@ -187,15 +187,7 @@ export default function AppRoleManagement() {
             <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-red-500" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">{error}</h3>
             <div className="mt-6">
-              <button
-                onClick={() => {
-                  setError('')
-                  fetchRolesAndPermissions()
-                }}
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-              >
-                重试
-              </button>
+              <PButton onClick={() => { setError(''); fetchRolesAndPermissions() }}>重试</PButton>
             </div>
           </div>
         </div>
@@ -207,39 +199,18 @@ export default function AppRoleManagement() {
     <TenantLayout title="角色管理">
       <div className="space-y-6">
         {/* 页面头部 */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-              <ShieldCheckIcon className="h-8 w-8 mr-3 text-green-600" />
-              角色管理
-            </h1>
-            <p className="mt-1 text-sm text-gray-500">
-              管理应用 "{app?.name}" 的角色和权限
-            </p>
-          </div>
-          <div className="flex space-x-3">
-            <button
-              onClick={() => navigate(`/tenant/apps/${appId}/permissions`)}
-              className="inline-flex items-center px-4 py-2 border border-blue-300 rounded-md shadow-sm text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100"
-            >
-              <KeyIcon className="h-4 w-4 mr-2" />
-              权限管理
-            </button>
-            <button
-              onClick={() => navigate(`/tenant/apps/${appId}/users`)}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-            >
-              用户管理
-            </button>
-            <button
-              onClick={handleCreateRole}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
-            >
-              <PlusIcon className="h-4 w-4 mr-2" />
-              创建角色
-            </button>
-          </div>
-        </div>
+        <PPageHeader
+          title="角色管理"
+          description={`管理应用 "${app?.name}" 的角色和权限`}
+          icon={<ShieldCheckIcon className="h-8 w-8 text-green-600" />}
+          actions={
+            <div className="flex space-x-3">
+              <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/permissions`)} leftIcon={<KeyIcon className="h-4 w-4" />}>权限管理</PButton>
+              <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/users`)}>用户管理</PButton>
+              <PButton onClick={handleCreateRole} leftIcon={<PlusIcon className="h-4 w-4" />}>创建角色</PButton>
+            </div>
+          }
+        />
 
         {/* 搜索 */}
         <div className="bg-white shadow rounded-lg p-6">
@@ -265,24 +236,15 @@ export default function AppRoleManagement() {
             </div>
 
             {filteredRoles.length === 0 ? (
-              <div className="text-center py-12">
-                <ShieldCheckIcon className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-medium text-gray-900">暂无角色</h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  {searchTerm ? '未找到匹配的角色' : '还没有创建任何角色'}
-                </p>
+              <PEmptyState
+                icon={ShieldCheckIcon}
+                title="暂无角色"
+                description={searchTerm ? '未找到匹配的角色' : '还没有创建任何角色'}
+              >
                 {!searchTerm && (
-                  <div className="mt-6">
-                    <button
-                      onClick={handleCreateRole}
-                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
-                    >
-                      <PlusIcon className="h-4 w-4 mr-2" />
-                      创建角色
-                    </button>
-                  </div>
+                  <PButton onClick={handleCreateRole} leftIcon={<PlusIcon className="h-4 w-4" />}>创建角色</PButton>
                 )}
-              </div>
+              </PEmptyState>
             ) : (
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {filteredRoles.map((role) => (
@@ -328,17 +290,10 @@ export default function AppRoleManagement() {
                     {role.permissions && role.permissions.length > 0 && (
                       <div className="mt-3 flex flex-wrap gap-1">
                         {role.permissions.slice(0, 3).map((permission) => (
-                          <span
-                            key={permission.id}
-                            className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                          >
-                            {permission.name}
-                          </span>
+                          <PBadge key={permission.id} variant="info">{permission.name}</PBadge>
                         ))}
                         {role.permissions.length > 3 && (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                            +{role.permissions.length - 3} 更多
-                          </span>
+                          <PBadge variant="default">+{role.permissions.length - 3} 更多</PBadge>
                         )}
                       </div>
                     )}
@@ -422,13 +377,12 @@ const RoleModal: React.FC<{
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   角色代码 *
                 </label>
-                <input
+                <PInput
                   type="text"
                   required
                   value={formData.code}
-                  onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, code: (e.target as HTMLInputElement).value })}
                   disabled={isEdit}
-                  className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
                   placeholder="例如: admin, user, editor"
                 />
               </div>
@@ -437,12 +391,11 @@ const RoleModal: React.FC<{
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   角色名称 *
                 </label>
-                <input
+                <PInput
                   type="text"
                   required
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                  onChange={(e) => setFormData({ ...formData, name: (e.target as HTMLInputElement).value })}
                   placeholder="例如: 管理员, 普通用户, 编辑者"
                 />
               </div>
@@ -452,11 +405,10 @@ const RoleModal: React.FC<{
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 角色描述
               </label>
-              <textarea
+              <PTextarea
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, description: (e.target as HTMLTextAreaElement).value })}
                 rows={3}
-                className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="描述该角色的用途和职责"
               />
             </div>
@@ -510,21 +462,8 @@ const RoleModal: React.FC<{
             </div>
 
             <div className="flex justify-end space-x-3">
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={submitting}
-                className="px-4 py-2 bg-gray-300 text-gray-700 text-base font-medium rounded-md shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-50"
-              >
-                取消
-              </button>
-              <button
-                type="submit"
-                disabled={submitting}
-                className="px-4 py-2 bg-green-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
-              >
-                {submitting ? '保存中...' : (isEdit ? '更新' : '创建')}
-              </button>
+              <PButton type="button" variant="secondary" onClick={onClose} disabled={submitting}>取消</PButton>
+              <PButton type="submit" loading={submitting}>{isEdit ? '更新' : '创建'}</PButton>
             </div>
           </form>
         </div>

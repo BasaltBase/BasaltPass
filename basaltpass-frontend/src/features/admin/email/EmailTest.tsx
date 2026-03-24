@@ -5,7 +5,8 @@ import {
   PInput,
   PTextarea,
   PCheckbox,
-  PSkeleton
+  PSkeleton,
+  PAlert
 } from '@ui'
 import { getEmailConfig, sendTestEmail, EmailConfig } from '@api/admin/email'
 import { CheckCircleIcon, XCircleIcon, PaperAirplaneIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline'
@@ -64,26 +65,12 @@ export default function EmailTest() {
 
         {/* Alert messages */}
         {alert && (
-          <div
-            className={`flex items-start rounded-md p-4 ${
-              alert.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
-            }`}
-          >
-            {alert.type === 'success' ? (
-              <CheckCircleIcon className="h-5 w-5 mt-0.5 mr-3" />
-            ) : (
-              <ExclamationCircleIcon className="h-5 w-5 mt-0.5 mr-3" />
-            )}
-            <div>
-              <p className="text-sm font-medium">{alert.message}</p>
-            </div>
-            <button
-              onClick={() => setAlert(null)}
-              className="ml-auto text-sm underline hover:no-underline"
-            >
-              Dismiss
-            </button>
-          </div>
+          <PAlert
+            variant={alert.type === 'success' ? 'success' : 'error'}
+            message={alert.message}
+            dismissible
+            onDismiss={() => setAlert(null)}
+          />
         )}
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">

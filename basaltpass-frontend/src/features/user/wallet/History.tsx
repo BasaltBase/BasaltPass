@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { history } from '@api/user/wallet'
 import { Link } from 'react-router-dom'
 import Layout from '@features/user/components/Layout'
-import { PInput, PSelect, PSkeleton } from '@ui'
+import { PInput, PSelect, PSkeleton, PBadge, PPageHeader, PEmptyState } from '@ui'
 import useDebounce from '@hooks/useDebounce'
 import { ROUTES } from '@constants'
 import { 
@@ -154,20 +154,7 @@ export default function History() {
     <Layout>
       <div className="space-y-6">
         {/* 页面标题 */}
-        <div className="flex items-center">
-          <Link 
-            to={ROUTES.user.wallet} 
-            className="mr-4 p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
-          >
-            <ArrowLeftIcon className="h-5 w-5" />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">交易记录</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              查看您的所有交易历史
-            </p>
-          </div>
-        </div>
+        <PPageHeader title="交易记录" description="查看您的所有交易历史" backTo={ROUTES.user.wallet} />
 
         {/* 统计卡片 */}
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-4">
@@ -283,13 +270,11 @@ export default function History() {
             </h3>
             
             {filteredTxs.length === 0 ? (
-              <div className="text-center py-12">
-                <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-medium text-gray-900">暂无交易记录</h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  {filter !== 'all' ? '当前筛选条件下没有找到交易记录' : '您还没有进行过任何交易'}
-                </p>
-              </div>
+              <PEmptyState
+                icon={<DocumentTextIcon className="h-12 w-12" />}
+                title="暂无交易记录"
+                description={filter !== 'all' ? '当前筛选条件下没有找到交易记录' : '您还没有进行过任何交易'}
+              />
             ) : (
               <div className="overflow-hidden">
                 <div className="flow-root">
@@ -321,9 +306,17 @@ export default function History() {
                                                                      <p className={`text-sm font-medium ${getTypeColor(tx.Type)}`}>
                                      {tx.Type && tx.Type.toLowerCase() === 'recharge' ? '+' : '-'}¥{(tx.Amount / 100).toFixed(2)}
                                    </p>
-                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(tx.Status)}`}>
+                                  <PBadge variant={
+                                    (() => {
+                                      const s = (tx.Status || '').toLowerCase()
+                                      if (s === 'success' || s === 'completed') return 'success' as const
+                                      if (s === 'pending') return 'warning' as const
+                                      if (s === 'failed') return 'error' as const
+                                      return 'default' as const
+                                    })()
+                                  }>
                                     {getStatusText(tx.Status)}
-                                  </span>
+                                  </PBadge>
                                 </div>
                               </div>
                             </div>

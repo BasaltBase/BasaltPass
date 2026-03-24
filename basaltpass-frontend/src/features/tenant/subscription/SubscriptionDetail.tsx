@@ -5,7 +5,7 @@ import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import TenantLayout from '@features/tenant/components/TenantLayout'
 import { getTenantUserSubscription, Subscription, tenantSubscriptionAPI } from '@api/tenant/subscription'
 import { ROUTES } from '@constants/routes'
-import { PSkeleton } from '@ui'
+import { PSkeleton, PBadge, PButton } from '@ui'
 
 function fmtDate(value?: string | null) {
   if (!value) return '-'
@@ -105,16 +105,12 @@ export default function TenantSubscriptionDetail() {
   }
 
   const status = tenantSubscriptionAPI.formatSubscriptionStatus(subscription.Status)
-  const statusClassName =
-    status.color === 'green'
-      ? 'bg-green-100 text-green-800'
-      : status.color === 'red'
-        ? 'bg-red-100 text-red-800'
-        : status.color === 'yellow'
-          ? 'bg-yellow-100 text-yellow-800'
-          : status.color === 'orange'
-            ? 'bg-orange-100 text-orange-800'
-            : 'bg-gray-100 text-gray-800'
+  const statusVariant =
+    status.color === 'green' ? 'success'
+    : status.color === 'red' ? 'error'
+    : status.color === 'yellow' ? 'warning'
+    : status.color === 'orange' ? 'orange'
+    : 'default'
 
   return (
     <TenantLayout title="订阅详情">
@@ -125,28 +121,15 @@ export default function TenantSubscriptionDetail() {
               <Link to={ROUTES.tenant.subscriptions} className="text-sm text-gray-500 hover:text-gray-700">
                 ← 返回订阅列表
               </Link>
-              <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusClassName}`}>
-                {status.text}
-              </span>
+              <PBadge variant={statusVariant as any}>{status.text}</PBadge>
             </div>
             <h1 className="mt-2 text-xl font-semibold text-gray-900">订阅 #{subscription.ID}</h1>
             <p className="mt-1 text-sm text-gray-500">用户 {subscription.UserID} · 创建于 {fmtDate(subscription.CreatedAt)}</p>
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => navigate(`/tenant/subscriptions/subscriptions`)}
-              className="px-4 py-2 rounded-md border border-gray-300 bg-white text-sm hover:bg-gray-50"
-            >
-              返回
-            </button>
-            <button
-              onClick={handleCancel}
-              disabled={subscription.Status !== 'active'}
-              className="px-4 py-2 rounded-md bg-red-600 text-white text-sm hover:bg-red-700 disabled:opacity-50"
-            >
-              取消订阅
-            </button>
+            <PButton variant="secondary" onClick={() => navigate(`/tenant/subscriptions/subscriptions`)}>返回</PButton>
+            <PButton variant="danger" onClick={handleCancel} disabled={subscription.Status !== 'active'}>取消订阅</PButton>
           </div>
         </div>
 

@@ -13,10 +13,7 @@ import {
   ShieldCheckIcon
 } from '@heroicons/react/24/outline'
 import TenantLayout from '@features/tenant/components/TenantLayout'
-import PInput from '@ui/PInput'
-import PSelect from '@ui/PSelect'
-import PTextarea from '@ui/PTextarea'
-import PButton from '@ui/PButton'
+import { PInput, PSelect, PTextarea, PButton, PSkeleton, PBadge, PPageHeader, PPagination } from '@ui'
 import PTable, { type PTableColumn, type PTableAction } from '@ui/PTable'
 import useDebounce from '@hooks/useDebounce'
 import useLocalStorage from '@hooks/useLocalStorage'
@@ -180,10 +177,7 @@ export default function TenantPermissionManagement() {
       title: '分类',
       key: 'category',
       render: (permission) => (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-          <TagIcon className="h-3 w-3 mr-1" />
-          {permission.category}
-        </span>
+        <PBadge variant="purple" icon={<TagIcon className="h-3 w-3" />}>{permission.category}</PBadge>
       )
     },
     {
@@ -243,26 +237,17 @@ export default function TenantPermissionManagement() {
     <TenantLayout title="权限管理">
       <div className="space-y-6">
         {/* 页面头部 */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-              <KeyIcon className="h-8 w-8 mr-3 text-blue-600" />
-              租户权限管理
-            </h1>
-            <p className="mt-1 text-sm text-gray-500">
-              管理租户级别的权限和访问控制
-            </p>
-          </div>
-          <div className="flex space-x-3">
-            <PButton variant="secondary" onClick={() => navigate(ROUTES.tenant.roles)}>
-              <ShieldCheckIcon className="h-4 w-4 mr-2" />
-              角色管理
-            </PButton>
-            <PButton onClick={handleCreatePermission} leftIcon={<PlusIcon className="h-4 w-4" />}>
-              创建权限
-            </PButton>
-          </div>
-        </div>
+        <PPageHeader
+          title="租户权限管理"
+          description="管理租户级别的权限和访问控制"
+          icon={<KeyIcon className="h-8 w-8 text-blue-600" />}
+          actions={
+            <div className="flex space-x-3">
+              <PButton variant="secondary" onClick={() => navigate(ROUTES.tenant.roles)} leftIcon={<ShieldCheckIcon className="h-4 w-4" />}>角色管理</PButton>
+              <PButton onClick={handleCreatePermission} leftIcon={<PlusIcon className="h-4 w-4" />}>创建权限</PButton>
+            </div>
+          }
+        />
 
         {/* 搜索和过滤 */}
         <div className="bg-white shadow rounded-lg p-6">

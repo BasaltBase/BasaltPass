@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import Layout from '@features/user/components/Layout'
-import { PSelect, PCard, PToggle, PButton, PInput, PSkeleton } from '@ui'
+import { PSelect, PCard, PToggle, PButton, PInput, PSkeleton, PTextarea, PPageHeader } from '@ui'
 import { 
   UserIcon, 
   BellIcon, 
@@ -169,12 +169,7 @@ export default function Settings() {
     <Layout>
       <div className="space-y-6">
         {/* 页面标题 */}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">系统设置</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            管理您的账户设置和偏好
-          </p>
-        </div>
+        <PPageHeader title="系统设置" description="管理您的账户设置和偏好" />
 
         <div className="grid grid-cols-1 gap-6">
           
@@ -242,12 +237,11 @@ export default function Settings() {
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">个人简介</label>
-                <textarea
+                <PTextarea
+                  label="个人简介"
                   value={profile.bio}
                   onChange={(e) => setProfile(prev => ({ ...prev, bio: e.target.value }))}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                   placeholder="介绍一下自己..."
                 />
               </div>

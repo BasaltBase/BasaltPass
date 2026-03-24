@@ -8,6 +8,7 @@ import PButton from '@ui/PButton'
 import PSelect from '@ui/PSelect'
 import PToggle from '@ui/PToggle'
 import PCard from '@ui/PCard'
+import PAlert from '@ui/PAlert'
 import client from '@api/client'
 import { adminSettingsCategories } from './categories'
 
@@ -248,7 +249,7 @@ export default function SettingsCategoryPage() {
         {loading ? (
           <div className="py-10 text-center text-gray-500">加载中...</div>
         ) : error ? (
-          <div className="py-10 text-center text-red-600">{error}</div>
+          <div className="py-10"><PAlert variant="error" message={error} /></div>
         ) : (
           <div className="mt-6 space-y-6">
             {filtered.length === 0 ? (

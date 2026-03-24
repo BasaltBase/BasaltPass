@@ -24,6 +24,7 @@ import {
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { listRoles, type AdminRole } from '@api/admin/roles'
 import { ROUTES } from '@constants'
+import { PBadge, PButton } from '@ui'
 
 export default function UserDetail() {
   const { id } = useParams<{ id: string }>()
@@ -171,58 +172,40 @@ export default function UserDetail() {
                 </h1>
                 <p className="text-sm text-gray-500">ID: {user.id}</p>
                 <div className="mt-2 flex items-center gap-2">
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                    user.banned ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-                  }`}>
+                  <PBadge variant={user.banned ? 'error' : 'success'}>
                     {user.banned ? '已封禁' : '正常'}
-                  </span>
+                  </PBadge>
                   {user.email_verified && (
-                    <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                      邮箱已验证
-                    </span>
+                    <PBadge variant="info">邮箱已验证</PBadge>
                   )}
                   {user.two_fa_enabled && (
-                    <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
-                      启用2FA
-                    </span>
+                    <PBadge variant="success">启用2FA</PBadge>
                   )}
                 </div>
               </div>
             </div>
             <div className="flex items-center space-x-3">
-              <button
+              <PButton
                 onClick={() => setShowBanModal(true)}
-                className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white ${
-                  user.banned 
-                    ? 'bg-green-600 hover:bg-green-700' 
-                    : 'bg-red-600 hover:bg-red-700'
-                }`}
+                variant={user.banned ? 'primary' : 'danger'}
+                leftIcon={user.banned ? <ShieldCheckIcon className="h-4 w-4" /> : <ShieldExclamationIcon className="h-4 w-4" />}
               >
-                {user.banned ? (
-                  <>
-                    <ShieldCheckIcon className="h-4 w-4 mr-2" />
-                    解封用户
-                  </>
-                ) : (
-                  <>
-                    <ShieldExclamationIcon className="h-4 w-4 mr-2" />
-                    封禁用户
-                  </>
-                )}
-              </button>
-              <button
+                {user.banned ? '解封用户' : '封禁用户'}
+              </PButton>
+              <PButton
                 onClick={openAssignRole}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+                variant="primary"
+                leftIcon={<KeyIcon className="h-4 w-4" />}
               >
-                <KeyIcon className="h-4 w-4 mr-2" /> 分配全局角色
-              </button>
-              <button
+                分配全局角色
+              </PButton>
+              <PButton
                 onClick={handleDeleteUser}
-                className="inline-flex items-center px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50"
+                variant="danger"
+                leftIcon={<TrashIcon className="h-4 w-4" />}
               >
-                <TrashIcon className="h-4 w-4 mr-2" />
                 删除用户
-              </button>
+              </PButton>
             </div>
           </div>
 
@@ -326,9 +309,7 @@ export default function UserDetail() {
                       <p className="text-sm text-gray-500">加入时间: {formatDate(membership.joined_at)}</p>
                     </div>
                     <div>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {membership.role}
-                      </span>
+                      <PBadge variant="info">{membership.role}</PBadge>
                     </div>
                   </div>
                 ))}
@@ -355,8 +336,8 @@ export default function UserDetail() {
                 </select>
               </div>
               <div className="flex justify-end gap-3 mt-6">
-                <button className="px-4 py-2 border rounded" onClick={()=>setShowAssignRole(false)}>取消</button>
-                <button className="px-4 py-2 bg-indigo-600 text-white rounded disabled:opacity-50" disabled={!selectedRoleId} onClick={submitAssignRole}>确认分配</button>
+                <PButton variant="secondary" onClick={() => setShowAssignRole(false)}>取消</PButton>
+                <PButton disabled={!selectedRoleId} onClick={submitAssignRole}>确认分配</PButton>
               </div>
             </div>
           </div>
@@ -435,9 +416,9 @@ export default function UserDetail() {
                         <div className="text-sm text-gray-900">{auth.tenant_name}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(auth.status)}`}>
+                        <PBadge variant={auth.status === 'active' ? 'success' : auth.status === 'suspended' ? 'warning' : 'error'}>
                           {auth.status}
-                        </span>
+                        </PBadge>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {formatDate(auth.first_authorized_at)}
@@ -480,25 +461,21 @@ export default function UserDetail() {
                   />
                 </div>
                 <div className="flex justify-end space-x-3">
-                  <button
-                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                  <PButton
+                    variant="secondary"
                     onClick={() => {
                       setShowBanModal(false)
                       setBanReason('')
                     }}
                   >
                     取消
-                  </button>
-                  <button
-                    className={`px-4 py-2 text-white rounded-md ${
-                      user.banned 
-                        ? 'bg-green-600 hover:bg-green-700' 
-                        : 'bg-red-600 hover:bg-red-700'
-                    }`}
+                  </PButton>
+                  <PButton
+                    variant={user.banned ? 'primary' : 'danger'}
                     onClick={handleBanUser}
                   >
                     确认{user.banned ? '解封' : '封禁'}
-                  </button>
+                  </PButton>
                 </div>
               </div>
             </div>

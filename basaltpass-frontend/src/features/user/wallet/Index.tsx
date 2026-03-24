@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 import Layout from '@features/user/components/Layout'
 import CurrencySelector from '@features/user/components/CurrencySelector'
 import { ROUTES } from '@constants'
-import { PSkeleton } from '@ui'
+import { PSkeleton, PPageHeader, PBadge } from '@ui'
 import { 
   WalletIcon, 
   ArrowUpIcon, 
@@ -157,12 +157,7 @@ export default function WalletIndex() {
       <div className="space-y-6">
         {/* 页面标题和货币选择 */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">我的钱包</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              管理您的资金和交易
-            </p>
-          </div>
+          <PPageHeader title="我的钱包" description="管理您的资金和交易" />
           {!isLoading && (
             <div className="w-64">
               <CurrencySelector
@@ -308,11 +303,11 @@ export default function WalletIndex() {
                     const amountColor = isRecharge ? 'text-green-600' : 'text-red-600'
                     const sign = isRecharge ? '+' : '-'
                     const statusLower = (tx.Status || '').toLowerCase()
-                    const statusColor = statusLower === 'success' || statusLower === 'completed'
-                      ? 'bg-green-100 text-green-800'
+                    const statusVariant = statusLower === 'success' || statusLower === 'completed'
+                      ? 'success' as const
                       : statusLower === 'pending'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-gray-100 text-gray-800'
+                        ? 'warning' as const
+                        : 'default' as const
                     const formatTxAmount = () => {
                       if (!selectedCurrency) return `${sign}${tx.Amount}`
                       const divisor = Math.pow(10, selectedCurrency.decimal_places)
@@ -341,9 +336,9 @@ export default function WalletIndex() {
                           </div>
                           <div className="flex-shrink-0 text-right">
                             <p className={`text-sm font-medium ${amountColor}`}>{formatTxAmount()}</p>
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColor}`}>
+                            <PBadge variant={statusVariant}>
                               {statusLower === 'success' || statusLower === 'completed' ? '已完成' : statusLower === 'pending' ? '处理中' : (tx.Status || '未知')}
-                            </span>
+                            </PBadge>
                           </div>
                         </div>
                       </li>

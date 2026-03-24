@@ -11,7 +11,7 @@ import { isPasskeySupported } from '@utils/webauthn'
 import { resolveSafeRedirectTarget } from '@utils/redirect'
 import { fetchPublicTenantByCode } from '@api/publicTenant'
 import { EyeIcon, EyeSlashIcon, ShieldCheckIcon, EnvelopeIcon, KeyIcon } from '@heroicons/react/24/outline'
-import { PInput, PButton, PCheckbox } from '@ui'
+import { PInput, PButton, PCheckbox, PAlert } from '@ui'
 
 /**
  * 租户专属登录页面
@@ -260,16 +260,7 @@ function TenantLogin() {
           </p>
         </div>
 
-        {error && (
-          <div className="rounded-md bg-red-50 p-4">
-            <div className="flex">
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">登录失败</h3>
-                <div className="mt-2 text-sm text-red-700">{error}</div>
-              </div>
-            </div>
-          </div>
-        )}
+        {error && <PAlert variant="error" title="登录失败" message={error} />}
 
         {step === 1 && (
           <form className="mt-8 space-y-6" onSubmit={submitPasswordLogin}>
@@ -324,11 +315,7 @@ function TenantLogin() {
 
         {step === 2 && (
           <form className="mt-8 space-y-6" onSubmit={submit2FAVerify}>
-            {error && (
-              <div className="rounded-md bg-red-50 p-4">
-                <div className="text-sm text-red-800">{error}</div>
-              </div>
-            )}
+            {error && <PAlert variant="error" message={error} />}
 
             <div className="text-center">
               <h3 className="text-lg font-medium text-gray-900">二次验证</h3>
@@ -340,19 +327,15 @@ function TenantLogin() {
                 {available2FAMethods.map((method) => {
                   const Icon = get2FAMethodIcon(method)
                   return (
-                    <button
+                    <PButton
                       key={method}
                       type="button"
+                      variant={twoFAType === method ? 'primary' : 'secondary'}
                       onClick={() => switch2FAMethod(method)}
-                      className={`flex items-center px-4 py-2 rounded-md text-sm font-medium ${
-                        twoFAType === method
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                      }`}
+                      leftIcon={<Icon className="h-5 w-5" />}
                     >
-                      <Icon className="h-5 w-5 mr-2" />
                       {get2FAMethodName(method)}
-                    </button>
+                    </PButton>
                   )
                 })}
               </div>
@@ -408,13 +391,9 @@ function TenantLogin() {
             </div>
 
             <div className="text-center">
-              <button
-                type="button"
-                onClick={() => setStep(1)}
-                className="text-sm font-medium text-blue-600 hover:text-blue-500"
-              >
+              <PButton type="button" variant="ghost" onClick={() => setStep(1)}>
                 返回登录
-              </button>
+              </PButton>
             </div>
           </form>
         )}

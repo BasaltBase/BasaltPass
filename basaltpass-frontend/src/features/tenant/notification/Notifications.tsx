@@ -11,7 +11,7 @@ import {
   ChevronRightIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
-import { EntitySearchSelect, PSkeleton } from '@ui';
+import { EntitySearchSelect, PSkeleton, PBadge, PButton, PPageHeader, PPagination } from '@ui';
 import {
   TenantNotification,
   TenantCreateNotificationRequest,
@@ -160,15 +160,14 @@ const TenantNotifications: React.FC = () => {
     fetchNotifications(page, pagination.pageSize);
   };
 
-  // 通知类型样式映射
-  const getTypeStyle = (type: string) => {
-    const styles = {
-      info: 'bg-blue-100 text-blue-800 border-blue-200',
-      success: 'bg-green-100 text-green-800 border-green-200',
-      warning: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      error: 'bg-red-100 text-red-800 border-red-200',
+  const getTypeVariant = (type: string) => {
+    const variants: Record<string, string> = {
+      info: 'info',
+      success: 'success',
+      warning: 'warning',
+      error: 'error',
     };
-    return styles[type as keyof typeof styles] || 'bg-gray-100 text-gray-800 border-gray-200';
+    return variants[type] || 'default';
   };
 
   // 通知类型中文映射
@@ -213,19 +212,13 @@ const TenantNotifications: React.FC = () => {
       )}
 
       {/* 页面标题 */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center">
-          <BellIcon className="w-8 h-8 text-blue-600 mr-3" />
-          <h1 className="text-2xl font-bold text-gray-900">通知管理</h1>
-        </div>
-        <button
-          onClick={() => setModalVisible(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
-        >
-          <PlusIcon className="w-5 h-5" />
-          <span>发送通知</span>
-        </button>
-      </div>
+      <PPageHeader
+        title="通知管理"
+        icon={<BellIcon className="w-8 h-8 text-blue-600" />}
+        actions={
+          <PButton onClick={() => setModalVisible(true)} leftIcon={<PlusIcon className="w-5 h-5" />}>发送通知</PButton>
+        }
+      />
 
       {/* 通知列表 */}
       <div className="bg-white rounded-lg shadow">
@@ -268,9 +261,7 @@ const TenantNotifications: React.FC = () => {
                       {notification.content}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getTypeStyle(notification.type)}`}>
-                        {getTypeText(notification.type)}
-                      </span>
+                      <PBadge variant={getTypeVariant(notification.type) as any}>{getTypeText(notification.type)}</PBadge>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {notification.sender_name}
@@ -282,9 +273,7 @@ const TenantNotifications: React.FC = () => {
                           <span>{notification.user.nickname || notification.user.email}</span>
                         </div>
                       ) : (
-                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 border border-purple-200">
-                          全员广播
-                        </span>
+                        <PBadge variant="purple">全员广播</PBadge>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -293,26 +282,13 @@ const TenantNotifications: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       {deleteConfirm === notification.id ? (
                         <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => handleDelete(notification.id)}
-                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs transition-colors"
-                          >
-                            确认删除
-                          </button>
-                          <button
-                            onClick={() => setDeleteConfirm(null)}
-                            className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs transition-colors"
-                          >
-                            取消
-                          </button>
+                          <PButton size="sm" variant="danger" onClick={() => handleDelete(notification.id)}>确认删除</PButton>
+                          <PButton size="sm" variant="secondary" onClick={() => setDeleteConfirm(null)}>取消</PButton>
                         </div>
                       ) : (
-                        <button
-                          onClick={() => setDeleteConfirm(notification.id)}
-                          className="text-red-600 hover:text-red-800 p-1 transition-colors"
-                        >
-                          <TrashIcon className="w-4 h-4" />
-                        </button>
+                        <PButton size="sm" variant="ghost" onClick={() => setDeleteConfirm(notification.id)}>
+                          <TrashIcon className="w-4 h-4 text-red-600" />
+                        </PButton>
                       )}
                     </td>
                   </tr>
@@ -323,34 +299,16 @@ const TenantNotifications: React.FC = () => {
         )}
 
         {/* 分页 */}
-        {notifications && notifications.length > 0 && (
+        {notifications && notifications.length > 0 && pagination.total > pagination.pageSize && (
           <div className="px-6 py-4 border-t border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-700">
-                显示第 {((pagination.current - 1) * pagination.pageSize) + 1} - {Math.min(pagination.current * pagination.pageSize, pagination.total)} 条，共 {pagination.total} 条
-              </div>
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => handlePageChange(pagination.current - 1)}
-                  disabled={pagination.current <= 1}
-                  className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                >
-                  <ChevronLeftIcon className="w-4 h-4" />
-                </button>
-                
-                <span className="px-3 py-1 text-sm">
-                  第 {pagination.current} 页，共 {Math.ceil(pagination.total / pagination.pageSize)} 页
-                </span>
-                
-                <button
-                  onClick={() => handlePageChange(pagination.current + 1)}
-                  disabled={pagination.current >= Math.ceil(pagination.total / pagination.pageSize)}
-                  className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                >
-                  <ChevronRightIcon className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+            <PPagination
+              currentPage={pagination.current}
+              totalPages={Math.ceil(pagination.total / pagination.pageSize)}
+              onPageChange={handlePageChange}
+              total={pagination.total}
+              pageSize={pagination.pageSize}
+              showInfo
+            />
           </div>
         )}
       </div>
@@ -476,30 +434,19 @@ const TenantNotifications: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                  <button
-                    type="submit"
-                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm transition-colors"
-                  >
-                    发送通知
-                  </button>
-                  <button
+                <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-2">
+                  <PButton type="submit">发送通知</PButton>
+                  <PButton
                     type="button"
+                    variant="secondary"
                     onClick={() => {
                       setModalVisible(false);
-                      setFormData({
-                        app_name: '',
-                        title: '',
-                        content: '',
-                        type: 'info',
-                        receiver_ids: [],
-                      });
-                      setSelectedUsers([]); // 清空已选用户
+                      setFormData({ app_name: '', title: '', content: '', type: 'info', receiver_ids: [] });
+                      setSelectedUsers([]);
                     }}
-                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors"
                   >
                     取消
-                  </button>
+                  </PButton>
                 </div>
               </form>
             </div>

@@ -2,7 +2,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } 
 import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import Layout from '@features/user/components/Layout'
 import { invitationApi } from '@api/user/invitation'
-import { EntitySearchSelect, type BaseEntityItem, PButton, PTextarea } from '@ui'
+import { EntitySearchSelect, type BaseEntityItem, PButton, PTextarea, PBadge } from '@ui'
 import { useNavigate, useParams } from 'react-router-dom'
 import { DocumentTextIcon } from '@heroicons/react/24/outline'
 
@@ -43,7 +43,7 @@ const Invite: React.FC = () => {
           <div className="space-y-2">
             <h1 className="text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600">邀请成员</h1>
             <p className="text-sm text-gray-500 flex items-center gap-2">
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-medium">团队协作</span>
+              <PBadge variant="info">团队协作</PBadge>
               搜索并邀请用户加入您的团队
             </p>
           </div>

@@ -150,7 +150,7 @@ export default function AdminTeamsPage() {
         {totalPages>1 && (
           <div className='flex space-x-2'>
             {Array.from({length: totalPages}, (_,i)=>i+1).map(p=> (
-              <button key={p} onClick={()=>setPage(p)} className={`px-3 py-1 rounded-md text-sm ${p===page? 'bg-indigo-600 text-white':'bg-white border text-gray-600'}`}>{p}</button>
+              <PButton key={p} size='sm' variant={p===page? 'primary':'secondary'} onClick={()=>setPage(p)}>{p}</PButton>
             ))}
           </div>) }
       </div>

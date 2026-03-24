@@ -2,6 +2,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } 
 import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { listPermissions, createPermission, updatePermission, deletePermission, type Permission } from '@api/admin/permissions'
+import { PButton, PInput, PAlert } from '@ui'
 
 export default function PermissionsPage() {
   const [perms, setPerms] = useState<Permission[]>([])
@@ -75,19 +76,19 @@ export default function PermissionsPage() {
 
         <div className="bg-white shadow rounded-lg p-4">
           <form onSubmit={onSubmit} className="grid grid-cols-3 gap-4">
-            <input value={code} onChange={e=>setCode(e.target.value)} placeholder="权限代码（唯一）" className="border rounded px-3 py-2" />
-            <input value={desc} onChange={e=>setDesc(e.target.value)} placeholder="描述（可选）" className="border rounded px-3 py-2" />
+            <PInput value={code} onChange={e=>setCode(e.target.value)} placeholder="权限代码（唯一）" />
+            <PInput value={desc} onChange={e=>setDesc(e.target.value)} placeholder="描述（可选）" />
             <div className="flex items-center gap-2">
-              <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded">{editing ? '更新' : '创建'}</button>
-              {editing && <button type="button" className="px-3 py-2 border rounded" onClick={resetForm}>取消编辑</button>}
+              <PButton type="submit">{editing ? '更新' : '创建'}</PButton>
+              {editing && <PButton type="button" variant="secondary" onClick={resetForm}>取消编辑</PButton>}
             </div>
           </form>
-          {error && <div className="text-red-600 text-sm mt-2">{error}</div>}
+          {error && <PAlert variant="error" message={error} className="mt-2" />}
         </div>
 
         <div className="bg-white shadow rounded-lg">
           <div className="p-4 flex items-center justify-between border-b">
-            <input value={keyword} onChange={e=>setKeyword(e.target.value)} placeholder="搜索代码或描述" className="border rounded px-3 py-2 w-80" />
+            <PInput value={keyword} onChange={e=>setKeyword(e.target.value)} placeholder="搜索代码或描述" className="w-80" />
             {loading && <span className="text-sm text-gray-500">加载中...</span>}
           </div>
           <div className="overflow-x-auto">
@@ -107,8 +108,8 @@ export default function PermissionsPage() {
                     <td className="px-6 py-4 text-sm font-medium">{p.Code}</td>
                     <td className="px-6 py-4 text-sm">{p.Desc}</td>
                     <td className="px-6 py-4 text-sm text-right space-x-2">
-                      <button className="px-3 py-1 border rounded" onClick={()=>onEdit(p)}>编辑</button>
-                      <button className="px-3 py-1 border rounded text-red-600" onClick={()=>onDelete(p.ID)}>删除</button>
+                      <PButton size="sm" variant="secondary" onClick={()=>onEdit(p)}>编辑</PButton>
+                      <PButton size="sm" variant="danger" onClick={()=>onDelete(p.ID)}>删除</PButton>
                     </td>
                   </tr>
                 ))}

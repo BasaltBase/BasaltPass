@@ -27,7 +27,7 @@ import {
 } from '@api/admin/tenant'
 import TenantUserDetailDrawer from '@features/admin/components/TenantUserDetailDrawer'
 import Modal from '@ui/common/Modal'
-import { PSkeleton } from '@ui'
+import { PSkeleton, PBadge, PAlert, PPagination, PButton } from '@ui'
 
 // 类型定义
 interface TenantUser extends AdminTenantUser {
@@ -204,68 +204,25 @@ const TenantUsers: React.FC = () => {
     if (userType === 'tenant_user') {
       switch (role) {
         case 'owner':
-          return (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-              <StarIcon className="h-3 w-3 mr-1" />
-              所有者
-            </span>
-          )
+          return <PBadge variant="warning"><StarIcon className="h-3 w-3 mr-1" />所有者</PBadge>
         case 'admin':
-          return (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-              <ShieldCheckIcon className="h-3 w-3 mr-1" />
-              管理员
-            </span>
-          )
+          return <PBadge variant="purple"><ShieldCheckIcon className="h-3 w-3 mr-1" />管理员</PBadge>
         case 'member':
-          return (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-              <UserIcon className="h-3 w-3 mr-1" />
-              成员
-            </span>
-          )
+          return <PBadge variant="info"><UserIcon className="h-3 w-3 mr-1" />成员</PBadge>
         default:
-          return (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-              {role}
-            </span>
-          )
+          return <PBadge variant="default">{role}</PBadge>
       }
     } else {
-      return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-          应用用户
-        </span>
-      )
+      return <PBadge variant="success">应用用户</PBadge>
     }
   }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'active':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-            活跃
-          </span>
-        )
-      case 'suspended':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-            暂停
-          </span>
-        )
-      case 'banned':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-            封禁
-          </span>
-        )
-      default:
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-            {status}
-          </span>
-        )
+      case 'active': return <PBadge variant="success">活跃</PBadge>
+      case 'suspended': return <PBadge variant="error">暂停</PBadge>
+      case 'banned': return <PBadge variant="error">封禁</PBadge>
+      default: return <PBadge variant="default">{status}</PBadge>
     }
   }
 
@@ -290,43 +247,23 @@ const TenantUsers: React.FC = () => {
   }
 
   const actions = (
-    <div className="flex space-x-3">
-      <button
-        onClick={handleOpenInvite}
-        className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-      >
-        <PlusIcon className="h-4 w-4 mr-2" />
-        添加用户
-      </button>
-    </div>
+    <PButton onClick={handleOpenInvite} leftIcon={<PlusIcon className="h-4 w-4" />}>
+      添加用户
+    </PButton>
   )
 
   return (
     <AdminLayout title={`用户管理 - ${tenant?.name || '租户'}`} actions={actions}>
       <div className="space-y-6">
         {alert && (
-          <div
-            className={`flex items-start rounded-md p-4 ${
-              alert.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
-            }`}
-          >
-            {alert.type === 'success' ? (
-              <CheckCircleIcon className="h-5 w-5 mt-0.5 mr-3" />
-            ) : (
-              <ExclamationCircleIcon className="h-5 w-5 mt-0.5 mr-3" />
-            )}
-            <div>
-              <p className="text-sm font-medium">{alert.message}</p>
-            </div>
-          </div>
+          <PAlert
+            variant={alert.type === 'success' ? 'success' : 'error'}
+            message={alert.message}
+          />
         )}
 
         {/* 错误提示 */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-4">
-            <p className="text-red-800">{error}</p>
-          </div>
-        )}
+        {error && <PAlert variant="error" message={error} />}
 
         {/* 页面头部 */}
         <div className="lg:flex lg:items-center lg:justify-between">
@@ -491,27 +428,11 @@ const TenantUsers: React.FC = () => {
 
         {/* 分页 */}
         {totalPages > 1 && (
-          <div className="flex justify-center">
-            <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-              <button
-                onClick={() => setPage(page - 1)}
-                disabled={page === 1}
-                className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                上一页
-              </button>
-              <span className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
-                {page} / {totalPages}
-              </span>
-              <button
-                onClick={() => setPage(page + 1)}
-                disabled={page === totalPages}
-                className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                下一页
-              </button>
-            </nav>
-          </div>
+          <PPagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
         )}
       </div>
 
@@ -614,21 +535,8 @@ const InviteTenantUserModal: React.FC<InviteTenantUserModalProps> = ({
       </div>
 
       <div className="flex justify-end space-x-3 pt-4">
-        <button
-          type="button"
-          onClick={onClose}
-          disabled={submitting}
-          className="px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-60"
-        >
-          取消
-        </button>
-        <button
-          type="submit"
-          disabled={submitting}
-          className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60"
-        >
-          {submitting ? '发送中...' : '发送邀请'}
-        </button>
+        <PButton type="button" variant="secondary" onClick={onClose} disabled={submitting}>取消</PButton>
+        <PButton type="submit" disabled={submitting} loading={submitting}>发送邀请</PButton>
       </div>
     </form>
   </Modal>
@@ -709,21 +617,8 @@ const EditTenantUserModal: React.FC<EditTenantUserModalProps> = ({
           </div>
 
           <div className="flex justify-end space-x-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={submitting}
-              className="px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-60"
-            >
-              取消
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60"
-            >
-              {submitting ? '保存中...' : '保存更改'}
-            </button>
+            <PButton type="button" variant="secondary" onClick={onClose} disabled={submitting}>取消</PButton>
+            <PButton type="submit" disabled={submitting} loading={submitting}>保存更改</PButton>
           </div>
         </form>
       )}

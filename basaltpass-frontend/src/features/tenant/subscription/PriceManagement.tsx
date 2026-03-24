@@ -12,13 +12,9 @@ import {
   ClockIcon
 } from '@heroicons/react/24/outline';
 import * as tenantSubscriptionAPI from '@api/tenant/subscription';
-import PInput from '@ui/PInput';
-import PSelect from '@ui/PSelect';
-import PButton from '@ui/PButton';
-import PTextarea from '@ui/PTextarea';
+import { PInput, PSelect, PButton, PTextarea, PSkeleton } from '@ui';
 import PTable, { PTableColumn, PTableAction } from '@ui/PTable';
 import useDebounce from '@hooks/useDebounce';
-import { PSkeleton } from '@ui'
 
 interface PriceManagementProps {}
 

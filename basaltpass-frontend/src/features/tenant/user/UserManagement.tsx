@@ -22,7 +22,7 @@ import {
   ChevronRightIcon
 } from '@heroicons/react/24/outline'
 import TenantLayout from '@features/tenant/components/TenantLayout'
-import { PInput, PSelect, PButton, PTextarea, PSkeleton } from '@ui'
+import { PInput, PSelect, PButton, PTextarea, PSkeleton, PBadge, PEmptyState, PPageHeader } from '@ui'
 import PTable, { PTableColumn } from '@ui/PTable'
 import { tenantAppApi } from '@api/tenant/tenantApp'
 import { appUserApi, type AppUserStats } from '@api/tenant/appUser'
@@ -196,18 +196,13 @@ export default function TenantUserManagement() {
     }
   }
 
-  const getStatusColor = (status: string) => {
+  const getStatusVariant = (status: string) => {
     switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-800'
-      case 'inactive':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'suspended':
-        return 'bg-red-100 text-red-800'
-      case 'pending':
-        return 'bg-blue-100 text-blue-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
+      case 'active': return 'success'
+      case 'inactive': return 'warning'
+      case 'suspended': return 'error'
+      case 'pending': return 'info'
+      default: return 'default'
     }
   }
 
@@ -226,16 +221,12 @@ export default function TenantUserManagement() {
     }
   }
 
-  const getRoleColor = (role: string) => {
+  const getRoleVariant = (role: string) => {
     switch (role) {
-      case 'owner':
-        return 'bg-purple-100 text-purple-800'
-      case 'admin':
-        return 'bg-blue-100 text-blue-800'
-      case 'member':
-        return 'bg-green-100 text-green-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
+      case 'owner': return 'purple'
+      case 'admin': return 'info'
+      case 'member': return 'success'
+      default: return 'default'
     }
   }
 
@@ -428,22 +419,14 @@ export default function TenantUserManagement() {
         )}
 
         {/* 页面头部 */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-              <UsersIcon className="h-8 w-8 mr-3 text-blue-600" />
-              用户管理
-            </h1>
-            <p className="mt-1 text-sm text-gray-500">
-              管理租户用户和应用用户权限
-            </p>
-          </div>
-          {activeTab === 'users' && (
-            <div className="flex space-x-3">
-              <PButton onClick={() => setShowInviteModal(true)} leftIcon={<UserPlusIcon className="w-5 h-5" />}>邀请用户</PButton>
-            </div>
-          )}
-        </div>
+        <PPageHeader
+          title="用户管理"
+          description="管理租户用户和应用用户权限"
+          icon={<UsersIcon className="h-8 w-8 text-blue-600" />}
+          actions={activeTab === 'users' ? (
+            <PButton onClick={() => setShowInviteModal(true)} leftIcon={<UserPlusIcon className="w-5 h-5" />}>邀请用户</PButton>
+          ) : undefined}
+        />
 
         {/* 标签页导航 */}
         <div className="border-b border-gray-200">
@@ -696,24 +679,15 @@ export default function TenantUserManagement() {
               </div>
 
               {filteredTenantUsers.length === 0 ? (
-                <div className="text-center py-12">
-                  <UsersIcon className="mx-auto h-12 w-12 text-gray-400" />
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">暂无用户</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    {searchTerm ? '未找到匹配的用户' : '还没有任何用户'}
-                  </p>
+                <PEmptyState
+                  icon={UsersIcon}
+                  title="暂无用户"
+                  description={searchTerm ? '未找到匹配的用户' : '还没有任何用户'}
+                >
                   {!searchTerm && (
-                    <div className="mt-6">
-                      <button
-                        onClick={() => setShowInviteModal(true)}
-                        className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-                      >
-                        <UserPlusIcon className="h-4 w-4 mr-2" />
-                        邀请用户
-                      </button>
-                    </div>
+                    <PButton onClick={() => setShowInviteModal(true)} leftIcon={<UserPlusIcon className="h-4 w-4" />}>邀请用户</PButton>
                   )}
-                </div>
+                </PEmptyState>
               ) : (
                 <>
                   <PTable
@@ -743,11 +717,9 @@ export default function TenantUserManagement() {
                         title: '角色',
                         render: (user: TenantUser) => (
                           <div className="flex items-center gap-2">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
-                              {getRoleText(user.role)}
-                            </span>
+                            <PBadge variant={getRoleVariant(user.role) as any}>{getRoleText(user.role)}</PBadge>
                             {!user.is_tenant_user && (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">应用用户</span>
+                              <PBadge variant="default">应用用户</PBadge>
                             )}
                           </div>
                         )
@@ -756,9 +728,7 @@ export default function TenantUserManagement() {
                         key: 'status',
                         title: '状态',
                         render: (user: TenantUser) => (
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(user.status)}`}>
-                            {getStatusText(user.status)}
-                          </span>
+                          <PBadge variant={getStatusVariant(user.status) as any}>{getStatusText(user.status)}</PBadge>
                         )
                       },
                       {
@@ -869,23 +839,17 @@ export default function TenantUserManagement() {
               </div>
 
               {filteredApps.length === 0 ? (
-                <div className="text-center py-12">
-                  <CubeIcon className="mx-auto h-12 w-12 text-gray-400" />
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">暂无应用</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    {searchTerm ? '未找到匹配的应用' : '还没有创建任何应用'}
-                  </p>
+                <PEmptyState
+                  icon={CubeIcon}
+                  title="暂无应用"
+                  description={searchTerm ? '未找到匹配的应用' : '还没有创建任何应用'}
+                >
                   {!searchTerm && (
-                    <div className="mt-6">
-                      <Link
-                        to={ROUTES.tenant.appsNew}
-                        className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-                      >
-                        创建应用
-                      </Link>
-                    </div>
+                    <Link to={ROUTES.tenant.appsNew}>
+                      <PButton>创建应用</PButton>
+                    </Link>
                   )}
-                </div>
+                </PEmptyState>
               ) : (
                 <PTable
                   columns={[
@@ -912,9 +876,7 @@ export default function TenantUserManagement() {
                       key: 'status',
                       title: '状态',
                       render: (app: AppWithUserStats) => (
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(app.status)}`}>
-                          {getStatusText(app.status)}
-                        </span>
+                        <PBadge variant={getStatusVariant(app.status) as any}>{getStatusText(app.status)}</PBadge>
                       )
                     },
                     {

@@ -18,7 +18,7 @@ import {
   UpdateTenantCouponRequest,
 } from '@api/tenant/subscription'
 import { ROUTES } from '@constants'
-import { PSkeleton } from '@ui'
+import { PSkeleton, PBadge, PButton } from '@ui'
 
 export default function TenantCoupons() {
   const [searchParams] = useSearchParams()
@@ -221,18 +221,14 @@ export default function TenantCoupons() {
                                 <p className="text-lg font-medium text-gray-900">
                                   {coupon.Name}
                                 </p>
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                  {coupon.Code}
-                                </span>
+                                <PBadge variant="default">{coupon.Code}</PBadge>
                                 {coupon.IsActive ? (
                                   <CheckCircleIcon className="h-5 w-5 text-green-500" title="活跃" />
                                 ) : (
                                   <XCircleIcon className="h-5 w-5 text-red-500" title="停用" />
                                 )}
                                 {isExpired(coupon.ExpiresAt) && (
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                    已过期
-                                  </span>
+                                  <PBadge variant="error">已过期</PBadge>
                                 )}
                               </div>
                               <div className="mt-2 flex items-center text-sm text-gray-500 space-x-4">

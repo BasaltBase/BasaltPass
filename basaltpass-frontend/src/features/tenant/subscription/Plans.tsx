@@ -16,12 +16,9 @@ import {
   CreateTenantPlanRequest,
   UpdateTenantPlanRequest,
 } from '@api/tenant/subscription'
-import PInput from '@ui/PInput'
-import PSelect from '@ui/PSelect'
-import PButton from '@ui/PButton'
+import { PInput, PSelect, PButton, PSkeleton } from '@ui'
 import PTable, { PTableColumn, PTableAction } from '@ui/PTable'
 import { ROUTES } from '@constants'
-import { PSkeleton } from '@ui'
 
 export default function TenantPlans() {
   const [searchParams] = useSearchParams()

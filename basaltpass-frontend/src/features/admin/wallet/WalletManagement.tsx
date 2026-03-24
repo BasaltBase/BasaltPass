@@ -18,7 +18,7 @@ import {
 import { adminWalletApi, Wallet, Currency, CreateWalletRequest, AdjustBalanceRequest } from '@api/adminWallet';
 import AdminLayout from '@features/admin/components/AdminLayout';
 import WalletStatsCard from '@features/admin/components/WalletStatsCard';
-import { PInput, PSelect, PButton, PCard, PSkeleton } from '@ui';
+import { PInput, PSelect, PButton, PCard, PSkeleton, PBadge, PTextarea } from '@ui';
 
 interface WalletManagementProps {}
 
@@ -203,48 +203,19 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
   // 获取钱包类型标签
   const getWalletTypeTag = (wallet: Wallet) => {
     if (wallet.user_id) {
-      return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-          <UsersIcon className="w-3 h-3 mr-1" />
-          用户钱包
-        </span>
-      );
+      return <PBadge variant="info"><UsersIcon className="w-3 h-3 mr-1" />用户钱包</PBadge>;
     } else if (wallet.team_id) {
-      return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-          <UserGroupIcon className="w-3 h-3 mr-1" />
-          团队钱包
-        </span>
-      );
+      return <PBadge variant="success"><UserGroupIcon className="w-3 h-3 mr-1" />团队钱包</PBadge>;
     }
-    return (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-        未知类型
-      </span>
-    );
+    return <PBadge variant="default">未知类型</PBadge>;
   };
 
   // 获取钱包状态标签
   const getStatusTag = (status: string) => {
     switch (status) {
-      case 'active':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-            活跃
-          </span>
-        );
-      case 'frozen':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-            冻结
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-            {status}
-          </span>
-        );
+      case 'active': return <PBadge variant="success">活跃</PBadge>;
+      case 'frozen': return <PBadge variant="error">冻结</PBadge>;
+      default: return <PBadge variant="default">{status}</PBadge>;
     }
   };
 
@@ -925,13 +896,10 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      调整原因 *
-                    </label>
-                    <textarea
+                    <PTextarea
+                      label="调整原因 *"
                       value={adjustForm.reason}
                       onChange={(e) => setAdjustForm({ ...adjustForm, reason: e.target.value })}
-                      className="block w-full rounded-xl border-gray-200 bg-white/80 placeholder-gray-400 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 sm:text-sm"
                       rows={3}
                       placeholder="请输入调整原因"
                       required

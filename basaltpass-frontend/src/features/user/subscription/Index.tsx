@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import Layout from '@features/user/components/Layout'
-import { PCard, PButton, PSkeleton } from '@ui'
+import { PCard, PButton, PSkeleton, PBadge, PPageHeader } from '@ui'
 import { listSubscriptions, cancelSubscription } from '@api/subscription/subscription'
 import { SubscriptionResponse } from '@types/domain/subscription'
 import { Link } from 'react-router-dom'
@@ -64,37 +64,17 @@ export default function SubscriptionIndex() {
   function statusBadge(status: string) {
     switch (status) {
       case 'trialing':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-            试用中
-          </span>
-        )
+        return <PBadge variant="warning">试用中</PBadge>
       case 'active':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-            进行中
-          </span>
-        )
+        return <PBadge variant="success">进行中</PBadge>
       case 'canceled':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-            已取消
-          </span>
-        )
+        return <PBadge variant="error">已取消</PBadge>
       case 'past_due':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-            逾期
-          </span>
-        )
+        return <PBadge variant="orange">逾期</PBadge>
       case 'unpaid':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-            未付款
-          </span>
-        )
+        return <PBadge variant="error">未付款</PBadge>
       default:
-        return status
+        return <PBadge variant="default">{status}</PBadge>
     }
   }
 
@@ -112,12 +92,7 @@ export default function SubscriptionIndex() {
     <Layout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-semibold text-gray-900">我的订阅</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              管理您的所有订阅，查看状态和账单信息
-            </p>
-          </div>
+          <PPageHeader title="我的订阅" description="管理您的所有订阅，查看状态和账单信息" />
           <Link to={ROUTES.user.products}>
             <PButton variant="primary">
               <CubeIcon className="h-4 w-4 mr-2" />

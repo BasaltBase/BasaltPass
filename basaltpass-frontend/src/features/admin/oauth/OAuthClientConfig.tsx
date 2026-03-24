@@ -16,7 +16,7 @@ import { oauthApi, type OAuthScopeMeta } from '@api/oauth/oauth'
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { ROUTES } from '@constants'
 import { OAuthScopePicker } from '@components'
-import { PSkeleton } from '@ui'
+import { PSkeleton, PBadge, PAlert, PButton } from '@ui'
 
 export default function OAuthClientConfig() {
   const { appId } = useParams<{ appId: string }>()
@@ -218,11 +218,7 @@ export default function OAuthClientConfig() {
         </div>
 
         {/* 错误提示 */}
-        {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
-            <p className="text-red-800">{error}</p>
-          </div>
-        )}
+        {error && <PAlert variant="error" message={error} className="mb-6" />}
 
         <div className="space-y-8">
           {/* 客户端信息 */}
@@ -294,13 +290,9 @@ export default function OAuthClientConfig() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700">客户端类型</label>
                   <div className="mt-1">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      client.client_type === 'public' 
-                        ? 'bg-blue-100 text-blue-800' 
-                        : 'bg-green-100 text-green-800'
-                    }`}>
+                    <PBadge variant={client.client_type === 'public' ? 'info' : 'success'}>
                       {client.client_type === 'public' ? '公开客户端' : '机密客户端'}
-                    </span>
+                    </PBadge>
                   </div>
                 </div>
               </div>
@@ -454,20 +446,10 @@ export default function OAuthClientConfig() {
 
               {/* 提交按钮 */}
               <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => navigate(ROUTES.admin.apps)}
-                  className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
-                  取消
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {saving ? '保存中...' : (client ? '更新配置' : '创建客户端')}
-                </button>
+                <PButton type="button" variant="secondary" onClick={() => navigate(ROUTES.admin.apps)}>取消</PButton>
+                <PButton type="submit" disabled={saving} loading={saving}>
+                  {client ? '更新配置' : '创建客户端'}
+                </PButton>
               </div>
             </form>
           </div>

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ROUTES } from '@constants'
 import client from '@api/client'
-import { PInput, PButton, PCheckbox } from '@ui'
+import { PInput, PButton, PCheckbox, PAlert } from '@ui'
 
 const getPasswordStrength = (value: string) => {
   if (!value) return { label: '未设置', color: 'bg-gray-200', percent: 0 }
@@ -171,16 +171,7 @@ function Register() {
           </div>
 
           <form className="mt-8 space-y-6" onSubmit={verifyCode}>
-            {error && (
-              <div className="rounded-md bg-red-50 p-4" role="alert" aria-live="assertive">
-                <div className="flex">
-                  <div className="ml-3">
-                    <h3 className="text-sm font-medium text-red-800">验证失败</h3>
-                    <div className="mt-2 text-sm text-red-700">{error}</div>
-                  </div>
-                </div>
-              </div>
-            )}
+            {error && <PAlert variant="error" title="验证失败" message={error} />}
 
             <div>
               <PInput
@@ -205,32 +196,32 @@ function Register() {
             </div>
 
             <div className="text-center">
-              <button
+              <PButton
                 type="button"
+                variant="ghost"
                 onClick={resendCode}
                 disabled={resendCooldown > 0 || isSendingCode}
-                className="text-sm text-blue-600 hover:text-blue-500 disabled:text-gray-400"
               >
                 {resendCooldown > 0
                   ? `${resendCooldown}秒后可重新发送`
                   : isSendingCode
                     ? '正在发送...'
                     : '重新发送验证码'}
-              </button>
+              </PButton>
             </div>
 
             <div className="text-center">
-              <button
+              <PButton
                 type="button"
+                variant="ghost"
                 onClick={() => {
                   setStep('form')
                   setVerificationCode('')
                   setError('')
                 }}
-                className="text-sm text-gray-600 hover:text-gray-800"
               >
                 返回修改邮箱
-              </button>
+              </PButton>
             </div>
           </form>
         </div>
@@ -252,16 +243,7 @@ function Register() {
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={submit}>
-          {error && (
-            <div className="rounded-md bg-red-50 p-4" role="alert" aria-live="assertive">
-              <div className="flex">
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">注册失败</h3>
-                  <div className="mt-2 text-sm text-red-700">{error}</div>
-                </div>
-              </div>
-            </div>
-          )}
+          {error && <PAlert variant="error" title="注册失败" message={error} />}
 
           <div className="space-y-4">
             <PInput

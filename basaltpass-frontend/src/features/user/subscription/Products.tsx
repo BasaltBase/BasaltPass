@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import Layout from '@features/user/components/Layout'
-import { PCard, PButton, PSkeleton } from '@ui'
+import { PCard, PButton, PSkeleton, PPageHeader, PEmptyState } from '@ui'
 import { listProducts } from '@api/subscription/subscription'
 import { createOrder, CreateOrderRequest } from '@api/subscription/payment/order'
 import { Product, Price } from '@types/domain/subscription'
@@ -127,12 +127,7 @@ export default function ProductsPage() {
     <Layout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-semibold text-gray-900">产品与套餐</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              浏览可用的产品和套餐，选择适合您需求的订阅方案
-            </p>
-          </div>
+          <PPageHeader title="产品与套餐" description="浏览可用的产品和套餐，选择适合您需求的订阅方案" />
           <Link to={ROUTES.user.subscriptions}>
             <PButton variant="primary">
               <CreditCardIcon className="h-4 w-4 mr-2" />
@@ -242,10 +237,12 @@ export default function ProductsPage() {
                 </PCard>
             ))
           ) : (
-            <div className="col-span-full text-center py-12">
-              <CubeIcon className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">暂无产品</h3>
-              <p className="mt-1 text-sm text-gray-500">当前没有可用的产品。</p>
+            <div className="col-span-full">
+              <PEmptyState
+                icon={<CubeIcon className="h-12 w-12" />}
+                title="暂无产品"
+                description="当前没有可用的产品。"
+              />
             </div>
           )}
         </div>

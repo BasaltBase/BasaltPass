@@ -15,6 +15,7 @@ import PInput from '@ui/PInput'
 import PTextarea from '@ui/PTextarea'
 import PSelect from '@ui/PSelect'
 import PButton from '@ui/PButton'
+import PBadge from '@ui/PBadge'
 import { tenantAppApi, TenantApp, UpdateTenantAppRequest } from '@api/tenant/tenantApp'
 import { ROUTES } from '@constants'
 import { PSkeleton } from '@ui'
@@ -159,16 +160,12 @@ export default function AppSettings() {
     }
   }
 
-  const getStatusBadgeColor = (status: string) => {
+  const getStatusVariant = (status: string) => {
     switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-800'
-      case 'inactive':
-        return 'bg-red-100 text-red-800'
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
+      case 'active': return 'success'
+      case 'inactive': return 'error'
+      case 'pending': return 'warning'
+      default: return 'default'
     }
   }
 
@@ -262,9 +259,9 @@ export default function AppSettings() {
               <p className="mt-2 text-gray-600">管理应用的基本信息和配置</p>
             </div>
             <div className="flex items-center space-x-3">
-              <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusBadgeColor(app.status)}`}>
+              <PBadge variant={getStatusVariant(app.status) as any}>
                 {getStatusText(app.status)}
-              </span>
+              </PBadge>
             </div>
           </div>
         </div>
@@ -462,9 +459,9 @@ export default function AppSettings() {
                             创建于 {new Date(client.created_at).toLocaleString()}
                           </div>
                         </div>
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${client.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>
+                        <PBadge variant={client.is_active ? 'success' : 'default'}>
                           {client.is_active ? '启用' : '停用'}
-                        </span>
+                        </PBadge>
                       </div>
 
                       <div className="mt-4">

@@ -4,7 +4,7 @@ import Layout from '@features/user/components/Layout'
 import { userAppsApi, UserApp } from '@api/user/apps'
 import { Link } from 'react-router-dom'
 import { CubeIcon, ClockIcon, TrashIcon } from '@heroicons/react/24/outline'
-import { PSkeleton } from '@ui'
+import { PSkeleton, PAlert, PEmptyState, PPageHeader, PButton } from '@ui'
 
 export default function UserAppsIndex() {
   const [apps, setApps] = useState<UserApp[]>([])
@@ -46,29 +46,18 @@ export default function UserAppsIndex() {
   return (
     <Layout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">我的应用</h1>
-          <p className="mt-1 text-sm text-gray-500">查看并管理你已授权的应用</p>
-        </div>
+        <PPageHeader title="我的应用" description="查看并管理你已授权的应用" />
 
         {loading ? (
           <PSkeleton.AppCardGrid count={6} />
         ) : error ? (
-          <div className="rounded-md bg-red-50 p-4">
-            <div className="flex">
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">加载失败</h3>
-                <div className="mt-2 text-sm text-red-700">{error}</div>
-                <div className="mt-4">
-                  <button onClick={load} className="px-3 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700">重试</button>
-                </div>
-              </div>
-            </div>
-          </div>
+          <PAlert variant="error" title="加载失败" message={error} actions={[{ label: '重试', onClick: load }]} />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {apps.length === 0 ? (
-              <div className="col-span-full text-center text-gray-500">暂无授权的应用</div>
+              <div className="col-span-full">
+                <PEmptyState icon={<CubeIcon className="h-12 w-12" />} title="暂无授权的应用" description="您还没有授权任何应用" />
+              </div>
             ) : (
               apps.map((app) => (
                 <div key={app.id} className="bg-white rounded-lg shadow p-6 flex flex-col">
@@ -105,13 +94,16 @@ export default function UserAppsIndex() {
                   )}
                   <div className="mt-6 flex items-center justify-between">
                     <Link to={`/my-apps/${app.app_id}`} className="text-sm text-blue-600 hover:text-blue-700">查看应用</Link>
-                    <button
+                    <PButton
                       onClick={() => revoke(app)}
                       disabled={revokingId === app.app_id}
-                      className={`inline-flex items-center px-3 py-1.5 rounded text-sm ${revokingId === app.app_id ? 'bg-gray-200 text-gray-500' : 'bg-red-50 text-red-700 hover:bg-red-100'}`}
+                      loading={revokingId === app.app_id}
+                      variant="danger"
+                      size="sm"
+                      leftIcon={<TrashIcon className="h-4 w-4" />}
                     >
-                      <TrashIcon className="h-4 w-4 mr-1" /> 撤销授权
-                    </button>
+                      撤销授权
+                    </PButton>
                   </div>
                 </div>
               ))

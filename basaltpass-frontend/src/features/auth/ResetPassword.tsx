@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import client from '@api/client'
-import { PInput, PButton } from '@ui'
+import { PInput, PButton, PAlert } from '@ui'
 import { ROUTES } from '@constants'
 
 function ResetPassword() {
@@ -76,11 +76,7 @@ function ResetPassword() {
           </div>
           
           {success ? (
-            <div className="rounded-md bg-green-50 p-4">
-              <div className="text-sm text-green-700 text-center">
-                {success}
-              </div>
-            </div>
+            <PAlert variant="success" message={success} />
           ) : (
             <form className="mt-8 space-y-6" onSubmit={handleRequestReset}>
               <div>
@@ -94,19 +90,13 @@ function ResetPassword() {
                 />
               </div>
 
-              {error && (
-                <div className="rounded-md bg-red-50 p-4">
-                  <div className="text-sm text-red-700 text-center">
-                    {error}
-                  </div>
-                </div>
-              )}
+              {error && <PAlert variant="error" message={error} />}
 
               <div>
                 <PButton
                   type="submit"
                   variant="primary"
-                  className="w-full"
+                  fullWidth
                   loading={isLoading}
                 >
                   发送重置邮件
@@ -114,13 +104,9 @@ function ResetPassword() {
               </div>
 
               <div className="text-center">
-                <button
-                  type="button"
-                  onClick={() => navigate(ROUTES.user.login)}
-                  className="text-sm text-indigo-600 hover:text-indigo-500"
-                >
+                <PButton type="button" variant="ghost" onClick={() => navigate(ROUTES.user.login)}>
                   返回登录
-                </button>
+                </PButton>
               </div>
             </form>
           )}
@@ -147,11 +133,7 @@ function ResetPassword() {
         </div>
 
         {success ? (
-          <div className="rounded-md bg-green-50 p-4">
-            <div className="text-sm text-green-700 text-center">
-              {success}
-            </div>
-          </div>
+          <PAlert variant="success" message={success} />
         ) : (
           <form className="mt-8 space-y-6" onSubmit={handleResetPassword}>
             <div>
@@ -176,19 +158,13 @@ function ResetPassword() {
               />
             </div>
 
-            {error && (
-              <div className="rounded-md bg-red-50 p-4">
-                <div className="text-sm text-red-700 text-center">
-                  {error}
-                </div>
-              </div>
-            )}
+            {error && <PAlert variant="error" message={error} />}
 
             <div>
               <PButton
                 type="submit"
                 variant="primary"
-                className="w-full"
+                fullWidth
                 loading={isLoading}
               >
                 重置密码

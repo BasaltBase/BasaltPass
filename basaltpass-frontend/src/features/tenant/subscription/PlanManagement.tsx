@@ -13,13 +13,9 @@ import {
   Cog6ToothIcon
 } from '@heroicons/react/24/outline';
 import * as tenantSubscriptionAPI from '@api/tenant/subscription';
-import PInput from '@ui/PInput';
-import PSelect from '@ui/PSelect';
-import PButton from '@ui/PButton';
-import PTextarea from '@ui/PTextarea';
+import { PInput, PSelect, PButton, PTextarea, PSkeleton, PBadge } from '@ui';
 import PTable, { PTableColumn, PTableAction } from '@ui/PTable';
 import useDebounce from '@hooks/useDebounce';
-import { PSkeleton } from '@ui'
 
 interface PlanManagementProps {}
 
@@ -150,7 +146,7 @@ const PlanManagement: React.FC<PlanManagementProps> = () => {
                 <div className="flex items-center">
                   <RocketLaunchIcon className="h-5 w-5 text-blue-600" />
                   <span className="ml-2 text-blue-600 font-medium">{row.DisplayName}</span>
-                  <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">v{row.PlanVersion}</span>
+                  <PBadge variant="info" className="ml-2">v{row.PlanVersion}</PBadge>
                 </div>
               )
             },

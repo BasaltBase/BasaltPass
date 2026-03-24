@@ -5,7 +5,7 @@ import client from '@api/client'
 import { useConfig } from '@contexts/ConfigContext'
 import { fetchPublicTenantByCode } from '@api/publicTenant'
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
-import { PInput, PButton, PCheckbox } from '@ui'
+import { PInput, PButton, PCheckbox, PAlert } from '@ui'
 
 /**
  * 租户专属注册页面
@@ -254,11 +254,7 @@ function TenantRegister() {
           </div>
 
           <form className="mt-8 space-y-6" onSubmit={verifyCode}>
-            {error && (
-              <div className="rounded-md bg-red-50 p-4">
-                <p className="text-sm text-red-800">{error}</p>
-              </div>
-            )}
+            {error && <PAlert variant="error" message={error} />}
 
             <div>
               <label htmlFor="verification-code" className="block text-sm font-medium text-gray-700">
@@ -288,18 +284,18 @@ function TenantRegister() {
             </div>
 
             <div className="text-center">
-              <button
+              <PButton
                 type="button"
+                variant="ghost"
                 onClick={resendCode}
                 disabled={resendCooldown > 0 || isSendingCode}
-                className="text-sm text-indigo-600 hover:text-indigo-500 disabled:text-gray-400 disabled:cursor-not-allowed"
               >
                 {resendCooldown > 0 
                   ? `${resendCooldown}秒后可重发` 
                   : isSendingCode 
                     ? '发送中...' 
                     : '重新发送验证码'}
-              </button>
+              </PButton>
             </div>
           </form>
         </div>
@@ -321,11 +317,7 @@ function TenantRegister() {
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={submit}>
-          {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <p className="text-sm text-red-800">{error}</p>
-            </div>
-          )}
+          {error && <PAlert variant="error" message={error} />}
 
           <div className="space-y-4">
             <div>

@@ -3,7 +3,7 @@ import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { useNavigate } from 'react-router-dom';
 import { paymentAPI, CreatePaymentIntentRequest, PaymentIntent, MockStripeResponse } from '@api/subscription/payment/payment';
 import { getBalance } from '@api/user/wallet';
-import { PSelect, PInput, PButton } from '@ui';
+import { PSelect, PInput, PButton, PAlert } from '@ui';
 import { ROUTES } from '@constants';
 
 const Payment: React.FC = () => {
@@ -106,12 +106,9 @@ const Payment: React.FC = () => {
         <h1 className="text-2xl font-bold text-gray-900 mb-6">钱包充值</h1>
         
         {/* 当前余额 */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-          <h2 className="text-lg font-semibold text-blue-900 mb-2">当前余额</h2>
-          <p className="text-2xl font-bold text-blue-600">
-            {formatAmount(balance)} {currency}
-          </p>
-        </div>
+        <PAlert variant="info" title="当前余额">
+          <p className="text-2xl font-bold">{formatAmount(balance)} {currency}</p>
+        </PAlert>
 
         {/* 创建支付意图表单 */}
         <form onSubmit={handleCreatePaymentIntent} className="space-y-4 mb-6">
@@ -165,24 +162,21 @@ const Payment: React.FC = () => {
 
         {/* 支付意图信息 */}
         {paymentIntent && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-            <h3 className="text-lg font-semibold text-green-900 mb-2">支付意图已创建</h3>
-            <div className="space-y-2 text-sm">
+          <PAlert variant="success" title="支付意图已创建">
+            <div className="space-y-2 text-sm mb-4">
               <p><strong>ID:</strong> {paymentIntent.StripePaymentIntentID}</p>
               <p><strong>金额:</strong> {formatAmount(paymentIntent.Amount)} {paymentIntent.Currency}</p>
               <p><strong>状态:</strong> <span className="text-orange-600">{paymentIntent.Status}</span></p>
               <p><strong>描述:</strong> {paymentIntent.Description}</p>
               <p><strong>创建时间:</strong> {new Date(paymentIntent.CreatedAt).toLocaleString()}</p>
             </div>
-            
             <PButton
               onClick={handleCreatePaymentSession}
               loading={loading}
-              className="mt-4"
             >
               创建支付会话
             </PButton>
-          </div>
+          </PAlert>
         )}
 
         {/* Stripe模拟响应 */}

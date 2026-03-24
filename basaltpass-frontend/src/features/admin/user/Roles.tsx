@@ -5,7 +5,7 @@ import { PlusIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 import { listPermissions, getRolePermissions, setRolePermissions, type Permission } from '@api/admin/permissions'
 import { Link } from 'react-router-dom'
 import AdminLayout from '@features/admin/components/AdminLayout'
-import { PCheckbox, PButton, PInput } from '@ui'
+import { PCheckbox, PButton, PInput, PAlert } from '@ui'
 import PTable, { PTableColumn } from '@ui/PTable'
 import { ROUTES } from '@constants'
 
@@ -196,11 +196,7 @@ export default function Roles() {
               </div>
 
               {/* 错误信息显示 */}
-              {error && (
-                <div className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-md px-3 py-2">
-                  {error}
-                </div>
-              )}
+              {error && <PAlert variant="error" message={error} />}
 
               {/* 按钮区域 */}
               <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">

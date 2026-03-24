@@ -19,7 +19,7 @@ import {
 import TenantLayout from '@features/tenant/components/TenantLayout'
 import { tenantAppApi, TenantApp } from '@api/tenant/tenantApp'
 import { ROUTES } from '@constants'
-import { PSkeleton } from '@ui'
+import { PSkeleton, PBadge, PAlert, PPageHeader, PEmptyState, PButton } from '@ui'
 
 export default function TenantAppList() {
   const [apps, setApps] = useState<TenantApp[]>([])
@@ -43,16 +43,12 @@ export default function TenantAppList() {
     }
   }
 
-  const getStatusBadgeColor = (status: string) => {
+  const getStatusVariant = (status: string) => {
     switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-800'
-      case 'inactive':
-        return 'bg-red-100 text-red-800'
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
+      case 'active': return 'success'
+      case 'inactive': return 'error'
+      case 'pending': return 'warning'
+      default: return 'default'
     }
   }
 
@@ -114,12 +110,7 @@ export default function TenantAppList() {
             <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-red-500" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">{error}</h3>
             <div className="mt-6">
-              <button
-                onClick={fetchApps}
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-              >
-                重试
-              </button>
+              <PButton onClick={fetchApps}>重试</PButton>
             </div>
           </div>
         </div>
@@ -131,31 +122,19 @@ export default function TenantAppList() {
     <TenantLayout title="应用管理">
       <div className="space-y-6">
         {/* 页面头部 */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-              <CubeIcon className="h-8 w-8 mr-3 text-blue-600" />
-              应用管理
-            </h1>
-            <p className="mt-1 text-sm text-gray-500">
-              管理您租户下的应用和服务
-            </p>
-          </div>
-          <Link 
-            to={ROUTES.tenant.appsNew} 
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            <PlusIcon className="h-4 w-4 mr-2" />
-            创建应用
-          </Link>
-        </div>
+        <PPageHeader
+          title="应用管理"
+          description="管理您租户下的应用和服务"
+          icon={<CubeIcon className="h-8 w-8 text-blue-600" />}
+          actions={
+            <Link to={ROUTES.tenant.appsNew}>
+              <PButton leftIcon={<PlusIcon className="h-4 w-4" />}>创建应用</PButton>
+            </Link>
+          }
+        />
 
         {/* 错误提示 */}
-        {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
-            <p className="text-red-800">{error}</p>
-          </div>
-        )}
+        {error && <PAlert variant="error" message={error} className="mb-6" />}
 
         {/* 应用列表 */}
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
@@ -187,14 +166,13 @@ export default function TenantAppList() {
                             >
                               {app.name}
                             </Link>
-                            <span className={`ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeColor(app.status)}`}>
+                            <PBadge variant={getStatusVariant(app.status) as any} className="ml-3">
                               {getStatusText(app.status)}
-                            </span>
+                            </PBadge>
                             {app.oauth_client && (
-                              <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                <KeyIcon className="h-3 w-3 mr-1" />
+                              <PBadge variant="info" className="ml-2" icon={<KeyIcon className="h-3 w-3" />}>
                                 OAuth已配置
-                              </span>
+                              </PBadge>
                             )}
                           </div>
                           <div className="mt-1">
@@ -301,22 +279,15 @@ export default function TenantAppList() {
 
           {/* 空状态 */}
           {apps.length === 0 && !loading && (
-            <div className="text-center py-12">
-              <CubeIcon className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">暂无应用</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                开始创建您的第一个应用
-              </p>
-              <div className="mt-6">
-                <Link 
-                  to={ROUTES.tenant.appsNew} 
-                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  <PlusIcon className="h-4 w-4 mr-2" />
-                  创建应用
-                </Link>
-              </div>
-            </div>
+            <PEmptyState
+              icon={CubeIcon}
+              title="暂无应用"
+              description="开始创建您的第一个应用"
+            >
+              <Link to={ROUTES.tenant.appsNew}>
+                <PButton leftIcon={<PlusIcon className="h-4 w-4" />}>创建应用</PButton>
+              </Link>
+            </PEmptyState>
           )}
         </div>
 

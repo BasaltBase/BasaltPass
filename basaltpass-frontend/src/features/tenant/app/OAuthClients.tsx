@@ -12,7 +12,7 @@ import {
 } from '@heroicons/react/24/outline'
 import TenantLayout from '@features/tenant/components/TenantLayout'
 import { tenantOAuthApi, TenantAppWithClients, TenantOAuthClient } from '@api/tenant/tenantOAuth'
-import { PButton, PInput, PSkeleton } from '@ui'
+import { PButton, PInput, PSkeleton, PBadge, PPagination } from '@ui'
 import CreateOAuthClientModal from '@features/tenant/app/components/CreateOAuthClientModal'
 import OAuthClientDetailModal from '@features/tenant/app/components/OAuthClientDetailModal'
 
@@ -118,12 +118,9 @@ export default function TenantOAuthClients() {
             <div className="p-8 text-center">
               <ExclamationTriangleIcon className="h-8 w-8 text-red-500 mx-auto" />
               <p className="mt-2 text-red-600">{error}</p>
-              <button
-                onClick={loadAppsWithClients}
-                className="mt-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-              >
-                重新加载
-              </button>
+              <div className="mt-2">
+                <PButton onClick={loadAppsWithClients}>重新加载</PButton>
+              </div>
             </div>
           ) : !apps || apps.length === 0 ? (
             <div className="p-8 text-center">
@@ -144,13 +141,9 @@ export default function TenantOAuthClients() {
                       <h3 className="text-lg font-medium text-gray-900">{app.name}</h3>
                       <p className="text-sm text-gray-500">{app.description}</p>
                     </div>
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      app.status === 'active' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
+                    <PBadge variant={app.status === 'active' ? 'success' : 'error'}>
                       {app.status === 'active' ? '激活' : '停用'}
-                    </span>
+                    </PBadge>
                   </div>
 
                   {!app.oauth_clients || app.oauth_clients.length === 0 ? (
@@ -192,13 +185,9 @@ export default function TenantOAuthClients() {
                                 </span>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                  client.is_active 
-                                    ? 'bg-green-100 text-green-800' 
-                                    : 'bg-red-100 text-red-800'
-                                }`}>
+                                <PBadge variant={client.is_active ? 'success' : 'error'}>
                                   {client.is_active ? '激活' : '停用'}
-                                </span>
+                                </PBadge>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {client.created_at}
@@ -233,30 +222,14 @@ export default function TenantOAuthClients() {
               {/* 分页 */}
               {totalPages > 1 && (
                 <div className="px-6 py-3 bg-gray-50 border-t border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-700">
-                      共 {total} 个应用
-                    </div>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => setPage(page - 1)}
-                        disabled={page === 1}
-                        className="px-3 py-1 border rounded-md disabled:opacity-50 hover:bg-gray-50"
-                      >
-                        上一页
-                      </button>
-                      <span className="px-3 py-1 text-gray-700">
-                        第 {page} 页，共 {totalPages} 页
-                      </span>
-                      <button
-                        onClick={() => setPage(page + 1)}
-                        disabled={page === totalPages}
-                        className="px-3 py-1 border rounded-md disabled:opacity-50 hover:bg-gray-50"
-                      >
-                        下一页
-                      </button>
-                    </div>
-                  </div>
+                  <PPagination
+                    currentPage={page}
+                    totalPages={totalPages}
+                    onPageChange={setPage}
+                    total={total}
+                    pageSize={pageSize}
+                    showInfo
+                  />
                 </div>
               )}
             </div>

@@ -16,7 +16,7 @@ import { Link } from 'react-router-dom'
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { ROUTES } from '@constants'
 import { OAuthScopePicker } from '@components'
-import { PSkeleton } from '@ui'
+import { PSkeleton, PBadge, PAlert, PPageHeader, PPagination, PButton } from '@ui'
 
 interface CreateClientModalProps {
   isOpen: boolean
@@ -276,26 +276,12 @@ function CreateClientModal({ isOpen, onClose, onSuccess }: CreateClientModalProp
             </div>
           </div>
 
-          {error && (
-            <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md">{error}</div>
-          )}
+          {error && <PAlert variant="error" message={error} />}
 
           {/* 按钮区域 */}
           <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-            >
-              取消
-            </button>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="px-6 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-            >
-              {isLoading ? '创建中...' : '创建'}
-            </button>
+            <PButton type="button" variant="secondary" onClick={onClose}>取消</PButton>
+            <PButton type="submit" disabled={isLoading} loading={isLoading}>创建</PButton>
           </div>
         </form>
       </div>
@@ -365,13 +351,9 @@ function ClientDetailModal({ client, isOpen, onClose, onUpdate }: ClientDetailMo
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">状态</label>
-              <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
-                client.is_active 
-                  ? 'bg-green-100 text-green-800' 
-                  : 'bg-red-100 text-red-800'
-              }`}>
+              <PBadge variant={client.is_active ? 'success' : 'error'}>
                 {client.is_active ? '激活' : '停用'}
-              </span>
+              </PBadge>
             </div>
           </div>
 
@@ -445,12 +427,7 @@ function ClientDetailModal({ client, isOpen, onClose, onUpdate }: ClientDetailMo
 
         {/* 按钮区域 */}
         <div className="flex justify-end pt-6 mt-6 border-t border-gray-200">
-          <button
-            onClick={onClose}
-            className="px-6 py-2 text-sm font-medium text-white bg-gray-600 border border-transparent rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-          >
-            关闭
-          </button>
+          <PButton variant="secondary" onClick={onClose}>关闭</PButton>
         </div>
       </div>
     </div>
@@ -514,21 +491,16 @@ export default function OAuthClients() {
   return (
     <AdminLayout title="OAuth客户端管理">
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">OAuth2客户端管理</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              管理业务应用的OAuth2客户端配置
-            </p>
-          </div>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-blue-700"
-          >
-            <PlusIcon className="h-4 w-4 mr-2" />
-            创建客户端
-          </button>
-        </div>
+        <PPageHeader
+          title="OAuth2客户端管理"
+          description="管理业务应用的OAuth2客户端配置"
+          icon={<KeyIcon className="h-8 w-8 text-indigo-600" />}
+          actions={
+            <PButton onClick={() => setShowCreateModal(true)} leftIcon={<PlusIcon className="h-4 w-4" />}>
+              创建客户端
+            </PButton>
+          }
+        />
 
         {/* 搜索 */}
         <div className="bg-white p-4 rounded-lg shadow">
@@ -545,12 +517,7 @@ export default function OAuthClients() {
                 />
               </div>
             </div>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-blue-700"
-            >
-              搜索
-            </button>
+            <PButton type="submit">搜索</PButton>
           </form>
         </div>
 
@@ -562,22 +529,12 @@ export default function OAuthClients() {
             <div className="p-8 text-center">
               <ExclamationTriangleIcon className="h-8 w-8 text-red-500 mx-auto" />
               <p className="mt-2 text-red-600">{error}</p>
-              <button
-                onClick={loadClients}
-                className="mt-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-blue-700"
-              >
-                重新加载
-              </button>
+              <PButton onClick={loadClients} className="mt-4">重新加载</PButton>
             </div>
           ) : clients.length === 0 ? (
             <div className="p-8 text-center">
               <p className="text-gray-500">暂无OAuth2客户端</p>
-              <button
-                onClick={() => setShowCreateModal(true)}
-                className="mt-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-blue-700"
-              >
-                创建第一个客户端
-              </button>
+              <PButton onClick={() => setShowCreateModal(true)} className="mt-4">创建第一个客户端</PButton>
             </div>
           ) : (
             <>
@@ -621,13 +578,9 @@ export default function OAuthClients() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            client.is_active 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-red-100 text-red-800'
-                          }`}>
+                          <PBadge variant={client.is_active ? 'success' : 'error'}>
                             {client.is_active ? '激活' : '停用'}
-                          </span>
+                          </PBadge>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {client.created_at}
@@ -658,29 +611,15 @@ export default function OAuthClients() {
 
               {/* 分页 */}
               {totalPages > 1 && (
-                <div className="px-6 py-3 border-t border-gray-200 flex justify-between items-center">
-                  <div className="text-sm text-gray-700">
-                    显示 {(page - 1) * pageSize + 1} 到 {Math.min(page * pageSize, total)} 条，共 {total} 条
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setPage(page - 1)}
-                      disabled={page === 1}
-                      className="px-3 py-1 border rounded-md disabled:opacity-50 hover:bg-gray-50"
-                    >
-                      上一页
-                    </button>
-                    <span className="px-3 py-1">
-                      {page} / {totalPages}
-                    </span>
-                    <button
-                      onClick={() => setPage(page + 1)}
-                      disabled={page === totalPages}
-                      className="px-3 py-1 border rounded-md disabled:opacity-50 hover:bg-gray-50"
-                    >
-                      下一页
-                    </button>
-                  </div>
+                <div className="px-6 py-3 border-t border-gray-200">
+                  <PPagination
+                    currentPage={page}
+                    totalPages={totalPages}
+                    onPageChange={setPage}
+                    total={total}
+                    pageSize={pageSize}
+                    showInfo
+                  />
                 </div>
               )}
             </>

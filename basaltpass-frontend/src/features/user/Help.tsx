@@ -13,7 +13,6 @@ import {
   ExclamationTriangleIcon,
   CheckCircleIcon,
   XMarkIcon,
-  HeartIcon,
   HandThumbUpIcon,
   HandThumbDownIcon
 } from '@heroicons/react/24/outline'
@@ -322,7 +321,6 @@ export default function Help() {
                       className="w-full justify-between text-left px-6 py-4"
                     >
                       <div className="flex items-start space-x-4">
-                        <span className="text-2xl">❓</span>
                         <div>
                           <span className="text-base font-medium text-gray-900">
                             {faq.question}
@@ -332,9 +330,6 @@ export default function Help() {
                               faqCategories.find(c => c.id === faq.category)?.color || 'bg-gray-100 text-gray-800'
                             }`}>
                               {faqCategories.find(c => c.id === faq.category)?.name}
-                            </span>
-                            <span className="text-xs text-gray-500">
-                              {faq.helpful} 人觉得有用
                             </span>
                           </div>
                         </div>
@@ -433,50 +428,6 @@ export default function Help() {
           </div>
         </div>
 
-        {/* 使用指南 */}
-        <div className="bg-white shadow-lg rounded-xl">
-          <div className="px-6 py-6">
-            <h3 className="text-xl font-semibold text-gray-900 mb-6">使用指南</h3>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6">
-                <div className="flex items-center mb-4">
-                  <div className="h-10 w-10 bg-blue-500 rounded-full flex items-center justify-center mr-4">
-                    <span className="text-lg font-bold text-white">1</span>
-                  </div>
-                  <h4 className="text-lg font-semibold text-gray-900">注册账户</h4>
-                </div>
-                <p className="text-gray-700 leading-relaxed">
-                  使用邮箱或手机号注册账户，完成身份验证和安全设置
-                </p>
-              </div>
-
-              <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6">
-                <div className="flex items-center mb-4">
-                  <div className="h-10 w-10 bg-green-500 rounded-full flex items-center justify-center mr-4">
-                    <span className="text-lg font-bold text-white">2</span>
-                  </div>
-                  <h4 className="text-lg font-semibold text-gray-900">充值钱包</h4>
-                </div>
-                <p className="text-gray-700 leading-relaxed">
-                  选择充值方式，输入金额，完成支付。支持多种支付方式
-                </p>
-              </div>
-
-              <div className="bg-gradient-to-br from-purple-50 to-violet-50 rounded-xl p-6">
-                <div className="flex items-center mb-4">
-                  <div className="h-10 w-10 bg-purple-500 rounded-full flex items-center justify-center mr-4">
-                    <span className="text-lg font-bold text-white">3</span>
-                  </div>
-                  <h4 className="text-lg font-semibold text-gray-900">开始使用</h4>
-                </div>
-                <p className="text-gray-700 leading-relaxed">
-                  管理您的资金，查看交易记录，设置安全选项和订阅服务
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* 系统状态 */}
         <div className="bg-white shadow-lg rounded-xl">
           <div className="px-6 py-6">
@@ -527,18 +478,6 @@ export default function Help() {
           </div>
         </div>
 
-        {/* 反馈区域 */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-8 text-center">
-          <HeartIcon className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">我们重视您的反馈</h3>
-          <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-            如果您没有找到需要的答案，或者有其他建议，请随时联系我们。您的反馈帮助我们提供更好的服务。
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <PButton size="lg">提交反馈</PButton>
-            <PButton variant="secondary" size="lg">建议新功能</PButton>
-          </div>
-        </div>
       </div>
     </Layout>
   )

@@ -12,7 +12,7 @@ import {
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import * as tenantSubscriptionAPI from '@api/tenant/subscription';
-import { PSkeleton } from '@ui'
+import { PSkeleton, PBadge } from '@ui'
 
 interface SubscriptionWithDetails {
   ID: number;
@@ -105,22 +105,15 @@ const SubscriptionStatusManagement: React.FC = () => {
     return statusMap[status] || status;
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusVariant = (status: string) => {
     switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-800';
-      case 'canceled':
-        return 'bg-red-100 text-red-800';
-      case 'paused':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'pending':
-        return 'bg-blue-100 text-blue-800';
-      case 'overdue':
-        return 'bg-orange-100 text-orange-800';
-      case 'trialing':
-        return 'bg-purple-100 text-purple-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+      case 'active': return 'success';
+      case 'canceled': return 'error';
+      case 'paused': return 'warning';
+      case 'pending': return 'info';
+      case 'overdue': return 'orange';
+      case 'trialing': return 'purple';
+      default: return 'default';
     }
   };
 
@@ -317,7 +310,13 @@ const SubscriptionStatusManagement: React.FC = () => {
                 onClick={() => setStatusFilter(status)}
                 className={`px-3 py-1 rounded-full text-sm font-medium ${
                   statusFilter === status
-                    ? getStatusColor(status)
+                    ? getStatusVariant(status) === 'success' ? 'bg-green-100 text-green-800' :
+                      getStatusVariant(status) === 'error' ? 'bg-red-100 text-red-800' :
+                      getStatusVariant(status) === 'warning' ? 'bg-yellow-100 text-yellow-800' :
+                      getStatusVariant(status) === 'info' ? 'bg-blue-100 text-blue-800' :
+                      getStatusVariant(status) === 'orange' ? 'bg-orange-100 text-orange-800' :
+                      getStatusVariant(status) === 'purple' ? 'bg-purple-100 text-purple-800' :
+                      'bg-gray-100 text-gray-800'
                     : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                 }`}
               >
@@ -344,9 +343,9 @@ const SubscriptionStatusManagement: React.FC = () => {
                             <p className="text-sm font-medium text-gray-900">
                               {subscription.CurrentPrice?.Plan?.Product?.Name || '未知产品'} - {subscription.CurrentPrice?.Plan?.DisplayName || '未知计划'}
                             </p>
-                            <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(subscription.Status)}`}>
+                            <PBadge variant={getStatusVariant(subscription.Status) as any} className="ml-2">
                               {getStatusText(subscription.Status)}
-                            </span>
+                            </PBadge>
                           </div>
                           <div className="text-right">
                             <p className="text-lg font-semibold text-gray-900">
@@ -387,9 +386,7 @@ const SubscriptionStatusManagement: React.FC = () => {
                           <div className="mt-2">
                             <div className="flex flex-wrap gap-2">
                               {Object.entries(subscription.Metadata).map(([key, value]) => (
-                                <span key={key} className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
-                                  {key}: {String(value)}
-                                </span>
+                                <PBadge key={key} variant="info">{key}: {String(value)}</PBadge>
                               ))}
                             </div>
                           </div>
@@ -646,9 +643,7 @@ const SubscriptionDetailModal: React.FC<{
                   <p className="mt-1 text-sm text-gray-900">
                     {subscription.User.Email}
                     {subscription.User.EmailVerified && (
-                      <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                        已验证
-                      </span>
+                      <PBadge variant="success" className="ml-2">已验证</PBadge>
                     )}
                   </p>
                 </div>
@@ -659,9 +654,7 @@ const SubscriptionDetailModal: React.FC<{
                     <p className="mt-1 text-sm text-gray-900">
                       {subscription.User.Phone}
                       {subscription.User.PhoneVerified && (
-                        <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                          已验证
-                        </span>
+                        <PBadge variant="success" className="ml-2">已验证</PBadge>
                       )}
                     </p>
                   </div>

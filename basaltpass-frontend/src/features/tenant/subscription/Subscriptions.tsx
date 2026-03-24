@@ -15,7 +15,7 @@ import {
   listTenantUserSubscriptions,
   getTenantUserSubscription,
 } from '@api/tenant/subscription'
-import { PInput, PSelect, PButton, PTextarea } from '@ui'
+import { PInput, PSelect, PButton, PTextarea, PBadge } from '@ui'
 import useDebounce from '@hooks/useDebounce'
 import { ROUTES } from '@constants'
 
@@ -93,19 +93,16 @@ export default function TenantSubscriptions() {
 
   const getStatusBadge = (status: string) => {
     const statusInfo = tenantSubscriptionAPI.formatSubscriptionStatus(status)
-    const colorClasses = {
-      green: 'bg-green-100 text-green-800',
-      red: 'bg-red-100 text-red-800',
-      yellow: 'bg-yellow-100 text-yellow-800',
-      blue: 'bg-blue-100 text-blue-800',
-      gray: 'bg-gray-100 text-gray-800',
-      orange: 'bg-orange-100 text-orange-800',
+    const variantMap: Record<string, string> = {
+      green: 'success',
+      red: 'error',
+      yellow: 'warning',
+      blue: 'info',
+      gray: 'default',
+      orange: 'orange',
     }
-
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClasses[statusInfo.color as keyof typeof colorClasses] || colorClasses.gray}`}>
-        {statusInfo.text}
-      </span>
+      <PBadge variant={(variantMap[statusInfo.color] || 'default') as any}>{statusInfo.text}</PBadge>
     )
   }
 

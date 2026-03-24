@@ -14,7 +14,7 @@ import {
 import { appApi, App } from '@api/admin/app'
 import TenantLayout from '@features/tenant/components/TenantLayout'
 import { ROUTES } from '@constants'
-import { PSkeleton } from '@ui'
+import { PSkeleton, PBadge, PAlert, PPageHeader, PPagination, PButton } from '@ui'
 
 export default function AppList() {
   const [apps, setApps] = useState<App[]>([])
@@ -55,16 +55,11 @@ export default function AppList() {
     }
   }
 
-  const getStatusBadgeColor = (status: string) => {
+  const getStatusVariant = (status: string): 'success' | 'error' | 'default' => {
     switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-800'
-      case 'inactive':
-        return 'bg-gray-100 text-gray-800'
-      case 'suspended':
-        return 'bg-red-100 text-red-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
+      case 'active': return 'success'
+      case 'suspended': return 'error'
+      default: return 'default'
     }
   }
 
@@ -93,31 +88,19 @@ export default function AppList() {
     <TenantLayout title="应用管理">
       <div className="space-y-6">
       {/* 页面头部 */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-            <CubeIcon className="h-8 w-8 mr-3 text-blue-600" />
-            应用管理
-          </h1>
-          <p className="mt-1 text-sm text-gray-500">
-            管理你的 OAuth2 应用和服务
-          </p>
-        </div>
-        <Link
-          to={ROUTES.tenant.appsNew}
-          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-        >
-          <PlusIcon className="h-4 w-4 mr-2" />
-          创建应用
-        </Link>
-      </div>
+      <PPageHeader
+        title="应用管理"
+        description="管理你的 OAuth2 应用和服务"
+        icon={<CubeIcon className="h-8 w-8 text-blue-600" />}
+        actions={
+          <Link to={ROUTES.tenant.appsNew}>
+            <PButton leftIcon={<PlusIcon className="h-4 w-4" />}>创建应用</PButton>
+          </Link>
+        }
+      />
 
         {/* 错误提示 */}
-        {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
-            <p className="text-red-800">{error}</p>
-          </div>
-        )}
+        {error && <PAlert variant="error" message={error} className="mb-6" />}
 
         {/* 应用列表 */}
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
@@ -146,14 +129,14 @@ export default function AppList() {
                             <h3 className="text-lg font-medium text-gray-900 truncate">
                               {app.name}
                             </h3>
-                            <span className={`ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeColor(app.status)}`}>
+                            <PBadge variant={getStatusVariant(app.status)} className="ml-3">
                               {getStatusText(app.status)}
-                            </span>
+                            </PBadge>
                             {app.oauth_client && (
-                              <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              <PBadge variant="info" className="ml-2">
                                 <KeyIcon className="h-3 w-3 mr-1" />
                                 OAuth已配置
-                              </span>
+                              </PBadge>
                             )}
                           </div>
                           <div className="mt-1">
@@ -264,27 +247,11 @@ export default function AppList() {
 
         {/* 分页 */}
         {totalPages > 1 && (
-          <div className="mt-6 flex justify-center">
-            <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-              <button
-                onClick={() => setPage(page - 1)}
-                disabled={page === 1}
-                className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                上一页
-              </button>
-              <span className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
-                {page} / {totalPages}
-              </span>
-              <button
-                onClick={() => setPage(page + 1)}
-                disabled={page === totalPages}
-                className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                下一页
-              </button>
-            </nav>
-          </div>
+          <PPagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
         )}
       </div>
     </TenantLayout>

@@ -14,7 +14,7 @@ import {
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { Link } from 'react-router-dom'
 import { ROUTES } from '@constants'
-import { PSkeleton } from '@ui'
+import { PSkeleton, PBadge, PPageHeader, PPagination, PButton } from '@ui'
 
 const AdminNotifications: React.FC = () => {
   const [notifications, setNotifications] = useState<TenantNotification[]>([])
@@ -97,24 +97,19 @@ const AdminNotifications: React.FC = () => {
   }
 
   const getTypeBadge = (type: string) => {
-    const colors = {
-      success: 'bg-green-100 text-green-800',
-      warning: 'bg-yellow-100 text-yellow-800',
-      error: 'bg-red-100 text-red-800',
-      info: 'bg-blue-100 text-blue-800',
+    const variantMap: Record<string, 'success' | 'warning' | 'error' | 'info'> = {
+      success: 'success',
+      warning: 'warning',
+      error: 'error',
+      info: 'info',
     }
-    
-    const names = {
-      success: '成功',
-      warning: '警告',
-      error: '错误',
-      info: '信息',
+    const nameMap: Record<string, string> = {
+      success: '成功', warning: '警告', error: '错误', info: '信息',
     }
-
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colors[type as keyof typeof colors]}`}>
-        {names[type as keyof typeof names]}
-      </span>
+      <PBadge variant={variantMap[type] || 'info'}>
+        {nameMap[type] || type}
+      </PBadge>
     )
   }
 
@@ -127,19 +122,16 @@ const AdminNotifications: React.FC = () => {
     <AdminLayout title="通知中心">
       <div className="space-y-6">
 
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">通知中心</h1>
-            <p className="mt-1 text-sm text-gray-500">统一管理站内通知</p>
-          </div>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-blue-700"
-          >
-            <PlusIcon className="h-4 w-4 mr-2" />
-            发送通知
-          </button>
-        </div>
+        <PPageHeader
+          title="通知中心"
+          description="统一管理站内通知"
+          icon={<BellIcon className="h-8 w-8 text-indigo-600" />}
+          actions={
+            <PButton onClick={() => setShowCreateModal(true)} leftIcon={<PlusIcon className="h-4 w-4" />}>
+              发送通知
+            </PButton>
+          }
+        />
 
         {/* 栏目切换 */}
         <div className="bg-white shadow rounded-lg">
@@ -211,32 +203,14 @@ const AdminNotifications: React.FC = () => {
 
         {/* 分页 */}
         {total > pageSize && (
-          <div className="bg-white shadow rounded-lg px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-700">
-                显示第 {(page - 1) * pageSize + 1} 到 {Math.min(page * pageSize, total)} 条，共 {total} 条
-              </div>
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => setPage(page - 1)}
-                  disabled={page === 1}
-                  className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  上一页
-                </button>
-                <span className="px-3 py-2 text-sm text-gray-700">
-                  {page} / {Math.ceil(total / pageSize)}
-                </span>
-                <button
-                  onClick={() => setPage(page + 1)}
-                  disabled={page >= Math.ceil(total / pageSize)}
-                  className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  下一页
-                </button>
-              </div>
-            </div>
-          </div>
+          <PPagination
+            currentPage={page}
+            totalPages={Math.ceil(total / pageSize)}
+            onPageChange={setPage}
+            total={total}
+            pageSize={pageSize}
+            showInfo
+          />
         )}
         {/* 创建通知模态框 */}
         {showCreateModal && (
@@ -334,20 +308,8 @@ const AdminNotifications: React.FC = () => {
 
                 {/* 按钮区域 */}
                 <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateModal(false)}
-                    className="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-                  >
-                    取消
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={creating}
-                    className="px-6 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-                  >
-                    {creating ? '发送中...' : '发送通知'}
-                  </button>
+                  <PButton type="button" variant="secondary" onClick={() => setShowCreateModal(false)}>取消</PButton>
+                  <PButton type="submit" disabled={creating} loading={creating}>发送通知</PButton>
                 </div>
               </form>
             </div>

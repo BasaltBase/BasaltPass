@@ -15,7 +15,7 @@ import {
   CheckCircleIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline'
-import { PSkeleton } from '@ui'
+import { PSkeleton, PAlert, PButton, PInput } from '@ui'
 
 function PasskeyManagement() {
   const [passkeys, setPasskeys] = useState<PasskeyInfo[]>([])
@@ -123,21 +123,7 @@ function PasskeyManagement() {
               </div>
             </div>
             
-            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <ExclamationTriangleIcon className="h-5 w-5 text-yellow-400" />
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-yellow-800">
-                    浏览器不支持Passkey
-                  </h3>
-                  <div className="mt-2 text-sm text-yellow-700">
-                    <p>您的浏览器不支持WebAuthn/Passkey功能。请使用支持的浏览器，如Chrome、Safari或Edge的最新版本。</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <PAlert variant="warning" title="浏览器不支持Passkey" message="您的浏览器不支持WebAuthn/Passkey功能。请使用支持的浏览器，如Chrome、Safari或Edge的最新版本。" />
           </div>
         </div>
       </Layout>
@@ -165,53 +151,11 @@ function PasskeyManagement() {
           </div>
 
           {/* 成功和错误消息 */}
-          {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <ExclamationTriangleIcon className="h-5 w-5 text-red-400" />
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">错误</h3>
-                  <div className="mt-2 text-sm text-red-700">{error}</div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {success && (
-            <div className="rounded-md bg-green-50 p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <CheckCircleIcon className="h-5 w-5 text-green-400" />
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-green-800">成功</h3>
-                  <div className="mt-2 text-sm text-green-700">{success}</div>
-                </div>
-              </div>
-            </div>
-          )}
+          {error && <PAlert variant="error" message={error} dismissible onDismiss={() => setError('')} />}
+          {success && <PAlert variant="success" message={success} dismissible onDismiss={() => setSuccess('')} />}
 
           {/* Passkey介绍 */}
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <ShieldCheckIcon className="h-5 w-5 text-blue-400" />
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-blue-800">
-                  关于Passkey
-                </h3>
-                <div className="mt-2 text-sm text-blue-700">
-                  <p>
-                    Passkey是一种安全、便捷的无密码登录方式。它使用设备上的生物识别功能（如指纹、面容ID）或硬件安全密钥来验证您的身份，
-                    比传统密码更安全、更方便。
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <PAlert variant="info" title="关于Passkey" message="Passkey是一种安全、便捷的无密码登录方式。它使用设备上的生物识别功能（如指纹、面容ID）或硬件安全密钥来验证您的身份，比传统密码更安全、更方便。" />
 
           {/* 添加新Passkey */}
           <div className="bg-white shadow sm:rounded-lg">
@@ -224,49 +168,44 @@ function PasskeyManagement() {
               </div>
               <div className="mt-5">
                 {!showCreateForm ? (
-                  <button
-                    type="button"
+                  <PButton
+                    variant="primary"
                     onClick={() => setShowCreateForm(true)}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    leftIcon={<PlusIcon className="h-4 w-4" />}
                   >
-                    <PlusIcon className="h-4 w-4 mr-2" />
                     添加Passkey
-                  </button>
+                  </PButton>
                 ) : (
                   <form onSubmit={handleCreatePasskey} className="space-y-4">
-                    <div>
-                      <label htmlFor="passkey-name" className="block text-sm font-medium text-gray-700">
-                        Passkey名称
-                      </label>
-                      <input
-                        type="text"
-                        id="passkey-name"
-                        value={newPasskeyName}
-                        onChange={(e) => setNewPasskeyName(e.target.value)}
-                        placeholder="例如：我的iPhone、工作电脑等"
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      />
-                    </div>
+                    <PInput
+                      type="text"
+                      id="passkey-name"
+                      label="Passkey名称"
+                      value={newPasskeyName}
+                      onChange={(e) => setNewPasskeyName(e.target.value)}
+                      placeholder="例如：我的iPhone、工作电脑等"
+                    />
                     <div className="flex space-x-3">
-                      <button
+                      <PButton
                         type="submit"
+                        variant="primary"
                         disabled={isCreating}
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                        loading={isCreating}
+                        leftIcon={<ShieldCheckIcon className="h-4 w-4" />}
                       >
-                        <ShieldCheckIcon className="h-4 w-4 mr-2" />
-                        {isCreating ? '创建中...' : '创建Passkey'}
-                      </button>
-                      <button
+                        创建Passkey
+                      </PButton>
+                      <PButton
                         type="button"
+                        variant="secondary"
                         onClick={() => {
                           setShowCreateForm(false)
                           setNewPasskeyName('')
                           setError('')
                         }}
-                        className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                       >
                         取消
-                      </button>
+                      </PButton>
                     </div>
                   </form>
                 )}
@@ -321,13 +260,14 @@ function PasskeyManagement() {
                               </div>
                             </div>
                             <div className="flex items-center">
-                              <button
+                              <PButton
+                                variant="danger"
+                                size="sm"
                                 onClick={() => handleDeletePasskey(passkey.id.toString(), passkey.name)}
-                                className="inline-flex items-center p-2 border border-transparent rounded-full text-red-400 hover:bg-red-50 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                                title="删除Passkey"
+                                leftIcon={<TrashIcon className="h-4 w-4" />}
                               >
-                                <TrashIcon className="h-4 w-4" />
-                              </button>
+                                删除
+                              </PButton>
                             </div>
                           </div>
                         </li>

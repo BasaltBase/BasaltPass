@@ -16,7 +16,7 @@ import {
 } from '@heroicons/react/24/outline'
 import TenantLayout from '@features/tenant/components/TenantLayout'
 import { tenantApi, TenantInfo } from '@api/tenant/tenant'
-import { PSkeleton } from '@ui'
+import { PSkeleton, PBadge } from '@ui'
 
 export default function TenantInfoPage() {
   const [tenantInfo, setTenantInfo] = useState<TenantInfo | null>(null)
@@ -63,22 +63,22 @@ export default function TenantInfoPage() {
     return planNames[plan as keyof typeof planNames] || plan
   }
 
-  const getPlanColor = (plan: string) => {
-    const planColors = {
-      free: 'bg-gray-100 text-gray-800',
-      pro: 'bg-blue-100 text-blue-800',
-      enterprise: 'bg-purple-100 text-purple-800'
+  const getPlanVariant = (plan: string) => {
+    const planVariants: Record<string, string> = {
+      free: 'default',
+      pro: 'info',
+      enterprise: 'purple'
     }
-    return planColors[plan as keyof typeof planColors] || 'bg-gray-100 text-gray-800'
+    return planVariants[plan] || 'default'
   }
 
-  const getStatusColor = (status: string) => {
-    const statusColors = {
-      active: 'bg-green-100 text-green-800',
-      suspended: 'bg-yellow-100 text-yellow-800',
-      deleted: 'bg-red-100 text-red-800'
+  const getStatusVariant = (status: string) => {
+    const statusVariants: Record<string, string> = {
+      active: 'success',
+      suspended: 'warning',
+      deleted: 'error'
     }
-    return statusColors[status as keyof typeof statusColors] || 'bg-gray-100 text-gray-800'
+    return statusVariants[status] || 'default'
   }
 
   const getStatusDisplayName = (status: string) => {
@@ -214,18 +214,13 @@ export default function TenantInfoPage() {
                   <div>
                     <dt className="text-sm font-medium text-gray-500">套餐类型</dt>
                     <dd className="mt-1">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPlanColor(tenantInfo.plan)}`}>
-                        {getPlanDisplayName(tenantInfo.plan)}
-                      </span>
+                      <PBadge variant={getPlanVariant(tenantInfo.plan) as any}>{getPlanDisplayName(tenantInfo.plan)}</PBadge>
                     </dd>
                   </div>
                   <div>
                     <dt className="text-sm font-medium text-gray-500">状态</dt>
                     <dd className="mt-1">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(tenantInfo.status)}`}>
-                        <CheckCircleIcon className="h-3 w-3 mr-1" />
-                        {getStatusDisplayName(tenantInfo.status)}
-                      </span>
+                      <PBadge variant={getStatusVariant(tenantInfo.status) as any} icon={<CheckCircleIcon className="h-3 w-3" />}>{getStatusDisplayName(tenantInfo.status)}</PBadge>
                     </dd>
                   </div>
                   <div>

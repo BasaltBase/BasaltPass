@@ -18,7 +18,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { getDashboardStats, getRecentActivities } from '@api/admin/admin'
 import AdminLayout from '@features/admin/components/AdminLayout'
-import { PSkeleton } from '@ui'
+import { PSkeleton, PButton } from '@ui'
 import { ROUTES } from '@constants'
 
 interface DashboardStats {
@@ -252,12 +252,7 @@ export default function AdminDashboard() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-600 text-lg font-medium">{error}</div>
-          <button 
-            onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-          >
-            重新加载
-          </button>
+          <PButton onClick={() => window.location.reload()} className="mt-4">重新加载</PButton>
         </div>
       </div>
     )

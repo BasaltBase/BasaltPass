@@ -8,6 +8,7 @@ import { OrderResponse } from '@api/subscription/payment/order'
 import { ChevronRightIcon, ClockIcon, CreditCardIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import { CheckCircleIcon, ShoppingCartIcon } from '@heroicons/react/24/solid'
 import { ROUTES } from '@constants'
+import { PButton, PBadge, PEmptyState } from '@ui'
 
 export default function OrderConfirmPage() {
   const { orderId } = useParams<{ orderId: string }>()
@@ -126,19 +127,12 @@ export default function OrderConfirmPage() {
   if (!order) {
     return (
       <Layout>
-        <div className="text-center py-12">
-          <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-red-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">订单不存在</h3>
-          <p className="mt-1 text-sm text-gray-500">请检查订单链接是否正确。</p>
-          <div className="mt-6">
-            <Link
-              to={ROUTES.user.products}
-              className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-            >
-              返回产品页面
-            </Link>
-          </div>
-        </div>
+        <PEmptyState
+          icon={<ExclamationTriangleIcon className="h-12 w-12" />}
+          title="订单不存在"
+          description="请检查订单链接是否正确。"
+          action={{ label: '返回产品页面', onClick: () => navigate(ROUTES.user.products) }}
+        />
       </Layout>
     )
   }
@@ -181,17 +175,16 @@ export default function OrderConfirmPage() {
                   <h1 className="text-xl font-semibold text-gray-900">订单确认</h1>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                    order.status === 'paid' ? 'bg-green-100 text-green-800' :
-                    order.status === 'expired' ? 'bg-red-100 text-red-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
+                  <PBadge variant={
+                    order.status === 'pending' ? 'warning' :
+                    order.status === 'paid' ? 'success' :
+                    order.status === 'expired' ? 'error' : 'default'
+                  }>
                     {order.status === 'pending' ? '待支付' :
                      order.status === 'paid' ? '已支付' :
                      order.status === 'expired' ? '已过期' :
                      order.status === 'cancelled' ? '已取消' : order.status}
-                  </span>
+                  </PBadge>
                 </div>
               </div>
             </div>
@@ -285,40 +278,28 @@ export default function OrderConfirmPage() {
               {/* 支付按钮 */}
               <div className="flex flex-col sm:flex-row gap-3">
                 {order.status === 'pending' && !isExpired() ? (
-                  <button
+                  <PButton
                     onClick={handlePayment}
                     disabled={paying}
-                    className="flex-1 inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    loading={paying}
+                    variant="primary"
+                    leftIcon={<CreditCardIcon className="h-5 w-5" />}
+                    fullWidth
                   >
-                    {paying ? (
-                      <div className="flex items-center">
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                        处理中...
-                      </div>
-                    ) : (
-                      <div className="flex items-center">
-                        <CreditCardIcon className="h-5 w-5 mr-2" />
-                        立即支付 ¥{formatAmount(order.total_amount)}
-                      </div>
-                    )}
-                  </button>
+                    立即支付 ¥{formatAmount(order.total_amount)}
+                  </PButton>
                 ) : order.status === 'paid' ? (
-                  <div className="flex-1 inline-flex justify-center items-center px-6 py-3 border border-green-300 text-base font-medium rounded-md text-green-700 bg-green-50">
-                    <CheckCircleIcon className="h-5 w-5 mr-2" />
+                  <PButton variant="secondary" disabled fullWidth leftIcon={<CheckCircleIcon className="h-5 w-5" />}>
                     订单已支付
-                  </div>
+                  </PButton>
                 ) : (
-                  <div className="flex-1 inline-flex justify-center items-center px-6 py-3 border border-red-300 text-base font-medium rounded-md text-red-700 bg-red-50">
-                    <ExclamationTriangleIcon className="h-5 w-5 mr-2" />
+                  <PButton variant="secondary" disabled fullWidth leftIcon={<ExclamationTriangleIcon className="h-5 w-5" />}>
                     {isExpired() ? '订单已过期' : '订单已取消'}
-                  </div>
+                  </PButton>
                 )}
                 
-                <Link
-                  to={ROUTES.user.products}
-                  className="inline-flex justify-center items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                >
-                  返回产品页面
+                <Link to={ROUTES.user.products}>
+                  <PButton variant="secondary" fullWidth>返回产品页面</PButton>
                 </Link>
               </div>
             </div>

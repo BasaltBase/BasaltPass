@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import Layout from '@features/user/components/Layout'
-import { PCard, PButton, PSelect, PSkeleton } from '@ui'
+import { PCard, PButton, PSelect, PSkeleton, PBadge, PPageHeader, PPagination } from '@ui'
 import { useNotifications } from '@contexts/NotificationContext'
 import { notificationApi, TenantNotification } from '@api/tenant/tenantNotification'
 import { 
@@ -76,24 +76,22 @@ const Notifications: React.FC = () => {
   }
 
   const getTypeBadge = (type: string) => {
-    const colors = {
-      success: 'bg-green-100 text-green-800',
-      warning: 'bg-yellow-100 text-yellow-800',
-      error: 'bg-red-100 text-red-800',
-      info: 'bg-blue-100 text-blue-800',
+    const variants = {
+      success: 'success' as const,
+      warning: 'warning' as const,
+      error: 'error' as const,
+      info: 'info' as const,
     }
-    
     const names = {
       success: '成功',
       warning: '警告',
       error: '错误',
       info: '信息',
     }
-
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colors[type as keyof typeof colors]}`}>
-        {names[type as keyof typeof names]}
-      </span>
+      <PBadge variant={variants[type as keyof typeof variants] || 'default'}>
+        {names[type as keyof typeof names] || type}
+      </PBadge>
     )
   }
 
@@ -114,12 +112,7 @@ const Notifications: React.FC = () => {
     <Layout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">通知中心</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              管理您的所有通知
-            </p>
-          </div>
+          <PPageHeader title="通知中心" description="管理您的所有通知" />
           <div className="flex items-center space-x-3">
             {unreadCount > 0 && (
               <PButton
@@ -234,9 +227,7 @@ const Notifications: React.FC = () => {
                           {formatTime(notification.created_at)}
                         </p>
                         {!notification.is_read && (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            未读
-                          </span>
+                          <PBadge variant="info">未读</PBadge>
                         )}
                       </div>
                     </div>
@@ -249,34 +240,14 @@ const Notifications: React.FC = () => {
 
         {/* 分页 */}
         {total > pageSize && (
-          <PCard className="px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-700">
-                显示第 {(page - 1) * pageSize + 1} 到 {Math.min(page * pageSize, total)} 条，共 {total} 条
-              </div>
-              <div className="flex items-center space-x-2">
-                <PButton
-                  onClick={() => setPage(page - 1)}
-                  disabled={page === 1}
-                  variant="secondary"
-                  size="sm"
-                >
-                  上一页
-                </PButton>
-                <span className="px-3 py-2 text-sm text-gray-700">
-                  {page} / {Math.ceil(total / pageSize)}
-                </span>
-                <PButton
-                  onClick={() => setPage(page + 1)}
-                  disabled={page >= Math.ceil(total / pageSize)}
-                  variant="secondary"
-                  size="sm"
-                >
-                  下一页
-                </PButton>
-              </div>
-            </div>
-          </PCard>
+          <PPagination
+            currentPage={page}
+            totalPages={Math.ceil(total / pageSize)}
+            onPageChange={setPage}
+            total={total}
+            pageSize={pageSize}
+            showInfo
+          />
         )}
       </div>
     </Layout>

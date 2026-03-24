@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import AdminLayout from '@features/admin/components/AdminLayout'
-import { PButton, PInput, PSelect } from '@ui'
+import { PButton, PInput, PSelect, PBadge } from '@ui'
 import PTable, { PTableColumn } from '@ui/PTable'
 import { adminInvitationApi, AdminInvitationBrief } from '@api/admin/invitation'
 import { adminTeamApi } from '@api/admin/team'
@@ -66,7 +66,9 @@ export default function AdminInvitationsPage() {
     { key: 'invitee', title: '被邀请人', align: 'center', render: (inv) => inv.invitee_id },
     {
       key: 'status', title: '状态', align: 'center', render: (inv) => (
-        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${inv.status==='pending'?'bg-yellow-100 text-yellow-800':inv.status==='accepted'?'bg-green-100 text-green-800':inv.status==='rejected'?'bg-red-100 text-red-800':'bg-gray-100 text-gray-600'}`}>{inv.status}</span>
+        <PBadge variant={inv.status==='pending'?'warning':inv.status==='accepted'?'success':inv.status==='rejected'?'error':'default'}>
+          {inv.status}
+        </PBadge>
       )
     },
     { key: 'remark', title: '备注', className: 'max-w-xs truncate', render: (inv) => inv.remark || '' },

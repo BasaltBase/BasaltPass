@@ -2,7 +2,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } 
 import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { Link } from 'react-router-dom'
 import Layout from '@features/user/components/Layout'
-import { PButton, PSkeleton } from '@ui'
+import { PButton, PSkeleton, PBadge, PEmptyState, PPagination } from '@ui'
 import { invitationApi, Invitation } from '@api/user/invitation'
 import { CheckIcon, XMarkIcon, ClockIcon, UserGroupIcon, EnvelopeIcon, CalendarIcon, UserIcon, ArrowLeftIcon } from '@heroicons/react/24/outline'
 import { useAuth } from '@contexts/AuthContext'
@@ -70,35 +70,13 @@ const Inbox: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      pending: { 
-        text: '待处理', 
-        class: 'bg-gradient-to-r from-yellow-100 to-orange-100 text-yellow-800 border border-yellow-200',
-        icon: ClockIcon
-      },
-      accepted: { 
-        text: '已接受', 
-        class: 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-200',
-        icon: CheckIcon
-      },
-      rejected: { 
-        text: '已拒绝', 
-        class: 'bg-gradient-to-r from-red-100 to-pink-100 text-red-800 border border-red-200',
-        icon: XMarkIcon
-      },
-      revoked: { 
-        text: '已撤回', 
-        class: 'bg-gradient-to-r from-gray-100 to-slate-100 text-gray-800 border border-gray-200',
-        icon: XMarkIcon
-      },
+      pending: { text: '待处理', variant: 'warning' as const },
+      accepted: { text: '已接受', variant: 'success' as const },
+      rejected: { text: '已拒绝', variant: 'error' as const },
+      revoked: { text: '已撤回', variant: 'default' as const },
     }
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending
-    const IconComponent = config.icon
-    return (
-      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${config.class} shadow-sm`}>
-        <IconComponent className="w-3 h-3 mr-1" />
-        {config.text}
-      </span>
-    )
+    return <PBadge variant={config.variant}>{config.text}</PBadge>
   }
 
   const formatDate = (dateString: string) => {
@@ -161,17 +139,11 @@ const Inbox: React.FC = () => {
         {loading ? (
           <PSkeleton.List items={3} />
         ) : invitations.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="bg-gradient-to-r from-gray-50 to-slate-50 rounded-2xl p-12 border border-gray-200">
-              <div className="bg-gradient-to-r from-gray-100 to-slate-200 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <EnvelopeIcon className="w-10 h-10 text-gray-400" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">暂无邀请</h3>
-              <p className="text-gray-600 max-w-md mx-auto">
-                您目前没有收到任何团队邀请。当有新邀请时，它们会出现在这里。
-              </p>
-            </div>
-          </div>
+          <PEmptyState
+            icon={<EnvelopeIcon className="w-12 h-12" />}
+            title="暂无邀请"
+            description="您目前没有收到任何团队邀请。当有新邀请时，它们会出现在这里。"
+          />
         ) : (
           <div className="space-y-4">
             {invitations.map((inv) => (
@@ -245,49 +217,14 @@ const Inbox: React.FC = () => {
 
         {/* 分页 */}
         {totalPages > 1 && (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-              <div className="text-sm text-gray-700">
-                显示第 <span className="font-semibold text-gray-900">{(currentPage - 1) * pageSize + 1}</span> 到{' '}
-                <span className="font-semibold text-gray-900">
-                  {Math.min(currentPage * pageSize, invitations.length)}
-                </span>{' '}
-                条，共 <span className="font-semibold text-gray-900">{invitations.length}</span> 条
-              </div>
-              <nav className="flex items-center space-x-2">
-                <PButton
-                  onClick={() => load(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  variant="secondary"
-                  size="sm"
-                >
-                  上一页
-                </PButton>
-                
-                <div className="flex items-center space-x-1">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                    <PButton
-                      key={page}
-                      onClick={() => load(page)}
-                      variant={page === currentPage ? 'primary' : 'secondary'}
-                      size="sm"
-                    >
-                      {page}
-                    </PButton>
-                  ))}
-                </div>
-                
-                <PButton
-                  onClick={() => load(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  variant="secondary"
-                  size="sm"
-                >
-                  下一页
-                </PButton>
-              </nav>
-            </div>
-          </div>
+          <PPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(page) => load(page)}
+            total={invitations.length}
+            pageSize={pageSize}
+            showInfo
+          />
         )}
       </div>
     </Layout>

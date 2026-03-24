@@ -21,7 +21,7 @@ import { tenantAppApi, TenantApp } from '@api/tenant/tenantApp'
 import { ROUTES } from '@constants'
 import CreateOAuthClientModal from '@features/tenant/app/components/CreateOAuthClientModal'
 import OAuthClientDetailModal from '@features/tenant/app/components/OAuthClientDetailModal'
-import { PButton, PSkeleton } from '@ui'
+import { PButton, PSkeleton, PBadge, PAlert } from '@ui'
 import type { TenantOAuthClientSummary } from '@api/tenant/tenantApp'
 
 export default function AppDetail() {
@@ -67,16 +67,12 @@ export default function AppDetail() {
     }
   }
 
-  const getStatusBadgeColor = (status: string) => {
+  const getStatusVariant = (status: string) => {
     switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-800'
-      case 'inactive':
-        return 'bg-red-100 text-red-800'
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
+      case 'active': return 'success'
+      case 'inactive': return 'error'
+      case 'pending': return 'warning'
+      default: return 'default'
     }
   }
 
@@ -149,11 +145,7 @@ export default function AppDetail() {
   return (
     <TenantLayout title={`${app.name} - 应用详情`}>
       <div className="space-y-6">
-        {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-            {error}
-          </div>
-        )}
+        {error && <PAlert variant="error" message={error} className="mb-4" />}
 
         {/* 页面头部 */}
         <div className="flex justify-between items-start">
@@ -174,9 +166,9 @@ export default function AppDetail() {
             <div className="ml-6">
               <div className="flex items-center">
                 <h1 className="text-3xl font-bold text-gray-900">{app.name}</h1>
-                <span className={`ml-3 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusBadgeColor(app.status)}`}>
+                <PBadge variant={getStatusVariant(app.status) as any} className="ml-3">
                   {getStatusText(app.status)}
-                </span>
+                </PBadge>
               </div>
               {app.description && (
                 <p className="mt-2 text-lg text-gray-600">{app.description}</p>
@@ -405,9 +397,11 @@ export default function AppDetail() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">状态</label>
-                <span className={`mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeColor(app.status)}`}>
-                  {getStatusText(app.status)}
-                </span>
+                <div className="mt-1">
+                  <PBadge variant={getStatusVariant(app.status) as any}>
+                    {getStatusText(app.status)}
+                  </PBadge>
+                </div>
               </div>
               {app.homepage_url && (
                 <div>
@@ -468,15 +462,11 @@ export default function AppDetail() {
                   <div key={client.id} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2">
                           <span className="text-sm font-medium text-gray-900">Client ID</span>
-                          <span
-                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              client.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                            }`}
-                          >
+                          <PBadge variant={client.is_active ? 'success' : 'error'}>
                             {client.is_active ? '激活' : '停用'}
-                          </span>
+                          </PBadge>
                         </div>
                         <div className="mt-2 flex items-center gap-2">
                           <code className="flex-1 px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-xs font-mono break-all">

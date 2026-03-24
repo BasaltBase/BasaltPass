@@ -11,7 +11,7 @@ import {
   ArrowLeftIcon
 } from '@heroicons/react/24/outline'
 import AdminLayout from '@features/admin/components/AdminLayout'
-import { PInput, PSelect, PTextarea, PCheckbox, PButton, PSkeleton } from '@ui'
+import { PInput, PSelect, PTextarea, PCheckbox, PButton, PSkeleton, PBadge, PAlert } from '@ui'
 import { adminTenantApi, AdminTenantDetailResponse, AdminUpdateTenantRequest, TenantSettings } from '@api/admin/tenant'
 import { ROUTES } from '@constants'
 
@@ -121,33 +121,23 @@ const EditTenant: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      active: { color: 'bg-green-100 text-green-800', text: '活跃' },
-      suspended: { color: 'bg-yellow-100 text-yellow-800', text: '暂停' },
-      deleted: { color: 'bg-red-100 text-red-800', text: '已删除' }
+      active: { variant: 'success' as const, text: '活跃' },
+      suspended: { variant: 'warning' as const, text: '暂停' },
+      deleted: { variant: 'error' as const, text: '已删除' }
     }
-    
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.active
-    return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}>
-        {config.text}
-      </span>
-    )
+    return <PBadge variant={config.variant}>{config.text}</PBadge>
   }
 
   const getPlanBadge = (plan: string) => {
     const planConfig = {
-      free: { color: 'bg-gray-100 text-gray-800', text: '免费版' },
-      basic: { color: 'bg-blue-100 text-blue-800', text: '基础版' },
-      premium: { color: 'bg-purple-100 text-purple-800', text: '高级版' },
-      enterprise: { color: 'bg-yellow-100 text-yellow-800', text: '企业版' }
+      free: { variant: 'default' as const, text: '免费版' },
+      basic: { variant: 'info' as const, text: '基础版' },
+      premium: { variant: 'purple' as const, text: '高级版' },
+      enterprise: { variant: 'warning' as const, text: '企业版' }
     }
-    
     const config = planConfig[plan as keyof typeof planConfig] || planConfig.free
-    return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}>
-        {config.text}
-      </span>
-    )
+    return <PBadge variant={config.variant}>{config.text}</PBadge>
   }
 
   if (loading) {
@@ -181,21 +171,7 @@ const EditTenant: React.FC = () => {
     <AdminLayout title={`编辑租户 - ${tenant.name}`}>
       <div className="space-y-6">
         {/* 错误提示 */}
-        {error && (
-          <div className="rounded-md bg-red-50 p-4">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <ExclamationTriangleIcon className="h-5 w-5 text-red-400" />
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">操作失败</h3>
-                <div className="mt-2 text-sm text-red-700">
-                  <p>{error}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {error && <PAlert variant="error" title="操作失败" message={error} />}
 
         {/* 页面头部 */}
         <div className="lg:flex lg:items-center lg:justify-between">

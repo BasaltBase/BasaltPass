@@ -3,7 +3,7 @@ import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import Layout from '@features/user/components/Layout'
 import { userAppsApi, UserApp } from '@api/user/apps'
-import { PCard, PSkeleton } from '@ui'
+import { PCard, PSkeleton, PAlert, PButton } from '@ui'
 import { 
   ArrowLeftIcon, 
   CubeIcon, 
@@ -76,17 +76,7 @@ export default function UserAppDetail() {
             <ArrowLeftIcon className="w-4 h-4 mr-1" />
             返回
           </Link>
-          <div className="rounded-md bg-red-50 p-4">
-            <div className="flex">
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">加载失败</h3>
-                <div className="mt-2 text-sm text-red-700">{error || '应用不存在'}</div>
-                <div className="mt-4">
-                  <button onClick={load} className="px-3 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700">重试</button>
-                </div>
-              </div>
-            </div>
-          </div>
+          <PAlert variant="error" title="加载失败" message={error || '应用不存在'} actions={[{ label: '重试', onClick: load }]} />
         </div>
       </Layout>
     )
@@ -168,18 +158,15 @@ export default function UserAppDetail() {
 
         {/* 操作按钮 */}
         <div className="flex justify-end">
-          <button
+          <PButton
             onClick={revoke}
             disabled={revoking}
-            className={`inline-flex items-center px-4 py-2 rounded-md text-sm font-medium ${
-              revoking 
-                ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
-                : 'bg-red-600 text-white hover:bg-red-700'
-            }`}
+            loading={revoking}
+            variant="danger"
+            leftIcon={<TrashIcon className="h-4 w-4" />}
           >
-            <TrashIcon className="h-4 w-4 mr-2" />
-            {revoking ? '撤销中...' : '撤销授权'}
-          </button>
+            撤销授权
+          </PButton>
         </div>
       </div>
     </Layout>

@@ -13,15 +13,11 @@ import {
   LockClosedIcon
 } from '@heroicons/react/24/outline'
 import TenantLayout from '@features/tenant/components/TenantLayout'
-import PInput from '@ui/PInput'
-import PSelect from '@ui/PSelect'
-import PTextarea from '@ui/PTextarea'
-import PButton from '@ui/PButton'
+import { PSkeleton, PInput, PSelect, PTextarea, PButton, PPageHeader } from '@ui'
 import PTable, { type PTableColumn, type PTableAction } from '@ui/PTable'
 import { tenantAppApi } from '@api/tenant/tenantApp'
 import userPermissionsApi, { type Permission } from '@api/tenant/appPermissions'
 import useDebounce from '@hooks/useDebounce'
-import { PSkeleton } from '@ui'
 
 export default function AppPermissionManagement() {
   const { id: appId } = useParams<{ id: string }>()
@@ -213,26 +209,18 @@ export default function AppPermissionManagement() {
     <TenantLayout title="权限管理">
       <div className="space-y-6">
         {/* 页面头部 */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-              <KeyIcon className="h-8 w-8 mr-3 text-blue-600" />
-              权限管理
-            </h1>
-            <p className="mt-1 text-sm text-gray-500">
-              管理应用 "{app?.name}" 的权限和访问控制
-            </p>
-          </div>
-          <div className="flex space-x-3">
-            <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/roles`)}>
-              角色管理
-            </PButton>
-            <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/users`)}>
-              用户管理
-            </PButton>
-            <PButton onClick={handleCreatePermission} leftIcon={<PlusIcon className="h-4 w-4" />}>创建权限</PButton>
-          </div>
-        </div>
+        <PPageHeader
+          title="权限管理"
+          description={`管理应用 "${app?.name}" 的权限和访问控制`}
+          icon={<KeyIcon className="h-8 w-8 text-blue-600" />}
+          actions={
+            <div className="flex space-x-3">
+              <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/roles`)}>角色管理</PButton>
+              <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/users`)}>用户管理</PButton>
+              <PButton onClick={handleCreatePermission} leftIcon={<PlusIcon className="h-4 w-4" />}>创建权限</PButton>
+            </div>
+          }
+        />
 
         {/* 搜索和过滤 */}
         <div className="bg-white shadow rounded-lg p-6">

@@ -23,7 +23,7 @@ import { tenantAppApi } from '@api/tenant/tenantApp'
 import { appUserApi, type AppUser, type AppUsersResponse } from '@api/tenant/appUser'
 import { userPermissionsApi, type Permission, type Role, type UserPermission, type UserRole } from '@api/tenant/appPermissions'
 import useDebounce from '@hooks/useDebounce'
-import { PSkeleton } from '@ui'
+import { PSkeleton, PBadge, PPagination, PPageHeader, PEmptyState, PButton } from '@ui'
 
 export default function AppUserManagement() {
   const { id: appId } = useParams<{ id: string }>()
@@ -270,18 +270,13 @@ export default function AppUserManagement() {
     }
   }
 
-  const getStatusColor = (status: string) => {
+  const getStatusVariant = (status: string) => {
     switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-800'
-      case 'banned':
-        return 'bg-red-100 text-red-800'
-      case 'suspended':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'restricted':
-        return 'bg-orange-100 text-orange-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
+      case 'active': return 'success'
+      case 'banned': return 'error'
+      case 'suspended': return 'warning'
+      case 'restricted': return 'orange'
+      default: return 'default'
     }
   }
 
@@ -356,15 +351,7 @@ export default function AppUserManagement() {
             <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-red-500" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">{error}</h3>
             <div className="mt-6">
-              <button
-                onClick={() => {
-                  setError('')
-                  fetchUsers()
-                }}
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-              >
-                重试
-              </button>
+              <PButton onClick={() => { setError(''); fetchUsers() }}>重试</PButton>
             </div>
           </div>
         </div>
@@ -376,39 +363,18 @@ export default function AppUserManagement() {
     <TenantLayout title="用户管理">
       <div className="space-y-6">
         {/* 页面头部 */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-              <UsersIcon className="h-8 w-8 mr-3 text-blue-600" />
-              用户管理
-            </h1>
-            <p className="mt-1 text-sm text-gray-500">
-              管理应用 "{app?.name}" 的用户访问权限
-            </p>
-          </div>
-          <div className="flex space-x-3">
-            <button
-              onClick={() => navigate(`/tenant/apps/${appId}/permissions`)}
-              className="inline-flex items-center px-4 py-2 border border-blue-300 rounded-md shadow-sm text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100"
-            >
-              <KeyIcon className="h-4 w-4 mr-2" />
-              权限管理
-            </button>
-            <button
-              onClick={() => navigate(`/tenant/apps/${appId}/roles`)}
-              className="inline-flex items-center px-4 py-2 border border-blue-300 rounded-md shadow-sm text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100"
-            >
-              <ShieldCheckIcon className="h-4 w-4 mr-2" />
-              角色管理
-            </button>
-            <button
-              onClick={() => navigate(`/tenant/apps/${appId}`)}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-            >
-              返回应用详情
-            </button>
-          </div>
-        </div>
+        <PPageHeader
+          title="用户管理"
+          description={`管理应用 "${app?.name}" 的用户访问权限`}
+          icon={<UsersIcon className="h-8 w-8 text-blue-600" />}
+          actions={
+            <div className="flex space-x-3">
+              <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/permissions`)} leftIcon={<KeyIcon className="h-4 w-4" />}>权限管理</PButton>
+              <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/roles`)} leftIcon={<ShieldCheckIcon className="h-4 w-4" />}>角色管理</PButton>
+              <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}`)}>返回应用详情</PButton>
+            </div>
+          }
+        />
 
         {/* 搜索和过滤 */}
         <div className="bg-white shadow rounded-lg p-6">
@@ -457,13 +423,11 @@ export default function AppUserManagement() {
             </div>
 
             {filteredUsers.length === 0 ? (
-              <div className="text-center py-12">
-                <UsersIcon className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-medium text-gray-900">暂无用户</h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  {searchTerm ? '未找到匹配的用户' : '该应用还没有用户授权'}
-                </p>
-              </div>
+              <PEmptyState
+                icon={UsersIcon}
+                title="暂无用户"
+                description={searchTerm ? '未找到匹配的用户' : '该应用还没有用户授权'}
+              />
             ) : (
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -517,9 +481,9 @@ export default function AppUserManagement() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             {getStatusIcon(user.status)}
-                            <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(user.status)}`}>
+                            <PBadge variant={getStatusVariant(user.status) as any} className="ml-2">
                               {getStatusText(user.status)}
-                            </span>
+                            </PBadge>
                           </div>
                           {user.ban_reason && (
                             <div className="text-xs text-gray-500 mt-1">
@@ -597,29 +561,15 @@ export default function AppUserManagement() {
 
             {/* 分页 */}
             {totalPages > 1 && (
-              <div className="mt-6 flex items-center justify-between">
-                <div className="text-sm text-gray-700">
-                  显示第 {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, totalUsers)} 条，共 {totalUsers} 条
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                    disabled={currentPage === 1}
-                    className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    上一页
-                  </button>
-                  <span className="px-3 py-2 text-sm text-gray-700">
-                    第 {currentPage} 页，共 {totalPages} 页
-                  </span>
-                  <button
-                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                    disabled={currentPage === totalPages}
-                    className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    下一页
-                  </button>
-                </div>
+              <div className="mt-6">
+                <PPagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  total={totalUsers}
+                  pageSize={pageSize}
+                  showInfo
+                />
               </div>
             )}
           </div>
