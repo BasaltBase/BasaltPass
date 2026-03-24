@@ -2,6 +2,7 @@ package user
 
 import (
 	"basaltpass-backend/internal/service/wallet"
+	"errors"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -31,6 +32,9 @@ func RechargeWalletHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 	if err := wallet.RechargeByCode(uid, body.Currency, body.Amount); err != nil {
+		if errors.Is(err, wallet.ErrWalletRechargeWithdrawDisabled) {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": err.Error()})
+		}
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.SendStatus(fiber.StatusNoContent)
@@ -47,6 +51,9 @@ func WithdrawWalletHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 	if err := wallet.WithdrawByCode(uid, body.Currency, body.Amount); err != nil {
+		if errors.Is(err, wallet.ErrWalletRechargeWithdrawDisabled) {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": err.Error()})
+		}
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.SendStatus(fiber.StatusNoContent)

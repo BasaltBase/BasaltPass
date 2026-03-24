@@ -35,7 +35,7 @@ interface RecentTransaction {
 }
 
 export default function Dashboard() {
-  const { marketEnabled } = useConfig()
+  const { marketEnabled, walletRechargeWithdrawEnabled } = useConfig()
   const [userProfile, setUserProfile] = useState<UserBasicProfile | null>(null)
   const [securityStatus, setSecurityStatus] = useState<SecurityStatus | null>(null)
   const [recentTransactions, setRecentTransactions] = useState<RecentTransaction[]>([])
@@ -185,33 +185,65 @@ export default function Dashboard() {
             快速操作
           </h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
-              <Link
-                to={ROUTES.user.walletRecharge}
-                className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
-              >
-                <div className="flex-shrink-0">
-                  <ArrowUpIcon className="h-6 w-6 text-green-600" />
+              {walletRechargeWithdrawEnabled ? (
+                <Link
+                  to={ROUTES.user.walletRecharge}
+                  className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
+                >
+                  <div className="flex-shrink-0">
+                    <ArrowUpIcon className="h-6 w-6 text-green-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="absolute inset-0" aria-hidden="true" />
+                    <p className="text-sm font-medium text-gray-900">充值</p>
+                    <p className="text-sm text-gray-500">向钱包充值</p>
+                  </div>
+                </Link>
+              ) : (
+                <div
+                  className="relative rounded-lg border border-gray-200 bg-gray-50 px-6 py-5 shadow-sm flex items-center space-x-3 opacity-60 cursor-not-allowed grayscale"
+                  aria-disabled
+                  title="钱包充值暂未开放"
+                >
+                  <div className="flex-shrink-0">
+                    <ArrowUpIcon className="h-6 w-6 text-gray-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-500">充值</p>
+                    <p className="text-sm text-gray-400">向钱包充值（暂未开放）</p>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <span className="absolute inset-0" aria-hidden="true" />
-                  <p className="text-sm font-medium text-gray-900">充值</p>
-                  <p className="text-sm text-gray-500">向钱包充值</p>
-                </div>
-              </Link>
+              )}
 
-              <Link
-                to={ROUTES.user.walletWithdraw}
-                className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
-              >
-                <div className="flex-shrink-0">
-                  <ArrowDownIcon className="h-6 w-6 text-red-600" />
+              {walletRechargeWithdrawEnabled ? (
+                <Link
+                  to={ROUTES.user.walletWithdraw}
+                  className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
+                >
+                  <div className="flex-shrink-0">
+                    <ArrowDownIcon className="h-6 w-6 text-red-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="absolute inset-0" aria-hidden="true" />
+                    <p className="text-sm font-medium text-gray-900">提现</p>
+                    <p className="text-sm text-gray-500">从钱包提现</p>
+                  </div>
+                </Link>
+              ) : (
+                <div
+                  className="relative rounded-lg border border-gray-200 bg-gray-50 px-6 py-5 shadow-sm flex items-center space-x-3 opacity-60 cursor-not-allowed grayscale"
+                  aria-disabled
+                  title="钱包提现暂未开放"
+                >
+                  <div className="flex-shrink-0">
+                    <ArrowDownIcon className="h-6 w-6 text-gray-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-500">提现</p>
+                    <p className="text-sm text-gray-400">从钱包提现（暂未开放）</p>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <span className="absolute inset-0" aria-hidden="true" />
-                  <p className="text-sm font-medium text-gray-900">提现</p>
-                  <p className="text-sm text-gray-500">从钱包提现</p>
-                </div>
-              </Link>
+              )}
 
               <Link
                 to={ROUTES.user.walletHistory}

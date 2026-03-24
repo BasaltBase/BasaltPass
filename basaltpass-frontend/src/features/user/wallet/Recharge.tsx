@@ -6,6 +6,7 @@ import Layout from '@features/user/components/Layout'
 import CurrencySelector from '@features/user/components/CurrencySelector'
 import { PInput, PButton } from '@ui'
 import { ROUTES } from '@constants'
+import { useConfig } from '@contexts/ConfigContext'
 import { 
   ArrowUpIcon,
   CreditCardIcon,
@@ -68,6 +69,8 @@ const formatAmount = (amount: number, currency: Currency): string => {
 }
 
 export default function Recharge() {
+  const { walletRechargeWithdrawEnabled } = useConfig()
+  const walletOpsDisabled = !walletRechargeWithdrawEnabled
   const navigate = useNavigate()
   const [amount, setAmount] = useState('')
   const [selectedCurrency, setSelectedCurrency] = useState<Currency | null>(null)
@@ -78,6 +81,11 @@ export default function Recharge() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (walletOpsDisabled) {
+      setError('钱包充值功能暂未开放')
+      return
+    }
     
     if (!amount || parseFloat(amount) <= 0) {
       setError('请输入有效的充值金额')
@@ -155,6 +163,12 @@ export default function Recharge() {
           </div>
         </div>
 
+        {walletOpsDisabled && (
+          <div className="rounded-md bg-amber-50 p-4 border border-amber-200">
+            <p className="text-sm text-amber-900">钱包充值功能暂未开放，如有疑问请联系客服。</p>
+          </div>
+        )}
+
         {/* 错误提示 */}
         {error && (
           <div className="rounded-md bg-red-50 p-4 border border-red-200">
@@ -172,14 +186,14 @@ export default function Recharge() {
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* 充值表单 */}
-          <div className="bg-white shadow rounded-lg">
+          <div className={`bg-white shadow rounded-lg ${walletOpsDisabled ? 'opacity-50' : ''}`}>
             <div className="px-4 py-5 sm:p-6">
               <div className="flex items-center mb-6">
                 <ArrowUpIcon className="h-6 w-6 text-green-600 mr-2" />
                 <h3 className="text-lg font-medium text-gray-900">充值信息</h3>
               </div>
               
-              <form onSubmit={submit} className="space-y-6">
+              <form onSubmit={submit} className={`space-y-6 ${walletOpsDisabled ? 'pointer-events-none' : ''}`}>
                 {/* 货币选择 */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -266,7 +280,7 @@ export default function Recharge() {
                 {/* 提交按钮 */}
                 <PButton
                   type="submit"
-                  disabled={!amount || parseFloat(amount) <= 0 || !selectedCurrency}
+                  disabled={walletOpsDisabled || !amount || parseFloat(amount) <= 0 || !selectedCurrency}
                   loading={isLoading}
                   fullWidth
                 >

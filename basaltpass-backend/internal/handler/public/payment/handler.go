@@ -4,6 +4,8 @@ import (
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
 	payment2 "basaltpass-backend/internal/service/payment"
+	"basaltpass-backend/internal/service/wallet"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -53,6 +55,11 @@ func CreatePaymentIntentHandler(c *fiber.Ctx) error {
 
 	paymentIntent, mockResponse, err := payment2.CreatePaymentIntent(userID, req)
 	if err != nil {
+		if errors.Is(err, wallet.ErrWalletRechargeWithdrawDisabled) {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})

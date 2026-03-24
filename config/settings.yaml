@@ -161,6 +161,10 @@ settings:
         value: true
         category: features
         description: 是否启用市场功能（订阅、产品、套餐等）
+    features.wallet_recharge_withdraw_enabled:
+        value: false
+        category: features
+        description: 是否开放用户钱包充值与提现（关闭时相关 API 拒绝，前端灰显入口）
     features.registration_invite_only:
         value: false
         category: features

@@ -2,6 +2,8 @@ import client from './client'
 
 export interface PublicConfig {
   market_enabled: boolean
+  /** 用户钱包充值/提现总开关；未返回或非 true 时视为关闭 */
+  wallet_recharge_withdraw_enabled?: boolean
   site_name: string
 }
 

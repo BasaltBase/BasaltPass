@@ -5,6 +5,8 @@ interface ConfigContextType {
   config: PublicConfig | null
   loading: boolean
   marketEnabled: boolean
+  /** 与后台 features.wallet_recharge_withdraw_enabled 一致，默认关闭 */
+  walletRechargeWithdrawEnabled: boolean
   siteName: string
   siteInitial: string
   setPageTitle: (pageTitle?: string) => void
@@ -16,6 +18,7 @@ const DEFAULT_SITE_NAME = 'BasaltPass'
 export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [config, setConfig] = useState<PublicConfig | null>({
     market_enabled: true,
+    wallet_recharge_withdraw_enabled: false,
     site_name: DEFAULT_SITE_NAME,
   })
   const [loading, setLoading] = useState(false)
@@ -35,6 +38,7 @@ export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       } catch {
         setConfig({
           market_enabled: true,
+          wallet_recharge_withdraw_enabled: false,
           site_name: DEFAULT_SITE_NAME,
         })
       } finally {
@@ -46,6 +50,7 @@ export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [])
 
   const marketEnabled = config?.market_enabled ?? true
+  const walletRechargeWithdrawEnabled = config?.wallet_recharge_withdraw_enabled === true
   const siteName = config?.site_name?.trim() || DEFAULT_SITE_NAME
   const siteInitial = siteName.charAt(0).toUpperCase() || 'B'
 
@@ -72,7 +77,7 @@ export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [setPageTitle])
 
   return (
-    <ConfigContext.Provider value={{ config, loading, marketEnabled, siteName, siteInitial, setPageTitle }}>
+    <ConfigContext.Provider value={{ config, loading, marketEnabled, walletRechargeWithdrawEnabled, siteName, siteInitial, setPageTitle }}>
       {children}
     </ConfigContext.Provider>
   )

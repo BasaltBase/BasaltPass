@@ -5,8 +5,11 @@ import { paymentAPI, CreatePaymentIntentRequest, PaymentIntent, MockStripeRespon
 import { getBalance } from '@api/user/wallet';
 import { PSelect, PInput, PButton, PAlert } from '@ui';
 import { ROUTES } from '@constants';
+import { useConfig } from '@contexts/ConfigContext';
 
 const Payment: React.FC = () => {
+  const { walletRechargeWithdrawEnabled } = useConfig();
+  const walletOpsDisabled = !walletRechargeWithdrawEnabled;
   const [loading, setLoading] = useState(false);
   const [amount, setAmount] = useState<string>('');
   const [currency, setCurrency] = useState('USD');
@@ -31,6 +34,11 @@ const Payment: React.FC = () => {
 
   const handleCreatePaymentIntent = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (walletOpsDisabled) {
+      uiAlert('钱包充值功能暂未开放');
+      return;
+    }
     
     if (!amount || parseFloat(amount) <= 0) {
       uiAlert('请输入有效的金额');
@@ -67,6 +75,10 @@ const Payment: React.FC = () => {
   };
 
   const handleCreatePaymentSession = async () => {
+    if (walletOpsDisabled) {
+      uiAlert('钱包充值功能暂未开放');
+      return;
+    }
     if (!paymentIntent) {
       uiAlert('请先创建支付意图');
       return;
@@ -104,6 +116,12 @@ const Payment: React.FC = () => {
     <div className="max-w-4xl mx-auto p-6">
       <div className="bg-white rounded-lg shadow-md p-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">钱包充值</h1>
+
+        {walletOpsDisabled && (
+          <div className="mb-4">
+            <PAlert variant="warning" title="功能未开放" message="钱包充值功能暂未开放，如有疑问请联系客服。" />
+          </div>
+        )}
         
         {/* 当前余额 */}
         <PAlert variant="info" title="当前余额">
@@ -111,7 +129,10 @@ const Payment: React.FC = () => {
         </PAlert>
 
         {/* 创建支付意图表单 */}
-        <form onSubmit={handleCreatePaymentIntent} className="space-y-4 mb-6">
+        <form
+          onSubmit={handleCreatePaymentIntent}
+          className={`space-y-4 mb-6 ${walletOpsDisabled ? 'pointer-events-none opacity-50' : ''}`}
+        >
           <div>
             <PInput
               type="number"
@@ -152,7 +173,7 @@ const Payment: React.FC = () => {
 
           <PButton
             type="submit"
-            disabled={!amount}
+            disabled={walletOpsDisabled || !amount}
             loading={loading}
             fullWidth
           >
@@ -173,6 +194,7 @@ const Payment: React.FC = () => {
             <PButton
               onClick={handleCreatePaymentSession}
               loading={loading}
+              disabled={walletOpsDisabled}
             >
               创建支付会话
             </PButton>

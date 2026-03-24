@@ -45,6 +45,18 @@ type MockStripeResponse struct {
 	Timestamp      time.Time         `json:"timestamp"`
 }
 
+func isWalletRechargeMetadata(meta map[string]interface{}) bool {
+	if meta == nil {
+		return false
+	}
+	v, ok := meta["source"]
+	if !ok {
+		return false
+	}
+	s, ok := v.(string)
+	return ok && s == "wallet_recharge"
+}
+
 // generateStripeID 生成模拟的Stripe ID
 func generateStripeID(prefix string) string {
 	bytes := make([]byte, 12)
@@ -55,6 +67,10 @@ func generateStripeID(prefix string) string {
 // CreatePaymentIntent 创建支付意图
 func CreatePaymentIntent(userID uint, req CreatePaymentIntentRequest) (*model.PaymentIntent, *MockStripeResponse, error) {
 	db := common.DB()
+
+	if isWalletRechargeMetadata(req.Metadata) && !wallet.RechargeWithdrawEnabled() {
+		return nil, nil, wallet.ErrWalletRechargeWithdrawDisabled
+	}
 
 	// 验证币种
 	if req.Currency == "" {

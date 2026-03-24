@@ -39,6 +39,9 @@ func GetBalanceByCode(userID uint, currencyCode string) (model.Wallet, error) {
 
 // Recharge adds amount to balance and creates transaction (mock auto success)
 func Recharge(userID uint, currencyID uint, amount int64) error {
+	if !RechargeWithdrawEnabled() {
+		return ErrWalletRechargeWithdrawDisabled
+	}
 	if amount <= 0 {
 		return errors.New("amount must be positive")
 	}
@@ -73,6 +76,9 @@ func RechargeByCode(userID uint, currencyCode string, amount int64) error {
 
 // Withdraw deducts amount (mock immediate success)
 func Withdraw(userID uint, currencyID uint, amount int64) error {
+	if !RechargeWithdrawEnabled() {
+		return ErrWalletRechargeWithdrawDisabled
+	}
 	if amount <= 0 {
 		return errors.New("amount must be positive")
 	}

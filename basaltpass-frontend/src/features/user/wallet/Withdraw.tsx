@@ -6,6 +6,7 @@ import Layout from '@features/user/components/Layout'
 import CurrencySelector from '@features/user/components/CurrencySelector'
 import { PButton, PInput } from '@ui'
 import { ROUTES } from '@constants'
+import { useConfig } from '@contexts/ConfigContext'
 import { 
   ArrowDownIcon,
   CreditCardIcon,
@@ -47,6 +48,8 @@ const withdrawMethods = [
 const quickAmounts = [50, 100, 200, 500, 1000, 2000]
 
 export default function Withdraw() {
+  const { walletRechargeWithdrawEnabled } = useConfig()
+  const walletOpsDisabled = !walletRechargeWithdrawEnabled
   const navigate = useNavigate()
   const [amount, setAmount] = useState('')
   const [selectedCurrency, setSelectedCurrency] = useState<Currency | null>(null)
@@ -58,6 +61,11 @@ export default function Withdraw() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (walletOpsDisabled) {
+      setError('钱包提现功能暂未开放')
+      return
+    }
     
     if (!amount || parseFloat(amount) <= 0) {
       setError('请输入有效的提现金额')
@@ -153,6 +161,12 @@ export default function Withdraw() {
           </div>
         </div>
 
+        {walletOpsDisabled && (
+          <div className="rounded-md bg-amber-50 p-4 border border-amber-200">
+            <p className="text-sm text-amber-900">钱包提现功能暂未开放，如有疑问请联系客服。</p>
+          </div>
+        )}
+
         {/* 错误提示 */}
         {error && (
           <div className="rounded-md bg-red-50 p-4 border border-red-200">
@@ -170,14 +184,14 @@ export default function Withdraw() {
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* 提现表单 */}
-          <div className="bg-white shadow rounded-lg">
+          <div className={`bg-white shadow rounded-lg ${walletOpsDisabled ? 'opacity-50' : ''}`}>
             <div className="px-4 py-5 sm:p-6">
               <div className="flex items-center mb-6">
                 <ArrowDownIcon className="h-6 w-6 text-red-600 mr-2" />
                 <h3 className="text-lg font-medium text-gray-900">提现信息</h3>
               </div>
               
-              <form onSubmit={submit} className="space-y-6">
+              <form onSubmit={submit} className={`space-y-6 ${walletOpsDisabled ? 'pointer-events-none' : ''}`}>
                 {/* 金额输入 */}
                 <div>
                   <PInput
@@ -264,7 +278,7 @@ export default function Withdraw() {
                   type="submit"
                   variant="danger"
                   fullWidth
-                  disabled={isLoading || !amount || parseFloat(amount) <= 0 || !accountInfo.trim()}
+                  disabled={walletOpsDisabled || isLoading || !amount || parseFloat(amount) <= 0 || !accountInfo.trim()}
                   loading={isLoading}
                 >
                   {isLoading ? '处理中...' : `提现 ¥${amount || '0.00'}`}
