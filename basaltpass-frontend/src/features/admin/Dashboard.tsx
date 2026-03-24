@@ -16,7 +16,7 @@ import {
   CubeIcon,
   KeyIcon
 } from '@heroicons/react/24/outline'
-import { getDashboardStats, getRecentActivities } from '@api/admin/admin'
+import { getDashboardStats, getRecentActivities, triggerAdminLivenessCheck } from '@api/admin/admin'
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { PSkeleton, PButton } from '@ui'
 import { ROUTES } from '@constants'
@@ -108,6 +108,8 @@ export default function AdminDashboard() {
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isCheckingLiveness, setIsCheckingLiveness] = useState(false)
+  const [livenessTip, setLivenessTip] = useState('')
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -239,6 +241,20 @@ export default function AdminDashboard() {
     }).format(amount)
   }
 
+  const handleLivenessCheck = async () => {
+    try {
+      setIsCheckingLiveness(true)
+      const response = await triggerAdminLivenessCheck()
+      const checkedAt = response?.data?.checked_at ? new Date(response.data.checked_at).toLocaleString() : ''
+      setLivenessTip(checkedAt ? `存活检查通过（${checkedAt}）` : '存活检查通过')
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || '存活检查失败'
+      setLivenessTip(`存活检查失败：${msg}`)
+    } finally {
+      setIsCheckingLiveness(false)
+    }
+  }
+
   if (isLoading) {
     return (
       <AdminLayout title="管理后台">
@@ -262,11 +278,17 @@ export default function AdminDashboard() {
     <AdminLayout title="管理仪表板">
       <div className="space-y-6">
       {/* 页面标题 */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">管理仪表板</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          欢迎来到BasaltPass管理控制台，这里可以查看系统概览和执行管理操作
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">管理仪表板</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            欢迎来到BasaltPass管理控制台，这里可以查看系统概览和执行管理操作
+          </p>
+          {livenessTip && <p className="mt-2 text-sm text-gray-600">{livenessTip}</p>}
+        </div>
+        <PButton onClick={handleLivenessCheck} loading={isCheckingLiveness}>
+          存活检查
+        </PButton>
       </div>
 
       {/* 统计卡片 */}

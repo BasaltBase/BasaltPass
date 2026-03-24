@@ -83,6 +83,13 @@ export interface UserTenant {
   tenant?: Tenant
 }
 
+export interface LivenessCheckResponse {
+  ok: boolean
+  scope: 'admin' | 'tenant' | string
+  message: string
+  checked_at: string
+}
+
 // 租户管理员API (/admin)
 export const tenantApi = {
   // 获取当前租户详细信息（控制台专用）
@@ -94,6 +101,11 @@ export const tenantApi = {
   // 调试用户状态 - 临时调试方法
   async debugUserStatus() {
     const response = await client.get('/api/v1/user/debug')
+    return response.data
+  },
+
+  async triggerLivenessCheck(): Promise<LivenessCheckResponse> {
+    const response = await client.post<LivenessCheckResponse>('/api/v1/tenant/liveness-check')
     return response.data
   },
 }

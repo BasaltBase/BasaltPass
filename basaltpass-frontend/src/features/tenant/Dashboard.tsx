@@ -14,7 +14,7 @@ import {
   InformationCircleIcon
 } from '@heroicons/react/24/outline'
 import TenantLayout from '@features/tenant/components/TenantLayout'
-import { PSkeleton } from '@ui'
+import { PSkeleton, PButton } from '@ui'
 import { tenantAppApi } from '@api/tenant/tenantApp'
 import { tenantNotificationApi } from '@api/tenant/notification'
 import { tenantUserManagementApi } from '@api/tenant/tenantUserManagement'
@@ -97,6 +97,8 @@ export default function TenantDashboard() {
   const [error, setError] = useState('')
   const [tenantCode, setTenantCode] = useState<string>('')
   const [copiedField, setCopiedField] = useState<string | null>(null)
+  const [isCheckingLiveness, setIsCheckingLiveness] = useState(false)
+  const [livenessTip, setLivenessTip] = useState('')
 
   useEffect(() => {
     const fetchData = async () => {
@@ -168,6 +170,20 @@ export default function TenantDashboard() {
   const getRegisterUrl = () => {
     const baseUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || 'http://localhost:5173'
     return `${baseUrl}/auth/tenant/${tenantCode}/register`
+  }
+
+  const handleLivenessCheck = async () => {
+    try {
+      setIsCheckingLiveness(true)
+      const response = await tenantApi.triggerLivenessCheck()
+      const checkedAt = response?.checked_at ? new Date(response.checked_at).toLocaleString() : ''
+      setLivenessTip(checkedAt ? `存活检查通过（${checkedAt}）` : '存活检查通过')
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || '存活检查失败'
+      setLivenessTip(`存活检查失败：${msg}`)
+    } finally {
+      setIsCheckingLiveness(false)
+    }
   }
 
   const cards = useMemo(() => {
@@ -244,7 +260,11 @@ export default function TenantDashboard() {
           <div>
             <h1 className="text-2xl font-semibold text-gray-900">租户仪表盘</h1>
             <p className="mt-1 text-sm text-gray-500">关键指标与快捷入口</p>
+            {livenessTip && <p className="mt-2 text-sm text-gray-600">{livenessTip}</p>}
           </div>
+          <PButton onClick={handleLivenessCheck} loading={isCheckingLiveness}>
+            存活检查
+          </PButton>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

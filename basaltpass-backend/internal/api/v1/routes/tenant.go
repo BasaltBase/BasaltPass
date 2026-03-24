@@ -9,6 +9,7 @@ import (
 	"basaltpass-backend/internal/handler/tenant/app"
 	tenantNotif "basaltpass-backend/internal/handler/tenant/notification"
 	"basaltpass-backend/internal/middleware"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -32,6 +33,14 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 
 	// 租户信息管理
 	tenantGroup.Get("/info", tenant2.TenantGetInfoHandler)
+	tenantGroup.Post("/liveness-check", func(c *fiber.Ctx) error {
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"ok":         true,
+			"scope":      "tenant",
+			"message":    "tenant liveness check ok",
+			"checked_at": time.Now().UTC().Format(time.RFC3339),
+		})
+	})
 
 	// 租户用户管理路由
 	tenantUserGroup := tenantAdminGroup.Group("/users")

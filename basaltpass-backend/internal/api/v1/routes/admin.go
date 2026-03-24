@@ -15,6 +15,7 @@ import (
 	"basaltpass-backend/internal/handler/public/oauth"
 	"basaltpass-backend/internal/handler/public/rbac"
 	"basaltpass-backend/internal/handler/public/subscription"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -34,6 +35,14 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 
 	adminGroup.Get("/dashboard/stats", admin2.DashboardStatsHandler)        // /tenant/dashboard/stats
 	adminGroup.Get("/dashboard/activities", admin2.RecentActivitiesHandler) // /tenant/dashboard/activities
+	adminAliasGroup.Post("/liveness-check", func(c *fiber.Ctx) error {
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"ok":         true,
+			"scope":      "admin",
+			"message":    "admin liveness check ok",
+			"checked_at": time.Now().UTC().Format(time.RFC3339),
+		})
+	})
 	adminGroup.Get("/roles", rbac.ListRolesHandler)                         // /tenant/roles
 	adminGroup.Post("/roles", rbac.CreateRoleHandler)                       // /tenant/roles
 	adminGroup.Post("/user/:id/role", rbac.AssignRoleHandler)               // /tenant/user/:id/role

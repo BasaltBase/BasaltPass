@@ -44,6 +44,7 @@ Default admin login: create via API then assign `admin` role.
 - Developer docs: ./docs/developer/README.md
 - User/API docs: ./docs/user/README.md
 - Release/Deploy automation: `docs/GITHUB_RELEASE_DEPLOY.md`
+- Liveness check docs: `docs/LIVENESS_CHECK.md`
 
 推荐从这些文档开始：
 
