@@ -17,3 +17,23 @@ hola:
   label: Hola
   permalink: /hola
   description: Hola tag description
+
+introduction:
+  label: Introduction
+  permalink: /introduction
+  description: Introductory BasaltPass posts
+
+basaltpass:
+  label: BasaltPass
+  permalink: /basaltpass
+  description: BasaltPass product updates and guides
+
+security:
+  label: Security
+  permalink: /security
+  description: Security-focused posts and practices
+
+multi-tenancy:
+  label: Multi-Tenancy
+  permalink: /multi-tenancy
+  description: Multi-tenant architecture and operations
