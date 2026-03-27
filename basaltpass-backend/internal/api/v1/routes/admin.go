@@ -10,6 +10,7 @@ import (
 	adminTenant "basaltpass-backend/internal/handler/admin/tenant"
 	adminUser "basaltpass-backend/internal/handler/admin/user"
 	adminWallet "basaltpass-backend/internal/handler/admin/wallet"
+	"basaltpass-backend/internal/handler/manualapi"
 	appHandler "basaltpass-backend/internal/handler/public/app"
 	"basaltpass-backend/internal/handler/public/app/app_user"
 	"basaltpass-backend/internal/handler/public/oauth"
@@ -43,9 +44,9 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 			"checked_at": time.Now().UTC().Format(time.RFC3339),
 		})
 	})
-	adminGroup.Get("/roles", rbac.ListRolesHandler)                         // /tenant/roles
-	adminGroup.Post("/roles", rbac.CreateRoleHandler)                       // /tenant/roles
-	adminGroup.Post("/user/:id/role", rbac.AssignRoleHandler)               // /tenant/user/:id/role
+	adminGroup.Get("/roles", rbac.ListRolesHandler)           // /tenant/roles
+	adminGroup.Post("/roles", rbac.CreateRoleHandler)         // /tenant/roles
+	adminGroup.Post("/user/:id/role", rbac.AssignRoleHandler) // /tenant/user/:id/role
 
 	// 权限管理（系统级）
 	adminPermGroup := adminGroup.Group("/permissions")
@@ -398,4 +399,8 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 	emailGroup.Post("/send-test", adminEmail.SendTestEmailHandler)
 	emailGroup.Get("/logs", adminEmail.GetEmailLogsHandler)
 	emailGroup.Get("/stats", adminEmail.GetEmailStatsHandler)
+
+	// 管理台手动 API Key 生成
+	adminManualAPIGroup := adminAliasGroup.Group("/manual-api")
+	adminManualAPIGroup.Post("/keys", manualapi.AdminCreateManualAPIKeyHandler)
 }
