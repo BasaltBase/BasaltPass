@@ -1,16 +1,21 @@
 services:
   backend:
     image: ${BACKEND_IMAGE}
+    mem_limit: 1g
+    cpus: 1.0
     restart: unless-stopped
     expose:
       - "8101"
-    volumes:
-      - ../data:/data
     env_file:
       - .env
+    environment:
+      - BASALTPASS_DATABASE_DRIVER=${BASALTPASS_DATABASE_DRIVER:-postgres}
+      - BASALTPASS_DATABASE_DSN=${BASALTPASS_DATABASE_DSN:?BASALTPASS_DATABASE_DSN is required}
 
   frontend:
     image: ${FRONTEND_IMAGE}
+    mem_limit: 512m
+    cpus: 0.5
     restart: unless-stopped
     depends_on:
       - backend

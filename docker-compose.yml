@@ -4,6 +4,8 @@ services:
     build:
       context: .
       dockerfile: backend.Dockerfile
+    mem_limit: 1g
+    cpus: 1.0
     ports:
       - "8101:8101"
     volumes:
@@ -14,10 +16,14 @@ services:
     # Optional fallback if .env is missing: use default secret
     environment:
       - JWT_SECRET=${JWT_SECRET:-supersecret}
+      - BASALTPASS_DATABASE_DRIVER=${BASALTPASS_DATABASE_DRIVER:-sqlite}
+      - BASALTPASS_DATABASE_PATH=${BASALTPASS_DATABASE_PATH:-/data/basaltpass.db}
   frontend:
     build:
       context: .
       dockerfile: frontend.Dockerfile
+    mem_limit: 512m
+    cpus: 0.5
     ports:
       - "5104:80"
     depends_on:
