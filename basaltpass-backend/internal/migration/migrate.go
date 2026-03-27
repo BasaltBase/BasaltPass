@@ -185,6 +185,9 @@ func RunMigrations() {
 		&model.TenantUserRbacPermission{},
 		&model.TenantUserRbacRole{},
 		&model.TenantRbacRolePermission{},
+
+		// 手动 API Key
+		&model.ManualAPIKey{},
 	)
 	if err != nil {
 		log.Fatalf("[Error][RunMigrations] auto migration failed: %v", err)

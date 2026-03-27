@@ -37,4 +37,7 @@ func RegisterRoutes(app *fiber.App) {
 
 	// 注册服务间（S2S）路由
 	routes2.RegisterS2SRoutes(v1)
+
+	// 注册手动 API（API Key）
+	routes2.RegisterManualAPIRoutes(v1)
 }

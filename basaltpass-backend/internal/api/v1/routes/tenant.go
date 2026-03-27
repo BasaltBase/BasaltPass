@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"basaltpass-backend/internal/handler/manualapi"
 	app_rbac2 "basaltpass-backend/internal/handler/public/app/app_rbac"
 	"basaltpass-backend/internal/handler/public/app/app_user"
 	"basaltpass-backend/internal/handler/public/oauth"
@@ -113,6 +114,10 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 
 	// 租户OAuth scope 选项（用于控制台创建/编辑客户端）
 	tenantGroup.Get("/oauth/scopes", oauth.TenantListOAuthScopesHandler)
+
+	// 租户控制台生成手动 API Key
+	tenantManualAPIGroup := tenantAdminGroup.Group("/manual-api")
+	tenantManualAPIGroup.Post("/keys", manualapi.TenantCreateManualAPIKeyHandler)
 
 	// 租户订阅管理（读写，所有租户成员可访问）
 	tenantSubscriptionMgmtGroup := tenantAdminGroup.Group("/subscription")
