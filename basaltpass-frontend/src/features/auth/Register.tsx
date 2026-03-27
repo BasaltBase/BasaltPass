@@ -347,7 +347,7 @@ function Register() {
             <div className="mt-6">
               <PButton
                 type="button"
-                onClick={() => (window.location.href = `${import.meta.env.VITE_API_BASE || 'http://localhost:8080'}/api/v1/auth/oauth/google/login`)}
+                onClick={() => (window.location.href = `${import.meta.env.VITE_API_BASE || 'http://localhost:8101'}/api/v1/auth/oauth/google/login`)}
                 variant="secondary"
                 fullWidth
                 leftIcon={

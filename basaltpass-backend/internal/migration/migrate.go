@@ -941,7 +941,7 @@ func ensureSystemTenantWebAuthnConfig() {
 	}
 
 	if count == 0 {
-		defaultOrigins := `["http://localhost:3000","http://localhost:5101","http://localhost:5173","http://localhost:8080"]`
+		defaultOrigins := `["http://localhost:8101","http://localhost:5101","http://localhost:5102","http://localhost:5103","http://localhost:5104"]`
 		cfg := model.TenantWebAuthnConfig{
 			TenantID:      0,
 			RPID:          "localhost",

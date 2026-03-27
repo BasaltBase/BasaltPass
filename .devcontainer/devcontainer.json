@@ -1,12 +1,42 @@
 {
-  "name": "go-node-dev",
+  "name": "BasaltPass",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-  "forwardPorts": [5173, 5174, 5175, 8080],
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "runArgs": [
+    "--init",
+    "-p",
+    "8101:8101",
+    "-p",
+    "5101:5101",
+    "-p",
+    "5102:5102",
+    "-p",
+    "5103:5103",
+    "-p",
+    "5104:5104"
+  ],
+  "forwardPorts": [8101, 5101, 5102, 5103, 5104],
   "portsAttributes": {
-    "5173": { "label": "BasaltPass User Console (Vite)" },
-    "5174": { "label": "BasaltPass Tenant Console (Vite)" },
-    "5175": { "label": "BasaltPass Admin Console (Vite)" },
-    "8080": { "label": "BasaltPass Backend (Go/Fiber)" }
+    "8101": {
+      "label": "BasaltPass Backend API",
+      "onAutoForward": "notify"
+    },
+    "5101": {
+      "label": "BasaltPass User Console",
+      "onAutoForward": "openBrowserOnce"
+    },
+    "5102": {
+      "label": "BasaltPass Tenant Console",
+      "onAutoForward": "openBrowserOnce"
+    },
+    "5103": {
+      "label": "BasaltPass Admin Console",
+      "onAutoForward": "openBrowserOnce"
+    },
+    "5104": {
+      "label": "BasaltPass Frontend Prod Mapping",
+      "onAutoForward": "silent"
+    }
   },
   "features": {
     "ghcr.io/devcontainers/features/go:1": {
@@ -15,13 +45,9 @@
     "ghcr.io/devcontainers/features/node:1": {
       "version": "20"
     },
-    "ghcr.io/devcontainers/features/common-utils:2": {
-      "installZsh": true,
-      "installOhMyZsh": false,
-      "upgradePackages": true
-    }
+    "ghcr.io/devcontainers/features/github-cli:1": {}
   },
-  "postCreateCommand": "corepack enable",
+  "postCreateCommand": "bash -lc 'corepack enable && cd basaltpass-frontend && npm install'",
   "remoteEnv": {
     "GOROOT": ""
   },
@@ -29,15 +55,12 @@
     "vscode": {
       "extensions": [
         "golang.go",
-        "dbaeumer.vscode-eslint"
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode"
       ]
     }
   },
   "mounts": [
     "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
-  ],
-  "runArgs": [
-    "--init"
   ]
 }
-

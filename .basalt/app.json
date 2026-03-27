@@ -1,0 +1,32 @@
+{
+  "schema_version": "0.1.0",
+  "type": "basalt_app_definition",
+  "app": {
+    "app_id": "basaltpass",
+    "app_key": "basaltpass",
+    "display_name": "BasaltPass",
+    "description": "Identity platform metadata for BasaltPass itself.",
+    "homepage_url": "http://localhost:5101",
+    "api_base_url": "http://localhost:8101",
+    "callback_urls": [],
+    "default_role_key": "basaltpass_viewer",
+    "status": "active",
+    "tags": [
+      "workplace",
+      "basalt"
+    ],
+    "service_ports": [
+      { "service": "backend_api", "port": 8101, "protocol": "http" },
+      { "service": "user_console_dev", "port": 5101, "protocol": "http" },
+      { "service": "tenant_console_dev", "port": 5102, "protocol": "http" },
+      { "service": "admin_console_dev", "port": 5103, "protocol": "http" },
+      { "service": "frontend_prod_mapping_local", "port": 5104, "protocol": "http" }
+    ],
+    "metadata": {
+      "project_root": "C:/Users/Administrator/Desktop/WorkPlace/BasaltPass",
+      "notes": [
+        "Replace the baseline RBAC template with BasaltPass real tenant/system roles when the importer is ready."
+      ]
+    }
+  }
+}

@@ -86,8 +86,8 @@ func QuickCheckoutHandler(c *fiber.Ctx) error {
 		PriceID:    req.PriceID,
 		Quantity:   req.Quantity,
 		CouponCode: req.CouponCode,
-		SuccessURL: "http://localhost:3000/subscriptions?payment=success",
-		CancelURL:  "http://localhost:3000/subscriptions?payment=canceled",
+		SuccessURL: "http://localhost:5101/subscriptions?payment=success",
+		CancelURL:  "http://localhost:5101/subscriptions?payment=canceled",
 	}
 
 	response, err := checkoutService.CreateCheckout(&checkoutReq)

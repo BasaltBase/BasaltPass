@@ -9,9 +9,9 @@ import (
 )
 
 func getSiteURL() string {
-	url := strings.TrimSpace(settingssvc.GetString("general.site_url", "http://localhost:8080"))
+	url := strings.TrimSpace(settingssvc.GetString("general.site_url", "http://localhost:8101"))
 	if url == "" {
-		url = "http://localhost:8080"
+		url = "http://localhost:8101"
 	}
 	return strings.TrimRight(url, "/")
 }

@@ -56,7 +56,7 @@ func defaultItems() map[string]SettingItem {
 	return map[string]SettingItem{
 		// General
 		"general.site_name":   {Value: "BasaltPass", Category: "general", Description: "系统名称"},
-		"general.site_url":    {Value: "http://localhost:8080", Category: "general", Description: "站点 URL（用于邮件、回调等绝对链接）"},
+		"general.site_url":    {Value: "http://localhost:8101", Category: "general", Description: "站点 URL（用于邮件、回调等绝对链接）"},
 		"general.timezone":    {Value: "Asia/Shanghai", Category: "general", Description: "默认时区"},
 		"general.locale":      {Value: "zh-CN", Category: "general", Description: "默认语言/区域"},
 		"general.theme":       {Value: "light", Category: "general", Description: "默认主题（light/dark/system）"},
@@ -97,7 +97,16 @@ func defaultItems() map[string]SettingItem {
 		"security.account_lockout.window_minutes": {Value: 15, Category: "security", Description: "统计失败次数的时间窗口（分钟）"},
 
 		// CORS
-		"cors.allow_origins":     {Value: []string{"http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000"}, Category: "cors", Description: "允许的跨域来源列表"},
+		"cors.allow_origins":     {Value: []string{
+			"http://localhost:5101",
+			"http://127.0.0.1:5101",
+			"http://localhost:5102",
+			"http://127.0.0.1:5102",
+			"http://localhost:5103",
+			"http://127.0.0.1:5103",
+			"http://localhost:5104",
+			"http://127.0.0.1:5104",
+		}, Category: "cors", Description: "允许的跨域来源列表"},
 		"cors.allow_methods":     {Value: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"}, Category: "cors", Description: "允许的方法"},
 		"cors.allow_headers":     {Value: []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With", "X-Tenant-ID"}, Category: "cors", Description: "允许的请求头"},
 		"cors.allow_credentials": {Value: true, Category: "cors", Description: "是否允许携带凭据"},

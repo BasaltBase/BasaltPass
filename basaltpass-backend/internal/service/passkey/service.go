@@ -72,7 +72,7 @@ func (s *Service) GetWebAuthnInstance(tenantID uint) (*webauthn.WebAuthn, error)
 		rpID = tenantCfg.RPID
 		rpDisplayName = tenantCfg.RPDisplayName
 		if jsonErr := json.Unmarshal([]byte(tenantCfg.RPOrigins), &rpOrigins); jsonErr != nil || len(rpOrigins) == 0 {
-			rpOrigins = []string{"http://localhost:3000"}
+			rpOrigins = []string{"http://localhost:5101"}
 		}
 	} else {
 		// 2. 回退到系统租户配置获取 RPID / Origins
@@ -81,13 +81,19 @@ func (s *Service) GetWebAuthnInstance(tenantID uint) (*webauthn.WebAuthn, error)
 			rpID = sysCfg.RPID
 			rpDisplayName = sysCfg.RPDisplayName
 			if jsonErr := json.Unmarshal([]byte(sysCfg.RPOrigins), &rpOrigins); jsonErr != nil || len(rpOrigins) == 0 {
-				rpOrigins = []string{"http://localhost:3000"}
+				rpOrigins = []string{"http://localhost:5101"}
 			}
 		} else {
 			// 3. 内置开发默认值
 			rpID = "localhost"
 			rpDisplayName = "BasaltPass"
-			rpOrigins = []string{"http://localhost:3000", "http://localhost:8080", "http://localhost:5173", "http://localhost:5101"}
+			rpOrigins = []string{
+				"http://localhost:8101",
+				"http://localhost:5101",
+				"http://localhost:5102",
+				"http://localhost:5103",
+				"http://localhost:5104",
+			}
 		}
 
 		// 非系统租户走回退路径时，将租户名拼入 RPDisplayName，

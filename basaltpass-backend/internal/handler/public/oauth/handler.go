@@ -197,7 +197,7 @@ func CallbackHandler(c *fiber.Ctx) error {
 
 	redirectURL := os.Getenv("OAUTH_SUCCESS_URL")
 	if redirectURL == "" {
-		redirectURL = "http://localhost:5173/oauth-success"
+		redirectURL = "http://localhost:5101/oauth-success"
 	}
 	return c.Redirect(redirectURL, http.StatusTemporaryRedirect)
 }

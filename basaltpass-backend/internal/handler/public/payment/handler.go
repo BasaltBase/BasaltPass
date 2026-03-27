@@ -346,7 +346,7 @@ func PaymentCheckoutHandler(c *fiber.Ctx) error {
                     setTimeout(() => {
                         showModal('支付成功！正在跳转...', () => {
                             // 跳转到成功页面
-                            window.location.href = successUrl || 'http://localhost:5173/dashboard';
+                            window.location.href = successUrl || 'http://localhost:5101/dashboard';
                         });
                     }, 2000);
                 }

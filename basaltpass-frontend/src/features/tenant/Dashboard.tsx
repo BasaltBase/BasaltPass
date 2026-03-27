@@ -163,12 +163,12 @@ export default function TenantDashboard() {
   }
 
   const getLoginUrl = () => {
-    const baseUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || 'http://localhost:5173'
+    const baseUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || 'http://localhost:5101'
     return `${baseUrl}/auth/tenant/${tenantCode}/login`
   }
 
   const getRegisterUrl = () => {
-    const baseUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || 'http://localhost:5173'
+    const baseUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || 'http://localhost:5101'
     return `${baseUrl}/auth/tenant/${tenantCode}/register`
   }
 

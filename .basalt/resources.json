@@ -1,0 +1,20 @@
+{
+  "schema_version": "0.1.0",
+  "type": "basalt_app_resources",
+  "navigation": [
+    { "key": "user_console", "label": "User Console", "path": "/", "url": "http://localhost:5101" },
+    { "key": "tenant_console", "label": "Tenant Console", "path": "/", "url": "http://localhost:5102" },
+    { "key": "admin_console", "label": "Admin Console", "path": "/", "url": "http://localhost:5103" }
+  ],
+  "oauth_clients": [],
+  "webhooks": [],
+  "claims": [
+    { "claim": "app_id", "value": "basaltpass" }
+  ],
+  "extra": {
+    "feature_flags": [],
+    "notes": [
+      "This file is intended for non-RBAC app metadata that BasaltPass may need later."
+    ]
+  }
+}

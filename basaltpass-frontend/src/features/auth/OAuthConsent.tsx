@@ -22,7 +22,7 @@ export default function OAuthConsent() {
   const termsOfServiceUrl = searchParams.get('terms_of_service_url') || ''
   const isVerified = searchParams.get('is_verified') === 'true'
 
-  const apiBase = client.defaults.baseURL || (import.meta as any).env?.VITE_API_BASE || 'http://localhost:8080'
+  const apiBase = client.defaults.baseURL || (import.meta as any).env?.VITE_API_BASE || 'http://localhost:8101'
   const consentEndpoint = String(apiBase).replace(/\/$/, '') + '/api/v1/oauth/consent'
 
   const submitConsentForm = (action: 'allow' | 'deny') => {
