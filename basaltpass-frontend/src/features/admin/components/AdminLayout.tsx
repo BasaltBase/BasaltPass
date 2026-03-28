@@ -6,8 +6,9 @@ import AdminNavigation from './AdminNavigation'
 import { useAuth } from '@contexts/AuthContext'
 import { useConfig } from '@contexts/ConfigContext'
 import EnhancedNotificationIcon from '@components/EnhancedNotificationIcon'
+import ConsoleAccountSwitcherModal from '@components/ConsoleAccountSwitcherModal'
 import { PButton } from '@ui'
-import { authorizeConsole } from '@api/console'
+import { authorizeConsole, joinConsoleUrl } from '@api/console'
 import { uiAlert } from '@contexts/DialogContext'
 import { ROUTES } from '@constants'
 
@@ -23,6 +24,7 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
   const location = useLocation()
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [showAccountSwitcher, setShowAccountSwitcher] = useState(false)
 
   const handleLogout = () => {
     logout()
@@ -38,18 +40,12 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
 
   const consoleUserUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || ''
   const consoleTenantUrl = (import.meta as any).env?.VITE_CONSOLE_TENANT_URL || ''
-
-  const joinUrl = (base: string, path: string) => {
-    const b = (base || '').replace(/\/+$/, '')
-    const p = (path || '').replace(/^\//, '')
-    if (!b) return '/' + p
-    return `${b}/${p}`
-  }
+  const consoleAdminUrl = (import.meta as any).env?.VITE_CONSOLE_ADMIN_URL || ''
 
   const switchToTenant = async () => {
     try {
       const { code } = await authorizeConsole('tenant')
-      window.location.href = joinUrl(consoleTenantUrl, `tenant/dashboard?code=${encodeURIComponent(code)}`)
+      window.location.href = joinConsoleUrl(consoleTenantUrl, `tenant/dashboard?code=${encodeURIComponent(code)}`)
     } catch (error: any) {
       const message = error?.response?.data?.error || '当前账号没有租户管理权限，或租户控制台授权失败。'
       await uiAlert(message, '无法进入租户面板')
@@ -57,7 +53,7 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
   }
 
   const switchToUser = () => {
-    window.location.href = joinUrl(consoleUserUrl, 'dashboard')
+    window.location.href = joinConsoleUrl(consoleUserUrl, 'dashboard')
   }
 
   const getUserInitial = () => {
@@ -171,7 +167,7 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
                     </div>
                     
                     <a
-                      href={joinUrl(consoleUserUrl, 'profile')}
+                      href={joinConsoleUrl(consoleUserUrl, 'profile')}
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       onClick={() => setIsUserMenuOpen(false)}
                     >
@@ -187,6 +183,18 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
                       <Cog6ToothIcon className="mr-3 h-4 w-4" />
                       设置
                     </Link>
+                    
+                    <PButton
+                      variant="ghost"
+                      onClick={() => {
+                        setShowAccountSwitcher(true)
+                        setIsUserMenuOpen(false)
+                      }}
+                      className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 justify-start"
+                    >
+                      <ArrowsRightLeftIcon className="mr-3 h-4 w-4" />
+                      切换账户
+                    </PButton>
                     
                     <div className="border-t border-gray-200"></div>
                     
@@ -266,6 +274,16 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
           </main>
         </div>
       </div>
+
+      <ConsoleAccountSwitcherModal
+        open={showAccountSwitcher}
+        onClose={() => setShowAccountSwitcher(false)}
+        currentScope="admin"
+        currentUserId={Number(user?.id || 0)}
+        consoleUserUrl={consoleUserUrl}
+        consoleTenantUrl={consoleTenantUrl}
+        consoleAdminUrl={consoleAdminUrl}
+      />
     </div>
   )
 }

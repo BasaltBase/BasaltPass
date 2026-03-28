@@ -111,6 +111,10 @@ export function removeUserConsoleSession(userID: number, tenantID: number) {
   writeSessions(readSessions().filter((session) => session.key !== key))
 }
 
+export function removeUserConsoleSessionByKey(sessionKey: string) {
+  writeSessions(readSessions().filter((session) => session.key !== sessionKey))
+}
+
 export function updateStoredUserSessionToken(token: string) {
   const decoded = decodeJWT(token)
   const userID = Number(decoded?.sub || 0)

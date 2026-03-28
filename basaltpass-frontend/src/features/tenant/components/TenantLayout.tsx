@@ -6,8 +6,9 @@ import TenantNavigation from './TenantNavigation'
 import { useAuth } from '@contexts/AuthContext'
 import { useConfig } from '@contexts/ConfigContext'
 import EnhancedNotificationIcon from '@components/EnhancedNotificationIcon'
+import ConsoleAccountSwitcherModal from '@components/ConsoleAccountSwitcherModal'
 import { PButton } from '@ui'
-import { authorizeConsole } from '@api/console'
+import { authorizeConsole, joinConsoleUrl } from '@api/console'
 import { ROUTES } from '@constants'
 
 interface TenantLayoutProps {
@@ -22,6 +23,7 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
   const location = useLocation()
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [showAccountSwitcher, setShowAccountSwitcher] = useState(false)
 
   const handleLogout = () => {
     logout()
@@ -36,22 +38,16 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
   }, [setPageTitle, title])
 
   const consoleUserUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || ''
+  const consoleTenantUrl = (import.meta as any).env?.VITE_CONSOLE_TENANT_URL || ''
   const consoleAdminUrl = (import.meta as any).env?.VITE_CONSOLE_ADMIN_URL || ''
-
-  const joinUrl = (base: string, path: string) => {
-    const b = (base || '').replace(/\/+$/, '')
-    const p = (path || '').replace(/^\//, '')
-    if (!b) return '/' + p
-    return `${b}/${p}`
-  }
 
   const switchToAdmin = async () => {
     const { code } = await authorizeConsole('admin')
-    window.location.href = joinUrl(consoleAdminUrl, `admin/dashboard?code=${encodeURIComponent(code)}`)
+    window.location.href = joinConsoleUrl(consoleAdminUrl, `admin/dashboard?code=${encodeURIComponent(code)}`)
   }
 
   const switchToUser = () => {
-    window.location.href = joinUrl(consoleUserUrl, 'dashboard')
+    window.location.href = joinConsoleUrl(consoleUserUrl, 'dashboard')
   }
 
   const getUserInitial = () => {
@@ -169,7 +165,7 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
                     </div>
                     
                     <a
-                      href={joinUrl(consoleUserUrl, 'profile')}
+                      href={joinConsoleUrl(consoleUserUrl, 'profile')}
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       onClick={() => setIsUserMenuOpen(false)}
                     >
@@ -178,13 +174,25 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
                     </a>
                     
                     <a
-                      href={joinUrl(consoleUserUrl, 'settings')}
+                      href={joinConsoleUrl(consoleUserUrl, 'settings')}
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       onClick={() => setIsUserMenuOpen(false)}
                     >
                       <Cog6ToothIcon className="mr-3 h-4 w-4" />
                       租户设置
                     </a>
+                    
+                    <PButton
+                      variant="ghost"
+                      onClick={() => {
+                        setShowAccountSwitcher(true)
+                        setIsUserMenuOpen(false)
+                      }}
+                      className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 justify-start"
+                    >
+                      <ArrowsRightLeftIcon className="mr-3 h-4 w-4" />
+                      切换账户
+                    </PButton>
                     
                     <div className="border-t border-gray-200"></div>
                     
@@ -267,6 +275,17 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
           </main>
         </div>
       </div>
+
+      <ConsoleAccountSwitcherModal
+        open={showAccountSwitcher}
+        onClose={() => setShowAccountSwitcher(false)}
+        currentScope="tenant"
+        currentTenantId={Number(user?.tenant_id || 0)}
+        currentUserId={Number(user?.id || 0)}
+        consoleUserUrl={consoleUserUrl}
+        consoleTenantUrl={consoleTenantUrl}
+        consoleAdminUrl={consoleAdminUrl}
+      />
     </div>
   )
 }

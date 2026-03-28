@@ -16,12 +16,16 @@ export function getAuthScope(): ConsoleScope {
 }
 
 export function getTokenKey(): string {
+  return getTokenKeyForScope(getAuthScope())
+}
+
+export function getTokenKeyForScope(scope: ConsoleScope): string {
   const envTokenKey = (import.meta as any).env?.VITE_TOKEN_KEY
-  if (envTokenKey) {
+  if (envTokenKey && scope === getAuthScope()) {
     return envTokenKey
   }
 
-  switch (getAuthScope()) {
+  switch (scope) {
     case 'admin':
       return 'bp_admin_access_token'
     case 'tenant':
@@ -41,4 +45,27 @@ export function getAccessToken(): string | null {
 
 export function clearAccessToken() {
   localStorage.removeItem(getTokenKey())
-} 
+}
+
+export function clearAccessTokenForScope(scope: ConsoleScope) {
+  localStorage.removeItem(getTokenKeyForScope(scope))
+}
+
+function expireCookie(name: string) {
+  if (typeof document === 'undefined') {
+    return
+  }
+
+  document.cookie = `${name}=; Max-Age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax`
+}
+
+export function clearScopeCookies(scope: ConsoleScope) {
+  if (scope === 'user') {
+    expireCookie('access_token')
+    expireCookie('refresh_token')
+    return
+  }
+
+  expireCookie(`access_token_${scope}`)
+  expireCookie(`refresh_token_${scope}`)
+}

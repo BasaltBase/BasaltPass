@@ -12,6 +12,7 @@ import { resolveSafeRedirectTarget } from '@utils/redirect'
 import { fetchPublicTenantByCode } from '@api/publicTenant'
 import { decodeJWT } from '@utils/jwt'
 import { getAccessToken } from '@utils/auth'
+import { listUserConsoleSessions } from '@utils/userSessions'
 import { ShieldCheckIcon, EnvelopeIcon, KeyIcon } from '@heroicons/react/24/outline'
 import { PInput, PButton, PCheckbox, PAlert } from '@ui'
 
@@ -58,6 +59,7 @@ function TenantLogin() {
   const [twoFACode, setTwoFACode] = useState('')
   const [emailCode, setEmailCode] = useState('')
   const [rememberMe, setRememberMe] = useState(false)
+  const [isResolvingTenantSession, setIsResolvingTenantSession] = useState(true)
 
   const redirectParam = searchParams.get('redirect') || ''
   const authRequestTimeout = Number((import.meta as any).env?.VITE_AUTH_TIMEOUT_MS || 12000)
@@ -97,21 +99,55 @@ function TenantLogin() {
       return
     }
 
-    if (isAuthLoading || !isAuthenticated) {
+    if (isAuthLoading) {
       return
     }
 
-    const token = getAccessToken()
-    const decoded = token ? decodeJWT(token) : null
-    const currentTenantID = Number(decoded?.tid || 0)
-    const currentScope = String(decoded?.scp || 'user')
+    const targetTenantID = tenantInfo.id
+    const activeToken = getAccessToken()
+    const activeDecoded = activeToken ? decodeJWT(activeToken) : null
+    const activeTenantID = Number(activeDecoded?.tid || 0)
+    const activeScope = String(activeDecoded?.scp || 'user')
 
-    if (currentScope === 'user' && currentTenantID === tenantInfo.id) {
+    if (isAuthenticated && activeScope === 'user' && activeTenantID === targetTenantID) {
+      setIsResolvingTenantSession(false)
       if (!redirectAfterLogin()) {
         navigate(ROUTES.user.dashboard, { replace: true })
       }
+      return
     }
-  }, [isAuthenticated, isAuthLoading, navigate, tenantInfo?.id])
+
+    const storedTenantSession = listUserConsoleSessions().find(
+      (session) => Number(session.tenant_id || 0) === targetTenantID,
+    )
+
+    if (!storedTenantSession) {
+      setIsResolvingTenantSession(false)
+      return
+    }
+
+    let cancelled = false
+    setIsResolvingTenantSession(true)
+
+    login(storedTenantSession.token)
+      .then(() => {
+        if (cancelled) {
+          return
+        }
+        if (!redirectAfterLogin()) {
+          navigate(ROUTES.user.dashboard, { replace: true })
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setIsResolvingTenantSession(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [isAuthenticated, isAuthLoading, login, navigate, tenantInfo?.id])
 
   const redirectAfterLogin = () => {
     const target = resolveSafeRedirectTarget(redirectParam, resolvedApiBase)
@@ -251,9 +287,9 @@ function TenantLogin() {
     }
   }
 
-  if (loadingTenant) {
+  if (loadingTenant || isResolvingTenantSession) {
     return (
-      <PSkeleton.PageLoader message="正在加载租户信息..." />
+      <PSkeleton.PageLoader message={loadingTenant ? "正在加载租户信息..." : "正在检查租户登录状态..."} />
     )
   }
 

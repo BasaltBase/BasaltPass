@@ -13,6 +13,11 @@ export default function PublicRoute({ children }: PublicRouteProps) {
   const navigate = useNavigate()
   const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
   const search = typeof window !== 'undefined' ? window.location.search : ''
+  const isTenantScopedAuthPath =
+    /^\/auth\/tenant\/[^/]+\/login$/.test(pathname) ||
+    /^\/tenant\/[^/]+\/login$/.test(pathname) ||
+    /^\/auth\/tenant\/[^/]+\/register$/.test(pathname) ||
+    /^\/tenant\/[^/]+\/register$/.test(pathname)
 
   // OAuth hosted login requires a real login page even when localStorage token exists:
   // /api/v1/oauth/authorize cannot read SPA localStorage token and relies on backend cookies.
@@ -20,22 +25,21 @@ export default function PublicRoute({ children }: PublicRouteProps) {
   const isAuthEntryPath =
     pathname === '/login' ||
     pathname === '/register' ||
-    (/^\/auth\/tenant\/[^/]+\/login$/.test(pathname)) ||
-    (/^\/tenant\/[^/]+\/login$/.test(pathname)) ||
-    (/^\/auth\/tenant\/[^/]+\/register$/.test(pathname)) ||
-    (/^\/tenant\/[^/]+\/register$/.test(pathname))
+    isTenantScopedAuthPath
   const hasOAuthAuthorizeRedirect = redirectParam.startsWith('/api/v1/oauth/authorize?')
+  const allowTenantScopedAuth = isTenantScopedAuthPath
   const allowOAuthReauth = isAuthEntryPath && hasOAuthAuthorizeRedirect
+  const allowPublicAccess = allowTenantScopedAuth || allowOAuthReauth
 
   useEffect(() => {
     // 只有在加载完成且已认证时才跳转
-    if (!isLoading && isAuthenticated && !allowOAuthReauth) {
+    if (!isLoading && isAuthenticated && !allowPublicAccess) {
       debugAuth.logRedirect(window.location.pathname, '/dashboard', 'already authenticated')
       navigate('/dashboard', { replace: true })
-    } else if (!isLoading && isAuthenticated && allowOAuthReauth) {
-      debugAuth.log('PublicRoute: allowing OAuth re-auth page despite authenticated local state')
+    } else if (!isLoading && isAuthenticated && allowPublicAccess) {
+      debugAuth.log('PublicRoute: allowing public auth page despite authenticated local state')
     }
-  }, [allowOAuthReauth, isAuthenticated, isLoading, navigate])
+  }, [allowPublicAccess, isAuthenticated, isLoading, navigate])
 
   // 如果正在加载，显示加载状态
   if (isLoading) {
@@ -44,7 +48,7 @@ export default function PublicRoute({ children }: PublicRouteProps) {
   }
 
   // 如果未认证，显示子组件
-  if (!isAuthenticated || allowOAuthReauth) {
+  if (!isAuthenticated || allowPublicAccess) {
     debugAuth.log('PublicRoute: showing public content')
     return <>{children}</>
   }
