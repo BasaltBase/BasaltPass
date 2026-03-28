@@ -14,7 +14,7 @@ pip install requests
 from basaltpass_s2s import BasaltPassS2SClient
 
 client = BasaltPassS2SClient(
-    base_url="http://localhost:8080",
+    base_url="http://localhost:8101",
     client_id="your_client_id",
     client_secret="your_client_secret",
 )

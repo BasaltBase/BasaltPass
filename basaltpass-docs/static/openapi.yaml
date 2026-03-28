@@ -3,7 +3,7 @@ info:
   title: BasaltPass API
   version: 0.1.0
 servers:
-  - url: http://localhost:8080
+  - url: http://localhost:8101
 paths:
   /api/v1/auth/register:
     post:

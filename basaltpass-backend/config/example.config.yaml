@@ -4,31 +4,31 @@
 #
 # 约定：
 # - 敏感或经常变动的值（如 JWT_SECRET、数据库密码、第三方 Key）放到项目根 `.env`，不要写进该文件。
-# - 该文件只放系统级/稳定的默认配置（端口、CORS、sqlite 路径等）。
+# - 该文件只放系统级/稳定的默认配置（端口、CORS、默认数据库口径等）。
 
 # 环境：develop / staging / production
 env: develop
 
 server:
   # 监听地址（host:port 或 :port）
-  address: ":8080"
+  address: ":8101"
 
 database:
-  # 仅内置 sqlite，可选：sqlite, mysql
-  driver: "sqlite"
-  # sqlite 数据库存放路径（相对当前工作目录）
+  # 开发编排默认使用 MySQL；也支持 sqlite
+  driver: "mysql"
+  # sqlite 数据库存放路径（仅在 driver=sqlite 时使用）
   path: "basaltpass.db"
   # dsn 优先级高于 path；留空则使用 path
-  # MySQL DSN 示例: "user:password@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local"
-  dsn: ""
+  # MySQL DSN 示例: "basaltpass:basaltpass@tcp(127.0.0.1:3307)/basaltpass?charset=utf8mb4&parseTime=True&loc=Local"
+  dsn: "basaltpass:basaltpass@tcp(127.0.0.1:3307)/basaltpass?charset=utf8mb4&parseTime=True&loc=Local"
 
 cors:
   # 允许的跨域来源
   allow_origins:
-    - "http://localhost:5173"
-    - "http://localhost:5174"
-    - "http://127.0.0.1:5173"
-    - "http://localhost:3000"
+    - "http://localhost:5104"
+    - "http://localhost:5104/tenant"
+    - "http://localhost:5104/admin"
+    - "http://127.0.0.1:5104"
   # 允许的方法
   allow_methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
   # 允许的头

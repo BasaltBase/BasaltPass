@@ -8,7 +8,7 @@ BasaltPass APIs follow RESTful principles and standard HTTP status codes.
 
 ## Base URL
 
--   **Development**: `http://localhost:8080/api/v1`
+-   **Development**: `http://localhost:8101/api/v1`
 -   **Production**: `https://your-domain.com/api/v1`
 
 ## Authentication

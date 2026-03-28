@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -108,7 +109,7 @@ func Load(path string) (*Config, error) {
 	v := viper.New()
 
 	// 1) Load .env first so that os.Getenv can see values (incl. JWT_SECRET)
-	// Priority: BASALTPASS_ENV_FILE > ./.env > ../.env
+	// Priority: BASALTPASS_ENV_FILE > repository-root .env
 	if custom := os.Getenv("BASALTPASS_ENV_FILE"); custom != "" {
 		if err := gotenv.Load(custom); err == nil {
 			log.Printf("loaded env from %s", custom)
@@ -116,12 +117,11 @@ func Load(path string) (*Config, error) {
 			log.Printf("env file not found at %s (skip): %v", custom, err)
 		}
 	} else {
-		// try common locations relative to the backend working directory
-		tried := []string{".env", "../.env"}
-		for _, f := range tried {
-			if err := gotenv.Load(f); err == nil {
-				log.Printf("loaded env from %s", f)
-				break
+		if envPath := findRepositoryEnvFile(); envPath != "" {
+			if err := gotenv.Load(envPath); err == nil {
+				log.Printf("loaded env from %s", envPath)
+			} else {
+				log.Printf("env file not found at %s (skip): %v", envPath, err)
 			}
 		}
 	}
@@ -146,7 +146,7 @@ func Load(path string) (*Config, error) {
 	v.SetDefault("cors.allow_methods", []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"})
 	v.SetDefault("cors.allow_headers", []string{
 		"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With",
-		"Access-Control-Request-Method", "Access-Control-Request-Headers", "X-Tenant-ID",
+		"Access-Control-Request-Method", "Access-Control-Request-Headers", "X-Tenant-ID", "X-Auth-Scope",
 	})
 	v.SetDefault("cors.allow_credentials", true)
 	v.SetDefault("cors.expose_headers", []string{
@@ -243,4 +243,37 @@ func IsStaging() bool { return strings.EqualFold(Get().Env, "staging") }
 func IsProduction() bool {
 	e := strings.ToLower(Get().Env)
 	return e == "production" || e == "prod"
+}
+
+func findRepositoryEnvFile() string {
+	wd, err := os.Getwd()
+	if err != nil {
+		return ""
+	}
+
+	dir := wd
+	for {
+		rootEnv := filepath.Join(dir, ".env")
+		if fileExists(filepath.Join(dir, "docker-compose.yml")) && fileExists(filepath.Join(dir, "basaltpass-backend", "go.mod")) {
+			return rootEnv
+		}
+		if filepath.Base(dir) == "basaltpass-backend" {
+			parent := filepath.Dir(dir)
+			parentEnv := filepath.Join(parent, ".env")
+			if fileExists(filepath.Join(parent, "docker-compose.yml")) && fileExists(filepath.Join(dir, "go.mod")) {
+				return parentEnv
+			}
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			return ""
+		}
+		dir = parent
+	}
+}
+
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
 }

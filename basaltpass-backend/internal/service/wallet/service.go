@@ -121,6 +121,9 @@ func History(userID uint, currencyID uint, limit int) ([]model.WalletTx, error) 
 	var w model.Wallet
 	db := common.DB()
 	if err := db.Where("user_id = ? AND currency_id = ?", userID, currencyID).First(&w).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return []model.WalletTx{}, nil
+		}
 		return nil, err
 	}
 	var txs []model.WalletTx

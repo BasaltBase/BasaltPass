@@ -7,7 +7,7 @@ import { getSecurityStatus, SecurityStatus } from '@api/user/security'
 import { getProfile, UserBasicProfile } from '@api/user/profile'
 import { ROUTES } from '@constants'
 import { useConfig } from '@contexts/ConfigContext'
-import { 
+import {
   WalletIcon, 
   UserIcon, 
   ShieldCheckIcon,
@@ -34,6 +34,15 @@ interface RecentTransaction {
   description: string
 }
 
+interface WalletHistoryItem {
+  ID?: number
+  Type?: 'recharge' | 'withdraw'
+  Amount?: number
+  Status?: 'pending' | 'success' | 'fail'
+  Reference?: string
+  CreatedAt?: string
+}
+
 export default function Dashboard() {
   const { marketEnabled, walletRechargeWithdrawEnabled } = useConfig()
   const [userProfile, setUserProfile] = useState<UserBasicProfile | null>(null)
@@ -58,10 +67,32 @@ export default function Dashboard() {
         setUserProfile(profileResponse.data)
         setSecurityStatus(securityResponse.data)
         
-        // 使用真实的交易数据
-        if (historyResponse.data && historyResponse.data.transactions) {
-          setRecentTransactions(historyResponse.data.transactions)
-        }
+        const historyItems = Array.isArray(historyResponse.data)
+          ? historyResponse.data
+          : Array.isArray(historyResponse.data?.transactions)
+            ? historyResponse.data.transactions
+            : []
+
+        setRecentTransactions(
+          historyItems.map((transaction: WalletHistoryItem) => ({
+            id: String(transaction.ID ?? crypto.randomUUID()),
+            type: transaction.Type === 'withdraw' ? 'withdraw' : 'recharge',
+            amount: Math.abs(Number(transaction.Amount ?? 0)),
+            status:
+              transaction.Status === 'success'
+                ? 'completed'
+                : transaction.Status === 'fail'
+                  ? 'failed'
+                  : 'pending',
+            date: transaction.CreatedAt ?? new Date().toISOString(),
+            description:
+              transaction.Reference?.trim()
+                ? transaction.Reference
+                : transaction.Type === 'withdraw'
+                  ? '钱包提现'
+                  : '钱包充值',
+          }))
+        )
       } catch (err) {
         console.error('获取数据失败:', err)
         setError('获取数据失败，请稍后重试')
@@ -117,12 +148,17 @@ export default function Dashboard() {
   }
 
   if (error) {
-    return (
-      <Layout>
-        <PAlert variant="error" title="加载失败" message={error} actions={[{ label: '重试', onClick: () => window.location.reload() }]} />
-      </Layout>
-    )
-  }
+      return (
+        <Layout>
+        <PAlert
+          variant="error"
+          title="加载失败"
+          message={error}
+          actions={<PButton type="button" onClick={() => window.location.reload()}>重试</PButton>}
+        />
+        </Layout>
+      )
+    }
 
   return (
     <Layout>
@@ -376,7 +412,9 @@ export default function Dashboard() {
             </div>
             <div className="flow-root">
               <ul className="-my-5 divide-y divide-gray-200">
-                {recentTransactions.map((transaction) => (
+                {recentTransactions.length === 0 ? (
+                  <li className="py-6 text-sm text-gray-500">暂无交易记录</li>
+                ) : recentTransactions.map((transaction) => (
                   <li key={transaction.id} className="py-4">
                     <div className="flex items-center space-x-4">
                       <div className="flex-shrink-0">

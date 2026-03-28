@@ -128,7 +128,7 @@
 ### 测试场景
 
 #### 场景1：租户登录
-1. 访问 `http://localhost:5173/tenant/tenant-a/login`
+1. 访问 `http://localhost:5104/tenant/tenant-a/login`
 2. 使用tenant A的用户登录
 3. 验证登录成功
 
@@ -139,12 +139,12 @@
 
 #### 场景3：普通用户平台登录失败
 1. 使用普通用户凭据
-2. 访问 `http://localhost:5173/login`（平台登录）
+2. 访问 `http://localhost:5104/login`（平台登录）
 3. 验证收到错误："普通用户不能登录平台"
 
 #### 场景4：Admin平台登录成功
 1. 使用admin用户凭据
-2. 访问 `http://localhost:5173/login`
+2. 访问 `http://localhost:5104/login`
 3. 验证登录成功
 
 #### 场景5：OAuth授权租户验证

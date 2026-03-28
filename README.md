@@ -50,15 +50,15 @@ docker compose up -d --build
 
 - `JWT_SECRET`
 - `BASALTPASS_DATABASE_DRIVER`
-- `BASALTPASS_DATABASE_PATH`
+- `BASALTPASS_DATABASE_DSN`
 - OAuth / S2S 相关 client 配置
 
 ## Persistence Mounts
 
 - 开发编排 `docker-compose.yml`：
-  - `./data -> /data`
+  - MySQL 使用 Docker volume `basaltpass_mysql_data`
 - 生产编排 `deploy/docker-compose.prod.yml`：
-  - `../data -> /data`（相对 `deploy/`）
+  - 不内置数据库，要求外部数据库连接串
 
 ## Documentation
 

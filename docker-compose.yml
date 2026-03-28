@@ -1,23 +1,46 @@
 version: '3'
 services:
+  mysql:
+    profiles:
+      - localdb
+    image: mysql:8.4
+    mem_limit: 1g
+    cpus: 1.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: basaltpass
+      MYSQL_USER: basaltpass
+      MYSQL_PASSWORD: basaltpass
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3307:3306"
+    volumes:
+      - basaltpass_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
   backend:
     build:
       context: .
       dockerfile: backend.Dockerfile
+    user: "0:0"
     mem_limit: 1g
     cpus: 1.0
     ports:
       - "8101:8101"
-    volumes:
-      - ./data:/data
+    restart: unless-stopped
     # Load environment variables from project .env (JWT_SECRET, BASALTPASS_*)
     env_file:
       - .env
     # Optional fallback if .env is missing: use default secret
     environment:
       - JWT_SECRET=${JWT_SECRET:-supersecret}
-      - BASALTPASS_DATABASE_DRIVER=${BASALTPASS_DATABASE_DRIVER:-sqlite}
-      - BASALTPASS_DATABASE_PATH=${BASALTPASS_DATABASE_PATH:-/data/basaltpass.db}
+      - BASALTPASS_DATABASE_DRIVER=${BASALTPASS_DATABASE_DRIVER:-mysql}
+      - BASALTPASS_DATABASE_DSN=${BASALTPASS_DATABASE_DSN:-BasaltPass_local_Dev:nJtGpTDAFEAa4k3m@tcp(199.7.140.120:3306)/basaltpass_local_dev?charset=utf8mb4&parseTime=True&loc=Local}
   frontend:
     build:
       context: .
@@ -27,4 +50,9 @@ services:
     ports:
       - "5104:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  basaltpass_mysql_data:

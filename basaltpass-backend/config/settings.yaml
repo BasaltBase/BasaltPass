@@ -131,6 +131,7 @@ settings:
             - Authorization
             - X-Requested-With
             - X-Tenant-ID
+            - X-Auth-Scope
         category: cors
         description: 允许的请求头
     cors.allow_methods:

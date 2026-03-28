@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-    client := s2s.New("http://localhost:8080", "your_client_id", "your_client_secret")
+    client := s2s.New("http://localhost:8101", "your_client_id", "your_client_secret")
 
     user, err := client.GetUser(context.Background(), 123)
     if err != nil { panic(err) }

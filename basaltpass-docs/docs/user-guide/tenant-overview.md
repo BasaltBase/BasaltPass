@@ -9,7 +9,7 @@ In BasaltPass, a **Tenant** is an isolated environment for your organization or 
 ## Accessing the Console
 
 The Tenant Console is your control center.
--   **Default URL**: `http://localhost:5174` (local) or your deployed domain.
+-   **Default URL**: `http://localhost:5104/tenant` (local) or your deployed domain.
 -   **Login**: Use your admin credentials.
 
 ## Dashboard Overview

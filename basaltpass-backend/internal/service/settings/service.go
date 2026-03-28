@@ -108,7 +108,7 @@ func defaultItems() map[string]SettingItem {
 			"http://127.0.0.1:5104",
 		}, Category: "cors", Description: "允许的跨域来源列表"},
 		"cors.allow_methods":     {Value: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"}, Category: "cors", Description: "允许的方法"},
-		"cors.allow_headers":     {Value: []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With", "X-Tenant-ID"}, Category: "cors", Description: "允许的请求头"},
+		"cors.allow_headers":     {Value: []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With", "X-Tenant-ID", "X-Auth-Scope"}, Category: "cors", Description: "允许的请求头"},
 		"cors.allow_credentials": {Value: true, Category: "cors", Description: "是否允许携带凭据"},
 		"cors.expose_headers":    {Value: []string{"Authorization", "Content-Length"}, Category: "cors", Description: "暴露给前端的响应头"},
 		"cors.max_age_seconds":   {Value: 86400, Category: "cors", Description: "预检请求缓存秒数"},

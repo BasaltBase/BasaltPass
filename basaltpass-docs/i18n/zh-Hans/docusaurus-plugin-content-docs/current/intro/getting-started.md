@@ -16,11 +16,12 @@ sidebar_position: 3
 使用一条命令运行整个技术栈：
 
 ```bash
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
--   **后端**: `http://localhost:8080`
--   **前端**: `http://localhost:3000` (查看 `docker-compose.yml` 确认确切端口)
+-   **后端**: `http://localhost:8101`
+-   **前端**: `http://localhost:5104`
+-   **MySQL**: `localhost:3307`
 
 ## 方法 B: 开发脚本 (推荐)
 
@@ -34,16 +35,15 @@ docker-compose up -d --build
 
 | 服务 | 端口 | 描述 |
 | :--- | :--- | :--- |
-| **后端 (Backend)** | `8080` | API 服务器 |
-| **用户控制台 (User Console)** | `5173` | 终端用户登录与个人资料 |
-| **租户控制台 (Tenant Console)** | `5174` | 组织管理 |
-| **管理控制台 (Admin Console)** | `5175` | 平台管理 |
+| **后端 (Backend)** | `8101` | API 服务器 |
+| **前端统一入口** | `5104` | User / Tenant / Admin 控制台入口 |
+| **MySQL** | `3307` | 本地开发数据库 |
 
 ## 配置
 
 BasaltPass 通过以下方式配置：
-1.  **.env 文件**: 用于机密信息和特定环境的变量。
+1.  **根目录 `.env` 文件**: 用于机密信息和特定环境变量。
 2.  **config.yaml**: 默认系统配置。
-3.  **环境变量**: 覆盖任何配置 (例如 `BASALTPASS_DB_HOST`)。
+3.  **环境变量**: 覆盖任何配置 (例如 `BASALTPASS_DATABASE_DSN`)。
 
 > **注意**: 在生产环境中务必设置 `JWT_SECRET`！

@@ -30,12 +30,12 @@ sidebar_position: 2
 ### 重定向 URIs (Redirect URIs)
 **允许** BasaltPass 将用户重定向回的 URL 白名单。
 -   必须完全匹配 (包括 http/https, 端口, 尾随斜杠)。
--   例如: `http://localhost:3000/callback`, `https://myapp.com/api/auth/callback`
+-   例如: `http://localhost:5104/callback`, `https://myapp.com/api/auth/callback`
 
 ### 允许的来源 (Allowed Origins)
 配置 CORS (跨域资源共享) 策略。
 -   对于 SPA (在浏览器中运行)，必须添加前端的 Origin。
--   例如: `http://localhost:3000`, `https://myapp.com`
+-   例如: `http://localhost:5104`, `https://myapp.com`
 
 ### 授权范围 (Scopes)
 定义客户端可以请求的权限。

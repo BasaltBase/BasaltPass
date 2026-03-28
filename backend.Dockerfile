@@ -7,8 +7,9 @@ RUN go mod download
 COPY basaltpass-backend/ ./
 RUN CGO_ENABLED=1 GOOS=linux go build -o server ./cmd/basaltpass
 
-FROM gcr.io/distroless/base-debian12
+FROM debian:bookworm-slim
 WORKDIR /app
 COPY --from=builder /app/server ./
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
 EXPOSE 8101
 ENTRYPOINT ["/app/server"] 
