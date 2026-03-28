@@ -11,11 +11,11 @@ try:
     code = 'BasaltPass'
     status = 'active'
     
-    print(f"测试查询: SELECT id, name, code, description, status, plan FROM tenants WHERE code = '{code}' AND status = '{status}'")
+    print(f"测试查询: SELECT id, name, code, description, status FROM tenants WHERE code = '{code}' AND status = '{status}'")
     print()
     
     cursor.execute("""
-        SELECT id, name, code, description, status, plan 
+        SELECT id, name, code, description, status
         FROM tenants 
         WHERE code = ? AND status = ?
     """, (code, status))
@@ -29,7 +29,6 @@ try:
         print(f"  Code: {tenant[2]}")
         print(f"  Description: {tenant[3]}")
         print(f"  Status: {tenant[4]}")
-        print(f"  Plan: {tenant[5]}")
     else:
         print("✗ 未找到匹配的租户")
     

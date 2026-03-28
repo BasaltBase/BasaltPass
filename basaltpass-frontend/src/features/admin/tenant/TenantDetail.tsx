@@ -3,7 +3,6 @@ import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { useParams, useNavigate } from 'react-router-dom'
 import { 
   BuildingOfficeIcon, 
-  CreditCardIcon,
   DocumentTextIcon,
   CogIcon,
   ExclamationTriangleIcon,
@@ -31,7 +30,6 @@ const TenantDetail: React.FC = () => {
   const [formData, setFormData] = useState<AdminUpdateTenantRequest>({
     name: '',
     description: '',
-    plan: 'free',
     status: 'active',
     settings: {
       max_users: 100,
@@ -63,7 +61,6 @@ const TenantDetail: React.FC = () => {
       setFormData({
         name: response.name,
         description: response.description || '',
-        plan: response.plan,
         status: response.status,
         settings: response.settings || {
           max_users: 100,
@@ -157,17 +154,6 @@ const TenantDetail: React.FC = () => {
     return <PBadge variant={config.variant}>{config.text}</PBadge>
   }
 
-  const getPlanBadge = (plan: string) => {
-    const planConfig = {
-      free: { variant: 'default' as const, text: '免费版' },
-      basic: { variant: 'info' as const, text: '基础版' },
-      premium: { variant: 'purple' as const, text: '高级版' },
-      enterprise: { variant: 'warning' as const, text: '企业版' }
-    }
-    const config = planConfig[plan as keyof typeof planConfig] || planConfig.free
-    return <PBadge variant={config.variant}>{config.text}</PBadge>
-  }
-
   const formatDate = (dateString?: string) => {
     if (!dateString) {
       return '--'
@@ -178,6 +164,16 @@ const TenantDetail: React.FC = () => {
   const formatNumber = (value?: number | null) => {
     return new Intl.NumberFormat('zh-CN').format(value ?? 0)
   }
+
+  const tenantLoginUrl = useMemo(() => {
+    if (!tenant?.code) {
+      return ''
+    }
+    if (typeof window === 'undefined') {
+      return `/auth/tenant/${tenant.code}/login`
+    }
+    return `${window.location.origin}/auth/tenant/${tenant.code}/login`
+  }, [tenant?.code])
 
   if (loading) {
     return (
@@ -225,8 +221,6 @@ const TenantDetail: React.FC = () => {
                   <span className="text-sm text-gray-500">代码: {tenant.code}</span>
                   <span className="text-gray-300">•</span>
                   {getStatusBadge(tenant.status)}
-                  <span className="text-gray-300">•</span>
-                  {getPlanBadge(tenant.plan)}
                 </div>
               </div>
             </div>
@@ -292,20 +286,6 @@ const TenantDetail: React.FC = () => {
 
                     <div>
                       <PSelect
-                        label="套餐"
-                        name="plan"
-                        value={formData.plan}
-                        onChange={handleInputChange}
-                      >
-                        <option value="free">免费版</option>
-                        <option value="basic">基础版</option>
-                        <option value="premium">高级版</option>
-                        <option value="enterprise">企业版</option>
-                      </PSelect>
-                    </div>
-
-                    <div>
-                      <PSelect
                         label="状态"
                         name="status"
                         value={formData.status}
@@ -348,6 +328,19 @@ const TenantDetail: React.FC = () => {
                     <div>
                       <dt className="text-sm font-medium text-gray-500">所有者邮箱</dt>
                       <dd className="mt-1 text-sm text-gray-900">{tenant.owner_email}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">租户登录台 URL</dt>
+                      <dd className="mt-1 text-sm">
+                        <a
+                          href={tenantLoginUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="font-mono text-indigo-600 hover:text-indigo-800 break-all"
+                        >
+                          {tenantLoginUrl}
+                        </a>
+                      </dd>
                     </div>
                     <div>
                       <dt className="text-sm font-medium text-gray-500">创建时间</dt>

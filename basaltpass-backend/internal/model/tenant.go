@@ -16,7 +16,7 @@ const (
 	TenantStatusDeleted   TenantStatus = "deleted"
 )
 
-// TenantPlan 租户套餐类型
+// TenantPlan 已废弃，仅为兼容历史数据库字段保留。
 type TenantPlan string
 
 const (
@@ -32,7 +32,7 @@ type Tenant struct {
 	Code        string       `gorm:"size:64;uniqueIndex;not null" json:"code"`
 	Description string       `gorm:"size:500" json:"description"`
 	Status      TenantStatus `gorm:"type:varchar(20);default:active" json:"status"`
-	Plan        TenantPlan   `gorm:"type:varchar(20);default:free" json:"plan"`
+	Plan        TenantPlan   `gorm:"type:varchar(20);default:free" json:"-"`
 	Metadata    JSONMap      `gorm:"type:json" json:"metadata,omitempty"`
 	CreatedAt   time.Time    `json:"created_at"`
 	UpdatedAt   time.Time    `json:"updated_at"`

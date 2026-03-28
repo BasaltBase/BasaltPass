@@ -7,7 +7,6 @@ export interface AdminTenantListRequest {
   limit?: number;
   search?: string;
   status?: string; // active, suspended, deleted
-  plan?: string;   // free, pro, enterprise
   sort_by?: string;
   sort_order?: string; // asc, desc
   created_start?: string;
@@ -28,7 +27,6 @@ export interface AdminCreateTenantRequest {
 export interface AdminUpdateTenantRequest {
   name?: string;
   description?: string;
-  plan?: string;
   status?: string;
   settings?: TenantSettings;
 }
@@ -48,11 +46,9 @@ export interface AdminTenantResponse {
   name: string;
   code: string;
   description: string;
-  plan: string;
   status: string;
   owner_id: number;
   owner_email: string;
-  owner_name: string;
   user_count: number;
   app_count: number;
   created_at: string;
@@ -105,9 +101,6 @@ export interface TenantStatsResponse {
   active_tenants: number;
   suspended_tenants: number;
   deleted_tenants: number;
-  free_plan_tenants: number;
-  pro_plan_tenants: number;
-  enterprise_plan_tenants: number;
   new_tenants_today: number;
   new_tenants_this_week: number;
   new_tenants_this_month: number;

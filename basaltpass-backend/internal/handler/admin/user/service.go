@@ -163,6 +163,33 @@ func (s *AdminUserService) GetUserDetail(userID uint) (*AdminUserDetailResponse,
 	return response, nil
 }
 
+// GetUserSummary 获取用户摘要
+func (s *AdminUserService) GetUserSummary(userID uint) (*AdminUserSummaryResponse, error) {
+	var user model.User
+	if err := s.db.First(&user, userID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("用户不存在")
+		}
+		return nil, err
+	}
+
+	return &AdminUserSummaryResponse{
+		ID:            user.ID,
+		Email:         user.Email,
+		Phone:         user.Phone,
+		Nickname:      user.Nickname,
+		AvatarURL:     user.AvatarURL,
+		EmailVerified: user.EmailVerified,
+		PhoneVerified: user.PhoneVerified,
+		TwoFAEnabled:  user.TwoFAEnabled,
+		Banned:        user.Banned,
+		TenantID:      user.TenantID,
+		LastLoginAt:   nil,
+		CreatedAt:     user.CreatedAt,
+		UpdatedAt:     user.UpdatedAt,
+	}, nil
+}
+
 // UpdateUser 更新用户信息
 func (s *AdminUserService) UpdateUser(userID uint, req UpdateUserRequest) error {
 	updates := make(map[string]interface{})

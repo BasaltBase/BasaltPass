@@ -29,19 +29,17 @@ func (s Service) GetProfile(userID uint) (ProfileResponse, error) {
 	if u.TenantID > 0 {
 		tid := u.TenantID
 		tenantID = &tid
+		hasTenant = true
 	}
 
-	// 控制台访问策略：仅 tenant_users 中存在记录的用户才视为可访问租户控制台。
-	var ta model.TenantUser
-	if err := common.DB().
-		Where("user_id = ?", userID).
-		Order("created_at ASC").
-		First(&ta).Error; err == nil {
-		hasTenant = true
-		tenantRole = string(ta.Role)
-		if tenantID == nil && ta.TenantID > 0 {
-			tid := ta.TenantID
-			tenantID = &tid
+	// 平台管理员（tenant_id=0）不应因为 tenant_users 历史记录而自动获得租户控制台上下文。
+	if u.TenantID > 0 {
+		var ta model.TenantUser
+		if err := common.DB().
+			Where("user_id = ? AND tenant_id = ?", userID, u.TenantID).
+			Order("created_at ASC").
+			First(&ta).Error; err == nil {
+			tenantRole = string(ta.Role)
 		}
 	}
 

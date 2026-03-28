@@ -39,9 +39,6 @@ func (s *AdminTenantService) GetTenantList(req admindto.AdminTenantListRequest) 
 	if req.Status != "" {
 		query = query.Where("status = ?", req.Status)
 	}
-	if req.Plan != "" {
-		query = query.Where("plan = ?", req.Plan)
-	}
 
 	var total int64
 	if err := query.Count(&total).Error; err != nil {
@@ -82,10 +79,27 @@ func (s *AdminTenantService) GetTenantList(req admindto.AdminTenantListRequest) 
 		appCounts[r.TenantID] = r.Cnt
 	}
 
+	type ownerRow struct {
+		TenantID uint
+		UserID   uint
+		Email    string
+	}
+	owners := map[uint]ownerRow{}
+	var ownerRows []ownerRow
+	s.db.Table("tenant_users tu").
+		Select("tu.tenant_id, tu.user_id, u.email").
+		Joins("JOIN system_auth_users u ON u.id = tu.user_id").
+		Where("tu.tenant_id IN ? AND tu.role = ?", ids, model.TenantRoleOwner).
+		Scan(&ownerRows)
+	for _, row := range ownerRows {
+		owners[row.TenantID] = row
+	}
+
 	list := make([]admindto.AdminTenantListResponse, 0, len(tenants))
 	for _, t := range tenants {
+		owner := owners[t.ID]
 		list = append(list, admindto.AdminTenantListResponse{
-			ID: t.ID, Name: t.Name, Code: t.Code, Description: t.Description, Plan: string(t.Plan), Status: string(t.Status),
+			ID: t.ID, Name: t.Name, Code: t.Code, Description: t.Description, Status: string(t.Status), OwnerID: owner.UserID, OwnerEmail: owner.Email,
 			UserCount: adminCounts[t.ID], AppCount: appCounts[t.ID], CreatedAt: t.CreatedAt, UpdatedAt: t.UpdatedAt,
 		})
 	}
@@ -109,6 +123,8 @@ func (s *AdminTenantService) GetTenantDetail(id uint) (*admindto.AdminTenantDeta
 	s.db.Model(&model.App{}).Where("tenant_id = ? AND status = ?", id, model.AppStatusActive).Count(&activeAppCount)
 	var quota model.TenantQuota
 	s.db.Where("tenant_id = ?", id).First(&quota)
+	var owner model.TenantUser
+	s.db.Preload("User").Where("tenant_id = ? AND role = ?", id, model.TenantRoleOwner).First(&owner)
 
 	// Recent users
 	var tas []model.TenantUser
@@ -125,7 +141,7 @@ func (s *AdminTenantService) GetTenantDetail(id uint) (*admindto.AdminTenantDeta
 		recentApps = append(recentApps, admindto.RecentApp{ID: a.ID, Name: a.Name, Description: a.Description, CreatedAt: a.CreatedAt})
 	}
 
-	base := admindto.AdminTenantListResponse{ID: tenant.ID, Name: tenant.Name, Code: tenant.Code, Description: tenant.Description, Plan: string(tenant.Plan), Status: string(tenant.Status), UserCount: adminCount, AppCount: appCount, CreatedAt: tenant.CreatedAt, UpdatedAt: tenant.UpdatedAt}
+	base := admindto.AdminTenantListResponse{ID: tenant.ID, Name: tenant.Name, Code: tenant.Code, Description: tenant.Description, Status: string(tenant.Status), OwnerID: owner.UserID, OwnerEmail: owner.User.Email, UserCount: adminCount, AppCount: appCount, CreatedAt: tenant.CreatedAt, UpdatedAt: tenant.UpdatedAt}
 	stats := admindto.TenantStats{TotalUsers: adminCount, ActiveUsers: adminCount, TotalApps: appCount, ActiveApps: activeAppCount}
 	settings := admindto.TenantSettings{
 		MaxUsers:         quota.MaxUsers,
@@ -175,7 +191,7 @@ func (s *AdminTenantService) CreateTenant(req admindto.AdminCreateTenantRequest)
 	var tenant *model.Tenant
 	err := s.db.Transaction(func(tx *gorm.DB) error {
 		// 创建租户
-		tenant = &model.Tenant{Name: req.Name, Code: req.Code, Description: req.Description, Plan: model.TenantPlanFree}
+		tenant = &model.Tenant{Name: req.Name, Code: req.Code, Description: req.Description}
 		if err := tx.Create(tenant).Error; err != nil {
 			return fmt.Errorf("创建租户失败: %w", err)
 		}
@@ -223,9 +239,6 @@ func (s *AdminTenantService) UpdateTenant(id uint, req admindto.AdminUpdateTenan
 	if req.Description != nil {
 		updates["description"] = *req.Description
 	}
-	if req.Plan != nil {
-		updates["plan"] = *req.Plan
-	}
 	if req.Status != nil {
 		updates["status"] = *req.Status
 	}
@@ -247,9 +260,6 @@ func (s *AdminTenantService) GetTenantStats() (*admindto.TenantStatsResponse, er
 	s.db.Model(&model.Tenant{}).Where("status = ?", model.TenantStatusActive).Count(&stats.ActiveTenants)
 	s.db.Model(&model.Tenant{}).Where("status = ?", model.TenantStatusSuspended).Count(&stats.SuspendedTenants)
 	s.db.Model(&model.Tenant{}).Where("status = ?", model.TenantStatusDeleted).Count(&stats.DeletedTenants)
-	s.db.Model(&model.Tenant{}).Where("plan = ?", model.TenantPlanFree).Count(&stats.FreePlanTenants)
-	s.db.Model(&model.Tenant{}).Where("plan = ?", model.TenantPlanPro).Count(&stats.ProPlanTenants)
-	s.db.Model(&model.Tenant{}).Where("plan = ?", model.TenantPlanEnterprise).Count(&stats.EnterprisePlanTenants)
 	// 简化：未实现按时间统计，可留空或后续补充
 	return &stats, nil
 }
@@ -280,6 +290,52 @@ func (s *AdminTenantService) GetTenantUsers(tenantID uint, req admindto.AdminTen
 	}
 	totalPages := int(math.Ceil(float64(total) / float64(req.Limit)))
 	return &admindto.AdminTenantUserListResponse{Users: users, Pagination: admindto.PaginationResponse{Page: req.Page, Limit: req.Limit, Total: total, TotalPages: totalPages}}, nil
+}
+
+// GetTenantUserDetail 获取租户用户详情
+func (s *AdminTenantService) GetTenantUserDetail(tenantID uint, userID uint) (*admindto.AdminTenantUserDetailResponse, error) {
+	var record model.TenantUser
+	if err := s.db.Preload("User").Where("tenant_id = ? AND user_id = ?", tenantID, userID).First(&record).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("租户用户不存在")
+		}
+		return nil, err
+	}
+
+	var lastLogin model.LoginLog
+	var lastLoginAt *time.Time
+	if err := s.db.Where("user_id = ?", userID).Order("logged_at DESC").First(&lastLogin).Error; err == nil {
+		lastLoginAt = &lastLogin.LoggedAt
+	}
+
+	phone := record.User.Phone
+	response := &admindto.AdminTenantUserDetailResponse{
+		AdminTenantUser: admindto.AdminTenantUser{
+			ID:           record.UserID,
+			Email:        record.User.Email,
+			Nickname:     record.User.Nickname,
+			Role:         string(record.Role),
+			UserType:     "tenant_user",
+			Status:       "active",
+			LastActiveAt: nil,
+			CreatedAt:    record.CreatedAt,
+		},
+		Phone:       &phone,
+		LastLoginAt: lastLoginAt,
+		UpdatedAt:   &record.User.UpdatedAt,
+		Permissions: []string{},
+		Apps:        []admindto.AdminTenantUserApp{},
+		ExtraInfo: map[string]interface{}{
+			"tenant_id": tenantID,
+			"user_id":   userID,
+		},
+	}
+
+	if phone == "" {
+		response.Phone = nil
+	}
+
+	return response, nil
 }
 
 // RemoveTenantUser 移除租户管理员

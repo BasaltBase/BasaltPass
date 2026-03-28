@@ -118,14 +118,16 @@ func resolveTokenTenantID(userID uint, claimedTenantID uint, scope string) (uint
 			return claimedTenantID, nil
 		}
 
-		var membershipCount int64
-		if err := common.DB().Model(&model.TenantUser{}).
-			Where("user_id = ? AND tenant_id = ?", userID, claimedTenantID).
-			Count(&membershipCount).Error; err != nil {
-			return 0, err
-		}
-		if membershipCount > 0 {
-			return claimedTenantID, nil
+		if scope == ConsoleScopeTenant {
+			var membershipCount int64
+			if err := common.DB().Model(&model.TenantUser{}).
+				Where("user_id = ? AND tenant_id = ?", userID, claimedTenantID).
+				Count(&membershipCount).Error; err != nil {
+				return 0, err
+			}
+			if membershipCount > 0 {
+				return claimedTenantID, nil
+			}
 		}
 	}
 
@@ -133,16 +135,9 @@ func resolveTokenTenantID(userID uint, claimedTenantID uint, scope string) (uint
 		return user.TenantID, nil
 	}
 
-	return getUserDefaultTenant(userID), nil
-}
-
-// getUserDefaultTenant 获取用户的首个有效租户ID。
-func getUserDefaultTenant(userID uint) uint {
-	var tenantUser model.TenantUser
-	if err := common.DB().Where("user_id = ?", userID).Order("created_at ASC").First(&tenantUser).Error; err != nil {
-		return 0
-	}
-	return tenantUser.TenantID
+	// 平台级账号（tenant_id=0）在 user scope 下保持 tenant_id=0，
+	// 避免因为历史 tenant_users 记录被错误带入某个租户上下文。
+	return 0, nil
 }
 
 // ParseToken validates a JWT and returns claims.

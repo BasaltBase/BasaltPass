@@ -44,7 +44,6 @@ func TestCreateAppCreatesTenantUserWithUserRole(t *testing.T) {
 		Name:   "Acme",
 		Code:   "acme-create-app",
 		Status: model.TenantStatusActive,
-		Plan:   model.TenantPlanFree,
 	}
 	if err := db.Create(&tenant).Error; err != nil {
 		t.Fatalf("create tenant failed: %v", err)
@@ -96,7 +95,6 @@ func TestCreateAppKeepsExistingTenantUserRole(t *testing.T) {
 		Name:   "Beta",
 		Code:   "beta-create-app",
 		Status: model.TenantStatusActive,
-		Plan:   model.TenantPlanPro,
 	}
 	if err := db.Create(&tenant).Error; err != nil {
 		t.Fatalf("create tenant failed: %v", err)

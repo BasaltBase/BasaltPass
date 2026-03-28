@@ -27,14 +27,12 @@ func NewTenantService() *TenantService {
 // CreateTenantRequest 创建租户请求
 type CreateTenantRequest struct {
 	Name     string                 `json:"name" validate:"required,min=1,max=128"`
-	Plan     model.TenantPlan       `json:"plan" validate:"required,oneof=free pro enterprise"`
 	Metadata map[string]interface{} `json:"metadata"`
 }
 
 // UpdateTenantRequest 更新租户请求
 type UpdateTenantRequest struct {
 	Name     string                 `json:"name" validate:"omitempty,min=1,max=128"`
-	Plan     *model.TenantPlan      `json:"plan" validate:"omitempty,oneof=free pro enterprise"`
 	Metadata map[string]interface{} `json:"metadata"`
 }
 
@@ -42,7 +40,6 @@ type UpdateTenantRequest struct {
 type TenantResponse struct {
 	ID        uint                   `json:"id"`
 	Name      string                 `json:"name"`
-	Plan      model.TenantPlan       `json:"plan"`
 	Metadata  map[string]interface{} `json:"metadata,omitempty"`
 	CreatedAt string                 `json:"created_at"`
 	UpdatedAt string                 `json:"updated_at"`
@@ -65,7 +62,6 @@ type TenantInfo struct {
 	Code        string             `json:"code"`
 	Description string             `json:"description"`
 	Status      model.TenantStatus `json:"status"`
-	Plan        model.TenantPlan   `json:"plan"`
 	CreatedAt   string             `json:"created_at"`
 	UpdatedAt   string             `json:"updated_at"`
 
@@ -103,7 +99,6 @@ func (s *TenantService) CreateTenant(ownerUserID uint, req *CreateTenantRequest)
 	// 创建租户
 	tenant := &model.Tenant{
 		Name:     req.Name,
-		Plan:     req.Plan,
 		Metadata: model.JSONMap(req.Metadata),
 	}
 
@@ -120,21 +115,9 @@ func (s *TenantService) CreateTenant(ownerUserID uint, req *CreateTenantRequest)
 		TenantID: tenant.ID,
 	}
 
-	// 根据计划设置配额
-	switch req.Plan {
-	case model.TenantPlanFree:
-		quota.MaxApps = 3
-		quota.MaxUsers = 50
-		quota.MaxTokensPerHour = 1000
-	case model.TenantPlanPro:
-		quota.MaxApps = 10
-		quota.MaxUsers = 500
-		quota.MaxTokensPerHour = 10000
-	case model.TenantPlanEnterprise:
-		quota.MaxApps = 100
-		quota.MaxUsers = 10000
-		quota.MaxTokensPerHour = 100000
-	}
+	quota.MaxApps = 5
+	quota.MaxUsers = 100
+	quota.MaxTokensPerHour = 1000
 
 	if err := tx.Create(quota).Error; err != nil {
 		tx.Rollback()
@@ -207,7 +190,6 @@ func (s *TenantService) GetTenantInfo(tenantID uint) (*TenantInfo, error) {
 		Code:        tenant.Code,
 		Description: tenant.Description,
 		Status:      tenant.Status,
-		Plan:        tenant.Plan,
 		CreatedAt:   tenant.CreatedAt.Format("2006-01-02 15:04:05"),
 		UpdatedAt:   tenant.UpdatedAt.Format("2006-01-02 15:04:05"),
 		Stats:       *stats,
@@ -315,9 +297,6 @@ func (s *TenantService) UpdateTenant(tenantID uint, req *UpdateTenantRequest) (*
 		}
 		updates["name"] = req.Name
 	}
-	if req.Plan != nil {
-		updates["plan"] = *req.Plan
-	}
 	if req.Metadata != nil {
 		updates["metadata"] = model.JSONMap(req.Metadata)
 	}
@@ -399,7 +378,6 @@ func (s *TenantService) tenantToResponse(tenant *model.Tenant, stats *TenantStat
 	resp := &TenantResponse{
 		ID:        tenant.ID,
 		Name:      tenant.Name,
-		Plan:      tenant.Plan,
 		Metadata:  map[string]interface{}(tenant.Metadata),
 		CreatedAt: tenant.CreatedAt.Format("2006-07-05 15:04:05"),
 		UpdatedAt: tenant.UpdatedAt.Format("2006-07-05 15:04:05"),

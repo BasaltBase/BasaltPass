@@ -19,14 +19,13 @@ try:
         # 创建新租户
         now = datetime.now().isoformat()
         cursor.execute("""
-            INSERT INTO tenants (name, code, description, status, plan, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO tenants (name, code, description, status, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?)
         """, (
             'BasaltPass',
             'BasaltPass',
             'BasaltPass tenant with matching code',
             'active',
-            'enterprise',
             now,
             now
         ))
@@ -38,7 +37,6 @@ try:
         print(f"  名称: BasaltPass")
         print(f"  代码: BasaltPass")
         print(f"  状态: active")
-        print(f"  计划: enterprise")
         print(f"\n访问地址: http://localhost:5173/tenant/BasaltPass/register")
     
     conn.close()

@@ -8,13 +8,12 @@ import {
   TrashIcon,
   BuildingOfficeIcon,
   UsersIcon,
-  CogIcon,
   MagnifyingGlassIcon
 } from '@heroicons/react/24/outline'
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { adminTenantApi, AdminTenantResponse, AdminTenantListRequest } from '@api/admin/tenant'
 import { ROUTES } from '@constants'
-import { PSkeleton, PBadge, PAlert, PPageHeader, PPagination, PButton } from '@ui'
+import { PSkeleton, PBadge, PAlert, PPageHeader, PPagination, PButton, UserTooltip } from '@ui'
 
 export default function TenantList() {
   const [tenants, setTenants] = useState<AdminTenantResponse[]>([])
@@ -24,11 +23,10 @@ export default function TenantList() {
   const [totalPages, setTotalPages] = useState(1)
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('')
-  const [plan, setPlan] = useState('')
 
   useEffect(() => {
     loadTenants()
-  }, [page, search, status, plan])
+  }, [page, search, status])
 
   const loadTenants = async () => {
     try {
@@ -38,7 +36,6 @@ export default function TenantList() {
         limit: 20,
         search: search || undefined,
         status: status || undefined,
-        plan: plan || undefined,
       }
       const response = await adminTenantApi.getTenantList(params)
       setTenants(response.tenants)
@@ -65,32 +62,11 @@ export default function TenantList() {
     }
   }
 
-  const getPlanVariant = (plan: string): 'default' | 'info' | 'purple' => {
-    switch (plan) {
-      case 'pro': return 'info'
-      case 'enterprise': return 'purple'
-      default: return 'default'
-    }
-  }
-
   const getStatusVariant = (status: string): 'success' | 'error' | 'default' => {
     switch (status) {
       case 'active': return 'success'
       case 'suspended': return 'error'
       default: return 'default'
-    }
-  }
-
-  const getPlanDisplayName = (plan: string) => {
-    switch (plan) {
-      case 'free':
-        return '免费版'
-      case 'pro':
-        return '专业版'
-      case 'enterprise':
-        return '企业版'
-      default:
-        return plan
     }
   }
 
@@ -161,18 +137,6 @@ export default function TenantList() {
                 <option value="deleted">已删除</option>
               </select>
             </div>
-            <div className="sm:w-32">
-              <select
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                value={plan}
-                onChange={(e) => setPlan(e.target.value)}
-              >
-                <option value="">所有套餐</option>
-                <option value="free">免费版</option>
-                <option value="pro">专业版</option>
-                <option value="enterprise">企业版</option>
-              </select>
-            </div>
           </div>
         </div>
 
@@ -197,17 +161,14 @@ export default function TenantList() {
                           <h3 className="text-lg font-medium text-gray-900 truncate">
                             {tenant.name}
                           </h3>
-                          <PBadge variant={getPlanVariant(tenant.plan)} className="ml-3">
-                            {getPlanDisplayName(tenant.plan)}
-                          </PBadge>
-                          <PBadge variant={getStatusVariant(tenant.status)} className="ml-2">
+                          <PBadge variant={getStatusVariant(tenant.status)} className="ml-3">
                             {getStatusDisplayName(tenant.status)}
                           </PBadge>
                         </div>
                         <div className="mt-1 flex items-center text-sm text-gray-500">
                           <span>代码: {tenant.code}</span>
                           <span className="mx-2">•</span>
-                          <span>所有者: {tenant.owner_name || tenant.owner_email}</span>
+                          <span>所有者: <UserTooltip userId={tenant.owner_id} fallbackLabel="未分配所有者" /></span>
                           <span className="mx-2">•</span>
                           <span>用户: {tenant.user_count}</span>
                           <span className="mx-2">•</span>
@@ -239,13 +200,6 @@ export default function TenantList() {
                       title="用户管理"
                     >
                       <UsersIcon className="h-4 w-4" />
-                    </Link>
-                    <Link
-                      to={`/platform/tenants/${tenant.id}/settings`}
-                      className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                      title="设置"
-                    >
-                      <CogIcon className="h-4 w-4" />
                     </Link>
                     <button
                       onClick={() => handleDeleteTenant(tenant.id)}

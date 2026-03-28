@@ -19,7 +19,7 @@ func GetTenantByCodeHandler(c *fiber.Ctx) error {
 
 	var tenant model.Tenant
 	if err := common.DB().Where("code = ? AND status = ?", code, model.TenantStatusActive).
-		Select("id", "name", "code", "description", "status", "plan").
+		Select("id", "name", "code", "description", "status").
 		First(&tenant).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": "tenant not found or inactive",
@@ -32,6 +32,5 @@ func GetTenantByCodeHandler(c *fiber.Ctx) error {
 		"code":        tenant.Code,
 		"description": tenant.Description,
 		"status":      tenant.Status,
-		"plan":        tenant.Plan,
 	})
 }

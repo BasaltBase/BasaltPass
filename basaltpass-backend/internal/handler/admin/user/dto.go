@@ -46,6 +46,23 @@ type AdminUserDetailResponse struct {
 	ActivityStats     ActivityStats      `json:"activity_stats"`
 }
 
+// AdminUserSummaryResponse 管理员用户摘要响应
+type AdminUserSummaryResponse struct {
+	ID            uint       `json:"id"`
+	Email         string     `json:"email"`
+	Phone         string     `json:"phone"`
+	Nickname      string     `json:"nickname"`
+	AvatarURL     string     `json:"avatar_url"`
+	EmailVerified bool       `json:"email_verified"`
+	PhoneVerified bool       `json:"phone_verified"`
+	TwoFAEnabled  bool       `json:"two_fa_enabled"`
+	Banned        bool       `json:"banned"`
+	TenantID      uint       `json:"tenant_id"`
+	LastLoginAt   *time.Time `json:"last_login_at"`
+	CreatedAt     time.Time  `json:"created_at"`
+	UpdatedAt     time.Time  `json:"updated_at"`
+}
+
 // AppAuthorization 应用授权信息
 type AppAuthorization struct {
 	AppID             uint       `json:"app_id"`

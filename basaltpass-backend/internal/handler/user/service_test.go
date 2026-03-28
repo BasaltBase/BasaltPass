@@ -33,7 +33,6 @@ func TestGetProfileUsesUserTenantIDForRegularUser(t *testing.T) {
 		Name:   "Acme",
 		Code:   "acme",
 		Status: model.TenantStatusActive,
-		Plan:   model.TenantPlanPro,
 	}
 	if err := db.Create(&tenant).Error; err != nil {
 		t.Fatalf("create tenant failed: %v", err)
@@ -59,19 +58,18 @@ func TestGetProfileUsesUserTenantIDForRegularUser(t *testing.T) {
 	if *profile.TenantID != tenant.ID {
 		t.Fatalf("expected tenant_id %d, got %d", tenant.ID, *profile.TenantID)
 	}
-	if profile.HasTenant {
-		t.Fatalf("expected has_tenant=false for regular user without tenant_users row")
+	if !profile.HasTenant {
+		t.Fatalf("expected has_tenant=true for regular tenant user")
 	}
 }
 
-func TestGetProfileFallsBackToTenantUserTenantID(t *testing.T) {
+func TestGetProfileDoesNotDeriveTenantContextFromTenantUsersForPlatformAdmin(t *testing.T) {
 	db := setupUserServiceTestDB(t)
 
 	tenant := model.Tenant{
 		Name:   "Org",
 		Code:   "org",
 		Status: model.TenantStatusActive,
-		Plan:   model.TenantPlanEnterprise,
 	}
 	if err := db.Create(&tenant).Error; err != nil {
 		t.Fatalf("create tenant failed: %v", err)
@@ -100,16 +98,13 @@ func TestGetProfileFallsBackToTenantUserTenantID(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetProfile failed: %v", err)
 	}
-	if !profile.HasTenant {
-		t.Fatalf("expected has_tenant=true")
+	if profile.HasTenant {
+		t.Fatalf("expected has_tenant=false for platform admin account")
 	}
-	if profile.TenantID == nil {
-		t.Fatalf("expected tenant_id in profile")
+	if profile.TenantID != nil {
+		t.Fatalf("expected tenant_id to stay nil for platform admin account, got %v", *profile.TenantID)
 	}
-	if *profile.TenantID != tenant.ID {
-		t.Fatalf("expected tenant_id %d, got %d", tenant.ID, *profile.TenantID)
-	}
-	if profile.TenantRole != string(model.TenantRoleOwner) {
-		t.Fatalf("expected tenant_role %q, got %q", model.TenantRoleOwner, profile.TenantRole)
+	if profile.TenantRole != "" {
+		t.Fatalf("expected tenant_role to be empty for platform admin account, got %q", profile.TenantRole)
 	}
 }

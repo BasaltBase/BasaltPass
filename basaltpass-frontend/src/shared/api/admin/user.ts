@@ -38,6 +38,22 @@ export interface AdminUserDetail extends AdminUser {
   activity_stats: ActivityStats
 }
 
+export interface AdminUserSummary {
+  id: number
+  email: string
+  phone: string
+  nickname: string
+  avatar_url: string
+  email_verified: boolean
+  phone_verified: boolean
+  two_fa_enabled: boolean
+  banned: boolean
+  tenant_id: number
+  last_login_at?: string
+  created_at: string
+  updated_at: string
+}
+
 export interface AppAuthorization {
   app_id: number
   app_name: string
@@ -134,6 +150,12 @@ export const adminUserApi = {
   async getUser(id: number) {
     const response = await client.get(`/api/v1/admin/users/${id}`)
     return response.data as AdminUserDetail
+  },
+
+  // 获取用户摘要
+  async getUserSummary(id: number) {
+    const response = await client.get(`/api/v1/admin/users/${id}/summary`)
+    return response.data as AdminUserSummary
   },
 
   // 更新用户信息

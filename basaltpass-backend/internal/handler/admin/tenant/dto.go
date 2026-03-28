@@ -12,7 +12,6 @@ type AdminTenantListRequest struct {
 	Limit        int        `query:"limit" validate:"min=1,max=100"`
 	Search       string     `query:"search"`
 	Status       string     `query:"status"` // active, suspended, deleted
-	Plan         string     `query:"plan"`   // free, pro, enterprise
 	SortBy       string     `query:"sort_by"`
 	SortOrder    string     `query:"sort_order"` // asc, desc
 	CreatedStart *time.Time `query:"created_start"`
@@ -35,7 +34,6 @@ type AdminCreateTenantRequest struct {
 type AdminUpdateTenantRequest struct {
 	Name        *string         `json:"name,omitempty" validate:"omitempty,min=2,max=100"`
 	Description *string         `json:"description,omitempty" validate:"omitempty,max=500"`
-	Plan        *string         `json:"plan,omitempty" validate:"omitempty,oneof=free pro enterprise"`
 	Status      *string         `json:"status,omitempty" validate:"omitempty,oneof=active suspended deleted"`
 	Settings    *TenantSettings `json:"settings,omitempty"`
 }
@@ -58,11 +56,9 @@ type AdminTenantListResponse struct {
 	Name        string    `json:"name"`
 	Code        string    `json:"code"`
 	Description string    `json:"description"`
-	Plan        string    `json:"plan"`
 	Status      string    `json:"status"`
 	OwnerID     uint      `json:"owner_id"`
 	OwnerEmail  string    `json:"owner_email"`
-	OwnerName   string    `json:"owner_name"`
 	UserCount   int64     `json:"user_count"`
 	AppCount    int64     `json:"app_count"`
 	CreatedAt   time.Time `json:"created_at"`
@@ -86,16 +82,13 @@ type TenantListResponse struct {
 
 // TenantStatsResponse 租户统计响应
 type TenantStatsResponse struct {
-	TotalTenants          int64 `json:"total_tenants"`
-	ActiveTenants         int64 `json:"active_tenants"`
-	SuspendedTenants      int64 `json:"suspended_tenants"`
-	DeletedTenants        int64 `json:"deleted_tenants"`
-	FreePlanTenants       int64 `json:"free_plan_tenants"`
-	ProPlanTenants        int64 `json:"pro_plan_tenants"`
-	EnterprisePlanTenants int64 `json:"enterprise_plan_tenants"`
-	NewTenantsToday       int64 `json:"new_tenants_today"`
-	NewTenantsThisWeek    int64 `json:"new_tenants_this_week"`
-	NewTenantsThisMonth   int64 `json:"new_tenants_this_month"`
+	TotalTenants        int64 `json:"total_tenants"`
+	ActiveTenants       int64 `json:"active_tenants"`
+	SuspendedTenants    int64 `json:"suspended_tenants"`
+	DeletedTenants      int64 `json:"deleted_tenants"`
+	NewTenantsToday     int64 `json:"new_tenants_today"`
+	NewTenantsThisWeek  int64 `json:"new_tenants_this_week"`
+	NewTenantsThisMonth int64 `json:"new_tenants_this_month"`
 }
 
 // AdminTenantUserListResponse 管理员租户用户列表响应
@@ -115,6 +108,25 @@ type AdminTenantUser struct {
 	AppName      *string    `json:"app_name,omitempty"`
 	LastActiveAt *time.Time `json:"last_active_at,omitempty"`
 	CreatedAt    time.Time  `json:"created_at"`
+}
+
+// AdminTenantUserApp 管理员租户用户关联应用
+type AdminTenantUserApp struct {
+	ID      uint       `json:"id"`
+	Name    string     `json:"name"`
+	Role    *string    `json:"role,omitempty"`
+	AddedAt *time.Time `json:"added_at,omitempty"`
+}
+
+// AdminTenantUserDetailResponse 管理员租户用户详情响应
+type AdminTenantUserDetailResponse struct {
+	AdminTenantUser
+	Phone       *string                `json:"phone,omitempty"`
+	LastLoginAt *time.Time             `json:"last_login_at,omitempty"`
+	UpdatedAt   *time.Time             `json:"updated_at,omitempty"`
+	Permissions []string               `json:"permissions,omitempty"`
+	Apps        []AdminTenantUserApp   `json:"apps,omitempty"`
+	ExtraInfo   map[string]interface{} `json:"extra_info,omitempty"`
 }
 
 // 嵌套DTO

@@ -44,7 +44,6 @@ func createTenantForTest(t *testing.T, db *gorm.DB, code string, status model.Te
 		Name:   "Tenant " + code,
 		Code:   code,
 		Status: status,
-		Plan:   model.TenantPlanFree,
 	}
 	if err := db.Create(&tenant).Error; err != nil {
 		t.Fatalf("failed to create tenant: %v", err)

@@ -33,7 +33,6 @@ func TestGetUserTenantsIncludesPrimaryTenantForRegularUser(t *testing.T) {
 		Name:   "Acme",
 		Code:   "acme",
 		Status: model.TenantStatusActive,
-		Plan:   model.TenantPlanPro,
 	}
 	if err := db.Create(&tenant).Error; err != nil {
 		t.Fatalf("create tenant failed: %v", err)
@@ -83,7 +82,6 @@ func TestGetUserTenantsPrefersTenantUserRoleWhenPresent(t *testing.T) {
 		Name:   "Org",
 		Code:   "org",
 		Status: model.TenantStatusActive,
-		Plan:   model.TenantPlanEnterprise,
 	}
 	if err := db.Create(&tenant).Error; err != nil {
 		t.Fatalf("create tenant failed: %v", err)

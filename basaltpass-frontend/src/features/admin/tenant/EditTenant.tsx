@@ -2,12 +2,9 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { 
   BuildingOfficeIcon, 
-  CreditCardIcon,
   DocumentTextIcon,
   CogIcon,
   ExclamationTriangleIcon,
-  CheckCircleIcon,
-  UserIcon,
   ArrowLeftIcon
 } from '@heroicons/react/24/outline'
 import AdminLayout from '@features/admin/components/AdminLayout'
@@ -25,7 +22,6 @@ const EditTenant: React.FC = () => {
   const [formData, setFormData] = useState<AdminUpdateTenantRequest>({
     name: '',
     description: '',
-    plan: 'free',
     status: 'active',
     settings: {
       max_users: 100,
@@ -57,7 +53,6 @@ const EditTenant: React.FC = () => {
       setFormData({
         name: response.name,
         description: response.description || '',
-        plan: response.plan,
         status: response.status,
         settings: response.settings || {
           max_users: 100,
@@ -131,17 +126,6 @@ const EditTenant: React.FC = () => {
     return <PBadge variant={config.variant}>{config.text}</PBadge>
   }
 
-  const getPlanBadge = (plan: string) => {
-    const planConfig = {
-      free: { variant: 'default' as const, text: '免费版' },
-      basic: { variant: 'info' as const, text: '基础版' },
-      premium: { variant: 'purple' as const, text: '高级版' },
-      enterprise: { variant: 'warning' as const, text: '企业版' }
-    }
-    const config = planConfig[plan as keyof typeof planConfig] || planConfig.free
-    return <PBadge variant={config.variant}>{config.text}</PBadge>
-  }
-
   if (loading) {
     return (
       <AdminLayout title="编辑租户">
@@ -197,8 +181,6 @@ const EditTenant: React.FC = () => {
                   <span className="text-sm text-gray-500">代码: {tenant.code}</span>
                   <span className="text-gray-300">•</span>
                   {getStatusBadge(tenant.status)}
-                  <span className="text-gray-300">•</span>
-                  {getPlanBadge(tenant.plan)}
                 </div>
               </div>
             </div>
@@ -246,20 +228,6 @@ const EditTenant: React.FC = () => {
                     rows={3}
                     placeholder="租户描述信息..."
                   />
-                </div>
-
-                <div>
-                  <PSelect
-                    label="套餐"
-                    name="plan"
-                    value={formData.plan}
-                    onChange={handleInputChange}
-                  >
-                    <option value="free">免费版</option>
-                    <option value="basic">基础版</option>
-                    <option value="premium">高级版</option>
-                    <option value="enterprise">企业版</option>
-                  </PSelect>
                 </div>
 
                 <div>

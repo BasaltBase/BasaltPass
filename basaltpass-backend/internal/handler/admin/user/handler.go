@@ -59,6 +59,32 @@ func GetUserHandler(c *fiber.Ctx) error {
 	return c.JSON(response)
 }
 
+// GetUserSummaryHandler 获取用户摘要
+// GET /tenant/users/:id/summary
+func GetUserSummaryHandler(c *fiber.Ctx) error {
+	userIDStr := c.Params("id")
+	userID, err := strconv.ParseUint(userIDStr, 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "无效的用户ID",
+		})
+	}
+
+	response, err := adminUserService.GetUserSummary(uint(userID))
+	if err != nil {
+		if err.Error() == "用户不存在" {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(response)
+}
+
 // UpdateUserHandler 更新用户信息
 // PUT /tenant/users/:id
 func UpdateUserHandler(c *fiber.Ctx) error {

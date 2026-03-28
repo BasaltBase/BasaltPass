@@ -431,7 +431,6 @@ func ensureDefaultTenant() {
 			Code:        "default",
 			Description: "Default tenant for BasaltPass",
 			Status:      "active",
-			Plan:        "free",
 			// 不设置Metadata字段，让GORM使用默认值
 		}
 		if err := db.Create(&defaultTenant).Error; err != nil {
@@ -1074,7 +1073,6 @@ func seedDevData() error {
 			Code:        fmt.Sprintf("tenant_demo_%d", i),
 			Description: "Seeded tenant for development",
 			Status:      model.TenantStatusActive,
-			Plan:        model.TenantPlanFree,
 		}
 		if err := db.Create(&t).Error; err != nil {
 			log.Printf("[Seed][tenant] create failed: %v", err)

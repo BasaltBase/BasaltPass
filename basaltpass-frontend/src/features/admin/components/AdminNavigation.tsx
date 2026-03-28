@@ -62,6 +62,7 @@ const navigationItems: NavigationItem[] = [
     icon: BuildingOfficeIcon,
     children: [
       { name: '租户列表', href: ROUTES.admin.tenants, icon: BuildingOfficeIcon },
+      { name: '创建租户', href: ROUTES.admin.tenantsCreate, icon: BuildingOfficeIcon },
     ]
   },
   {

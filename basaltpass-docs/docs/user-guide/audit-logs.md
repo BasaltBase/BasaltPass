@@ -20,4 +20,4 @@ Tenant Admins can view logs in the **Console** under **Audit Logs**.
 -   Filter by Actor (User).
 -   Filter by Action Type.
 
-Logs are retained based on the tenant's subscription plan (e.g., 30 days, 1 year).
+Logs are retained according to the platform's configured audit retention policy.

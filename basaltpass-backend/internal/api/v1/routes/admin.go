@@ -66,6 +66,7 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 	adminUserGroup.Post("/", adminUser.CreateUserHandler)                           // /tenant/users
 	adminUserGroup.Get("/stats", adminUser.GetUserStatsHandler)                     // /tenant/users/stats
 	adminUserGroup.Get("/:id", adminUser.GetUserHandler)                            // /tenant/users/:id
+	adminUserGroup.Get("/:id/summary", adminUser.GetUserSummaryHandler)             // /tenant/users/:id/summary
 	adminUserGroup.Put("/:id", adminUser.UpdateUserHandler)                         // /tenant/users/:id
 	adminUserGroup.Delete("/:id", adminUser.DeleteUserHandler)                      // /tenant/users/:id
 	adminUserGroup.Post("/:id/ban", adminUser.BanUserHandler)                       // /tenant/users/:id/ban
@@ -78,6 +79,7 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 	aliasUserGroup.Post("/", adminUser.CreateUserHandler)
 	aliasUserGroup.Get("/stats", adminUser.GetUserStatsHandler)
 	aliasUserGroup.Get("/:id", adminUser.GetUserHandler)
+	aliasUserGroup.Get("/:id/summary", adminUser.GetUserSummaryHandler)
 	aliasUserGroup.Put("/:id", adminUser.UpdateUserHandler)
 	aliasUserGroup.Delete("/:id", adminUser.DeleteUserHandler)
 	aliasUserGroup.Post("/:id/ban", adminUser.BanUserHandler)
@@ -104,9 +106,11 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 
 	// 租户用户管理
 	adminTenantGroup.Get("/:id/users", adminTenant.GetTenantUsersHandler)              // /tenant/tenants/:id/users
+	adminTenantGroup.Get("/:id/users/:userId", adminTenant.GetTenantUserDetailHandler) // /tenant/tenants/:id/users/:userId
 	adminTenantGroup.Delete("/:id/users/:userId", adminTenant.RemoveTenantUserHandler) // /tenant/tenants/:id/users/:userId
 	// alias 租户用户管理
 	aliasTenantGroup.Get("/:id/users", adminTenant.GetTenantUsersHandler)
+	aliasTenantGroup.Get("/:id/users/:userId", adminTenant.GetTenantUserDetailHandler)
 	aliasTenantGroup.Delete("/:id/users/:userId", adminTenant.RemoveTenantUserHandler)
 
 	// 钱包管理路由

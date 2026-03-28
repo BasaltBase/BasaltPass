@@ -183,6 +183,32 @@ func GetTenantUsersHandler(c *fiber.Ctx) error {
 	return c.JSON(response)
 }
 
+// GetTenantUserDetailHandler 获取租户用户详情
+func GetTenantUserDetailHandler(c *fiber.Ctx) error {
+	tenantID, err := strconv.ParseUint(c.Params("id"), 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "无效的租户ID",
+		})
+	}
+
+	userID, err := strconv.ParseUint(c.Params("userId"), 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "无效的用户ID",
+		})
+	}
+
+	response, err := adminTenantService.GetTenantUserDetail(uint(tenantID), uint(userID))
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(response)
+}
+
 // RemoveTenantUserHandler 移除租户用户
 func RemoveTenantUserHandler(c *fiber.Ctx) error {
 	tenantID, err := strconv.ParseUint(c.Params("id"), 10, 32)
