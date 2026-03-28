@@ -5,7 +5,7 @@
 <meta name="generator" content="Docusaurus v3.9.2">
 <title data-rh="true">租户隔离功能实现完成 | BasaltPass</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://basaltbase.github.io/BasaltPass/zh-Hans/img/logo.svg"><meta data-rh="true" name="twitter:image" content="https://basaltbase.github.io/BasaltPass/zh-Hans/img/logo.svg"><meta data-rh="true" property="og:url" content="https://basaltbase.github.io/BasaltPass/zh-Hans/docs/project/TENANT_ISOLATION_COMPLETED"><meta data-rh="true" property="og:locale" content="zh_Hans"><meta data-rh="true" property="og:locale:alternate" content="en"><meta data-rh="true" name="docusaurus_locale" content="zh-Hans"><meta data-rh="true" name="docsearch:language" content="zh-Hans"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="租户隔离功能实现完成 | BasaltPass"><meta data-rh="true" name="description" content="✅ 已完成的工作"><meta data-rh="true" property="og:description" content="✅ 已完成的工作"><link data-rh="true" rel="icon" href="/BasaltPass/zh-Hans/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://basaltbase.github.io/BasaltPass/zh-Hans/docs/project/TENANT_ISOLATION_COMPLETED"><link data-rh="true" rel="alternate" href="https://basaltbase.github.io/BasaltPass/docs/project/TENANT_ISOLATION_COMPLETED" hreflang="en"><link data-rh="true" rel="alternate" href="https://basaltbase.github.io/BasaltPass/zh-Hans/docs/project/TENANT_ISOLATION_COMPLETED" hreflang="zh-Hans"><link data-rh="true" rel="alternate" href="https://basaltbase.github.io/BasaltPass/docs/project/TENANT_ISOLATION_COMPLETED" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"租户隔离功能实现完成","item":"https://basaltbase.github.io/BasaltPass/zh-Hans/docs/project/TENANT_ISOLATION_COMPLETED"}]}</script><link rel="alternate" type="application/rss+xml" href="/BasaltPass/zh-Hans/blog/rss.xml" title="BasaltPass RSS Feed">
 <link rel="alternate" type="application/atom+xml" href="/BasaltPass/zh-Hans/blog/atom.xml" title="BasaltPass Atom Feed"><link rel="stylesheet" href="/BasaltPass/zh-Hans/assets/css/styles.898b43ab.css">
-<script src="/BasaltPass/zh-Hans/assets/js/runtime~main.279341c9.js" defer="defer"></script>
+<script src="/BasaltPass/zh-Hans/assets/js/runtime~main.4e6913ac.js" defer="defer"></script>
 <script src="/BasaltPass/zh-Hans/assets/js/main.32ac49a6.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -174,7 +174,7 @@
 <h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="测试场景">测试场景<a href="#测试场景" class="hash-link" aria-label="测试场景的直接链接" title="测试场景的直接链接" translate="no">​</a></h3>
 <h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="场景1租户登录">场景1：租户登录<a href="#场景1租户登录" class="hash-link" aria-label="场景1：租户登录的直接链接" title="场景1：租户登录的直接链接" translate="no">​</a></h4>
 <ol>
-<li class="">访问 <code>http://localhost:5173/tenant/tenant-a/login</code></li>
+<li class="">访问 <code>http://localhost:5104/tenant/tenant-a/login</code></li>
 <li class="">使用tenant A的用户登录</li>
 <li class="">验证登录成功</li>
 </ol>
@@ -187,13 +187,13 @@
 <h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="场景3普通用户平台登录失败">场景3：普通用户平台登录失败<a href="#场景3普通用户平台登录失败" class="hash-link" aria-label="场景3：普通用户平台登录失败的直接链接" title="场景3：普通用户平台登录失败的直接链接" translate="no">​</a></h4>
 <ol>
 <li class="">使用普通用户凭据</li>
-<li class="">访问 <code>http://localhost:5173/login</code>（平台登录）</li>
+<li class="">访问 <code>http://localhost:5104/login</code>（平台登录）</li>
 <li class="">验证收到错误：&quot;普通用户不能登录平台&quot;</li>
 </ol>
 <h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="场景4admin平台登录成功">场景4：Admin平台登录成功<a href="#场景4admin平台登录成功" class="hash-link" aria-label="场景4：Admin平台登录成功的直接链接" title="场景4：Admin平台登录成功的直接链接" translate="no">​</a></h4>
 <ol>
 <li class="">使用admin用户凭据</li>
-<li class="">访问 <code>http://localhost:5173/login</code></li>
+<li class="">访问 <code>http://localhost:5104/login</code></li>
 <li class="">验证登录成功</li>
 </ol>
 <h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="场景5oauth授权租户验证">场景5：OAuth授权租户验证<a href="#场景5oauth授权租户验证" class="hash-link" aria-label="场景5：OAuth授权租户验证的直接链接" title="场景5：OAuth授权租户验证的直接链接" translate="no">​</a></h4>
