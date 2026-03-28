@@ -105,7 +105,6 @@ func RunMigrations() {
 		&model.AuditLog{},
 		&model.LoginLog{},
 		&model.LoginHistory{},
-		&model.OAuthAccount{},
 		&model.PasswordReset{},
 		&model.Passkey{},
 		&model.TenantWebAuthnConfig{},

@@ -29,10 +29,6 @@ func RegisterOAuthRoutes(v1 fiber.Router) {
 	 * 和会话管理等功能。
 	 */
 
-	oauthGroup := v1.Group("/auth/oauth")
-	oauthGroup.Get(":provider/login", oauth.LoginHandler)
-	oauthGroup.Get(":provider/callback", oauth.CallbackHandler)
-
 	oauthServerGroup := v1.Group("/oauth")
 	oauthServerGroup.Get("/authorize", oauth.AuthorizeHandler)
 	oauthServerGroup.Post("/consent", oauth.ConsentHandler)

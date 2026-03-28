@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type ReactNode } from 'react'
 import PSkeleton from '@ui/PSkeleton'
 import { Link, useParams } from 'react-router-dom'
 import { ROUTES } from '@constants'
@@ -10,7 +10,7 @@ import { loginWithPasskey2FAFlow } from '@api/oauth/passkey'
 import { isPasskeySupported } from '@utils/webauthn'
 import { resolveSafeRedirectTarget } from '@utils/redirect'
 import { fetchPublicTenantByCode } from '@api/publicTenant'
-import { EyeIcon, EyeSlashIcon, ShieldCheckIcon, EnvelopeIcon, KeyIcon } from '@heroicons/react/24/outline'
+import { ShieldCheckIcon, EnvelopeIcon, KeyIcon } from '@heroicons/react/24/outline'
 import { PInput, PButton, PCheckbox, PAlert } from '@ui'
 
 /**
@@ -234,36 +234,58 @@ function TenantLogin() {
     )
   }
 
-  if (!tenantInfo && !loadingTenant) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-8 text-center">
-          <h2 className="text-2xl font-bold text-red-600 mb-4">租户不存在</h2>
-          <p className="text-gray-600 mb-6">该租户不存在或已被禁用，请检查您的访问链接。</p>
-          <Link to={ROUTES.user.login} className="text-blue-600 hover:text-blue-700 font-medium">
-            返回平台登录
-          </Link>
+  const renderShell = (subtitle: string, title: string, description: ReactNode, content: ReactNode) => (
+    <div className="min-h-screen bg-gray-50 px-4 py-10 sm:px-6 lg:px-8">
+      <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-md items-center">
+        <div className="w-full rounded-2xl border border-gray-200 bg-white px-6 py-8 shadow-sm sm:px-8">
+          <div className="space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-900">
+                <span className="text-sm font-semibold text-white">{tenantInfo?.name?.slice(0, 1) || '?'}</span>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">{tenantInfo?.name || tenantCode}</p>
+                <p className="text-xs text-gray-500">{subtitle}</p>
+              </div>
+            </div>
+
+            <div>
+              <h2 className="text-2xl font-semibold text-gray-900">{title}</h2>
+              <div className="mt-2 text-sm text-gray-600">{description}</div>
+            </div>
+          </div>
+
+          {content}
         </div>
       </div>
+    </div>
+  )
+
+  if (!tenantInfo && !loadingTenant) {
+    return renderShell(
+      '租户登录',
+      '租户不存在',
+      <>该租户不存在或已被禁用，请检查您的访问链接。</>,
+      <div className="mt-6">
+        <Link to={ROUTES.user.login} className="font-medium text-blue-600 hover:text-blue-500">
+          返回平台登录
+        </Link>
+      </div>,
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-left text-4xl font-extrabold text-gray-900">
-            {tenantInfo?.name}
-          </h2>
-          <p className="mt-2 text-left text-sm text-gray-600">
-            租户登录
-          </p>
-        </div>
-
-        {error && <PAlert variant="error" title="登录失败" message={error} />}
+    renderShell(
+      '租户登录',
+      '欢迎回来',
+      <>
+        使用邮箱或手机号登录，继续访问 <span className="font-medium text-gray-900">{tenantInfo?.name}</span>。
+      </>,
+      <>
+        {error && <div className="mt-6"><PAlert variant="error" title="登录失败" message={error} /></div>}
 
         {step === 1 && (
-          <form className="mt-8 space-y-6" onSubmit={submitPasswordLogin}>
+          <form className="mt-6 space-y-6" onSubmit={submitPasswordLogin}>
             <div className="space-y-4">
               <PInput
                 id="identifier"
@@ -306,7 +328,7 @@ function TenantLogin() {
             </div>
 
             <div>
-              <PButton type="submit" loading={isLoading} variant="gradient" fullWidth>
+              <PButton type="submit" loading={isLoading} variant="primary" fullWidth>
                 登录
               </PButton>
             </div>
@@ -314,7 +336,7 @@ function TenantLogin() {
         )}
 
         {step === 2 && (
-          <form className="mt-8 space-y-6" onSubmit={submit2FAVerify}>
+          <form className="mt-6 space-y-6" onSubmit={submit2FAVerify}>
             {error && <PAlert variant="error" message={error} />}
 
             <div className="text-center">
@@ -401,16 +423,16 @@ function TenantLogin() {
         <div className="mt-6 flex items-center justify-between text-sm text-gray-600">
           <Link 
             to={`/auth/tenant/${tenantCode}/register`}
-            className="font-medium text-indigo-600 hover:text-indigo-500"
+            className="font-medium text-blue-600 hover:text-blue-500"
           >
             注册新账户
           </Link>
-          <Link to={ROUTES.user.login} className="text-blue-600 hover:text-blue-700">
+          <Link to={ROUTES.user.login} className="text-blue-600 hover:text-blue-500">
             使用平台账号登录
           </Link>
         </div>
-      </div>
-    </div>
+      </>,
+    )
   )
 }
 
