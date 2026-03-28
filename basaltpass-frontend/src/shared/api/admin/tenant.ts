@@ -18,8 +18,10 @@ export interface AdminCreateTenantRequest {
   name: string;
   code: string;
   description?: string;
-  plan: string;
   owner_email: string;
+  max_apps: number;
+  max_users: number;
+  max_tokens_per_hour: number;
   settings?: TenantSettings;
 }
 
@@ -34,6 +36,7 @@ export interface AdminUpdateTenantRequest {
 export interface TenantSettings {
   max_users: number;
   max_apps: number;
+  max_tokens_per_hour: number;
   max_storage: number; // MB
   enable_api: boolean;
   enable_sso: boolean;

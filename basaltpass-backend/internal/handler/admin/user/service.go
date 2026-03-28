@@ -58,6 +58,11 @@ func (s *AdminUserService) GetUserList(req AdminUserListRequest) (*UserListRespo
 	if req.TenantID != nil {
 		query = query.Where("tenant_id = ?", *req.TenantID)
 	}
+	if req.UnassignedOnly {
+		query = query.
+			Where("tenant_id = ?", 0).
+			Where("NOT EXISTS (SELECT 1 FROM tenant_users tu WHERE tu.user_id = system_auth_users.id)")
+	}
 
 	// 搜索条件
 	if req.Search != "" {

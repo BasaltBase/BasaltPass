@@ -85,6 +85,7 @@ export interface UserListParams {
   search?: string
   status?: 'all' | 'active' | 'banned' | 'verified' | 'unverified'
   tenant_id?: number
+  unassigned_only?: boolean
   role?: string
   sort_by?: 'created_at' | 'last_login' | 'email'
   sort_order?: 'asc' | 'desc'

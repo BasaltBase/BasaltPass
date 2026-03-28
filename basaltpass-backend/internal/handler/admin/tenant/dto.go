@@ -21,12 +21,14 @@ type AdminTenantListRequest struct {
 
 // AdminCreateTenantRequest 管理员创建租户请求
 type AdminCreateTenantRequest struct {
-	Name        string         `json:"name" validate:"required,min=2,max=100"`
-	Code        string         `json:"code" validate:"required,min=2,max=50,alphanum"`
-	Description string         `json:"description" validate:"max=500"`
-	Plan        string         `json:"plan" validate:"required,oneof=free pro enterprise"`
-	OwnerEmail  string         `json:"owner_email" validate:"required,email"`
-	Settings    TenantSettings `json:"settings"`
+	Name             string         `json:"name" validate:"required,min=2,max=100"`
+	Code             string         `json:"code" validate:"required,min=2,max=50"`
+	Description      string         `json:"description" validate:"max=500"`
+	OwnerEmail       string         `json:"owner_email" validate:"required,email"`
+	MaxApps          int            `json:"max_apps" validate:"required,min=1"`
+	MaxUsers         int            `json:"max_users" validate:"required,min=1"`
+	MaxTokensPerHour int            `json:"max_tokens_per_hour" validate:"required,min=1"`
+	Settings         TenantSettings `json:"settings"`
 }
 
 // AdminUpdateTenantRequest 管理员更新租户请求
@@ -119,12 +121,13 @@ type AdminTenantUser struct {
 
 // TenantSettings 租户设置
 type TenantSettings struct {
-	MaxUsers    int  `json:"max_users"`
-	MaxApps     int  `json:"max_apps"`
-	MaxStorage  int  `json:"max_storage"` // MB
-	EnableAPI   bool `json:"enable_api"`
-	EnableSSO   bool `json:"enable_sso"`
-	EnableAudit bool `json:"enable_audit"`
+	MaxUsers         int  `json:"max_users"`
+	MaxApps          int  `json:"max_apps"`
+	MaxTokensPerHour int  `json:"max_tokens_per_hour"`
+	MaxStorage       int  `json:"max_storage"` // MB
+	EnableAPI        bool `json:"enable_api"`
+	EnableSSO        bool `json:"enable_sso"`
+	EnableAudit      bool `json:"enable_audit"`
 }
 
 // TenantStats 租户统计

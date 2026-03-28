@@ -30,6 +30,7 @@ const EditTenant: React.FC = () => {
     settings: {
       max_users: 100,
       max_apps: 10,
+      max_tokens_per_hour: 1000,
       max_storage: 1024,
       enable_api: true,
       enable_sso: false,
@@ -61,6 +62,7 @@ const EditTenant: React.FC = () => {
         settings: response.settings || {
           max_users: 100,
           max_apps: 10,
+          max_tokens_per_hour: 1000,
           max_storage: 1024,
           enable_api: true,
           enable_sso: false,

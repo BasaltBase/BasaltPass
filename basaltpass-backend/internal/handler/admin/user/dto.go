@@ -87,16 +87,17 @@ type BanUserRequest struct {
 
 // AdminUserListRequest 管理员用户列表查询请求
 type AdminUserListRequest struct {
-	Page         int        `query:"page"`
-	Limit        int        `query:"limit"`
-	Search       string     `query:"search"`        // 搜索关键词（邮箱、电话、昵称）
-	Status       string     `query:"status"`        // 状态筛选：all, active, banned, verified, unverified
-	TenantID     *uint      `query:"tenant_id"`     // 按租户筛选
-	Role         string     `query:"role"`          // 按角色筛选
-	SortBy       string     `query:"sort_by"`       // 排序字段：created_at, last_login, email
-	SortOrder    string     `query:"sort_order"`    // 排序顺序：asc, desc
-	CreatedStart *time.Time `query:"created_start"` // 创建时间筛选开始
-	CreatedEnd   *time.Time `query:"created_end"`   // 创建时间筛选结束
+	Page           int        `query:"page"`
+	Limit          int        `query:"limit"`
+	Search         string     `query:"search"`          // 搜索关键词（邮箱、电话、昵称）
+	Status         string     `query:"status"`          // 状态筛选：all, active, banned, verified, unverified
+	TenantID       *uint      `query:"tenant_id"`       // 按租户筛选
+	UnassignedOnly bool       `query:"unassigned_only"` // 仅查询未分配租户的用户
+	Role           string     `query:"role"`            // 按角色筛选
+	SortBy         string     `query:"sort_by"`         // 排序字段：created_at, last_login, email
+	SortOrder      string     `query:"sort_order"`      // 排序顺序：asc, desc
+	CreatedStart   *time.Time `query:"created_start"`   // 创建时间筛选开始
+	CreatedEnd     *time.Time `query:"created_end"`     // 创建时间筛选结束
 }
 
 // UserStatsResponse 用户统计响应

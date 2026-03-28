@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"regexp"
+	"strings"
 	"time"
 
 	admindto "basaltpass-backend/internal/dto/tenant"
@@ -14,6 +16,8 @@ import (
 
 // AdminTenantService 管理端租户服务
 type AdminTenantService struct{ db *gorm.DB }
+
+var tenantCodePattern = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
 
 func NewAdminTenantService(db *gorm.DB) *AdminTenantService { return &AdminTenantService{db: db} }
 
@@ -103,6 +107,8 @@ func (s *AdminTenantService) GetTenantDetail(id uint) (*admindto.AdminTenantDeta
 	s.db.Model(&model.App{}).Where("tenant_id = ?", id).Count(&appCount)
 	var activeAppCount int64
 	s.db.Model(&model.App{}).Where("tenant_id = ? AND status = ?", id, model.AppStatusActive).Count(&activeAppCount)
+	var quota model.TenantQuota
+	s.db.Where("tenant_id = ?", id).First(&quota)
 
 	// Recent users
 	var tas []model.TenantUser
@@ -121,7 +127,12 @@ func (s *AdminTenantService) GetTenantDetail(id uint) (*admindto.AdminTenantDeta
 
 	base := admindto.AdminTenantListResponse{ID: tenant.ID, Name: tenant.Name, Code: tenant.Code, Description: tenant.Description, Plan: string(tenant.Plan), Status: string(tenant.Status), UserCount: adminCount, AppCount: appCount, CreatedAt: tenant.CreatedAt, UpdatedAt: tenant.UpdatedAt}
 	stats := admindto.TenantStats{TotalUsers: adminCount, ActiveUsers: adminCount, TotalApps: appCount, ActiveApps: activeAppCount}
-	return &admindto.AdminTenantDetailResponse{AdminTenantListResponse: base, Settings: admindto.TenantSettings{}, Stats: stats, RecentUsers: recentUsers, RecentApps: recentApps}, nil
+	settings := admindto.TenantSettings{
+		MaxUsers:         quota.MaxUsers,
+		MaxApps:          quota.MaxApps,
+		MaxTokensPerHour: quota.MaxTokensPerHour,
+	}
+	return &admindto.AdminTenantDetailResponse{AdminTenantListResponse: base, Settings: settings, Stats: stats, RecentUsers: recentUsers, RecentApps: recentApps}, nil
 }
 
 // CreateTenant 创建租户（仅最小实现）
@@ -131,6 +142,13 @@ func (s *AdminTenantService) CreateTenant(req admindto.AdminCreateTenantRequest)
 	}
 	if req.OwnerEmail == "" {
 		return nil, errors.New("租户所有者邮箱必填")
+	}
+	req.Code = strings.ToLower(strings.TrimSpace(req.Code))
+	if !tenantCodePattern.MatchString(req.Code) {
+		return nil, errors.New("租户代码只能包含小写字母、数字和连字符")
+	}
+	if req.MaxApps <= 0 || req.MaxUsers <= 0 || req.MaxTokensPerHour <= 0 {
+		return nil, errors.New("租户配额必须大于 0")
 	}
 
 	// 唯一性检查
@@ -157,9 +175,19 @@ func (s *AdminTenantService) CreateTenant(req admindto.AdminCreateTenantRequest)
 	var tenant *model.Tenant
 	err := s.db.Transaction(func(tx *gorm.DB) error {
 		// 创建租户
-		tenant = &model.Tenant{Name: req.Name, Code: req.Code, Description: req.Description, Plan: model.TenantPlan(req.Plan)}
+		tenant = &model.Tenant{Name: req.Name, Code: req.Code, Description: req.Description, Plan: model.TenantPlanFree}
 		if err := tx.Create(tenant).Error; err != nil {
 			return fmt.Errorf("创建租户失败: %w", err)
+		}
+
+		quota := &model.TenantQuota{
+			TenantID:         tenant.ID,
+			MaxApps:          req.MaxApps,
+			MaxUsers:         req.MaxUsers,
+			MaxTokensPerHour: req.MaxTokensPerHour,
+		}
+		if err := tx.Create(quota).Error; err != nil {
+			return fmt.Errorf("创建租户配额失败: %w", err)
 		}
 
 		// 绑定所有者到tenant_user表，角色为owner

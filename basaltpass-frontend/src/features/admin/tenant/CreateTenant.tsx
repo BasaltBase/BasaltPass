@@ -1,8 +1,7 @@
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { 
   BuildingOfficeIcon, 
-  CreditCardIcon,
   DocumentTextIcon,
   CogIcon,
   ExclamationTriangleIcon,
@@ -10,9 +9,18 @@ import {
   UserIcon
 } from '@heroicons/react/24/outline'
 import AdminLayout from '@features/admin/components/AdminLayout'
-import { EntitySearchSelect, BaseEntityItem, PInput, PSelect, PTextarea, PButton } from '@ui'
+import { EntitySearchSelect, BaseEntityItem, PInput, PTextarea, PButton } from '@ui'
 import { adminTenantApi, AdminCreateTenantRequest, TenantSettings } from '@api/admin/tenant'
 import { ROUTES } from '@constants'
+
+const slugifyTenantCode = (name: string) => {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .replace(/-{2,}/g, '-')
+}
 
 const CreateTenant: React.FC = () => {
   const navigate = useNavigate()
@@ -20,11 +28,14 @@ const CreateTenant: React.FC = () => {
     name: '',
     code: '',
     description: '',
-    plan: 'free',
     owner_email: '',
+    max_apps: 10,
+    max_users: 100,
+    max_tokens_per_hour: 1000,
     settings: {
       max_users: 100,
       max_apps: 10,
+      max_tokens_per_hour: 1000,
       max_storage: 1024,
       enable_api: true,
       enable_sso: false,
@@ -35,23 +46,57 @@ const CreateTenant: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [codeError, setCodeError] = useState<string | null>(null)
+  const [isCodeManuallyEdited, setIsCodeManuallyEdited] = useState(false)
+
+  const generatedCodePlaceholder = useMemo(() => slugifyTenantCode(formData.name), [formData.name])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
+    setFormData(prev => {
+      if (name === 'name') {
+        const nextName = value
+        const nextCode = !isCodeManuallyEdited ? slugifyTenantCode(nextName) : prev.code
+
+        return {
+          ...prev,
+          name: nextName,
+          code: nextCode
+        }
+      }
+
+      if (name === 'code') {
+        setIsCodeManuallyEdited(true)
+      }
+
+      return {
+        ...prev,
+        [name]: value
+      }
+    })
 
     // 实时验证代码格式
-    if (name === 'code') {
+    if (name === 'name' && !isCodeManuallyEdited) {
+      validateCode(slugifyTenantCode(value))
+    } else if (name === 'code') {
       validateCode(value)
     }
   }
 
   const handleSettingChange = (key: keyof TenantSettings, value: any) => {
+    const topLevelUpdates: Partial<AdminCreateTenantRequest> = {}
+    if (key === 'max_apps') {
+      topLevelUpdates.max_apps = value
+    }
+    if (key === 'max_users') {
+      topLevelUpdates.max_users = value
+    }
+    if (key === 'max_tokens_per_hour') {
+      topLevelUpdates.max_tokens_per_hour = value
+    }
+
     setFormData(prev => ({
       ...prev,
+      ...topLevelUpdates,
       settings: {
         ...prev.settings!,
         [key]: value
@@ -65,10 +110,10 @@ const CreateTenant: React.FC = () => {
       return
     }
 
-    // 验证代码格式：只允许字母和数字
-    const codeRegex = /^[a-zA-Z0-9]+$/
+    // 验证代码格式：只允许小写字母、数字和连字符
+    const codeRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
     if (!codeRegex.test(code)) {
-      setCodeError('代码只能包含字母和数字')
+      setCodeError('代码只能包含小写字母、数字和连字符')
     } else {
       setCodeError(null)
     }
@@ -103,7 +148,7 @@ const CreateTenant: React.FC = () => {
       
       // 使用选中的用户邮箱或手动输入的邮箱
       const ownerEmail = selectedOwner.length > 0 
-        ? selectedOwner[0].subtitle || selectedOwner[0].raw.email 
+        ? selectedOwner[0].raw.email
         : formData.owner_email
       
       const requestData = {
@@ -127,28 +172,6 @@ const CreateTenant: React.FC = () => {
 
   const handleCancel = () => {
     navigate(ROUTES.admin.tenants)
-  }
-
-  const planOptions = [
-    { value: 'free', label: '免费版', description: '基础功能，适合个人用户' },
-    { value: 'basic', label: '基础版', description: '扩展功能，适合小团队' },
-    { value: 'premium', label: '高级版', description: '完整功能，适合中型企业' },
-    { value: 'enterprise', label: '企业版', description: '定制化功能，适合大型企业' }
-  ]
-
-  const getPlanBadgeColor = (plan: string) => {
-    switch (plan) {
-      case 'free':
-        return 'bg-gray-100 text-gray-800'
-      case 'basic':
-        return 'bg-blue-100 text-blue-800'
-      case 'premium':
-        return 'bg-purple-100 text-purple-800'
-      case 'enterprise':
-        return 'bg-yellow-100 text-yellow-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
   }
 
   return (
@@ -214,12 +237,12 @@ const CreateTenant: React.FC = () => {
                   name="code"
                   value={formData.code}
                   onChange={handleInputChange}
-                  placeholder="tenant-code"
+                  placeholder={generatedCodePlaceholder || 'tenant-code'}
                   required
                   error={codeError || undefined}
                 />
                 {!codeError && (
-                  <p className="text-xs text-gray-500">租户的唯一标识符，只能包含字母和数字</p>
+                  <p className="text-xs text-gray-500">会根据租户名称自动生成，支持小写字母、数字和连字符</p>
                 )}
               </div>
 
@@ -233,6 +256,7 @@ const CreateTenant: React.FC = () => {
                   <EntitySearchSelect
                     entity="user"
                     context="admin"
+                    adminUserParams={{ unassigned_only: true }}
                     value={selectedOwner}
                     onChange={setSelectedOwner}
                     placeholder="搜索用户名或邮箱..."
@@ -277,36 +301,40 @@ const CreateTenant: React.FC = () => {
               </div>
             </div>
 
-            {/* 套餐选择 */}
+            {/* 配额设置 */}
             <div className="space-y-6">
               <div className="border-b border-gray-200 pb-4">
                 <h3 className="text-lg font-medium text-gray-900 flex items-center">
-                  <CreditCardIcon className="h-5 w-5 mr-2 text-indigo-500" />
-                  套餐选择
+                  <CogIcon className="h-5 w-5 mr-2 text-indigo-500" />
+                  租户配额
                 </h3>
               </div>
 
-              <div className="space-y-2">
-                <PSelect
-                  label={<span>选择套餐 <span className="text-red-500 ml-1">*</span></span>}
-                  id="plan"
-                  name="plan"
-                  value={formData.plan}
-                  onChange={handleInputChange}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <PInput
+                  label={<span>最大应用数 <span className="text-red-500 ml-1">*</span></span>}
+                  type="number"
+                  min={1}
+                  value={formData.max_apps}
+                  onChange={(e) => handleSettingChange('max_apps', Math.max(1, parseInt(e.target.value, 10) || 1))}
                   required
-                >
-                  {planOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label} - {option.description}
-                    </option>
-                  ))}
-                </PSelect>
-                <div className="flex items-center mt-2">
-                  <span className="text-sm text-gray-500 mr-2">当前选择:</span>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPlanBadgeColor(formData.plan)}`}>
-                    {planOptions.find(p => p.value === formData.plan)?.label}
-                  </span>
-                </div>
+                />
+                <PInput
+                  label={<span>最大用户数 <span className="text-red-500 ml-1">*</span></span>}
+                  type="number"
+                  min={1}
+                  value={formData.max_users}
+                  onChange={(e) => handleSettingChange('max_users', Math.max(1, parseInt(e.target.value, 10) || 1))}
+                  required
+                />
+                <PInput
+                  label={<span>每小时最大 Token 数 <span className="text-red-500 ml-1">*</span></span>}
+                  type="number"
+                  min={1}
+                  value={formData.max_tokens_per_hour}
+                  onChange={(e) => handleSettingChange('max_tokens_per_hour', Math.max(1, parseInt(e.target.value, 10) || 1))}
+                  required
+                />
               </div>
             </div>
 
