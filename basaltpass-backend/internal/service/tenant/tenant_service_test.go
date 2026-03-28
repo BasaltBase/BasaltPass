@@ -18,7 +18,16 @@ func setupTenantServiceTestDB(t *testing.T) *gorm.DB {
 		t.Fatalf("open sqlite failed: %v", err)
 	}
 
-	if err := db.AutoMigrate(&model.User{}, &model.Tenant{}, &model.TenantUser{}); err != nil {
+	if err := db.AutoMigrate(
+		&model.User{},
+		&model.Tenant{},
+		&model.TenantUser{},
+		&model.TenantQuota{},
+		&model.TenantRbacPermission{},
+		&model.TenantRbacRole{},
+		&model.TenantRbacRolePermission{},
+		&model.TenantUserRbacRole{},
+	); err != nil {
 		t.Fatalf("auto migrate failed: %v", err)
 	}
 
@@ -70,8 +79,8 @@ func TestGetUserTenantsIncludesPrimaryTenantForRegularUser(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected user_role to be string, got %T", roleValue)
 	}
-	if role != string(model.TenantRoleMember) {
-		t.Fatalf("expected user_role %q, got %q", model.TenantRoleMember, role)
+	if role != string(model.TenantRoleUser) {
+		t.Fatalf("expected user_role %q, got %q", model.TenantRoleUser, role)
 	}
 }
 
@@ -118,11 +127,67 @@ func TestGetUserTenantsPrefersTenantUserRoleWhenPresent(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected user_role in metadata")
 	}
-	role, ok := roleValue.(model.TenantRole)
+	role, ok := roleValue.(string)
 	if !ok {
-		t.Fatalf("expected user_role to be model.TenantRole, got %T", roleValue)
+		t.Fatalf("expected user_role to be string, got %T", roleValue)
 	}
-	if role != model.TenantRoleOwner {
+	if role != string(model.TenantRoleOwner) {
 		t.Fatalf("expected user_role %q, got %q", model.TenantRoleOwner, role)
+	}
+}
+
+func TestCreateTenantBootstrapsTenantRBAC(t *testing.T) {
+	db := setupTenantServiceTestDB(t)
+
+	owner := model.User{
+		Email:        "creator@example.com",
+		PasswordHash: "x",
+	}
+	if err := db.Create(&owner).Error; err != nil {
+		t.Fatalf("create owner failed: %v", err)
+	}
+
+	svc := NewTenantService()
+	if _, err := svc.CreateTenant(owner.ID, &CreateTenantRequest{Name: "RBAC Tenant"}); err != nil {
+		t.Fatalf("CreateTenant failed: %v", err)
+	}
+
+	var tenant model.Tenant
+	if err := db.Where("name = ?", "RBAC Tenant").First(&tenant).Error; err != nil {
+		t.Fatalf("load tenant failed: %v", err)
+	}
+
+	var updatedOwner model.User
+	if err := db.First(&updatedOwner, owner.ID).Error; err != nil {
+		t.Fatalf("reload owner failed: %v", err)
+	}
+	if updatedOwner.TenantID != tenant.ID {
+		t.Fatalf("expected owner tenant_id to be %d, got %d", tenant.ID, updatedOwner.TenantID)
+	}
+
+	var permissionCount int64
+	if err := db.Model(&model.TenantRbacPermission{}).Where("tenant_id = ?", tenant.ID).Count(&permissionCount).Error; err != nil {
+		t.Fatalf("count permissions failed: %v", err)
+	}
+	if permissionCount == 0 {
+		t.Fatalf("expected bootstrapped tenant permissions")
+	}
+
+	var ownerRole model.TenantRbacRole
+	if err := db.Where("tenant_id = ? AND code = ?", tenant.ID, "owner").First(&ownerRole).Error; err != nil {
+		t.Fatalf("load owner role failed: %v", err)
+	}
+
+	var ownerAssignment model.TenantUserRbacRole
+	if err := db.Where("tenant_id = ? AND user_id = ? AND role_id = ?", tenant.ID, owner.ID, ownerRole.ID).First(&ownerAssignment).Error; err != nil {
+		t.Fatalf("expected owner rbac role assignment: %v", err)
+	}
+
+	var ownerPermissionLinks int64
+	if err := db.Model(&model.TenantRbacRolePermission{}).Where("role_id = ?", ownerRole.ID).Count(&ownerPermissionLinks).Error; err != nil {
+		t.Fatalf("count owner role permissions failed: %v", err)
+	}
+	if ownerPermissionLinks != permissionCount {
+		t.Fatalf("expected owner role to have all permissions, got %d of %d", ownerPermissionLinks, permissionCount)
 	}
 }

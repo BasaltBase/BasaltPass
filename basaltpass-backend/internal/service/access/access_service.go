@@ -27,23 +27,28 @@ func NewService() *Service {
 
 // ResolveTenantContext resolves a user's tenant context and validates tenant status.
 func (s *Service) ResolveTenantContext(userID uint, requestedTenantID uint) (uint, model.TenantRole, error) {
-	query := s.db.Where("user_id = ?", userID)
-	if requestedTenantID > 0 {
-		query = query.Where("tenant_id = ?", requestedTenantID)
-	} else {
-		query = query.Order("created_at ASC")
-	}
-
-	var tenantUser model.TenantUser
-	if err := query.First(&tenantUser).Error; err != nil {
+	var user model.User
+	if err := s.db.Select("id", "tenant_id").First(&user, userID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return 0, "", ErrNoTenantAssociation
+			return 0, "", ErrUserNotFound
 		}
 		return 0, "", err
 	}
 
+	if user.TenantID == 0 {
+		return 0, "", ErrNoTenantAssociation
+	}
+
+	tenantID := user.TenantID
+	if requestedTenantID > 0 {
+		if requestedTenantID != user.TenantID {
+			return 0, "", ErrInvalidTenantAssociation
+		}
+		tenantID = requestedTenantID
+	}
+
 	var tenant model.Tenant
-	if err := s.db.First(&tenant, tenantUser.TenantID).Error; err != nil {
+	if err := s.db.First(&tenant, tenantID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return 0, "", ErrInvalidTenantAssociation
 		}
@@ -51,18 +56,37 @@ func (s *Service) ResolveTenantContext(userID uint, requestedTenantID uint) (uin
 	}
 
 	if tenant.Status != model.TenantStatusActive {
-		return tenant.ID, tenantUser.Role, ErrInactiveTenant
+		return tenant.ID, model.TenantRoleUser, ErrInactiveTenant
 	}
 
-	return tenant.ID, tenantUser.Role, nil
+	role, err := s.GetTenantRole(userID, tenant.ID)
+	if err != nil {
+		if errors.Is(err, ErrTenantMembershipNotFound) {
+			return tenant.ID, model.TenantRoleUser, nil
+		}
+		return 0, "", err
+	}
+
+	return tenant.ID, role, nil
 }
 
 // GetTenantRole returns user's role in a tenant.
 func (s *Service) GetTenantRole(userID, tenantID uint) (model.TenantRole, error) {
+	var user model.User
+	if err := s.db.Select("id", "tenant_id").First(&user, userID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return "", ErrUserNotFound
+		}
+		return "", err
+	}
+	if user.TenantID != tenantID || tenantID == 0 {
+		return "", ErrTenantMembershipNotFound
+	}
+
 	var tenantUser model.TenantUser
 	if err := s.db.Where("user_id = ? AND tenant_id = ?", userID, tenantID).First(&tenantUser).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return "", ErrTenantMembershipNotFound
+			return model.TenantRoleUser, nil
 		}
 		return "", err
 	}

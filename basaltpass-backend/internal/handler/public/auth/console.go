@@ -126,6 +126,14 @@ func userHasTenantAdminAccess(userID uint, tenantID uint) (bool, error) {
 		return false, nil
 	}
 
+	var user model.User
+	if err := common.DB().Select("id", "tenant_id").First(&user, userID).Error; err != nil {
+		return false, err
+	}
+	if user.TenantID != tenantID {
+		return false, nil
+	}
+
 	var cnt int64
 	err := common.DB().Model(&model.TenantUser{}).
 		Where("user_id = ? AND tenant_id = ? AND role IN ?", userID, tenantID, []model.TenantRole{model.TenantRoleOwner, model.TenantRoleAdmin}).
@@ -137,14 +145,21 @@ func userHasTenantAdminAccess(userID uint, tenantID uint) (bool, error) {
 }
 
 func userDefaultTenantIDForAdminConsole(userID uint) (uint, error) {
-	var tenantUser model.TenantUser
-	if err := common.DB().
-		Where("user_id = ? AND role IN ?", userID, []model.TenantRole{model.TenantRoleOwner, model.TenantRoleAdmin}).
-		Order("created_at ASC").
-		First(&tenantUser).Error; err != nil {
+	var user model.User
+	if err := common.DB().Select("id", "tenant_id").First(&user, userID).Error; err != nil {
 		return 0, err
 	}
-	return tenantUser.TenantID, nil
+	if user.TenantID == 0 {
+		return 0, errors.New("tenant admin access required")
+	}
+	ok, err := userHasTenantAdminAccess(userID, user.TenantID)
+	if err != nil {
+		return 0, err
+	}
+	if !ok {
+		return 0, errors.New("tenant admin access required")
+	}
+	return user.TenantID, nil
 }
 
 func mustGetUserID(c *fiber.Ctx) (uint, error) {

@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { getAccessToken, clearAccessToken, getAuthScope, setAccessToken } from '../utils/auth'
+import { updateStoredUserSessionToken } from '../utils/userSessions'
 
 const inferDefaultApiBase = () => {
   if (typeof window !== 'undefined' && window.location?.hostname) {
@@ -109,6 +110,9 @@ client.interceptors.response.use(
         
         // 更新本地存储的token
         setAccessToken(access_token)
+        if (getAuthScope() === 'user') {
+          updateStoredUserSessionToken(access_token)
+        }
         
         // 处理队列中的请求
         processQueue(null, access_token)

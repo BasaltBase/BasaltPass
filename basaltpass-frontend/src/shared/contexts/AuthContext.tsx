@@ -4,6 +4,14 @@ import { getAccessToken, clearAccessToken, setAccessToken, getAuthScope } from '
 import { debugAuth } from '../utils/debug'
 import client from '../api/client'
 import { decodeJWT } from '../utils/jwt'
+import {
+  getUserConsoleSession,
+  listUserConsoleSessions,
+  removeUserConsoleSession,
+  type UserConsoleSession,
+  upsertUserConsoleSession,
+} from '../utils/userSessions'
+import { ROUTES } from '@constants'
 
 interface User {
   id: number
@@ -11,8 +19,6 @@ interface User {
   phone?: string
   nickname?: string
   avatar_url?: string
-
-  // capability flags (from backend profile)
   is_super_admin?: boolean
   has_tenant?: boolean
   tenant_id?: number
@@ -29,6 +35,7 @@ interface UserTenant {
 interface AuthContextType {
   user: User | null
   tenants: UserTenant[]
+  userSessions: UserConsoleSession[]
   canAccessAdmin: boolean
   canAccessTenant: boolean
   isAuthenticated: boolean
@@ -36,6 +43,7 @@ interface AuthContextType {
   login: (token: string) => Promise<void>
   logout: () => void
   checkAuth: () => Promise<void>
+  switchAccount: (sessionKey: string) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -45,19 +53,61 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
+  const expectedScope = getAuthScope()
   const [user, setUser] = useState<User | null>(null)
   const [tenants, setTenants] = useState<UserTenant[]>([])
+  const [userSessions, setUserSessions] = useState<UserConsoleSession[]>(() =>
+    expectedScope === 'user' ? listUserConsoleSessions() : [],
+  )
   const [isLoading, setIsLoading] = useState(true)
   const [hasChecked, setHasChecked] = useState(false)
   const navigate = useNavigate()
-
-  const expectedScope = getAuthScope()
 
   const tokenMatchesScope = useCallback((token: string) => {
     const decoded = decodeJWT(token)
     const tokenScope: string = decoded?.scp || 'user'
     return tokenScope === expectedScope
   }, [expectedScope])
+
+  const syncUserSessions = useCallback(() => {
+    if (expectedScope !== 'user') {
+      setUserSessions([])
+      return
+    }
+    setUserSessions(listUserConsoleSessions())
+  }, [expectedScope])
+
+  const loadIdentity = useCallback(async (token: string) => {
+    if (!tokenMatchesScope(token)) {
+      throw new Error('Token scope mismatch')
+    }
+
+    setAccessToken(token)
+
+    const response = await client.get('/api/v1/user/profile')
+    const profileData = response.data?.data ?? response.data
+    if (!profileData || typeof profileData !== 'object') {
+      throw new Error('Invalid user profile response')
+    }
+
+    let tenantList: UserTenant[] = []
+    try {
+      const tenantsRes = await client.get('/api/v1/user/tenants')
+      tenantList = tenantsRes.data?.data || []
+    } catch {
+      tenantList = []
+    }
+
+    setUser(profileData)
+    setTenants(tenantList)
+
+    if (expectedScope === 'user') {
+      upsertUserConsoleSession(profileData, token, tenantList)
+      syncUserSessions()
+    }
+
+    return { profileData, tenantList }
+  }, [expectedScope, syncUserSessions, tokenMatchesScope])
 
   const checkAuth = useCallback(async () => {
     debugAuth.log('Starting auth check')
@@ -69,6 +119,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setTenants([])
       setIsLoading(false)
       setHasChecked(true)
+      syncUserSessions()
       return
     }
 
@@ -79,123 +130,116 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setTenants([])
       setIsLoading(false)
       setHasChecked(true)
+      syncUserSessions()
       return
     }
 
     try {
       debugAuth.log('Token found, checking validity')
-      const response = await client.get('/api/v1/user/profile')
-      debugAuth.log('API Response received:', response.data)
-      
-      // 检查响应结构
-      if (response.data && response.data.data) {
-        debugAuth.log('Token valid, setting user', response.data.data)
-        setUser(response.data.data)
-      } else if (response.data && !response.data.data) {
-        // 如果响应结构不同，直接使用response.data
-        debugAuth.log('Token valid, setting user (direct)', response.data)
-        setUser(response.data)
-      } else {
-        debugAuth.log('Invalid response structure', response)
-        throw new Error('Invalid response structure')
-      }
-
-    // Load tenant associations (best-effort)
-    try {
-    const tenantsRes = await client.get('/api/v1/user/tenants')
-    setTenants(tenantsRes.data?.data || [])
-    } catch (e) {
-    setTenants([])
-    }
+      const { profileData } = await loadIdentity(token)
+      debugAuth.log('Token valid, setting user', profileData)
     } catch (error: any) {
       debugAuth.log('Token validation failed', error.response?.status)
       if (error.response?.status === 401) {
         debugAuth.log('Clearing invalid token')
         clearAccessToken()
         setUser(null)
-		setTenants([])
+        setTenants([])
       } else {
-        // 对于其他错误（如网络错误、服务器错误等），保持当前状态
-        // 不要立即设置为未认证，因为这可能是临时错误
         debugAuth.log('Other error, keeping current state')
-        // 对于非401错误，我们暂时保持用户状态，不立即清除
-        // 这样可以避免因为临时网络问题导致的认证失效
       }
     } finally {
       setIsLoading(false)
       setHasChecked(true)
+      syncUserSessions()
       debugAuth.log('Auth check completed')
     }
-  }, [])
+  }, [loadIdentity, syncUserSessions, tokenMatchesScope])
 
   const login = useCallback(async (token: string) => {
     debugAuth.log('Login called with token', token.substring(0, 20) + '...')
-    if (!tokenMatchesScope(token)) {
-      throw new Error('Token scope mismatch')
-    }
-    setAccessToken(token)
     setIsLoading(true)
     try {
-      const response = await client.get('/api/v1/user/profile')
-      const profileData = response.data?.data ?? response.data
-
-      if (!profileData || typeof profileData !== 'object') {
-        throw new Error('Invalid user profile response')
-      }
-
+      const { profileData } = await loadIdentity(token)
       debugAuth.log('Login completed, user set', profileData)
-      setUser(profileData)
-
-    // Load tenant associations (best-effort)
-    try {
-    const tenantsRes = await client.get('/api/v1/user/tenants')
-    setTenants(tenantsRes.data?.data || [])
-    } catch (e) {
-    setTenants([])
-    }
     } catch (error) {
       debugAuth.log('Failed to fetch profile after login', error)
       clearAccessToken()
       setUser(null)
-	  setTenants([])
+      setTenants([])
+      syncUserSessions()
       throw error
     } finally {
       setIsLoading(false)
       setHasChecked(true)
     }
-  }, [])
+  }, [loadIdentity, syncUserSessions])
+
+  const switchAccount = useCallback(async (sessionKey: string) => {
+    const session = getUserConsoleSession(sessionKey)
+    if (!session) {
+      throw new Error('目标账户会话不存在或已失效')
+    }
+
+    const previousToken = getAccessToken()
+    setIsLoading(true)
+    try {
+      await loadIdentity(session.token)
+      setHasChecked(true)
+      navigate(ROUTES.user.dashboard, { replace: true })
+    } catch (error) {
+      if (previousToken) {
+        setAccessToken(previousToken)
+      } else {
+        clearAccessToken()
+      }
+      removeUserConsoleSession(session.user_id, session.tenant_id)
+      syncUserSessions()
+      throw error
+    } finally {
+      setIsLoading(false)
+    }
+  }, [loadIdentity, navigate, syncUserSessions])
 
   const logout = useCallback(() => {
     debugAuth.log('Logout called')
+    if (expectedScope === 'user' && user?.id) {
+      removeUserConsoleSession(user.id, Number(user.tenant_id || 0))
+      syncUserSessions()
+    }
     clearAccessToken()
     setUser(null)
     setTenants([])
     setIsLoading(false)
     setHasChecked(true)
     navigate('/login', { replace: true })
-  }, [navigate])
+  }, [expectedScope, navigate, syncUserSessions, user?.id, user?.tenant_id])
 
   useEffect(() => {
     if (!hasChecked) {
       checkAuth()
     }
-  }, [hasChecked]) // 移除 checkAuth 依赖项，避免无限循环
+  }, [checkAuth, hasChecked])
 
-  // 调试：输出当前状态
   useEffect(() => {
     debugAuth.logState({ user, isAuthenticated: !!user, isLoading, hasChecked })
   }, [user, isLoading, hasChecked])
 
+  const tenantRole = (user?.tenant_role || '').toLowerCase()
+  const canManageTenant = user?.tenant_id ? user.tenant_id > 0 && ['owner', 'admin'].includes(tenantRole) : false
+
   const value: AuthContextType = {
     user,
     tenants,
+    userSessions,
     canAccessAdmin: !!user?.is_super_admin,
-    canAccessTenant: !!user?.has_tenant,
+    canAccessTenant: canManageTenant,
     isAuthenticated: !!user,
     isLoading,
     login,
     logout,
     checkAuth,
+    switchAccount,
   }
 
   return (
@@ -211,4 +255,4 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider')
   }
   return context
-} 
+}

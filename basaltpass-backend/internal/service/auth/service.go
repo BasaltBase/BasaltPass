@@ -162,31 +162,18 @@ func (s Service) LoginV2(req LoginRequest) (LoginResult, error) {
 	db := common.DB().WithContext(ctx)
 
 	// 构建查询条件：email/phone + tenant_id
-	// 特殊处理：
-	// 1. 如果tenant_id = 0，表示平台登录，只允许admin和tenant_user登录
-	// 2. 如果tenant_id > 0，表示租户登录，只查询该租户下的用户
+	// 规则：
+	// 1. tenant_id = 0 表示平台登录，只允许 is_system_admin = true 的账号登录
+	// 2. tenant_id > 0 表示租户登录，只允许该租户下 (users.tenant_id = tenant_id) 的账号登录
 	query := db.Preload("Passkeys").Where("email = ? OR phone = ?", req.EmailOrPhone, req.EmailOrPhone)
 
 	if req.TenantID == 0 {
-		// 平台登录：只允许admin(is_system_admin=true)或tenant_user(存在于tenant_users表)
-		// 先查询用户
+		// 平台登录：只允许全局管理员账号
 		if err := query.First(&user).Error; err != nil {
 			return LoginResult{}, normalizeLoginQueryError(err)
 		}
 
-		// 检查是否是系统管理员
-		isAdmin := user.IsSystemAdmin != nil && *user.IsSystemAdmin
-
-		// 检查是否是租户管理员
-		var isTenantUser bool
-		var tenantUserCount int64
-		if err := db.Model(&model.TenantUser{}).Where("user_id = ?", user.ID).Count(&tenantUserCount).Error; err != nil {
-			return LoginResult{}, fmt.Errorf("%w: %v", ErrServiceUnavailable, err)
-		}
-		isTenantUser = tenantUserCount > 0
-
-		// 如果既不是admin也不是tenant_user，拒绝平台登录
-		if !isAdmin && !isTenantUser {
+		if !user.IsSuperAdmin() {
 			return LoginResult{}, ErrPlatformAdminOnly
 		}
 	} else {
@@ -371,76 +358,15 @@ func (s Service) Verify2FA(req Verify2FARequest) (TokenPair, error) {
 	return GenerateTokenPair(user.ID)
 }
 
-// setupFirstUserAsGlobalAdmin 设置第一个用户为全局管理员
+// setupFirstUserAsGlobalAdmin 设置第一个用户为全局管理员。
+// 根据当前规则，全局管理员没有默认 tenant，tenant_id 必须保持 0。
 func (s Service) setupFirstUserAsGlobalAdmin(tx *gorm.DB, user *model.User) error {
-	// 1. 获取或创建默认租户
-	var defaultTenant model.Tenant
-	if err := tx.Where("code = ?", "default").First(&defaultTenant).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			// 创建默认租户
-			defaultTenant = model.Tenant{
-				Name:        "BasaltPass",
-				Code:        "default",
-				Description: "BasaltPass系统默认租户",
-				Status:      "active",
-				Plan:        "enterprise", // 给第一个用户企业版权限
-			}
-			if err := tx.Create(&defaultTenant).Error; err != nil {
-				return err
-			}
-		} else {
-			return err
-		}
-	}
-
-	// 2. 创建租户管理员关联，设置为Owner
-	tenantUser := model.TenantUser{
-		UserID:   user.ID,
-		TenantID: defaultTenant.ID,
-		Role:     "owner", // 设置为租户Owner
-	}
-	if err := tx.Create(&tenantUser).Error; err != nil {
-		return err
-	}
-
-	// 3. 获取或创建租户管理员角色（RBAC角色）
-	var adminRole model.TenantRbacRole
-	if err := tx.Where("code = ? AND tenant_id = ?", "admin", defaultTenant.ID).First(&adminRole).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			// 创建租户管理员角色
-			adminRole = model.TenantRbacRole{
-				TenantID:    defaultTenant.ID,
-				Code:        "admin",
-				Name:        "租户管理员",
-				Description: "租户管理员，拥有租户内所有权限",
-				IsSystem:    true,
-			}
-			if err := tx.Create(&adminRole).Error; err != nil {
-				return err
-			}
-		} else {
-			return err
-		}
-	}
-
-	// 4. 创建用户-角色关联（租户RBAC角色）
-	userRole := model.TenantUserRbacRole{
-		UserID:     user.ID,
-		TenantID:   defaultTenant.ID,
-		RoleID:     adminRole.ID,
-		AssignedAt: time.Now(),
-		AssignedBy: user.ID, // 第一个用户自己分配给自己
-	}
-	if err := tx.Create(&userRole).Error; err != nil {
-		return err
-	}
-
-	// 5. 更新用户昵称为更友好的名称
+	// 仅更新平台管理员自身资料，不创建默认租户，也不绑定 tenant_users 关系。
 	if err := tx.Model(user).Update("nickname", "系统管理员").Error; err != nil {
 		return err
 	}
 
-	// 6.将email验证状态设置为已验证
+	// 将邮箱验证状态设置为已验证
 	if err := tx.Model(user).Update("email_verified", true).Error; err != nil {
 		return err
 	}

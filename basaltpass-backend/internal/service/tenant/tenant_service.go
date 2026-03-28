@@ -136,8 +136,16 @@ func (s *TenantService) CreateTenant(ownerUserID uint, req *CreateTenantRequest)
 		return nil, err
 	}
 
-	// 创建默认角色
-	if err := s.createDefaultRoles(tx, tenant.ID); err != nil {
+	// 将用户主租户切换到新创建的 tenant
+	if err := tx.Model(&model.User{}).
+		Where("id = ?", ownerUserID).
+		Update("tenant_id", tenant.ID).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	// 初始化租户 RBAC 默认权限、角色，并将创建者绑定为 owner 角色
+	if err := EnsureTenantRBACBootstrap(tx, tenant.ID, ownerUserID); err != nil {
 		tx.Rollback()
 		return nil, err
 	}
@@ -234,47 +242,35 @@ func (s *TenantService) ListTenants(page, pageSize int, search string) ([]*Tenan
 
 // GetUserTenants 获取用户的租户列表
 func (s *TenantService) GetUserTenants(userID uint) ([]*TenantResponse, error) {
-	respMap := make(map[uint]*TenantResponse)
-
-	// 普通用户可能只有 users.tenant_id，没有 tenant_users 记录。
-	// 先补齐主租户，保证用户控制台可以拿到当前租户名称。
 	var user model.User
 	if err := s.db.Select("tenant_id").First(&user, userID).Error; err != nil {
 		return nil, err
 	}
-	if user.TenantID > 0 {
-		var tenant model.Tenant
-		if err := s.db.First(&tenant, user.TenantID).Error; err == nil {
-			resp := s.tenantToResponse(&tenant, nil)
-			if resp.Metadata == nil {
-				resp.Metadata = make(map[string]interface{})
-			}
-			resp.Metadata["user_role"] = string(model.TenantRoleMember)
-			respMap[user.TenantID] = resp
-		}
+	if user.TenantID == 0 {
+		return []*TenantResponse{}, nil
 	}
 
-	var tenantUsers []model.TenantUser
-	if err := s.db.Preload("Tenant").Where("user_id = ?", userID).Find(&tenantUsers).Error; err != nil {
+	var tenant model.Tenant
+	if err := s.db.First(&tenant, user.TenantID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return []*TenantResponse{}, nil
+		}
 		return nil, err
 	}
 
-	for _, ta := range tenantUsers {
-		resp := s.tenantToResponse(&ta.Tenant, nil)
-		// 添加用户在租户中的角色信息
-		if resp.Metadata == nil {
-			resp.Metadata = make(map[string]interface{})
-		}
-		resp.Metadata["user_role"] = ta.Role
-		respMap[ta.TenantID] = resp
+	resp := s.tenantToResponse(&tenant, nil)
+	if resp.Metadata == nil {
+		resp.Metadata = make(map[string]interface{})
 	}
 
-	responses := make([]*TenantResponse, 0, len(respMap))
-	for _, resp := range respMap {
-		responses = append(responses, resp)
+	var tenantUser model.TenantUser
+	if err := s.db.Where("user_id = ? AND tenant_id = ?", userID, user.TenantID).First(&tenantUser).Error; err == nil {
+		resp.Metadata["user_role"] = string(tenantUser.Role)
+	} else {
+		resp.Metadata["user_role"] = string(model.TenantRoleUser)
 	}
 
-	return responses, nil
+	return []*TenantResponse{resp}, nil
 }
 
 // UpdateTenant 更新租户
@@ -444,38 +440,4 @@ func (s *TenantService) getTenantQuota(tenantID uint) *TenantQuotaInfo {
 		MaxUsers:         quota.MaxUsers,
 		MaxTokensPerHour: quota.MaxTokensPerHour,
 	}
-}
-
-func (s *TenantService) createDefaultRoles(tx *gorm.DB, tenantID uint) error {
-	defaultRoles := []model.TenantRbacRole{
-		{
-			TenantID:    tenantID,
-			Code:        "tenant_user",
-			Name:        "租户管理员",
-			Description: "租户管理员角色",
-			IsSystem:    true,
-		},
-		{
-			TenantID:    tenantID,
-			Code:        "app_developer",
-			Name:        "应用开发者",
-			Description: "应用开发者角色",
-			IsSystem:    true,
-		},
-		{
-			TenantID:    tenantID,
-			Code:        "viewer",
-			Name:        "查看者",
-			Description: "只读访问角色",
-			IsSystem:    true,
-		},
-	}
-
-	for _, role := range defaultRoles {
-		if err := tx.Create(&role).Error; err != nil {
-			return err
-		}
-	}
-
-	return nil
 }

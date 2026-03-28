@@ -10,6 +10,8 @@ import { loginWithPasskey2FAFlow } from '@api/oauth/passkey'
 import { isPasskeySupported } from '@utils/webauthn'
 import { resolveSafeRedirectTarget } from '@utils/redirect'
 import { fetchPublicTenantByCode } from '@api/publicTenant'
+import { decodeJWT } from '@utils/jwt'
+import { getAccessToken } from '@utils/auth'
 import { ShieldCheckIcon, EnvelopeIcon, KeyIcon } from '@heroicons/react/24/outline'
 import { PInput, PButton, PCheckbox, PAlert } from '@ui'
 
@@ -21,7 +23,7 @@ import { PInput, PButton, PCheckbox, PAlert } from '@ui'
 function TenantLogin() {
   const { tenantCode } = useParams<{ tenantCode: string }>()
   const navigate = useNavigate()
-  const { login } = useAuth()
+  const { login, isAuthenticated, isLoading: isAuthLoading } = useAuth()
   const { siteName, setPageTitle } = useConfig()
   const [searchParams] = useSearchParams()
   
@@ -89,6 +91,27 @@ function TenantLogin() {
       setLoadingTenant(false)
     }
   }, [tenantCode])
+
+  useEffect(() => {
+    if (!tenantInfo?.id) {
+      return
+    }
+
+    if (isAuthLoading || !isAuthenticated) {
+      return
+    }
+
+    const token = getAccessToken()
+    const decoded = token ? decodeJWT(token) : null
+    const currentTenantID = Number(decoded?.tid || 0)
+    const currentScope = String(decoded?.scp || 'user')
+
+    if (currentScope === 'user' && currentTenantID === tenantInfo.id) {
+      if (!redirectAfterLogin()) {
+        navigate(ROUTES.user.dashboard, { replace: true })
+      }
+    }
+  }, [isAuthenticated, isAuthLoading, navigate, tenantInfo?.id])
 
   const redirectAfterLogin = () => {
     const target = resolveSafeRedirectTarget(redirectParam, resolvedApiBase)
@@ -283,6 +306,29 @@ function TenantLogin() {
       </>,
       <>
         {error && <div className="mt-6"><PAlert variant="error" title="登录失败" message={error} /></div>}
+        {tenantInfo && (() => {
+          if (isAuthLoading || !isAuthenticated) {
+            return null
+          }
+
+          const token = getAccessToken()
+          const decoded = token ? decodeJWT(token) : null
+          const currentTenantID = Number(decoded?.tid || 0)
+          const currentScope = String(decoded?.scp || 'user')
+          const mismatch = currentScope === 'user' && currentTenantID > 0 && currentTenantID !== tenantInfo.id
+          if (!mismatch) {
+            return null
+          }
+          return (
+            <div className="mt-6">
+              <PAlert
+                variant="info"
+                title="检测到其他租户会话"
+                message="当前浏览器已登录其他租户账户。只有当前会话属于本租户时才会视为已登录；你仍然可以继续登录这个租户。"
+              />
+            </div>
+          )
+        })()}
 
         {step === 1 && (
           <form className="mt-6 space-y-6" onSubmit={submitPasswordLogin}>

@@ -6,6 +6,7 @@ import (
 	"basaltpass-backend/internal/middleware/ratelimit"
 	"basaltpass-backend/internal/model"
 	"basaltpass-backend/internal/service/currency"
+	tenantservice "basaltpass-backend/internal/service/tenant"
 	"basaltpass-backend/internal/utils"
 	"errors"
 	"fmt"
@@ -197,18 +198,17 @@ func RunMigrations() {
 	ensureUserTenantScopedUniqueIndexes()
 	ensureIsSystemAdminNonUniqueIndex()
 
-	createDefaultRoles()
 	seedSystemApps()
 	createSubscriptionIndexes()
 
 	// 初始化性别和语言数据
 	InitGendersAndLanguages()
 
-	// 系统权限种子化，并赋予默认租户的 tenant 角色
+	// 系统权限种子化
 	seedSystemPermissions()
-	createAdditionalSystemRoles()
-	assignPermissionsToPredefinedRoles()
-	assignPermissionsToAdminRole()
+	if err := tenantservice.EnsureTenantRBACBootstrapForAllTenants(db); err != nil {
+		log.Printf("[Migration] Failed to bootstrap tenant RBAC data: %v", err)
+	}
 
 	// 删除遗留的 system_settings 表（如果存在），系统设置已迁移至文件
 	dropLegacySystemSettingsTable()

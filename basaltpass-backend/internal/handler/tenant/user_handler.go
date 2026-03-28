@@ -53,11 +53,16 @@ type InviteTenantUserRequest struct {
 	Message string `json:"message,omitempty"`
 }
 
-// loadTenantMembership 判断用户归属，只使用 tenant_users 里的记录作为租户用户的标准
+// loadTenantMembership 判断用户归属，只使用 users.tenant_id 作为唯一标准。
+// tenant_users 仅用于补充角色信息。
 func loadTenantMembership(userID, tenantID uint) (model.User, *model.TenantUser, bool, error) {
 	var user model.User
 	if err := common.DB().Unscoped().First(&user, userID).Error; err != nil {
 		return model.User{}, nil, false, err
+	}
+
+	if user.TenantID != tenantID || tenantID == 0 {
+		return user, nil, false, nil
 	}
 
 	var tenantUser model.TenantUser
@@ -71,8 +76,7 @@ func loadTenantMembership(userID, tenantID uint) (model.User, *model.TenantUser,
 		tenantUserPtr = &tenantUser
 	}
 
-	belongs := tenantUserPtr != nil
-	return user, tenantUserPtr, belongs, nil
+	return user, tenantUserPtr, true, nil
 }
 
 // GetTenantUsersHandler 获取租户用户列表
@@ -96,10 +100,10 @@ func GetTenantUsersHandler(c *fiber.Ctx) error {
 
 	offset := (page - 1) * limit
 
-	// 基于 tenant_users 查询当前租户的所有用户
-	base := common.DB().Table("tenant_users ta").
-		Joins("JOIN system_auth_users u ON u.id = ta.user_id").
-		Where("ta.tenant_id = ?", tenantID)
+	// 基于 users.tenant_id 查询当前租户的所有用户，tenant_users 仅补充角色信息
+	base := common.DB().Table("system_auth_users u").
+		Joins("LEFT JOIN tenant_users ta ON ta.user_id = u.id AND ta.tenant_id = ?", tenantID).
+		Where("u.tenant_id = ?", tenantID)
 
 	// 搜索条件（邮箱/昵称）
 	if search != "" {
@@ -107,7 +111,11 @@ func GetTenantUsersHandler(c *fiber.Ctx) error {
 	}
 	// 角色过滤
 	if role != "" {
-		base = base.Where("ta.role = ?", role)
+		if role == "user" {
+			base = base.Where("(ta.role IS NULL OR ta.role = '')")
+		} else {
+			base = base.Where("ta.role = ?", role)
+		}
 	}
 	// 状态过滤（如果想要根据状态过滤）
 	if status != "" {
@@ -152,7 +160,7 @@ func GetTenantUsersHandler(c *fiber.Ctx) error {
 			u.email,
 			u.nickname,
 			COALESCE(u.avatar_url, '') as avatar,
-			ta.role as role,
+			COALESCE(ta.role, 'user') as role,
 			CASE 
 				WHEN ta.role = 'baned' THEN 'baned'
 				WHEN u.email_verified = 0 THEN 'inactive'
@@ -295,26 +303,26 @@ func GetTenantUserStatsHandler(c *fiber.Ctx) error {
 
 	var stats TenantUserStatsResponse
 
-	// 基于 tenant_users 统计
+	// 基于 users.tenant_id 统计
 	// 总用户数
-	if err := common.DB().Table("tenant_users").
+	if err := common.DB().Table("system_auth_users").
 		Where("tenant_id = ?", tenantID).
 		Count(&stats.TotalUsers).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "统计总用户数失败"})
 	}
 
 	// 活跃用户
-	if err := common.DB().Table("tenant_users ta").
-		Joins("JOIN system_auth_users u ON u.id = ta.user_id").
-		Where("ta.tenant_id = ? AND u.email_verified = 1 AND u.deleted_at IS NULL AND ta.role != 'baned'", tenantID).
+	if err := common.DB().Table("system_auth_users u").
+		Joins("LEFT JOIN tenant_users ta ON ta.user_id = u.id AND ta.tenant_id = ?", tenantID).
+		Where("u.tenant_id = ? AND u.email_verified = 1 AND u.deleted_at IS NULL AND (ta.role IS NULL OR ta.role != 'baned')", tenantID).
 		Count(&stats.ActiveUsers).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "统计活跃用户数失败"})
 	}
 
 	// 暂停/封禁用户
-	if err := common.DB().Table("tenant_users ta").
-		Joins("JOIN system_auth_users u ON u.id = ta.user_id").
-		Where("ta.tenant_id = ? AND (u.deleted_at IS NOT NULL OR ta.role = 'baned')", tenantID).
+	if err := common.DB().Table("system_auth_users u").
+		Joins("LEFT JOIN tenant_users ta ON ta.user_id = u.id AND ta.tenant_id = ?", tenantID).
+		Where("u.tenant_id = ? AND (u.deleted_at IS NOT NULL OR ta.role = 'baned')", tenantID).
 		Count(&stats.SuspendedUsers).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "统计暂停用户数失败"})
 	}
@@ -322,7 +330,7 @@ func GetTenantUserStatsHandler(c *fiber.Ctx) error {
 	// 本月新用户
 	now := time.Now()
 	startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-	if err := common.DB().Table("tenant_users").
+	if err := common.DB().Table("system_auth_users").
 		Where("tenant_id = ? AND created_at >= ?", tenantID, startOfMonth).
 		Count(&stats.NewUsersThisMonth).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "统计本月新用户失败"})

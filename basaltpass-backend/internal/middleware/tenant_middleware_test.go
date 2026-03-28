@@ -29,7 +29,7 @@ func setupTenantMiddlewareTestDB(t *testing.T) *gorm.DB {
 		t.Fatalf("failed to open test database: %v", err)
 	}
 
-	if err := db.AutoMigrate(&model.Tenant{}, &model.TenantUser{}); err != nil {
+	if err := db.AutoMigrate(&model.User{}, &model.Tenant{}, &model.TenantUser{}); err != nil {
 		t.Fatalf("failed to migrate test schema: %v", err)
 	}
 
@@ -63,6 +63,20 @@ func createTenantUserForTest(t *testing.T, db *gorm.DB, userID, tenantID uint, r
 	}
 	if err := db.Create(&tenantUser).Error; err != nil {
 		t.Fatalf("failed to create tenant admin: %v", err)
+	}
+}
+
+func createUserForTest(t *testing.T, db *gorm.DB, userID, tenantID uint) {
+	t.Helper()
+
+	user := model.User{
+		Model:        gorm.Model{ID: userID},
+		Email:        fmt.Sprintf("user-%d@example.com", userID),
+		PasswordHash: "x",
+		TenantID:     tenantID,
+	}
+	if err := db.Create(&user).Error; err != nil {
+		t.Fatalf("failed to create user: %v", err)
 	}
 }
 
@@ -177,6 +191,7 @@ func TestTenantMiddleware_RejectsSpoofedTenantID(t *testing.T) {
 	userID := uint(10)
 	tenant1 := createTenantForTest(t, db, "spoof-a", model.TenantStatusActive)
 	tenant2 := createTenantForTest(t, db, "spoof-b", model.TenantStatusActive)
+	createUserForTest(t, db, userID, tenant1.ID)
 	createTenantUserForTest(t, db, userID, tenant1.ID, model.TenantRoleAdmin, time.Now().UTC())
 
 	app := testAppWithTenantMiddleware(map[string]interface{}{
@@ -188,8 +203,8 @@ func TestTenantMiddleware_RejectsSpoofedTenantID(t *testing.T) {
 	if resp.StatusCode != fiber.StatusUnauthorized {
 		t.Fatalf("expected status 401, got %d", resp.StatusCode)
 	}
-	assertErrorCode(t, body, "tenant_missing_association")
-	if body["error"] != "Missing tenant association" {
+	assertErrorCode(t, body, "tenant_invalid_association")
+	if body["error"] != "Invalid tenant association" {
 		t.Fatalf("unexpected error message: %#v", body["error"])
 	}
 }
@@ -200,6 +215,7 @@ func TestTenantMiddleware_UsesAssociatedTenantAndRole(t *testing.T) {
 	userID := uint(20)
 	firstTenant := createTenantForTest(t, db, "default-tenant", model.TenantStatusActive)
 	secondTenant := createTenantForTest(t, db, "secondary-tenant", model.TenantStatusActive)
+	createUserForTest(t, db, userID, firstTenant.ID)
 
 	base := time.Now().UTC()
 	createTenantUserForTest(t, db, userID, firstTenant.ID, model.TenantRoleMember, base.Add(-2*time.Hour))
@@ -227,6 +243,7 @@ func TestTenantMiddleware_RejectsInactiveTenant(t *testing.T) {
 
 	userID := uint(30)
 	suspendedTenant := createTenantForTest(t, db, "suspended-tenant", model.TenantStatusSuspended)
+	createUserForTest(t, db, userID, suspendedTenant.ID)
 	createTenantUserForTest(t, db, userID, suspendedTenant.ID, model.TenantRoleAdmin, time.Now().UTC())
 
 	app := testAppWithTenantMiddleware(map[string]interface{}{
@@ -247,6 +264,7 @@ func TestTenantMiddleware_RejectsInvalidTenantAssociation(t *testing.T) {
 	db := setupTenantMiddlewareTestDB(t)
 
 	userID := uint(40)
+	createUserForTest(t, db, userID, 9999)
 	createTenantUserForTest(t, db, userID, 9999, model.TenantRoleAdmin, time.Now().UTC())
 
 	app := testAppWithTenantMiddleware(map[string]interface{}{
@@ -269,6 +287,8 @@ func TestTenantOwnerMiddleware_AllowsOwnerOnly(t *testing.T) {
 	tenantID := uint(100)
 	ownerID := uint(1)
 	adminID := uint(2)
+	createUserForTest(t, db, ownerID, tenantID)
+	createUserForTest(t, db, adminID, tenantID)
 	createTenantUserForTest(t, db, ownerID, tenantID, model.TenantRoleOwner, time.Now().UTC())
 	createTenantUserForTest(t, db, adminID, tenantID, model.TenantRoleAdmin, time.Now().UTC())
 
@@ -325,6 +345,10 @@ func TestTenantUserMiddleware_AllowsOwnerAndAdminOnly(t *testing.T) {
 	memberID := uint(13)
 	otherID := uint(14)
 
+	createUserForTest(t, db, ownerID, tenantID)
+	createUserForTest(t, db, adminID, tenantID)
+	createUserForTest(t, db, memberID, tenantID)
+	createUserForTest(t, db, otherID, 0)
 	createTenantUserForTest(t, db, ownerID, tenantID, model.TenantRoleOwner, time.Now().UTC())
 	createTenantUserForTest(t, db, adminID, tenantID, model.TenantRoleAdmin, time.Now().UTC())
 	createTenantUserForTest(t, db, memberID, tenantID, model.TenantRoleMember, time.Now().UTC())

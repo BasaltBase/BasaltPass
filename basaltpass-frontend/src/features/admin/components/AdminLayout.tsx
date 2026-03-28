@@ -8,6 +8,7 @@ import { useConfig } from '@contexts/ConfigContext'
 import EnhancedNotificationIcon from '@components/EnhancedNotificationIcon'
 import { PButton } from '@ui'
 import { authorizeConsole } from '@api/console'
+import { uiAlert } from '@contexts/DialogContext'
 import { ROUTES } from '@constants'
 
 interface AdminLayoutProps {
@@ -46,8 +47,13 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
   }
 
   const switchToTenant = async () => {
-    const { code } = await authorizeConsole('tenant')
-    window.location.href = joinUrl(consoleTenantUrl, `tenant/dashboard?code=${encodeURIComponent(code)}`)
+    try {
+      const { code } = await authorizeConsole('tenant')
+      window.location.href = joinUrl(consoleTenantUrl, `tenant/dashboard?code=${encodeURIComponent(code)}`)
+    } catch (error: any) {
+      const message = error?.response?.data?.error || '当前账号没有租户管理权限，或租户控制台授权失败。'
+      await uiAlert(message, '无法进入租户面板')
+    }
   }
 
   const switchToUser = () => {

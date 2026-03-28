@@ -216,6 +216,16 @@ func (s *AdminTenantService) CreateTenant(req admindto.AdminCreateTenantRequest)
 			return fmt.Errorf("绑定租户所有者失败: %w", err)
 		}
 
+		if err := tx.Model(&model.User{}).
+			Where("id = ?", owner.ID).
+			Update("tenant_id", tenant.ID).Error; err != nil {
+			return fmt.Errorf("更新用户主租户失败: %w", err)
+		}
+
+		if err := EnsureTenantRBACBootstrap(tx, tenant.ID, owner.ID); err != nil {
+			return fmt.Errorf("初始化租户 RBAC 失败: %w", err)
+		}
+
 		return nil
 	})
 
