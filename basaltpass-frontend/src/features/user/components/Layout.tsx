@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { 
   Bars3Icon, 
@@ -49,6 +49,8 @@ export default function Layout({ children }: LayoutProps) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [showAccountSwitcher, setShowAccountSwitcher] = useState(false)
   const [switchingSessionKey, setSwitchingSessionKey] = useState<string | null>(null)
+  const desktopUserMenuRef = useRef<HTMLDivElement | null>(null)
+  const mobileUserMenuRef = useRef<HTMLDivElement | null>(null)
   const location = useLocation()
   const { user, tenants, userSessions, logout, canAccessTenant, canAccessAdmin, switchAccount } = useAuth()
   const { marketEnabled, siteName, siteInitial, setPageTitle } = useConfig()
@@ -66,6 +68,40 @@ export default function Layout({ children }: LayoutProps) {
   useEffect(() => {
     setPageTitle('用户中心')
   }, [setPageTitle])
+
+  useEffect(() => {
+    setSidebarOpen(false)
+    setIsUserMenuOpen(false)
+  }, [location.pathname])
+
+  useEffect(() => {
+    if (!isUserMenuOpen) return
+
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target as Node | null
+      if (!target) return
+
+      const clickedDesktopMenu = desktopUserMenuRef.current?.contains(target)
+      const clickedMobileMenu = mobileUserMenuRef.current?.contains(target)
+
+      if (clickedDesktopMenu || clickedMobileMenu) return
+      setIsUserMenuOpen(false)
+    }
+
+    document.addEventListener('mousedown', handlePointerDown)
+    return () => document.removeEventListener('mousedown', handlePointerDown)
+  }, [isUserMenuOpen])
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      setIsUserMenuOpen(false)
+      setSidebarOpen(false)
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   const handleLogout = () => {
     logout()
@@ -253,7 +289,7 @@ export default function Layout({ children }: LayoutProps) {
         </div>
 
         {isUserMenuOpen && (
-          <div className="md:hidden relative z-50 bg-white border-b border-gray-200 shadow-sm">
+          <div ref={mobileUserMenuRef} className="md:hidden relative z-50 bg-white border-b border-gray-200 shadow-sm">
             <div className="px-4 py-3 border-b border-gray-200">
               <p className="text-sm text-gray-900 font-medium">{user?.nickname || '用户'}</p>
               <p className="text-sm text-gray-500 truncate">{user?.email}</p>
@@ -332,7 +368,7 @@ export default function Layout({ children }: LayoutProps) {
               
             <EnhancedNotificationIcon viewAllPath={ROUTES.user.notifications} />
             {/* 用户菜单 */}
-            <div className="relative">
+            <div ref={desktopUserMenuRef} className="relative">
               <PButton
                 variant="ghost"
                 size="sm"
@@ -398,10 +434,6 @@ export default function Layout({ children }: LayoutProps) {
                     登出
                   </PButton>
                 </div>
-              )}
-
-              {isUserMenuOpen && (
-                <div className="fixed inset-0 !m-0 z-40" onClick={() => setIsUserMenuOpen(false)} />
               )}
             </div>
           </div>

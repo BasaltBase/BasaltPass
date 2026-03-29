@@ -72,8 +72,10 @@ func RegisterUserRoutes(v1 fiber.Router) {
 	notifGroup := v1.Group("/notifications", middleware.JWTMiddleware())
 	notifGroup.Get("/", userNotif.ListHandler)
 	notifGroup.Get("/unread-count", userNotif.UnreadCountHandler)
+	notifGroup.Get("/settings", userNotif.GetSettingsHandler)
 	notifGroup.Put("/:id/read", userNotif.MarkAsReadHandler)
 	notifGroup.Put("/mark-all-read", userNotif.MarkAllAsReadHandler)
+	notifGroup.Put("/settings", userNotif.UpdateSettingsHandler)
 	notifGroup.Delete("/:id", userNotif.DeleteHandler)
 
 	// 团队相关路由

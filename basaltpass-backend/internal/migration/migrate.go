@@ -112,6 +112,7 @@ func RunMigrations() {
 		&model.UserTenantTOTP{},
 		&model.SystemApp{},
 		&model.Notification{},
+		&model.UserNotificationSettings{},
 		&model.Invitation{},
 
 		// 邮件日志

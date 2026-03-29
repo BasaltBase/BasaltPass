@@ -9,6 +9,62 @@ import (
 	"gorm.io/gorm"
 )
 
+func serializeGender(gender *model.Gender) fiber.Map {
+	if gender == nil {
+		return nil
+	}
+
+	return fiber.Map{
+		"id":         gender.ID,
+		"code":       gender.Code,
+		"name":       gender.Name,
+		"name_cn":    gender.NameCN,
+		"sort_order": gender.SortOrder,
+		"is_active":  gender.IsActive,
+		"created_at": gender.CreatedAt,
+		"updated_at": gender.UpdatedAt,
+	}
+}
+
+func serializeLanguage(language *model.Language) fiber.Map {
+	if language == nil {
+		return nil
+	}
+
+	return fiber.Map{
+		"id":         language.ID,
+		"code":       language.Code,
+		"name":       language.Name,
+		"name_local": language.NameLocal,
+		"sort_order": language.SortOrder,
+		"is_active":  language.IsActive,
+		"created_at": language.CreatedAt,
+		"updated_at": language.UpdatedAt,
+	}
+}
+
+func serializeCurrency(currency *model.Currency) fiber.Map {
+	if currency == nil {
+		return nil
+	}
+
+	return fiber.Map{
+		"id":             currency.ID,
+		"code":           currency.Code,
+		"name":           currency.Name,
+		"name_cn":        currency.NameCN,
+		"symbol":         currency.Symbol,
+		"decimal_places": currency.DecimalPlaces,
+		"type":           currency.Type,
+		"is_active":      currency.IsActive,
+		"sort_order":     currency.SortOrder,
+		"description":    currency.Description,
+		"icon_url":       currency.IconURL,
+		"created_at":     currency.CreatedAt,
+		"updated_at":     currency.UpdatedAt,
+	}
+}
+
 func buildUserProfileResponse(profile model.UserProfile) fiber.Map {
 	response := fiber.Map{
 		"id":          profile.ID,
@@ -22,9 +78,9 @@ func buildUserProfileResponse(profile model.UserProfile) fiber.Map {
 		"website":     profile.Website,
 		"company":     profile.Company,
 		"job_title":   profile.JobTitle,
-		"gender":      profile.Gender,
-		"language":    profile.Language,
-		"currency":    profile.Currency,
+		"gender":      serializeGender(profile.Gender),
+		"language":    serializeLanguage(profile.Language),
+		"currency":    serializeCurrency(profile.Currency),
 		"created_at":  profile.CreatedAt,
 		"updated_at":  profile.UpdatedAt,
 	}
@@ -191,8 +247,14 @@ func GetGendersHandler(c *fiber.Ctx) error {
 		})
 	}
 
+	items := make([]fiber.Map, 0, len(genders))
+	for _, gender := range genders {
+		genderCopy := gender
+		items = append(items, serializeGender(&genderCopy))
+	}
+
 	return c.JSON(fiber.Map{
-		"genders": genders,
+		"genders": items,
 	})
 }
 
@@ -206,8 +268,14 @@ func GetLanguagesHandler(c *fiber.Ctx) error {
 		})
 	}
 
+	items := make([]fiber.Map, 0, len(languages))
+	for _, language := range languages {
+		languageCopy := language
+		items = append(items, serializeLanguage(&languageCopy))
+	}
+
 	return c.JSON(fiber.Map{
-		"languages": languages,
+		"languages": items,
 	})
 }
 
@@ -230,8 +298,14 @@ func GetCurrenciesHandler(c *fiber.Ctx) error {
 		})
 	}
 
+	items := make([]fiber.Map, 0, len(currencies))
+	for _, currency := range currencies {
+		currencyCopy := currency
+		items = append(items, serializeCurrency(&currencyCopy))
+	}
+
 	return c.JSON(fiber.Map{
-		"currencies": currencies,
+		"currencies": items,
 	})
 }
 

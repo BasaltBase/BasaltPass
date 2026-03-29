@@ -33,15 +33,7 @@ export interface UserNotificationSettings {
   email_enabled: boolean
   sms_enabled: boolean
   push_enabled: boolean
-  quiet_hours_enabled: boolean
-  quiet_hours_start: string // "22:00"
-  quiet_hours_end: string   // "08:00"
-  notification_types: {
-    info: boolean
-    success: boolean
-    warning: boolean
-    error: boolean
-  }
+  security_enabled: boolean
 }
 
 export interface UserNotificationPreferences {
