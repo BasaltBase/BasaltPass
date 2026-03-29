@@ -3,7 +3,7 @@ import client from '../client'
 // 管理员级别通知接口（系统管理员）
 export interface AdminNotification {
   id: number
-  user_id: number
+  receiver_id: number
   app_id: number
   title: string
   content: string

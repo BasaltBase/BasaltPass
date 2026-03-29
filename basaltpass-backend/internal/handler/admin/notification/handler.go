@@ -5,6 +5,7 @@ import (
 	"basaltpass-backend/internal/model"
 	notif "basaltpass-backend/internal/service/notification"
 	"strconv"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -34,26 +35,28 @@ func AdminCreateHandler(c *fiber.Ctx) error {
 func AdminListHandler(c *fiber.Ctx) error {
 	page, _ := strconv.Atoi(c.Query("page", "1"))
 	pageSize, _ := strconv.Atoi(c.Query("page_size", "20"))
-	adminID := c.Locals("userID").(uint)
-
-	// 获取当前管理员的tenant_id
-	var admin model.User
+	search := strings.TrimSpace(c.Query("search", ""))
 	db := common.DB()
-	if err := db.Select("tenant_id").First(&admin, adminID).Error; err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "获取用户信息失败"})
+	if page < 1 {
+		page = 1
+	}
+	if pageSize <= 0 {
+		pageSize = 20
+	}
+	if pageSize > 100 {
+		pageSize = 100
 	}
 
-	// 只返回同一租户的通知（通过receiver_id匹配同租户用户）
 	var notifs []model.Notification
 	var total int64
-
-	// 获取同一租户的所有用户ID
-	var tenantUserIDs []uint
-	db.Model(&model.User{}).Where("tenant_id = ?", admin.TenantID).Pluck("id", &tenantUserIDs)
-	tenantUserIDs = append(tenantUserIDs, 0) // 包括广播消息
-
-	query := db.Model(&model.Notification{}).Where("receiver_id IN ?", tenantUserIDs)
-	query.Count(&total)
+	query := db.Model(&model.Notification{})
+	if search != "" {
+		like := "%" + search + "%"
+		query = query.Where("title LIKE ? OR content LIKE ?", like, like)
+	}
+	if err := query.Count(&total).Error; err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
 	if err := query.Order("created_at desc").Offset((page - 1) * pageSize).Limit(pageSize).Preload("App").Find(&notifs).Error; err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}

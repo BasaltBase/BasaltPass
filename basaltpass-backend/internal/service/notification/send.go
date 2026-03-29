@@ -19,13 +19,13 @@ func Send(appName, title, content, nType string, senderID *uint, senderName stri
 	var senderTenantID uint
 	if senderID != nil && *senderID > 0 {
 		var sender model.User
-		if err := db.Select("tenant_id").First(&sender, *senderID).Error; err != nil {
+		if err := db.Select("tenant_id", "is_system_admin").First(&sender, *senderID).Error; err != nil {
 			return err
 		}
 		senderTenantID = sender.TenantID
 
-		// 验证所有接收者都属于同一租户
-		if len(receiverIDs) > 0 && receiverIDs[0] != 0 {
+		// 系统管理员可以给任意用户发送通知；租户管理员仅限本租户用户。
+		if !sender.IsSuperAdmin() && len(receiverIDs) > 0 && receiverIDs[0] != 0 {
 			var count int64
 			if err := db.Model(&model.User{}).
 				Where("id IN ? AND tenant_id = ?", receiverIDs, senderTenantID).
