@@ -295,8 +295,10 @@ export default function ConsoleAccountSwitcherModal({
                               disabled={!!switchingId}
                               loading={switchingId === action.id}
                               onClick={() => void handleSwitch(session, action)}
-                              leftIcon={<ArrowsRightLeftIcon className="h-4 w-4" />}
                             >
+                              <span className="mr-2 inline-flex items-center">
+                                <ArrowsRightLeftIcon className="h-4 w-4" />
+                              </span>
                               {action.label}
                             </PButton>
                           )) : null}

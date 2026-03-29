@@ -33,10 +33,20 @@ const PEmptyState: React.FC<PEmptyStateProps> = ({
     if (!icon) {
       return <InboxIcon className="mx-auto h-12 w-12 text-gray-300" />
     }
-    if (typeof icon === 'function') {
-      const IconComponent = icon as React.FC<{ className?: string }>
+
+    if (React.isValidElement(icon)) {
+      return <div className="flex justify-center">{icon}</div>
+    }
+
+    const isComponentLike =
+      typeof icon === 'function' ||
+      (typeof icon === 'object' && icon !== null && ('render' in icon || '$$typeof' in icon))
+
+    if (isComponentLike) {
+      const IconComponent = icon as React.ElementType<{ className?: string }>
       return <IconComponent className="mx-auto h-12 w-12 text-gray-300" />
     }
+
     return <div className="flex justify-center">{icon}</div>
   }
 
