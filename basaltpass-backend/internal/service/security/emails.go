@@ -596,7 +596,7 @@ BasaltPass 团队
 // SendEmailVerificationEmail 发送邮箱验证码邮件（已登录用户验证自己的邮箱）
 // code 为6位明文数字，应在调用前生成并存储其哈希值。
 func (s *Service) SendEmailVerificationEmail(toEmail, code string) error {
-	subject := "✉️ BasaltPass 邮箱验证码"
+	subject := "BasaltPass 邮箱验证码"
 
 	textBody := fmt.Sprintf(`
 亲爱的用户，
@@ -622,34 +622,33 @@ BasaltPass 团队
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BasaltPass 邮箱验证码</title>
 </head>
-<body style="margin:0;padding:0;background-color:#f5f7fa;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-    <div style="max-width:600px;margin:0 auto;background-color:#ffffff;">
-        <div style="background:linear-gradient(135deg,#667eea 0%%,#764ba2 100%%);padding:40px 30px;text-align:center;">
-            <div style="font-size:48px;margin-bottom:16px;">✉️</div>
-            <h1 style="color:#ffffff;font-size:28px;font-weight:600;margin:0;">BasaltPass</h1>
-            <p style="color:#e1e8ff;font-size:16px;margin:8px 0 0;opacity:0.9;">邮箱验证</p>
-        </div>
-        <div style="padding:40px 30px;text-align:center;">
-            <h2 style="color:#2d3748;font-size:22px;font-weight:600;margin:0 0 16px;">请输入以下验证码</h2>
-            <p style="color:#4a5568;font-size:15px;line-height:1.6;margin:0 0 32px;">
-                您正在验证 BasaltPass 账户绑定的邮箱地址，请在页面中输入以下验证码。
-            </p>
-            <div style="background:#f3f4f6;border-radius:12px;padding:24px;margin:0 0 32px;display:inline-block;min-width:200px;">
-                <div style="font-size:42px;font-weight:700;letter-spacing:12px;color:#1a202c;font-family:monospace;">%s</div>
+<body style="margin:0;padding:0;background-color:#f5f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1d1d1f;">
+    <div style="max-width:640px;margin:0 auto;padding:40px 20px;">
+        <div style="background-color:#ffffff;border-radius:28px;overflow:hidden;box-shadow:0 10px 34px rgba(0,0,0,0.035);">
+            <div style="padding:32px 36px 22px;">
+                <div style="font-size:12px;line-height:18px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#86868b;">BasaltPass</div>
+                <h1 style="margin:14px 0 0;font-size:32px;line-height:38px;font-weight:600;letter-spacing:-0.02em;color:#1d1d1f;">邮箱验证码</h1>
             </div>
-            <div style="background:#fff8f0;border:1px solid #fed7aa;border-radius:8px;padding:16px;margin:0 0 32px;text-align:left;">
-                <div style="color:#92400e;font-size:14px;line-height:1.5;">
-                    ⏰ <strong>此验证码将在 %d 分钟后过期</strong>，且只能使用一次。<br>
-                    🔒 请勿将验证码分享给任何人，BasaltPass 工作人员不会主动索要验证码。
+            <div style="padding:8px 36px 36px;">
+                <p style="margin:0 0 26px;font-size:16px;line-height:28px;color:#424245;">
+                    您正在验证 BasaltPass 账户绑定的邮箱地址，请在页面中输入下面的验证码。
+                </p>
+                <div style="margin:0 0 24px;padding:28px 24px;border-radius:24px;background:linear-gradient(180deg,#fbfbfd 0%%,#f4f4f6 100%%);text-align:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.7);">
+                    <div style="margin:0 0 10px;font-size:11px;line-height:16px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#86868b;">One-time code</div>
+                    <div style="font-size:42px;line-height:46px;font-weight:600;letter-spacing:12px;color:#1d1d1f;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono','Courier New',monospace;">%s</div>
                 </div>
+                <div style="margin:0 0 24px;padding:18px 20px;border-radius:18px;background-color:#f5f5f7;color:#424245;font-size:14px;line-height:24px;">
+                    此验证码将在 <strong style="color:#1d1d1f;font-weight:600;">%d 分钟后过期</strong>，且只能使用一次。请勿将验证码分享给任何人。
+                </div>
+                <p style="margin:0;font-size:13px;line-height:22px;color:#6e6e73;">
+                    如果这不是您本人发起的操作，可以直接忽略此邮件，您的账户不会受到影响。
+                </p>
             </div>
-            <p style="color:#718096;font-size:14px;line-height:1.6;margin:0;">
-                如果您未请求验证邮箱，请忽略此邮件，您的账户不会受到影响。
-            </p>
-        </div>
-        <div style="background-color:#f7fafc;padding:30px;text-align:center;border-top:1px solid #e2e8f0;">
-            <p style="color:#a0aec0;font-size:14px;margin:0 0 8px;">此邮件由 BasaltPass 系统自动发送，请勿直接回复</p>
-            <p style="color:#2d3748;font-size:16px;font-weight:600;margin:0;">BasaltPass Team</p>
+            <div style="padding:20px 36px;background-color:#fbfbfd;">
+                <p style="margin:0;font-size:12px;line-height:20px;color:#8d8d92;">
+                    此邮件由 BasaltPass 系统自动发送，请勿直接回复。
+                </p>
+            </div>
         </div>
     </div>
 </body>

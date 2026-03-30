@@ -620,7 +620,7 @@ func (s *Service) sendVerificationEmail(email, code string, expiresAt time.Time)
 		return errors.New("email service not configured")
 	}
 
-	subject := "BasaltPass - Verification Code"
+	subject := "BasaltPass Verification Code"
 
 	// 计算剩余有效时间
 	remaining := time.Until(expiresAt)
@@ -640,7 +640,7 @@ Best regards,
 The BasaltPass Team
 `, code, minutes)
 
-	// HTML版本 - 现代专业样式 (无 Emoji)
+	// HTML版本 - 简洁风格
 	htmlBody := fmt.Sprintf(`
 <!DOCTYPE html>
 <html>
@@ -649,47 +649,33 @@ The BasaltPass Team
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BasaltPass Verification</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f7f9fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
-    <div style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
-        
-        <!-- 头部 -->
-        <div style="padding: 32px 40px; border-bottom: 1px solid #edf2f7; text-align: center;">
-            <h1 style="color: #1a202c; font-size: 24px; font-weight: 600; margin: 0; letter-spacing: -0.5px;">BasaltPass</h1>
-        </div>
-        
-        <!-- 主内容 -->
-        <div style="padding: 40px;">
-            <h2 style="color: #2d3748; font-size: 20px; font-weight: 600; margin: 0 0 24px; text-align: center;">Verification Code</h2>
-            
-            <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin: 0 0 32px; text-align: center;">
-                You are trying to register a BasaltPass account. Please use the verification code below to complete the process:
-            </p>
-            
-            <!-- 验证码框 -->
-            <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px; margin: 0 auto 32px; max-width: 320px; text-align: center;">
-                <div style="color: #2b6cb0; font-size: 36px; font-weight: 700; letter-spacing: 8px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">
-                    %s
-                </div>
+<body style="margin:0;padding:0;background-color:#f5f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1d1d1f;">
+    <div style="max-width:640px;margin:0 auto;padding:40px 20px;">
+        <div style="background-color:#ffffff;border-radius:28px;overflow:hidden;box-shadow:0 10px 34px rgba(0,0,0,0.035);">
+            <div style="padding:32px 36px 22px;">
+                <div style="font-size:12px;line-height:18px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#86868b;">BasaltPass</div>
+                <h1 style="margin:14px 0 0;font-size:32px;line-height:38px;font-weight:600;letter-spacing:-0.02em;color:#1d1d1f;">Verification code</h1>
             </div>
-            
-            <!-- 提示信息 -->
-            <div style="margin: 0 0 32px; text-align: center;">
-                <p style="color: #718096; font-size: 14px; margin: 0;">
-                    This verification code will expire in <strong style="color: #e53e3e; font-weight: 600;">%d minutes</strong>.
+            <div style="padding:8px 36px 36px;">
+                <p style="margin:0 0 26px;font-size:16px;line-height:28px;color:#424245;">
+                    Use the code below to complete your BasaltPass account verification.
+                </p>
+                <div style="margin:0 0 24px;padding:28px 24px;border-radius:24px;background:linear-gradient(180deg,#fbfbfd 0%%,#f4f4f6 100%%);text-align:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.7);">
+                    <div style="margin:0 0 10px;font-size:11px;line-height:16px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#86868b;">One-time code</div>
+                    <div style="font-size:42px;line-height:46px;font-weight:600;letter-spacing:12px;color:#1d1d1f;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono','Courier New',monospace;">%s</div>
+                </div>
+                <div style="margin:0 0 24px;padding:18px 20px;border-radius:18px;background-color:#f5f5f7;color:#424245;font-size:14px;line-height:24px;">
+                    This code expires in <strong style="color:#1d1d1f;font-weight:600;">%d minutes</strong> and can only be used once.
+                </div>
+                <p style="margin:0;font-size:13px;line-height:22px;color:#6e6e73;">
+                    If you did not request this email, you can safely ignore it. Never share this code with anyone.
                 </p>
             </div>
-            
-            <p style="color: #a0aec0; font-size: 13px; line-height: 1.6; margin: 0; text-align: center;">
-                If you did not request this verification code, please disregard this email. For the security of your account, do not share this code with anyone.
-            </p>
-        </div>
-        
-        <!-- 页脚 -->
-        <div style="background-color: #f7fafc; padding: 24px 40px; text-align: center; border-top: 1px solid #edf2f7;">
-            <p style="color: #a0aec0; font-size: 13px; margin: 0;">
-                &copy; %d BasaltPass. All rights reserved.<br>
-                This is an automated message, please do not reply directly.
-            </p>
+            <div style="padding:20px 36px;background-color:#fbfbfd;">
+                <p style="margin:0;font-size:12px;line-height:20px;color:#8d8d92;">
+                    &copy; %d BasaltPass. This is an automated message, please do not reply.
+                </p>
+            </div>
         </div>
     </div>
 </body>
