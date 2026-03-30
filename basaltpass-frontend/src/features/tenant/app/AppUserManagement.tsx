@@ -377,7 +377,7 @@ export default function AppUserManagement() {
         />
 
         {/* 搜索和过滤 */}
-        <div className="bg-white shadow rounded-lg p-6">
+        <PCard className="rounded-xl p-6 shadow-sm">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
@@ -387,7 +387,7 @@ export default function AppUserManagement() {
                   placeholder="搜索用户邮箱或昵称..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  className="block w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-3 leading-5 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500"
                 />
               </div>
             </div>
@@ -400,7 +400,7 @@ export default function AppUserManagement() {
                     setStatusFilter(e.target.value)
                     setCurrentPage(1)
                   }}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  className="block w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-3 leading-5 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 >
                   <option value="">所有状态</option>
                   <option value="active">正常</option>
@@ -411,10 +411,10 @@ export default function AppUserManagement() {
               </div>
             </div>
           </div>
-        </div>
+        </PCard>
 
         {/* 用户列表 */}
-        <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+        <PCard className="overflow-hidden rounded-xl p-0 shadow-sm">
           <div className="px-4 py-5 sm:p-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg leading-6 font-medium text-gray-900">
@@ -573,13 +573,13 @@ export default function AppUserManagement() {
               </div>
             )}
           </div>
-        </div>
+        </PCard>
       </div>
 
       {/* 用户操作模态框 */}
       {showActionModal && selectedUser && (
         <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+          <div className="mx-4 w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
             <h3 className="text-lg font-medium text-gray-900 mb-4">
               {getActionText(actionType)}用户
             </h3>
@@ -596,7 +596,7 @@ export default function AppUserManagement() {
                   value={actionReason}
                   onChange={(e) => setActionReason(e.target.value)}
                   placeholder={actionType === 'unban' ? '请输入解封原因...' : '请输入操作原因...'}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   rows={3}
                 />
               </div>
@@ -610,7 +610,7 @@ export default function AppUserManagement() {
                     type="datetime-local"
                     value={banUntil}
                     onChange={(e) => setBanUntil(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                   <p className="text-xs text-gray-500 mt-1">
                     留空表示无限期暂停
@@ -623,14 +623,14 @@ export default function AppUserManagement() {
               <button
                 onClick={() => setShowActionModal(false)}
                 disabled={processingAction}
-                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
               >
                 取消
               </button>
               <button
                 onClick={executeUserAction}
                 disabled={processingAction || !actionReason.trim()}
-                className={`px-4 py-2 rounded-md text-sm font-medium text-white disabled:opacity-50 ${
+                className={`rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50 ${
                   actionType === 'unban' 
                     ? 'bg-green-600 hover:bg-green-700' 
                     : 'bg-red-600 hover:bg-red-700'
@@ -646,7 +646,7 @@ export default function AppUserManagement() {
       {/* 权限管理模态框 */}
       {showPermissionModal && selectedUser && (
         <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-10 mx-auto p-5 border w-full max-w-6xl shadow-lg rounded-md bg-white">
+          <div className="relative top-10 mx-auto w-full max-w-6xl rounded-2xl border bg-white p-5 shadow-xl">
             <div className="mt-3">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-medium text-gray-900">
@@ -678,7 +678,7 @@ export default function AppUserManagement() {
                         {userPermissions.length > 0 ? (
                           <div className="space-y-2">
                             {userPermissions.map((userPerm) => (
-                              <div key={userPerm.id} className="flex items-center justify-between bg-white p-3 rounded-md border">
+                              <div key={userPerm.id} className="flex items-center justify-between rounded-lg border bg-white p-3">
                                 <div className="flex-1">
                                   <div className="text-sm font-medium text-gray-900">
                                     {userPerm.permission.name}
@@ -719,7 +719,7 @@ export default function AppUserManagement() {
                         {userRoles.length > 0 ? (
                           <div className="space-y-2">
                             {userRoles.map((userRole) => (
-                              <div key={userRole.id} className="flex items-center justify-between bg-white p-3 rounded-md border">
+                              <div key={userRole.id} className="flex items-center justify-between rounded-lg border bg-white p-3">
                                 <div className="flex-1">
                                   <div className="text-sm font-medium text-gray-900">
                                     {userRole.role.name}
@@ -809,13 +809,13 @@ export default function AppUserManagement() {
                               type="datetime-local"
                               value={permissionExpiry}
                               onChange={(e) => setPermissionExpiry(e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                             />
                           </div>
                           <button
                             onClick={handleGrantPermissions}
                             disabled={selectedPermissions.length === 0}
-                            className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             授予选中权限 ({selectedPermissions.length})
                           </button>
@@ -874,7 +874,7 @@ export default function AppUserManagement() {
                           <button
                             onClick={handleAssignRoles}
                             disabled={selectedRoles.length === 0}
-                            className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             分配选中角色 ({selectedRoles.length})
                           </button>
@@ -888,7 +888,7 @@ export default function AppUserManagement() {
               <div className="flex justify-end mt-6">
                 <button
                   onClick={() => setShowPermissionModal(false)}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                  className="rounded-lg bg-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-400"
                 >
                   关闭
                 </button>

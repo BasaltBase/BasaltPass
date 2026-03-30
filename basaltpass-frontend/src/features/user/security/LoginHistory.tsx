@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { ArrowLeftIcon } from '@heroicons/react/24/outline'
 import client from '@api/client'
 import { ROUTES } from '@constants'
+import { PButton, PPageHeader } from '@ui'
 
 interface LoginHistoryItem {
   id: number
@@ -92,7 +93,7 @@ export default function LoginHistory() {
               <p>{error}</p>
               <button
                 onClick={() => fetchLoginHistory(pagination.page)}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+                className="inline-flex items-center rounded-lg border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
               >
                 重试
               </button>
@@ -146,13 +147,10 @@ export default function LoginHistory() {
             >
               <ArrowLeftIcon className="h-5 w-5" />
             </Link>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">登录历史</h1>
-              <p className="mt-1 text-sm text-gray-500">查看您最近的登录活动，保障账户安全</p>
-            </div>
+            <PPageHeader title="登录历史" description="查看您最近的登录活动，保障账户安全" />
           </div>
 
-          <div className="bg-white shadow rounded">
+          <div className="overflow-hidden rounded-xl bg-white shadow-sm">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
@@ -178,14 +176,14 @@ export default function LoginHistory() {
                   <button
                     onClick={() => handlePageChange(pagination.page - 1)}
                     disabled={pagination.page <= 1 || isLoading}
-                    className="px-4 py-2 text-sm font-medium border rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="rounded-lg border px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     上一页
                   </button>
                   <button
                     onClick={() => handlePageChange(pagination.page + 1)}
                     disabled={pagination.total_pages > 0 && pagination.page >= pagination.total_pages || isLoading}
-                    className="px-4 py-2 text-sm font-medium border rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="rounded-lg border px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     下一页
                   </button>

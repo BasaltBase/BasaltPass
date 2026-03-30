@@ -155,17 +155,16 @@ export default function AdminNavigation() {
     const isExpanded = expandedSections.includes(item.name)
     const isCurrent = item.href ? isCurrentPath(item.href) : false
     const hasCurrentChild = item.children?.some(child => child.href && isCurrentPath(child.href))
+    const sharedStateClass = hasCurrentChild || isCurrent
+      ? 'bg-indigo-100 text-indigo-900 shadow-sm'
+      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
 
     if (item.children) {
       return (
         <div key={item.name}>
           <button
             onClick={() => toggleSection(item.name)}
-            className={`w-full flex items-center justify-between px-3 py-2 text-left text-sm font-medium rounded-md transition-colors ${
-              hasCurrentChild || isCurrent
-                ? 'bg-indigo-100 text-indigo-900'
-                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-            }`}
+            className={`w-full flex items-center justify-between px-3 py-2 text-left text-sm font-medium rounded-lg transition-colors ${sharedStateClass}`}
             style={{ paddingLeft: `${0.75 + depth * 1}rem` }}
           >
             <div className="flex items-center">
@@ -191,9 +190,9 @@ export default function AdminNavigation() {
       <Link
         key={item.name}
         to={item.href!}
-        className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+        className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
           isCurrent
-            ? 'bg-indigo-100 text-indigo-900'
+            ? 'bg-indigo-100 text-indigo-900 shadow-sm'
             : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
         }`}
         style={{ paddingLeft: `${0.75 + depth * 1}rem` }}

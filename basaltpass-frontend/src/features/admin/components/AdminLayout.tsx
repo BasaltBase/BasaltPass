@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useState } from 'react'
+import { ReactNode, useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Bars3Icon, ChevronDownIcon, ArrowsRightLeftIcon } from '@heroicons/react/24/outline'
 import { UserIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline'
@@ -25,6 +25,7 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showAccountSwitcher, setShowAccountSwitcher] = useState(false)
+  const userMenuRef = useRef<HTMLDivElement | null>(null)
 
   const handleLogout = () => {
     logout()
@@ -37,6 +38,36 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
   useEffect(() => {
     setPageTitle(title ? `管理控制台 - ${title}` : '管理控制台')
   }, [setPageTitle, title])
+
+  useEffect(() => {
+    setIsUserMenuOpen(false)
+    setSidebarOpen(false)
+  }, [location.pathname])
+
+  useEffect(() => {
+    if (!isUserMenuOpen) return
+
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target as Node | null
+      if (!target) return
+      if (userMenuRef.current?.contains(target)) return
+      setIsUserMenuOpen(false)
+    }
+
+    document.addEventListener('mousedown', handlePointerDown)
+    return () => document.removeEventListener('mousedown', handlePointerDown)
+  }, [isUserMenuOpen])
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      setIsUserMenuOpen(false)
+      setSidebarOpen(false)
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   const consoleUserUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || ''
   const consoleTenantUrl = (import.meta as any).env?.VITE_CONSOLE_TENANT_URL || ''
@@ -75,7 +106,7 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
               {/* 移动端汉堡菜单按钮 */}
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="lg:hidden mr-3 inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+                className="lg:hidden mr-3 inline-flex items-center justify-center rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
               >
                 <span className="sr-only">打开侧边栏</span>
                 <Bars3Icon className="h-6 w-6" />
@@ -101,7 +132,7 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
               {isAdminPath && canAccessTenant && (
                 <button
                   onClick={switchToTenant}
-                  className="relative rounded-md bg-purple-50 px-3 py-2 text-purple-600 hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors duration-200"
+                  className="relative rounded-lg bg-indigo-50 px-3 py-2 text-indigo-600 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200"
                   title="切换到租户面板"
                 >
                   <div className="flex items-center space-x-2">
@@ -115,7 +146,7 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
               {isAdminPath && (
                 <button
                   onClick={switchToUser}
-                  className="relative rounded-md bg-green-50 px-3 py-2 text-green-600 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors duration-200"
+                  className="relative rounded-lg bg-green-50 px-3 py-2 text-green-600 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors duration-200"
                   title="切换到用户面板"
                 >
                   <div className="flex items-center space-x-2">
@@ -126,7 +157,7 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
               )}
               
               {/* 通知：使用全局 NotificationProvider 的组件 */}
-              <div className="relative">
+              <div ref={userMenuRef} className="relative">
                 <span className="sr-only">查看通知</span>
                 <EnhancedNotificationIcon viewAllPath={ROUTES.admin.notifications} />
               </div>
@@ -156,7 +187,7 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
 
                 {/* 用户下拉菜单 */}
                 {isUserMenuOpen && (
-                  <div className="absolute right-0 z-50 mt-2 w-56 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                  <div className="absolute right-0 z-50 mt-2 w-56 origin-top-right rounded-xl bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                     <div className="px-4 py-3 border-b border-gray-200">
                       <p className="text-sm text-gray-900 font-medium">
                         {user?.nickname || '用户'}
@@ -207,14 +238,6 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
                       登出
                     </PButton>
                   </div>
-                )}
-
-                {/* 点击外部关闭菜单 */}
-                {isUserMenuOpen && (
-                  <div 
-                    className="fixed inset-0 !m-0 z-40" 
-                    onClick={() => setIsUserMenuOpen(false)}
-                  />
                 )}
               </div>
             </div>

@@ -27,7 +27,7 @@ import {
 } from '@api/admin/tenant'
 import TenantUserDetailDrawer from '@features/admin/components/TenantUserDetailDrawer'
 import Modal from '@ui/common/Modal'
-import { PSkeleton, PBadge, PAlert, PPagination, PButton } from '@ui'
+import { PSkeleton, PBadge, PAlert, PPagination, PButton, PInput, PSelect, PPageHeader } from '@ui'
 
 // 类型定义
 interface TenantUser extends AdminTenantUser {
@@ -266,59 +266,46 @@ const TenantUsers: React.FC = () => {
         {error && <PAlert variant="error" message={error} />}
 
         {/* 页面头部 */}
-        <div className="lg:flex lg:items-center lg:justify-between">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center">
-              <button
-                onClick={() => navigate(`/admin/tenants/${id}`)}
-                className="mr-4 p-2 text-gray-400 hover:text-gray-500"
-              >
-                <ArrowLeftIcon className="h-5 w-5" />
-              </button>
-              <UsersIcon className="h-8 w-8 mr-3 text-indigo-600" />
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">
-                  用户管理
-                </h1>
-                <p className="mt-1 text-sm text-gray-500">
-                  管理租户 "{tenant?.name}" 的用户
-                </p>
-              </div>
-            </div>
-          </div>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate(`/admin/tenants/${id}`)}
+            className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-500"
+          >
+            <ArrowLeftIcon className="h-5 w-5" />
+          </button>
+          <PPageHeader
+            title="用户管理"
+            description={`管理租户 "${tenant?.name}" 的用户`}
+            icon={<UsersIcon className="h-8 w-8 text-indigo-600" />}
+          />
         </div>
 
         {/* 搜索和过滤 */}
-        <div className="bg-white p-4 rounded-lg shadow">
+        <div className="rounded-xl bg-white p-4 shadow-sm">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  placeholder="搜索用户邮箱或昵称..."
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
+              <PInput
+                type="text"
+                placeholder="搜索用户邮箱或昵称..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                icon={<MagnifyingGlassIcon className="h-5 w-5" />}
+                variant="rounded"
+                autoComplete="off"
+              />
             </div>
             <div className="sm:w-40">
-              <select
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              <PSelect
                 value={userType}
                 onChange={(e) => setUserType(e.target.value as any)}
               >
                 <option value="all">所有用户</option>
                 <option value="tenant_user">租户管理员</option>
                 <option value="app_user">应用用户</option>
-              </select>
+              </PSelect>
             </div>
             <div className="sm:w-32">
-              <select
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              <PSelect
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
               >
@@ -326,13 +313,13 @@ const TenantUsers: React.FC = () => {
                 <option value="owner">所有者</option>
                 <option value="admin">管理员</option>
                 <option value="member">成员</option>
-              </select>
+              </PSelect>
             </div>
           </div>
         </div>
 
         {/* 用户列表 */}
-        <div className="bg-white shadow overflow-hidden sm:rounded-md">
+        <div className="overflow-hidden rounded-xl bg-white shadow-sm">
           {loading ? (
             <div className="py-4">
               <PSkeleton.List items={3} />
@@ -345,7 +332,7 @@ const TenantUsers: React.FC = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center">
                         <div className="flex-shrink-0">
-                          <div className="h-10 w-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100">
                             <UserIcon className="h-6 w-6 text-indigo-600" />
                           </div>
                         </div>
@@ -384,7 +371,7 @@ const TenantUsers: React.FC = () => {
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => handleViewDetail(user.id)}
-                        className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        className="inline-flex items-center rounded-lg border border-gray-300 bg-white p-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                         title="查看详情"
                       >
                         <EyeIcon className="h-4 w-4" />
@@ -393,14 +380,14 @@ const TenantUsers: React.FC = () => {
                         <>
                           <button
                             onClick={() => handleOpenEdit(user)}
-                            className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            className="inline-flex items-center rounded-lg border border-gray-300 bg-white p-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                             title="编辑权限"
                           >
                             <PencilIcon className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => handleRemoveUser(user.id)}
-                            className="inline-flex items-center p-2 border border-red-300 rounded-md text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                            className="inline-flex items-center rounded-lg border border-red-300 bg-white p-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                             title="移除用户"
                           >
                             <TrashIcon className="h-4 w-4" />

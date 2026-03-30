@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import TenantLayout from '@features/tenant/components/TenantLayout'
 import {
-  ChevronRightIcon,
   PlusIcon,
   PencilIcon,
   TrashIcon,
@@ -16,7 +15,7 @@ import {
   CreateTenantPriceRequest,
   UpdateTenantPriceRequest,
 } from '@api/tenant/subscription'
-import { PInput, PSelect, PButton, PSkeleton } from '@ui'
+import { PInput, PSelect, PButton, PSkeleton, Modal, PPageHeader } from '@ui'
 import PTable, { PTableColumn, PTableAction } from '@ui/PTable'
 import { ROUTES } from '@constants'
 
@@ -167,16 +166,11 @@ export default function TenantPrices() {
       <div className="py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* 页面头部 */}
-          <div className="lg:flex lg:items-center lg:justify-between">
-            <div className="flex-1 min-w-0">
-              <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-                定价管理
-              </h2>
-            </div>
-            <div className="mt-5 flex lg:mt-0 lg:ml-4">
-              <PButton type="button" onClick={() => setShowModal(true)} leftIcon={<PlusIcon className="h-5 w-5" />}>创建定价</PButton>
-            </div>
-          </div>
+          <PPageHeader
+            title="定价管理"
+            description="维护套餐价格、计费周期与试用配置"
+            actions={<PButton type="button" onClick={() => setShowModal(true)} leftIcon={<PlusIcon className="h-5 w-5" />}>创建定价</PButton>}
+          />
 
           {/* 定价列表（统一表格组件） */}
           <div className="mt-8">
@@ -216,8 +210,7 @@ export default function TenantPrices() {
 
       {/* 创建/编辑定价模态框 */}
       {showModal && (
-        <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white max-h-[80vh] overflow-y-auto">
+        <Modal open={showModal} onClose={handleCancel} title={editingPrice ? '编辑定价' : '创建定价'} widthClass="max-w-md">
             <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
               {editingPrice ? '编辑定价' : '创建定价'}
             </h3>
@@ -299,14 +292,12 @@ export default function TenantPrices() {
                 <PButton type="submit">{editingPrice ? '更新' : '创建'}</PButton>
               </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {/* 删除确认模态框 */}
       {showDeleteModal && deleteTarget && (
-        <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <Modal open={showDeleteModal} onClose={() => setShowDeleteModal(false)} title="确认删除" widthClass="max-w-md">
             <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
               <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
             </div>
@@ -332,8 +323,7 @@ export default function TenantPrices() {
                 {deleting ? '删除中...' : '确认删除'}
               </PButton>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </TenantLayout>
   )

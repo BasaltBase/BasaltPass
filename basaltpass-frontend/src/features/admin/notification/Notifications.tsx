@@ -11,7 +11,7 @@ import {
 } from '@heroicons/react/24/outline'
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { adminNotificationApi, AdminCreateNotificationRequest, AdminNotification } from '@api/admin/notification'
-import { BaseEntityItem, EntitySearchSelect, PBadge, PButton, PPageHeader, PPagination, PSkeleton } from '@ui'
+import { BaseEntityItem, EntitySearchSelect, PBadge, PButton, PInput, PPageHeader, PPagination, PSelect, PSkeleton, PTextarea, Modal } from '@ui'
 import { uiAlert, uiConfirm } from '@contexts/DialogContext'
 
 const pageSize = 20
@@ -140,7 +140,7 @@ const AdminNotifications: React.FC = () => {
           }
         />
 
-        <div className="bg-white shadow rounded-lg">
+        <div className="rounded-xl bg-white shadow-sm">
           {loading ? (
             <PSkeleton.List items={5} />
           ) : notifications.length === 0 ? (
@@ -152,7 +152,7 @@ const AdminNotifications: React.FC = () => {
           ) : (
             <div className="divide-y divide-gray-200">
               {notifications.map((notification) => (
-                <div key={notification.id} className="p-6 hover:bg-gray-50">
+                <div key={notification.id} className="p-6 transition-colors hover:bg-gray-50">
                   <div className="flex items-start space-x-4">
                     <div className="flex-shrink-0">
                       {getTypeIcon(notification.type)}
@@ -165,7 +165,7 @@ const AdminNotifications: React.FC = () => {
                         </div>
                         <button
                           onClick={() => handleDelete(notification.id)}
-                          className="text-gray-400 hover:text-red-600"
+                          className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
                           title="删除通知"
                         >
                           <TrashIcon className="h-5 w-5" />
@@ -199,81 +199,62 @@ const AdminNotifications: React.FC = () => {
         )}
 
         {showCreateModal && (
-          <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10">
-            <div className="w-3/4 max-w-4xl p-6 border shadow-lg rounded-md bg-white">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">发送全局通知</h2>
-                <button
-                  onClick={() => {
-                    setShowCreateModal(false)
-                    resetForm()
-                  }}
-                  className="text-gray-400 hover:text-gray-600 text-xl font-bold"
-                >
-                  x
-                </button>
-              </div>
-
+          <Modal
+            open={showCreateModal}
+            onClose={() => {
+              setShowCreateModal(false)
+              resetForm()
+            }}
+            title="发送全局通知"
+            widthClass="max-w-4xl"
+          >
+            <div className="space-y-6">
               <form onSubmit={handleCreateNotification} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <PInput
+                    label={<>通知标题 <span className="text-red-500">*</span></>}
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="输入通知标题"
+                    required
+                  />
+                  <PInput
+                    label="应用模块"
+                    type="text"
+                    value={formData.app_name}
+                    onChange={(e) => setFormData({ ...formData, app_name: e.target.value })}
+                    placeholder="如 系统信息/安全中心"
+                  />
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      通知标题 <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
-                      placeholder="输入通知标题"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">应用模块</label>
-                    <input
-                      type="text"
-                      value={formData.app_name}
-                      onChange={(e) => setFormData({ ...formData, app_name: e.target.value })}
-                      className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
-                      placeholder="如 系统信息/安全中心"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">通知类型</label>
-                    <select
+                    <label className="mb-2 block text-sm font-medium text-gray-700">通知类型</label>
+                    <PSelect
                       value={formData.type}
                       onChange={(e) => setFormData({ ...formData, type: e.target.value as AdminCreateNotificationRequest['type'] })}
-                      className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
                     >
                       <option value="info">信息</option>
                       <option value="success">成功</option>
                       <option value="warning">警告</option>
                       <option value="error">错误</option>
-                    </select>
+                    </PSelect>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    通知内容 <span className="text-red-500">*</span>
-                  </label>
-                  <textarea
-                    value={formData.content}
-                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                    rows={4}
-                    className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    placeholder="输入通知内容"
-                    required
-                  />
-                </div>
+                <PTextarea
+                  label={<>通知内容 <span className="text-red-500">*</span></>}
+                  value={formData.content}
+                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                  rows={4}
+                  placeholder="输入通知内容"
+                  required
+                />
 
                 <div>
                   <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                     <UserIcon className="h-4 w-4 mr-2 text-indigo-500" />
                     指定接收用户
                   </label>
-                  <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
                     <EntitySearchSelect
                       entity="user"
                       context="admin"
@@ -289,7 +270,7 @@ const AdminNotifications: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                <div className="flex justify-end space-x-3 border-t border-gray-200 pt-6">
                   <PButton
                     type="button"
                     variant="secondary"
@@ -306,7 +287,7 @@ const AdminNotifications: React.FC = () => {
                 </div>
               </form>
             </div>
-          </div>
+          </Modal>
         )}
       </div>
     </AdminLayout>

@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import TenantLayout from '@features/tenant/components/TenantLayout'
-import { PInput, PButton, PTextarea } from '@ui'
+import { PInput, PButton, PTextarea, Modal, PPageHeader } from '@ui'
 import {
-  ChevronRightIcon,
   PlusIcon,
   PencilIcon,
   TrashIcon,
@@ -117,7 +116,7 @@ export default function TenantProducts() {
     return (
       <TenantLayout title="产品管理">
         <div className="animate-pulse">
-          <div className="bg-white shadow overflow-hidden sm:rounded-md">
+          <div className="overflow-hidden rounded-xl bg-white shadow-sm">
             <ul className="divide-y divide-gray-200">
               {[1, 2, 3].map((i) => (
                 <li key={i} className="px-4 py-4">
@@ -140,17 +139,18 @@ export default function TenantProducts() {
   return (
     <TenantLayout title="产品管理">
       <div>
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">产品管理</h1>
-          <PButton onClick={() => setShowModal(true)}>
-            <span className="inline-flex items-center gap-2">
-              <PlusIcon className="h-5 w-5" /> 创建产品
-            </span>
-          </PButton>
-        </div>
+        <PPageHeader
+          title="产品管理"
+          description="维护订阅产品目录与基础信息"
+          actions={
+            <PButton onClick={() => setShowModal(true)} leftIcon={<PlusIcon className="h-5 w-5" />}>
+              创建产品
+            </PButton>
+          }
+        />
 
         {/* 产品列表 */}
-        <div className="bg-white shadow overflow-hidden sm:rounded-md mb-6">
+        <div className="mb-6 overflow-hidden rounded-xl bg-white shadow-sm">
           <ul className="divide-y divide-gray-200">
             {products.length > 0 ? (
               products.map((product) => (
@@ -179,7 +179,7 @@ export default function TenantProducts() {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleEdit(product)}
-                        className="text-blue-600 hover:text-blue-900"
+                        className="text-blue-600 hover:text-blue-800"
                         title="编辑产品"
                       >
                         <PencilIcon className="h-5 w-5" />
@@ -188,7 +188,7 @@ export default function TenantProducts() {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDeleteClick(product)}
-                        className="text-red-600 hover:text-red-900"
+                        className="text-red-600 hover:text-red-700"
                         title="删除产品"
                       >
                         <TrashIcon className="h-5 w-5" />
@@ -230,17 +230,18 @@ export default function TenantProducts() {
 
       {/* 创建/编辑产品模态框 */}
       {showModal && (
-        <div className="fixed inset-0 !m-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
-            <div className="relative w-full max-w-md bg-white rounded-lg shadow-xl">
+        <Modal
+          open={showModal}
+          onClose={() => {
+            setShowModal(false)
+            setEditingProduct(null)
+            resetForm()
+          }}
+          title={editingProduct ? '编辑产品' : '创建产品'}
+          widthClass="max-w-md"
+        >
               {/* 模态框头部 */}
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-xl font-semibold text-gray-900">
-                  {editingProduct ? '编辑产品' : '创建产品'}
-                </h3>
-              </div>
-
               {/* 模态框内容 */}
-              <div className="px-6 py-4">
                 <form onSubmit={handleSubmit}>
                   {/* 产品代码字段 */}
                   <div className="mb-6">
@@ -254,8 +255,8 @@ export default function TenantProducts() {
                       disabled={!!editingProduct}
                     />
                     {editingProduct && (
-                      <p className="mt-2 text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-md">
-                        💡 产品代码创建后不可修改
+                      <p className="mt-2 rounded-lg bg-yellow-50 px-3 py-2 text-xs text-yellow-700">
+                        产品代码创建后不可修改
                       </p>
                     )}
                   </div>
@@ -301,20 +302,24 @@ export default function TenantProducts() {
                     </PButton>
                   </div>
                 </form>
-              </div>
-            </div>
-          </div>
+        </Modal>
         )}
 
       {/* 删除确认模态框 */}
       {showDeleteModal && deleteTarget && (
-        <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <Modal
+          open={showDeleteModal}
+          onClose={() => {
+            setShowDeleteModal(false)
+            setDeleteTarget(null)
+          }}
+          title="删除产品"
+          widthClass="max-w-md"
+        >
               <div className="mt-3 text-center">
                 <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
                   <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mt-4">删除产品</h3>
                 <div className="mt-2">
                   <p className="text-sm text-gray-500">
                     确定要删除产品 "{deleteTarget.Name}" 吗？
@@ -343,8 +348,7 @@ export default function TenantProducts() {
                   </PButton>
                 </div>
               </div>
-            </div>
-          </div>
+        </Modal>
         )}
       </div>
     </TenantLayout>

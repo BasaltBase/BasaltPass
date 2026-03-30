@@ -31,8 +31,8 @@ const variantStyles: Record<BadgeVariant, string> = {
   warning:  'bg-yellow-100 text-yellow-800',
   error:    'bg-red-100 text-red-800',
   info:     'bg-blue-100 text-blue-800',
-  purple:   'bg-purple-100 text-purple-800',
-  orange:   'bg-orange-100 text-orange-800',
+  purple:   'bg-indigo-100 text-indigo-800',
+  orange:   'bg-yellow-100 text-yellow-800',
   blue:     'bg-blue-100 text-blue-800',
 }
 
@@ -42,8 +42,8 @@ const dotStyles: Record<BadgeVariant, string> = {
   warning:  'bg-yellow-500',
   error:    'bg-red-500',
   info:     'bg-blue-500',
-  purple:   'bg-purple-500',
-  orange:   'bg-orange-500',
+  purple:   'bg-indigo-500',
+  orange:   'bg-yellow-500',
   blue:     'bg-blue-500',
 }
 
@@ -63,7 +63,7 @@ const PBadge: React.FC<PBadgeProps> = ({
   return (
     <span
       className={`
-        inline-flex items-center font-medium rounded-full
+        inline-flex items-center rounded-full font-medium
         ${variantStyles[variant]}
         ${sizeStyles[size]}
         ${className}

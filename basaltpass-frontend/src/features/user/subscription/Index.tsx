@@ -147,12 +147,12 @@ export default function SubscriptionIndex() {
         </PCard>
 
         {/* 相关链接 */}
-        <PCard variant="bordered" className="p-6">
+        <PCard variant="bordered" className="rounded-xl p-6 shadow-sm">
           <h3 className="text-lg font-medium text-gray-900 mb-4">相关链接</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Link
               to={ROUTES.user.products}
-              className="flex items-center p-3 bg-white rounded-md shadow-sm hover:shadow-md transition-shadow"
+              className="flex items-center rounded-lg bg-white p-3 shadow-sm transition-shadow hover:shadow-md"
             >
               <CubeIcon className="h-5 w-5 text-indigo-600 mr-3" />
               <div>
@@ -162,7 +162,7 @@ export default function SubscriptionIndex() {
             </Link>
             <Link
               to={ROUTES.user.wallet}
-              className="flex items-center p-3 bg-white rounded-md shadow-sm hover:shadow-md transition-shadow"
+              className="flex items-center rounded-lg bg-white p-3 shadow-sm transition-shadow hover:shadow-md"
             >
               <WalletIcon className="h-5 w-5 text-green-600 mr-3" />
               <div>
@@ -172,7 +172,7 @@ export default function SubscriptionIndex() {
             </Link>
             <Link
               to={ROUTES.user.help}
-              className="flex items-center p-3 bg-white rounded-md shadow-sm hover:shadow-md transition-shadow"
+              className="flex items-center rounded-lg bg-white p-3 shadow-sm transition-shadow hover:shadow-md"
             >
               <QuestionMarkCircleIcon className="h-5 w-5 text-blue-600 mr-3" />
               <div>
@@ -187,7 +187,7 @@ export default function SubscriptionIndex() {
       {/* 取消订阅确认模态框 */}
       {showCancelModal && cancelTarget && (
         <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+          <div className="relative top-20 mx-auto w-96 rounded-2xl border bg-white p-5 shadow-xl">
             <div className="mt-3 text-center">
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
                 <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
@@ -199,7 +199,7 @@ export default function SubscriptionIndex() {
                 <p className="text-sm text-gray-500">
                   您确定要取消以下订阅吗？
                 </p>
-                <div className="mt-3 p-3 bg-gray-50 rounded-md">
+                <div className="mt-3 rounded-lg bg-gray-50 p-3">
                   <p className="text-sm font-medium text-gray-900">
                     订阅 #{cancelTarget.ID}
                   </p>

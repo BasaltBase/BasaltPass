@@ -71,7 +71,7 @@ export default function TenantSubscriptionDashboard() {
       description: '查看和管理客户订阅',
       href: ROUTES.tenant.subscriptionsList,
       icon: UserGroupIcon,
-      color: 'bg-purple-500',
+      color: 'bg-indigo-500',
     },
     {
       name: '账单管理',
@@ -85,7 +85,7 @@ export default function TenantSubscriptionDashboard() {
       description: '创建和管理优惠券',
       href: ROUTES.tenant.coupons,
       icon: TicketIcon,
-      color: 'bg-pink-500',
+      color: 'bg-blue-500',
     },
   ]
 
@@ -95,7 +95,7 @@ export default function TenantSubscriptionDashboard() {
         <div className="animate-pulse">
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="bg-white overflow-hidden shadow rounded-lg">
+              <div key={i} className="overflow-hidden rounded-xl bg-white shadow-sm">
                 <div className="p-5">
                   <div className="flex items-center">
                     <div className="flex-shrink-0">
@@ -121,7 +121,7 @@ export default function TenantSubscriptionDashboard() {
         {/* 统计卡片 */}
         {stats && (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="overflow-hidden rounded-xl bg-white shadow-sm">
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
@@ -137,7 +137,7 @@ export default function TenantSubscriptionDashboard() {
               </div>
             </div>
 
-            <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="overflow-hidden rounded-xl bg-white shadow-sm">
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
@@ -153,7 +153,7 @@ export default function TenantSubscriptionDashboard() {
               </div>
             </div>
 
-            <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="overflow-hidden rounded-xl bg-white shadow-sm">
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
@@ -171,11 +171,11 @@ export default function TenantSubscriptionDashboard() {
               </div>
             </div>
 
-            <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="overflow-hidden rounded-xl bg-white shadow-sm">
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    <UserGroupIcon className="h-8 w-8 text-purple-400" />
+                    <UserGroupIcon className="h-8 w-8 text-indigo-400" />
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
@@ -190,7 +190,7 @@ export default function TenantSubscriptionDashboard() {
         )}
 
         {/* 管理功能网格 */}
-        <div className="bg-white shadow rounded-lg">
+        <div className="rounded-xl bg-white shadow-sm">
           <div className="px-4 py-5 sm:p-6">
             <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">订阅管理</h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -198,10 +198,10 @@ export default function TenantSubscriptionDashboard() {
                 <Link
                   key={item.name}
                   to={item.href}
-                  className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-md transition-all duration-200"
+                  className="group relative rounded-xl border border-gray-200 bg-white p-6 transition-all duration-200 hover:border-gray-300 hover:shadow-md focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500"
                 >
                   <div>
-                    <span className={`${item.color} rounded-lg inline-flex p-3 ring-4 ring-white`}>
+                    <span className={`${item.color} inline-flex rounded-xl p-3 ring-4 ring-white`}>
                       <item.icon className="h-6 w-6 text-white" aria-hidden="true" />
                     </span>
                   </div>
@@ -225,34 +225,34 @@ export default function TenantSubscriptionDashboard() {
         </div>
 
         {/* 快速操作 */}
-        <div className="bg-white shadow rounded-lg">
+        <div className="rounded-xl bg-white shadow-sm">
           <div className="px-4 py-5 sm:p-6">
             <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">快速操作</h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <Link
                 to={`${ROUTES.tenant.subscriptionProducts}?action=create`}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 <PlusIcon className="h-4 w-4 mr-2" />
                 创建产品
               </Link>
               <Link
                 to={`${ROUTES.tenant.plans}?action=create`}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                className="inline-flex items-center rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
               >
                 <PlusIcon className="h-4 w-4 mr-2" />
                 创建套餐
               </Link>
               <Link
                 to={`${ROUTES.tenant.prices}?action=create`}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+                className="inline-flex items-center rounded-lg bg-yellow-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
               >
                 <PlusIcon className="h-4 w-4 mr-2" />
                 设置价格
               </Link>
               <Link
                 to={`${ROUTES.tenant.coupons}?action=create`}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-pink-600 hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500"
+                className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
               >
                 <PlusIcon className="h-4 w-4 mr-2" />
                 创建优惠券
@@ -263,11 +263,11 @@ export default function TenantSubscriptionDashboard() {
 
         {/* 状态概览 */}
         {stats && (
-          <div className="bg-white shadow rounded-lg">
+        <div className="rounded-xl bg-white shadow-sm">
             <div className="px-4 py-5 sm:p-6">
               <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">订阅状态概览</h3>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <div className="bg-green-50 rounded-lg p-4">
+                <div className="rounded-xl bg-green-50 p-4">
                   <div className="flex items-center">
                     <ArrowTrendingUpIcon className="h-8 w-8 text-green-500" />
                     <div className="ml-3">
@@ -277,7 +277,7 @@ export default function TenantSubscriptionDashboard() {
                   </div>
                 </div>
                 
-                <div className="bg-red-50 rounded-lg p-4">
+                <div className="rounded-xl bg-red-50 p-4">
                   <div className="flex items-center">
                     <ArrowTrendingDownIcon className="h-8 w-8 text-red-500" />
                     <div className="ml-3">
@@ -287,7 +287,7 @@ export default function TenantSubscriptionDashboard() {
                   </div>
                 </div>
                 
-                <div className="bg-yellow-50 rounded-lg p-4">
+                <div className="rounded-xl bg-yellow-50 p-4">
                   <div className="flex items-center">
                     <ChartBarIcon className="h-8 w-8 text-yellow-500" />
                     <div className="ml-3">

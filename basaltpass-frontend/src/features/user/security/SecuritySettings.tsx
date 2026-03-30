@@ -2,7 +2,6 @@ import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } 
 import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { Link, useNavigate } from 'react-router-dom'
 import Layout from '@features/user/components/Layout'
-import PhoneInput from '@ui/common/PhoneInput'
 import { formatPhoneForDisplay } from '@utils/phoneValidator'
 import { 
   getSecurityStatus, 
@@ -25,8 +24,6 @@ import {
   CheckCircleIcon,
   PlusIcon,
   TrashIcon,
-  EyeIcon,
-  EyeSlashIcon,
   CogIcon,
   LockClosedIcon,
   FingerPrintIcon
@@ -218,7 +215,7 @@ export default function SecuritySettings() {
           {success && <PAlert variant="success" message={success} dismissible onDismiss={() => setSuccess('')} />}
 
           {/* 安全状态概览 */}
-          <div className="bg-white shadow rounded-lg">
+          <div className="rounded-xl bg-white shadow-sm">
             <div className="px-4 py-5 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -248,7 +245,7 @@ export default function SecuritySettings() {
           </div>
 
           {/* 验证方式管理 */}
-          <div className="bg-white shadow rounded-lg">
+          <div className="rounded-xl bg-white shadow-sm">
             <div className="px-4 py-5 sm:p-6">
               <h3 className="text-lg leading-6 font-medium text-gray-900 mb-6">
                 验证方式管理
@@ -358,7 +355,7 @@ export default function SecuritySettings() {
                     {isPasskeySupported() && (
                       <Link
                         to={ROUTES.user.securityPasskey}
-                        className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                       >
                         <CogIcon className="h-4 w-4 mr-1" />
                         管理Passkey
@@ -407,7 +404,7 @@ export default function SecuritySettings() {
           </div>
 
           {/* 联系方式管理 */}
-          <div className="bg-white shadow rounded-lg">
+          <div className="rounded-xl bg-white shadow-sm">
             <div className="px-4 py-5 sm:p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg leading-6 font-medium text-gray-900">
@@ -480,7 +477,7 @@ export default function SecuritySettings() {
               {/* 邮箱变更表单 */}
               {showEmailChangeForm && (
                 <form onSubmit={handleEmailChange} className="mt-6 bg-gray-50 p-4 rounded-lg space-y-4">
-                  <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+                  <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
                     <div className="flex">
                       <div className="flex-shrink-0">
                         <ShieldCheckIcon className="h-5 w-5 text-blue-400" />

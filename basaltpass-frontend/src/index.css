@@ -1,14 +1,24 @@
+@import './shared/styles/components.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* 好看的滚动条样式 */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: #9ca3af #f3f4f6;
+html {
+  color: var(--bp-text-primary);
+  background: var(--bp-white);
 }
 
-/* Webkit 浏览器滚动条样式 */
+body {
+  color: var(--bp-text-primary);
+  background: var(--bp-white);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(17 24 39 / 0.28) rgb(17 24 39 / 0.06);
+}
+
 *::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -19,52 +29,56 @@
 }
 
 *::-webkit-scrollbar-track {
-  background: #f3f4f6;
-  border-radius: 0;
+  background: rgb(17 24 39 / 0.06);
+  border-radius: 9999px;
 }
 
 *::-webkit-scrollbar-thumb {
-  background: #9ca3af;
-  border-radius: 0;
-  transition: all 0.2s ease;
+  background: rgb(17 24 39 / 0.28);
+  border-radius: 9999px;
+  transition: background-color 0.2s ease;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: #6b7280;
+  background: rgb(17 24 39 / 0.42);
 }
 
 *::-webkit-scrollbar-thumb:active {
-  background: #4b5563;
+  background: var(--bp-black);
 }
 
-/* 角落样式 */
 *::-webkit-scrollbar-corner {
-  background: #f3f4f6;
+  background: rgb(17 24 39 / 0.06);
 }
 
-/* 深色模式下的滚动条样式 */
 @media (prefers-color-scheme: dark) {
+  html,
+  body {
+    background: var(--bp-black);
+    color: var(--bp-white);
+  }
+
   * {
-    scrollbar-color: #6b7280 #1f2937;
+    scrollbar-color: rgb(255 255 255 / 0.32) rgb(255 255 255 / 0.08);
   }
-  
+
   *::-webkit-scrollbar-track {
-    background: #1f2937;
+    background: rgb(255 255 255 / 0.08);
   }
-  
+
   *::-webkit-scrollbar-thumb {
-    background: #6b7280;
+    background: rgb(255 255 255 / 0.32);
   }
-  
+
   *::-webkit-scrollbar-thumb:hover {
-    background: #9ca3af;
+    background: rgb(255 255 255 / 0.5);
   }
-  
+
   *::-webkit-scrollbar-thumb:active {
-    background: #d1d5db;
+    background: var(--bp-white);
   }
-  
+
   *::-webkit-scrollbar-corner {
-    background: #1f2937;
+    background: rgb(255 255 255 / 0.08);
   }
-} 
+}

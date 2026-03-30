@@ -14,7 +14,7 @@ import {
   InformationCircleIcon
 } from '@heroicons/react/24/outline'
 import TenantLayout from '@features/tenant/components/TenantLayout'
-import { PSkeleton, PButton } from '@ui'
+import { PSkeleton, PButton, PCard, PInput, PPageHeader } from '@ui'
 import { tenantAppApi } from '@api/tenant/tenantApp'
 import { tenantNotificationApi } from '@api/tenant/notification'
 import { tenantUserManagementApi } from '@api/tenant/tenantUserManagement'
@@ -42,34 +42,37 @@ interface QuickAction {
   requiresMarket?: boolean
 }
 
+const quickActionCardClass =
+  'group flex items-start gap-3 rounded-xl border border-gray-200 p-4 transition hover:border-gray-300 hover:bg-gray-50'
+
 const quickActions: QuickAction[] = [
   {
     name: '应用管理',
     description: '管理您的应用',
     href: '/tenant/apps',
     icon: CubeIcon,
-    color: 'bg-blue-500 hover:bg-blue-600'
+    color: 'bg-blue-500'
   },
   {
     name: '用户管理',
     description: '管理租户下的用户',
     href: '/tenant/users',
     icon: UsersIcon,
-    color: 'bg-indigo-500 hover:bg-indigo-600'
+    color: 'bg-indigo-500'
   },
   {
     name: '权限管理',
     description: '管理用户权限和角色',
     href: '/tenant/roles',
     icon: ShieldCheckIcon,
-    color: 'bg-green-500 hover:bg-green-600'
+    color: 'bg-green-500'
   },
   {
     name: '订阅概览',
     description: '查看订阅状态和收入',
     href: '/tenant/subscriptions',
     icon: ChartBarIcon,
-    color: 'bg-purple-500 hover:bg-purple-600',
+    color: 'bg-indigo-500',
     requiresMarket: true
   },
   {
@@ -77,7 +80,7 @@ const quickActions: QuickAction[] = [
     description: '管理订阅产品',
     href: '/tenant/subscriptions/products',
     icon: ServerIcon,
-    color: 'bg-orange-500 hover:bg-orange-600',
+    color: 'bg-yellow-500',
     requiresMarket: true
   },
   {
@@ -85,7 +88,7 @@ const quickActions: QuickAction[] = [
     description: '创建和管理优惠券',
     href: '/tenant/subscriptions/coupons',
     icon: CreditCardIcon,
-    color: 'bg-red-500 hover:bg-red-600',
+    color: 'bg-red-500',
     requiresMarket: true
   }
 ]
@@ -219,7 +222,7 @@ export default function TenantDashboard() {
         sub: `活跃 ${stats.subscriptionsActive}`,
         icon: ChartBarIcon,
         href: '/tenant/subscriptions/subscriptions',
-        tone: 'text-purple-700 bg-purple-50',
+        tone: 'text-indigo-700 bg-indigo-50',
         requiresMarket: true,
       },
     ]
@@ -238,15 +241,10 @@ export default function TenantDashboard() {
   if (error) {
     return (
       <TenantLayout title="仪表板">
-        <div className="min-h-screen flex items-center justify-center">
+        <div className="flex min-h-screen items-center justify-center">
           <div className="text-center">
-            <div className="text-red-600 text-lg font-medium">{error}</div>
-            <button 
-              onClick={() => window.location.reload()}
-              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              重新加载
-            </button>
+            <div className="text-lg font-medium text-red-600">{error}</div>
+            <PButton onClick={() => window.location.reload()} className="mt-4">重新加载</PButton>
           </div>
         </div>
       </TenantLayout>
@@ -256,27 +254,23 @@ export default function TenantDashboard() {
   return (
     <TenantLayout title="仪表板">
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-gray-900">租户仪表盘</h1>
-            <p className="mt-1 text-sm text-gray-500">关键指标与快捷入口</p>
-            {livenessTip && <p className="mt-2 text-sm text-gray-600">{livenessTip}</p>}
-          </div>
-          <PButton onClick={handleLivenessCheck} loading={isCheckingLiveness}>
-            存活检查
-          </PButton>
-        </div>
+        <PPageHeader
+          title="租户仪表盘"
+          description="关键指标与快捷入口"
+          actions={<PButton onClick={handleLivenessCheck} loading={isCheckingLiveness}>存活检查</PButton>}
+        />
+        {livenessTip && <p className="text-sm text-gray-600">{livenessTip}</p>}
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {cards.map((c) => (
-            <Link key={c.title} to={c.href} className="bg-white rounded-lg shadow p-5 hover:shadow-md transition-shadow">
+            <Link key={c.title} to={c.href} className="rounded-xl bg-white p-5 shadow-sm transition hover:shadow-md">
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-sm text-gray-500">{c.title}</div>
                   <div className="mt-1 text-2xl font-semibold text-gray-900">{c.value}</div>
                   <div className="mt-1 text-xs text-gray-500">{c.sub}</div>
                 </div>
-                <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${c.tone}`}>
+                <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${c.tone}`}>
                   <c.icon className="h-6 w-6" />
                 </div>
               </div>
@@ -286,7 +280,7 @@ export default function TenantDashboard() {
 
         {/* 用户访问链接 */}
         {tenantCode && (
-          <div className="bg-white rounded-lg shadow">
+          <PCard className="rounded-xl p-0 shadow-sm">
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-center">
                 <LinkIcon className="h-5 w-5 text-blue-500 mr-2" />
@@ -302,15 +296,16 @@ export default function TenantDashboard() {
                     登录页面
                   </label>
                   <div className="flex items-center space-x-2">
-                    <input
+                    <PInput
                       type="text"
                       readOnly
                       value={getLoginUrl()}
-                      className="flex-1 text-sm px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600 font-mono"
+                      className="flex-1 bg-gray-50 font-mono text-gray-600"
                     />
-                    <button
+                    <PButton
+                      type="button"
+                      variant="secondary"
                       onClick={() => copyToClipboard(getLoginUrl(), 'login')}
-                      className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                       title="复制链接"
                     >
                       {copiedField === 'login' ? (
@@ -318,7 +313,7 @@ export default function TenantDashboard() {
                       ) : (
                         <ClipboardDocumentIcon className="h-5 w-5" />
                       )}
-                    </button>
+                    </PButton>
                   </div>
                 </div>
 
@@ -328,15 +323,16 @@ export default function TenantDashboard() {
                     注册页面
                   </label>
                   <div className="flex items-center space-x-2">
-                    <input
+                    <PInput
                       type="text"
                       readOnly
                       value={getRegisterUrl()}
-                      className="flex-1 text-sm px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600 font-mono"
+                      className="flex-1 bg-gray-50 font-mono text-gray-600"
                     />
-                    <button
+                    <PButton
+                      type="button"
+                      variant="secondary"
                       onClick={() => copyToClipboard(getRegisterUrl(), 'register')}
-                      className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                       title="复制链接"
                     >
                       {copiedField === 'register' ? (
@@ -344,13 +340,13 @@ export default function TenantDashboard() {
                       ) : (
                         <ClipboardDocumentIcon className="h-5 w-5" />
                       )}
-                    </button>
+                    </PButton>
                   </div>
                 </div>
               </div>
 
               {/* 提示信息 */}
-              <div className="mt-4 p-3 bg-blue-50 rounded-md">
+              <div className="mt-4 rounded-lg bg-blue-50 p-3">
                 <div className="flex">
                   <InformationCircleIcon className="h-5 w-5 text-blue-400 mr-2 flex-shrink-0 mt-0.5" />
                   <div className="text-sm text-blue-700">
@@ -359,10 +355,10 @@ export default function TenantDashboard() {
                 </div>
               </div>
             </div>
-          </div>
+          </PCard>
         )}
 
-            <div className="bg-white rounded-lg shadow">
+            <PCard className="rounded-xl p-0 shadow-sm">
               <div className="px-6 py-4 border-b border-gray-200">
                 <h2 className="text-base font-medium text-gray-900">快捷操作</h2>
               </div>
@@ -373,9 +369,9 @@ export default function TenantDashboard() {
                   <Link
                     key={action.name}
                     to={action.href}
-                    className="group flex items-start gap-3 rounded-lg border border-gray-200 p-4 hover:border-gray-300 hover:bg-gray-50"
+                    className={quickActionCardClass}
                   >
-                    <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${action.color}`}>
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${action.color}`}>
                       <action.icon className="h-6 w-6 text-white" />
                     </div>
                     <div className="flex-1">
@@ -385,7 +381,7 @@ export default function TenantDashboard() {
                   </Link>
                 ))}
               </div>
-            </div>
+            </PCard>
           </div>
     </TenantLayout>
   )

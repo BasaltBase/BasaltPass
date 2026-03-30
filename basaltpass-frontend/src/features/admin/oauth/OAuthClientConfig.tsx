@@ -16,7 +16,7 @@ import { oauthApi, type OAuthScopeMeta } from '@api/oauth/oauth'
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { ROUTES } from '@constants'
 import { OAuthScopePicker } from '@components'
-import { PSkeleton, PBadge, PAlert, PButton } from '@ui'
+import { PSkeleton, PBadge, PAlert, PButton, PCard, PInput, PPageHeader } from '@ui'
 
 export default function OAuthClientConfig() {
   const { appId } = useParams<{ appId: string }>()
@@ -207,15 +207,11 @@ export default function OAuthClientConfig() {
     <AdminLayout title="OAuth客户端配置">
       <div className="space-y-6">
         {/* 页面头部 */}
-        <div className="flex items-center">
-          <KeyIcon className="h-8 w-8 mr-3 text-indigo-600" />
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">OAuth 客户端配置</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              {client ? '管理现有的OAuth客户端' : '为应用创建OAuth客户端'}
-            </p>
-          </div>
-        </div>
+        <PPageHeader
+          title="OAuth 客户端配置"
+          description={client ? '管理现有的 OAuth 客户端' : '为应用创建 OAuth 客户端'}
+          icon={<KeyIcon className="h-8 w-8 text-indigo-600" />}
+        />
 
         {/* 错误提示 */}
         {error && <PAlert variant="error" message={error} className="mb-6" />}
@@ -223,7 +219,7 @@ export default function OAuthClientConfig() {
         <div className="space-y-8">
           {/* 客户端信息 */}
           {client && (
-            <div className="bg-white shadow rounded-lg">
+            <PCard className="rounded-xl p-0 shadow-sm">
               <div className="px-6 py-4 border-b border-gray-200">
                 <h3 className="text-lg font-medium text-gray-900">客户端凭据</h3>
                 <p className="mt-1 text-sm text-gray-500">
@@ -234,15 +230,15 @@ export default function OAuthClientConfig() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700">客户端 ID</label>
                   <div className="mt-1 flex items-center space-x-2">
-                    <input
+                    <PInput
                       type="text"
                       value={client.client_id}
                       readOnly
-                      className="flex-1 border-gray-300 rounded-md shadow-sm bg-gray-50 text-sm"
+                      className="flex-1"
                     />
                     <button
                       onClick={() => copyToClipboard(client.client_id)}
-                      className="inline-flex items-center p-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                      className="inline-flex items-center rounded-lg border border-gray-300 p-2 text-gray-700 transition-colors hover:bg-gray-50"
                       title="复制"
                     >
                       <ClipboardDocumentIcon className="h-4 w-4" />
@@ -253,22 +249,22 @@ export default function OAuthClientConfig() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700">客户端密钥</label>
                   <div className="mt-1 flex items-center space-x-2">
-                    <input
+                    <PInput
                       type={showSecret ? "text" : "password"}
                       value={client.client_secret}
                       readOnly
-                      className="flex-1 border-gray-300 rounded-md shadow-sm bg-gray-50 text-sm"
+                      className="flex-1"
                     />
                     <button
                       onClick={() => setShowSecret(!showSecret)}
-                      className="inline-flex items-center p-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                      className="inline-flex items-center rounded-lg border border-gray-300 p-2 text-gray-700 transition-colors hover:bg-gray-50"
                       title={showSecret ? "隐藏" : "显示"}
                     >
                       {showSecret ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
                     </button>
                     <button
                       onClick={() => copyToClipboard(client.client_secret)}
-                      className="inline-flex items-center p-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                      className="inline-flex items-center rounded-lg border border-gray-300 p-2 text-gray-700 transition-colors hover:bg-gray-50"
                       title="复制"
                     >
                       <ClipboardDocumentIcon className="h-4 w-4" />
@@ -276,7 +272,7 @@ export default function OAuthClientConfig() {
                     <button
                       onClick={handleRegenerateSecret}
                       disabled={saving}
-                      className="inline-flex items-center p-2 border border-orange-300 rounded-md text-orange-700 hover:bg-orange-50 disabled:opacity-50"
+                      className="inline-flex items-center rounded-lg border border-yellow-300 p-2 text-yellow-700 transition-colors hover:bg-yellow-50 disabled:opacity-50"
                       title="重新生成"
                     >
                       <ArrowPathIcon className="h-4 w-4" />
@@ -296,11 +292,11 @@ export default function OAuthClientConfig() {
                   </div>
                 </div>
               </div>
-            </div>
+            </PCard>
           )}
 
           {/* 配置表单 */}
-          <div className="bg-white shadow rounded-lg">
+          <PCard className="rounded-xl p-0 shadow-sm">
             <form onSubmit={handleCreateOrUpdate}>
               <div className="px-6 py-4 border-b border-gray-200">
                 <h3 className="text-lg font-medium text-gray-900">OAuth 配置</h3>
@@ -411,18 +407,18 @@ export default function OAuthClientConfig() {
                   <div className="space-y-2">
                     {(formData.redirect_uris || []).map((uri, index) => (
                       <div key={index} className="flex items-center space-x-2">
-                        <input
+                        <PInput
                           type="url"
                           value={uri}
                           onChange={(e) => updateRedirectUri(index, e.target.value)}
-                          className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                          className="flex-1"
                           placeholder="https://example.com/auth/callback"
                         />
                         {(formData.redirect_uris || []).length > 1 && (
                           <button
                             type="button"
                             onClick={() => removeRedirectUri(index)}
-                            className="inline-flex items-center p-2 border border-red-300 rounded-md text-red-700 hover:bg-red-50"
+                            className="inline-flex items-center rounded-lg border border-red-300 p-2 text-red-700 transition-colors hover:bg-red-50"
                           >
                             <TrashIcon className="h-4 w-4" />
                           </button>
@@ -432,7 +428,7 @@ export default function OAuthClientConfig() {
                     <button
                       type="button"
                       onClick={addRedirectUri}
-                      className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                      className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
                     >
                       <PlusIcon className="h-4 w-4 mr-2" />
                       添加重定向URI
@@ -452,7 +448,7 @@ export default function OAuthClientConfig() {
                 </PButton>
               </div>
             </form>
-          </div>
+          </PCard>
         </div>
       </div>
     </AdminLayout>

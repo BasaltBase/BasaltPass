@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { adminListPlans, adminCreatePlan, adminUpdatePlan, adminDeletePlan, adminListProducts } from '@api/subscription/subscription'
 import { Plan, Product } from '@types/domain/subscription'
-import { Link } from 'react-router-dom'
-import { ChevronRightIcon, ExclamationTriangleIcon, PencilIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline'
+import { ExclamationTriangleIcon, PencilIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline'
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { adminTenantApi, AdminTenantResponse } from '@api/admin/tenant'
 import PSelect from '@ui/PSelect'
@@ -11,7 +10,6 @@ import PInput from '@ui/PInput'
 import PTextarea from '@ui/PTextarea'
 import PCheckbox from '@ui/PCheckbox'
 import PTable, { PTableColumn, PTableAction } from '@ui/PTable'
-import { ROUTES } from '@constants'
 
 export default function AdminPlans() {
   const [plans, setPlans] = useState<Plan[]>([])
@@ -270,7 +268,7 @@ export default function AdminPlans() {
 
       {showModal && (
         <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10">
-          <div className="w-3/4 max-w-4xl p-5 border shadow-lg rounded-md bg-white">
+          <div className="w-3/4 max-w-4xl rounded-2xl border bg-white p-6 shadow-xl">
             <div className="mt-3">
               <h3 className="text-lg font-medium text-gray-900 mb-6">
                 {editingPlan ? '编辑套餐' : '新建套餐'}
@@ -384,7 +382,7 @@ export default function AdminPlans() {
       {/* 删除套餐确认模态框 */}
       {showDeleteModal && deleteTarget && (
         <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+          <div className="relative top-20 mx-auto w-96 rounded-2xl border bg-white p-5 shadow-xl">
             <div className="mt-3 text-center">
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
                 <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
@@ -396,7 +394,7 @@ export default function AdminPlans() {
                 <p className="text-sm text-gray-500">
                   您确定要删除以下套餐吗？
                 </p>
-                <div className="mt-3 p-3 bg-gray-50 rounded-md">
+                <div className="mt-3 rounded-lg bg-gray-50 p-3">
                   <p className="text-sm font-medium text-gray-900">
                     {deleteTarget.DisplayName}
                   </p>

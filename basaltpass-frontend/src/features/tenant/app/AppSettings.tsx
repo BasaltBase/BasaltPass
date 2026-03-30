@@ -342,10 +342,7 @@ export default function AppSettings() {
                 {/* 认证徽章开关 */}
                 <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-gray-50">
                   <div className="flex items-center gap-3">
-                    <div
-                      className="h-9 w-9 rounded-full flex items-center justify-center flex-shrink-0"
-                      style={{ background: '#1d9bf0' }}
-                    >
+                    <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-blue-600">
                       <svg viewBox="0 0 24 24" fill="white" className="h-5 w-5">
                         <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                       </svg>

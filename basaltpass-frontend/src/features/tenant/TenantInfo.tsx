@@ -16,7 +16,7 @@ import {
 } from '@heroicons/react/24/outline'
 import TenantLayout from '@features/tenant/components/TenantLayout'
 import { tenantApi, TenantInfo } from '@api/tenant/tenant'
-import { PSkeleton, PBadge } from '@ui'
+import { PSkeleton, PBadge, PButton, PCard, PInput, PPageHeader } from '@ui'
 
 export default function TenantInfoPage() {
   const [tenantInfo, setTenantInfo] = useState<TenantInfo | null>(null)
@@ -67,7 +67,7 @@ export default function TenantInfoPage() {
     const planVariants: Record<string, string> = {
       free: 'default',
       pro: 'info',
-      enterprise: 'purple'
+      enterprise: 'info'
     }
     return planVariants[plan] || 'default'
   }
@@ -152,12 +152,7 @@ export default function TenantInfoPage() {
             )}
             
             <div className="mt-6">
-              <button
-                onClick={fetchTenantInfo}
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-              >
-                重试
-              </button>
+              <PButton onClick={fetchTenantInfo}>重试</PButton>
             </div>
           </div>
         </div>
@@ -179,25 +174,18 @@ export default function TenantInfoPage() {
   }
 
   return (
-    <TenantLayout title="租户信息">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* 页面标题 */}
-        <div className="mb-8">
-          <div className="flex items-center">
-            <BuildingOffice2Icon className="h-8 w-8 text-blue-600 mr-3" />
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">租户信息</h1>
-              <p className="mt-1 text-sm text-gray-500">
-                查看您的租户的基础信息和统计数据
-              </p>
-            </div>
-          </div>
-        </div>
+      <TenantLayout title="租户信息">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <PPageHeader
+          title="租户信息"
+          description="查看您的租户的基础信息和统计数据"
+          icon={<BuildingOffice2Icon className="h-8 w-8 text-blue-600" />}
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* 基础信息 */}
           <div className="lg:col-span-2">
-            <div className="bg-white shadow rounded-lg">
+            <PCard className="rounded-xl p-0 shadow-sm">
               <div className="px-6 py-4 border-b border-gray-200">
                 <h3 className="text-lg font-medium text-gray-900">基础信息</h3>
               </div>
@@ -245,13 +233,13 @@ export default function TenantInfoPage() {
                   )}
                 </dl>
               </div>
-            </div>
+            </PCard>
           </div>
 
           {/* 统计信息 */}
           <div className="space-y-6">
             {/* 用户访问链接 */}
-            <div className="bg-white shadow rounded-lg">
+            <PCard className="rounded-xl p-0 shadow-sm">
               <div className="px-6 py-4 border-b border-gray-200">
                 <div className="flex items-center">
                   <LinkIcon className="h-5 w-5 text-blue-500 mr-2" />
@@ -267,15 +255,16 @@ export default function TenantInfoPage() {
                       登录页面
                     </label>
                     <div className="flex items-center space-x-2">
-                      <input
+                      <PInput
                         type="text"
                         readOnly
                         value={getLoginUrl()}
-                        className="flex-1 text-sm px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600 font-mono"
+                        className="flex-1 bg-gray-50 font-mono text-gray-600"
                       />
-                      <button
+                      <PButton
+                        type="button"
+                        variant="secondary"
                         onClick={() => copyToClipboard(getLoginUrl(), 'login')}
-                        className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                         title="复制链接"
                       >
                         {copiedField === 'login' ? (
@@ -283,7 +272,7 @@ export default function TenantInfoPage() {
                         ) : (
                           <ClipboardDocumentIcon className="h-5 w-5" />
                         )}
-                      </button>
+                      </PButton>
                     </div>
                   </div>
 
@@ -293,15 +282,16 @@ export default function TenantInfoPage() {
                       注册页面
                     </label>
                     <div className="flex items-center space-x-2">
-                      <input
+                      <PInput
                         type="text"
                         readOnly
                         value={getRegisterUrl()}
-                        className="flex-1 text-sm px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600 font-mono"
+                        className="flex-1 bg-gray-50 font-mono text-gray-600"
                       />
-                      <button
+                      <PButton
+                        type="button"
+                        variant="secondary"
                         onClick={() => copyToClipboard(getRegisterUrl(), 'register')}
-                        className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                         title="复制链接"
                       >
                         {copiedField === 'register' ? (
@@ -309,12 +299,12 @@ export default function TenantInfoPage() {
                         ) : (
                           <ClipboardDocumentIcon className="h-5 w-5" />
                         )}
-                      </button>
+                      </PButton>
                     </div>
                   </div>
 
                   {/* 提示信息 */}
-                  <div className="mt-4 p-3 bg-blue-50 rounded-md">
+                  <div className="mt-4 rounded-lg bg-blue-50 p-3">
                     <div className="flex">
                       <InformationCircleIcon className="h-5 w-5 text-blue-400 mr-2 flex-shrink-0 mt-0.5" />
                       <div className="text-sm text-blue-700">
@@ -324,10 +314,10 @@ export default function TenantInfoPage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </PCard>
 
             {/* 使用统计 */}
-            <div className="bg-white shadow rounded-lg">
+            <PCard className="rounded-xl p-0 shadow-sm">
               <div className="px-6 py-4 border-b border-gray-200">
                 <h3 className="text-lg font-medium text-gray-900">使用统计</h3>
               </div>
@@ -365,30 +355,30 @@ export default function TenantInfoPage() {
                   
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
-                      <KeyIcon className="h-5 w-5 text-purple-500 mr-2" />
+                      <KeyIcon className="h-5 w-5 text-indigo-500 mr-2" />
                       <span className="text-sm font-medium text-gray-700">OAuth客户端</span>
                     </div>
-                    <span className="text-lg font-semibold text-purple-600">
+                    <span className="text-lg font-semibold text-indigo-600">
                       {tenantInfo.stats.total_clients}
                     </span>
                   </div>
                   
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
-                      <CpuChipIcon className="h-5 w-5 text-orange-500 mr-2" />
+                      <CpuChipIcon className="h-5 w-5 text-yellow-500 mr-2" />
                       <span className="text-sm font-medium text-gray-700">活跃令牌</span>
                     </div>
-                    <span className="text-lg font-semibold text-orange-600">
+                    <span className="text-lg font-semibold text-yellow-600">
                       {tenantInfo.stats.active_tokens}
                     </span>
                   </div>
                 </div>
               </div>
-            </div>
+            </PCard>
 
             {/* 配额信息 */}
             {tenantInfo.quota && (
-              <div className="bg-white shadow rounded-lg">
+              <PCard className="rounded-xl p-0 shadow-sm">
                 <div className="px-6 py-4 border-b border-gray-200">
                   <h3 className="text-lg font-medium text-gray-900">配额限制</h3>
                 </div>
@@ -437,8 +427,8 @@ export default function TenantInfoPage() {
                       </div>
                     </div>
                   </div>
-                </div>
               </div>
+              </PCard>
             )}
           </div>
         </div>

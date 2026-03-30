@@ -18,7 +18,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { getDashboardStats, getRecentActivities, triggerAdminLivenessCheck } from '@api/admin/admin'
 import AdminLayout from '@features/admin/components/AdminLayout'
-import { PSkeleton, PButton } from '@ui'
+import { PSkeleton, PButton, PCard, PPageHeader } from '@ui'
 import { ROUTES } from '@constants'
 
 interface DashboardStats {
@@ -49,48 +49,51 @@ interface QuickAction {
   color: string
 }
 
+const quickActionCardClass =
+  'group flex items-start gap-3 rounded-xl border border-gray-200 p-4 transition hover:border-gray-300 hover:bg-gray-50'
+
 const quickActions: QuickAction[] = [
   {
     name: '用户管理',
     description: '查看和管理系统用户',
     href: '/admin/users',
     icon: UsersIcon,
-    color: 'bg-blue-500 hover:bg-blue-600'
+    color: 'bg-blue-500'
   },
   {
     name: '钱包管理',
     description: '查看用户钱包和交易',
     href: '/admin/wallets',
     icon: WalletIcon,
-    color: 'bg-green-500 hover:bg-green-600'
+    color: 'bg-green-500'
   },
   {
     name: '订阅管理',
     description: '管理用户订阅和计费',
     href: '/admin/subscriptions',
     icon: CreditCardIcon,
-    color: 'bg-purple-500 hover:bg-purple-600'
+    color: 'bg-indigo-500'
   },
   {
     name: '应用管理',
     description: '管理租户应用配置',
     href: '/admin/apps',
     icon: CubeIcon,
-    color: 'bg-indigo-500 hover:bg-indigo-600'
+    color: 'bg-indigo-500'
   },
   {
     name: '产品管理',
     description: '管理产品和套餐',
     href: '/admin/products',
     icon: ShoppingCartIcon,
-    color: 'bg-orange-500 hover:bg-orange-600'
+    color: 'bg-yellow-500'
   },
   {
     name: '审计日志',
     description: '查看系统操作日志',
     href: '/admin/logs',
     icon: DocumentTextIcon,
-    color: 'bg-gray-500 hover:bg-gray-600'
+    color: 'bg-gray-500'
   }
 ]
 
@@ -226,7 +229,7 @@ export default function AdminDashboard() {
       case 'wallet_transaction':
         return <WalletIcon className="h-5 w-5 text-green-500" />
       case 'subscription_created':
-        return <CreditCardIcon className="h-5 w-5 text-purple-500" />
+        return <CreditCardIcon className="h-5 w-5 text-indigo-500" />
       case 'app_created':
         return <CubeIcon className="h-5 w-5 text-indigo-500" />
       default:
@@ -265,36 +268,31 @@ export default function AdminDashboard() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-red-600 text-lg font-medium">{error}</div>
-          <PButton onClick={() => window.location.reload()} className="mt-4">重新加载</PButton>
+      <AdminLayout title="管理后台">
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="text-center">
+            <div className="text-lg font-medium text-red-600">{error}</div>
+            <PButton onClick={() => window.location.reload()} className="mt-4">重新加载</PButton>
+          </div>
         </div>
-      </div>
+      </AdminLayout>
     )
   }
 
   return (
     <AdminLayout title="管理仪表板">
       <div className="space-y-6">
-      {/* 页面标题 */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">管理仪表板</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            欢迎来到BasaltPass管理控制台，这里可以查看系统概览和执行管理操作
-          </p>
-          {livenessTip && <p className="mt-2 text-sm text-gray-600">{livenessTip}</p>}
-        </div>
-        <PButton onClick={handleLivenessCheck} loading={isCheckingLiveness}>
-          存活检查
-        </PButton>
-      </div>
+      <PPageHeader
+        title="管理仪表板"
+        description="欢迎来到BasaltPass管理控制台，这里可以查看系统概览和执行管理操作"
+        actions={<PButton onClick={handleLivenessCheck} loading={isCheckingLiveness}>存活检查</PButton>}
+      />
+      {livenessTip && <p className="text-sm text-gray-600">{livenessTip}</p>}
 
       {/* 统计卡片 */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {/* 用户统计 */}
-        <div className="bg-white overflow-hidden shadow rounded-lg">
+        <PCard className="rounded-xl shadow-sm">
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -317,10 +315,10 @@ export default function AdminDashboard() {
               </div>
             </div>
           </div>
-        </div>
+        </PCard>
 
         {/* 钱包统计 */}
-        <div className="bg-white overflow-hidden shadow rounded-lg">
+        <PCard className="rounded-xl shadow-sm">
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -339,10 +337,10 @@ export default function AdminDashboard() {
               </div>
             </div>
           </div>
-        </div>
+        </PCard>
 
         {/* 收入统计 */}
-        <div className="bg-white overflow-hidden shadow rounded-lg">
+        <PCard className="rounded-xl shadow-sm">
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -362,10 +360,10 @@ export default function AdminDashboard() {
               </div>
             </div>
           </div>
-        </div>
+        </PCard>
 
         {/* 订阅统计 */}
-        <div className="bg-white overflow-hidden shadow rounded-lg">
+        <PCard className="rounded-xl shadow-sm">
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -388,14 +386,14 @@ export default function AdminDashboard() {
               </div>
             </div>
           </div>
-        </div>
+        </PCard>
       </div>
 
       {/* 主要内容区域 */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* 快速操作 */}
         <div className="lg:col-span-2">
-          <div className="bg-white shadow rounded-lg">
+          <PCard className="rounded-xl p-0 shadow-sm">
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-medium text-gray-900">快速操作</h3>
               <p className="mt-1 text-sm text-gray-500">常用的管理功能快捷入口</p>
@@ -406,10 +404,10 @@ export default function AdminDashboard() {
                   <Link
                     key={action.name}
                     to={action.href}
-                    className="group relative bg-white p-6 rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-md transition-all duration-200"
+                    className={quickActionCardClass}
                   >
                     <div>
-                      <span className={`inline-flex rounded-lg p-3 ${action.color} transition-colors duration-200`}>
+                      <span className={`inline-flex rounded-xl p-3 ${action.color}`}>
                         <action.icon className="h-6 w-6 text-white" />
                       </span>
                     </div>
@@ -423,12 +421,12 @@ export default function AdminDashboard() {
                 ))}
               </div>
             </div>
-          </div>
+          </PCard>
         </div>
 
         {/* 最近活动 */}
         <div className="lg:col-span-1">
-          <div className="bg-white shadow rounded-lg">
+          <PCard className="rounded-xl p-0 shadow-sm">
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-medium text-gray-900">最近活动</h3>
               <p className="mt-1 text-sm text-gray-500">系统的最新动态</p>
@@ -463,18 +461,18 @@ export default function AdminDashboard() {
               <div className="mt-6">
                 <Link
                   to={ROUTES.admin.logs}
-                  className="text-sm text-indigo-600 hover:text-indigo-500 font-medium"
+                  className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
                 >
                   查看所有活动 →
                 </Link>
               </div>
             </div>
-          </div>
+          </PCard>
         </div>
       </div>
 
       {/* 系统状态 */}
-      <div className="bg-white shadow rounded-lg">
+      <PCard className="rounded-xl p-0 shadow-sm">
         <div className="px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-medium text-gray-900">系统状态</h3>
           <p className="mt-1 text-sm text-gray-500">当前系统运行状态概览</p>
@@ -494,12 +492,12 @@ export default function AdminDashboard() {
               <div className="text-sm text-gray-500">待处理任务</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">正常</div>
+              <div className="text-2xl font-bold text-indigo-600">正常</div>
               <div className="text-sm text-gray-500">服务状态</div>
             </div>
           </div>
-          </div>
         </div>
+      </PCard>
       </div>
     </AdminLayout>
   )

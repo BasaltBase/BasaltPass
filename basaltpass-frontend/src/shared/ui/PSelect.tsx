@@ -73,7 +73,7 @@ const PSelect = forwardRef<HTMLSelectElement, PSelectProps>(
     };
     const iconSize = { sm: 'h-4 w-4', md: 'h-5 w-5', lg: 'h-6 w-6' };
     const variantClasses = {
-      default: 'border-gray-300 rounded-md shadow-sm',
+      default: 'border-gray-300 rounded-lg shadow-sm',
       rounded: 'border-gray-200 rounded-xl shadow-sm',
       minimal: 'border-gray-200 rounded-lg bg-gray-50',
     };
@@ -202,7 +202,7 @@ const PSelect = forwardRef<HTMLSelectElement, PSelectProps>(
             <ul
               role="listbox"
               aria-activedescendant={currentValue ? `${selectId}-opt-${currentValue}` : undefined}
-              className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto py-1 focus:outline-none"
+              className="absolute z-50 mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-auto py-1 focus:outline-none"
             >
               {options.map((opt) => {
                 const isSelected = opt.value === currentValue;

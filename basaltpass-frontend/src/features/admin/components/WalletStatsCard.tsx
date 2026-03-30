@@ -33,7 +33,7 @@ const WalletStatsCard: React.FC<WalletStatsCardProps> = () => {
 
   if (!stats) {
     return (
-      <div className="bg-white shadow rounded-lg p-6">
+      <div className="rounded-xl bg-white p-6 shadow-sm">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-medium text-gray-900">钱包统计</h3>
           <PButton
@@ -85,13 +85,13 @@ const WalletStatsCard: React.FC<WalletStatsCardProps> = () => {
       name: '24小时交易',
       value: stats?.recent_transactions_24h || 0,
       icon: CurrencyDollarIcon,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100',
+      color: 'text-indigo-600',
+      bgColor: 'bg-indigo-100',
     },
   ];
 
   return (
-    <div className="bg-white shadow rounded-lg p-6">
+    <div className="rounded-xl bg-white p-6 shadow-sm">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-medium text-gray-900">钱包统计</h3>
         <PButton
@@ -108,9 +108,9 @@ const WalletStatsCard: React.FC<WalletStatsCardProps> = () => {
       {/* 基础统计卡片 */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-6">
         {statCards.map((stat) => (
-          <div key={stat.name} className="relative bg-white p-5 border border-gray-200 rounded-lg">
+          <div key={stat.name} className="relative rounded-xl border border-gray-200 bg-white p-5">
             <div className="flex items-center">
-              <div className={`flex-shrink-0 p-3 ${stat.bgColor} rounded-md`}>
+              <div className={`flex-shrink-0 rounded-lg p-3 ${stat.bgColor}`}>
                 <stat.icon className={`h-6 w-6 ${stat.color}`} />
               </div>
               <div className="ml-5 w-0 flex-1">
@@ -130,7 +130,7 @@ const WalletStatsCard: React.FC<WalletStatsCardProps> = () => {
           <h4 className="text-md font-medium text-gray-900 mb-3">各货币总余额</h4>
           <div className="space-y-3">
             {stats.currency_balances.map((balance: any) => (
-              <div key={balance.currency_code} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-md">
+              <div key={balance.currency_code} className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
                 <span className="text-sm font-medium text-gray-900">{balance.currency_code}</span>
                 <span className="text-sm text-gray-600">
                   {(balance.total_balance || 0).toLocaleString(undefined, {

@@ -22,9 +22,9 @@ const faqCategories = [
   { id: 'all', name: '全部', color: 'bg-gray-100 text-gray-800' },
   { id: 'account', name: '账户管理', color: 'bg-blue-100 text-blue-800' },
   { id: 'security', name: '安全设置', color: 'bg-green-100 text-green-800' },
-  { id: 'payment', name: '支付充值', color: 'bg-purple-100 text-purple-800' },
-  { id: 'wallet', name: '钱包管理', color: 'bg-orange-100 text-orange-800' },
-  { id: 'subscription', name: '订阅服务', color: 'bg-pink-100 text-pink-800' }
+  { id: 'payment', name: '支付充值', color: 'bg-indigo-100 text-indigo-800' },
+  { id: 'wallet', name: '钱包管理', color: 'bg-yellow-100 text-yellow-800' },
+  { id: 'subscription', name: '订阅服务', color: 'bg-red-100 text-red-800' }
 ]
 
 const faqs = [

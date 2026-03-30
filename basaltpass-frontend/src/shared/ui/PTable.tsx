@@ -130,7 +130,7 @@ const PTable = <T extends unknown>({
   };
 
   return (
-    <div className={`bg-white shadow overflow-hidden sm:rounded-lg ${className}`}>
+    <div className={`overflow-hidden rounded-xl bg-white shadow-sm ${className}`}>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">

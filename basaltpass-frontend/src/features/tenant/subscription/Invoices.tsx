@@ -12,7 +12,7 @@ import {
   TenantInvoice,
   CreateTenantInvoiceRequest,
 } from '@api/tenant/subscription'
-import { PInput, PSelect, PButton, PSkeleton, PBadge } from '@ui'
+import { PInput, PSelect, PButton, PSkeleton, PBadge, Modal, PPageHeader } from '@ui'
 import PTable, { PTableColumn } from '@ui/PTable'
 import { ROUTES } from '@constants'
 
@@ -122,13 +122,10 @@ export default function TenantInvoices() {
       <div className="py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* 页面头部 */}
-          <div className="lg:flex lg:items-center lg:justify-between">
-            <div className="flex-1 min-w-0">
-              <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-                账单管理
-              </h2>
-            </div>
-            <div className="mt-5 flex lg:mt-0 lg:ml-4">
+          <PPageHeader
+            title="账单管理"
+            description="查看并创建租户账单记录"
+            actions={
               <PButton
                 type="button"
                 onClick={() => setShowModal(true)}
@@ -136,8 +133,8 @@ export default function TenantInvoices() {
               >
                 创建账单
               </PButton>
-            </div>
-          </div>
+            }
+          />
 
           {/* 账单列表（统一表格组件） */}
           <div className="mt-8">
@@ -196,11 +193,7 @@ export default function TenantInvoices() {
 
       {/* 创建账单模态框 */}
       {showModal && (
-        <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
-              创建账单
-            </h3>
+        <Modal open={showModal} onClose={handleCancel} title="创建账单" widthClass="max-w-md">
             <form onSubmit={handleSubmit} className="space-y-4">
               <PInput
                 label="客户ID"
@@ -271,8 +264,7 @@ export default function TenantInvoices() {
                 <PButton type="submit">创建</PButton>
               </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
     </TenantLayout>
   )

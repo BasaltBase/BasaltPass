@@ -5,7 +5,7 @@ import { ArrowLeftIcon, RocketLaunchIcon, PlusIcon, TrashIcon, CubeIcon, CheckIc
 import { tenantAppApi, CreateTenantAppRequest } from '@api/tenant/tenantApp'
 import TenantLayout from '@features/tenant/components/TenantLayout'
 import { ROUTES } from '@constants'
-import { PButton, PCard, PInput, PTextarea } from '@ui'
+import { PButton, PCard, PInput, PPageHeader, PTextarea } from '@ui'
 
 export default function CreateApp() {
   const navigate = useNavigate()
@@ -178,21 +178,11 @@ export default function CreateApp() {
           </PButton>
         </div>
 
-        <PCard padding="xl" className="bg-gradient-to-r from-indigo-50 to-white">
-          <div className="flex items-start gap-4">
-            <div className="flex-shrink-0">
-              <div className="rounded-xl bg-indigo-600 p-3 shadow-sm">
-                <CubeIcon className="h-6 w-6 text-white" />
-              </div>
-            </div>
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold text-gray-900">创建应用</h1>
-              <p className="mt-1 text-sm text-gray-600">
-                创建一个新的 OAuth2 应用，配置认证和授权设置。
-              </p>
-            </div>
-          </div>
-        </PCard>
+        <PPageHeader
+          title="创建应用"
+          description="创建一个新的 OAuth2 应用，配置认证和授权设置。"
+          icon={<CubeIcon className="h-8 w-8 text-indigo-600" />}
+        />
 
         <PCard padding="xl">
           <form onSubmit={handleSubmit} className="space-y-10">
@@ -340,8 +330,8 @@ export default function CreateApp() {
 
             <div>
               <div className="flex items-center gap-3 mb-6">
-                <div className="h-9 w-9 bg-purple-100 rounded-xl flex items-center justify-center">
-                  <svg className="h-5 w-5 text-purple-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="h-9 w-9 bg-indigo-100 rounded-xl flex items-center justify-center">
+                  <svg className="h-5 w-5 text-indigo-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>
@@ -382,7 +372,7 @@ export default function CreateApp() {
                 <div className="sm:col-span-2">
                   <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-gray-50">
                     <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-full flex items-center justify-center" style={{ background: '#1d9bf0' }}>
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600">
                         <svg viewBox="0 0 24 24" fill="white" className="h-5 w-5">
                           <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                         </svg>
@@ -437,7 +427,7 @@ export default function CreateApp() {
 
       {createdCredentials && (
         <div className="fixed inset-0 !m-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-6 max-w-lg w-full">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
             <div className="flex items-center mb-4">
               <div className="h-10 w-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
                 <CheckIcon className="h-6 w-6 text-green-600" />
@@ -453,13 +443,13 @@ export default function CreateApp() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Client ID</label>
-                  <div className="bg-gray-50 p-3 rounded border border-gray-200 font-mono text-sm break-all">
+                  <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 font-mono text-sm break-all">
                     {createdCredentials.clientId}
                   </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Client Secret</label>
-                  <div className="bg-gray-50 p-3 rounded border border-gray-200 font-mono text-sm break-all">
+                  <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 font-mono text-sm break-all">
                     {createdCredentials.clientSecret}
                   </div>
                 </div>

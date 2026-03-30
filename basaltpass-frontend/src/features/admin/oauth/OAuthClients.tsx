@@ -16,7 +16,7 @@ import { Link } from 'react-router-dom'
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { ROUTES } from '@constants'
 import { OAuthScopePicker } from '@components'
-import { PSkeleton, PBadge, PAlert, PPageHeader, PPagination, PButton } from '@ui'
+import { PSkeleton, PBadge, PAlert, PPageHeader, PPagination, PButton, PInput, PTextarea, Modal } from '@ui'
 
 interface CreateClientModalProps {
   isOpen: boolean
@@ -154,102 +154,81 @@ function CreateClientModal({ isOpen, onClose, onSuccess }: CreateClientModalProp
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10">
-      <div className="w-11/12 max-w-6xl p-6 border shadow-lg rounded-md bg-white">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">创建OAuth2客户端</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl font-bold">
-            ✕
-          </button>
-        </div>
-        
+    <Modal open={isOpen} onClose={onClose} title="创建OAuth2客户端" widthClass="max-w-6xl">
+      <div className="space-y-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Left column: name/callback/cors */}
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">应用名称 *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    placeholder="输入应用名称"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">应用描述</label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    placeholder="输入应用描述"
-                    rows={3}
-                  />
-                </div>
+                <PInput
+                  label="应用名称 *"
+                  type="text"
+                  required
+                  value={formData.name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="输入应用名称"
+                />
+                <PTextarea
+                  label="应用描述"
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="输入应用描述"
+                  rows={3}
+                />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">重定向URI *</label>
                 {formData.redirect_uris.map((uri, index) => (
                   <div key={index} className="flex gap-2 mb-2">
-                    <input
+                    <PInput
                       type="url"
                       required
                       value={uri}
                       onChange={(e) => updateRedirectURI(index, e.target.value)}
-                      className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      className="flex-1"
                       placeholder="https://yourapp.com/callback"
                     />
                     {formData.redirect_uris.length > 1 && (
-                      <button
+                      <PButton
                         type="button"
+                        variant="ghost"
                         onClick={() => removeRedirectURI(index)}
-                        className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                       >
                         删除
-                      </button>
+                      </PButton>
                     )}
                   </div>
                 ))}
-                <button
-                  type="button"
-                  onClick={addRedirectURI}
-                  className="text-blue-600 hover:text-blue-800 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
+                <PButton type="button" variant="ghost" size="sm" onClick={addRedirectURI}>
                   + 添加重定向URI
-                </button>
+                </PButton>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">允许的CORS源</label>
                 {formData.allowed_origins?.map((origin, index) => (
                   <div key={index} className="flex gap-2 mb-2">
-                    <input
+                    <PInput
                       type="url"
                       value={origin}
                       onChange={(e) => updateAllowedOrigin(index, e.target.value)}
-                      className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      className="flex-1"
                       placeholder="https://yourapp.com"
                     />
-                    <button
+                    <PButton
                       type="button"
+                      variant="ghost"
                       onClick={() => removeAllowedOrigin(index)}
-                      className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                     >
                       删除
-                    </button>
+                    </PButton>
                   </div>
                 ))}
-                <button
-                  type="button"
-                  onClick={addAllowedOrigin}
-                  className="text-blue-600 hover:text-blue-800 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
+                <PButton type="button" variant="ghost" size="sm" onClick={addAllowedOrigin}>
                   + 添加CORS源
-                </button>
+                </PButton>
               </div>
             </div>
 
@@ -277,15 +256,13 @@ function CreateClientModal({ isOpen, onClose, onSuccess }: CreateClientModalProp
           </div>
 
           {error && <PAlert variant="error" message={error} />}
-
-          {/* 按钮区域 */}
-          <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
+          <div className="flex justify-end gap-3 border-t border-gray-200 pt-6">
             <PButton type="button" variant="secondary" onClick={onClose}>取消</PButton>
             <PButton type="submit" disabled={isLoading} loading={isLoading}>创建</PButton>
           </div>
         </form>
       </div>
-    </div>
+    </Modal>
   )
 }
 
@@ -320,15 +297,8 @@ function ClientDetailModal({ client, isOpen, onClose, onUpdate }: ClientDetailMo
   if (!isOpen || !client) return null
 
   return (
-    <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10">
-      <div className="w-3/4 max-w-4xl p-6 border shadow-lg rounded-md bg-white">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">客户端详情</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl font-bold">
-            ✕
-          </button>
-        </div>
-
+    <Modal open={isOpen} onClose={onClose} title="客户端详情" widthClass="max-w-4xl">
+      <div className="space-y-6">
         <div className="grid grid-cols-2 gap-8">
           {/* 左侧信息 */}
           <div className="space-y-6">
@@ -371,13 +341,13 @@ function ClientDetailModal({ client, isOpen, onClose, onUpdate }: ClientDetailMo
                     ••••••••••••••••
                   </p>
                 )}
-                <button
+                <PButton
                   onClick={handleRegenerateSecret}
                   disabled={isRegenerating}
-                  className="px-4 py-2 bg-yellow-600 text-white rounded-md text-sm hover:bg-yellow-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+                  variant="secondary"
                 >
                   {isRegenerating ? '生成中...' : '重新生成'}
-                </button>
+                </PButton>
               </div>
               {newSecret && (
                 <p className="text-sm text-yellow-600 mt-2 bg-yellow-50 p-2 rounded-md">
@@ -426,11 +396,11 @@ function ClientDetailModal({ client, isOpen, onClose, onUpdate }: ClientDetailMo
         </div>
 
         {/* 按钮区域 */}
-        <div className="flex justify-end pt-6 mt-6 border-t border-gray-200">
+        <div className="mt-6 flex justify-end border-t border-gray-200 pt-6">
           <PButton variant="secondary" onClick={onClose}>关闭</PButton>
         </div>
       </div>
-    </div>
+    </Modal>
   )
 }
 

@@ -5,7 +5,7 @@ import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import TenantLayout from '@features/tenant/components/TenantLayout'
 import { getTenantUserSubscription, Subscription, tenantSubscriptionAPI } from '@api/tenant/subscription'
 import { ROUTES } from '@constants/routes'
-import { PSkeleton, PBadge, PButton } from '@ui'
+import { PSkeleton, PBadge, PButton, PCard, PPageHeader } from '@ui'
 
 function fmtDate(value?: string | null) {
   if (!value) return '-'
@@ -85,18 +85,12 @@ export default function TenantSubscriptionDetail() {
             <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-red-500" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">{error || '未找到订阅'}</h3>
             <div className="mt-6 flex items-center justify-center gap-3">
-              <button
-                onClick={() => navigate(-1)}
-                className="px-4 py-2 rounded-md border border-gray-300 bg-white text-sm hover:bg-gray-50"
-              >
+              <PButton onClick={() => navigate(-1)} variant="secondary">
                 返回
-              </button>
-              <button
-                onClick={fetchDetail}
-                className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700"
-              >
+              </PButton>
+              <PButton onClick={fetchDetail}>
                 重试
-              </button>
+              </PButton>
             </div>
           </div>
         </div>
@@ -123,8 +117,10 @@ export default function TenantSubscriptionDetail() {
               </Link>
               <PBadge variant={statusVariant as any}>{status.text}</PBadge>
             </div>
-            <h1 className="mt-2 text-xl font-semibold text-gray-900">订阅 #{subscription.ID}</h1>
-            <p className="mt-1 text-sm text-gray-500">用户 {subscription.UserID} · 创建于 {fmtDate(subscription.CreatedAt)}</p>
+            <PPageHeader
+              title={`订阅 #${subscription.ID}`}
+              description={`用户 ${subscription.UserID} · 创建于 ${fmtDate(subscription.CreatedAt)}`}
+            />
           </div>
 
           <div className="flex items-center gap-2">
@@ -133,7 +129,7 @@ export default function TenantSubscriptionDetail() {
           </div>
         </div>
 
-        <div className="bg-white shadow rounded-lg">
+        <PCard className="rounded-xl p-0 shadow-sm">
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-base font-medium text-gray-900">基础信息</h2>
           </div>
@@ -165,9 +161,9 @@ export default function TenantSubscriptionDetail() {
               <div className="mt-1 text-sm text-gray-900">{fmtDate(subscription.CancelAt)}</div>
             </div>
           </div>
-        </div>
+        </PCard>
 
-        <div className="bg-white shadow rounded-lg">
+        <PCard className="rounded-xl p-0 shadow-sm">
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-base font-medium text-gray-900">价格 / 套餐</h2>
           </div>
@@ -189,7 +185,7 @@ export default function TenantSubscriptionDetail() {
               <div className="mt-1 text-sm text-gray-900">{subscription.GatewaySubscriptionID ?? '-'}</div>
             </div>
           </div>
-        </div>
+        </PCard>
       </div>
     </TenantLayout>
   )

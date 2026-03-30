@@ -16,6 +16,9 @@ import TenantLayout from '@features/tenant/components/TenantLayout'
 import { ROUTES } from '@constants'
 import { PSkeleton, PBadge, PAlert, PPageHeader, PPagination, PButton } from '@ui'
 
+const actionButtonClass =
+  'inline-flex items-center rounded-lg border p-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-2'
+
 export default function AppList() {
   const [apps, setApps] = useState<App[]>([])
   const [loading, setLoading] = useState(true)
@@ -103,7 +106,7 @@ export default function AppList() {
         {error && <PAlert variant="error" message={error} className="mb-6" />}
 
         {/* 应用列表 */}
-        <div className="bg-white shadow overflow-hidden sm:rounded-md">
+        <div className="overflow-hidden rounded-xl bg-white shadow-sm">
           <ul className="divide-y divide-gray-200">
             {apps.map((app) => (
               <li key={app.id}>
@@ -119,7 +122,7 @@ export default function AppList() {
                               alt={app.name}
                             />
                           ) : (
-                            <div className="h-10 w-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100">
                               <CubeIcon className="h-6 w-6 text-indigo-600" />
                             </div>
                           )}
@@ -179,42 +182,42 @@ export default function AppList() {
                     <div className="flex items-center space-x-2">
                       <Link
                         to={`/tenant/apps/${app.id}`}
-                        className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        className={`${actionButtonClass} border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-blue-500`}
                         title="查看详情"
                       >
                         <EyeIcon className="h-4 w-4" />
                       </Link>
                       <Link
                         to={`/tenant/apps/${app.id}/edit`}
-                        className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        className={`${actionButtonClass} border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-blue-500`}
                         title="编辑"
                       >
                         <PencilIcon className="h-4 w-4" />
                       </Link>
                       <Link
                         to={`/tenant/apps/${app.id}/oauth`}
-                        className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        className={`${actionButtonClass} border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-blue-500`}
                         title="OAuth配置"
                       >
                         <KeyIcon className="h-4 w-4" />
                       </Link>
                       <Link
                         to={`/tenant/apps/${app.id}/stats`}
-                        className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        className={`${actionButtonClass} border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-blue-500`}
                         title="统计"
                       >
                         <ChartBarIcon className="h-4 w-4" />
                       </Link>
                       <Link
                         to={`/tenant/apps/${app.id}/settings`}
-                        className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        className={`${actionButtonClass} border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-blue-500`}
                         title="设置"
                       >
                         <Cog6ToothIcon className="h-4 w-4" />
                       </Link>
                       <button
                         onClick={() => handleDeleteApp(app.id)}
-                        className="inline-flex items-center p-2 border border-red-300 rounded-md text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                        className={`${actionButtonClass} border-red-300 bg-white text-red-700 hover:bg-red-50 focus:ring-red-500`}
                         title="删除"
                       >
                         <TrashIcon className="h-4 w-4" />
@@ -233,12 +236,8 @@ export default function AppList() {
               <h3 className="mt-2 text-sm font-medium text-gray-900">暂无应用</h3>
               <p className="mt-1 text-sm text-gray-500">开始创建第一个应用</p>
               <div className="mt-6">
-                <Link
-                  to={ROUTES.tenant.appsNew}
-                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  <PlusIcon className="h-4 w-4 mr-2" />
-                  创建应用
+                <Link to={ROUTES.tenant.appsNew}>
+                  <PButton leftIcon={<PlusIcon className="h-4 w-4" />}>创建应用</PButton>
                 </Link>
               </div>
             </div>

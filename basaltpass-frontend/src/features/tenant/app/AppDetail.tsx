@@ -21,7 +21,7 @@ import { tenantAppApi, TenantApp } from '@api/tenant/tenantApp'
 import { ROUTES } from '@constants'
 import CreateOAuthClientModal from '@features/tenant/app/components/CreateOAuthClientModal'
 import OAuthClientDetailModal from '@features/tenant/app/components/OAuthClientDetailModal'
-import { PButton, PSkeleton, PBadge, PAlert } from '@ui'
+import { PButton, PSkeleton, PBadge, PAlert, PCard, PPageHeader } from '@ui'
 import type { TenantOAuthClientSummary } from '@api/tenant/tenantApp'
 
 export default function AppDetail() {
@@ -105,12 +105,9 @@ export default function AppDetail() {
             <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-red-500" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">{error}</h3>
             <div className="mt-6">
-              <button
-                onClick={fetchAppDetail}
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-              >
+              <PButton onClick={fetchAppDetail}>
                 重试
-              </button>
+              </PButton>
             </div>
           </div>
         </div>
@@ -128,7 +125,7 @@ export default function AppDetail() {
             <div className="mt-6">
               <Link
                 to={ROUTES.tenant.apps}
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700"
               >
                 返回应用列表
               </Link>
@@ -148,7 +145,7 @@ export default function AppDetail() {
         {error && <PAlert variant="error" message={error} className="mb-4" />}
 
         {/* 页面头部 */}
-        <div className="flex justify-between items-start">
+        <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
           <div className="flex items-center">
             <div className="flex-shrink-0">
               {app.logo_url ? (
@@ -164,18 +161,15 @@ export default function AppDetail() {
               )}
             </div>
             <div className="ml-6">
-              <div className="flex items-center">
-                <h1 className="text-3xl font-bold text-gray-900">{app.name}</h1>
-                <PBadge variant={getStatusVariant(app.status) as any} className="ml-3">
+              <PPageHeader
+                title={app.name}
+                description={app.description || `创建于 ${new Date(app.created_at).toLocaleDateString()} · 应用ID: ${app.id}`}
+              />
+              <div className="mt-2 flex items-center space-x-4 text-sm text-gray-500">
+                <PBadge variant={getStatusVariant(app.status) as any}>
                   {getStatusText(app.status)}
                 </PBadge>
-              </div>
-              {app.description && (
-                <p className="mt-2 text-lg text-gray-600">{app.description}</p>
-              )}
-              <div className="mt-2 flex items-center space-x-4 text-sm text-gray-500">
                 <span>创建于 {new Date(app.created_at).toLocaleDateString()}</span>
-                <span>•</span>
                 <span>应用ID: {app.id}</span>
               </div>
             </div>
@@ -183,14 +177,14 @@ export default function AppDetail() {
           <div className="flex items-center space-x-3">
             <Link
               to={`/tenant/apps/${app.id}/stats`}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
             >
               <ChartBarIcon className="h-4 w-4 mr-2" />
               统计
             </Link>
             <Link
               to={`/tenant/apps/${app.id}/settings`}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
             >
               <Cog6ToothIcon className="h-4 w-4 mr-2" />
               设置
@@ -200,8 +194,7 @@ export default function AppDetail() {
 
         {/* 统计卡片 */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
+          <PCard className="overflow-hidden rounded-xl p-5 shadow-sm">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
                   <UsersIcon className="h-6 w-6 text-gray-400" />
@@ -213,11 +206,9 @@ export default function AppDetail() {
                   </dl>
                 </div>
               </div>
-            </div>
-          </div>
+          </PCard>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
+          <PCard className="overflow-hidden rounded-xl p-5 shadow-sm">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
                   <UsersIcon className="h-6 w-6 text-green-400" />
@@ -229,11 +220,9 @@ export default function AppDetail() {
                   </dl>
                 </div>
               </div>
-            </div>
-          </div>
+          </PCard>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
+          <PCard className="overflow-hidden rounded-xl p-5 shadow-sm">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
                   <ChartBarIcon className="h-6 w-6 text-blue-400" />
@@ -245,8 +234,7 @@ export default function AppDetail() {
                   </dl>
                 </div>
               </div>
-            </div>
-          </div>
+          </PCard>
         </div>
 
         {/* 权限控制中心 */}
@@ -321,15 +309,15 @@ export default function AppDetail() {
               {/* 权限管理 */}
               <Link
                 to={`/tenant/apps/${app.id}/permissions`}
-                className="group relative bg-white rounded-lg p-6 border-2 border-gray-200 hover:border-purple-300 transition-all duration-200 hover:shadow-md"
+                className="group relative rounded-xl border-2 border-gray-200 bg-white p-6 transition-all duration-200 hover:border-indigo-300 hover:shadow-md"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     <div className="flex-shrink-0">
-                      <LockClosedIcon className="h-8 w-8 text-purple-600 group-hover:text-purple-700" />
+                      <LockClosedIcon className="h-8 w-8 text-indigo-600 group-hover:text-indigo-700" />
                     </div>
                     <div className="ml-4">
-                      <h4 className="text-lg font-medium text-gray-900 group-hover:text-purple-900">
+                      <h4 className="text-lg font-medium text-gray-900 group-hover:text-indigo-900">
                         权限管理
                       </h4>
                       <p className="text-sm text-gray-500">
@@ -337,10 +325,10 @@ export default function AppDetail() {
                       </p>
                     </div>
                   </div>
-                  <ArrowRightIcon className="h-5 w-5 text-gray-400 group-hover:text-purple-600 transition-colors" />
+                  <ArrowRightIcon className="h-5 w-5 text-gray-400 transition-colors group-hover:text-indigo-600" />
                 </div>
                 <div className="mt-3 flex items-center text-sm text-gray-500">
-                  <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-medium">
+                  <span className="rounded-full bg-indigo-100 px-2 py-1 text-xs font-medium text-indigo-800">
                     权限配置
                   </span>
                 </div>
@@ -359,19 +347,19 @@ export default function AppDetail() {
                 <div className="flex space-x-3">
                   <Link
                     to={`/tenant/apps/${app.id}/permissions`}
-                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 transition-colors"
+                    className="inline-flex items-center rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium leading-4 text-white transition-colors hover:bg-indigo-700"
                   >
                     创建权限
                   </Link>
                   <Link
                     to={`/tenant/apps/${app.id}/roles`}
-                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 transition-colors"
+                    className="inline-flex items-center rounded-lg bg-green-600 px-3 py-2 text-sm font-medium leading-4 text-white transition-colors hover:bg-green-700"
                   >
                     创建角色
                   </Link>
                   <Link
                     to={`/tenant/apps/${app.id}/users`}
-                    className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                    className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-700 transition-colors hover:bg-gray-50"
                   >
                     分配权限
                   </Link>
@@ -382,7 +370,7 @@ export default function AppDetail() {
         </div>
 
         {/* 应用信息 */}
-        <div className="bg-white shadow rounded-lg">
+        <PCard className="rounded-xl p-0 shadow-sm">
           <div className="px-6 py-4 border-b border-gray-200">
             <h3 className="text-lg font-medium text-gray-900 flex items-center">
               <CubeIcon className="h-5 w-5 mr-2 text-blue-500" />
@@ -428,10 +416,10 @@ export default function AppDetail() {
               </div>
             )}
           </div>
-        </div>
+        </PCard>
 
         {/* OAuth客户端 */}
-        <div className="bg-white shadow rounded-lg">
+        <PCard className="rounded-xl p-0 shadow-sm">
           <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between gap-4">
             <h3 className="text-lg font-medium text-gray-900 flex items-center">
               <KeyIcon className="h-5 w-5 mr-2 text-green-500" />
@@ -459,7 +447,7 @@ export default function AppDetail() {
             ) : (
               <div className="space-y-4">
                 {app.oauth_clients.map((client) => (
-                  <div key={client.id} className="border border-gray-200 rounded-lg p-4">
+                  <div key={client.id} className="rounded-xl border border-gray-200 p-4">
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
@@ -469,13 +457,13 @@ export default function AppDetail() {
                           </PBadge>
                         </div>
                         <div className="mt-2 flex items-center gap-2">
-                          <code className="flex-1 px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-xs font-mono break-all">
+                          <code className="flex-1 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-xs font-mono break-all">
                             {client.client_id}
                           </code>
                           <button
                             type="button"
                             onClick={() => copyToClipboard(client.client_id, `oauth_client_id_${client.id}`)}
-                            className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm text-gray-500 hover:text-gray-700"
+                            className="inline-flex items-center rounded-lg border border-gray-300 p-2 text-sm text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700"
                             title="复制 Client ID"
                           >
                             {copiedField === `oauth_client_id_${client.id}` ? (
@@ -509,13 +497,13 @@ export default function AppDetail() {
                               ) : (
                                 (client.redirect_uris || []).map((uri, index) => (
                                   <div key={index} className="flex items-center gap-2">
-                                    <code className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-xs font-mono break-all">
+                                    <code className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-mono break-all">
                                       {uri}
                                     </code>
                                     <button
                                       type="button"
                                       onClick={() => copyToClipboard(uri, `oauth_redirect_${client.id}_${index}`)}
-                                      className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm text-gray-500 hover:text-gray-700"
+                                      className="inline-flex items-center rounded-lg border border-gray-300 p-2 text-sm text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700"
                                       title="复制 Redirect URI"
                                     >
                                       {copiedField === `oauth_redirect_${client.id}_${index}` ? (
@@ -537,7 +525,7 @@ export default function AppDetail() {
                                 <span className="text-sm text-gray-500">未配置</span>
                               ) : (
                                 (client.scopes || []).map((scope) => (
-                                  <span key={scope} className="inline-flex px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">
+                                  <span key={scope} className="inline-flex rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
                                     {scope}
                                   </span>
                                 ))
@@ -560,7 +548,7 @@ export default function AppDetail() {
               </div>
             )}
           </div>
-        </div>
+        </PCard>
 
         <CreateOAuthClientModal
           isOpen={showCreateOAuthClientModal}

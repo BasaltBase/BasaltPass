@@ -25,29 +25,30 @@ let dialogBridge: DialogContextValue | null = null
 
 function fallbackModal(options: { message: string; title: string; type: DialogType; defaultValue?: string }) {
   return new Promise<boolean | string | null>((resolve) => {
+    const blackRgb = '17,24,39'
     const overlay = document.createElement('div')
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(17,24,39,.45);display:flex;align-items:center;justify-content:center;z-index:10000;padding:16px;'
+    overlay.style.cssText = `position:fixed;inset:0;background:rgba(${blackRgb},.45);display:flex;align-items:center;justify-content:center;z-index:10000;padding:16px;`
 
     const panel = document.createElement('div')
-    panel.style.cssText = 'width:min(92vw,460px);background:#fff;border-radius:12px;box-shadow:0 20px 50px rgba(0,0,0,.25);overflow:hidden;'
+    panel.style.cssText = `width:min(92vw,460px);background:#ffffff;border-radius:16px;box-shadow:0 20px 50px rgba(${blackRgb},.18);overflow:hidden;`
 
     const header = document.createElement('div')
-    header.style.cssText = 'padding:16px 20px;border-bottom:1px solid #e5e7eb;font-weight:600;color:#111827;'
+    header.style.cssText = `padding:16px 20px;border-bottom:1px solid rgba(${blackRgb},.12);font-weight:600;color:#111827;`
     header.textContent = options.title
 
     const body = document.createElement('div')
-    body.style.cssText = 'padding:16px 20px;color:#374151;line-height:1.6;'
+    body.style.cssText = `padding:16px 20px;color:rgba(${blackRgb},.72);line-height:1.6;`
     body.textContent = options.message
 
     const input = document.createElement('input')
     if (options.type === 'prompt') {
       input.value = options.defaultValue || ''
-      input.style.cssText = 'width:100%;margin-top:12px;border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;'
+      input.style.cssText = `width:100%;margin-top:12px;border:1px solid rgba(${blackRgb},.14);border-radius:14px;padding:10px 12px;`
       body.appendChild(input)
     }
 
     const footer = document.createElement('div')
-    footer.style.cssText = 'display:flex;justify-content:flex-end;gap:8px;padding:12px 20px;border-top:1px solid #e5e7eb;background:#f9fafb;'
+    footer.style.cssText = `display:flex;justify-content:flex-end;gap:8px;padding:12px 20px;border-top:1px solid rgba(${blackRgb},.12);background:rgba(${blackRgb},.04);`
 
     const cleanup = () => {
       if (document.body.contains(overlay)) {
@@ -57,7 +58,7 @@ function fallbackModal(options: { message: string; title: string; type: DialogTy
 
     const cancel = document.createElement('button')
     cancel.textContent = '取消'
-    cancel.style.cssText = 'padding:8px 14px;border:1px solid #d1d5db;background:#fff;border-radius:8px;cursor:pointer;'
+    cancel.style.cssText = `padding:8px 14px;border:1px solid rgba(${blackRgb},.14);background:#ffffff;border-radius:14px;cursor:pointer;`
     cancel.onclick = () => {
       cleanup()
       resolve(options.type === 'confirm' ? false : null)
@@ -65,7 +66,7 @@ function fallbackModal(options: { message: string; title: string; type: DialogTy
 
     const ok = document.createElement('button')
     ok.textContent = '确定'
-    ok.style.cssText = 'padding:8px 14px;border:none;background:#2563eb;color:#fff;border-radius:8px;cursor:pointer;'
+    ok.style.cssText = 'padding:8px 14px;border:none;background:#2563eb;color:#ffffff;border-radius:14px;cursor:pointer;'
     ok.onclick = () => {
       cleanup()
       if (options.type === 'prompt') {

@@ -101,7 +101,7 @@ export default function TwoFA() {
 
           {msgType === 'success' && msg.includes('成功启用') ? (
             /* 成功页面 */
-            <div className="bg-white shadow rounded-lg">
+            <div className="rounded-xl bg-white shadow-sm">
               <div className="px-4 py-5 sm:p-6 text-center">
                 <CheckCircleIcon className="mx-auto h-12 w-12 text-green-500 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -122,7 +122,7 @@ export default function TwoFA() {
             <>
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 {/* 设置说明 */}
-                <div className="bg-white shadow rounded-lg">
+                <div className="rounded-xl bg-white shadow-sm">
                   <div className="px-4 py-5 sm:p-6">
                     <div className="flex items-center mb-4">
                       <ShieldCheckIcon className="h-6 w-6 text-blue-600 mr-2" />
@@ -158,7 +158,7 @@ export default function TwoFA() {
                 </div>
 
                 {/* 验证码输入 */}
-                <div className="bg-white shadow rounded-lg">
+                <div className="rounded-xl bg-white shadow-sm">
                   <div className="px-4 py-5 sm:p-6">
                     <div className="flex items-center mb-4">
                       <KeyIcon className="h-6 w-6 text-green-600 mr-2" />
@@ -191,10 +191,10 @@ export default function TwoFA() {
 
               {/* 二维码和密钥 */}
               {qr && (
-                <div className="bg-white shadow rounded-lg">
+                <div className="rounded-xl bg-white shadow-sm">
                   <div className="px-4 py-5 sm:p-6">
                     <div className="flex items-center mb-4">
-                      <QrCodeIcon className="h-6 w-6 text-purple-600 mr-2" />
+                      <QrCodeIcon className="h-6 w-6 text-indigo-600 mr-2" />
                       <h3 className="text-lg font-medium text-gray-900">扫描二维码</h3>
                     </div>
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">

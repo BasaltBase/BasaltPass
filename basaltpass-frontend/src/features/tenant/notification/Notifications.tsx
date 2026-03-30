@@ -4,14 +4,11 @@ import {
   PlusIcon, 
   TrashIcon, 
   UserIcon, 
-  ChatBubbleLeftRightIcon,
   XMarkIcon,
   CheckIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
-import { EntitySearchSelect, PSkeleton, PBadge, PButton, PPageHeader, PPagination } from '@ui';
+import { EntitySearchSelect, PSkeleton, PBadge, PButton, PInput, PPageHeader, PPagination, PSelect, PTextarea, Modal } from '@ui';
 import {
   TenantNotification,
   TenantCreateNotificationRequest,
@@ -22,7 +19,6 @@ import TenantLayout from '@features/tenant/components/TenantLayout';
 
 const TenantNotifications: React.FC = () => {
   const [notifications, setNotifications] = useState<TenantNotification[]>([]);
-  const [users, setUsers] = useState<TenantUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
@@ -80,46 +76,8 @@ const TenantNotifications: React.FC = () => {
     }
   };
 
-  // 获取租户用户列表
-  const fetchUsers = async (search = '') => {
-    try {
-      const response = await tenantNotificationApi.getTenantUsers(search);
-      setUsers(response.data.data || []);
-    } catch (error: any) {
-      setUsers([]); // 确保在错误时设置为空数组
-      // 只在有搜索条件时显示错误，避免初始化时显示无意义的错误
-      if (search) {
-        showMessage('error', error.response?.data?.error || '获取用户列表失败');
-      }
-    }
-  };
-
-  // 处理多选用户
-  const handleUserSelect = (userId: number) => {
-    const isSelected = (formData.receiver_ids || []).includes(userId);
-    
-    setFormData(prev => ({
-      ...prev,
-      receiver_ids: isSelected
-        ? (prev.receiver_ids || []).filter(id => id !== userId)
-        : [...(prev.receiver_ids || []), userId],
-    }));
-
-    // 如果是取消选择，从已选用户列表中移除
-    if (isSelected) {
-      setSelectedUsers(prev => prev.filter(user => user.id !== userId));
-    } else {
-      // 如果是新选择，查找用户信息并添加到已选用户列表
-      const userInfo = users.find(user => user.id === userId);
-      if (userInfo && !selectedUsers.find(user => user.id === userId)) {
-        setSelectedUsers(prev => [...prev, userInfo]);
-      }
-    }
-  };
-
   useEffect(() => {
     fetchNotifications();
-    fetchUsers();
   }, []);
 
   // 创建通知
@@ -194,7 +152,7 @@ const TenantNotifications: React.FC = () => {
     <div className="p-6">
       {/* 消息提示 */}
       {message.visible && (
-        <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg flex items-center space-x-2 ${
+        <div className={`fixed top-4 right-4 z-50 flex items-center space-x-2 rounded-xl px-4 py-3 shadow-lg ${
           message.type === 'success' ? 'bg-green-500 text-white' :
           message.type === 'error' ? 'bg-red-500 text-white' :
           'bg-blue-500 text-white'
@@ -221,7 +179,7 @@ const TenantNotifications: React.FC = () => {
       />
 
       {/* 通知列表 */}
-      <div className="bg-white rounded-lg shadow">
+      <div className="rounded-xl bg-white shadow-sm">
         <div className="px-6 py-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">通知列表</h2>
         </div>
@@ -315,143 +273,108 @@ const TenantNotifications: React.FC = () => {
 
       {/* 创建通知模态框 */}
       {modalVisible && (
-        <div className="fixed inset-0 !m-0 z-50 overflow-y-auto">
-          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div className="fixed inset-0 !m-0 transition-opacity" aria-hidden="true">
-              <div className="absolute inset-0 bg-gray-500 opacity-75" onClick={() => setModalVisible(false)}></div>
+        <Modal
+          open={modalVisible}
+          onClose={() => {
+            setModalVisible(false);
+            setFormData({ app_name: '', title: '', content: '', type: 'info', receiver_ids: [] });
+            setSelectedUsers([]);
+          }}
+          title="发送通知"
+          widthClass="max-w-3xl"
+        >
+          <form onSubmit={handleCreate} className="space-y-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <PInput
+                label={<>应用名称 <span className="text-red-500">*</span></>}
+                type="text"
+                value={formData.app_name}
+                onChange={(e) => handleInputChange('app_name', e.target.value)}
+                placeholder="如：安全中心、用户中心等"
+                required
+              />
+              <div>
+                <label htmlFor="tenant-notification-type" className="mb-2 block text-sm font-medium text-gray-700">
+                  通知类型 <span className="text-red-500">*</span>
+                </label>
+                <PSelect
+                  id="tenant-notification-type"
+                  value={formData.type}
+                  onChange={(e) => handleInputChange('type', e.target.value as 'info' | 'success' | 'warning' | 'error')}
+                  required
+                >
+                  <option value="info">信息</option>
+                  <option value="success">成功</option>
+                  <option value="warning">警告</option>
+                  <option value="error">错误</option>
+                </PSelect>
+              </div>
             </div>
 
-            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <PInput
+              label={<>通知标题 <span className="text-red-500">*</span></>}
+              type="text"
+              value={formData.title}
+              onChange={(e) => handleInputChange('title', e.target.value)}
+              placeholder="请输入通知标题"
+              required
+            />
 
-            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-              <form onSubmit={handleCreate}>
-                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                  <div className="flex items-center mb-4">
-                    <ChatBubbleLeftRightIcon className="w-6 h-6 text-blue-600 mr-2" />
-                    <h3 className="text-lg font-medium text-gray-900">发送通知</h3>
-                  </div>
+            <PTextarea
+              label={<>通知内容 <span className="text-red-500">*</span></>}
+              rows={4}
+              value={formData.content}
+              onChange={(e) => handleInputChange('content', e.target.value)}
+              placeholder="请输入通知内容"
+              required
+            />
 
-                  <div className="space-y-4">
-                    {/* 应用名称 */}
-                    <div>
-                      <label htmlFor="app_name" className="block text-sm font-medium text-gray-700 mb-1">
-                        应用名称 <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        id="app_name"
-                        value={formData.app_name}
-                        onChange={(e) => handleInputChange('app_name', e.target.value)}
-                        placeholder="如：安全中心、用户中心等"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        required
-                      />
-                    </div>
-
-                    {/* 通知标题 */}
-                    <div>
-                      <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-                        通知标题 <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        id="title"
-                        value={formData.title}
-                        onChange={(e) => handleInputChange('title', e.target.value)}
-                        placeholder="请输入通知标题"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        required
-                      />
-                    </div>
-
-                    {/* 通知内容 */}
-                    <div>
-                      <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-1">
-                        通知内容 <span className="text-red-500">*</span>
-                      </label>
-                      <textarea
-                        id="content"
-                        rows={4}
-                        value={formData.content}
-                        onChange={(e) => handleInputChange('content', e.target.value)}
-                        placeholder="请输入通知内容"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        required
-                      />
-                    </div>
-
-                    {/* 通知类型 */}
-                    <div>
-                      <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">
-                        通知类型 <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        id="type"
-                        value={formData.type}
-                        onChange={(e) => handleInputChange('type', e.target.value as 'info' | 'success' | 'warning' | 'error')}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        required
-                      >
-                        <option value="info">信息</option>
-                        <option value="success">成功</option>
-                        <option value="warning">警告</option>
-                        <option value="error">错误</option>
-                      </select>
-                    </div>
-
-                    {/* 接收用户 */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        接收用户
-                        <span className="text-gray-500 text-xs ml-2">(不选择用户则向租户下所有用户广播)</span>
-                      </label>
-                      
-                      {/* 用户搜索框 - 统一组件 */}
-                      <div className="mb-3">
-                        <EntitySearchSelect
-                          entity="user"
-                          context="tenant"
-                          value={selectedUsers.map(user => ({
-                            id: user.id,
-                            label: user.nickname || user.email,
-                            subtitle: user.phone || user.email,
-                            type: 'user',
-                            raw: user
-                          }))}
-                          onChange={(items: any[]) => {
-                            const newSelectedUsers = items.map((item: any) => item.raw as TenantUser);
-                            setSelectedUsers(newSelectedUsers);
-                            setFormData(prev => ({
-                              ...prev,
-                              receiver_ids: newSelectedUsers.map((u: any) => u.id)
-                            }));
-                          }}
-                          placeholder="搜索用户（邮箱、昵称等）..."
-                          variant="chips"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-2">
-                  <PButton type="submit">发送通知</PButton>
-                  <PButton
-                    type="button"
-                    variant="secondary"
-                    onClick={() => {
-                      setModalVisible(false);
-                      setFormData({ app_name: '', title: '', content: '', type: 'info', receiver_ids: [] });
-                      setSelectedUsers([]);
-                    }}
-                  >
-                    取消
-                  </PButton>
-                </div>
-              </form>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                接收用户
+                <span className="ml-2 text-xs text-gray-500">(不选择用户则向租户下所有用户广播)</span>
+              </label>
+              <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                <EntitySearchSelect
+                  entity="user"
+                  context="tenant"
+                  value={selectedUsers.map(user => ({
+                    id: user.id,
+                    label: user.nickname || user.email,
+                    subtitle: user.phone || user.email,
+                    type: 'user',
+                    raw: user
+                  }))}
+                  onChange={(items: any[]) => {
+                    const newSelectedUsers = items.map((item: any) => item.raw as TenantUser);
+                    setSelectedUsers(newSelectedUsers);
+                    setFormData(prev => ({
+                      ...prev,
+                      receiver_ids: newSelectedUsers.map((u: any) => u.id)
+                    }));
+                  }}
+                  placeholder="搜索用户（邮箱、昵称等）..."
+                  variant="chips"
+                />
+              </div>
             </div>
-          </div>
-        </div>
+
+            <div className="flex justify-end gap-3 border-t border-gray-200 pt-6">
+              <PButton
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  setModalVisible(false);
+                  setFormData({ app_name: '', title: '', content: '', type: 'info', receiver_ids: [] });
+                  setSelectedUsers([]);
+                }}
+              >
+                取消
+              </PButton>
+              <PButton type="submit">发送通知</PButton>
+            </div>
+          </form>
+        </Modal>
       )}
     </div>
     </TenantLayout>

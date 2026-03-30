@@ -11,11 +11,10 @@ import {
   PencilIcon,
   TrashIcon,
   ChartBarIcon,
-  CalendarIcon,
   CubeIcon
 } from '@heroicons/react/24/outline'
 import AdminLayout from '@features/admin/components/AdminLayout'
-import { PInput, PSelect, PTextarea, PCheckbox, PButton, PSkeleton, PBadge, PAlert } from '@ui'
+import { PInput, PSelect, PTextarea, PCheckbox, PButton, PSkeleton, PBadge, PAlert, PCard, PPageHeader } from '@ui'
 import { adminTenantApi, AdminTenantDetailResponse, AdminUpdateTenantRequest, TenantSettings } from '@api/admin/tenant'
 import { ROUTES } from '@constants'
 
@@ -211,18 +210,13 @@ const TenantDetail: React.FC = () => {
         {/* 页面头部 */}
         <div className="lg:flex lg:items-center lg:justify-between">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center">
-              <BuildingOfficeIcon className="h-8 w-8 mr-3 text-indigo-600" />
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">
-                  {tenant.name}
-                </h1>
-                <div className="mt-1 flex items-center space-x-2">
-                  <span className="text-sm text-gray-500">代码: {tenant.code}</span>
-                  <span className="text-gray-300">•</span>
-                  {getStatusBadge(tenant.status)}
-                </div>
-              </div>
+            <PPageHeader
+              title={tenant.name}
+              description={`代码: ${tenant.code}`}
+              icon={<BuildingOfficeIcon className="h-8 w-8 text-indigo-600" />}
+            />
+            <div className="mt-2 flex items-center space-x-2">
+              {getStatusBadge(tenant.status)}
             </div>
           </div>
           <div className="mt-5 flex lg:mt-0 lg:ml-4 space-x-3">
@@ -253,7 +247,7 @@ const TenantDetail: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* 左侧：基本信息 */}
           <div className="lg:col-span-2">
-            <div className="bg-white shadow rounded-lg">
+            <PCard className="rounded-xl p-0 shadow-sm">
               <div className="px-4 py-5 sm:p-6">
                 <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4 flex items-center">
                   <DocumentTextIcon className="h-5 w-5 mr-2 text-gray-400" />
@@ -353,10 +347,10 @@ const TenantDetail: React.FC = () => {
                   </div>
                 )}
               </div>
-            </div>
+            </PCard>
 
             {/* 租户设置 */}
-            <div className="bg-white shadow rounded-lg mt-6">
+            <PCard className="mt-6 rounded-xl p-0 shadow-sm">
               <div className="px-4 py-5 sm:p-6">
                 <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4 flex items-center">
                   <CogIcon className="h-5 w-5 mr-2 text-gray-400" />
@@ -474,13 +468,13 @@ const TenantDetail: React.FC = () => {
                   </div>
                 )}
               </div>
-            </div>
+            </PCard>
           </div>
 
           {/* 右侧：统计信息 */}
           <div className="space-y-6">
             {/* 快速统计 */}
-            <div className="bg-white shadow rounded-lg">
+            <PCard className="rounded-xl p-0 shadow-sm">
               <div className="px-4 py-5 sm:p-6">
                 <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4 flex items-center">
                   <ChartBarIcon className="h-5 w-5 mr-2 text-gray-400" />
@@ -495,7 +489,7 @@ const TenantDetail: React.FC = () => {
                   </div>
                   <div>
                     <dt className="text-sm font-medium text-gray-500">应用数量</dt>
-                    <dd className="mt-1 text-2xl font-semibold text-purple-600">
+                    <dd className="mt-1 text-2xl font-semibold text-indigo-600">
                       {formatNumber(tenant.app_count)}
                     </dd>
                   </div>
@@ -523,10 +517,10 @@ const TenantDetail: React.FC = () => {
                   </div>
                 </div>
               </div>
-            </div>
+            </PCard>
 
             {/* 应用列表 */}
-            <div className="bg-white shadow rounded-lg">
+            <PCard className="rounded-xl p-0 shadow-sm">
               <div className="px-4 py-5 sm:p-6">
                 <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4 flex items-center">
                   <CubeIcon className="h-5 w-5 mr-2 text-gray-400" />
@@ -535,10 +529,10 @@ const TenantDetail: React.FC = () => {
                 {tenant.recent_apps && tenant.recent_apps.length > 0 ? (
                   <div className="space-y-3">
                     {tenant.recent_apps.map((app) => (
-                      <div key={app.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                      <div key={app.id} className="flex items-center justify-between rounded-xl bg-gray-50 p-3 transition-colors hover:bg-gray-100">
                         <div className="flex items-center space-x-3">
                           <div className="flex-shrink-0">
-                            <CubeIcon className="h-6 w-6 text-purple-600" />
+                            <CubeIcon className="h-6 w-6 text-indigo-600" />
                           </div>
                           <div>
                             <p className="text-sm font-medium text-gray-900">{app.name}</p>
@@ -558,7 +552,7 @@ const TenantDetail: React.FC = () => {
                   </div>
                 )}
               </div>
-            </div>
+            </PCard>
           </div>
         </div>
       </div>

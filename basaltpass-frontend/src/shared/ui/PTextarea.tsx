@@ -26,8 +26,8 @@ const PTextarea = forwardRef<HTMLTextAreaElement, PTextareaProps>(
     `;
 
     const variantStyles = {
-      default: 'border-gray-300 rounded-md shadow-sm bg-white',
-      rounded: 'border-gray-200 rounded-xl shadow-sm bg-white/80',
+      default: 'border-gray-300 rounded-lg shadow-sm bg-white',
+      rounded: 'border-gray-200 rounded-xl shadow-sm bg-white',
       minimal: 'border-gray-200 rounded-lg bg-gray-50'
     } as const;
 

@@ -31,6 +31,8 @@ const config: Record<AlertVariant, {
   border: string
   titleColor: string
   textColor: string
+  closeHover: string
+  closeRingOffset: string
   icon: React.FC<{ className?: string }>
 }> = {
   success: {
@@ -38,6 +40,8 @@ const config: Record<AlertVariant, {
     border: 'border-green-200',
     titleColor: 'text-green-800',
     textColor: 'text-green-700',
+    closeHover: 'hover:bg-green-100',
+    closeRingOffset: 'focus:ring-offset-green-50',
     icon: CheckCircleIcon,
   },
   error: {
@@ -45,6 +49,8 @@ const config: Record<AlertVariant, {
     border: 'border-red-200',
     titleColor: 'text-red-800',
     textColor: 'text-red-700',
+    closeHover: 'hover:bg-red-100',
+    closeRingOffset: 'focus:ring-offset-red-50',
     icon: ExclamationCircleIcon,
   },
   warning: {
@@ -52,6 +58,8 @@ const config: Record<AlertVariant, {
     border: 'border-yellow-200',
     titleColor: 'text-yellow-800',
     textColor: 'text-yellow-700',
+    closeHover: 'hover:bg-yellow-100',
+    closeRingOffset: 'focus:ring-offset-yellow-50',
     icon: ExclamationTriangleIcon,
   },
   info: {
@@ -59,6 +67,8 @@ const config: Record<AlertVariant, {
     border: 'border-blue-200',
     titleColor: 'text-blue-800',
     textColor: 'text-blue-700',
+    closeHover: 'hover:bg-blue-100',
+    closeRingOffset: 'focus:ring-offset-blue-50',
     icon: InformationCircleIcon,
   },
 }
@@ -80,7 +90,7 @@ const PAlert: React.FC<PAlertProps> = ({
   return (
     <div
       className={`
-        rounded-md border p-4
+        rounded-lg border p-4
         ${c.bg} ${c.border}
         ${className}
       `.replace(/\s+/g, ' ').trim()}
@@ -107,8 +117,8 @@ const PAlert: React.FC<PAlertProps> = ({
               type="button"
               onClick={onDismiss}
               className={`
-                inline-flex rounded-md p-1.5 focus:outline-none focus:ring-2 focus:ring-offset-2
-                ${c.textColor} hover:${c.bg} focus:ring-offset-${c.bg}
+                inline-flex rounded-lg p-1.5 focus:outline-none focus:ring-2 focus:ring-offset-2
+                ${c.textColor} ${c.closeHover} ${c.closeRingOffset}
               `}
               aria-label="关闭"
             >

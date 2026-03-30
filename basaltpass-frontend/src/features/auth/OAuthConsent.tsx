@@ -152,8 +152,7 @@ export default function OAuthConsent() {
                     {/* Twitter-style 蓝V认证徽章 */}
                     {isVerified && (
                       <div
-                        className="absolute bottom-0 right-0 h-6 w-6 rounded-full flex items-center justify-center shadow-md"
-                        style={{ background: '#1d9bf0' }}
+                        className="absolute bottom-0 right-0 flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 shadow-md"
                         title="认证应用"
                       >
                         {/* 勾选图标 */}

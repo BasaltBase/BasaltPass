@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import TenantLayout from '@features/tenant/components/TenantLayout'
 import {
-  ChevronRightIcon,
   PlusIcon,
   PencilIcon,
   TrashIcon,
@@ -18,7 +17,7 @@ import {
   UpdateTenantCouponRequest,
 } from '@api/tenant/subscription'
 import { ROUTES } from '@constants'
-import { PSkeleton, PBadge, PButton } from '@ui'
+import { PSkeleton, PBadge, PButton, PInput, PSelect, PCheckbox, Modal, PPageHeader } from '@ui'
 
 export default function TenantCoupons() {
   const [searchParams] = useSearchParams()
@@ -184,27 +183,19 @@ export default function TenantCoupons() {
       <div className="py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* 页面头部 */}
-          <div className="lg:flex lg:items-center lg:justify-between">
-            <div className="flex-1 min-w-0">
-              <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-                优惠券管理
-              </h2>
-            </div>
-            <div className="mt-5 flex lg:mt-0 lg:ml-4">
-              <button
-                type="button"
-                onClick={() => setShowModal(true)}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
+          <PPageHeader
+            title="优惠券管理"
+            description="创建、编辑和停用订阅优惠券"
+            actions={
+              <PButton type="button" onClick={() => setShowModal(true)} leftIcon={<PlusIcon className="h-5 w-5" />}>
                 创建优惠券
-              </button>
-            </div>
-          </div>
+              </PButton>
+            }
+          />
 
           {/* 优惠券列表 */}
           <div className="mt-8">
-            <div className="bg-white shadow overflow-hidden sm:rounded-md">
+            <div className="overflow-hidden rounded-xl bg-white shadow-sm">
               <ul className="divide-y divide-gray-200">
                 {coupons.length === 0 ? (
                   <li className="px-6 py-8 text-center text-gray-500">
@@ -253,14 +244,14 @@ export default function TenantCoupons() {
                         <div className="flex items-center space-x-2">
                           <button
                             onClick={() => handleEdit(coupon)}
-                            className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md"
+                            className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-indigo-50 hover:text-indigo-600"
                             title="编辑"
                           >
                             <PencilIcon className="h-5 w-5" />
                           </button>
                           <button
                             onClick={() => handleDeleteClick(coupon)}
-                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md"
+                            className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
                             title="删除"
                           >
                             <TrashIcon className="h-5 w-5" />
@@ -278,53 +269,50 @@ export default function TenantCoupons() {
 
       {/* 创建/编辑优惠券模态框 */}
       {showModal && (
-        <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white max-h-[80vh] overflow-y-auto">
-            <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
-              {editingCoupon ? '编辑优惠券' : '创建优惠券'}
-            </h3>
+        <Modal
+          open={showModal}
+          onClose={handleCancel}
+          title={editingCoupon ? '编辑优惠券' : '创建优惠券'}
+          widthClass="max-w-md"
+        >
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">优惠券代码</label>
-                <input
+                <PInput
+                  label="优惠券代码"
                   type="text"
                   value={formData.code}
                   onChange={(e) => setFormData({...formData, code: e.target.value.toUpperCase()})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                   required
                   disabled={!!editingCoupon}
                   placeholder="例: SAVE20"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">优惠券名称</label>
-                <input
+                <PInput
+                  label="优惠券名称"
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">折扣类型</label>
-                <select
+                <PSelect
+                  label="折扣类型"
                   value={formData.discount_type}
                   onChange={(e) => setFormData({...formData, discount_type: e.target.value as 'percent' | 'fixed'})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                   required
                 >
                   <option value="percent">百分比</option>
                   <option value="fixed">固定金额</option>
-                </select>
+                </PSelect>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">折扣值</label>
-                <input
+                <PInput
+                  label="折扣值"
                   type="number"
                   value={formData.discount_value}
                   onChange={(e) => setFormData({...formData, discount_value: parseFloat(e.target.value) || 0})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                   min="0"
                   step={formData.discount_type === 'percent' ? '1' : '0.01'}
                   max={formData.discount_type === 'percent' ? '100' : undefined}
@@ -335,109 +323,93 @@ export default function TenantCoupons() {
                 </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">持续时间</label>
-                <select
+                <PSelect
+                  label="持续时间"
                   value={formData.duration}
                   onChange={(e) => setFormData({...formData, duration: e.target.value as 'once' | 'repeating' | 'forever'})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                   required
                 >
                   <option value="once">一次性</option>
                   <option value="repeating">重复</option>
                   <option value="forever">永久</option>
-                </select>
+                </PSelect>
               </div>
               {formData.duration === 'repeating' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">重复次数</label>
-                  <input
+                  <PInput
+                    label="重复次数"
                     type="number"
                     value={formData.duration_in_cycles || ''}
                     onChange={(e) => setFormData({...formData, duration_in_cycles: e.target.value ? parseInt(e.target.value) : undefined})}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                     min="1"
                   />
                 </div>
               )}
               <div>
-                <label className="block text-sm font-medium text-gray-700">最大使用次数（可选）</label>
-                <input
+                <PInput
+                  label="最大使用次数（可选）"
                   type="number"
                   value={formData.max_redemptions || ''}
                   onChange={(e) => setFormData({...formData, max_redemptions: e.target.value ? parseInt(e.target.value) : undefined})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                   min="1"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">过期时间（可选）</label>
-                <input
+                <PInput
+                  label="过期时间（可选）"
                   type="datetime-local"
                   value={formData.expires_at || ''}
                   onChange={(e) => setFormData({...formData, expires_at: e.target.value || undefined})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 />
               </div>
-              <div>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={formData.is_active}
-                    onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
-                    className="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                  />
-                  <span className="ml-2 text-sm font-medium text-gray-700">启用优惠券</span>
-                </label>
-              </div>
+              <PCheckbox
+                label="启用优惠券"
+                checked={formData.is_active}
+                onChange={(e) => setFormData({...formData, is_active: (e.target as HTMLInputElement).checked})}
+              />
               <div className="flex justify-end space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={handleCancel}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-                >
+                <PButton type="button" onClick={handleCancel} variant="secondary">
                   取消
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
-                >
+                </PButton>
+                <PButton type="submit">
                   {editingCoupon ? '更新' : '创建'}
-                </button>
+                </PButton>
               </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {/* 删除确认模态框 */}
       {showDeleteModal && deleteTarget && (
-        <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <Modal
+          open={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          title="确认删除"
+          widthClass="max-w-md"
+        >
             <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
               <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
             </div>
-            <h3 className="text-lg font-medium text-center text-gray-900 mb-2">确认删除</h3>
             <p className="text-sm text-gray-500 text-center mb-6">
               确定要删除优惠券 "{deleteTarget.Name}" ({deleteTarget.Code}) 吗？此操作无法撤销。
             </p>
             <div className="flex justify-center space-x-3">
-              <button
+              <PButton
                 onClick={() => setShowDeleteModal(false)}
-                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
                 disabled={deleting}
+                variant="secondary"
               >
                 取消
-              </button>
-              <button
+              </PButton>
+              <PButton
                 onClick={handleDeleteConfirm}
-                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50"
                 disabled={deleting}
+                variant="danger"
               >
                 {deleting ? '删除中...' : '确认删除'}
-              </button>
+              </PButton>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </TenantLayout>
   )

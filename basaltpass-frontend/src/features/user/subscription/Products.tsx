@@ -106,9 +106,9 @@ export default function ProductsPage() {
   const getPriceColor = (index: number) => {
     const colors = [
       'text-blue-600 bg-blue-50 border-blue-200',
-      'text-emerald-600 bg-emerald-50 border-emerald-200',
-      'text-purple-600 bg-purple-50 border-purple-200',
-      'text-orange-600 bg-orange-50 border-orange-200'
+      'text-green-600 bg-green-50 border-green-200',
+      'text-indigo-600 bg-indigo-50 border-indigo-200',
+      'text-yellow-600 bg-yellow-50 border-yellow-200'
     ]
     return colors[index % colors.length]
   }
@@ -195,7 +195,7 @@ export default function ProductsPage() {
                               <h5 className="text-sm font-medium text-gray-700 mb-2">可选价格:</h5>
                               <div className="grid gap-2">
                                 {plan.Prices.map((price, priceIndex) => (
-                                  <div key={price.ID} className={`flex items-center justify-between p-3 rounded-md border ${getPriceColor(priceIndex)}`}>
+                                  <div key={price.ID} className={`flex items-center justify-between rounded-lg border p-3 ${getPriceColor(priceIndex)}`}>
                                     <div className="flex-1">
                                       <div className="flex items-center justify-between">
                                         <span className="text-lg font-semibold">{formatPrice(price)}</span>
@@ -248,12 +248,12 @@ export default function ProductsPage() {
         </div>
 
         {/* 相关链接 */}
-        <PCard variant="bordered" className="p-6">
+        <PCard variant="bordered" className="rounded-xl p-6 shadow-sm">
           <h3 className="text-lg font-medium text-gray-900 mb-4">相关链接</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Link
               to={ROUTES.user.subscriptions}
-              className="flex items-center p-3 bg-white rounded-md shadow-sm hover:shadow-md transition-shadow"
+              className="flex items-center rounded-lg bg-white p-3 shadow-sm transition-shadow hover:shadow-md"
             >
               <CreditCardIcon className="h-5 w-5 text-indigo-600 mr-3" />
               <div>
@@ -263,7 +263,7 @@ export default function ProductsPage() {
             </Link>
             <Link
               to={ROUTES.user.wallet}
-              className="flex items-center p-3 bg-white rounded-md shadow-sm hover:shadow-md transition-shadow"
+              className="flex items-center rounded-lg bg-white p-3 shadow-sm transition-shadow hover:shadow-md"
             >
               <WalletIcon className="h-5 w-5 text-green-600 mr-3" />
               <div>
@@ -273,7 +273,7 @@ export default function ProductsPage() {
             </Link>
             <Link
               to={ROUTES.user.help}
-              className="flex items-center p-3 bg-white rounded-md shadow-sm hover:shadow-md transition-shadow"
+              className="flex items-center rounded-lg bg-white p-3 shadow-sm transition-shadow hover:shadow-md"
             >
               <QuestionMarkCircleIcon className="h-5 w-5 text-blue-600 mr-3" />
               <div>

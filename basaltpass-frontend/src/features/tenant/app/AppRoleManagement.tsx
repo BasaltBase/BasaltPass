@@ -213,7 +213,7 @@ export default function AppRoleManagement() {
         />
 
         {/* 搜索 */}
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="rounded-xl bg-white p-6 shadow-sm">
           <div className="relative">
             <MagnifyingGlassIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
             <input
@@ -227,7 +227,7 @@ export default function AppRoleManagement() {
         </div>
 
         {/* 角色列表 */}
-        <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+        <div className="overflow-hidden rounded-xl bg-white shadow-sm">
           <div className="px-4 py-5 sm:p-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg leading-6 font-medium text-gray-900">
@@ -258,18 +258,22 @@ export default function AppRoleManagement() {
                         </div>
                       </div>
                       <div className="flex space-x-2">
-                        <button
+                        <PButton
                           onClick={() => handleEditRole(role)}
-                          className="text-blue-600 hover:text-blue-800"
+                          variant="ghost"
+                          size="sm"
+                          className="px-2 text-blue-600 hover:text-blue-800"
                         >
                           <PencilIcon className="h-4 w-4" />
-                        </button>
-                        <button
+                        </PButton>
+                        <PButton
                           onClick={() => handleDeleteRole(role)}
-                          className="text-red-600 hover:text-red-800"
+                          variant="ghost"
+                          size="sm"
+                          className="px-2 text-red-600 hover:text-red-800"
                         >
                           <TrashIcon className="h-4 w-4" />
-                        </button>
+                        </PButton>
                       </div>
                     </div>
 
@@ -359,7 +363,7 @@ const RoleModal: React.FC<{
 
   return (
     <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-10 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white">
+      <div className="relative top-10 mx-auto w-full max-w-4xl rounded-2xl border bg-white p-5 shadow-xl">
         <div className="mt-3">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-medium text-gray-900">{title}</h3>
@@ -417,7 +421,7 @@ const RoleModal: React.FC<{
               <label className="block text-sm font-medium text-gray-700 mb-3">
                 权限分配 ({formData.permission_ids.length} 个已选)
               </label>
-              <div className="max-h-80 overflow-y-auto border border-gray-200 rounded-md p-4">
+              <div className="max-h-80 overflow-y-auto rounded-lg border border-gray-200 p-4">
                 {Object.entries(getPermissionsByCategory()).map(([category, categoryPermissions]) => (
                   <div key={category} className="mb-4">
                     <h4 className="text-sm font-medium text-gray-900 mb-2 flex items-center">

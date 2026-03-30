@@ -174,7 +174,7 @@ export default function WalletIndex() {
         </div>
 
         {/* 钱包概览 */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg shadow-lg">
+        <div className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg">
           <div className="px-6 py-8">
             <div className="flex items-center justify-between">
               <div>
@@ -203,10 +203,10 @@ export default function WalletIndex() {
           {walletStats.map((stat) => (
             <div
               key={stat.name}
-              className="relative overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:px-6"
+              className="relative overflow-hidden rounded-xl bg-white px-4 py-5 shadow-sm sm:px-6"
             >
               <dt>
-                <div className={`absolute rounded-md ${stat.bgColor} p-3`}>
+                <div className={`absolute rounded-lg ${stat.bgColor} p-3`}>
                   <stat.icon className={`h-6 w-6 ${stat.color}`} />
                 </div>
                 <p className="ml-16 truncate text-sm font-medium text-gray-500">
@@ -223,7 +223,7 @@ export default function WalletIndex() {
         </div>
 
         {/* 快速操作 */}
-        <div className="bg-white shadow rounded-lg">
+        <div className="rounded-xl bg-white shadow-sm">
           <div className="px-4 py-5 sm:p-6">
             <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
               快速操作
@@ -317,7 +317,7 @@ export default function WalletIndex() {
         </div>
 
         {/* 最近交易预览（真实数据） */}
-        <div className="bg-white shadow rounded-lg">
+        <div className="rounded-xl bg-white shadow-sm">
           <div className="px-4 py-5 sm:p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-medium leading-6 text-gray-900">

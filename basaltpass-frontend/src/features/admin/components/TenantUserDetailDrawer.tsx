@@ -42,7 +42,7 @@ const TenantUserDetailDrawer: React.FC<TenantUserDetailDrawerProps> = ({
           )}
 
           {!loading && error && (
-            <div className="rounded-md bg-red-50 p-4">
+            <div className="rounded-lg bg-red-50 p-4">
               <p className="text-sm text-red-700">{error}</p>
             </div>
           )}
@@ -140,7 +140,7 @@ const TenantUserDetailDrawer: React.FC<TenantUserDetailDrawerProps> = ({
                   <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">关联应用</h3>
                   <ul className="mt-3 space-y-2 text-sm text-gray-600">
                     {user.apps.map((app) => (
-                      <li key={app.id} className="flex items-center justify-between rounded-md border border-gray-200 px-3 py-2">
+                      <li key={app.id} className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2">
                         <div>
                           <p className="font-medium text-gray-900">{app.name}</p>
                           {app.role && <p className="text-xs text-gray-500 mt-0.5">角色: {app.role}</p>}

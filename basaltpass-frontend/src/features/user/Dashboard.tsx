@@ -25,6 +25,12 @@ import {
   QuestionMarkCircleIcon
 } from '@heroicons/react/24/outline'
 
+const quickActionCardClass =
+  'relative flex items-center space-x-3 rounded-xl border border-gray-300 bg-white px-6 py-5 shadow-sm transition hover:border-gray-400 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2'
+
+const quickActionDisabledClass =
+  'relative flex items-center space-x-3 rounded-xl border border-gray-200 bg-gray-50 px-6 py-5 shadow-sm opacity-60 grayscale cursor-not-allowed'
+
 interface RecentTransaction {
   id: string
   type: 'recharge' | 'withdraw'
@@ -175,7 +181,7 @@ export default function Dashboard() {
               hoverable
             >
               <dt>
-                <div className="absolute rounded-md bg-blue-500 p-3">
+                <div className="absolute rounded-lg bg-blue-500 p-3">
                   <item.icon className="h-6 w-6 text-white" />
                 </div>
                 <p className="ml-16 truncate text-sm font-medium text-gray-500">
@@ -224,7 +230,7 @@ export default function Dashboard() {
               {walletRechargeWithdrawEnabled ? (
                 <Link
                   to={ROUTES.user.walletRecharge}
-                  className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
+                  className={quickActionCardClass}
                 >
                   <div className="flex-shrink-0">
                     <ArrowUpIcon className="h-6 w-6 text-green-600" />
@@ -237,7 +243,7 @@ export default function Dashboard() {
                 </Link>
               ) : (
                 <div
-                  className="relative rounded-lg border border-gray-200 bg-gray-50 px-6 py-5 shadow-sm flex items-center space-x-3 opacity-60 cursor-not-allowed grayscale"
+                  className={quickActionDisabledClass}
                   aria-disabled
                   title="钱包充值暂未开放"
                 >
@@ -254,7 +260,7 @@ export default function Dashboard() {
               {walletRechargeWithdrawEnabled ? (
                 <Link
                   to={ROUTES.user.walletWithdraw}
-                  className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
+                  className={quickActionCardClass}
                 >
                   <div className="flex-shrink-0">
                     <ArrowDownIcon className="h-6 w-6 text-red-600" />
@@ -267,7 +273,7 @@ export default function Dashboard() {
                 </Link>
               ) : (
                 <div
-                  className="relative rounded-lg border border-gray-200 bg-gray-50 px-6 py-5 shadow-sm flex items-center space-x-3 opacity-60 cursor-not-allowed grayscale"
+                  className={quickActionDisabledClass}
                   aria-disabled
                   title="钱包提现暂未开放"
                 >
@@ -283,7 +289,7 @@ export default function Dashboard() {
 
               <Link
                 to={ROUTES.user.walletHistory}
-                className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
+                className={quickActionCardClass}
               >
                 <div className="flex-shrink-0">
                   <ClockIcon className="h-6 w-6 text-blue-600" />
@@ -297,10 +303,11 @@ export default function Dashboard() {
 
               <Link
                 to={ROUTES.user.securityTwoFA}
-                className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
+                className={quickActionCardClass}
               >
                 <div className="flex-shrink-0">
                   <ShieldCheckIcon className="h-6 w-6 text-purple-600" />
+                  
                 </div>
                 <div className="flex-1 min-w-0">
                   <span className="absolute inset-0" aria-hidden="true" />
@@ -311,7 +318,7 @@ export default function Dashboard() {
 
               <Link
                 to={ROUTES.user.teams}
-                className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
+                className={quickActionCardClass}
               >
                 <div className="flex-shrink-0">
                   <UserGroupIcon className="h-6 w-6 text-indigo-600" />
@@ -326,10 +333,10 @@ export default function Dashboard() {
               {marketEnabled && (
                 <Link
                   to={ROUTES.user.subscriptions}
-                  className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
+                  className={quickActionCardClass}
                 >
                   <div className="flex-shrink-0">
-                    <CreditCardIcon className="h-6 w-6 text-orange-600" />
+                  <CreditCardIcon className="h-6 w-6 text-orange-600" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <span className="absolute inset-0" aria-hidden="true" />
@@ -341,7 +348,7 @@ export default function Dashboard() {
 
               <Link
                 to={ROUTES.user.notifications}
-                className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
+                className={quickActionCardClass}
               >
                 <div className="flex-shrink-0">
                   <BellIcon className="h-6 w-6 text-yellow-600" />
@@ -355,10 +362,10 @@ export default function Dashboard() {
 
               <Link
                 to={ROUTES.user.profile}
-                className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
+                className={quickActionCardClass}
               >
                 <div className="flex-shrink-0">
-                  <UserIcon className="h-6 w-6 text-teal-600" />
+                  <UserIcon className="h-6 w-6 text-blue-600" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <span className="absolute inset-0" aria-hidden="true" />
@@ -369,7 +376,7 @@ export default function Dashboard() {
 
               <Link
                 to={ROUTES.user.settings}
-                className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
+                className={quickActionCardClass}
               >
                 <div className="flex-shrink-0">
                   <CogIcon className="h-6 w-6 text-gray-600" />
@@ -383,10 +390,10 @@ export default function Dashboard() {
 
               <Link
                 to={ROUTES.user.help}
-                className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
+                className={quickActionCardClass}
               >
                 <div className="flex-shrink-0">
-                  <QuestionMarkCircleIcon className="h-6 w-6 text-pink-600" />
+                  <QuestionMarkCircleIcon className="h-6 w-6 text-blue-600" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <span className="absolute inset-0" aria-hidden="true" />
@@ -405,7 +412,7 @@ export default function Dashboard() {
             </h3>
               <Link
                 to={ROUTES.user.walletHistory}
-                className="text-sm font-medium text-blue-600 hover:text-blue-500"
+                className="text-sm font-medium text-blue-600 hover:text-indigo-700"
               >
                 查看全部
               </Link>

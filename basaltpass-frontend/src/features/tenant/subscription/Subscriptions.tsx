@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import TenantLayout from '@features/tenant/components/TenantLayout'
 import {
-  ChevronRightIcon,
   MagnifyingGlassIcon,
-  XMarkIcon,
   ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline'
 
@@ -15,7 +13,7 @@ import {
   listTenantUserSubscriptions,
   getTenantUserSubscription,
 } from '@api/tenant/subscription'
-import { PInput, PSelect, PButton, PTextarea, PBadge } from '@ui'
+import { PInput, PSelect, PButton, PTextarea, PBadge, Modal, PPageHeader } from '@ui'
 import useDebounce from '@hooks/useDebounce'
 import { ROUTES } from '@constants'
 
@@ -110,7 +108,7 @@ export default function TenantSubscriptions() {
     return (
       <TenantLayout title="订阅管理">
         <div className="animate-pulse">
-          <div className="bg-white shadow overflow-hidden sm:rounded-md">
+          <div className="overflow-hidden rounded-xl bg-white shadow-sm">
             <ul className="divide-y divide-gray-200">
               {[1, 2, 3].map((i) => (
                 <li key={i} className="px-4 py-4">
@@ -133,12 +131,13 @@ export default function TenantSubscriptions() {
   return (
     <TenantLayout title="订阅管理">
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-semibold text-gray-900">订阅管理</h1>
-        </div>
+        <PPageHeader
+          title="订阅管理"
+          description="查看、筛选并管理所有订阅"
+        />
 
         {/* 搜索和过滤 */}
-        <div className="bg-white p-4 rounded-lg shadow">
+        <div className="rounded-xl bg-white p-4 shadow-sm">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <PInput
@@ -177,7 +176,7 @@ export default function TenantSubscriptions() {
         </div>
 
         {/* 订阅列表 */}
-        <div className="bg-white shadow overflow-hidden sm:rounded-md">
+        <div className="overflow-hidden rounded-xl bg-white shadow-sm">
           <ul className="divide-y divide-gray-200">
             {filteredSubscriptions.length > 0 ? (
               filteredSubscriptions.map((subscription) => (
@@ -230,7 +229,7 @@ export default function TenantSubscriptions() {
                         )}
                         <Link
                           to={`/tenant/subscriptions/detail/${subscription.ID}`}
-                          className="text-blue-600 hover:text-blue-900 text-sm font-medium"
+                          className="text-sm font-medium text-blue-600 transition-colors hover:text-blue-800"
                         >
                           查看详情
                         </Link>
@@ -269,13 +268,20 @@ export default function TenantSubscriptions() {
 
         {/* 取消订阅确认模态框 */}
         {showCancelModal && cancelTarget && (
-          <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+          <Modal
+            open={showCancelModal}
+            onClose={() => {
+              setShowCancelModal(false)
+              setCancelTarget(null)
+              setCancelReason('')
+            }}
+            title="取消订阅"
+            widthClass="max-w-md"
+          >
               <div className="mt-3 text-center">
                 <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
                   <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mt-4">取消订阅</h3>
                 <div className="mt-2">
                   <p className="text-sm text-gray-500">
                     确定要取消订阅 #{cancelTarget.ID} 吗？
@@ -316,8 +322,7 @@ export default function TenantSubscriptions() {
                   </PButton>
                 </div>
               </div>
-            </div>
-          </div>
+          </Modal>
         )}
       </div>
     </TenantLayout>

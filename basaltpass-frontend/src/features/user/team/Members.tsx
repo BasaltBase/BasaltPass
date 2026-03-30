@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import Layout from '@features/user/components/Layout';
-import { PCard, PButton, PSkeleton, PAlert, PBadge } from '@ui';
+import { PCard, PButton, PSkeleton, PAlert, PBadge, PPageHeader } from '@ui';
 import PTable, { PTableColumn, PTableAction } from '@ui/PTable';
 import { teamApi } from '@api/user/team';
 
@@ -20,7 +20,6 @@ interface TeamMember {
 
 const TeamMembers: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -91,22 +90,17 @@ const TeamMembers: React.FC = () => {
       <div className="space-y-6">
         {/* 头部 */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">团队成员管理</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              管理团队成员和权限
-            </p>
-          </div>
+          <PPageHeader title="团队成员管理" description="管理团队成员和权限" />
           <Link
             to={`/teams/${id}`}
-            className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
           >
             返回团队
           </Link>
         </div>
 
         {/* 成员列表 */}
-        <div className="bg-white shadow rounded-lg">
+        <div className="rounded-xl bg-white shadow-sm">
           <div className="px-6 py-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-medium text-gray-900">成员列表</h3>

@@ -71,7 +71,7 @@ const PCard = forwardRef<HTMLDivElement, PCardProps>(
     // 组合所有类名
     const combinedClasses = [
       // 基础样式：圆弧和阴影
-      'rounded-lg',
+      'rounded-xl',
       // 变体样式
       variantClasses[variant],
       // 内边距样式

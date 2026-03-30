@@ -39,8 +39,8 @@ const paymentMethods = [
     name: '银行卡',
     icon: CreditCardIcon,
     description: '在线支付',
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-100'
+    color: 'text-indigo-600',
+    bgColor: 'bg-indigo-100'
   }
 ]
 
@@ -164,14 +164,14 @@ export default function Recharge() {
         </div>
 
         {walletOpsDisabled && (
-          <div className="rounded-md bg-amber-50 p-4 border border-amber-200">
+          <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
             <p className="text-sm text-amber-900">钱包充值功能暂未开放，如有疑问请联系客服。</p>
           </div>
         )}
 
         {/* 错误提示 */}
         {error && (
-          <div className="rounded-md bg-red-50 p-4 border border-red-200">
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4">
             <div className="flex">
               <div className="flex-shrink-0">
                 <ExclamationTriangleIcon className="h-5 w-5 text-red-400" />
@@ -186,7 +186,7 @@ export default function Recharge() {
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* 充值表单 */}
-          <div className={`bg-white shadow rounded-lg ${walletOpsDisabled ? 'opacity-50' : ''}`}>
+          <div className={`rounded-xl bg-white shadow-sm ${walletOpsDisabled ? 'opacity-50' : ''}`}>
             <div className="px-4 py-5 sm:p-6">
               <div className="flex items-center mb-6">
                 <ArrowUpIcon className="h-6 w-6 text-green-600 mr-2" />
@@ -293,7 +293,7 @@ export default function Recharge() {
           {/* 充值说明 */}
           <div className="space-y-6">
             {/* 充值说明 */}
-            <div className="bg-white shadow rounded-lg">
+            <div className="rounded-xl bg-white shadow-sm">
               <div className="px-4 py-5 sm:p-6">
                 <div className="flex items-center mb-4">
                   <BanknotesIcon className="h-6 w-6 text-blue-600 mr-2" />
@@ -340,7 +340,7 @@ export default function Recharge() {
             </div>
 
             {/* 常见问题 */}
-            <div className="bg-white shadow rounded-lg">
+            <div className="rounded-xl bg-white shadow-sm">
               <div className="px-4 py-5 sm:p-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">常见问题</h3>
                 <div className="space-y-3 text-sm">

@@ -53,17 +53,17 @@ const PButton = forwardRef<HTMLButtonElement, PButtonProps>(
         hover:bg-indigo-50 focus:ring-indigo-500
       `,
       gradient: `
-        border-transparent text-white bg-gradient-to-r from-blue-600 to-indigo-600 
-        hover:from-blue-700 hover:to-indigo-700 focus:ring-blue-500
+        border-transparent text-white bg-blue-600 
+        hover:bg-indigo-700 focus:ring-blue-500
         shadow-sm
       `
     };
 
     // 尺寸样式
     const sizeStyles = {
-      sm: 'px-3 py-1.5 text-sm rounded-md',
-      md: 'px-4 py-2 text-sm rounded-md',
-      lg: 'px-6 py-3 text-base rounded-lg'
+      sm: 'px-3 py-1.5 text-sm rounded-lg',
+      md: 'px-4 py-2.5 text-sm rounded-lg',
+      lg: 'px-6 py-3 text-base rounded-xl'
     };
 
     // 宽度样式

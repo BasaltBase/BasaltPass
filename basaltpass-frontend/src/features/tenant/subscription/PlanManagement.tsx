@@ -13,7 +13,7 @@ import {
   Cog6ToothIcon
 } from '@heroicons/react/24/outline';
 import * as tenantSubscriptionAPI from '@api/tenant/subscription';
-import { PInput, PSelect, PButton, PTextarea, PSkeleton, PBadge } from '@ui';
+import { PInput, PSelect, PButton, PTextarea, PSkeleton, PBadge, Modal, PPageHeader } from '@ui';
 import PTable, { PTableColumn, PTableAction } from '@ui/PTable';
 import useDebounce from '@hooks/useDebounce';
 
@@ -100,20 +100,15 @@ const PlanManagement: React.FC<PlanManagementProps> = () => {
   return (
     <TenantLayout title="套餐管理">
       <div className="space-y-6">
-        <div className="sm:flex sm:items-center">
-          <div className="sm:flex-auto">
-            <h1 className="text-2xl font-semibold text-gray-900">套餐管理</h1>
-            <p className="mt-2 text-sm text-gray-700">
-              管理产品的订阅套餐和功能配置
-            </p>
-          </div>
-          <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-            <PButton type="button" onClick={handleCreatePlan} leftIcon={<PlusIcon className="h-5 w-5" />}>创建套餐</PButton>
-          </div>
-        </div>
+        <PPageHeader
+          title="套餐管理"
+          description="管理产品的订阅套餐和功能配置"
+          icon={<RocketLaunchIcon className="h-8 w-8 text-indigo-600" />}
+          actions={<PButton type="button" onClick={handleCreatePlan} leftIcon={<PlusIcon className="h-5 w-5" />}>创建套餐</PButton>}
+        />
 
         {/* 筛选和搜索栏 */}
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="rounded-xl bg-white p-6 shadow-sm">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <PInput
               icon={<MagnifyingGlassIcon className="h-5 w-5" />}
@@ -279,13 +274,8 @@ const CreatePlanModal: React.FC<{
   };
 
   return (
-    <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+    <Modal open onClose={onClose} title={plan ? '编辑套餐' : '创建套餐'} widthClass="max-w-2xl">
         <div className="mt-3">
-          <h3 className="text-lg font-medium text-gray-900 mb-6">
-            {plan ? '编辑套餐' : '创建套餐'}
-          </h3>
-          
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -377,8 +367,7 @@ const CreatePlanModal: React.FC<{
             </div>
           </form>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

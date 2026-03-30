@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { adminListCoupons, adminCreateCoupon, adminUpdateCoupon, adminDeleteCoupon } from '@api/subscription/subscription'
 import { Coupon } from '@types/domain/subscription'
-import { Link } from 'react-router-dom'
-import { ChevronRightIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
+import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import AdminLayout from '@features/admin/components/AdminLayout'
-import { ROUTES } from '@constants'
+import { PButton, PCard, PInput, PPageHeader, PSelect } from '@ui'
 
 export default function AdminCoupons() {
   const [coupons, setCoupons] = useState<Coupon[]>([])
@@ -162,17 +161,13 @@ export default function AdminCoupons() {
   return (
     <AdminLayout title="优惠券管理">
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-semibold text-gray-900">优惠券管理</h1>
-          <button
-            onClick={() => setShowModal(true)}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-          >
-            新建优惠券
-          </button>
-        </div>
+        <PPageHeader
+          title="优惠券管理"
+          description="统一管理后台优惠券、折扣规则和有效期配置"
+          actions={<PButton onClick={() => setShowModal(true)}>新建优惠券</PButton>}
+        />
 
-        <div className="bg-white shadow overflow-hidden sm:rounded-md">
+        <PCard className="overflow-hidden rounded-xl p-0 shadow-sm">
           {/* 调试信息 */}
           <div className="p-4 bg-gray-100 text-sm">
             <p>优惠券数量: {coupons.length}</p>
@@ -214,18 +209,22 @@ export default function AdminCoupons() {
                       </div>
                     </div>
                     <div className="flex space-x-2">
-                      <button
+                      <PButton
                         onClick={() => handleEdit(coupon)}
-                        className="text-indigo-600 hover:text-indigo-900 text-sm"
+                        variant="ghost"
+                        size="sm"
+                        className="px-2 text-indigo-600 hover:text-indigo-900"
                       >
                         编辑
-                      </button>
-                      <button
+                      </PButton>
+                      <PButton
                         onClick={() => handleDeleteClick(coupon)}
-                        className="text-red-600 hover:text-red-900 text-sm"
+                        variant="ghost"
+                        size="sm"
+                        className="px-2 text-red-600 hover:text-red-900"
                       >
                         删除
-                      </button>
+                      </PButton>
                     </div>
                   </div>
                 </li>
@@ -236,11 +235,11 @@ export default function AdminCoupons() {
               </li>
             )}
           </ul>
-        </div>
+        </PCard>
 
-        {showModal && (
+      {showModal && (
         <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10">
-          <div className="w-3/4 max-w-4xl p-5 border shadow-lg rounded-md bg-white">
+          <div className="w-3/4 max-w-4xl rounded-2xl border bg-white p-6 shadow-xl">
             <div className="mt-3">
               <h3 className="text-lg font-medium text-gray-900 mb-6">
                 {editingCoupon ? '编辑优惠券' : '新建优惠券'}
@@ -250,24 +249,22 @@ export default function AdminCoupons() {
                 <div className="grid grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">优惠券代码</label>
-                    <input
+                    <PInput
                       type="text"
                       required
                       disabled={!!editingCoupon}
                       value={formData.code}
                       onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                      className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:text-gray-500"
                       placeholder="例如: SAVE20"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">优惠券名称</label>
-                    <input
+                    <PInput
                       type="text"
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
                       placeholder="例如: 新用户专享优惠"
                     />
                   </div>
@@ -277,26 +274,26 @@ export default function AdminCoupons() {
                 <div className="grid grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">折扣类型</label>
-                    <select
+                    <PSelect
                       value={formData.discount_type}
                       onChange={(e) => setFormData({ ...formData, discount_type: e.target.value })}
-                      className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    >
-                      <option value="percent">百分比折扣</option>
-                      <option value="fixed_amount">固定金额</option>
-                    </select>
+                      options={[
+                        { value: 'percent', label: '百分比折扣' },
+                        { value: 'fixed_amount', label: '固定金额' }
+                      ]}
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">持续时间</label>
-                    <select
+                    <PSelect
                       value={formData.duration}
                       onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                      className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    >
-                      <option value="once">一次性</option>
-                      <option value="repeating">重复</option>
-                      <option value="forever">永久</option>
-                    </select>
+                      options={[
+                        { value: 'once', label: '一次性' },
+                        { value: 'repeating', label: '重复' },
+                        { value: 'forever', label: '永久' }
+                      ]}
+                    />
                   </div>
                 </div>
 
@@ -306,26 +303,24 @@ export default function AdminCoupons() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       折扣值 {formData.discount_type === 'percent' ? '(%)' : '(分)'}
                     </label>
-                    <input
+                    <PInput
                       type="number"
                       required
                       min="1"
                       max={formData.discount_type === 'percent' ? '100' : undefined}
                       value={formData.discount_value}
                       onChange={(e) => setFormData({ ...formData, discount_value: e.target.value })}
-                      className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
                       placeholder={formData.discount_type === 'percent' ? '例如: 20' : '例如: 1000 (10元)'}
                     />
                   </div>
                   {formData.duration === 'repeating' && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">重复周期数</label>
-                      <input
+                      <PInput
                         type="number"
                         min="1"
                         value={formData.duration_in_cycles}
                         onChange={(e) => setFormData({ ...formData, duration_in_cycles: e.target.value })}
-                        className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
                         placeholder="例如: 3"
                       />
                     </div>
@@ -336,22 +331,20 @@ export default function AdminCoupons() {
                 <div className="grid grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">最大使用次数（可选）</label>
-                    <input
+                    <PInput
                       type="number"
                       min="1"
                       value={formData.max_redemptions}
                       onChange={(e) => setFormData({ ...formData, max_redemptions: e.target.value })}
-                      className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
                       placeholder="留空表示无限制"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">过期时间（可选）</label>
-                    <input
+                    <PInput
                       type="date"
                       value={formData.expires_at}
                       onChange={(e) => setFormData({ ...formData, expires_at: e.target.value })}
-                      className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
                     />
                   </div>
                 </div>
@@ -371,7 +364,7 @@ export default function AdminCoupons() {
 
                 {/* 按钮区域 */}
                 <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
-                  <button
+                  <PButton
                     type="button"
                     onClick={() => {
                       setShowModal(false)
@@ -388,16 +381,15 @@ export default function AdminCoupons() {
                         is_active: true
                       })
                     }}
-                    className="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                    variant="secondary"
                   >
                     取消
-                  </button>
-                  <button
+                  </PButton>
+                  <PButton
                     type="submit"
-                    className="px-6 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   >
                     {editingCoupon ? '更新' : '创建'}
-                  </button>
+                  </PButton>
                 </div>
               </form>
             </div>
@@ -408,7 +400,7 @@ export default function AdminCoupons() {
       {/* 删除优惠券确认模态框 */}
       {showDeleteModal && deleteTarget && (
         <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+          <div className="relative top-20 mx-auto w-96 rounded-2xl border bg-white p-5 shadow-xl">
             <div className="mt-3 text-center">
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
                 <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
@@ -420,7 +412,7 @@ export default function AdminCoupons() {
                 <p className="text-sm text-gray-500">
                   您确定要删除以下优惠券吗？
                 </p>
-                <div className="mt-3 p-3 bg-gray-50 rounded-md">
+                <div className="mt-3 rounded-lg bg-gray-50 p-3">
                   <p className="text-sm font-medium text-gray-900">
                     {deleteTarget!.Code}
                   </p>
@@ -460,20 +452,20 @@ export default function AdminCoupons() {
                 </p>
               </div>
               <div className="flex justify-center space-x-3 mt-4">
-                <button
+                <PButton
                   onClick={handleDeleteCancel}
                   disabled={deleting}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 text-base font-medium rounded-md shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-50"
+                  variant="secondary"
                 >
                   取消
-                </button>
-                <button
+                </PButton>
+                <PButton
                   onClick={handleDeleteConfirm}
                   disabled={deleting}
-                  className="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50"
+                  variant="danger"
                 >
                   {deleting ? '删除中...' : '确认删除'}
-                </button>
+                </PButton>
               </div>
             </div>
           </div>

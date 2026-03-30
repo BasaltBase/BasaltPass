@@ -13,7 +13,7 @@ import {
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { adminTenantApi, AdminTenantResponse, AdminTenantListRequest } from '@api/admin/tenant'
 import { ROUTES } from '@constants'
-import { PSkeleton, PBadge, PAlert, PPageHeader, PPagination, PButton, UserTooltip } from '@ui'
+import { PSkeleton, PBadge, PAlert, PPageHeader, PPagination, PButton, UserTooltip, PInput, PSelect } from '@ui'
 
 export default function TenantList() {
   const [tenants, setTenants] = useState<AdminTenantResponse[]>([])
@@ -109,25 +109,21 @@ export default function TenantList() {
         />
 
         {/* 搜索和过滤 */}
-        <div className="bg-white p-4 rounded-lg shadow">
+        <div className="rounded-xl bg-white p-4 shadow-sm">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  placeholder="搜索租户名称、代码或描述..."
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
+              <PInput
+                type="text"
+                placeholder="搜索租户名称、代码或描述..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                icon={<MagnifyingGlassIcon className="h-5 w-5" />}
+                variant="rounded"
+                autoComplete="off"
+              />
             </div>
             <div className="sm:w-32">
-              <select
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              <PSelect
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
               >
@@ -135,7 +131,7 @@ export default function TenantList() {
                 <option value="active">活跃</option>
                 <option value="suspended">暂停</option>
                 <option value="deleted">已删除</option>
-              </select>
+              </PSelect>
             </div>
           </div>
         </div>
@@ -144,7 +140,7 @@ export default function TenantList() {
         {error && <PAlert variant="error" message={error} />}
 
         {/* 租户列表 */}
-        <div className="bg-white shadow overflow-hidden sm:rounded-md">
+        <div className="overflow-hidden rounded-xl bg-white shadow-sm">
           <ul className="divide-y divide-gray-200">
             {tenants.map((tenant) => (
               <li key={tenant.id}>
@@ -152,7 +148,7 @@ export default function TenantList() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center">
                       <div className="flex-shrink-0">
-                        <div className="h-10 w-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100">
                           <BuildingOfficeIcon className="h-6 w-6 text-indigo-600" />
                         </div>
                       </div>
@@ -182,28 +178,28 @@ export default function TenantList() {
                   <div className="flex items-center space-x-2">
                     <Link
                       to={`/admin/tenants/${tenant.id}`}
-                      className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                      className="inline-flex items-center rounded-lg border border-gray-300 bg-white p-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                       title="查看详情"
                     >
                       <EyeIcon className="h-4 w-4" />
                     </Link>
                     <Link
                       to={`/admin/tenants/${tenant.id}/edit`}
-                      className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                      className="inline-flex items-center rounded-lg border border-gray-300 bg-white p-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                       title="编辑"
                     >
                       <PencilIcon className="h-4 w-4" />
                     </Link>
                     <Link
                       to={`/admin/tenants/${tenant.id}/users`}
-                      className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                      className="inline-flex items-center rounded-lg border border-gray-300 bg-white p-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                       title="用户管理"
                     >
                       <UsersIcon className="h-4 w-4" />
                     </Link>
                     <button
                       onClick={() => handleDeleteTenant(tenant.id)}
-                      className="inline-flex items-center p-2 border border-red-300 rounded-md text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                      className="inline-flex items-center rounded-lg border border-red-300 bg-white p-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                       title="删除"
                     >
                       <TrashIcon className="h-4 w-4" />
@@ -223,7 +219,7 @@ export default function TenantList() {
               <div className="mt-6">
                 <Link
                   to={ROUTES.admin.tenantsCreate}
-                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                 >
                   <PlusIcon className="h-4 w-4 mr-2" />
                   创建租户

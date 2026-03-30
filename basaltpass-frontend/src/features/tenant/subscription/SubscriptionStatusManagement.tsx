@@ -12,7 +12,7 @@ import {
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import * as tenantSubscriptionAPI from '@api/tenant/subscription';
-import { PSkeleton, PBadge } from '@ui'
+import { PSkeleton, PBadge, PButton, PPageHeader, Modal } from '@ui'
 
 interface SubscriptionWithDetails {
   ID: number;
@@ -87,7 +87,7 @@ const SubscriptionStatusManagement: React.FC = () => {
       case 'overdue':
         return <ExclamationTriangleIcon className="h-5 w-5 text-orange-500" />;
       case 'trialing':
-        return <ClockIcon className="h-5 w-5 text-purple-500" />;
+        return <ClockIcon className="h-5 w-5 text-indigo-500" />;
       default:
         return <CreditCardIcon className="h-5 w-5 text-gray-500" />;
     }
@@ -112,7 +112,7 @@ const SubscriptionStatusManagement: React.FC = () => {
       case 'paused': return 'warning';
       case 'pending': return 'info';
       case 'overdue': return 'orange';
-      case 'trialing': return 'purple';
+      case 'trialing': return 'info';
       default: return 'default';
     }
   };
@@ -170,23 +170,16 @@ const SubscriptionStatusManagement: React.FC = () => {
   return (
     <TenantLayout title="订阅状态管理">
       <div className="space-y-6">
-        <div className="sm:flex sm:items-center">
-          <div className="sm:flex-auto">
-            <h1 className="text-2xl font-semibold text-gray-900">订阅状态管理</h1>
-            <p className="mt-2 text-sm text-gray-700">
-              管理所有订阅的生命周期和状态
-            </p>
-          </div>
-          <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-            <button
-              onClick={fetchSubscriptions}
-              className="inline-flex items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-              <ArrowPathIcon className="h-4 w-4 mr-2" />
+        <PPageHeader
+          title="订阅状态管理"
+          description="管理所有订阅的生命周期和状态"
+          icon={<CreditCardIcon className="h-8 w-8 text-indigo-600" />}
+          actions={
+            <PButton onClick={fetchSubscriptions} leftIcon={<ArrowPathIcon className="h-4 w-4" />}>
               刷新
-            </button>
-          </div>
-        </div>
+            </PButton>
+          }
+        />
 
         {/* 统计卡片 */}
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-6">
@@ -195,10 +188,10 @@ const SubscriptionStatusManagement: React.FC = () => {
             { key: 'pending', label: '待处理', color: 'text-blue-600' },
             { key: 'canceled', label: '已取消', color: 'text-red-600' },
             { key: 'overdue', label: '逾期', color: 'text-orange-600' },
-            { key: 'trialing', label: '试用中', color: 'text-purple-600' },
+            { key: 'trialing', label: '试用中', color: 'text-indigo-600' },
             { key: 'paused', label: '已暂停', color: 'text-yellow-600' }
           ].map(({ key, label, color }) => (
-            <div key={key} className="bg-white overflow-hidden shadow rounded-lg">
+            <div key={key} className="overflow-hidden rounded-xl bg-white shadow-sm">
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
@@ -222,7 +215,7 @@ const SubscriptionStatusManagement: React.FC = () => {
 
         {/* 收入统计 */}
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="overflow-hidden rounded-xl bg-white shadow-sm">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -246,7 +239,7 @@ const SubscriptionStatusManagement: React.FC = () => {
             </div>
           </div>
           
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="overflow-hidden rounded-xl bg-white shadow-sm">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -270,11 +263,11 @@ const SubscriptionStatusManagement: React.FC = () => {
             </div>
           </div>
           
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="overflow-hidden rounded-xl bg-white shadow-sm">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <CheckCircleIcon className="h-8 w-8 text-purple-500" />
+                  <CheckCircleIcon className="h-8 w-8 text-indigo-500" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
@@ -292,7 +285,7 @@ const SubscriptionStatusManagement: React.FC = () => {
         </div>
 
         {/* 状态筛选 */}
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="rounded-xl bg-white p-6 shadow-sm">
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setStatusFilter('all')}
@@ -314,8 +307,7 @@ const SubscriptionStatusManagement: React.FC = () => {
                       getStatusVariant(status) === 'error' ? 'bg-red-100 text-red-800' :
                       getStatusVariant(status) === 'warning' ? 'bg-yellow-100 text-yellow-800' :
                       getStatusVariant(status) === 'info' ? 'bg-blue-100 text-blue-800' :
-                      getStatusVariant(status) === 'orange' ? 'bg-orange-100 text-orange-800' :
-                      getStatusVariant(status) === 'purple' ? 'bg-purple-100 text-purple-800' :
+                      getStatusVariant(status) === 'orange' ? 'bg-yellow-100 text-yellow-800' :
                       'bg-gray-100 text-gray-800'
                     : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                 }`}
@@ -327,7 +319,7 @@ const SubscriptionStatusManagement: React.FC = () => {
         </div>
 
         {/* 订阅列表 */}
-        <div className="bg-white shadow overflow-hidden sm:rounded-md">
+        <div className="overflow-hidden rounded-xl bg-white shadow-sm">
           <ul className="divide-y divide-gray-200">
             {subscriptions.map((subscription) => (
               <li key={subscription.ID}>
@@ -397,7 +389,7 @@ const SubscriptionStatusManagement: React.FC = () => {
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => handleViewDetails(subscription)}
-                        className="inline-flex items-center p-1 border border-transparent rounded-full shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                        className="inline-flex items-center rounded-full bg-gray-600 p-1 text-white shadow-sm transition-colors hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
                         title="查看详情"
                       >
                         <EyeIcon className="h-4 w-4" />
@@ -406,7 +398,7 @@ const SubscriptionStatusManagement: React.FC = () => {
                       {subscription.Status === 'active' && (
                         <button
                           onClick={() => handleStatusChange(subscription.ID, 'canceled')}
-                          className="inline-flex items-center p-1 border border-transparent rounded-full shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                          className="inline-flex items-center rounded-full bg-red-600 p-1 text-white shadow-sm transition-colors hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                           title="取消订阅"
                         >
                           <XCircleIcon className="h-4 w-4" />
@@ -460,17 +452,10 @@ const SubscriptionDetailModal: React.FC<{
   };
 
   return (
-    <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
-        <div className="mb-4">
-          <h3 className="text-lg font-medium text-gray-900">
-            订阅详情 #{subscription.ID}
-          </h3>
-        </div>
-        
-        <div className="space-y-6">
+    <Modal open onClose={onClose} title={`订阅详情 #${subscription.ID}`} widthClass="max-w-3xl">
+      <div className="space-y-6">
           {/* 基本信息 */}
-          <div className="bg-gray-50 p-4 rounded-lg">
+          <div className="rounded-xl bg-gray-50 p-4">
             <h4 className="text-lg font-medium text-gray-900 mb-3">基本信息</h4>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
@@ -484,7 +469,7 @@ const SubscriptionDetailModal: React.FC<{
                         case 'paused': return <PauseCircleIcon className="h-5 w-5 text-yellow-500" />;
                         case 'pending': return <ClockIcon className="h-5 w-5 text-blue-500" />;
                         case 'overdue': return <ExclamationTriangleIcon className="h-5 w-5 text-orange-500" />;
-                        case 'trialing': return <ClockIcon className="h-5 w-5 text-purple-500" />;
+                        case 'trialing': return <ClockIcon className="h-5 w-5 text-indigo-500" />;
                         default: return <CreditCardIcon className="h-5 w-5 text-gray-500" />;
                       }
                     };
@@ -564,7 +549,7 @@ const SubscriptionDetailModal: React.FC<{
 
           {/* 产品和价格信息 */}
           {subscription.CurrentPrice && (
-            <div className="bg-blue-50 p-4 rounded-lg">
+            <div className="rounded-xl bg-blue-50 p-4">
               <h4 className="text-lg font-medium text-gray-900 mb-3">产品和价格信息</h4>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
@@ -623,7 +608,7 @@ const SubscriptionDetailModal: React.FC<{
 
           {/* 客户信息 */}
           {subscription.User && (
-            <div className="bg-green-50 p-4 rounded-lg">
+            <div className="rounded-xl bg-green-50 p-4">
               <h4 className="text-lg font-medium text-gray-900 mb-3">客户信息</h4>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
@@ -664,7 +649,7 @@ const SubscriptionDetailModal: React.FC<{
           )}
 
           {/* 系统信息 */}
-          <div className="bg-gray-50 p-4 rounded-lg">
+          <div className="rounded-xl bg-gray-50 p-4">
             <h4 className="text-lg font-medium text-gray-900 mb-3">系统信息</h4>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
@@ -701,11 +686,11 @@ const SubscriptionDetailModal: React.FC<{
 
           {/* 元数据 */}
           {subscription.Metadata && Object.keys(subscription.Metadata).length > 0 && (
-            <div className="bg-yellow-50 p-4 rounded-lg">
+            <div className="rounded-xl bg-yellow-50 p-4">
               <h4 className="text-lg font-medium text-gray-900 mb-3">元数据</h4>
               <div className="space-y-2">
                 {Object.entries(subscription.Metadata).map(([key, value]) => (
-                  <div key={key} className="flex justify-between items-center p-2 bg-white rounded border">
+                  <div key={key} className="flex items-center justify-between rounded-lg border bg-white p-2">
                     <span className="text-sm font-medium text-gray-700">{key}:</span>
                     <span className="text-sm text-gray-900 font-mono">{JSON.stringify(value)}</span>
                   </div>
@@ -715,24 +700,20 @@ const SubscriptionDetailModal: React.FC<{
           )}
         </div>
         
-        <div className="flex justify-end space-x-2 pt-6 border-t">
+        <div className="flex justify-end space-x-2 border-t pt-6">
           {subscription.Status === 'active' && (
-            <button
+            <PButton
               onClick={() => onStatusChange('canceled')}
-              className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              variant="danger"
             >
               取消订阅
-            </button>
+            </PButton>
           )}
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
+          <PButton onClick={onClose} variant="secondary">
             关闭
-          </button>
+          </PButton>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

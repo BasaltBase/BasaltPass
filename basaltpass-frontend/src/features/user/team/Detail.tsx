@@ -2,7 +2,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } 
 import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import Layout from '@features/user/components/Layout';
-import { PCard, PButton, PSkeleton, PAlert, PBadge } from '@ui';
+import { PCard, PButton, PSkeleton, PAlert, PBadge, PPageHeader } from '@ui';
 import { teamApi, TeamResponse } from '@api/user/team';
 import { invitationApi, Invitation } from '@api/user/invitation';
 import { XMarkIcon, ClockIcon } from '@heroicons/react/24/outline';
@@ -145,15 +145,12 @@ const TeamDetail: React.FC = () => {
       <div className="space-y-6">
         {/* 头部 */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{team.name}</h1>
-            <p className="mt-1 text-sm text-gray-500">{team.description}</p>
-          </div>
+          <PPageHeader title={team.name} description={team.description || '查看团队详情、成员和邀请信息'} />
           <div className="flex items-center space-x-3">
             {team.user_role && getRoleBadge(team.user_role)}
             <Link
               to={ROUTES.user.teams}
-              className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
             >
               返回列表
             </Link>
@@ -161,7 +158,7 @@ const TeamDetail: React.FC = () => {
         </div>
 
         {/* 团队信息卡片 */}
-        <div className="bg-white shadow rounded-lg">
+        <div className="rounded-xl bg-white shadow-sm">
           <div className="px-6 py-4 border-b border-gray-200">
             <h3 className="text-lg font-medium text-gray-900">团队信息</h3>
           </div>
@@ -198,7 +195,7 @@ const TeamDetail: React.FC = () => {
         </div>
 
         {/* 操作按钮 */}
-        <div className="bg-white shadow rounded-lg">
+        <div className="rounded-xl bg-white shadow-sm">
           <div className="px-6 py-4 border-b border-gray-200">
             <h3 className="text-lg font-medium text-gray-900">团队操作</h3>
           </div>
@@ -250,7 +247,7 @@ const TeamDetail: React.FC = () => {
 
         {/* 邀请管理 */}
         {showInvitations && (team.user_role === 'owner' || team.user_role === 'admin') && (
-          <div className="bg-white shadow rounded-lg">
+          <div className="rounded-xl bg-white shadow-sm">
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-medium text-gray-900">已发出的邀请</h3>
             </div>
@@ -303,7 +300,7 @@ const TeamDetail: React.FC = () => {
       {/* 删除确认对话框 - 移到 space-y-6 容器外 */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
-          <div className="relative mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+          <div className="relative mx-auto w-96 rounded-2xl border bg-white p-5 shadow-xl">
             <div className="mt-3 text-center">
               <h3 className="text-lg font-medium text-gray-900 mb-4">
                 {team.user_role === 'owner' ? '确认删除团队' : '确认离开团队'}

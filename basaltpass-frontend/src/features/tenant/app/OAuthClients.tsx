@@ -12,7 +12,7 @@ import {
 } from '@heroicons/react/24/outline'
 import TenantLayout from '@features/tenant/components/TenantLayout'
 import { tenantOAuthApi, TenantAppWithClients, TenantOAuthClient } from '@api/tenant/tenantOAuth'
-import { PButton, PInput, PSkeleton, PBadge, PPagination } from '@ui'
+import { PButton, PInput, PSkeleton, PBadge, PPagination, PPageHeader } from '@ui'
 import CreateOAuthClientModal from '@features/tenant/app/components/CreateOAuthClientModal'
 import OAuthClientDetailModal from '@features/tenant/app/components/OAuthClientDetailModal'
 
@@ -77,20 +77,19 @@ export default function TenantOAuthClients() {
     <TenantLayout title="OAuth客户端管理">
       <div>
         {/* 页面头部 */}
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">OAuth客户端管理</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              管理应用的OAuth2客户端配置
-            </p>
-          </div>
-          <PButton
-            onClick={() => setShowCreateModal(true)}
-            leftIcon={<PlusIcon className="h-4 w-4" />}
-          >
-            创建客户端
-          </PButton>
-        </div>
+        <PPageHeader
+          title="OAuth客户端管理"
+          description="管理应用的 OAuth2 客户端配置"
+          icon={<KeyIcon className="h-8 w-8 text-indigo-600" />}
+          actions={
+            <PButton
+              onClick={() => setShowCreateModal(true)}
+              leftIcon={<PlusIcon className="h-4 w-4" />}
+            >
+              创建客户端
+            </PButton>
+          }
+        />
 
         {/* 搜索 */}
         <div className="flex justify-between items-center mb-6">
@@ -111,7 +110,7 @@ export default function TenantOAuthClients() {
         </div>
 
         {/* 应用和客户端列表 */}
-        <div className="bg-white shadow rounded-lg">
+        <div className="rounded-xl bg-white shadow-sm">
           {loading ? (
             <PSkeleton.List items={3} />
           ) : error ? (
@@ -125,12 +124,9 @@ export default function TenantOAuthClients() {
           ) : !apps || apps.length === 0 ? (
             <div className="p-8 text-center">
               <p className="text-gray-500">暂无应用</p>
-              <button
-                onClick={() => setShowCreateModal(true)}
-                className="mt-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-              >
+              <PButton onClick={() => setShowCreateModal(true)} className="mt-2">
                 创建第一个OAuth客户端
-              </button>
+              </PButton>
             </div>
           ) : (
             <div className="divide-y divide-gray-200">
@@ -147,15 +143,12 @@ export default function TenantOAuthClients() {
                   </div>
 
                   {!app.oauth_clients || app.oauth_clients.length === 0 ? (
-                    <div className="text-center py-8 bg-gray-50 rounded-lg">
+                    <div className="rounded-xl bg-gray-50 py-8 text-center">
                       <KeyIcon className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                       <p className="text-gray-500 mb-4">该应用暂无OAuth客户端</p>
-                      <button
-                        onClick={() => setShowCreateModal(true)}
-                        className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-                      >
+                      <PButton onClick={() => setShowCreateModal(true)}>
                         创建OAuth客户端
-                      </button>
+                      </PButton>
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
@@ -196,14 +189,14 @@ export default function TenantOAuthClients() {
                                 <div className="flex space-x-2">
                                   <button
                                     onClick={() => handleViewDetail(client)}
-                                    className="text-blue-600 hover:text-blue-900"
+                                    className="rounded-lg p-2 text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700"
                                     title="查看详情"
                                   >
                                     <EyeIcon className="h-4 w-4" />
                                   </button>
                                   <button
                                     onClick={() => handleDelete(client)}
-                                    className="text-red-600 hover:text-red-900"
+                                    className="rounded-lg p-2 text-red-600 transition-colors hover:bg-red-50 hover:text-red-700"
                                     title="删除"
                                   >
                                     <TrashIcon className="h-4 w-4" />

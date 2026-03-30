@@ -73,7 +73,7 @@ const EnhancedNotificationIcon: React.FC<{ viewAllPath?: string }> = ({ viewAllP
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md"
+        className="relative rounded-lg p-2 text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
       >
         {unreadCount > 0 ? (
           <BellIconSolid className="h-6 w-6" />
@@ -88,7 +88,7 @@ const EnhancedNotificationIcon: React.FC<{ viewAllPath?: string }> = ({ viewAllP
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50">
+        <div className="absolute right-0 z-50 mt-2 w-80 rounded-xl bg-white shadow-lg ring-1 ring-black ring-opacity-5">
           <div className="py-2">
             <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200">
               <h3 className="text-sm font-medium text-gray-900">通知</h3>

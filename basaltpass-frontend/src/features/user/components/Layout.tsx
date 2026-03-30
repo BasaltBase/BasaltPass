@@ -205,7 +205,7 @@ export default function Layout({ children }: LayoutProps) {
                       isActive(item.href)
                         ? 'bg-gray-100 text-gray-900'
                         : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                    } group flex items-center px-2 py-2 text-base font-medium rounded-md`}
+                    } group flex items-center px-2 py-2 text-base font-medium rounded-lg`}
                   >
                     <item.icon className="text-gray-400 mr-4 h-6 w-6" />
                     {item.name}
@@ -237,7 +237,7 @@ export default function Layout({ children }: LayoutProps) {
                       isActive(item.href)
                         ? 'bg-gray-100 text-gray-900'
                         : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                    } group flex items-center px-2 py-2 text-sm font-medium rounded-md`}
+                    } group flex items-center px-2 py-2 text-sm font-medium rounded-lg`}
                   >
                     <item.icon className="text-gray-400 mr-3 h-6 w-6" />
                     {item.name}
@@ -257,7 +257,7 @@ export default function Layout({ children }: LayoutProps) {
             <PButton
               variant="ghost"
               size="md"
-              className="h-11 w-11 inline-flex items-center justify-center rounded-md text-gray-500 hover:text-gray-900 focus:ring-inset focus:ring-indigo-500"
+              className="h-11 w-11 inline-flex items-center justify-center rounded-lg text-gray-500 hover:text-gray-900 focus:ring-inset focus:ring-indigo-500"
               onClick={() => setSidebarOpen(true)}
               aria-label="打开侧边栏"
             >
@@ -341,11 +341,11 @@ export default function Layout({ children }: LayoutProps) {
             {/* 管理系统切换按钮 - 只在admin页面显示 */}
 
             {canAccessTenant && (
-              <button
-                onClick={switchToTenant}
-                className="relative rounded-md bg-purple-50 px-3 py-2 text-purple-600 hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors duration-200"
-                title="切换到租户控制台（按需授权）"
-              >
+                <button
+                  onClick={switchToTenant}
+                  className="relative rounded-lg bg-blue-50 px-3 py-2 text-blue-600 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
+                  title="切换到租户控制台（按需授权）"
+                >
                 <div className="flex items-center space-x-2">
                   <ArrowsRightLeftIcon className="h-4 w-4" />
                   <span className="text-sm font-medium">租户管理</span>
@@ -354,11 +354,11 @@ export default function Layout({ children }: LayoutProps) {
             )}
 
             {canAccessAdmin && (
-              <button
-                onClick={switchToAdmin}
-                className="relative rounded-md bg-indigo-50 px-3 py-2 text-indigo-600 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200"
-                title="切换到全局管理员控制台（按需授权）"
-              >
+                <button
+                  onClick={switchToAdmin}
+                  className="relative rounded-lg bg-indigo-50 px-3 py-2 text-indigo-600 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200"
+                  title="切换到全局管理员控制台（按需授权）"
+                >
                 <div className="flex items-center space-x-2">
                   <ArrowsRightLeftIcon className="h-4 w-4" />
                   <span className="text-sm font-medium">管理员面板</span>
@@ -392,7 +392,7 @@ export default function Layout({ children }: LayoutProps) {
               </PButton>
 
               {isUserMenuOpen && (
-                <div className="absolute right-0 z-50 mt-2 w-56 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                <div className="absolute right-0 z-50 mt-2 w-56 origin-top-right rounded-xl bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                   <div className="px-4 py-3 border-b border-gray-200">
                     <p className="text-sm text-gray-900 font-medium">{user?.nickname || '用户'}</p>
                     <p className="text-sm text-gray-500 truncate">{user?.email}</p>

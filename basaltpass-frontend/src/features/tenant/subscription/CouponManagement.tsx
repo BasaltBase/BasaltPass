@@ -23,7 +23,7 @@ import {
   deleteTenantCoupon 
 } from '@api/tenant/subscription';
 import useDebounce from '@hooks/useDebounce';
-import { PSkeleton, PBadge, PButton, PEmptyState } from '@ui'
+import { PSkeleton, PBadge, PButton, PEmptyState, PInput, PSelect, PTextarea, Modal, PPageHeader } from '@ui'
 
 interface CouponManagementProps {}
 
@@ -157,28 +157,20 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
   return (
     <TenantLayout title="优惠券管理">
       <div className="space-y-6">
-        <div className="sm:flex sm:items-center">
-          <div className="sm:flex-auto">
-            <h1 className="text-2xl font-semibold text-gray-900">优惠券管理</h1>
-            <p className="mt-2 text-sm text-gray-700">
-              创建和管理订阅优惠券，提升用户转化率
-            </p>
-          </div>
-          <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-            <button
-              type="button"
-              onClick={handleCreateCoupon}
-              className="inline-flex items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:w-auto"
-            >
-              <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
+        <PPageHeader
+          title="优惠券管理"
+          description="创建和管理订阅优惠券，提升用户转化率"
+          icon={<GiftIcon className="h-8 w-8 text-indigo-600" />}
+          actions={
+            <PButton type="button" onClick={handleCreateCoupon} leftIcon={<PlusIcon className="h-5 w-5" />}>
               创建优惠券
-            </button>
-          </div>
-        </div>
+            </PButton>
+          }
+        />
 
         {/* 统计卡片 */}
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-4">
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="overflow-hidden rounded-xl bg-white shadow-sm">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -194,7 +186,7 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="overflow-hidden rounded-xl bg-white shadow-sm">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -212,7 +204,7 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="overflow-hidden rounded-xl bg-white shadow-sm">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -230,7 +222,7 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="overflow-hidden rounded-xl bg-white shadow-sm">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -250,31 +242,30 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
         </div>
 
         {/* 筛选和搜索栏 */}
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="rounded-xl bg-white p-6 shadow-sm">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
               </div>
-              <input
+              <PInput
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="pl-10"
                 placeholder="搜索优惠券代码或名称..."
               />
             </div>
             <div>
-              <select
+              <PSelect
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               >
                 <option value="all">所有状态</option>
                 <option value="active">活跃</option>
                 <option value="inactive">已停用</option>
                 <option value="expired">已过期</option>
-              </select>
+              </PSelect>
             </div>
           </div>
         </div>
@@ -299,7 +290,7 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
               return (
                 <div
                   key={coupon.ID || coupon.Code || `coupon-${index}`}
-                  className={`bg-white overflow-hidden shadow rounded-lg border-l-4 ${
+                  className={`overflow-hidden rounded-xl bg-white shadow-sm border-l-4 ${
                     status.color === 'green' ? 'border-green-400' :
                     status.color === 'red' ? 'border-red-400' :
                     status.color === 'orange' ? 'border-orange-400' :
@@ -491,65 +482,49 @@ const CreateCouponModal: React.FC<{
   };
 
   return (
-    <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
-        <div className="mt-3">
-          <h3 className="text-lg font-medium text-gray-900 mb-6">
-            {coupon ? '编辑优惠券' : '创建优惠券'}
-          </h3>
-          
+    <Modal
+      open
+      onClose={onClose}
+      title={coupon ? '编辑优惠券' : '创建优惠券'}
+      widthClass="max-w-2xl"
+    >
+      <div className="space-y-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  优惠券代码 *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.code}
-                  onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                  className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="输入优惠券代码"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  优惠券名称 *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="输入优惠券名称"
-                />
-              </div>
+              <PInput
+                label="优惠券代码 *"
+                type="text"
+                required
+                value={formData.code}
+                onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                placeholder="输入优惠券代码"
+              />
+              <PInput
+                label="优惠券名称 *"
+                type="text"
+                required
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="输入优惠券名称"
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  折扣类型 *
-                </label>
-                <select
+                <label className="mb-2 block text-sm font-medium text-gray-700">折扣类型 *</label>
+                <PSelect
                   required
                   value={formData.discount_type}
                   onChange={(e) => setFormData({ ...formData, discount_type: e.target.value as 'percent' | 'fixed' })}
-                  className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="percent">百分比折扣</option>
                   <option value="fixed">固定金额折扣</option>
-                </select>
+                </PSelect>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  折扣值 *
-                </label>
-                <input
+                <PInput
+                  label="折扣值 *"
                   type="number"
                   step="0.01"
                   min="0"
@@ -557,7 +532,6 @@ const CreateCouponModal: React.FC<{
                   required
                   value={formData.discount_value}
                   onChange={(e) => setFormData({ ...formData, discount_value: e.target.value })}
-                  className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder={formData.discount_type === 'percent' ? '输入百分比 (如: 10)' : '输入金额 (如: 50)'}
                 />
                 <p className="mt-1 text-sm text-gray-500">
@@ -568,78 +542,54 @@ const CreateCouponModal: React.FC<{
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  使用期限 *
-                </label>
-                <select
+                <label className="mb-2 block text-sm font-medium text-gray-700">使用期限 *</label>
+                <PSelect
                   required
                   value={formData.duration}
                   onChange={(e) => setFormData({ ...formData, duration: e.target.value as 'once' | 'repeating' | 'forever' })}
-                  className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="once">一次性</option>
                   <option value="repeating">重复使用</option>
                   <option value="forever">永久</option>
-                </select>
+                </PSelect>
               </div>
               
               {formData.duration === 'repeating' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    重复周期数
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={formData.duration_in_cycles}
-                    onChange={(e) => setFormData({ ...formData, duration_in_cycles: e.target.value })}
-                    className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="输入周期数"
-                  />
-                </div>
+                <PInput
+                  label="重复周期数"
+                  type="number"
+                  min="1"
+                  value={formData.duration_in_cycles}
+                  onChange={(e) => setFormData({ ...formData, duration_in_cycles: e.target.value })}
+                  placeholder="输入周期数"
+                />
               )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  最大使用次数
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  value={formData.max_redemptions}
-                  onChange={(e) => setFormData({ ...formData, max_redemptions: e.target.value })}
-                  className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="留空表示无限制"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  过期日期
-                </label>
-                <input
-                  type="date"
-                  value={formData.expires_at}
-                  onChange={(e) => setFormData({ ...formData, expires_at: e.target.value })}
-                  className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                描述
-              </label>
-              <textarea
-                rows={3}
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="输入优惠券描述"
+              <PInput
+                label="最大使用次数"
+                type="number"
+                min="1"
+                value={formData.max_redemptions}
+                onChange={(e) => setFormData({ ...formData, max_redemptions: e.target.value })}
+                placeholder="留空表示无限制"
+              />
+              <PInput
+                label="过期日期"
+                type="date"
+                value={formData.expires_at}
+                onChange={(e) => setFormData({ ...formData, expires_at: e.target.value })}
               />
             </div>
+
+            <PTextarea
+              label="描述"
+              rows={3}
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="输入优惠券描述"
+            />
 
             <div className="flex items-center">
               <input
@@ -654,26 +604,24 @@ const CreateCouponModal: React.FC<{
             </div>
 
             <div className="flex justify-end space-x-3 pt-4">
-              <button
+              <PButton
                 type="button"
+                variant="secondary"
                 onClick={onClose}
                 disabled={submitting}
-                className="px-4 py-2 bg-gray-300 text-gray-700 text-base font-medium rounded-md shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-50"
               >
                 取消
-              </button>
-              <button
+              </PButton>
+              <PButton
                 type="submit"
                 disabled={submitting}
-                className="px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
               >
                 {submitting ? '保存中...' : (coupon ? '更新' : '创建')}
-              </button>
+              </PButton>
             </div>
           </form>
-        </div>
       </div>
-    </div>
+    </Modal>
   );
 };
 
