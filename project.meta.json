@@ -33,5 +33,19 @@
       "port": 5104,
       "protocol": "http"
     }
+  ],
+  "health_checks": [
+    {
+      "service": "backend_api",
+      "kind": "liveness",
+      "path": "/health",
+      "url": "http://localhost:8101/health"
+    },
+    {
+      "service": "backend_api",
+      "kind": "readiness",
+      "path": "/api/v1/health",
+      "url": "http://localhost:8101/api/v1/health"
+    }
   ]
 }

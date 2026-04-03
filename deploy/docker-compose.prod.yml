@@ -11,6 +11,12 @@ services:
     environment:
       - BASALTPASS_DATABASE_DRIVER=${BASALTPASS_DATABASE_DRIVER:-postgres}
       - BASALTPASS_DATABASE_DSN=${BASALTPASS_DATABASE_DSN:?BASALTPASS_DATABASE_DSN is required}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8101/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   frontend:
     image: ${FRONTEND_IMAGE}
@@ -18,7 +24,8 @@ services:
     cpus: 0.5
     restart: unless-stopped
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     ports:
       - "127.0.0.1:5104:80"
 

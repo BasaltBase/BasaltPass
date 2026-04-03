@@ -24,6 +24,20 @@
     ],
     "metadata": {
       "project_root": "C:/Users/Administrator/Desktop/WorkPlace/BasaltPass",
+      "health_checks": [
+        {
+          "service": "backend_api",
+          "kind": "liveness",
+          "path": "/health",
+          "url": "http://localhost:8101/health"
+        },
+        {
+          "service": "backend_api",
+          "kind": "readiness",
+          "path": "/api/v1/health",
+          "url": "http://localhost:8101/api/v1/health"
+        }
+      ],
       "notes": [
         "Replace the baseline RBAC template with BasaltPass real tenant/system roles when the importer is ready."
       ]
