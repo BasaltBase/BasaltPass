@@ -121,7 +121,7 @@ func (s *ClientService) CreateClient(creatorID uint, req *CreateClientRequest) (
 	aduit.LogAudit(creatorID, "创建OAuth2客户端", "oauth_client", client.ClientID, "", "")
 
 	// 加载创建者信息
-	if err := s.db.Preload("Creator").First(client, client.ID).Error; err != nil {
+	if err := s.db.Preload("Creator").Preload("App").First(client, client.ID).Error; err != nil {
 		return nil, err
 	}
 
@@ -178,13 +178,17 @@ func (s *ClientService) CreateClientForApp(appID, creatorID uint, req *CreateCli
 	aduit.LogAudit(creatorID, "为应用创建OAuth2客户端", "oauth_client", client.ClientID, "", "")
 
 	// 返回响应（包含明文密钥）
+	if err := s.db.Preload("Creator").Preload("App").First(client, client.ID).Error; err != nil {
+		return nil, err
+	}
+
 	return s.clientToResponse(client, plainSecret), nil
 }
 
 // GetClient 获取客户端详情
 func (s *ClientService) GetClient(clientID string) (*ClientResponse, error) {
 	var client model.OAuthClient
-	if err := s.db.Preload("Creator").Where("client_id = ?", clientID).First(&client).Error; err != nil {
+	if err := s.db.Preload("Creator").Preload("App").Where("client_id = ?", clientID).First(&client).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("客户端不存在")
 		}
@@ -273,7 +277,7 @@ func (s *ClientService) UpdateClient(clientID string, req *UpdateClientRequest) 
 	aduit.LogAudit(0, "更新OAuth2客户端", "oauth_client", clientID, "", "")
 
 	// 重新加载数据
-	if err := s.db.Preload("Creator").First(&client, client.ID).Error; err != nil {
+	if err := s.db.Preload("Creator").Preload("App").First(&client, client.ID).Error; err != nil {
 		return nil, err
 	}
 

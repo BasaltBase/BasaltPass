@@ -78,6 +78,7 @@ import AppDetail from '@pages/tenant/app/AppDetail'
 import AppSettings from '@pages/tenant/app/AppSettings'
 import AppStats from '@pages/tenant/app/AppStats'
 import TenantOAuthClients from '@pages/tenant/app/OAuthClients'
+import TenantAutomationTokens from '@pages/tenant/security/AutomationTokens'
 import TenantUserManagement from '@pages/tenant/user/UserManagement'
 import TenantTeamsPage from '@pages/tenant/team/Teams'
 import AppUserManagement from '@pages/tenant/app/AppUserManagement'
@@ -495,6 +496,11 @@ export default function AppRouter() {
       <Route path="/tenant/oauth/clients" element={
         <TenantRoute>
           <TenantOAuthClients />
+        </TenantRoute>
+      } />
+      <Route path="/tenant/automation-tokens" element={
+        <TenantRoute>
+          <TenantAutomationTokens />
         </TenantRoute>
       } />
       <Route path="/tenant/users" element={

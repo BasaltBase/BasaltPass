@@ -117,7 +117,9 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 
 	// 租户控制台生成手动 API Key
 	tenantManualAPIGroup := tenantAdminGroup.Group("/manual-api")
+	tenantManualAPIGroup.Get("/keys", manualapi.TenantListManualAPIKeysHandler)
 	tenantManualAPIGroup.Post("/keys", manualapi.TenantCreateManualAPIKeyHandler)
+	tenantManualAPIGroup.Delete("/keys/:id", manualapi.TenantDeleteManualAPIKeyHandler)
 
 	// 租户订阅管理（读写，所有租户成员可访问）
 	tenantSubscriptionMgmtGroup := tenantAdminGroup.Group("/subscription")

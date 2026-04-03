@@ -9,6 +9,7 @@ import AppDetail from '../../../src/features/tenant/app/AppDetail'
 import AppSettings from '../../../src/features/tenant/app/AppSettings'
 import AppStats from '../../../src/features/tenant/app/AppStats'
 import TenantOAuthClients from '../../../src/features/tenant/app/OAuthClients'
+import TenantAutomationTokens from '../../../src/features/tenant/security/AutomationTokens'
 import TenantUserManagement from '../../../src/features/tenant/user/UserManagement'
 import TenantTeamsPage from '../../../src/features/tenant/team/Teams'
 import TenantRoleManagement from '../../../src/features/tenant/user/RoleManagement'
@@ -76,6 +77,7 @@ export default function AppRouter() {
       <Route path="/tenant/apps/:id/roles" element={<TenantRoute><AppRoleManagement /></TenantRoute>} />
       <Route path="/tenant/apps/:id/permissions" element={<TenantRoute><AppPermissionManagement /></TenantRoute>} />
       <Route path="/tenant/oauth/clients" element={<TenantRoute><TenantOAuthClients /></TenantRoute>} />
+      <Route path="/tenant/automation-tokens" element={<TenantRoute><TenantAutomationTokens /></TenantRoute>} />
 
       <Route path="/tenant/users" element={<TenantRoute><TenantUserManagement /></TenantRoute>} />
       <Route path="/tenant/teams" element={<TenantRoute><TenantTeamsPage /></TenantRoute>} />

@@ -45,6 +45,7 @@ const navigationItems: NavigationItem[] = [
     children: [
       { name: '我的应用', href: ROUTES.tenant.apps, icon: CubeIcon },
       { name: 'OAuth客户端', href: ROUTES.tenant.oauthClients, icon: KeyIcon },
+      { name: '自动化令牌', href: ROUTES.tenant.automationTokens, icon: KeyIcon },
     ]
   },
   {

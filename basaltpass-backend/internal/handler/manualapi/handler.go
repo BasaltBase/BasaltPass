@@ -2,6 +2,7 @@ package manualapi
 
 import (
 	"basaltpass-backend/internal/common"
+	oauthhandler "basaltpass-backend/internal/handler/public/oauth"
 	"basaltpass-backend/internal/model"
 	appsvc "basaltpass-backend/internal/service/app"
 	"errors"
@@ -14,10 +15,25 @@ import (
 )
 
 var service = appsvc.NewAppService()
+var clientService = oauthhandler.NewClientService()
 
 type CreateManualAPIKeyRequest struct {
 	Name      string     `json:"name"`
 	ExpiresAt *time.Time `json:"expires_at,omitempty"`
+}
+
+type ManualAPIKeyListItem struct {
+	ID              uint                     `json:"id"`
+	Name            string                   `json:"name"`
+	Scope           model.ManualAPIKeyScope  `json:"scope"`
+	TenantID        *uint                    `json:"tenant_id,omitempty"`
+	KeyPrefix       string                   `json:"key_prefix"`
+	IsActive        bool                     `json:"is_active"`
+	CreatedByUserID uint                     `json:"created_by_user_id"`
+	LastUsedAt      *time.Time               `json:"last_used_at,omitempty"`
+	ExpiresAt       *time.Time               `json:"expires_at,omitempty"`
+	CreatedAt       time.Time                `json:"created_at"`
+	UpdatedAt       time.Time                `json:"updated_at"`
 }
 
 type AdminCreateManualAPIKeyRequest struct {
@@ -52,6 +68,43 @@ type ManualPermissionItem struct {
 type ManualReplaceAppPermissionsRequest struct {
 	TenantID    *uint                  `json:"tenant_id,omitempty"`
 	Permissions []ManualPermissionItem `json:"permissions"`
+}
+
+type ManualUpdateAppRequest struct {
+	Name              string            `json:"name"`
+	Description       string            `json:"description"`
+	IconURL           string            `json:"icon_url"`
+	LogoURL           *string           `json:"logo_url"`
+	HomepageURL       *string           `json:"homepage_url"`
+	PrivacyPolicyURL  *string           `json:"privacy_policy_url"`
+	TermsOfServiceURL *string           `json:"terms_of_service_url"`
+	IsVerified        *bool             `json:"is_verified"`
+	Status            *model.AppStatus  `json:"status"`
+}
+
+type ManualToggleAppStatusRequest struct {
+	TenantID *uint  `json:"tenant_id,omitempty"`
+	Status   string `json:"status"`
+}
+
+type ManualOAuthClientRequest struct {
+	TenantID       *uint    `json:"tenant_id,omitempty"`
+	AppID          uint     `json:"app_id"`
+	Name           string   `json:"name"`
+	Description    string   `json:"description"`
+	RedirectURIs   []string `json:"redirect_uris"`
+	Scopes         []string `json:"scopes"`
+	AllowedOrigins []string `json:"allowed_origins"`
+}
+
+type ManualUpdateOAuthClientRequest struct {
+	TenantID       *uint    `json:"tenant_id,omitempty"`
+	Name           string   `json:"name"`
+	Description    string   `json:"description"`
+	RedirectURIs   []string `json:"redirect_uris"`
+	Scopes         []string `json:"scopes"`
+	AllowedOrigins []string `json:"allowed_origins"`
+	IsActive       *bool    `json:"is_active"`
 }
 
 func TenantCreateManualAPIKeyHandler(c *fiber.Ctx) error {
@@ -106,6 +159,66 @@ func TenantCreateManualAPIKeyHandler(c *fiber.Ctx) error {
 		},
 		"message": "manual api key created",
 	})
+}
+
+func TenantListManualAPIKeysHandler(c *fiber.Ctx) error {
+	tenantID, ok := c.Locals("tenantID").(uint)
+	if !ok || tenantID == 0 {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "missing tenant context"})
+	}
+
+	var keys []model.ManualAPIKey
+	if err := common.DB().
+		Where("scope = ? AND tenant_id = ?", model.ManualAPIKeyScopeTenant, tenantID).
+		Order("created_at DESC").
+		Find(&keys).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to list api keys"})
+	}
+
+	items := make([]ManualAPIKeyListItem, 0, len(keys))
+	for _, key := range keys {
+		items = append(items, ManualAPIKeyListItem{
+			ID:              key.ID,
+			Name:            key.Name,
+			Scope:           key.Scope,
+			TenantID:        key.TenantID,
+			KeyPrefix:       key.KeyPrefix,
+			IsActive:        key.IsActive,
+			CreatedByUserID: key.CreatedByUserID,
+			LastUsedAt:      key.LastUsedAt,
+			ExpiresAt:       key.ExpiresAt,
+			CreatedAt:       key.CreatedAt,
+			UpdatedAt:       key.UpdatedAt,
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"data": items,
+	})
+}
+
+func TenantDeleteManualAPIKeyHandler(c *fiber.Ctx) error {
+	tenantID, ok := c.Locals("tenantID").(uint)
+	if !ok || tenantID == 0 {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "missing tenant context"})
+	}
+
+	keyID, err := strconv.ParseUint(c.Params("id"), 10, 32)
+	if err != nil || keyID == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid key id"})
+	}
+
+	result := common.DB().
+		Where("id = ? AND scope = ? AND tenant_id = ?", uint(keyID), model.ManualAPIKeyScopeTenant, tenantID).
+		Delete(&model.ManualAPIKey{})
+	if result.Error != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to delete api key"})
+	}
+	if result.RowsAffected == 0 {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "api key not found"})
+	}
+
+	return c.JSON(fiber.Map{"message": "manual api key deleted"})
 }
 
 func AdminCreateManualAPIKeyHandler(c *fiber.Ctx) error {
@@ -167,6 +280,39 @@ func AdminCreateManualAPIKeyHandler(c *fiber.Ctx) error {
 	})
 }
 
+func ManualListAppsHandler(c *fiber.Ctx) error {
+	requestedTenantID := parseOptionalTenantID(c.Query("tenant_id"))
+	tenantID, err := resolveTenantIDFromManualKey(c, requestedTenantID)
+	if err != nil {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	page, _ := strconv.Atoi(c.Query("page", "1"))
+	limit, _ := strconv.Atoi(c.Query("limit", "20"))
+	search := strings.TrimSpace(c.Query("search"))
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit > 100 {
+		limit = 20
+	}
+
+	apps, total, listErr := service.ListApps(tenantID, page, limit, search)
+	if listErr != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": listErr.Error()})
+	}
+
+	return c.JSON(fiber.Map{
+		"data": fiber.Map{
+			"apps":   apps,
+			"total":  total,
+			"page":   page,
+			"limit":  limit,
+			"search": search,
+		},
+	})
+}
+
 func ManualCreateAppHandler(c *fiber.Ctx) error {
 	var req ManualCreateAppRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -208,12 +354,113 @@ func ManualCreateAppHandler(c *fiber.Ctx) error {
 	})
 }
 
-func ManualReplaceAppPermissionsHandler(c *fiber.Ctx) error {
-	appID, err := strconv.ParseUint(c.Params("app_id"), 10, 32)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid app_id"})
+func ManualGetAppHandler(c *fiber.Ctx) error {
+	appID, tenantID, errResp := resolveScopedAppID(c)
+	if errResp != nil {
+		return errResp
 	}
 
+	appInfo, err := service.GetApp(tenantID, appID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"data": appInfo})
+}
+
+func ManualUpdateAppHandler(c *fiber.Ctx) error {
+	appID, tenantID, errResp := resolveScopedAppID(c)
+	if errResp != nil {
+		return errResp
+	}
+
+	var req ManualUpdateAppRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request body"})
+	}
+
+	updateReq := appsvc.UpdateAppRequest{
+		Name:              strings.TrimSpace(req.Name),
+		Description:       req.Description,
+		IconURL:           strings.TrimSpace(req.IconURL),
+		LogoURL:           req.LogoURL,
+		HomepageURL:       req.HomepageURL,
+		PrivacyPolicyURL:  req.PrivacyPolicyURL,
+		TermsOfServiceURL: req.TermsOfServiceURL,
+		IsVerified:        req.IsVerified,
+		Status:            req.Status,
+	}
+
+	updated, err := service.UpdateApp(tenantID, appID, &updateReq)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{
+		"data":    updated,
+		"message": "app updated",
+	})
+}
+
+func ManualDeleteAppHandler(c *fiber.Ctx) error {
+	appID, tenantID, errResp := resolveScopedAppID(c)
+	if errResp != nil {
+		return errResp
+	}
+
+	if err := service.DeleteApp(tenantID, appID); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"message": "app deleted"})
+}
+
+func ManualGetAppStatsHandler(c *fiber.Ctx) error {
+	appID, tenantID, errResp := resolveScopedAppID(c)
+	if errResp != nil {
+		return errResp
+	}
+
+	period := strings.TrimSpace(c.Query("period"))
+	if period == "" {
+		period = "7d"
+	}
+
+	stats, err := service.GetAppStats(tenantID, appID, period)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"data": stats})
+}
+
+func ManualToggleAppStatusHandler(c *fiber.Ctx) error {
+	appID, tenantID, errResp := resolveScopedAppID(c)
+	if errResp != nil {
+		return errResp
+	}
+
+	var req ManualToggleAppStatusRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request body"})
+	}
+	req.Status = strings.TrimSpace(req.Status)
+	if req.Status == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "status is required"})
+	}
+
+	appInfo, err := service.ToggleAppStatus(tenantID, appID, req.Status)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{
+		"data":    appInfo,
+		"message": "app status updated",
+	})
+}
+
+func ManualReplaceAppPermissionsHandler(c *fiber.Ctx) error {
 	var req ManualReplaceAppPermissionsRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request body"})
@@ -222,17 +469,9 @@ func ManualReplaceAppPermissionsHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "permissions cannot be empty"})
 	}
 
-	tenantID, tenantErr := resolveTenantIDFromManualKey(c, req.TenantID)
-	if tenantErr != nil {
-		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": tenantErr.Error()})
-	}
-
-	var app model.App
-	if dbErr := common.DB().Where("id = ? AND tenant_id = ?", uint(appID), tenantID).First(&app).Error; dbErr != nil {
-		if errors.Is(dbErr, gorm.ErrRecordNotFound) {
-			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "app not found"})
-		}
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to query app"})
+	_, tenantID, app, errResp := resolveScopedApp(c, req.TenantID)
+	if errResp != nil {
+		return errResp
 	}
 
 	tx := common.DB().Begin()
@@ -347,6 +586,179 @@ func ManualReplaceAppPermissionsHandler(c *fiber.Ctx) error {
 	})
 }
 
+func ManualListOAuthClientsHandler(c *fiber.Ctx) error {
+	requestedTenantID := parseOptionalTenantID(c.Query("tenant_id"))
+	tenantID, err := resolveTenantIDFromManualKey(c, requestedTenantID)
+	if err != nil {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	page, _ := strconv.Atoi(c.Query("page", "1"))
+	pageSize, _ := strconv.Atoi(c.Query("page_size", "10"))
+	search := strings.TrimSpace(c.Query("search"))
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 100 {
+		pageSize = 10
+	}
+
+	appsWithClients, total, listErr := service.GetTenantAppsWithOAuthClients(tenantID, page, pageSize, search)
+	if listErr != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": listErr.Error()})
+	}
+
+	return c.JSON(fiber.Map{
+		"data": fiber.Map{
+			"apps":      appsWithClients,
+			"total":     total,
+			"page":      page,
+			"page_size": pageSize,
+			"search":    search,
+		},
+	})
+}
+
+func ManualCreateOAuthClientHandler(c *fiber.Ctx) error {
+	var req ManualOAuthClientRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request body"})
+	}
+
+	tenantID, err := resolveTenantIDFromManualKey(c, req.TenantID)
+	if err != nil {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": err.Error()})
+	}
+	if req.AppID == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "app_id is required"})
+	}
+	if !appBelongsToTenant(req.AppID, tenantID) {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "app not found"})
+	}
+
+	creatorID, _ := c.Locals("manualAPIKeyCreatorUserID").(uint)
+	if creatorID == 0 {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "invalid api key creator"})
+	}
+
+	createReq := oauthhandler.CreateClientRequest{
+		Name:           strings.TrimSpace(req.Name),
+		Description:    req.Description,
+		RedirectURIs:   req.RedirectURIs,
+		Scopes:         req.Scopes,
+		AllowedOrigins: req.AllowedOrigins,
+	}
+
+	client, createErr := clientService.CreateClientForApp(req.AppID, creatorID, &createReq)
+	if createErr != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": createErr.Error()})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"data":    client,
+		"message": "oauth client created",
+	})
+}
+
+func ManualGetOAuthClientHandler(c *fiber.Ctx) error {
+	client, _, errResp := resolveScopedClient(c, nil)
+	if errResp != nil {
+		return errResp
+	}
+
+	return c.JSON(fiber.Map{"data": client})
+}
+
+func ManualUpdateOAuthClientHandler(c *fiber.Ctx) error {
+	var req ManualUpdateOAuthClientRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request body"})
+	}
+
+	_, clientID, errResp := resolveScopedClient(c, req.TenantID)
+	if errResp != nil {
+		return errResp
+	}
+
+	updateReq := oauthhandler.UpdateClientRequest{
+		Name:           strings.TrimSpace(req.Name),
+		Description:    req.Description,
+		RedirectURIs:   req.RedirectURIs,
+		Scopes:         req.Scopes,
+		AllowedOrigins: req.AllowedOrigins,
+		IsActive:       req.IsActive,
+	}
+
+	client, err := clientService.UpdateClient(clientID, &updateReq)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{
+		"data":    client,
+		"message": "oauth client updated",
+	})
+}
+
+func ManualDeleteOAuthClientHandler(c *fiber.Ctx) error {
+	_, clientID, errResp := resolveScopedClient(c, nil)
+	if errResp != nil {
+		return errResp
+	}
+
+	if err := clientService.DeleteClient(clientID); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"message": "oauth client deleted"})
+}
+
+func ManualGetOAuthClientStatsHandler(c *fiber.Ctx) error {
+	_, clientID, errResp := resolveScopedClient(c, nil)
+	if errResp != nil {
+		return errResp
+	}
+
+	stats, err := clientService.GetClientStats(clientID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"data": stats})
+}
+
+func ManualRegenerateOAuthClientSecretHandler(c *fiber.Ctx) error {
+	_, clientID, errResp := resolveScopedClient(c, nil)
+	if errResp != nil {
+		return errResp
+	}
+
+	secret, err := clientService.RegenerateSecret(clientID)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{
+		"data": fiber.Map{
+			"client_secret": secret,
+		},
+		"message": "oauth client secret regenerated",
+	})
+}
+
+func ManualRevokeOAuthClientTokensHandler(c *fiber.Ctx) error {
+	_, clientID, errResp := resolveScopedClient(c, nil)
+	if errResp != nil {
+		return errResp
+	}
+
+	if err := clientService.RevokeClientTokens(clientID); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"message": "oauth client tokens revoked"})
+}
+
 func resolveTenantIDFromManualKey(c *fiber.Ctx, requested *uint) (uint, error) {
 	scope, _ := c.Locals("manualAPIKeyScope").(string)
 	keyTenantID, hasTenant := c.Locals("manualAPIKeyTenantID").(uint)
@@ -375,4 +787,73 @@ func resolveTenantIDFromManualKey(c *fiber.Ctx, requested *uint) (uint, error) {
 	}
 
 	return 0, errors.New("invalid api key scope")
+}
+
+func parseOptionalTenantID(raw string) *uint {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return nil
+	}
+	id, err := strconv.ParseUint(raw, 10, 32)
+	if err != nil || id == 0 {
+		return nil
+	}
+	value := uint(id)
+	return &value
+}
+
+func resolveScopedAppID(c *fiber.Ctx) (uint, uint, error) {
+	appID, tenantID, _, err := resolveScopedApp(c, parseOptionalTenantID(c.Query("tenant_id")))
+	return appID, tenantID, err
+}
+
+func resolveScopedApp(c *fiber.Ctx, requestedTenantID *uint) (uint, uint, *model.App, error) {
+	appIDValue, err := strconv.ParseUint(c.Params("app_id"), 10, 32)
+	if err != nil {
+		return 0, 0, nil, c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid app_id"})
+	}
+
+	tenantID, tenantErr := resolveTenantIDFromManualKey(c, requestedTenantID)
+	if tenantErr != nil {
+		return 0, 0, nil, c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": tenantErr.Error()})
+	}
+
+	var app model.App
+	if dbErr := common.DB().Where("id = ? AND tenant_id = ?", uint(appIDValue), tenantID).First(&app).Error; dbErr != nil {
+		if errors.Is(dbErr, gorm.ErrRecordNotFound) {
+			return 0, 0, nil, c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "app not found"})
+		}
+		return 0, 0, nil, c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to query app"})
+	}
+
+	return uint(appIDValue), tenantID, &app, nil
+}
+
+func appBelongsToTenant(appID, tenantID uint) bool {
+	var count int64
+	common.DB().Model(&model.App{}).Where("id = ? AND tenant_id = ?", appID, tenantID).Count(&count)
+	return count > 0
+}
+
+func resolveScopedClient(c *fiber.Ctx, requestedTenantID *uint) (*oauthhandler.ClientResponse, string, error) {
+	clientID := strings.TrimSpace(c.Params("client_id"))
+	if clientID == "" {
+		return nil, "", c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid client_id"})
+	}
+
+	tenantID, err := resolveTenantIDFromManualKey(c, requestedTenantID)
+	if err != nil {
+		return nil, "", c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	if !clientService.ClientBelongsToTenant(clientID, tenantID) {
+		return nil, "", c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "oauth client not found"})
+	}
+
+	client, getErr := clientService.GetClient(clientID)
+	if getErr != nil {
+		return nil, "", c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": getErr.Error()})
+	}
+
+	return client, clientID, nil
 }
