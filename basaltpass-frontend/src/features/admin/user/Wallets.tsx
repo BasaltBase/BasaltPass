@@ -6,6 +6,7 @@ import AdminLayout from '@features/admin/components/AdminLayout'
 import PTable, { PTableColumn } from '@ui/PTable'
 import PInput from '@ui/PInput'
 import PButton from '@ui/PButton'
+import UserTooltip from '@ui/UserTooltip'
 import { ROUTES } from '@constants'
 
 export default function Wallets() {
@@ -53,7 +54,13 @@ export default function Wallets() {
       sortable: true,
       align: 'center',
       sorter: (a, b) => (a.user_id || 0) - (b.user_id || 0),
-      render: (row) => row.user_id ?? '-'
+      render: (row) => row.user_id ? (
+        <UserTooltip
+          userId={row.user_id}
+          triggerLabel={`UID ${row.user_id}`}
+          fallbackLabel={`UID ${row.user_id}`}
+        />
+      ) : '-'
     },
     {
       key: 'balance',

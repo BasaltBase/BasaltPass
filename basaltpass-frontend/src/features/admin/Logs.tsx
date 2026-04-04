@@ -6,6 +6,7 @@ import AdminLayout from '@features/admin/components/AdminLayout'
 import PTable, { PTableColumn } from '@ui/PTable'
 import PInput from '@ui/PInput'
 import PButton from '@ui/PButton'
+import UserTooltip from '@ui/UserTooltip'
 import { ROUTES } from '@constants'
 
 interface Log {
@@ -49,7 +50,20 @@ export default function Logs() {
 
   const columns: PTableColumn<Log>[] = [
     { key: 'id', title: 'ID', dataIndex: 'ID', sortable: true, align: 'center' },
-    { key: 'user', title: '用户ID', sortable: true, align: 'center', sorter: (a,b)=> a.UserID - b.UserID, render: (row)=> row.UserID },
+    {
+      key: 'user',
+      title: '用户ID',
+      sortable: true,
+      align: 'center',
+      sorter: (a,b)=> a.UserID - b.UserID,
+      render: (row)=> (
+        <UserTooltip
+          userId={row.UserID}
+          triggerLabel={`UID ${row.UserID}`}
+          fallbackLabel={`UID ${row.UserID}`}
+        />
+      )
+    },
     { key: 'action', title: '操作', align: 'left', render: (row)=> row.Action },
     { key: 'resource', title: '资源', align: 'left', render: (row)=> (row.Data?.slice(0,50) || '') },
     { key: 'ip', title: 'IP地址', align: 'center', render: (row)=> row.IP },

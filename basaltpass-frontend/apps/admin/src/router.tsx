@@ -1,5 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { useMemo } from 'react'
 import AdminRoute from '../../../src/features/admin/components/AdminRoute'
+import { consumeSessionNotice, getSessionNoticeMessage, peekSessionNotice } from '../../../src/shared/utils/sessionNotice'
 
 import AdminDashboard from '../../../src/features/admin/Dashboard'
 import Users from '../../../src/features/admin/user/Users'
@@ -39,6 +41,13 @@ import EmailTest from '../../../src/features/admin/email/EmailTest'
 import NotFound from '../../../src/features/NotFound'
 
 function Entry() {
+  const notice = useMemo(() => {
+    const current = peekSessionNotice()
+    if (!current) {
+      return ''
+    }
+    return getSessionNoticeMessage(consumeSessionNotice())
+  }, [])
   const userUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || ''
   const joinUrl = (base: string, path: string) => {
     const b = (base || '').replace(/\/+$/, '')
@@ -50,14 +59,19 @@ function Entry() {
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="max-w-md w-full bg-white rounded-lg shadow p-6">
         <h1 className="text-lg font-semibold text-gray-900">管理员控制台</h1>
+        {notice ? (
+          <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            {notice === '当前登录会话已过期，请重新登录。' ? '当前管理员会话已过期，请重新登录后再进入管理员控制台。' : notice}
+          </div>
+        ) : null}
         <p className="mt-2 text-sm text-gray-600">
           请从用户/租户控制台点击“管理员面板”进入（按需授权）。
         </p>
         <a
           className="mt-4 inline-block text-indigo-600 hover:underline"
-          href={joinUrl(userUrl, 'dashboard')}
+          href={joinUrl(userUrl, notice ? 'login' : 'dashboard')}
         >
-          返回用户控制台
+          {notice ? '前往重新登录' : '返回用户控制台'}
         </a>
       </div>
     </div>

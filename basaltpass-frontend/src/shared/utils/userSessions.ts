@@ -39,6 +39,15 @@ function buildSessionKey(userID: number, tenantID: number) {
   return `${userID}:${tenantID}`
 }
 
+function getTokenExpiryMs(token: string) {
+  const decoded = decodeJWT(token)
+  const exp = Number(decoded?.exp || 0)
+  if (!exp) {
+    return 0
+  }
+  return exp * 1000
+}
+
 function readSessions(): UserConsoleSession[] {
   if (!isBrowser()) {
     return []
@@ -73,6 +82,25 @@ function writeSessions(sessions: UserConsoleSession[]) {
 
 export function listUserConsoleSessions() {
   return readSessions().sort((a, b) => new Date(b.last_used_at).getTime() - new Date(a.last_used_at).getTime())
+}
+
+export function isUserConsoleSessionExpired(session: UserConsoleSession, leewayMs = 30_000) {
+  const expiresAt = getTokenExpiryMs(session.token)
+  if (!expiresAt) {
+    return true
+  }
+  return expiresAt <= Date.now() + leewayMs
+}
+
+export function pruneExpiredUserConsoleSessions() {
+  const sessions = readSessions()
+  const activeSessions = sessions.filter((session) => !isUserConsoleSessionExpired(session))
+
+  if (activeSessions.length !== sessions.length) {
+    writeSessions(activeSessions)
+  }
+
+  return activeSessions.sort((a, b) => new Date(b.last_used_at).getTime() - new Date(a.last_used_at).getTime())
 }
 
 export function upsertUserConsoleSession(

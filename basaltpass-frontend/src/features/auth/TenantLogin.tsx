@@ -12,7 +12,8 @@ import { resolveSafeRedirectTarget } from '@utils/redirect'
 import { fetchPublicTenantByCode } from '@api/publicTenant'
 import { decodeJWT } from '@utils/jwt'
 import { getAccessToken } from '@utils/auth'
-import { listUserConsoleSessions } from '@utils/userSessions'
+import { listUserConsoleSessions, removeUserConsoleSessionByKey } from '@utils/userSessions'
+import { consumeSessionNotice, getSessionNoticeMessage } from '@utils/sessionNotice'
 import { ShieldCheckIcon, EnvelopeIcon, KeyIcon } from '@heroicons/react/24/outline'
 import { PInput, PButton, PCheckbox, PAlert } from '@ui'
 
@@ -31,6 +32,13 @@ function TenantLogin() {
   // 租户信息
   const [tenantInfo, setTenantInfo] = useState<{ id: number; name: string; code: string } | null>(null)
   const [loadingTenant, setLoadingTenant] = useState(true)
+
+  useEffect(() => {
+    const message = getSessionNoticeMessage(consumeSessionNotice())
+    if (message) {
+      setError(message === '当前登录会话已过期，请重新登录。' ? '当前登录会话已过期，请重新登录后再进入租户控制台。' : message)
+    }
+  }, [])
 
   useEffect(() => {
     if (tenantInfo?.name) {
@@ -140,6 +148,7 @@ function TenantLogin() {
       })
       .catch(() => {
         if (!cancelled) {
+          removeUserConsoleSessionByKey(storedTenantSession.key)
           setIsResolvingTenantSession(false)
         }
       })

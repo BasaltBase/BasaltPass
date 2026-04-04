@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { getAccessToken, clearAccessToken, getAuthScope, setAccessToken } from '../utils/auth'
 import { updateStoredUserSessionToken } from '../utils/userSessions'
+import { setSessionNotice } from '../utils/sessionNotice'
 
 const inferDefaultApiBase = () => {
   if (typeof window !== 'undefined' && window.location?.hostname) {
@@ -34,6 +35,20 @@ const client = axios.create({
   withCredentials: true,
   timeout: normalizeTimeoutMs((import.meta as any).env?.VITE_API_TIMEOUT_MS, 30000),
 })
+
+const buildSessionExpiredRedirect = () => {
+  const scope = getAuthScope()
+  const userConsoleUrl = String((import.meta as any).env?.VITE_CONSOLE_USER_URL || '').replace(/\/+$/, '')
+
+  if (scope === 'tenant' || scope === 'admin') {
+    if (userConsoleUrl) {
+      return `${userConsoleUrl}/login`
+    }
+    return '/'
+  }
+
+  return '/login'
+}
 
 // 是否正在刷新token的标志
 let isRefreshing = false
@@ -125,10 +140,17 @@ client.interceptors.response.use(
         // 刷新失败，清除token并处理队列
         processQueue(refreshError, null)
         clearAccessToken()
+        setSessionNotice('session_expired')
+        const scope = getAuthScope()
+        if (scope === 'tenant' || scope === 'admin') {
+          document.cookie = `access_token_${scope}=; Max-Age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax`
+          document.cookie = `refresh_token_${scope}=; Max-Age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax`
+        }
         
         // 如果是在非登录页面，跳转到登录页
-        if (window.location.pathname !== '/login') {
-          window.location.href = '/login'
+        const redirectTarget = buildSessionExpiredRedirect()
+        if (window.location.pathname + window.location.search !== redirectTarget) {
+          window.location.href = redirectTarget
         }
         
         return Promise.reject(refreshError)

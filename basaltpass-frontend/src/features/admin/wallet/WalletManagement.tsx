@@ -18,7 +18,7 @@ import {
 import { adminWalletApi, Wallet, Currency, CreateWalletRequest, AdjustBalanceRequest, AdjustOwnerWalletRequest, WalletTransaction } from '@api/adminWallet';
 import AdminLayout from '@features/admin/components/AdminLayout';
 import WalletStatsCard from '@features/admin/components/WalletStatsCard';
-import { PInput, PSelect, PButton, PCard, PSkeleton, PBadge, PTextarea } from '@ui';
+import { PInput, PSelect, PButton, PCard, PSkeleton, PBadge, PTextarea, UserTooltip } from '@ui';
 
 interface WalletManagementProps {}
 
@@ -601,8 +601,15 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                                 </div>
                               </div>
                               <div className="ml-3">
-                                <div className="text-sm font-medium text-gray-900">{wallet.user.username}</div>
-                                <div className="text-sm text-gray-500">{wallet.user.email}</div>
+                                <div className="text-sm font-medium text-gray-900">
+                                  <UserTooltip
+                                    userId={wallet.user_id}
+                                    triggerLabel={wallet.user.username || wallet.user.email}
+                                    fallbackLabel={`用户 #${wallet.user_id}`}
+                                    className="cursor-default border-b border-dotted border-gray-300 text-gray-900"
+                                  />
+                                </div>
+                                <div className="text-sm text-gray-500">UID #{wallet.user_id}</div>
                               </div>
                             </div>
                           )}

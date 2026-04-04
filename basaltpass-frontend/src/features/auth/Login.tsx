@@ -7,6 +7,7 @@ import { useAuth } from '@contexts/AuthContext'
 import { useConfig } from '@contexts/ConfigContext'
 import { loginWithPasskey2FAFlow } from '@api/oauth/passkey'
 import { resolveSafeRedirectTarget } from '@utils/redirect'
+import { consumeSessionNotice, getSessionNoticeMessage } from '@utils/sessionNotice'
 import { ShieldCheckIcon, EnvelopeIcon, KeyIcon } from '@heroicons/react/24/outline'
 import { PInput, PButton, PCheckbox, PAlert } from '@ui'
 
@@ -49,6 +50,13 @@ function Login() {
   useEffect(() => {
     setPageTitle('管理员登录')
   }, [setPageTitle])
+
+  useEffect(() => {
+    const message = getSessionNoticeMessage(consumeSessionNotice())
+    if (message) {
+      setError(message)
+    }
+  }, [])
 
   useEffect(() => {
     if (step === 2 && twoFAType === 'totp') {

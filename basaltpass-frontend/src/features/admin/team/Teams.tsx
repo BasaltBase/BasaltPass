@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import AdminLayout from '@features/admin/components/AdminLayout'
-import { PButton, PInput, PCard, PSelect } from '@ui'
+import { PButton, PInput, PCard, PSelect, UserTooltip } from '@ui'
 import { adminTeamApi, AdminTeamBrief } from '@api/admin/team'
 import { PlusIcon, PencilIcon, TrashIcon, UsersIcon } from '@heroicons/react/24/outline'
 
@@ -211,7 +211,14 @@ export default function AdminTeamsPage() {
                 {!memberLoading && members.map(m=> (
                   <div key={m.user_id} className='p-3 flex items-center justify-between'>
                     <div className='space-y-1'>
-                      <div className='font-medium text-sm'>UID {m.user_id} {m.is_owner && <span className='ml-2 text-xs px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-600'>所有者</span>}</div>
+                      <div className='font-medium text-sm'>
+                        <UserTooltip
+                          userId={m.user_id}
+                          triggerLabel={`UID ${m.user_id}`}
+                          fallbackLabel={`UID ${m.user_id}`}
+                        />
+                        {m.is_owner && <span className='ml-2 text-xs px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-600'>所有者</span>}
+                      </div>
                       <div className='text-xs text-gray-500'>加入: {m.joined_at ? new Date(m.joined_at).toLocaleDateString(): '-'}</div>
                     </div>
                     <div className='flex items-center space-x-2'>

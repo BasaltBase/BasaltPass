@@ -41,6 +41,7 @@ export interface WalletTransaction {
   amount: number;
   status: string;
   description: string;
+  reference?: string;
   created_at: string;
   updated_at: string;
 }
@@ -93,6 +94,39 @@ export interface PaginatedResponse<T> {
   };
 }
 
+interface RawWalletTransaction {
+  id?: number;
+  wallet_id?: number;
+  type?: string;
+  amount?: number;
+  status?: string;
+  description?: string;
+  reference?: string;
+  created_at?: string;
+  updated_at?: string;
+  ID?: number;
+  WalletID?: number;
+  Type?: string;
+  Amount?: number;
+  Status?: string;
+  Description?: string;
+  Reference?: string;
+  CreatedAt?: string;
+  UpdatedAt?: string;
+}
+
+const normalizeWalletTransaction = (tx: RawWalletTransaction): WalletTransaction => ({
+  id: tx.id ?? tx.ID ?? 0,
+  wallet_id: tx.wallet_id ?? tx.WalletID ?? 0,
+  type: tx.type ?? tx.Type ?? '',
+  amount: tx.amount ?? tx.Amount ?? 0,
+  status: tx.status ?? tx.Status ?? '',
+  description: tx.description ?? tx.Description ?? tx.reference ?? tx.Reference ?? '',
+  reference: tx.reference ?? tx.Reference,
+  created_at: tx.created_at ?? tx.CreatedAt ?? '',
+  updated_at: tx.updated_at ?? tx.UpdatedAt ?? '',
+});
+
 export const adminWalletApi = {
   // 获取钱包列表
   getWallets: (params?: ListWalletsParams): Promise<PaginatedResponse<Wallet>> =>
@@ -131,7 +165,12 @@ export const adminWalletApi = {
     walletId: number,
     params?: { page?: number; page_size?: number }
   ): Promise<PaginatedResponse<WalletTransaction>> =>
-    api.get(`/api/v1/admin/wallets/${walletId}/transactions`, { params }).then(response => response.data),
+    api.get(`/api/v1/admin/wallets/${walletId}/transactions`, { params }).then(response => ({
+      ...response.data,
+      data: Array.isArray(response.data?.data)
+        ? response.data.data.map((tx: RawWalletTransaction) => normalizeWalletTransaction(tx))
+        : [],
+    })),
 
   // 获取用户钱包
   getUserWallets: (userId: number): Promise<{ data: Wallet[] }> =>

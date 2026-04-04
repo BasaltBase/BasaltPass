@@ -5,6 +5,7 @@ import { ChevronRightIcon, ExclamationTriangleIcon } from '@heroicons/react/24/o
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { adminTenantApi, AdminTenantResponse } from '@api/admin/tenant'
 import useDebounce from '@hooks/useDebounce'
+import UserTooltip from '@ui/UserTooltip'
 import { ROUTES } from '@constants'
 
 interface Subscription {
@@ -271,12 +272,15 @@ export default function AdminSubscriptions() {
                             {getStatusBadge(subscription.Status)}
                           </div>
                           <p className="mt-1 text-sm text-gray-900">
-                            用户ID: {subscription.UserID}
-                            {subscription.User?.Email && (
-                              <span className="ml-2 text-gray-500">
-                                ({subscription.User.Email})
-                              </span>
-                            )}
+                            用户:
+                            <span className="ml-2">
+                              <UserTooltip
+                                userId={subscription.UserID}
+                                triggerLabel={subscription.User?.Nickname || subscription.User?.Email || `UID ${subscription.UserID}`}
+                                fallbackLabel={`UID ${subscription.UserID}`}
+                                className="cursor-default border-b border-dotted border-gray-300 text-gray-900"
+                              />
+                            </span>
                           </p>
                           <p className="mt-1 text-sm text-gray-500">
                             {subscription.CurrentPrice?.Plan?.Product?.Name || '未知产品'} - 
@@ -351,12 +355,12 @@ export default function AdminSubscriptions() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">用户ID</label>
                   <p className="text-sm text-gray-900">
-                    {selectedSubscription.UserID}
-                    {selectedSubscription.User?.Email && (
-                      <span className="ml-2 text-gray-500">
-                        ({selectedSubscription.User.Email})
-                      </span>
-                    )}
+                    <UserTooltip
+                      userId={selectedSubscription.UserID}
+                      triggerLabel={selectedSubscription.User?.Nickname || selectedSubscription.User?.Email || `UID ${selectedSubscription.UserID}`}
+                      fallbackLabel={`UID ${selectedSubscription.UserID}`}
+                      className="cursor-default border-b border-dotted border-gray-300 text-gray-900"
+                    />
                   </p>
                 </div>
                 <div>
@@ -458,10 +462,14 @@ export default function AdminSubscriptions() {
                     订阅 #{cancelTarget.ID}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
-                    用户ID: {cancelTarget.UserID}
-                    {cancelTarget.User?.Email && (
-                      <span className="ml-1">({cancelTarget.User.Email})</span>
-                    )}
+                    用户:
+                    <span className="ml-1">
+                      <UserTooltip
+                        userId={cancelTarget.UserID}
+                        triggerLabel={cancelTarget.User?.Nickname || cancelTarget.User?.Email || `UID ${cancelTarget.UserID}`}
+                        fallbackLabel={`UID ${cancelTarget.UserID}`}
+                      />
+                    </span>
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
                     {cancelTarget.CurrentPrice?.Plan?.Product?.Name || '未知产品'} - 

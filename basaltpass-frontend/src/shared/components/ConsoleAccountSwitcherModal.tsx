@@ -6,6 +6,7 @@ import { authorizeConsoleWithToken, joinConsoleUrl, type ConsoleTarget } from '@
 import { clearAccessTokenForScope, clearScopeCookies } from '@utils/auth'
 import {
   listUserConsoleSessions,
+  pruneExpiredUserConsoleSessions,
   removeUserConsoleSessionByKey,
   type UserConsoleSession,
 } from '@utils/userSessions'
@@ -41,12 +42,12 @@ function canAccessAdminConsole(session: UserConsoleSession) {
 
 function getSessionAccent(session: UserConsoleSession) {
   if (session.is_super_admin) {
-    return 'from-indigo-500 to-blue-600'
+    return 'bg-slate-700'
   }
   if (canAccessTenantConsole(session)) {
-    return 'from-violet-500 to-fuchsia-500'
+    return 'bg-slate-500'
   }
-  return 'from-slate-500 to-slate-600'
+  return 'bg-slate-300'
 }
 
 function getSessionBadges(session: UserConsoleSession) {
@@ -55,26 +56,26 @@ function getSessionBadges(session: UserConsoleSession) {
   if (session.is_super_admin) {
     badges.push({
       label: '平台管理员',
-      className: 'bg-indigo-50 text-indigo-700 ring-1 ring-inset ring-indigo-200',
+      className: 'border border-slate-300 bg-slate-100 text-slate-700',
     })
   }
 
   if (session.tenant_id > 0) {
     badges.push({
       label: session.tenant_name || `租户 ${session.tenant_id}`,
-      className: 'bg-violet-50 text-violet-700 ring-1 ring-inset ring-violet-200',
+      className: 'border border-slate-300 bg-white text-slate-700',
     })
   } else {
     badges.push({
       label: '平台账户',
-      className: 'bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-200',
+      className: 'border border-slate-300 bg-white text-slate-700',
     })
   }
 
   if (session.tenant_role) {
     badges.push({
       label: session.tenant_role,
-      className: 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200',
+      className: 'border border-slate-300 bg-slate-50 text-slate-600',
     })
   }
 
@@ -94,12 +95,16 @@ export default function ConsoleAccountSwitcherModal({
 }: ConsoleAccountSwitcherModalProps) {
   const [switchingId, setSwitchingId] = useState<string | null>(null)
   const [sessions, setSessions] = useState<UserConsoleSession[]>([])
+  const [cleanedCount, setCleanedCount] = useState(0)
 
   useEffect(() => {
     if (!open) {
       return
     }
-    setSessions(listUserConsoleSessions())
+    const original = listUserConsoleSessions()
+    const active = pruneExpiredUserConsoleSessions()
+    setSessions(active)
+    setCleanedCount(Math.max(0, original.length - active.length))
   }, [open])
 
   const getActionsForSession = (session: UserConsoleSession): SessionAction[] => {
@@ -152,7 +157,13 @@ export default function ConsoleAccountSwitcherModal({
       const { code } = await authorizeConsoleWithToken(session.token, action.target, action.tenantId)
       window.location.href = action.href.replace('__CODE__', encodeURIComponent(code))
     } catch (error: any) {
-      const message = error?.response?.data?.error || error?.message || '账户切换失败，请重新登录目标账户。'
+      if (error?.response?.status === 401) {
+        removeUserConsoleSessionByKey(session.key)
+        setSessions((current) => current.filter((item) => item.key !== session.key))
+      }
+      const message = error?.response?.status === 401
+        ? '该账户的登录会话已失效，系统已将其标记为退出状态，请重新登录该账户。'
+        : error?.response?.data?.error || error?.message || '账户切换失败，请重新登录目标账户。'
       await uiAlert(message, '无法切换账户')
       setSwitchingId(null)
     }
@@ -205,11 +216,16 @@ export default function ConsoleAccountSwitcherModal({
       }}
       widthClass="max-w-3xl"
     >
-      <div className="space-y-5">
-        <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-slate-100 px-5 py-4">
+      <div className="space-y-4">
+        {cleanedCount > 0 ? (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            已自动清理 {cleanedCount} 个失效的历史登录账户。这些账户需要重新登录后才能再次切换。
+          </div>
+        ) : null}
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4">
           <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-sm">
-              <ArrowsRightLeftIcon className="h-5 w-5" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600">
+              <ArrowsRightLeftIcon className="h-4 w-4" />
             </div>
             <div className="min-w-0">
               <div className="text-sm font-semibold text-slate-900">
@@ -224,7 +240,7 @@ export default function ConsoleAccountSwitcherModal({
         </div>
 
         {sessions.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-8 text-center text-sm text-slate-500">
+          <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-5 py-8 text-center text-sm text-slate-500">
             当前浏览器还没有可用的 user 会话，请先在用户面板登录目标账户。
           </div>
         ) : (
@@ -246,23 +262,23 @@ export default function ConsoleAccountSwitcherModal({
                 return (
                   <div
                     key={session.key}
-                    className={`overflow-hidden rounded-2xl border bg-white shadow-sm transition ${
-                      isCurrentUser ? 'border-blue-200 ring-1 ring-blue-100' : 'border-slate-200'
+                    className={`overflow-hidden rounded-lg border bg-white transition ${
+                      isCurrentUser ? 'border-slate-400 bg-slate-50' : 'border-slate-200'
                     }`}
                   >
-                    <div className={`h-1.5 w-full bg-gradient-to-r ${getSessionAccent(session)}`} />
-                    <div className="px-5 py-4">
+                    <div className={`h-1 w-full ${getSessionAccent(session)}`} />
+                    <div className="px-4 py-4">
                       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-3">
                             {session.avatar_url ? (
                               <img
-                                className="h-11 w-11 rounded-2xl object-cover ring-1 ring-slate-200"
+                                className="h-10 w-10 rounded-lg object-cover ring-1 ring-slate-200"
                                 src={session.avatar_url}
                                 alt={displayName}
                               />
                             ) : (
-                              <div className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br ${getSessionAccent(session)} text-sm font-semibold text-white shadow-sm`}>
+                              <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-slate-100 text-sm font-semibold text-slate-700">
                                 {displayName.charAt(0).toUpperCase()}
                               </div>
                             )}
@@ -270,7 +286,7 @@ export default function ConsoleAccountSwitcherModal({
                               <div className="flex flex-wrap items-center gap-2">
                                 <span className="truncate text-sm font-semibold text-slate-900">{displayName}</span>
                                 {isCurrentUser ? (
-                                  <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-700 ring-1 ring-inset ring-blue-200">
+                                  <span className="rounded border border-slate-300 bg-white px-2 py-0.5 text-[11px] font-medium text-slate-600">
                                     当前使用中
                                   </span>
                                 ) : null}
@@ -283,7 +299,7 @@ export default function ConsoleAccountSwitcherModal({
                             {badges.map((badge) => (
                               <span
                                 key={`${session.key}-${badge.label}`}
-                                className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${badge.className}`}
+                                className={`rounded px-2 py-0.5 text-[11px] font-medium ${badge.className}`}
                               >
                                 {badge.label}
                               </span>
@@ -297,7 +313,7 @@ export default function ConsoleAccountSwitcherModal({
                               key={action.id}
                               type="button"
                               size="sm"
-                              variant={action.target === 'admin' ? 'primary' : 'secondary'}
+                              variant="secondary"
                               disabled={!!switchingId}
                               loading={switchingId === action.id}
                               onClick={() => void handleSwitch(session, action)}
@@ -321,7 +337,7 @@ export default function ConsoleAccountSwitcherModal({
                           </PButton>
 
                           {actions.length === 0 ? (
-                            <div className="rounded-full bg-slate-100 px-3 py-2 text-xs text-slate-500">
+                            <div className="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
                               当前没有可用的控制台切换入口
                             </div>
                           ) : null}

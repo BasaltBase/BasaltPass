@@ -1,8 +1,8 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@contexts/AuthContext'
-import { ROUTES } from '@constants'
 import PSkeleton from '@ui/PSkeleton'
+import { setSessionNotice } from '@utils/sessionNotice'
 
 interface AdminRouteProps {
   children: React.ReactNode
@@ -16,12 +16,14 @@ export default function AdminRoute({ children }: AdminRouteProps) {
     if (isLoading) return
 
     if (!isAuthenticated) {
-      navigate(ROUTES.user.login, { replace: true })
+      setSessionNotice('session_expired')
+      navigate('/', { replace: true })
       return
     }
 
     if (!canAccessAdmin) {
-      navigate(ROUTES.user.dashboard, { replace: true })
+      setSessionNotice('admin_access_required')
+      navigate('/', { replace: true })
     }
   }, [isAuthenticated, isLoading, canAccessAdmin, navigate])
 
