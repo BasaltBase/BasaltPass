@@ -462,6 +462,48 @@ paths:
         '403': { description: Insufficient scope }
         '500': { description: Server error }
 
+  /api/v1/s2s/users/{id}/wallets/adjust:
+    post:
+      summary: Adjust user wallet balance (S2S)
+      description: Increases or decreases the user's wallet in the requested currency. `amount` must be an integer in the currency's smallest unit. Required scope: s2s.wallet.write.
+      security:
+        - ClientID: []
+          ClientSecret: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/S2SWalletAdjustRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/S2SWalletAdjustment'
+                  error:
+                    oneOf:
+                      - type: 'null'
+                      - $ref: '#/components/schemas/ErrorObject'
+                  request_id:
+                    type: string
+        '400': { description: Invalid parameter }
+        '401': { description: Invalid client }
+        '403': { description: Insufficient scope }
+        '404': { description: User not found }
+        '409': { description: Insufficient funds }
+        '500': { description: Server error }
+
   /api/v1/s2s/users/{id}/messages:
     get:
       summary: List user messages/notifications (S2S)
@@ -641,6 +683,31 @@ components:
         transactions:
           type: array
           items: { $ref: '#/components/schemas/S2SWalletTx' }
+    S2SWalletAdjustRequest:
+      type: object
+      required: [operation, amount, currency]
+      properties:
+        operation:
+          type: string
+          enum: [increase, decrease]
+        amount:
+          type: integer
+          description: Amount in smallest unit, must be positive
+        currency:
+          type: string
+        reference:
+          type: string
+    S2SWalletAdjustment:
+      type: object
+      properties:
+        user_id: { type: integer }
+        wallet_id: { type: integer }
+        currency: { type: string }
+        operation: { type: string, enum: [increase, decrease] }
+        amount: { type: integer }
+        balance: { type: integer }
+        balance_delta: { type: integer }
+        reference: { type: string }
     S2SMessage:
       type: object
       properties:
