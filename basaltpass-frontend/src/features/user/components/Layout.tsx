@@ -19,13 +19,14 @@ import {
   ChevronDownIcon,
   ArrowRightOnRectangleIcon
 } from '@heroicons/react/24/outline'
-import { Modal, PButton } from '@ui'
+import { PButton } from '@ui'
 import { useAuth } from '@contexts/AuthContext'
 import { useConfig } from '@contexts/ConfigContext'
 import EnhancedNotificationIcon from '@components/EnhancedNotificationIcon'
 import { authorizeConsole } from '@api/console'
 import { uiAlert } from '@contexts/DialogContext'
 import { ROUTES } from '@constants'
+import ConsoleAccountSwitcherModal from '@components/ConsoleAccountSwitcherModal'
 
 const navigation = [
   { name: '仪表板', href: ROUTES.user.dashboard, icon: HomeIcon },
@@ -48,11 +49,10 @@ export default function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [showAccountSwitcher, setShowAccountSwitcher] = useState(false)
-  const [switchingSessionKey, setSwitchingSessionKey] = useState<string | null>(null)
   const desktopUserMenuRef = useRef<HTMLDivElement | null>(null)
   const mobileUserMenuRef = useRef<HTMLDivElement | null>(null)
   const location = useLocation()
-  const { user, tenants, userSessions, logout, canAccessTenant, canAccessAdmin, switchAccount } = useAuth()
+  const { user, tenants, logout, canAccessTenant, canAccessAdmin } = useAuth()
   const { marketEnabled, siteName, siteInitial, setPageTitle } = useConfig()
   const currentSessionKey = `${user?.id || 0}:${Number(user?.tenant_id || 0)}`
 
@@ -105,25 +105,6 @@ export default function Layout({ children }: LayoutProps) {
 
   const handleLogout = () => {
     logout()
-  }
-
-  const handleSwitchAccount = async (sessionKey: string) => {
-    if (sessionKey === currentSessionKey) {
-      setShowAccountSwitcher(false)
-      return
-    }
-
-    setSwitchingSessionKey(sessionKey)
-    try {
-      await switchAccount(sessionKey)
-      setShowAccountSwitcher(false)
-      setIsUserMenuOpen(false)
-    } catch (error: any) {
-      const message = error?.message || '账户切换失败，请重新登录目标账户。'
-      await uiAlert(message, '无法切换账户')
-    } finally {
-      setSwitchingSessionKey(null)
-    }
   }
 
   const getUserInitial = () => {
@@ -449,73 +430,16 @@ export default function Layout({ children }: LayoutProps) {
         </main>
       </div>
 
-      <Modal
+      <ConsoleAccountSwitcherModal
         open={showAccountSwitcher}
-        title="切换账户"
-        description="这里列出当前浏览器已经登录的 user 控制台账户。你可以直接切换当前正在使用的账户。"
-        onClose={() => {
-          if (!switchingSessionKey) {
-            setShowAccountSwitcher(false)
-          }
-        }}
-        widthClass="max-w-2xl"
-      >
-        <div className="space-y-3">
-          {userSessions.length === 0 ? (
-            <p className="text-sm text-gray-500">当前没有可切换的已登录账户。</p>
-          ) : (
-            userSessions.map((session) => {
-              const isCurrent = session.key === currentSessionKey
-              const displayName = session.nickname || session.email
-              const tenantLabel = session.tenant_id > 0
-                ? `${session.tenant_name || '租户账户'} · tenant_id ${session.tenant_id}`
-                : '平台账户'
-
-              return (
-                <button
-                  key={session.key}
-                  type="button"
-                  onClick={() => void handleSwitchAccount(session.key)}
-                  disabled={!!switchingSessionKey}
-                  className={`w-full rounded-lg border px-4 py-3 text-left transition ${
-                    isCurrent
-                      ? 'border-blue-200 bg-blue-50'
-                      : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      {session.avatar_url ? (
-                        <img
-                          className="h-10 w-10 rounded-full object-cover"
-                          src={session.avatar_url}
-                          alt={displayName}
-                        />
-                      ) : (
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-sm font-medium text-white">
-                          {displayName.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">{displayName}</div>
-                        <div className="text-sm text-gray-500">{session.email}</div>
-                        <div className="mt-1 text-xs text-gray-500">
-                          {tenantLabel}
-                          {session.tenant_role ? ` · ${session.tenant_role}` : ''}
-                          {session.is_super_admin ? ' · 平台管理员' : ''}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {isCurrent ? '当前使用中' : switchingSessionKey === session.key ? '切换中...' : '点击切换'}
-                    </div>
-                  </div>
-                </button>
-              )
-            })
-          )}
-        </div>
-      </Modal>
+        onClose={() => setShowAccountSwitcher(false)}
+        currentScope="user"
+        currentUserId={Number(user?.id || 0)}
+        currentSessionKey={currentSessionKey}
+        consoleUserUrl={consoleUserUrl}
+        consoleTenantUrl={consoleTenantUrl}
+        consoleAdminUrl={consoleAdminUrl}
+      />
 
   {/* 移除旧的确认退出对话框，登出入口移至用户菜单 */}
     </div>

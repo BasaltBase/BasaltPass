@@ -6,6 +6,7 @@ import (
 	"basaltpass-backend/internal/service/currency"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -47,6 +48,39 @@ func (s *AdminWalletService) GetUserWallets(userID uint) ([]model.Wallet, error)
 	return wallets, err
 }
 
+// GetWalletByID returns a wallet with related entities preloaded.
+func (s *AdminWalletService) GetWalletByID(walletID uint) (*model.Wallet, error) {
+	var wallet model.Wallet
+	db := common.DB()
+	if err := db.Preload("Currency").Preload("User").Preload("Team").First(&wallet, walletID).Error; err != nil {
+		return nil, err
+	}
+	return &wallet, nil
+}
+
+// UserBelongsToTenant checks whether the user belongs to the specified tenant.
+func (s *AdminWalletService) UserBelongsToTenant(userID uint, tenantID uint) (bool, error) {
+	db := common.DB()
+
+	var directCount int64
+	if err := db.Model(&model.User{}).
+		Where("id = ? AND tenant_id = ?", userID, tenantID).
+		Count(&directCount).Error; err != nil {
+		return false, err
+	}
+	if directCount > 0 {
+		return true, nil
+	}
+
+	var membershipCount int64
+	if err := db.Model(&model.TenantUser{}).
+		Where("user_id = ? AND tenant_id = ?", userID, tenantID).
+		Count(&membershipCount).Error; err != nil {
+		return false, err
+	}
+	return membershipCount > 0, nil
+}
+
 // GetTeamWallets returns all wallets for a specific team
 func (s *AdminWalletService) GetTeamWallets(teamID uint) ([]model.Wallet, error) {
 	var wallets []model.Wallet
@@ -71,9 +105,8 @@ func (s *AdminWalletService) GetAllWallets(page, pageSize int, userID *uint, tea
 		db = db.Where("team_id = ?", *teamID)
 	}
 	if currencyCode != "" {
-		// Join with currency table to filter by code
-		db = db.Joins("JOIN currencies ON wallets.currency_id = currencies.id").
-			Where("currencies.code = ?", currencyCode)
+		db = db.Joins("JOIN market_currencies ON market_wallets.currency_id = market_currencies.id").
+			Where("market_currencies.code = ?", strings.ToUpper(strings.TrimSpace(currencyCode)))
 	}
 
 	// Get total count
@@ -255,6 +288,90 @@ func (s *AdminWalletService) AdjustBalance(walletID uint, amount float64, reason
 
 		return tx.Create(&auditLog).Error
 	})
+}
+
+// AdjustUserBalance adjusts a user's wallet balance by currency code.
+func (s *AdminWalletService) AdjustUserBalance(userID uint, currencyCode string, amount float64, reason string, operatorID uint, createIfMissing bool) (*model.Wallet, error) {
+	curr, err := currency.GetCurrencyByCode(strings.ToUpper(strings.TrimSpace(currencyCode)))
+	if err != nil {
+		return nil, fmt.Errorf("invalid currency code: %s", currencyCode)
+	}
+
+	db := common.DB()
+	var walletModel model.Wallet
+	err = db.Preload("Currency").Preload("User").Where("user_id = ? AND currency_id = ?", userID, curr.ID).First(&walletModel).Error
+	if err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, err
+		}
+		if !createIfMissing {
+			return nil, errors.New("wallet not found")
+		}
+		walletModel = model.Wallet{
+			UserID:     &userID,
+			CurrencyID: &curr.ID,
+			Balance:    0,
+			Freeze:     0,
+		}
+		if err := db.Create(&walletModel).Error; err != nil {
+			return nil, err
+		}
+		if err := db.Preload("Currency").Preload("User").First(&walletModel, walletModel.ID).Error; err != nil {
+			return nil, err
+		}
+	}
+
+	if amount == 0 {
+		return &walletModel, nil
+	}
+	if !createIfMissing && walletModel.ID == 0 {
+		return nil, errors.New("wallet not found")
+	}
+
+	if err := s.AdjustBalance(walletModel.ID, amount, reason, operatorID); err != nil {
+		return nil, err
+	}
+	return s.GetWalletByID(walletModel.ID)
+}
+
+// AdjustTeamBalance adjusts a team's wallet balance by currency code.
+func (s *AdminWalletService) AdjustTeamBalance(teamID uint, currencyCode string, amount float64, reason string, operatorID uint, createIfMissing bool) (*model.Wallet, error) {
+	curr, err := currency.GetCurrencyByCode(strings.ToUpper(strings.TrimSpace(currencyCode)))
+	if err != nil {
+		return nil, fmt.Errorf("invalid currency code: %s", currencyCode)
+	}
+
+	db := common.DB()
+	var walletModel model.Wallet
+	err = db.Preload("Currency").Preload("Team").Where("team_id = ? AND currency_id = ?", teamID, curr.ID).First(&walletModel).Error
+	if err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, err
+		}
+		if !createIfMissing {
+			return nil, errors.New("wallet not found")
+		}
+		walletModel = model.Wallet{
+			TeamID:     &teamID,
+			CurrencyID: &curr.ID,
+			Balance:    0,
+			Freeze:     0,
+		}
+		if err := db.Create(&walletModel).Error; err != nil {
+			return nil, err
+		}
+		if err := db.Preload("Currency").Preload("Team").First(&walletModel, walletModel.ID).Error; err != nil {
+			return nil, err
+		}
+	}
+
+	if amount == 0 {
+		return &walletModel, nil
+	}
+	if err := s.AdjustBalance(walletModel.ID, amount, reason, operatorID); err != nil {
+		return nil, err
+	}
+	return s.GetWalletByID(walletModel.ID)
 }
 
 // FreezeWallet freezes a wallet

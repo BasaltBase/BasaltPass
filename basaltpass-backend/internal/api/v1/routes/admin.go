@@ -33,6 +33,7 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 	adminGroup := v1.Group("/tenant", profileSuperAdminConsole()...)
 	// 新增 /admin 前缀别名，逐步迁移
 	adminAliasGroup := v1.Group("/admin", profileSuperAdminConsole()...)
+	walletHandler := adminWallet.NewAdminWalletHandler()
 
 	adminGroup.Get("/dashboard/stats", admin2.DashboardStatsHandler)        // /tenant/dashboard/stats
 	adminGroup.Get("/dashboard/activities", admin2.RecentActivitiesHandler) // /tenant/dashboard/activities
@@ -108,17 +109,19 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 	adminTenantGroup.Get("/:id/users", adminTenant.GetTenantUsersHandler)              // /tenant/tenants/:id/users
 	adminTenantGroup.Get("/:id/users/:userId", adminTenant.GetTenantUserDetailHandler) // /tenant/tenants/:id/users/:userId
 	adminTenantGroup.Delete("/:id/users/:userId", adminTenant.RemoveTenantUserHandler) // /tenant/tenants/:id/users/:userId
+	adminTenantGroup.Post("/:tenantId/users/:id/wallets/adjust", walletHandler.AdjustTenantUserWallet)
 	// alias 租户用户管理
 	aliasTenantGroup.Get("/:id/users", adminTenant.GetTenantUsersHandler)
 	aliasTenantGroup.Get("/:id/users/:userId", adminTenant.GetTenantUserDetailHandler)
 	aliasTenantGroup.Delete("/:id/users/:userId", adminTenant.RemoveTenantUserHandler)
+	aliasTenantGroup.Post("/:tenantId/users/:id/wallets/adjust", walletHandler.AdjustTenantUserWallet)
 
 	// 钱包管理路由
-	walletHandler := adminWallet.NewAdminWalletHandler()
 	adminWalletGroup := adminGroup.Group("/wallets")
 	adminWalletGroup.Get("/", walletHandler.ListWallets)                           // /tenant/wallets
 	adminWalletGroup.Post("/", walletHandler.CreateWallet)                         // /tenant/wallets
 	adminWalletGroup.Get("/stats", walletHandler.GetWalletStats)                   // /tenant/wallets/stats
+	adminWalletGroup.Get("/:id", walletHandler.GetWallet)                          // /tenant/wallets/:id
 	adminWalletGroup.Get("/:id/transactions", walletHandler.GetWalletTransactions) // /tenant/wallets/:id/transactions
 	adminWalletGroup.Post("/:id/adjust", walletHandler.AdjustBalance)              // /tenant/wallets/:id/adjust
 	adminWalletGroup.Post("/:id/freeze", walletHandler.FreezeWallet)               // /tenant/wallets/:id/freeze
@@ -127,8 +130,10 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 
 	// 用户钱包管理
 	adminGroup.Get("/users/:id/wallets", walletHandler.GetUserWallets) // /tenant/users/:id/wallets
+	adminGroup.Post("/users/:id/wallets/adjust", walletHandler.AdjustUserWallet)
 	// alias user wallets
 	adminAliasGroup.Get("/users/:id/wallets", walletHandler.GetUserWallets)
+	adminAliasGroup.Post("/users/:id/wallets/adjust", walletHandler.AdjustUserWallet)
 
 	// ===== 其它缺失的 /admin 别名路由补全 =====
 	// Dashboard
@@ -155,6 +160,7 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 	aliasWalletGroup.Get("/", walletHandler.ListWallets)
 	aliasWalletGroup.Post("/", walletHandler.CreateWallet)
 	aliasWalletGroup.Get("/stats", walletHandler.GetWalletStats)
+	aliasWalletGroup.Get("/:id", walletHandler.GetWallet)
 	aliasWalletGroup.Get("/:id/transactions", walletHandler.GetWalletTransactions)
 	aliasWalletGroup.Post("/:id/adjust", walletHandler.AdjustBalance)
 	aliasWalletGroup.Post("/:id/freeze", walletHandler.FreezeWallet)
@@ -253,6 +259,7 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 
 	// 团队钱包管理
 	adminGroup.Get("/teams/:id/wallets", walletHandler.GetTeamWallets) // /tenant/teams/:id/wallets
+	adminGroup.Post("/teams/:id/wallets/adjust", walletHandler.AdjustTeamWallet)
 	// 团队管理
 	adminTeamGroup := adminGroup.Group("/teams")
 	adminTeamGroup.Get("/", adminTeam.ListTeamsHandler)
@@ -280,6 +287,8 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 	aliasTeams.Put("/:id/members/:user_id/role", adminTeam.UpdateMemberRoleHandler)
 	aliasTeams.Post("/:id/transfer/:new_owner_id", adminTeam.TransferOwnershipHandler)
 	aliasTeams.Post("/:id/active", adminTeam.ToggleActiveHandler)
+	adminAliasGroup.Get("/teams/:id/wallets", walletHandler.GetTeamWallets)
+	adminAliasGroup.Post("/teams/:id/wallets/adjust", walletHandler.AdjustTeamWallet)
 
 	// 货币管理
 	adminGroup.Get("/currencies", walletHandler.GetCurrencies) // /tenant/currencies

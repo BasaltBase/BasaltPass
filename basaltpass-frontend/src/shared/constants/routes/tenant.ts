@@ -10,6 +10,7 @@ export const TENANT_ROUTES = {
   teams: '/tenant/teams',
   roles: '/tenant/roles',
   permissions: '/tenant/permissions',
+  wallets: '/tenant/wallets',
   notifications: '/tenant/notifications',
   subscriptions: '/tenant/subscriptions',
   subscriptionsList: '/tenant/subscriptions/subscriptions',

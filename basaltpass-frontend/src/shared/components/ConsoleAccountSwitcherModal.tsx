@@ -16,6 +16,7 @@ interface ConsoleAccountSwitcherModalProps {
   currentScope: ConsoleTarget
   currentTenantId?: number
   currentUserId?: number
+  currentSessionKey?: string
   consoleUserUrl?: string
   consoleTenantUrl?: string
   consoleAdminUrl?: string
@@ -86,6 +87,7 @@ export default function ConsoleAccountSwitcherModal({
   currentScope,
   currentTenantId = 0,
   currentUserId = 0,
+  currentSessionKey = '',
   consoleUserUrl = '',
   consoleTenantUrl = '',
   consoleAdminUrl = '',
@@ -157,7 +159,9 @@ export default function ConsoleAccountSwitcherModal({
   }
 
   const handleSignOut = async (session: UserConsoleSession) => {
-    const isCurrentConsoleUser = currentUserId > 0 && session.user_id === currentUserId
+    const isCurrentConsoleUser = currentSessionKey
+      ? session.key === currentSessionKey
+      : currentUserId > 0 && session.user_id === currentUserId
 
     removeUserConsoleSessionByKey(session.key)
     setSessions((current) => current.filter((item) => item.key !== session.key))
@@ -234,7 +238,9 @@ export default function ConsoleAccountSwitcherModal({
               {group.sessions.map((session) => {
                 const actions = getActionsForSession(session)
                 const displayName = session.nickname || session.email
-                const isCurrentUser = currentUserId > 0 && session.user_id === currentUserId
+                const isCurrentUser = currentSessionKey
+                  ? session.key === currentSessionKey
+                  : currentUserId > 0 && session.user_id === currentUserId
                 const badges = getSessionBadges(session)
 
                 return (

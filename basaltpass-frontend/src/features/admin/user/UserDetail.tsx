@@ -2,6 +2,8 @@ import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } 
 import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { adminUserApi, type AdminUserDetail } from '@api/admin/user'
+import { adminTenantApi, type AdminAdjustTenantUserWalletRequest } from '@api/admin/tenant'
+import { adminWalletApi, type Currency } from '@api/adminWallet'
 import { 
   ChevronRightIcon, 
   PencilIcon,
@@ -19,12 +21,14 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   ExclamationTriangleIcon,
-  KeyIcon
+  KeyIcon,
+  CurrencyDollarIcon
 } from '@heroicons/react/24/outline'
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { listRoles, type AdminRole } from '@api/admin/roles'
 import { ROUTES } from '@constants'
 import { PBadge, PButton } from '@ui'
+import Modal from '@ui/common/Modal'
 
 export default function UserDetail() {
   const { id } = useParams<{ id: string }>()
@@ -36,12 +40,34 @@ export default function UserDetail() {
   const [showAssignRole, setShowAssignRole] = useState(false)
   const [roles, setRoles] = useState<AdminRole[]>([])
   const [selectedRoleId, setSelectedRoleId] = useState<number | null>(null)
+  const [currencies, setCurrencies] = useState<Currency[]>([])
+  const [showAdjustWallet, setShowAdjustWallet] = useState(false)
+  const [selectedMembership, setSelectedMembership] = useState<AdminUserDetail['tenant_memberships'][number] | null>(null)
+  const [adjustWalletSubmitting, setAdjustWalletSubmitting] = useState(false)
+  const [adjustWalletForm, setAdjustWalletForm] = useState<AdminAdjustTenantUserWalletRequest>({
+    currency_code: '',
+    amount: 0,
+    reason: '',
+    create_if_missing: true,
+  })
 
   useEffect(() => {
     if (id) {
       loadUser(parseInt(id))
     }
   }, [id])
+
+  useEffect(() => {
+    const loadCurrencies = async () => {
+      try {
+        const response = await adminWalletApi.getCurrencies()
+        setCurrencies(response.data || [])
+      } catch (error) {
+        console.error('加载货币列表失败:', error)
+      }
+    }
+    loadCurrencies()
+  }, [])
 
   const loadUser = async (userId: number) => {
     try {
@@ -110,6 +136,45 @@ export default function UserDetail() {
       navigate(ROUTES.admin.users)
     } catch (error) {
       console.error('删除用户失败:', error)
+    }
+  }
+
+  const handleOpenAdjustWallet = (membership: AdminUserDetail['tenant_memberships'][number]) => {
+    setSelectedMembership(membership)
+    setAdjustWalletForm({
+      currency_code: '',
+      amount: 0,
+      reason: '',
+      create_if_missing: true,
+    })
+    setShowAdjustWallet(true)
+  }
+
+  const handleAdjustWalletSubmit = async () => {
+    if (!user || !selectedMembership) return
+    if (!adjustWalletForm.currency_code) {
+      uiAlert('请选择货币类型')
+      return
+    }
+    if (!adjustWalletForm.reason.trim()) {
+      uiAlert('请输入调整原因')
+      return
+    }
+    if (!adjustWalletForm.amount) {
+      uiAlert('调整金额不能为 0')
+      return
+    }
+
+    try {
+      setAdjustWalletSubmitting(true)
+      await adminTenantApi.adjustTenantUserWallet(selectedMembership.tenant_id, user.id, adjustWalletForm)
+      setShowAdjustWallet(false)
+      await loadUser(user.id)
+    } catch (error: any) {
+      console.error('调整用户钱包失败:', error)
+      uiAlert(error.response?.data?.error || error.response?.data?.message || '调整用户钱包失败')
+    } finally {
+      setAdjustWalletSubmitting(false)
     }
   }
 
@@ -308,8 +373,16 @@ export default function UserDetail() {
                       <p className="text-sm text-gray-500">代码: {membership.tenant_code}</p>
                       <p className="text-sm text-gray-500">加入时间: {formatDate(membership.joined_at)}</p>
                     </div>
-                    <div>
+                    <div className="flex items-center gap-3">
                       <PBadge variant="info">{membership.role}</PBadge>
+                      <PButton
+                        variant="secondary"
+                        size="sm"
+                        leftIcon={<CurrencyDollarIcon className="h-4 w-4" />}
+                        onClick={() => handleOpenAdjustWallet(membership)}
+                      >
+                        调整钱包
+                      </PButton>
                     </div>
                   </div>
                 ))}
@@ -481,7 +554,141 @@ export default function UserDetail() {
             </div>
           </div>
         )}
+
+        <AdjustUserTenantWalletModal
+          open={showAdjustWallet}
+          user={user}
+          membership={selectedMembership}
+          currencies={currencies}
+          formData={adjustWalletForm}
+          submitting={adjustWalletSubmitting}
+          onClose={() => {
+            setShowAdjustWallet(false)
+            setSelectedMembership(null)
+          }}
+          onChange={setAdjustWalletForm}
+          onSubmit={handleAdjustWalletSubmit}
+        />
       </div>
     </AdminLayout>
   )
 }
+
+interface AdjustUserTenantWalletModalProps {
+  open: boolean
+  user: AdminUserDetail | null
+  membership: AdminUserDetail['tenant_memberships'][number] | null
+  currencies: Currency[]
+  formData: AdminAdjustTenantUserWalletRequest
+  submitting: boolean
+  onClose: () => void
+  onChange: (data: AdminAdjustTenantUserWalletRequest) => void
+  onSubmit: () => void
+}
+
+const AdjustUserTenantWalletModal: React.FC<AdjustUserTenantWalletModalProps> = ({
+  open,
+  user,
+  membership,
+  currencies,
+  formData,
+  submitting,
+  onClose,
+  onChange,
+  onSubmit,
+}) => (
+  <Modal
+    open={open}
+    title={membership ? `调整钱包余额 - ${membership.tenant_name}` : '调整钱包余额'}
+    onClose={onClose}
+    description="为该用户在指定租户下直接调整任意币种的钱包余额。正数表示增加，负数表示减少。"
+  >
+    {user && membership ? (
+      <form
+        onSubmit={(event) => {
+          event.preventDefault()
+          onSubmit()
+        }}
+        className="space-y-4"
+      >
+        <div>
+          <label className="mb-2 block text-sm font-medium text-gray-700">用户</label>
+          <input
+            type="text"
+            value={`${user.nickname || '未设置昵称'} (${user.email})`}
+            disabled
+            className="block w-full rounded-md border border-gray-200 bg-gray-100 px-3 py-2 text-gray-500"
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-gray-700">租户</label>
+          <input
+            type="text"
+            value={`${membership.tenant_name} (${membership.tenant_code})`}
+            disabled
+            className="block w-full rounded-md border border-gray-200 bg-gray-100 px-3 py-2 text-gray-500"
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-gray-700">货币类型 *</label>
+          <select
+            value={formData.currency_code}
+            onChange={(event) => onChange({ ...formData, currency_code: event.target.value })}
+            className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500"
+          >
+            <option value="">选择货币</option>
+            {currencies.map(currency => (
+              <option key={currency.code} value={currency.code}>
+                {currency.code} - {currency.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-gray-700">调整金额 *</label>
+          <input
+            type="number"
+            step="0.01"
+            value={formData.amount}
+            onChange={(event) => onChange({ ...formData, amount: Number(event.target.value) || 0 })}
+            className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500"
+            placeholder="正数增加，负数减少"
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-gray-700">调整原因 *</label>
+          <textarea
+            value={formData.reason}
+            onChange={(event) => onChange({ ...formData, reason: event.target.value })}
+            rows={3}
+            className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500"
+            placeholder="例如：手工补偿、人工扣费、账务修正"
+          />
+        </div>
+
+        <label className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
+          <input
+            type="checkbox"
+            checked={formData.create_if_missing !== false}
+            onChange={(event) => onChange({ ...formData, create_if_missing: event.target.checked })}
+            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+          />
+          该币种钱包不存在时自动创建
+        </label>
+
+        <div className="flex justify-end gap-3 pt-4">
+          <PButton type="button" variant="secondary" onClick={onClose} disabled={submitting}>
+            取消
+          </PButton>
+          <PButton type="submit" disabled={submitting} loading={submitting}>
+            确认调整
+          </PButton>
+        </div>
+      </form>
+    ) : null}
+  </Modal>
+)

@@ -15,7 +15,7 @@ import {
   UserGroupIcon,
   WalletIcon
 } from '@heroicons/react/24/outline';
-import { adminWalletApi, Wallet, Currency, CreateWalletRequest, AdjustBalanceRequest } from '@api/adminWallet';
+import { adminWalletApi, Wallet, Currency, CreateWalletRequest, AdjustBalanceRequest, AdjustOwnerWalletRequest, WalletTransaction } from '@api/adminWallet';
 import AdminLayout from '@features/admin/components/AdminLayout';
 import WalletStatsCard from '@features/admin/components/WalletStatsCard';
 import { PInput, PSelect, PButton, PCard, PSkeleton, PBadge, PTextarea } from '@ui';
@@ -35,7 +35,14 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
   // Modal states
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [adjustModalVisible, setAdjustModalVisible] = useState(false);
+  const [quickAdjustModalVisible, setQuickAdjustModalVisible] = useState(false);
+  const [transactionsModalVisible, setTransactionsModalVisible] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState<Wallet | null>(null);
+  const [transactionWallet, setTransactionWallet] = useState<Wallet | null>(null);
+  const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
+  const [transactionLoading, setTransactionLoading] = useState(false);
+  const [quickAdjustMode, setQuickAdjustMode] = useState<'delta' | 'target'>('delta');
+  const [createWalletType, setCreateWalletType] = useState<'user' | 'team'>('user');
   
   // Form data
   const [createForm, setCreateForm] = useState<CreateWalletRequest>({
@@ -45,6 +52,14 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
   const [adjustForm, setAdjustForm] = useState<AdjustBalanceRequest>({
     amount: 0,
     reason: '',
+  });
+  const [quickAdjustForm, setQuickAdjustForm] = useState<AdjustOwnerWalletRequest & { owner_type: 'user' | 'team'; owner_id?: number }>({
+    owner_type: 'user',
+    owner_id: undefined,
+    currency_code: '',
+    amount: 0,
+    reason: '',
+    create_if_missing: true,
   });
   
   // Filters
@@ -126,6 +141,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
       uiAlert('钱包创建成功');
       setCreateModalVisible(false);
       setCreateForm({ currency_code: '', initial_balance: 0, user_id: undefined, team_id: undefined });
+      setCreateWalletType('user');
       loadWallets();
     } catch (error: any) {
       uiAlert(error.response?.data?.error || '创建钱包失败');
@@ -151,6 +167,119 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
       uiAlert(error.response?.data?.error || '调整余额失败');
     } finally {
       setAdjustLoading(false);
+    }
+  };
+
+  const resetQuickAdjustForm = () => {
+    setQuickAdjustForm({
+      owner_type: 'user',
+      owner_id: undefined,
+      currency_code: '',
+      amount: 0,
+      reason: '',
+      create_if_missing: true,
+    });
+  };
+
+  const convertToSmallestUnit = (amount: number, decimalPlaces: number) => {
+    const multiplier = Math.pow(10, decimalPlaces);
+    return Math.trunc(amount * multiplier);
+  };
+
+  const convertFromSmallestUnit = (amount: number, decimalPlaces: number) => {
+    return amount / Math.pow(10, decimalPlaces);
+  };
+
+  const resolveOwnerWallet = async () => {
+    if (!quickAdjustForm.owner_id || !quickAdjustForm.currency_code) return null;
+
+    const response = quickAdjustForm.owner_type === 'user'
+      ? await adminWalletApi.getUserWallets(quickAdjustForm.owner_id)
+      : await adminWalletApi.getTeamWallets(quickAdjustForm.owner_id);
+
+    return (response.data || []).find(wallet => wallet.currency?.code === quickAdjustForm.currency_code) || null;
+  };
+
+  const handleQuickAdjust = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!quickAdjustForm.owner_id) {
+      uiAlert('请输入用户或团队 ID');
+      return;
+    }
+    if (!quickAdjustForm.currency_code) {
+      uiAlert('请选择货币类型');
+      return;
+    }
+    if (!quickAdjustForm.reason.trim()) {
+      uiAlert('请输入调整原因');
+      return;
+    }
+    if (!quickAdjustForm.amount) {
+      uiAlert('调整金额不能为 0');
+      return;
+    }
+
+    setAdjustLoading(true);
+    try {
+      let requestAmount = quickAdjustForm.amount;
+      if (quickAdjustMode === 'target') {
+        const existingWallet = await resolveOwnerWallet();
+        const currencyMeta = existingWallet?.currency || currencies.find(currency => currency.code === quickAdjustForm.currency_code);
+        if (!currencyMeta) {
+          uiAlert('未找到对应货币配置');
+          return;
+        }
+        const targetSmallest = convertToSmallestUnit(quickAdjustForm.amount, currencyMeta.decimal_places);
+        const currentSmallest = existingWallet?.balance || 0;
+        const deltaSmallest = targetSmallest - currentSmallest;
+        requestAmount = convertFromSmallestUnit(deltaSmallest, currencyMeta.decimal_places);
+        if (!requestAmount) {
+          uiAlert('目标余额与当前余额相同，无需调整');
+          return;
+        }
+      }
+
+      if (quickAdjustForm.owner_type === 'user') {
+        await adminWalletApi.adjustUserWallet(quickAdjustForm.owner_id, {
+          currency_code: quickAdjustForm.currency_code,
+          amount: requestAmount,
+          reason: quickAdjustForm.reason,
+          create_if_missing: quickAdjustForm.create_if_missing,
+        });
+      } else {
+        await adminWalletApi.adjustTeamWallet(quickAdjustForm.owner_id, {
+          currency_code: quickAdjustForm.currency_code,
+          amount: requestAmount,
+          reason: quickAdjustForm.reason,
+          create_if_missing: quickAdjustForm.create_if_missing,
+        });
+      }
+
+      uiAlert('余额调整成功');
+      setQuickAdjustModalVisible(false);
+      setQuickAdjustMode('delta');
+      resetQuickAdjustForm();
+      loadWallets();
+    } catch (error: any) {
+      uiAlert(error.response?.data?.error || '调整余额失败');
+    } finally {
+      setAdjustLoading(false);
+    }
+  };
+
+  const openTransactionsModal = async (wallet: Wallet) => {
+    setTransactionWallet(wallet);
+    setTransactionsModalVisible(true);
+    setTransactionLoading(true);
+    try {
+      const response = await adminWalletApi.getWalletTransactions(wallet.id, { page: 1, page_size: 50 });
+      setTransactions(response.data || []);
+    } catch (error: any) {
+      uiAlert(error.response?.data?.error || '加载交易记录失败');
+      setTransactions([]);
+    } finally {
+      setTransactionLoading(false);
     }
   };
 
@@ -251,7 +380,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                 <span className="inline-block w-2 h-2 bg-indigo-500 rounded-full mr-2"></span>
                 快速操作
               </h3>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
                 <PButton
                   onClick={() => setCreateModalVisible(true)}
                   variant="secondary"
@@ -265,6 +394,22 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                   <div className="flex-1 min-w-0 text-left">
                     <p className="text-sm font-medium text-gray-900">创建钱包</p>
                     <p className="text-sm text-gray-500">为用户或团队创建新钱包</p>
+                  </div>
+                </PButton>
+
+                <PButton
+                  onClick={() => setQuickAdjustModalVisible(true)}
+                  variant="secondary"
+                  className="group relative rounded-xl border border-gray-200 bg-gradient-to-r from-amber-50 to-orange-50 px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-amber-300 hover:shadow-md focus-within:ring-2 focus-within:ring-amber-500 focus-within:ring-offset-2 transition-all duration-300"
+                >
+                  <div className="flex-shrink-0">
+                    <div className="h-8 w-8 rounded-full bg-gradient-to-r from-amber-500 to-orange-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                      <PencilIcon className="h-5 w-5 text-white" />
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-sm font-medium text-gray-900">直接调余额</p>
+                    <p className="text-sm text-gray-500">按用户/团队和币种快速调整</p>
                   </div>
                 </PButton>
 
@@ -500,6 +645,16 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex space-x-2">
                             <PButton
+                              onClick={() => openTransactionsModal(wallet)}
+                              variant="secondary"
+                              size="sm"
+                              className="inline-flex items-center p-2 rounded-full"
+                              title="查看交易记录"
+                            >
+                              <EyeIcon className="h-4 w-4" />
+                            </PButton>
+
+                            <PButton
                               onClick={() => {
                                 setSelectedWallet(wallet);
                                 setAdjustModalVisible(true);
@@ -706,6 +861,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                     onClick={() => {
                       setCreateModalVisible(false);
                       setCreateForm({ currency_code: '', initial_balance: 0, user_id: undefined, team_id: undefined });
+                      setCreateWalletType('user');
                     }}
                     variant="secondary"
                     size="sm"
@@ -723,13 +879,21 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                       钱包类型 *
                     </label>
                     <div className="grid grid-cols-2 gap-3">
-                      <label className="relative flex cursor-pointer rounded-lg border border-gray-300 bg-white p-4 shadow-sm focus:outline-none hover:bg-gray-50">
+                      <label className={`relative flex cursor-pointer rounded-lg border p-4 shadow-sm focus:outline-none transition-colors ${
+                        createWalletType === 'user'
+                          ? 'border-indigo-500 bg-indigo-50'
+                          : 'border-gray-300 bg-white hover:bg-gray-50'
+                      }`}>
                         <input
                           type="radio"
                           name="wallet_type"
                           value="user"
                           className="sr-only"
-                          onChange={() => setCreateForm({ ...createForm, team_id: undefined })}
+                          checked={createWalletType === 'user'}
+                          onChange={() => {
+                            setCreateWalletType('user');
+                            setCreateForm({ ...createForm, user_id: createForm.user_id, team_id: undefined });
+                          }}
                         />
                         <span className="flex flex-1">
                           <span className="flex flex-col">
@@ -737,17 +901,25 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                             <span className="mt-1 flex items-center text-sm text-gray-500">为特定用户创建钱包</span>
                           </span>
                         </span>
-                        <svg className="h-5 w-5 text-indigo-600 ml-3" viewBox="0 0 20 20" fill="currentColor">
+                        <svg className={`ml-3 h-5 w-5 ${createWalletType === 'user' ? 'text-indigo-600' : 'text-transparent'}`} viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.236 4.53L7.53 10.05a.75.75 0 00-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
                         </svg>
                       </label>
-                      <label className="relative flex cursor-pointer rounded-lg border border-gray-300 bg-white p-4 shadow-sm focus:outline-none hover:bg-gray-50">
+                      <label className={`relative flex cursor-pointer rounded-lg border p-4 shadow-sm focus:outline-none transition-colors ${
+                        createWalletType === 'team'
+                          ? 'border-indigo-500 bg-indigo-50'
+                          : 'border-gray-300 bg-white hover:bg-gray-50'
+                      }`}>
                         <input
                           type="radio"
                           name="wallet_type"
                           value="team"
                           className="sr-only"
-                          onChange={() => setCreateForm({ ...createForm, user_id: undefined })}
+                          checked={createWalletType === 'team'}
+                          onChange={() => {
+                            setCreateWalletType('team');
+                            setCreateForm({ ...createForm, team_id: createForm.team_id, user_id: undefined });
+                          }}
                         />
                         <span className="flex flex-1">
                           <span className="flex flex-col">
@@ -755,7 +927,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                             <span className="mt-1 flex items-center text-sm text-gray-500">为团队创建钱包</span>
                           </span>
                         </span>
-                        <svg className="h-5 w-5 text-indigo-600 ml-3" viewBox="0 0 20 20" fill="currentColor">
+                        <svg className={`ml-3 h-5 w-5 ${createWalletType === 'team' ? 'text-indigo-600' : 'text-transparent'}`} viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.236 4.53L7.53 10.05a.75.75 0 00-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
                         </svg>
                       </label>
@@ -765,18 +937,17 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                   <div>
                     <PInput
                       type="number"
-                      label="用户/团队 ID *"
+                      label={`${createWalletType === 'user' ? '用户' : '团队'} ID *`}
                       value={createForm.user_id || createForm.team_id || ''}
                       onChange={(e) => {
                         const value = e.target.value ? parseInt(e.target.value) : undefined;
-                        const walletType = document.querySelector('input[name="wallet_type"]:checked')?.getAttribute('value');
-                        if (walletType === 'user') {
+                        if (createWalletType === 'user') {
                           setCreateForm({ ...createForm, user_id: value, team_id: undefined });
                         } else {
                           setCreateForm({ ...createForm, team_id: value, user_id: undefined });
                         }
                       }}
-                      placeholder="输入用户或团队 ID"
+                      placeholder={`输入${createWalletType === 'user' ? '用户' : '团队'} ID`}
                       required
                       icon={<UsersIcon className="h-5 w-5" />}
                       variant="rounded"
@@ -835,6 +1006,210 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                     </PButton>
                   </div>
                 </form>
+              </div>
+            </PCard>
+          </div>
+        )}
+
+        {quickAdjustModalVisible && (
+          <div className="fixed inset-0 !m-0 bg-black bg-opacity-60 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
+            <PCard variant="elevated" className="relative mx-auto border-0 w-full max-w-lg rounded-2xl">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center">
+                    <div className="h-8 w-8 rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 flex items-center justify-center mr-3">
+                      <PencilIcon className="h-5 w-5 text-white" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900">按用户/团队直接调余额</h3>
+                  </div>
+                  <PButton
+                    onClick={() => {
+                      setQuickAdjustModalVisible(false);
+                      resetQuickAdjustForm();
+                    }}
+                    variant="secondary"
+                    size="sm"
+                    className="text-gray-600 p-1"
+                  >
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </PButton>
+                </div>
+
+                <div className="mb-6 rounded-xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 p-4 text-sm text-amber-900">
+                  不需要先找到钱包 ID。输入用户或团队 ID、币种和金额即可直接调整余额；若该币种钱包不存在，可自动创建。
+                </div>
+
+                <form onSubmit={handleQuickAdjust} className="space-y-4">
+                  <div>
+                    <PSelect
+                      label="调整方式 *"
+                      value={quickAdjustMode}
+                      onChange={(e) => setQuickAdjustMode((e.target as HTMLSelectElement).value as 'delta' | 'target')}
+                      variant="rounded"
+                    >
+                      <option value="delta">按增减额调整</option>
+                      <option value="target">设置目标余额</option>
+                    </PSelect>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <PSelect
+                      label="对象类型 *"
+                      value={quickAdjustForm.owner_type}
+                      onChange={(e) => setQuickAdjustForm({ ...quickAdjustForm, owner_type: (e.target as HTMLSelectElement).value as 'user' | 'team' })}
+                      variant="rounded"
+                    >
+                      <option value="user">用户</option>
+                      <option value="team">团队</option>
+                    </PSelect>
+
+                    <PInput
+                      type="number"
+                      label={`${quickAdjustForm.owner_type === 'user' ? '用户' : '团队'} ID *`}
+                      value={quickAdjustForm.owner_id || ''}
+                      onChange={(e) => setQuickAdjustForm({ ...quickAdjustForm, owner_id: e.target.value ? parseInt(e.target.value, 10) : undefined })}
+                      placeholder={`输入${quickAdjustForm.owner_type === 'user' ? '用户' : '团队'} ID`}
+                      variant="rounded"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <PSelect
+                      label="货币类型 *"
+                      value={quickAdjustForm.currency_code}
+                      onChange={(e) => setQuickAdjustForm({ ...quickAdjustForm, currency_code: (e.target as HTMLSelectElement).value })}
+                      variant="rounded"
+                    >
+                      <option value="">选择货币</option>
+                      {currencies.map(currency => (
+                        <option key={currency.code} value={currency.code}>
+                          {currency.code} - {currency.name}
+                        </option>
+                      ))}
+                    </PSelect>
+
+                    <PInput
+                      label={quickAdjustMode === 'delta' ? '调整金额 *' : '目标余额 *'}
+                      type="number"
+                      step="0.01"
+                      value={quickAdjustForm.amount}
+                      onChange={(e) => setQuickAdjustForm({ ...quickAdjustForm, amount: parseFloat(e.target.value) || 0 })}
+                      placeholder={quickAdjustMode === 'delta' ? '正数增加，负数减少' : '设置为该余额'}
+                      icon={<CurrencyDollarIcon className="h-5 w-5" />}
+                      variant="rounded"
+                    />
+                  </div>
+
+                  <PTextarea
+                    label="调整原因 *"
+                    value={quickAdjustForm.reason}
+                    onChange={(e) => setQuickAdjustForm({ ...quickAdjustForm, reason: e.target.value })}
+                    rows={3}
+                    placeholder="例如：人工补偿、手工扣费、测试数据修正"
+                    required
+                  />
+
+                  <label className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={quickAdjustForm.create_if_missing !== false}
+                      onChange={(e) => setQuickAdjustForm({ ...quickAdjustForm, create_if_missing: e.target.checked })}
+                      className="h-4 w-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                    />
+                    钱包不存在时自动创建
+                  </label>
+
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                    {quickAdjustMode === 'delta'
+                      ? '当前模式下，正数表示增加余额，负数表示减少余额。'
+                      : '当前模式下，系统会先查出当前余额，再自动计算出需要补差的增减额。'}
+                  </div>
+
+                  <div className="flex justify-end space-x-3 pt-4">
+                    <PButton
+                      type="button"
+                      onClick={() => {
+                        setQuickAdjustModalVisible(false);
+                        resetQuickAdjustForm();
+                      }}
+                      variant="secondary"
+                    >
+                      取消
+                    </PButton>
+                    <PButton
+                      type="submit"
+                      disabled={adjustLoading}
+                      loading={adjustLoading}
+                      variant="primary"
+                    >
+                      确认调整
+                    </PButton>
+                  </div>
+                </form>
+              </div>
+            </PCard>
+          </div>
+        )}
+
+        {transactionsModalVisible && transactionWallet && (
+          <div className="fixed inset-0 !m-0 bg-black bg-opacity-60 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
+            <PCard variant="elevated" className="relative mx-auto border-0 w-full max-w-4xl rounded-2xl">
+              <div className="p-6">
+                <div className="mb-6 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-900">钱包 #{transactionWallet.id} 交易记录</h3>
+                    <p className="mt-1 text-sm text-gray-500">
+                      {transactionWallet.currency.code} · 当前余额 {formatBalance(transactionWallet.balance, transactionWallet.currency)}
+                    </p>
+                  </div>
+                  <PButton
+                    onClick={() => {
+                      setTransactionsModalVisible(false);
+                      setTransactionWallet(null);
+                      setTransactions([]);
+                    }}
+                    variant="secondary"
+                  >
+                    关闭
+                  </PButton>
+                </div>
+
+                {transactionLoading ? (
+                  <PSkeleton.List items={3} />
+                ) : transactions.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-gray-300 px-6 py-10 text-center text-sm text-gray-500">
+                    暂无交易记录
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto rounded-xl border border-gray-200">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">类型</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">金额</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">状态</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">备注</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">时间</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 bg-white">
+                        {transactions.map(tx => (
+                          <tr key={tx.id}>
+                            <td className="px-4 py-3 text-sm text-gray-700">{tx.type}</td>
+                            <td className={`px-4 py-3 text-sm font-semibold ${tx.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {formatBalance(tx.amount, transactionWallet.currency)}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-700">{tx.status}</td>
+                            <td className="px-4 py-3 text-sm text-gray-500">{tx.description || '-'}</td>
+                            <td className="px-4 py-3 text-sm text-gray-500">{new Date(tx.created_at).toLocaleString('zh-CN')}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             </PCard>
           </div>

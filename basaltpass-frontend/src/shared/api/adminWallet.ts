@@ -68,6 +68,13 @@ export interface AdjustBalanceRequest {
   reason: string;
 }
 
+export interface AdjustOwnerWalletRequest {
+  currency_code: string;
+  amount: number;
+  reason: string;
+  create_if_missing?: boolean;
+}
+
 export interface ListWalletsParams {
   page?: number;
   page_size?: number;
@@ -100,8 +107,12 @@ export const adminWalletApi = {
     api.post('/api/v1/admin/wallets', data).then(response => response.data),
 
   // 调整余额
-  adjustBalance: (walletId: number, data: AdjustBalanceRequest): Promise<{ message: string }> =>
+  adjustBalance: (walletId: number, data: AdjustBalanceRequest): Promise<{ message: string; data?: Wallet }> =>
     api.post(`/api/v1/admin/wallets/${walletId}/adjust`, data).then(response => response.data),
+
+  // 获取单个钱包
+  getWallet: (walletId: number): Promise<{ data: Wallet }> =>
+    api.get(`/api/v1/admin/wallets/${walletId}`).then(response => response.data),
 
   // 冻结钱包
   freezeWallet: (walletId: number): Promise<{ message: string }> =>
@@ -126,9 +137,17 @@ export const adminWalletApi = {
   getUserWallets: (userId: number): Promise<{ data: Wallet[] }> =>
     api.get(`/api/v1/admin/users/${userId}/wallets`).then(response => response.data),
 
+  // 按用户+币种调整钱包
+  adjustUserWallet: (userId: number, data: AdjustOwnerWalletRequest): Promise<{ message: string; data: Wallet }> =>
+    api.post(`/api/v1/admin/users/${userId}/wallets/adjust`, data).then(response => response.data),
+
   // 获取团队钱包
   getTeamWallets: (teamId: number): Promise<{ data: Wallet[] }> =>
     api.get(`/api/v1/admin/teams/${teamId}/wallets`).then(response => response.data),
+
+  // 按团队+币种调整钱包
+  adjustTeamWallet: (teamId: number, data: AdjustOwnerWalletRequest): Promise<{ message: string; data: Wallet }> =>
+    api.post(`/api/v1/admin/teams/${teamId}/wallets/adjust`, data).then(response => response.data),
 
   // 获取货币列表
   getCurrencies: (): Promise<{ data: Currency[] }> =>

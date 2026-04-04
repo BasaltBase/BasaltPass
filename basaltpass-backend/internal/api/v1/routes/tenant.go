@@ -1,6 +1,7 @@
 package routes
 
 import (
+	adminWallet "basaltpass-backend/internal/handler/admin/wallet"
 	"basaltpass-backend/internal/handler/manualapi"
 	app_rbac2 "basaltpass-backend/internal/handler/public/app/app_rbac"
 	"basaltpass-backend/internal/handler/public/app/app_user"
@@ -31,6 +32,7 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 	 */
 	tenantGroup := v1.Group("/tenant", profileTenantConsole()...)
 	tenantAdminGroup := tenantGroup.Group("", middleware.TenantUserMiddleware())
+	walletHandler := adminWallet.NewAdminWalletHandler()
 
 	// 租户信息管理
 	tenantGroup.Get("/info", tenant2.TenantGetInfoHandler)
@@ -103,6 +105,23 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 	tenantNotifGroup.Get("/:id", tenantNotif.TenantGetNotificationHandler)
 	tenantNotifGroup.Put("/:id", tenantNotif.TenantUpdateNotificationHandler)
 	tenantNotifGroup.Delete("/:id", tenantNotif.TenantDeleteHandler)
+
+	// 租户钱包管理
+	tenantWalletGroup := tenantAdminGroup.Group("/wallets")
+	tenantWalletGroup.Get("/", walletHandler.ListWallets)
+	tenantWalletGroup.Post("/", walletHandler.CreateWallet)
+	tenantWalletGroup.Get("/stats", walletHandler.GetWalletStats)
+	tenantWalletGroup.Get("/:id", walletHandler.GetWallet)
+	tenantWalletGroup.Get("/:id/transactions", walletHandler.GetWalletTransactions)
+	tenantWalletGroup.Post("/:id/adjust", walletHandler.AdjustBalance)
+	tenantWalletGroup.Post("/:id/freeze", walletHandler.FreezeWallet)
+	tenantWalletGroup.Post("/:id/unfreeze", walletHandler.UnfreezeWallet)
+	tenantWalletGroup.Delete("/:id", walletHandler.DeleteWallet)
+
+	tenantAdminGroup.Get("/users/:id/wallets", walletHandler.GetUserWallets)
+	tenantAdminGroup.Post("/users/:id/wallets/adjust", walletHandler.AdjustUserWallet)
+	tenantAdminGroup.Get("/teams/:id/wallets", walletHandler.GetTeamWallets)
+	tenantAdminGroup.Post("/teams/:id/wallets/adjust", walletHandler.AdjustTeamWallet)
 
 	// 租户OAuth客户端管理路由
 	tenantOAuthGroup := tenantAdminGroup.Group("/oauth/clients")

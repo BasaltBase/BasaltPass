@@ -13,11 +13,13 @@ import {
   PlusIcon,
   StarIcon,
   CheckCircleIcon,
-  ExclamationCircleIcon
+  ExclamationCircleIcon,
+  CurrencyDollarIcon
 } from '@heroicons/react/24/outline'
 import AdminLayout from '@features/admin/components/AdminLayout'
 import {
   adminTenantApi,
+  AdminAdjustTenantUserWalletRequest,
   AdminTenantDetailResponse,
   AdminTenantUser,
   AdminTenantUserListRequest,
@@ -25,6 +27,7 @@ import {
   AdminTenantUpdateUserRequest,
   AdminTenantUserDetail
 } from '@api/admin/tenant'
+import { adminWalletApi, Currency } from '@api/adminWallet'
 import TenantUserDetailDrawer from '@features/admin/components/TenantUserDetailDrawer'
 import Modal from '@ui/common/Modal'
 import { PSkeleton, PBadge, PAlert, PPagination, PButton, PInput, PSelect, PPageHeader } from '@ui'
@@ -65,6 +68,16 @@ const TenantUsers: React.FC = () => {
     role: 'member',
     status: 'active'
   })
+  const [currencies, setCurrencies] = useState<Currency[]>([])
+  const [isAdjustWalletOpen, setAdjustWalletOpen] = useState(false)
+  const [adjustingUser, setAdjustingUser] = useState<TenantUser | null>(null)
+  const [adjustWalletSubmitting, setAdjustWalletSubmitting] = useState(false)
+  const [adjustWalletForm, setAdjustWalletForm] = useState<AdminAdjustTenantUserWalletRequest>({
+    currency_code: '',
+    amount: 0,
+    reason: '',
+    create_if_missing: true,
+  })
 
   useEffect(() => {
     if (id) {
@@ -72,6 +85,18 @@ const TenantUsers: React.FC = () => {
       loadUsers()
     }
   }, [id, page, search, userType, role])
+
+  useEffect(() => {
+    const loadCurrencies = async () => {
+      try {
+        const response = await adminWalletApi.getCurrencies()
+        setCurrencies(response.data || [])
+      } catch (error) {
+        console.error('加载货币列表失败:', error)
+      }
+    }
+    loadCurrencies()
+  }, [])
 
   const fetchTenantDetail = async () => {
     if (!id) return
@@ -197,6 +222,46 @@ const TenantUsers: React.FC = () => {
       console.error('Failed to remove user:', error)
       const errorMessage = error.response?.data?.error || '移除用户失败'
       uiAlert(errorMessage)
+    }
+  }
+
+  const handleOpenAdjustWallet = (user: TenantUser) => {
+    setAdjustingUser(user)
+    setAdjustWalletForm({
+      currency_code: '',
+      amount: 0,
+      reason: '',
+      create_if_missing: true,
+    })
+    setAdjustWalletOpen(true)
+  }
+
+  const handleAdjustWalletSubmit = async () => {
+    if (!id || !adjustingUser) return
+    if (!adjustWalletForm.currency_code) {
+      uiAlert('请选择货币类型')
+      return
+    }
+    if (!adjustWalletForm.reason.trim()) {
+      uiAlert('请输入调整原因')
+      return
+    }
+    if (!adjustWalletForm.amount) {
+      uiAlert('调整金额不能为 0')
+      return
+    }
+
+    try {
+      setAdjustWalletSubmitting(true)
+      await adminTenantApi.adjustTenantUserWallet(parseInt(id), adjustingUser.id, adjustWalletForm)
+      setAlert({ type: 'success', message: '用户钱包调整成功' })
+      setAdjustWalletOpen(false)
+    } catch (error: any) {
+      console.error('Failed to adjust tenant user wallet:', error)
+      const message = error.response?.data?.error || error.response?.data?.message || '调整用户钱包失败'
+      setAlert({ type: 'error', message })
+    } finally {
+      setAdjustWalletSubmitting(false)
     }
   }
 
@@ -376,6 +441,13 @@ const TenantUsers: React.FC = () => {
                       >
                         <EyeIcon className="h-4 w-4" />
                       </button>
+                      <button
+                        onClick={() => handleOpenAdjustWallet(user)}
+                        className="inline-flex items-center rounded-lg border border-amber-300 bg-white p-2 text-sm font-medium text-amber-700 transition-colors hover:bg-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+                        title="调整钱包余额"
+                      >
+                        <CurrencyDollarIcon className="h-4 w-4" />
+                      </button>
                       {user.role !== 'owner' && (
                         <>
                           <button
@@ -451,6 +523,20 @@ const TenantUsers: React.FC = () => {
         user={detailUser}
         error={detailError}
         onClose={() => setDetailOpen(false)}
+      />
+
+      <AdjustTenantUserWalletModal
+        open={isAdjustWalletOpen}
+        user={adjustingUser}
+        currencies={currencies}
+        formData={adjustWalletForm}
+        submitting={adjustWalletSubmitting}
+        onClose={() => {
+          setAdjustWalletOpen(false)
+          setAdjustingUser(null)
+        }}
+        onChange={setAdjustWalletForm}
+        onSubmit={handleAdjustWalletSubmit}
       />
     </AdminLayout>
   )
@@ -612,6 +698,109 @@ const EditTenantUserModal: React.FC<EditTenantUserModalProps> = ({
     </Modal>
   )
 }
+
+interface AdjustTenantUserWalletModalProps {
+  open: boolean
+  user: TenantUser | null
+  currencies: Currency[]
+  formData: AdminAdjustTenantUserWalletRequest
+  submitting: boolean
+  onSubmit: () => void
+  onClose: () => void
+  onChange: (data: AdminAdjustTenantUserWalletRequest) => void
+}
+
+const AdjustTenantUserWalletModal: React.FC<AdjustTenantUserWalletModalProps> = ({
+  open,
+  user,
+  currencies,
+  formData,
+  submitting,
+  onSubmit,
+  onClose,
+  onChange
+}) => (
+  <Modal
+    open={open}
+    title={user ? `调整钱包余额 - ${user.nickname || user.email}` : '调整钱包余额'}
+    onClose={onClose}
+    description="管理员可直接调整该租户用户任意币种的钱包余额。正数表示增加，负数表示减少。"
+  >
+    {user && (
+      <form
+        onSubmit={(event) => {
+          event.preventDefault()
+          onSubmit()
+        }}
+        className="space-y-4"
+      >
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">用户邮箱</label>
+          <input
+            type="email"
+            value={user.email}
+            disabled
+            className="block w-full rounded-md border border-gray-200 bg-gray-100 px-3 py-2 text-gray-500"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">货币类型 *</label>
+          <select
+            value={formData.currency_code}
+            onChange={(event) => onChange({ ...formData, currency_code: event.target.value })}
+            className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500"
+          >
+            <option value="">选择货币</option>
+            {currencies.map(currency => (
+              <option key={currency.code} value={currency.code}>
+                {currency.code} - {currency.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">调整金额 *</label>
+          <input
+            type="number"
+            step="0.01"
+            value={formData.amount}
+            onChange={(event) => onChange({ ...formData, amount: Number(event.target.value) || 0 })}
+            className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500"
+            placeholder="正数增加，负数减少"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">调整原因 *</label>
+          <textarea
+            value={formData.reason}
+            onChange={(event) => onChange({ ...formData, reason: event.target.value })}
+            rows={3}
+            className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500"
+            placeholder="例如：手工补偿、人工扣费、账务修正"
+          />
+        </div>
+
+        <label className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
+          <input
+            type="checkbox"
+            checked={formData.create_if_missing !== false}
+            onChange={(event) => onChange({ ...formData, create_if_missing: event.target.checked })}
+            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+          />
+          该币种钱包不存在时自动创建
+        </label>
+
+        <div className="flex justify-end space-x-3 pt-4">
+          <PButton type="button" variant="secondary" onClick={onClose} disabled={submitting}>取消</PButton>
+          <PButton type="submit" disabled={submitting} loading={submitting}>确认调整</PButton>
+        </div>
+      </form>
+    )}
+  </Modal>
+)
 
 const translateStatusOption = (status: string) => {
   switch (status) {

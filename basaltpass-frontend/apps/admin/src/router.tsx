@@ -5,7 +5,6 @@ import AdminDashboard from '../../../src/features/admin/Dashboard'
 import Users from '../../../src/features/admin/user/Users'
 import UserDetail from '../../../src/features/admin/user/UserDetail'
 import Roles from '../../../src/features/admin/user/Roles'
-import WalletsAdmin from '../../../src/features/admin/user/Wallets'
 import WalletManagement from '../../../src/features/admin/wallet/WalletManagement'
 import Logs from '../../../src/features/admin/Logs'
 
@@ -77,7 +76,7 @@ export default function AppRouter() {
       <Route path="/admin/users/:id" element={<AdminRoute><UserDetail /></AdminRoute>} />
       <Route path="/admin/roles" element={<AdminRoute><Roles /></AdminRoute>} />
 
-      <Route path="/admin/wallets" element={<AdminRoute><WalletsAdmin /></AdminRoute>} />
+      <Route path="/admin/wallets" element={<AdminRoute><WalletManagement /></AdminRoute>} />
       <Route path="/admin/wallet-management" element={<AdminRoute><WalletManagement /></AdminRoute>} />
       <Route path="/admin/logs" element={<AdminRoute><Logs /></AdminRoute>} />
 

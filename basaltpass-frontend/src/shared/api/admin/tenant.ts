@@ -165,6 +165,13 @@ export interface AdminTenantUserListResponse {
   };
 }
 
+export interface AdminAdjustTenantUserWalletRequest {
+  currency_code: string;
+  amount: number;
+  reason: string;
+  create_if_missing?: boolean;
+}
+
 export const adminTenantApi = {
   // 获取租户列表
   async getTenantList(params: AdminTenantListRequest = {}): Promise<TenantListResponse> {
@@ -225,6 +232,11 @@ export const adminTenantApi = {
   // 移除租户用户
   async removeTenantUser(tenantId: number, userId: number): Promise<void> {
     await client.delete(`/api/v1/admin/tenants/${tenantId}/users/${userId}`);
+  },
+
+  async adjustTenantUserWallet(tenantId: number, userId: number, data: AdminAdjustTenantUserWalletRequest): Promise<{ message: string; tenant_id: number }> {
+    const response = await client.post(`/api/v1/admin/tenants/${tenantId}/users/${userId}/wallets/adjust`, data);
+    return response.data;
   },
 };
 

@@ -26,6 +26,7 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showAccountSwitcher, setShowAccountSwitcher] = useState(false)
   const userMenuRef = useRef<HTMLDivElement | null>(null)
+  const currentSessionKey = `${user?.id || 0}:${Number(user?.tenant_id || 0)}`
 
   const handleLogout = () => {
     logout()
@@ -157,13 +158,13 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
               )}
               
               {/* 通知：使用全局 NotificationProvider 的组件 */}
-              <div ref={userMenuRef} className="relative">
+              <div className="relative">
                 <span className="sr-only">查看通知</span>
                 <EnhancedNotificationIcon viewAllPath={ROUTES.admin.notifications} />
               </div>
 
               {/* 用户菜单 */}
-              <div className="relative">
+              <div ref={userMenuRef} className="relative">
                 <PButton
                   variant="ghost" 
                   size="sm"
@@ -303,6 +304,7 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
         onClose={() => setShowAccountSwitcher(false)}
         currentScope="admin"
         currentUserId={Number(user?.id || 0)}
+        currentSessionKey={currentSessionKey}
         consoleUserUrl={consoleUserUrl}
         consoleTenantUrl={consoleTenantUrl}
         consoleAdminUrl={consoleAdminUrl}

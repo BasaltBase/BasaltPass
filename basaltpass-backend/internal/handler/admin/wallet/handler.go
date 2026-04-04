@@ -89,6 +89,13 @@ type AdjustBalanceRequest struct {
 	Reason string  `json:"reason" validate:"required"`
 }
 
+type AdjustOwnerWalletRequest struct {
+	CurrencyCode    string  `json:"currency_code"`
+	Amount          float64 `json:"amount"`
+	Reason          string  `json:"reason"`
+	CreateIfMissing bool    `json:"create_if_missing"`
+}
+
 // ListWallets GET /tenant/wallets - List all wallets with filtering and pagination
 func (h *AdminWalletHandler) ListWallets(c *fiber.Ctx) error {
 	var req ListWalletsRequest
@@ -142,6 +149,27 @@ func (h *AdminWalletHandler) GetUserWallets(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{
 		"data": walletsToResponse(wallets),
+	})
+}
+
+// GetWallet GET /tenant/wallets/:id - Get a specific wallet
+func (h *AdminWalletHandler) GetWallet(c *fiber.Ctx) error {
+	walletID, err := strconv.ParseUint(c.Params("id"), 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid wallet ID",
+		})
+	}
+
+	wallet, err := h.service.GetWalletByID(uint(walletID))
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Wallet not found",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"data": walletToResponse(*wallet),
 	})
 }
 
@@ -244,8 +272,192 @@ func (h *AdminWalletHandler) AdjustBalance(c *fiber.Ctx) error {
 		})
 	}
 
+	wallet, getErr := h.service.GetWalletByID(uint(walletID))
+	if getErr != nil {
+		return c.JSON(fiber.Map{
+			"message": "Balance adjusted successfully",
+		})
+	}
+
 	return c.JSON(fiber.Map{
 		"message": "Balance adjusted successfully",
+		"data":    walletToResponse(*wallet),
+	})
+}
+
+// AdjustUserWallet POST /tenant/users/:id/wallets/adjust - Adjust user wallet by currency
+func (h *AdminWalletHandler) AdjustUserWallet(c *fiber.Ctx) error {
+	userID, err := strconv.ParseUint(c.Params("id"), 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid user ID",
+		})
+	}
+
+	var req AdjustOwnerWalletRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+	if req.CurrencyCode == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "currency_code is required",
+		})
+	}
+	if req.Reason == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "reason is required",
+		})
+	}
+	if req.Amount == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "amount must not be zero",
+		})
+	}
+
+	userIDInterface := c.Locals("userID")
+	operatorID, ok := userIDInterface.(uint)
+	if userIDInterface == nil || !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Invalid user ID format",
+		})
+	}
+
+	wallet, err := h.service.AdjustUserBalance(uint(userID), req.CurrencyCode, req.Amount, req.Reason, operatorID, req.CreateIfMissing)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "User wallet adjusted successfully",
+		"data":    walletToResponse(*wallet),
+	})
+}
+
+// AdjustTenantUserWallet POST /tenant/tenants/:tenantId/users/:id/wallets/adjust - Adjust tenant user's wallet by currency
+func (h *AdminWalletHandler) AdjustTenantUserWallet(c *fiber.Ctx) error {
+	tenantID, err := strconv.ParseUint(c.Params("tenantId"), 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid tenant ID",
+		})
+	}
+
+	userID, err := strconv.ParseUint(c.Params("id"), 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid user ID",
+		})
+	}
+
+	belongs, err := h.service.UserBelongsToTenant(uint(userID), uint(tenantID))
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to validate tenant membership",
+		})
+	}
+	if !belongs {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "User does not belong to the specified tenant",
+		})
+	}
+
+	var req AdjustOwnerWalletRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+	if req.CurrencyCode == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "currency_code is required",
+		})
+	}
+	if req.Reason == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "reason is required",
+		})
+	}
+	if req.Amount == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "amount must not be zero",
+		})
+	}
+
+	userIDInterface := c.Locals("userID")
+	operatorID, ok := userIDInterface.(uint)
+	if userIDInterface == nil || !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Invalid user ID format",
+		})
+	}
+
+	wallet, err := h.service.AdjustUserBalance(uint(userID), req.CurrencyCode, req.Amount, req.Reason, operatorID, req.CreateIfMissing)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"message":   "Tenant user wallet adjusted successfully",
+		"tenant_id": uint(tenantID),
+		"data":      walletToResponse(*wallet),
+	})
+}
+
+// AdjustTeamWallet POST /tenant/teams/:id/wallets/adjust - Adjust team wallet by currency
+func (h *AdminWalletHandler) AdjustTeamWallet(c *fiber.Ctx) error {
+	teamID, err := strconv.ParseUint(c.Params("id"), 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid team ID",
+		})
+	}
+
+	var req AdjustOwnerWalletRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+	if req.CurrencyCode == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "currency_code is required",
+		})
+	}
+	if req.Reason == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "reason is required",
+		})
+	}
+	if req.Amount == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "amount must not be zero",
+		})
+	}
+
+	userIDInterface := c.Locals("userID")
+	operatorID, ok := userIDInterface.(uint)
+	if userIDInterface == nil || !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Invalid user ID format",
+		})
+	}
+
+	wallet, err := h.service.AdjustTeamBalance(uint(teamID), req.CurrencyCode, req.Amount, req.Reason, operatorID, req.CreateIfMissing)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "Team wallet adjusted successfully",
+		"data":    walletToResponse(*wallet),
 	})
 }
 
