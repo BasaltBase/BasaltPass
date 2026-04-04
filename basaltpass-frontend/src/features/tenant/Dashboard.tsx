@@ -296,12 +296,14 @@ export default function TenantDashboard() {
                     登录页面
                   </label>
                   <div className="flex items-center space-x-2">
-                    <PInput
-                      type="text"
-                      readOnly
-                      value={getLoginUrl()}
-                      className="flex-1 bg-gray-50 font-mono text-gray-600"
-                    />
+                    <div className="w-full md:w-1/2 min-w-0">
+                      <PInput
+                        type="text"
+                        readOnly
+                        value={getLoginUrl()}
+                        className="bg-gray-50 font-mono text-gray-600"
+                      />
+                    </div>
                     <PButton
                       type="button"
                       variant="secondary"
@@ -323,12 +325,14 @@ export default function TenantDashboard() {
                     注册页面
                   </label>
                   <div className="flex items-center space-x-2">
-                    <PInput
-                      type="text"
-                      readOnly
-                      value={getRegisterUrl()}
-                      className="flex-1 bg-gray-50 font-mono text-gray-600"
-                    />
+                    <div className="w-full md:w-1/2 min-w-0">
+                      <PInput
+                        type="text"
+                        readOnly
+                        value={getRegisterUrl()}
+                        className="bg-gray-50 font-mono text-gray-600"
+                      />
+                    </div>
                     <PButton
                       type="button"
                       variant="secondary"

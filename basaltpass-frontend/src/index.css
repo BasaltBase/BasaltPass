@@ -16,20 +16,37 @@ body {
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgb(17 24 39 / 0.28) rgb(17 24 39 / 0.06);
+  scrollbar-color: rgb(17 24 39 / 0.28) transparent;
 }
 
 *::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
 }
 
 *::-webkit-scrollbar-button {
   display: none;
+  width: 0;
+  height: 0;
+}
+
+*::-webkit-scrollbar-button:single-button,
+*::-webkit-scrollbar-button:double-button,
+*::-webkit-scrollbar-button:start,
+*::-webkit-scrollbar-button:end,
+*::-webkit-scrollbar-button:vertical:start:decrement,
+*::-webkit-scrollbar-button:vertical:end:increment,
+*::-webkit-scrollbar-button:horizontal:start:decrement,
+*::-webkit-scrollbar-button:horizontal:end:increment {
+  display: none;
+  width: 0;
+  height: 0;
+  background: transparent;
+  border: 0;
 }
 
 *::-webkit-scrollbar-track {
-  background: rgb(17 24 39 / 0.06);
+  background: transparent;
   border-radius: 9999px;
 }
 
@@ -48,7 +65,7 @@ body {
 }
 
 *::-webkit-scrollbar-corner {
-  background: rgb(17 24 39 / 0.06);
+  background: transparent;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -59,11 +76,11 @@ body {
   }
 
   * {
-    scrollbar-color: rgb(255 255 255 / 0.32) rgb(255 255 255 / 0.08);
+    scrollbar-color: rgb(255 255 255 / 0.32) transparent;
   }
 
   *::-webkit-scrollbar-track {
-    background: rgb(255 255 255 / 0.08);
+    background: transparent;
   }
 
   *::-webkit-scrollbar-thumb {
@@ -79,6 +96,6 @@ body {
   }
 
   *::-webkit-scrollbar-corner {
-    background: rgb(255 255 255 / 0.08);
+    background: transparent;
   }
 }
