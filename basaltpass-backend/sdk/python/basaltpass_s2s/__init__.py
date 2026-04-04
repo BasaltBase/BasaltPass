@@ -1,5 +1,5 @@
 from .client import BasaltPassS2SClient
-from .models import S2SUser, S2SRole, S2SWalletTx, S2SUserWallet
+from .models import S2SUser, S2SRole, S2SWalletTx, S2SUserWallet, S2SWalletAdjustment
 
 __all__ = [
     'BasaltPassS2SClient',
@@ -7,4 +7,5 @@ __all__ = [
     'S2SRole',
     'S2SWalletTx',
     'S2SUserWallet',
+    'S2SWalletAdjustment',
 ]

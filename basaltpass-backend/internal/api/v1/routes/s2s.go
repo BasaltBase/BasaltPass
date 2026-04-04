@@ -30,6 +30,7 @@ func RegisterS2SRoutes(v1 fiber.Router) {
 
 	// 钱包数据（需要 currency 参数）
 	group.Get("/users/:id/wallets", middleware.ClientScopeMiddleware(sc.S2SWalletRead), s2sHandler.GetUserWalletHandler)
+	group.Post("/users/:id/wallets/adjust", middleware.ClientScopeMiddleware(sc.S2SWalletWrite), s2sHandler.AdjustUserWalletHandler)
 
 	// 用户消息（通知）与商品拥有
 	group.Get("/users/:id/messages", middleware.ClientScopeMiddleware(sc.S2SMessagesRead), s2sHandler.GetUserMessagesHandler)

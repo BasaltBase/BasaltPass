@@ -9,7 +9,7 @@ except Exception:  # pragma: no cover
     Retry = None  # type: ignore
 from requests.adapters import HTTPAdapter
 
-from .models import S2SUser, S2SRole, S2SWalletTx, S2SUserWallet, S2SMessage, S2SProduct
+from .models import S2SUser, S2SRole, S2SWalletTx, S2SUserWallet, S2SWalletAdjustment, S2SMessage, S2SProduct
 from .exceptions import ApiError
 
 
@@ -56,9 +56,9 @@ class BasaltPassS2SClient:
         base.update(self.extra_headers)
         return base
 
-    def _request(self, method: str, path: str, *, params: Optional[Dict[str, Any]] = None, timeout: Optional[float] = None) -> Dict[str, Any]:
+    def _request(self, method: str, path: str, *, params: Optional[Dict[str, Any]] = None, json_body: Optional[Dict[str, Any]] = None, timeout: Optional[float] = None) -> Dict[str, Any]:
         url = f"{self.base_url}{path}"
-        resp = self.session.request(method, url, headers=self._headers(), params=params, timeout=timeout or self.timeout)
+        resp = self.session.request(method, url, headers=self._headers(), params=params, json=json_body, timeout=timeout or self.timeout)
         # try parse JSON always to extract envelope error
         content_type = resp.headers.get('Content-Type', '')
         is_json = 'application/json' in content_type
@@ -113,6 +113,17 @@ class BasaltPassS2SClient:
             wallet_id=payload['wallet_id'],
             transactions=txs,
         )
+
+    def adjust_user_wallet(self, user_id: int, *, operation: str, amount: int, currency: str, reference: Optional[str] = None) -> S2SWalletAdjustment:
+        payload: Dict[str, Any] = {
+            'operation': operation,
+            'amount': amount,
+            'currency': currency,
+        }
+        if reference is not None:
+            payload['reference'] = reference
+        result = self._request('POST', f"/api/v1/s2s/users/{user_id}/wallets/adjust", json_body=payload)
+        return S2SWalletAdjustment(**result)
 
     def close(self):
         self.session.close()

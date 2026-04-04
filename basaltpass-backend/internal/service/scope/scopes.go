@@ -20,6 +20,7 @@ func DefaultAllowedScopes() []string {
 		S2SUserWrite,
 		S2SRBACRead,
 		S2SWalletRead,
+		S2SWalletWrite,
 		S2SMessagesRead,
 		S2SProductsRead,
 	}
@@ -56,6 +57,8 @@ func Describe(s string) Meta {
 		return Meta{Scope: s, Category: "s2s", Title: "S2S RBAC Read", Description: "读取用户角色/权限（/roles、/permissions）"}
 	case S2SWalletRead:
 		return Meta{Scope: s, Category: "s2s", Title: "S2S Wallet Read", Description: "读取用户钱包与交易记录（/wallets）"}
+	case S2SWalletWrite:
+		return Meta{Scope: s, Category: "s2s", Title: "S2S Wallet Write", Description: "调整用户钱包余额（POST /api/v1/s2s/users/:id/wallets/adjust）"}
 	case S2SMessagesRead:
 		return Meta{Scope: s, Category: "s2s", Title: "S2S Messages Read", Description: "读取用户消息/通知（/messages）"}
 	case S2SProductsRead:
@@ -83,6 +86,7 @@ const (
 	S2SUserWrite    = "s2s.user.write"
 	S2SRBACRead     = "s2s.rbac.read"
 	S2SWalletRead   = "s2s.wallet.read"
+	S2SWalletWrite  = "s2s.wallet.write"
 	S2SMessagesRead = "s2s.messages.read"
 	S2SProductsRead = "s2s.products.read"
 )

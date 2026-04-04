@@ -38,6 +38,17 @@ class S2SUserWallet:
     transactions: List[S2SWalletTx]
 
 @dataclass
+class S2SWalletAdjustment:
+    user_id: int
+    wallet_id: int
+    currency: str
+    operation: str
+    amount: int
+    balance: int
+    balance_delta: int
+    reference: Optional[str] = None
+
+@dataclass
 class S2SMessage:
     id: int
     app_id: int

@@ -35,6 +35,16 @@ print(role_codes)
 wallet = client.get_user_wallet(123, currency="CNY", limit=10)
 print(wallet)
 
+# 调整余额（amount 为最小货币单位）
+adjusted = client.adjust_user_wallet(
+    123,
+    operation="decrease",
+    amount=299,
+    currency="CNY",
+    reference="billing:order_1001",
+)
+print(adjusted)
+
 client.close()
 ```
 

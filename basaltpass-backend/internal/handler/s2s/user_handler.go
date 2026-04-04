@@ -294,6 +294,13 @@ type patchUserRequest struct {
 	Username string `json:"username"`
 }
 
+type adjustUserWalletRequest struct {
+	Operation string `json:"operation"`
+	Amount    int64  `json:"amount"`
+	Currency  string `json:"currency"`
+	Reference string `json:"reference"`
+}
+
 // PATCH /api/v1/s2s/users/:id
 // Body: {"nickname": "..."} (or legacy alias "username")
 func PatchUserHandler(c *fiber.Ctx) error {
@@ -398,6 +405,80 @@ func GetUserWalletHandler(c *fiber.Ctx) error {
 		"balance":      w.Balance,
 		"wallet_id":    w.ID,
 		"transactions": txs,
+	}
+	return unifiedResponse(c, fiber.StatusOK, resp, nil)
+}
+
+// POST /api/v1/s2s/users/:id/wallets/adjust
+// Body: {"operation":"increase|decrease","amount":100,"currency":"USD","reference":"invoice_123"}
+func AdjustUserWalletHandler(c *fiber.Ctx) error {
+	idStr := c.Params("id")
+	uid64, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil || uid64 == 0 {
+		return unifiedResponse(c, fiber.StatusBadRequest, nil, fiber.Map{"code": "invalid_parameter", "message": "invalid user id"})
+	}
+	userID := uint(uid64)
+
+	tenantID, err := s2sTenantID(c)
+	if err != nil {
+		status := fiber.StatusBadRequest
+		if ferr, ok := err.(*fiber.Error); ok {
+			status = ferr.Code
+		}
+		return unifiedResponse(c, status, nil, fiber.Map{"code": "invalid_parameter", "message": err.Error()})
+	}
+	ok, err := userInTenant(userID, tenantID)
+	if err != nil {
+		return unifiedResponse(c, fiber.StatusInternalServerError, nil, fiber.Map{"code": "server_error", "message": err.Error()})
+	}
+	if !ok {
+		return unifiedResponse(c, fiber.StatusNotFound, nil, fiber.Map{"code": "not_found", "message": "user not found"})
+	}
+
+	var req adjustUserWalletRequest
+	if err := c.BodyParser(&req); err != nil {
+		return unifiedResponse(c, fiber.StatusBadRequest, nil, fiber.Map{"code": "invalid_parameter", "message": "invalid JSON body"})
+	}
+
+	req.Operation = strings.ToLower(strings.TrimSpace(req.Operation))
+	req.Currency = strings.ToUpper(strings.TrimSpace(req.Currency))
+	req.Reference = strings.TrimSpace(req.Reference)
+
+	if req.Operation != "increase" && req.Operation != "decrease" {
+		return unifiedResponse(c, fiber.StatusBadRequest, nil, fiber.Map{"code": "invalid_parameter", "message": "operation must be increase or decrease"})
+	}
+	if req.Amount <= 0 {
+		return unifiedResponse(c, fiber.StatusBadRequest, nil, fiber.Map{"code": "invalid_parameter", "message": "amount must be positive"})
+	}
+	if req.Currency == "" {
+		return unifiedResponse(c, fiber.StatusBadRequest, nil, fiber.Map{"code": "invalid_parameter", "message": "currency is required"})
+	}
+
+	delta := req.Amount
+	txType := "s2s_wallet_increase"
+	if req.Operation == "decrease" {
+		delta = -req.Amount
+		txType = "s2s_wallet_decrease"
+	}
+
+	w, err := wallet.AdjustByCode(userID, req.Currency, delta, txType, req.Reference)
+	if err != nil {
+		status := fiber.StatusBadRequest
+		if err.Error() == "insufficient funds" {
+			status = fiber.StatusConflict
+		}
+		return unifiedResponse(c, status, nil, fiber.Map{"code": "wallet_error", "message": err.Error()})
+	}
+
+	resp := fiber.Map{
+		"user_id":       userID,
+		"wallet_id":     w.ID,
+		"currency":      req.Currency,
+		"operation":     req.Operation,
+		"amount":        req.Amount,
+		"balance":       w.Balance,
+		"balance_delta": delta,
+		"reference":     req.Reference,
 	}
 	return unifiedResponse(c, fiber.StatusOK, resp, nil)
 }

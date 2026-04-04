@@ -1,6 +1,7 @@
 package basaltpasss2s
 
 import (
+	"bytes"
 	context "context"
 	"encoding/json"
 	"fmt"
@@ -78,6 +79,17 @@ type S2SUserWallet struct {
 	Transactions []S2SWalletTx `json:"transactions"`
 }
 
+type S2SWalletAdjustment struct {
+	UserID       int64  `json:"user_id"`
+	WalletID     int64  `json:"wallet_id"`
+	Currency     string `json:"currency"`
+	Operation    string `json:"operation"`
+	Amount       int64  `json:"amount"`
+	Balance      int64  `json:"balance"`
+	BalanceDelta int64  `json:"balance_delta"`
+	Reference    string `json:"reference"`
+}
+
 type S2SMessage struct {
 	ID         int64   `json:"id"`
 	AppID      int64   `json:"app_id"`
@@ -141,6 +153,10 @@ func (c *Client) headers(req *http.Request) {
 }
 
 func (c *Client) do(ctx context.Context, method, path string, q url.Values, out any) error {
+	return c.doJSON(ctx, method, path, q, nil, out)
+}
+
+func (c *Client) doJSON(ctx context.Context, method, path string, q url.Values, body any, out any) error {
 	u, err := url.Parse(c.BaseURL + path)
 	if err != nil {
 		return err
@@ -148,11 +164,24 @@ func (c *Client) do(ctx context.Context, method, path string, q url.Values, out 
 	if q != nil {
 		u.RawQuery = q.Encode()
 	}
-	req, err := http.NewRequestWithContext(ctx, method, u.String(), nil)
+	var bodyReader *bytes.Reader
+	if body != nil {
+		b, err := json.Marshal(body)
+		if err != nil {
+			return err
+		}
+		bodyReader = bytes.NewReader(b)
+	} else {
+		bodyReader = bytes.NewReader(nil)
+	}
+	req, err := http.NewRequestWithContext(ctx, method, u.String(), bodyReader)
 	if err != nil {
 		return err
 	}
 	c.headers(req)
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
 	resp, err := c.HTTP.Do(req)
 	if err != nil {
 		return err
@@ -243,6 +272,26 @@ func (c *Client) GetUserWallet(ctx context.Context, id int64, currency string, l
 	}
 	if env.Error != nil {
 		return S2SUserWallet{}, fmt.Errorf("api error: %s - %s", env.Error.Code, env.Error.Message)
+	}
+	return env.Data, nil
+}
+
+func (c *Client) AdjustUserWallet(ctx context.Context, id int64, operation string, amount int64, currency string, reference *string) (S2SWalletAdjustment, error) {
+	body := map[string]any{
+		"operation": operation,
+		"amount":    amount,
+		"currency":  currency,
+	}
+	if reference != nil {
+		body["reference"] = *reference
+	}
+	var env envelope[S2SWalletAdjustment]
+	err := c.doJSON(ctx, http.MethodPost, fmt.Sprintf("/api/v1/s2s/users/%d/wallets/adjust", id), nil, body, &env)
+	if err != nil {
+		return S2SWalletAdjustment{}, err
+	}
+	if env.Error != nil {
+		return S2SWalletAdjustment{}, fmt.Errorf("api error: %s - %s", env.Error.Code, env.Error.Message)
 	}
 	return env.Data, nil
 }

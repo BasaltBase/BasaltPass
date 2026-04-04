@@ -3,6 +3,7 @@ package wallet
 import (
 	"basaltpass-backend/internal/service/currency"
 	"errors"
+	"strings"
 
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
@@ -114,6 +115,65 @@ func WithdrawByCode(userID uint, currencyCode string, amount int64) error {
 		return errors.New("invalid currency code")
 	}
 	return Withdraw(userID, curr.ID, amount)
+}
+
+// AdjustByCode changes wallet balance by delta in smallest unit and records a transaction.
+func AdjustByCode(userID uint, currencyCode string, delta int64, txType string, reference string) (model.Wallet, error) {
+	if delta == 0 {
+		return model.Wallet{}, errors.New("amount must not be zero")
+	}
+
+	curr, err := currency.GetCurrencyByCode(currencyCode)
+	if err != nil {
+		return model.Wallet{}, errors.New("invalid currency code")
+	}
+
+	db := common.DB()
+	var updated model.Wallet
+	err = db.Transaction(func(tx *gorm.DB) error {
+		var w model.Wallet
+		if err := tx.Where("user_id = ? AND currency_id = ?", userID, curr.ID).
+			FirstOrCreate(&w, model.Wallet{UserID: &userID, CurrencyID: &curr.ID}).Error; err != nil {
+			return err
+		}
+
+		newBalance := w.Balance + delta
+		if newBalance < 0 {
+			return errors.New("insufficient funds")
+		}
+
+		w.Balance = newBalance
+		if err := tx.Save(&w).Error; err != nil {
+			return err
+		}
+
+		txType = strings.TrimSpace(txType)
+		if txType == "" {
+			if delta > 0 {
+				txType = "adjust_increase"
+			} else {
+				txType = "adjust_decrease"
+			}
+		}
+
+		walletTx := model.WalletTx{
+			WalletID:  w.ID,
+			Type:      txType,
+			Amount:    delta,
+			Status:    "success",
+			Reference: strings.TrimSpace(reference),
+		}
+		if err := tx.Create(&walletTx).Error; err != nil {
+			return err
+		}
+
+		updated = w
+		return nil
+	})
+	if err != nil {
+		return model.Wallet{}, err
+	}
+	return updated, nil
 }
 
 // History returns last n transactions

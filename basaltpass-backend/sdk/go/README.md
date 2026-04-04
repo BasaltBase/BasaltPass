@@ -32,6 +32,11 @@ func main() {
     wallet, err := client.GetUserWallet(context.Background(), 123, "CNY", &limit)
     if err != nil { panic(err) }
     fmt.Println(wallet)
+
+    reference := "billing:order_1001"
+    adjusted, err := client.AdjustUserWallet(context.Background(), 123, "decrease", 299, "CNY", &reference)
+    if err != nil { panic(err) }
+    fmt.Println(adjusted)
 }
 ```
 

@@ -278,6 +278,7 @@ settings:
             - s2s.user.write
             - s2s.rbac.read
             - s2s.wallet.read
+            - s2s.wallet.write
             - s2s.messages.read
             - s2s.products.read
         category: oauth

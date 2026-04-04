@@ -97,7 +97,7 @@ func defaultItems() map[string]SettingItem {
 		"security.account_lockout.window_minutes": {Value: 15, Category: "security", Description: "统计失败次数的时间窗口（分钟）"},
 
 		// CORS
-		"cors.allow_origins":     {Value: []string{
+		"cors.allow_origins": {Value: []string{
 			"http://localhost:5101",
 			"http://127.0.0.1:5101",
 			"http://localhost:5102",
@@ -134,6 +134,7 @@ func defaultItems() map[string]SettingItem {
 			"s2s.user.write",
 			"s2s.rbac.read",
 			"s2s.wallet.read",
+			"s2s.wallet.write",
 			"s2s.messages.read",
 			"s2s.products.read",
 		}, Category: "oauth", Description: "允许的 OAuth Scope 列表"},
