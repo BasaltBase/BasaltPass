@@ -199,3 +199,32 @@ func HistoryByCode(userID uint, currencyCode string, limit int) ([]model.WalletT
 	}
 	return History(userID, curr.ID, limit)
 }
+
+// HistoryAllByUser returns last n transactions across all wallets owned by the user.
+func HistoryAllByUser(userID uint, limit int) ([]model.WalletTx, error) {
+	if limit <= 0 {
+		limit = 20
+	}
+
+	db := common.DB()
+	var walletIDs []uint
+	if err := db.Model(&model.Wallet{}).
+		Where("user_id = ?", userID).
+		Pluck("id", &walletIDs).Error; err != nil {
+		return nil, err
+	}
+
+	if len(walletIDs) == 0 {
+		return []model.WalletTx{}, nil
+	}
+
+	var txs []model.WalletTx
+	if err := db.Where("wallet_id IN ?", walletIDs).
+		Order("created_at desc").
+		Limit(limit).
+		Find(&txs).Error; err != nil {
+		return nil, err
+	}
+
+	return txs, nil
+}

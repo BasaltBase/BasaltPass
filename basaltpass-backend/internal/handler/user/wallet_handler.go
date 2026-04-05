@@ -62,10 +62,16 @@ func WithdrawWalletHandler(c *fiber.Ctx) error {
 // WalletHistoryHandler GET /wallet/history?currency=USD&limit=20
 func WalletHistoryHandler(c *fiber.Ctx) error {
 	uid := c.Locals("userID").(uint)
-	currency := c.Query("currency", "USD")
+	currency := c.Query("currency", "")
 	limitStr := c.Query("limit", "20")
 	limit, _ := strconv.Atoi(limitStr)
-	txs, err := wallet.HistoryByCode(uid, currency, limit)
+	var txs interface{}
+	var err error
+	if currency == "" || currency == "all" {
+		txs, err = wallet.HistoryAllByUser(uid, limit)
+	} else {
+		txs, err = wallet.HistoryByCode(uid, currency, limit)
+	}
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}

@@ -36,7 +36,7 @@ export default function History() {
   const debouncedSearchTerm = useDebounce(searchTerm, 200)
 
   useEffect(() => {
-    history('USD').then((res) => {
+    history(undefined, 200).then((res) => {
       setTxs(res.data || [])
       setIsLoading(false)
     }).catch(() => {

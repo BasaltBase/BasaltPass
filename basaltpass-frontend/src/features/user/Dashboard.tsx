@@ -67,7 +67,7 @@ export default function Dashboard() {
         const [profileResponse, securityResponse, historyResponse] = await Promise.all([
           getProfile(),
           getSecurityStatus(),
-          getWalletHistory('USD', 3) // 获取最近3条交易记录
+          getWalletHistory(undefined, 3) // 获取最近3条交易记录（跨所有钱包）
         ])
 
         setUserProfile(profileResponse.data)
