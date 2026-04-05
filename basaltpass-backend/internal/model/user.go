@@ -23,8 +23,8 @@ type User struct {
 	// (email, tenant_id) 与 (phone, tenant_id)
 	// 这样同一个邮箱/手机号可以在不同租户下注册不同账户。
 	// 注意：这里不声明 unique，避免 AutoMigrate 误建成单列唯一索引。
-	Email         string `gorm:"size:128;index" json:"email"`
-	Phone         string `gorm:"size:32;index" json:"phone"`
+	Email         string `gorm:"size:128;index;default:null" json:"email"`
+	Phone         string `gorm:"size:32;index;default:null" json:"phone"`
 	PasswordHash  string `gorm:"size:255"`
 	Nickname      string `gorm:"size:64"`
 	AvatarURL     string `gorm:"size:255"`

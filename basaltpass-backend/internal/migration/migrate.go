@@ -65,6 +65,46 @@ func createIndexIfMissing(tableName, indexName, createSQL string) error {
 	return common.DB().Exec(createSQL).Error
 }
 
+func ensureUserOptionalContactsNullableOnMySQL() {
+	db := common.DB()
+	if strings.ToLower(db.Dialector.Name()) != "mysql" {
+		return
+	}
+
+	log.Println("[Migration] Normalizing optional user email/phone values for MySQL unique indexes...")
+
+	if err := db.Exec(`
+		UPDATE system_auth_users
+		SET email = NULL
+		WHERE email IS NOT NULL AND TRIM(email) = ''
+	`).Error; err != nil {
+		log.Printf("[Migration] Failed to normalize blank emails to NULL: %v", err)
+	}
+
+	if err := db.Exec(`
+		UPDATE system_auth_users
+		SET phone = NULL
+		WHERE phone IS NOT NULL
+		  AND (TRIM(CAST(phone AS CHAR(32))) = '' OR TRIM(CAST(phone AS CHAR(32))) = '0')
+	`).Error; err != nil {
+		log.Printf("[Migration] Failed to normalize blank phones to NULL: %v", err)
+	}
+
+	if err := db.Exec(`
+		ALTER TABLE system_auth_users
+		MODIFY COLUMN email VARCHAR(128) NULL DEFAULT NULL
+	`).Error; err != nil {
+		log.Printf("[Migration] Failed to make email nullable: %v", err)
+	}
+
+	if err := db.Exec(`
+		ALTER TABLE system_auth_users
+		MODIFY COLUMN phone VARCHAR(32) NULL DEFAULT NULL
+	`).Error; err != nil {
+		log.Printf("[Migration] Failed to make phone nullable: %v", err)
+	}
+}
+
 // 迁移数据库，自动迁移数据库表结构
 // RunMigrations performs GORM auto migration for all models.
 func RunMigrations() {
@@ -1342,6 +1382,10 @@ func ensureUserTenantScopedUniqueIndexes() {
 	dialect := strings.ToLower(db.Dialector.Name())
 
 	log.Println("[Migration] Ensuring tenant-scoped unique indexes on users(email, tenant_id) and users(phone, tenant_id)...")
+
+	if dialect == "mysql" {
+		ensureUserOptionalContactsNullableOnMySQL()
+	}
 
 	// 先删除历史上可能存在的单列唯一索引（以及错误的同名索引定义）
 	dropIndexIfExists("system_auth_users", "idx_users_email")

@@ -195,10 +195,22 @@ func (s *AdminUserService) UpdateUser(userID uint, req UpdateUserRequest) error 
 	updates := make(map[string]interface{})
 
 	if req.Email != nil {
-		updates["email"] = *req.Email
+		email := strings.TrimSpace(*req.Email)
+		if email == "" {
+			updates["email"] = nil
+			updates["email_verified"] = false
+		} else {
+			updates["email"] = email
+		}
 	}
 	if req.Phone != nil {
-		updates["phone"] = *req.Phone
+		phone := strings.TrimSpace(*req.Phone)
+		if phone == "" {
+			updates["phone"] = nil
+			updates["phone_verified"] = false
+		} else {
+			updates["phone"] = phone
+		}
 	}
 	if req.Nickname != nil {
 		updates["nickname"] = *req.Nickname
