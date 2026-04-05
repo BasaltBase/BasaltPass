@@ -1,13 +1,16 @@
 FROM node:18-bullseye-slim AS builder
 WORKDIR /app
 ARG VITE_API_BASE
+ARG VITE_APP_VERSION
 ARG VITE_CONSOLE_USER_URL
 ARG VITE_CONSOLE_TENANT_URL
 ARG VITE_CONSOLE_ADMIN_URL
 ENV VITE_API_BASE=$VITE_API_BASE
+ENV VITE_APP_VERSION=$VITE_APP_VERSION
 ENV VITE_CONSOLE_USER_URL=$VITE_CONSOLE_USER_URL
 ENV VITE_CONSOLE_TENANT_URL=$VITE_CONSOLE_TENANT_URL
 ENV VITE_CONSOLE_ADMIN_URL=$VITE_CONSOLE_ADMIN_URL
+RUN apt-get update && apt-get install -y --no-install-recommends git && rm -rf /var/lib/apt/lists/*
 COPY basaltpass-frontend/package.json ./
 COPY basaltpass-frontend/package-lock.json ./
 RUN npm ci

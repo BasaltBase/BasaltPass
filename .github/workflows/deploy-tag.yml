@@ -123,6 +123,7 @@ jobs:
           push: true
           build-args: |
             VITE_API_BASE=${{ vars.SERVICE_URL }}
+            VITE_APP_VERSION=${{ steps.version.outputs.raw_tag }}
             VITE_CONSOLE_USER_URL=${{ vars.SERVICE_URL }}
             VITE_CONSOLE_TENANT_URL=${{ vars.SERVICE_URL }}
             VITE_CONSOLE_ADMIN_URL=${{ vars.SERVICE_URL }}
