@@ -66,11 +66,11 @@ func normalizeTenantInviteRole(raw string) (model.TenantRole, string, bool) {
 	}
 }
 
-func resolveTenantInviteBaseURL(c *fiber.Ctx, cfg *config.Config) string {
-	if origin := strings.TrimSpace(c.Get("Origin")); origin != "" {
+func resolveTenantInviteBaseURL(originHeader, refererHeader string, cfg *config.Config) string {
+	if origin := strings.TrimSpace(originHeader); origin != "" {
 		return strings.TrimRight(origin, "/")
 	}
-	if referer := strings.TrimSpace(c.Get("Referer")); referer != "" {
+	if referer := strings.TrimSpace(refererHeader); referer != "" {
 		if parsed, err := url.Parse(referer); err == nil && parsed.Scheme != "" && parsed.Host != "" {
 			return strings.TrimRight(parsed.Scheme+"://"+parsed.Host, "/")
 		}
@@ -680,21 +680,36 @@ func InviteTenantUserHandler(c *fiber.Ctx) error {
 		var tenant model.Tenant
 		common.DB().Where("id = ?", tenantID).First(&tenant)
 
+		originHeader := c.Get("Origin")
+		refererHeader := c.Get("Referer")
+		baseURL := resolveTenantInviteBaseURL(originHeader, refererHeader, config.Get())
+		tenantCode := tenant.Code
+		tenantName := tenant.Name
+		inviteEmail := req.Email
+		inviteToken := tokenStr
+		inviteRoleLabel := roleLabel
+		inviterUserID := inviterID
+
 		// 异步发送邮件
 		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					log.Printf("[tenant_user] invitation email goroutine panic recovered: %v", r)
+				}
+			}()
+
 			cfg := config.Get()
 			emailSvc, err := emailservice.NewServiceFromConfig(cfg)
 			if err == nil && emailSvc != nil {
-				baseURL := resolveTenantInviteBaseURL(c, cfg)
 				inviteLink := fmt.Sprintf(
 					"%s/auth/tenant/%s/register?email=%s&invite_token=%s",
 					baseURL,
-					url.PathEscape(tenant.Code),
-					url.QueryEscape(req.Email),
-					url.QueryEscape(tokenStr),
+					url.PathEscape(tenantCode),
+					url.QueryEscape(inviteEmail),
+					url.QueryEscape(inviteToken),
 				)
 
-				subject := fmt.Sprintf("Invitation to join %s on BasaltPass", tenant.Name)
+				subject := fmt.Sprintf("Invitation to join %s on BasaltPass", tenantName)
 				htmlBody := fmt.Sprintf(`
 <!DOCTYPE html>
 <html>
@@ -737,20 +752,20 @@ func InviteTenantUserHandler(c *fiber.Ctx) error {
     </div>
 </body>
 </html>
-				`, tenant.Name, roleLabel, inviteLink, req.Email, inviteLink, inviteLink, time.Now().Year())
+				`, tenantName, inviteRoleLabel, inviteLink, inviteEmail, inviteLink, inviteLink, time.Now().Year())
 
 				msg := &emailservice.Message{
-					To:       []string{req.Email},
+					To:       []string{inviteEmail},
 					Subject:  subject,
 					HTMLBody: htmlBody,
 					TextBody: fmt.Sprintf(
 						"You have been invited to join %s as %s. Open the tenant registration page here: %s",
-						tenant.Name,
-						roleLabel,
+						tenantName,
+						inviteRoleLabel,
 						inviteLink,
 					),
 				}
-				_, sendErr := emailSvc.SendWithLogging(context.Background(), msg, &inviterID, "tenant_invitation")
+				_, sendErr := emailSvc.SendWithLogging(context.Background(), msg, &inviterUserID, "tenant_invitation")
 				if sendErr != nil {
 					log.Printf("[tenant_user] invitation email send failed: %v", sendErr)
 				}
