@@ -1,8 +1,8 @@
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
+import React, { useState } from 'react'
+import { uiAlert } from '@contexts/DialogContext'
 import Layout from '@features/user/components/Layout'
 import { invitationApi } from '@api/user/invitation'
-import { EntitySearchSelect, type BaseEntityItem, PButton, PTextarea, PBadge } from '@ui'
+import { EntitySearchSelect, type BaseEntityItem, PButton, PTextarea } from '@ui'
 import { useNavigate, useParams } from 'react-router-dom'
 import { DocumentTextIcon } from '@heroicons/react/24/outline'
 
@@ -37,14 +37,12 @@ const Invite: React.FC = () => {
 
   return (
     <Layout>
-      <div className="space-y-10 max-w-3xl relative">
-        <div className="absolute -inset-x-8 -top-8 h-48 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 rounded-3xl blur-sm opacity-70 pointer-events-none" />
-        <div className="relative flex items-center justify-between bg-white/70 backdrop-blur-sm p-6 rounded-2xl border border-indigo-100 shadow-sm">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600">邀请成员</h1>
-            <p className="text-sm text-gray-500 flex items-center gap-2">
-              <PBadge variant="info">团队协作</PBadge>
-              搜索并邀请用户加入您的团队
+      <div className="mx-auto max-w-3xl space-y-6">
+        <div className="flex items-start justify-between gap-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-semibold text-gray-900">邀请成员</h1>
+            <p className="text-sm text-gray-500">
+              搜索用户并将他们加入当前团队。
             </p>
           </div>
           <PButton
@@ -56,8 +54,11 @@ const Invite: React.FC = () => {
           </PButton>
         </div>
 
-        {/* 用户搜索 - 使用通用组件 */}
-    <div className="bg-white/90 backdrop-blur rounded-2xl border border-indigo-100 shadow-sm p-8 ring-1 ring-transparent hover:ring-indigo-200 transition-shadow">
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="mb-4 space-y-1">
+            <h2 className="text-sm font-semibold text-gray-900">选择用户</h2>
+            <p className="text-sm text-gray-500">可按昵称或邮箱模糊搜索。</p>
+          </div>
           <EntitySearchSelect
             entity="user"
             context="user"
@@ -65,32 +66,27 @@ const Invite: React.FC = () => {
             onChange={setSelectedUsers}
             placeholder="输入用户名或邮箱搜索..."
             limit={10}
-      variant="chips"
+            variant="chips"
           />
         </div>
 
-        {/* 已选择的用户 */}
-  {/* 已选择列表由通用组件内部展示，这里无需重复 */}
-
-        {/* 备注 */}
-  <div className="bg-white/90 backdrop-blur rounded-2xl border border-purple-100 shadow-sm p-8 ring-1 ring-transparent hover:ring-purple-200 transition-shadow">
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
           <div className="space-y-2">
             <label className="flex items-center text-sm font-semibold text-gray-700">
-              <DocumentTextIcon className="h-5 w-5 mr-2 text-indigo-500" />
-              邀请备注 (可选)
+              <DocumentTextIcon className="mr-2 h-5 w-5 text-gray-400" />
+              邀请备注（可选）
             </label>
             <PTextarea
               value={remark}
               onChange={e => setRemark(e.target.value)}
               rows={3}
-              placeholder="可以在这里添加邀请说明..."
+              placeholder="填写一段简短说明，收件人会更容易理解这次邀请。"
               variant="rounded"
             />
           </div>
         </div>
 
-        {/* 操作按钮 */}
-        <div className="flex justify-end space-x-4 pt-8 border-t border-gray-100">
+        <div className="flex justify-end space-x-3 border-t border-gray-200 pt-4">
           <PButton
             onClick={() => navigate(`/teams/${teamId}`)}
             variant="secondary"

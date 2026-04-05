@@ -226,7 +226,7 @@ const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
 
     return (
       <div
-        className="absolute left-0 right-0 top-full z-50 mt-2 max-h-72 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-2xl"
+        className="absolute left-0 right-0 top-full z-[9999] mt-2 max-h-72 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-2xl"
       >
         {loading ? (
           <div className="px-4 py-4 text-center text-gray-500">
@@ -268,7 +268,7 @@ const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
   }
 
   return (
-    <div ref={rootRef} className={`space-y-4 ${className}`}>
+    <div ref={rootRef} className={`relative z-20 space-y-4 ${className}`}>
       <div className="space-y-2">
         <label className="flex items-center text-sm font-semibold text-gray-700">
           <MagnifyingGlassIcon className="h-5 w-5 mr-2 text-indigo-500" />

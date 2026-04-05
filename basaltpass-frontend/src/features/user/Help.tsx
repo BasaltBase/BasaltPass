@@ -3,16 +3,8 @@ import Layout from '@features/user/components/Layout'
 import { PInput, PButton } from '@ui'
 import { 
   QuestionMarkCircleIcon,
-  ChatBubbleLeftRightIcon,
-  DocumentTextIcon,
-  PhoneIcon,
-  EnvelopeIcon,
-  GlobeAltIcon,
   MagnifyingGlassIcon,
-  StarIcon,
-  ExclamationTriangleIcon,
   CheckCircleIcon,
-  XMarkIcon,
   HandThumbUpIcon,
   HandThumbDownIcon
 } from '@heroicons/react/24/outline'
@@ -126,73 +118,12 @@ const faqs = [
   }
 ]
 
-const contactMethods = [
-  {
-    name: '在线客服',
-    description: '24/7 在线支持',
-    icon: ChatBubbleLeftRightIcon,
-    action: '开始对话',
-    href: '#',
-    available: true
-  },
-  {
-    name: '邮件支持',
-    description: 'support@basaltpass.com',
-    icon: EnvelopeIcon,
-    action: '发送邮件',
-    href: 'mailto:support@basaltpass.com',
-    available: true
-  },
-  {
-    name: '电话支持',
-    description: '400-123-4567',
-    icon: PhoneIcon,
-    action: '拨打电话',
-    href: 'tel:400-123-4567',
-    available: true
-  },
-  {
-    name: '帮助文档',
-    description: '详细使用指南',
-    icon: DocumentTextIcon,
-    action: '查看文档',
-    href: '#',
-    available: true
-  }
-]
-
-const quickActions = [
-  {
-    title: '账户设置',
-    description: '管理个人信息和安全设置',
-    icon: '👤',
-    href: '/profile'
-  },
-  {
-    title: '钱包管理',
-    description: '充值、提现、查看交易记录',
-    icon: '💰',
-    href: '/wallet'
-  },
-  {
-    title: '订阅服务',
-    description: '查看和管理订阅计划',
-    icon: '📦',
-    href: '/subscription'
-  },
-  {
-    title: '安全中心',
-    description: '两步验证、Passkey、登录历史',
-    icon: '🔒',
-    href: '/security'
-  }
-]
-
 export default function Help() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [feedbackSubmitted, setFeedbackSubmitted] = useState<Set<number>>(new Set())
+  const currentYear = new Date().getFullYear()
 
   const toggleFaq = (index: number) => {
     setOpenFaq(openFaq === index ? null : index)
@@ -219,31 +150,6 @@ export default function Help() {
         {/* 页面标题 */}
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900">帮助中心</h1>
-          <p className="mt-2 text-lg text-gray-600">
-            找到您需要的答案和支持
-          </p>
-        </div>
-
-        {/* 快速操作 */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">快速操作</h3>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {quickActions.map((action) => (
-              <a
-                key={action.title}
-                href={action.href}
-                className="bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200"
-              >
-                <div className="flex items-center space-x-3">
-                  <span className="text-2xl">{action.icon}</span>
-                  <div>
-                    <h4 className="font-medium text-gray-900">{action.title}</h4>
-                    <p className="text-sm text-gray-500">{action.description}</p>
-                  </div>
-                </div>
-              </a>
-            ))}
-          </div>
         </div>
 
         {/* 快速搜索 */}
@@ -387,47 +293,6 @@ export default function Help() {
           </div>
         </div>
 
-        {/* 联系支持 */}
-        <div className="bg-white shadow-lg rounded-xl">
-          <div className="px-6 py-6">
-            <h3 className="text-xl font-semibold text-gray-900 mb-6">联系支持</h3>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {contactMethods.map((method) => (
-                <div
-                  key={method.name}
-                  className={`relative rounded-xl border-2 p-6 transition-all duration-200 ${
-                    method.available 
-                      ? 'border-gray-200 bg-white hover:border-blue-300 hover:shadow-md' 
-                      : 'border-gray-100 bg-gray-50 opacity-60'
-                  }`}
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className="flex-shrink-0">
-                      <method.icon className={`h-8 w-8 ${method.available ? 'text-blue-600' : 'text-gray-400'}`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <a href={method.href} className="focus:outline-none">
-                        <span className="absolute inset-0" aria-hidden="true" />
-                        <p className="text-base font-medium text-gray-900">
-                          {method.name}
-                        </p>
-                        <p className="text-sm text-gray-500 mt-1">
-                          {method.description}
-                        </p>
-                        {method.available && (
-                          <p className="text-xs text-blue-600 mt-2 font-medium">
-                            {method.action} →
-                          </p>
-                        )}
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
         {/* 系统状态 */}
         <div className="bg-white shadow-lg rounded-xl">
           <div className="px-6 py-6">
@@ -476,6 +341,20 @@ export default function Help() {
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="px-4 pb-2 text-center text-sm text-gray-500">
+          <p>
+            Copyright 2024 - {currentYear} BasaltPass BasaltBase powered by{' '}
+            <a
+              href="https://hollowdata.com"
+              target="_blank"
+              rel="noreferrer"
+              className="text-gray-700 underline underline-offset-2 hover:text-gray-900"
+            >
+              HollowData
+            </a>
+          </p>
         </div>
 
       </div>
