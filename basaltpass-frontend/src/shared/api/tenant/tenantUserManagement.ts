@@ -7,7 +7,7 @@ export interface TenantUser {
   email: string
   nickname: string
   avatar?: string
-  role: 'owner' | 'admin' | 'member'
+  role: 'owner' | 'admin' | 'member' | 'user'
   status: 'active' | 'inactive' | 'suspended'
   last_login_at?: string
   created_at: string
@@ -36,13 +36,13 @@ export interface TenantUsersResponse {
 }
 
 export interface UpdateTenantUserRequest {
-  role?: 'admin' | 'member'
+  role?: 'admin' | 'user'
   status?: 'active' | 'inactive' | 'suspended'
 }
 
 export interface InviteTenantUserRequest {
   email: string
-  role: 'admin' | 'member'
+  role: 'admin' | 'user'
   message?: string
 }
 

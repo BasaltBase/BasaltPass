@@ -14,6 +14,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
+	"net/url"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -49,8 +51,34 @@ type UpdateTenantUserRequest struct {
 // InviteTenantUserRequest 邀请租户用户请求
 type InviteTenantUserRequest struct {
 	Email   string `json:"email" validate:"required,email"`
-	Role    string `json:"role" validate:"required,oneof=admin user"`
+	Role    string `json:"role" validate:"required,oneof=admin user member"`
 	Message string `json:"message,omitempty"`
+}
+
+func normalizeTenantInviteRole(raw string) (model.TenantRole, string, bool) {
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case string(model.TenantRoleAdmin):
+		return model.TenantRoleAdmin, "管理员", true
+	case string(model.TenantRoleMember), string(model.TenantRoleUser), "":
+		return model.TenantRoleMember, "成员", true
+	default:
+		return "", "", false
+	}
+}
+
+func resolveTenantInviteBaseURL(c *fiber.Ctx, cfg *config.Config) string {
+	if origin := strings.TrimSpace(c.Get("Origin")); origin != "" {
+		return strings.TrimRight(origin, "/")
+	}
+	if referer := strings.TrimSpace(c.Get("Referer")); referer != "" {
+		if parsed, err := url.Parse(referer); err == nil && parsed.Scheme != "" && parsed.Host != "" {
+			return strings.TrimRight(parsed.Scheme+"://"+parsed.Host, "/")
+		}
+	}
+	if cfg != nil && strings.TrimSpace(cfg.UI.BaseURL) != "" {
+		return strings.TrimRight(cfg.UI.BaseURL, "/")
+	}
+	return "http://localhost:5104"
 }
 
 // loadTenantMembership 判断用户归属，只使用 users.tenant_id 作为唯一标准。
@@ -548,7 +576,8 @@ func InviteTenantUserHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	if req.Role != "admin" && req.Role != "user" {
+	normalizedRole, roleLabel, ok := normalizeTenantInviteRole(req.Role)
+	if !ok {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "无效的角色类型",
 		})
@@ -601,7 +630,7 @@ func InviteTenantUserHandler(c *fiber.Ctx) error {
 		tenantUser := model.TenantUser{
 			UserID:   existingUser.ID,
 			TenantID: tenantID,
-			Role:     model.TenantRole(req.Role),
+			Role:     normalizedRole,
 		}
 		if err := tx.Create(&tenantUser).Error; err != nil {
 			tx.Rollback()
@@ -633,7 +662,7 @@ func InviteTenantUserHandler(c *fiber.Ctx) error {
 		invitation := model.TenantInvitation{
 			TenantID:  tenantID,
 			Email:     req.Email,
-			Role:      model.TenantRole(req.Role),
+			Role:      normalizedRole,
 			Status:    "pending",
 			InviterID: inviterID,
 			Token:     tokenStr,
@@ -656,11 +685,14 @@ func InviteTenantUserHandler(c *fiber.Ctx) error {
 			cfg := config.Get()
 			emailSvc, err := emailservice.NewServiceFromConfig(cfg)
 			if err == nil && emailSvc != nil {
-				baseURL := cfg.UI.BaseURL
-				if baseURL == "" {
-					baseURL = "http://localhost:5101" // fallback
-				}
-				inviteLink := fmt.Sprintf("%s/login?tenant=%s&email=%s&invite_token=%s", baseURL, tenant.Code, req.Email, tokenStr)
+				baseURL := resolveTenantInviteBaseURL(c, cfg)
+				inviteLink := fmt.Sprintf(
+					"%s/auth/tenant/%s/register?email=%s&invite_token=%s",
+					baseURL,
+					url.PathEscape(tenant.Code),
+					url.QueryEscape(req.Email),
+					url.QueryEscape(tokenStr),
+				)
 
 				subject := fmt.Sprintf("Invitation to join %s on BasaltPass", tenant.Name)
 				htmlBody := fmt.Sprintf(`
@@ -669,57 +701,54 @@ func InviteTenantUserHandler(c *fiber.Ctx) error {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tenant Invitation</title>
+    <title>BasaltPass Invitation</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f7f9fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
-    <div style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
-        
-        <!-- 头部 -->
-        <div style="padding: 32px 40px; border-bottom: 1px solid #edf2f7; text-align: center;">
-            <h1 style="color: #1a202c; font-size: 24px; font-weight: 600; margin: 0; letter-spacing: -0.5px;">BasaltPass</h1>
-        </div>
-        
-        <!-- 主内容 -->
-        <div style="padding: 40px;">
-            <h2 style="color: #2d3748; font-size: 20px; font-weight: 600; margin: 0 0 24px; text-align: center;">Invitation to Join Tenant</h2>
-            
-            <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin: 0 0 24px;">
-                You have been invited to join <strong>%s</strong> as a member.
-            </p>
-            
-            <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin: 0 0 32px;">
-                Please click the button below to accept the invitation and securely log in or register your account:
-            </p>
-            
-            <div style="text-align: center; margin: 0 0 32px;">
-                <a href="%s" style="background-color: #2b6cb0; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 16px; display: inline-block;">Accept Invitation</a>
+<body style="margin:0;padding:0;background-color:#f5f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1d1d1f;">
+    <div style="max-width:640px;margin:0 auto;padding:40px 20px;">
+        <div style="background-color:#ffffff;border-radius:28px;overflow:hidden;box-shadow:0 10px 34px rgba(0,0,0,0.035);">
+            <div style="padding:32px 36px 22px;">
+                <div style="font-size:12px;line-height:18px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#86868b;">BasaltPass</div>
+                <h1 style="margin:14px 0 0;font-size:32px;line-height:38px;font-weight:600;letter-spacing:-0.02em;color:#1d1d1f;">Tenant invitation</h1>
             </div>
-            
-            <hr style="border: 0; border-top: 1px solid #edf2f7; margin: 32px 0;">
-            
-            <p style="color: #718096; font-size: 14px; line-height: 1.6; margin: 0;">
-                If you're having trouble clicking the button, copy and paste the URL below into your web browser:<br>
-                <a href="%s" style="color: #2b6cb0; word-break: break-all;">%s</a>
-            </p>
-        </div>
-        
-        <!-- 页脚 -->
-        <div style="background-color: #f7fafc; padding: 24px 40px; text-align: center; border-top: 1px solid #edf2f7;">
-            <p style="color: #a0aec0; font-size: 13px; margin: 0;">
-                &copy; %d BasaltPass. All rights reserved.<br>
-                This is an automated message, please do not reply directly.
-            </p>
+            <div style="padding:8px 36px 36px;">
+                <p style="margin:0 0 26px;font-size:16px;line-height:28px;color:#424245;">
+                    You have been invited to join <strong>%s</strong> as <strong>%s</strong>.
+                </p>
+                <p style="margin:0 0 26px;font-size:16px;line-height:28px;color:#424245;">
+                    Use the button below to open the tenant registration page. If you already have an account, you can switch to sign in from there.
+                </p>
+                <div style="margin:0 0 24px;padding:28px 24px;border-radius:24px;background:linear-gradient(180deg,#fbfbfd 0%%,#f4f4f6 100%%);text-align:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.7);">
+                    <a href="%s" style="display:inline-block;padding:14px 28px;border-radius:999px;background-color:#1d4ed8;color:#ffffff;text-decoration:none;font-size:16px;font-weight:600;">Open invitation</a>
+                </div>
+                <div style="margin:0 0 24px;padding:18px 20px;border-radius:18px;background-color:#f5f5f7;color:#424245;font-size:14px;line-height:24px;">
+                    This invitation is linked to <strong style="color:#1d1d1f;font-weight:600;">%s</strong>. Please continue with the same email address when registering.
+                </div>
+                <p style="margin:0;font-size:13px;line-height:22px;color:#6e6e73;word-break:break-all;">
+                    If the button does not work, copy and paste this link into your browser:<br>
+                    <a href="%s" style="color:#1d4ed8;text-decoration:none;">%s</a>
+                </p>
+            </div>
+            <div style="padding:20px 36px;background-color:#fbfbfd;">
+                <p style="margin:0;font-size:12px;line-height:20px;color:#8d8d92;">
+                    &copy; %d BasaltPass. This is an automated message, please do not reply.
+                </p>
+            </div>
         </div>
     </div>
 </body>
 </html>
-				`, tenant.Name, inviteLink, inviteLink, inviteLink, time.Now().Year())
+				`, tenant.Name, roleLabel, inviteLink, req.Email, inviteLink, inviteLink, time.Now().Year())
 
 				msg := &emailservice.Message{
 					To:       []string{req.Email},
 					Subject:  subject,
 					HTMLBody: htmlBody,
-					TextBody: fmt.Sprintf("You have been invited to join %s. Please visit this link to accept the invitation: %s", tenant.Name, inviteLink),
+					TextBody: fmt.Sprintf(
+						"You have been invited to join %s as %s. Open the tenant registration page here: %s",
+						tenant.Name,
+						roleLabel,
+						inviteLink,
+					),
 				}
 				_, sendErr := emailSvc.SendWithLogging(context.Background(), msg, &inviterID, "tenant_invitation")
 				if sendErr != nil {

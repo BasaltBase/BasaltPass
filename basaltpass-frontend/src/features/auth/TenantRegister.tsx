@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import PSkeleton from '@ui/PSkeleton'
-import { Link, useParams, useNavigate } from 'react-router-dom'
+import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import client from '@api/client'
 import { useConfig } from '@contexts/ConfigContext'
 import { fetchPublicTenantByCode } from '@api/public/tenant'
@@ -24,6 +24,7 @@ const getPasswordStrength = (value: string) => {
 function TenantRegister() {
   const { tenantCode } = useParams<{ tenantCode: string }>()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { siteInitial, setPageTitle } = useConfig()
 
   const [tenantInfo, setTenantInfo] = useState<{ id: number; name: string; code: string } | null>(null)
@@ -45,6 +46,8 @@ function TenantRegister() {
   const [isVerifying, setIsVerifying] = useState(false)
   const [isSendingCode, setIsSendingCode] = useState(false)
   const [resendCooldown, setResendCooldown] = useState(0)
+  const inviteToken = searchParams.get('invite_token') || ''
+  const invitedEmail = searchParams.get('email') || ''
 
   const usernamePreview = email.includes('@') ? email.split('@')[0] : email
   const passwordStrength = getPasswordStrength(password)
@@ -87,6 +90,11 @@ function TenantRegister() {
       setLoadingTenant(false)
     }
   }, [tenantCode])
+
+  useEffect(() => {
+    if (!invitedEmail) return
+    setEmail((current) => current || invitedEmail)
+  }, [invitedEmail])
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -327,9 +335,17 @@ function TenantRegister() {
     '创建租户账户',
     <>
       <p>注册到 <span className="font-medium text-gray-900">{tenantInfo?.name}</span>，创建后即可登录并继续访问该租户。</p>
+      {inviteToken && invitedEmail && (
+        <p className="mt-2 rounded-xl bg-blue-50 px-3 py-2 text-sm text-blue-700">
+          这是发给 <span className="font-medium">{invitedEmail}</span> 的租户邀请，请使用该邮箱继续注册。
+        </p>
+      )}
       <p className="mt-2">
         已有账户？{' '}
-        <Link to={`/auth/tenant/${tenantCode}/login`} className="font-medium text-blue-600 hover:text-blue-500">
+        <Link
+          to={`/auth/tenant/${tenantCode}/login${invitedEmail ? `?email=${encodeURIComponent(invitedEmail)}` : ''}`}
+          className="font-medium text-blue-600 hover:text-blue-500"
+        >
           立即登录
         </Link>
       </p>

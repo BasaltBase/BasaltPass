@@ -71,12 +71,12 @@ export default function TenantUserManagement() {
   // 表单数据
   const [inviteFormData, setInviteFormData] = useState<InviteTenantUserRequest>({
     email: '',
-    role: 'member',
+    role: 'user',
     message: ''
   })
   
   const [editFormData, setEditFormData] = useState<UpdateTenantUserRequest>({
-    role: 'member',
+    role: 'user',
     status: 'active'
   })
 
@@ -225,6 +225,7 @@ export default function TenantUserManagement() {
     switch (role) {
       case 'owner': return 'purple'
       case 'admin': return 'info'
+      case 'user':
       case 'member': return 'success'
       default: return 'default'
     }
@@ -236,6 +237,7 @@ export default function TenantUserManagement() {
         return '所有者'
       case 'admin':
         return '管理员'
+      case 'user':
       case 'member':
         return '成员'
       default:
@@ -271,7 +273,7 @@ export default function TenantUserManagement() {
       await tenantUserManagementApi.inviteTenantUser(inviteFormData)
       showMessage('success', '邀请发送成功')
       setShowInviteModal(false)
-      setInviteFormData({ email: '', role: 'member', message: '' })
+      setInviteFormData({ email: '', role: 'user', message: '' })
       fetchTenantUsers()
       fetchTenantUserStats()
     } catch (err: any) {
@@ -285,7 +287,7 @@ export default function TenantUserManagement() {
   const handleEditUser = (user: TenantUser) => {
     setEditingUser(user)
     setEditFormData({
-      role: user.role === 'owner' ? 'admin' : user.role as 'admin' | 'member',
+      role: user.role === 'owner' ? 'admin' : user.role === 'admin' ? 'admin' : 'user',
       status: user.status
     })
     setShowEditModal(true)
@@ -634,7 +636,7 @@ export default function TenantUserManagement() {
                     <option value="">所有角色</option>
                     <option value="owner">所有者</option>
                     <option value="admin">管理员</option>
-                    <option value="member">成员</option>
+                      <option value="user">成员</option>
                   </PSelect>
                 </div>
               </div>
@@ -998,10 +1000,10 @@ const InviteUserModal: React.FC<{
             <div>
               <PSelect
                 value={formData.role}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, role: e.target.value as 'admin' | 'member' })}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, role: e.target.value as 'admin' | 'user' })}
                 label="角色 *"
               >
-                <option value="member">成员</option>
+                <option value="user">成员</option>
                 <option value="admin">管理员</option>
               </PSelect>
             </div>
@@ -1070,10 +1072,10 @@ const EditUserModal: React.FC<{
             <div>
               <PSelect
                 value={formData.role}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, role: e.target.value as 'admin' | 'member' })}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, role: e.target.value as 'admin' | 'user' })}
                 label="角色"
               >
-                <option value="member">成员</option>
+                <option value="user">成员</option>
                 <option value="admin">管理员</option>
               </PSelect>
             </div>
