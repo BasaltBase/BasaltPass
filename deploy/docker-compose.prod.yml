@@ -13,10 +13,10 @@ services:
       - BASALTPASS_DATABASE_DSN=${BASALTPASS_DATABASE_DSN:?BASALTPASS_DATABASE_DSN is required}
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8101/health"]
-      interval: 30s
+      interval: 15s
       timeout: 5s
-      retries: 3
-      start_period: 10s
+      retries: 12
+      start_period: 90s
 
   frontend:
     image: ${FRONTEND_IMAGE}

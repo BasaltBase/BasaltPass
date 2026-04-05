@@ -232,6 +232,20 @@ jobs:
             sshpass -e ssh -p "${DEPLOY_PORT}" -o StrictHostKeyChecking=yes "${DEPLOY_USER}@${DEPLOY_HOST}" "${REMOTE_COMMAND}"
           fi
 
+      - name: Collect remote diagnostics on deploy failure
+        if: failure()
+        env:
+          DEPLOY_SSH_PASSWORD: ${{ secrets.DEPLOY_SSH_PASSWORD }}
+        run: |
+          REMOTE_DEBUG_COMMAND="cd '${DEPLOY_PATH}' && docker compose ps -a && echo '--- backend logs ---' && docker compose logs backend --tail 200"
+
+          if [ -n "${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}" ]; then
+            ssh -i ~/.ssh/id_ed25519 -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOST}" "${REMOTE_DEBUG_COMMAND}" || true
+          else
+            export SSHPASS="${DEPLOY_SSH_PASSWORD}"
+            sshpass -e ssh -p "${DEPLOY_PORT}" -o StrictHostKeyChecking=yes "${DEPLOY_USER}@${DEPLOY_HOST}" "${REMOTE_DEBUG_COMMAND}" || true
+          fi
+
       - name: Verify health check on server
         env:
           DEPLOY_SSH_PASSWORD: ${{ secrets.DEPLOY_SSH_PASSWORD }}
