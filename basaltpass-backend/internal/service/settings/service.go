@@ -133,10 +133,14 @@ func defaultItems() map[string]SettingItem {
 			"s2s.user.read",
 			"s2s.user.write",
 			"s2s.rbac.read",
+			"s2s.team.read",
+			"s2s.team.write",
 			"s2s.wallet.read",
 			"s2s.wallet.write",
 			"s2s.messages.read",
+			"s2s.notifications.write",
 			"s2s.products.read",
+			"s2s.email.send",
 		}, Category: "oauth", Description: "允许的 OAuth Scope 列表"},
 
 		// SMTP/Email

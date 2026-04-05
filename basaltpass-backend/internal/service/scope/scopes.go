@@ -19,10 +19,14 @@ func DefaultAllowedScopes() []string {
 		S2SUserRead,
 		S2SUserWrite,
 		S2SRBACRead,
+		S2STeamRead,
+		S2STeamWrite,
 		S2SWalletRead,
 		S2SWalletWrite,
 		S2SMessagesRead,
+		S2SNotificationsWrite,
 		S2SProductsRead,
+		S2SEmailSend,
 	}
 }
 
@@ -55,14 +59,22 @@ func Describe(s string) Meta {
 		return Meta{Scope: s, Category: "s2s", Title: "S2S User Write", Description: "修改用户基础资料（PATCH /api/v1/s2s/users/:id，仅限昵称等测试写入）"}
 	case S2SRBACRead:
 		return Meta{Scope: s, Category: "s2s", Title: "S2S RBAC Read", Description: "读取用户角色/权限（/roles、/permissions）"}
+	case S2STeamRead:
+		return Meta{Scope: s, Category: "s2s", Title: "S2S Team Read", Description: "读取团队信息与用户所属团队（/teams）"}
+	case S2STeamWrite:
+		return Meta{Scope: s, Category: "s2s", Title: "S2S Team Write", Description: "创建团队（POST /api/v1/s2s/teams）"}
 	case S2SWalletRead:
 		return Meta{Scope: s, Category: "s2s", Title: "S2S Wallet Read", Description: "读取用户钱包与交易记录（/wallets）"}
 	case S2SWalletWrite:
 		return Meta{Scope: s, Category: "s2s", Title: "S2S Wallet Write", Description: "调整用户钱包余额（POST /api/v1/s2s/users/:id/wallets/adjust）"}
 	case S2SMessagesRead:
 		return Meta{Scope: s, Category: "s2s", Title: "S2S Messages Read", Description: "读取用户消息/通知（/messages）"}
+	case S2SNotificationsWrite:
+		return Meta{Scope: s, Category: "s2s", Title: "S2S Notifications Write", Description: "向当前应用已授权用户发送通知（POST /api/v1/s2s/notifications）"}
 	case S2SProductsRead:
 		return Meta{Scope: s, Category: "s2s", Title: "S2S Products Read", Description: "读取用户产品拥有情况（/products、/ownership）"}
+	case S2SEmailSend:
+		return Meta{Scope: s, Category: "s2s", Title: "S2S Email Send", Description: "向当前应用已授权用户发送邮件（POST /api/v1/s2s/emails/send）"}
 	default:
 		return Meta{Scope: s, Category: "custom", Title: s, Description: "自定义/未知 scope（请确认后端是否有实际使用）"}
 	}
@@ -81,14 +93,18 @@ const (
 // Backward compatibility:
 // - Legacy umbrella scope "s2s.read" implies all "s2s.*.read" scopes.
 const (
-	S2SRead         = "s2s.read"
-	S2SUserRead     = "s2s.user.read"
-	S2SUserWrite    = "s2s.user.write"
-	S2SRBACRead     = "s2s.rbac.read"
-	S2SWalletRead   = "s2s.wallet.read"
-	S2SWalletWrite  = "s2s.wallet.write"
-	S2SMessagesRead = "s2s.messages.read"
-	S2SProductsRead = "s2s.products.read"
+	S2SRead               = "s2s.read"
+	S2SUserRead           = "s2s.user.read"
+	S2SUserWrite          = "s2s.user.write"
+	S2SRBACRead           = "s2s.rbac.read"
+	S2STeamRead           = "s2s.team.read"
+	S2STeamWrite          = "s2s.team.write"
+	S2SWalletRead         = "s2s.wallet.read"
+	S2SWalletWrite        = "s2s.wallet.write"
+	S2SMessagesRead       = "s2s.messages.read"
+	S2SNotificationsWrite = "s2s.notifications.write"
+	S2SProductsRead       = "s2s.products.read"
+	S2SEmailSend          = "s2s.email.send"
 )
 
 func NormalizeList(in []string) []string {
