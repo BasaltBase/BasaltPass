@@ -42,11 +42,21 @@ const FeatureList: FeatureItem[] = [
       </Translate>
     ),
   },
+  {
+    title: translate({message: 'S2S Ready', id: 'homepage.features.s2s.title'}),
+    icon: '🧩',
+    description: (
+      <Translate id="homepage.features.s2s.description">
+        Documented service-to-service APIs for user lookup, wallet access, teams,
+        notifications, and app-triggered email delivery.
+      </Translate>
+    ),
+  },
 ];
 
 function Feature({title, icon, description}: FeatureItem) {
   return (
-    <div className={clsx('col col--4')}>
+    <div className={clsx('col col--6', 'margin-bottom--lg')}>
       <div className="text--center">
         <span style={{fontSize: '5rem'}} role="img" aria-label={title}>
           {icon}

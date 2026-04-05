@@ -2,6 +2,10 @@
 
 一个最小可用的 Python SDK，用于访问 BasaltPass 的 S2S API（/api/v1/s2s）。
 
+完整接口参考见：
+
+- `../../basaltpass-docs/docs/reference/s2s-api.md`
+
 ## 安装
 
 ```bash
@@ -47,6 +51,31 @@ print(adjusted)
 
 client.close()
 ```
+
+## 当前 SDK 已封装的接口
+
+- `GET /api/v1/s2s/users/{id}`
+- `GET /api/v1/s2s/users/{id}/roles`
+- `GET /api/v1/s2s/users/{id}/permissions`
+- `GET /api/v1/s2s/users/{id}/wallets`
+- `POST /api/v1/s2s/users/{id}/wallets/adjust`
+- `GET /api/v1/s2s/users/{id}/messages`
+- `GET /api/v1/s2s/users/{id}/products`
+- `GET /api/v1/s2s/users/{id}/products/{product_id}/ownership`
+
+## 后端已支持但 SDK 尚未封装的接口
+
+- `GET /api/v1/s2s/health`
+- `GET /api/v1/s2s/me`
+- `GET /api/v1/s2s/users/lookup`
+- `PATCH /api/v1/s2s/users/{id}`
+- `GET /api/v1/s2s/users/{id}/role-codes`
+- `GET /api/v1/s2s/teams`
+- `POST /api/v1/s2s/teams`
+- `GET /api/v1/s2s/teams/{id}`
+- `GET /api/v1/s2s/users/{id}/teams`
+- `POST /api/v1/s2s/notifications`
+- `POST /api/v1/s2s/emails/send`
 
 ## 错误处理
 

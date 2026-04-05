@@ -7,9 +7,17 @@
     "message": "BasaltPass Logo",
     "description": "The alt text of navbar logo"
   },
-  "item.label.Documentation": {
+  "item.label.Docs": {
     "message": "文档",
-    "description": "Navbar item with label Documentation"
+    "description": "Navbar item with label Docs"
+  },
+  "item.label.Integration": {
+    "message": "集成",
+    "description": "Navbar item with label Integration"
+  },
+  "item.label.S2S API": {
+    "message": "S2S API",
+    "description": "Navbar item with label S2S API"
   },
   "item.label.Blog": {
     "message": "博客",

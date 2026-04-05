@@ -3,9 +3,133 @@
     "message": "安全、可扩展且隔离的多租户身份验证系统。",
     "description": "Tagline on the homepage"
   },
+  "homepage.eyebrow": {
+    "message": "产品文档",
+    "description": "Hero eyebrow"
+  },
   "homepage.getStarted": {
     "message": "开始使用 - 5分钟 ⏱️",
     "description": "Button to get started"
+  },
+  "homepage.s2sApi": {
+    "message": "查看 S2S API",
+    "description": "Button to open S2S API"
+  },
+  "homepage.quicklinks.heading": {
+    "message": "从这里开始",
+    "description": "Quick links section heading"
+  },
+  "homepage.quicklinks.subheading": {
+    "message": "按你当前要做的事情，直接进入对应文档。",
+    "description": "Quick links section subheading"
+  },
+  "homepage.quicklinks.getStarted.title": {
+    "message": "快速开始",
+    "description": "Quick links get started title"
+  },
+  "homepage.quicklinks.getStarted.description": {
+    "message": "了解产品定位、整体架构，以及如何最快在本地跑起 BasaltPass。",
+    "description": "Quick links get started description"
+  },
+  "homepage.quicklinks.integration.title": {
+    "message": "集成指南",
+    "description": "Quick links integration title"
+  },
+  "homepage.quicklinks.integration.description": {
+    "message": "覆盖 OAuth2、OIDC、PKCE、客户端注册、令牌校验和常见集成排障。",
+    "description": "Quick links integration description"
+  },
+  "homepage.quicklinks.s2s.title": {
+    "message": "S2S API",
+    "description": "Quick links S2S title"
+  },
+  "homepage.quicklinks.s2s.description": {
+    "message": "面向服务端对接的用户查询、RBAC、钱包、团队、通知和应用邮件接口。",
+    "description": "Quick links S2S description"
+  },
+  "homepage.quicklinks.reference.title": {
+    "message": "参考资料",
+    "description": "Quick links reference title"
+  },
+  "homepage.quicklinks.reference.description": {
+    "message": "查看 API 约定、数据模型、仓库结构和架构参考，适合更深入的开发工作。",
+    "description": "Quick links reference description"
+  },
+  "homepage.audience.heading": {
+    "message": "按角色进入",
+    "description": "Audience section heading"
+  },
+  "homepage.audience.subheading": {
+    "message": "BasaltPass 同时服务于应用开发者、租户管理员和平台管理员，从最贴近你职责的入口开始。",
+    "description": "Audience section subheading"
+  },
+  "homepage.audience.app.eyebrow": {
+    "message": "应用开发者",
+    "description": "Audience eyebrow"
+  },
+  "homepage.audience.app.title": {
+    "message": "集成登录、令牌与应用到应用的工作流",
+    "description": "Audience title"
+  },
+  "homepage.audience.app.description": {
+    "message": "先从 OAuth2/OIDC 集成开始，再进入 S2S API，用于用户数据、钱包、团队流程和应用触发消息。",
+    "description": "Audience description"
+  },
+  "homepage.audience.tenant.eyebrow": {
+    "message": "租户管理员",
+    "description": "Audience eyebrow"
+  },
+  "homepage.audience.tenant.title": {
+    "message": "管理应用、用户、权限和租户内容",
+    "description": "Audience title"
+  },
+  "homepage.audience.tenant.description": {
+    "message": "当你在配置应用、管理用户访问、组织团队和执行租户级运营时，从租户相关文档进入最顺手。",
+    "description": "Audience description"
+  },
+  "homepage.audience.platform.eyebrow": {
+    "message": "平台管理员",
+    "description": "Audience eyebrow"
+  },
+  "homepage.audience.platform.title": {
+    "message": "运行平台、查看架构并控制系统行为",
+    "description": "Audience title"
+  },
+  "homepage.audience.platform.description": {
+    "message": "部署、路由地图、数据模型和平台级治理相关内容，适合直接从参考资料和项目文档进入。",
+    "description": "Audience description"
+  },
+  "homepage.capabilities.heading": {
+    "message": "BasaltPass 已覆盖的核心能力",
+    "description": "Capabilities heading"
+  },
+  "homepage.capabilities.link": {
+    "message": "查看平台参考资料",
+    "description": "Capabilities link"
+  },
+  "homepage.capabilities.oidc.label": {
+    "message": "身份协议",
+    "description": "Capability label"
+  },
+  "homepage.capabilities.oidc.value": {
+    "message": "OAuth2、OIDC、PKCE",
+    "description": "Capability value"
+  },
+  "homepage.capabilities.multitenant.label": {
+    "message": "隔离模型",
+    "description": "Capability label"
+  },
+  "homepage.capabilities.multitenant.value": {
+    "message": "按 tenant 组织用户、应用和 RBAC",
+    "description": "Capability value"
+  },
+  "homepage.capabilities.s2s.label": {
+    "message": "自动化能力",
+    "description": "Capability label"
+  },
+  "homepage.capabilities.s2s.value": {
+    "message": "S2S API 覆盖钱包、团队、通知和邮件",
+    "description": "Capability value"
   },
   "homepage.features.multitenant.title": {
     "message": "原生多租户",
@@ -29,6 +153,14 @@
   },
   "homepage.features.secure.description": {
     "message": "具有现代安全实践，如 PKCE、RBAC 和审计日志。旨在随您的用户群扩展。",
+    "description": "Feature description"
+  },
+  "homepage.features.s2s.title": {
+    "message": "S2S 就绪",
+    "description": "Feature title"
+  },
+  "homepage.features.s2s.description": {
+    "message": "提供面向服务端的 S2S 文档与接口，覆盖用户查询、钱包、团队、通知和应用触发邮件发送。",
     "description": "Feature description"
   }
 }

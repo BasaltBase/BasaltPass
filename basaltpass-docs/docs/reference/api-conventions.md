@@ -16,7 +16,7 @@ BasaltPass APIs follow RESTful principles and standard HTTP status codes.
 Most endpoints require authentication via the `Authorization` header.
 
 -   **User/Tenant/Admin APIs**: `Bearer <jwt_token>`
--   **S2S APIs**: `Bearer <client_credentials_token>` (or Basic Auth for token endpoint).
+-   **S2S APIs**: direct `client_id` / `client_secret` credentials on each request. Preferred transport is request headers.
 
 ## Response Format
 

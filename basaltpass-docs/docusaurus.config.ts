@@ -72,8 +72,10 @@ const config: Config = {
           type: 'docSidebar',
           sidebarId: 'tutorialSidebar',
           position: 'left',
-          label: 'Documentation',
+          label: 'Docs',
         },
+        {to: '/docs/integration/overview', label: 'Integration', position: 'left'},
+        {to: '/docs/reference/s2s-api', label: 'S2S API', position: 'left'},
         { to: '/blog', label: 'Blog', position: 'left' },
         {
           href: 'https://github.com/BasaltBase/BasaltPass',
@@ -93,12 +95,16 @@ const config: Config = {
           title: 'Docs',
           items: [
             {
-              label: 'Introduction',
+              label: 'Get Started',
               to: '/docs/intro/what-is-basaltpass',
             },
             {
               label: 'Integration Guide',
               to: '/docs/integration/oauth2-oidc',
+            },
+            {
+              label: 'S2S API',
+              to: '/docs/reference/s2s-api',
             },
           ],
         },
@@ -108,6 +114,19 @@ const config: Config = {
             {
               label: 'GitHub',
               href: 'https://github.com/BasaltBase/BasaltPass',
+            },
+          ],
+        },
+        {
+          title: 'More',
+          items: [
+            {
+              label: 'Reference',
+              to: '/docs/reference/api-conventions',
+            },
+            {
+              label: 'Project Docs',
+              to: '/docs/project/ROUTES',
             },
           ],
         },

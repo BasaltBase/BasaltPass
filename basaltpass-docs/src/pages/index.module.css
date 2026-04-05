@@ -1,23 +1,198 @@
-/**
- * CSS files with the .module.css suffix will be treated as CSS modules
- * and scoped locally.
- */
-
 .heroBanner {
-  padding: 4rem 0;
-  text-align: center;
+  padding: 5rem 0 4rem;
   position: relative;
   overflow: hidden;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.16), transparent 28%),
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.12), transparent 24%);
 }
 
-@media screen and (max-width: 996px) {
-  .heroBanner {
-    padding: 2rem;
-  }
+.heroLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.9fr);
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.heroContent {
+  text-align: left;
+}
+
+.heroEyebrow {
+  margin: 0 0 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.82rem;
+  font-weight: 700;
+  opacity: 0.88;
+}
+
+.heroTitle {
+  margin-bottom: 0.75rem;
+}
+
+.heroSubtitle {
+  margin: 0;
+  max-width: 42rem;
+  font-size: 1.15rem;
+  line-height: 1.65;
+}
+
+.heroPanel {
+  padding: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 1.25rem;
+  background: rgba(7, 18, 14, 0.18);
+  backdrop-filter: blur(10px);
+  text-align: left;
+}
+
+.heroPanelTitle {
+  margin: 0 0 1rem;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.capabilityList {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.capabilityItem {
+  display: grid;
+  gap: 0.18rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.capabilityItem:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.capabilityLabel {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.78;
+}
+
+.capabilityValue {
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.heroPanelLink {
+  display: inline-block;
+  margin-top: 1rem;
+  color: #fff;
+  font-weight: 600;
+}
+
+.heroPanelLink:hover {
+  color: #fff;
 }
 
 .buttons {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+}
+
+.audienceSection,
+.quickLinksSection {
+  padding: 3rem 0 1rem;
+}
+
+.sectionHeading {
+  margin-bottom: 1.5rem;
+}
+
+.sectionHeading h2 {
+  margin-bottom: 0.5rem;
+}
+
+.sectionHeading p {
+  margin: 0;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.audienceGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.audienceCard,
+.quickLinkCard {
+  display: block;
+  padding: 1.25rem;
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 1rem;
+  background: var(--ifm-background-surface-color);
+  color: inherit;
+  text-decoration: none;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.audienceCard:hover,
+.quickLinkCard:hover {
+  color: inherit;
+  text-decoration: none;
+  transform: translateY(-2px);
+  border-color: var(--ifm-color-primary);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+}
+
+.audienceEyebrow {
+  display: inline-block;
+  margin-bottom: 0.75rem;
+  color: var(--ifm-color-primary);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.audienceCard h3,
+.quickLinkCard h3 {
+  margin-bottom: 0.5rem;
+}
+
+.audienceCard p,
+.quickLinkCard p {
+  margin: 0;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.quickLinksGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media screen and (max-width: 996px) {
+  .heroBanner {
+    padding: 2.5rem 0 2rem;
+  }
+
+  .heroLayout,
+  .audienceGrid,
+  .quickLinksGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .heroContent {
+    text-align: center;
+  }
+
+  .buttons {
+    justify-content: center;
+  }
 }

@@ -76,7 +76,7 @@ go run ./cmd/basaltpass
 ## API
 
 - 健康检查: `GET /health`
-- S2S 接口说明: `../docs/reference/s2s-api.md`
+- S2S 接口说明: `../basaltpass-docs/docs/reference/s2s-api.md`
 
 ## 系统设置
 

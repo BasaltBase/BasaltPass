@@ -2,29 +2,31 @@
 sidebar_position: 1
 ---
 
-# API Conventions
+# API 约定
 
-BasaltPass APIs follow RESTful principles and standard HTTP status codes.
+BasaltPass API 遵循 REST 风格和标准 HTTP 状态码。
 
-## Base URL
+## 基础地址
 
--   **Development**: `http://localhost:8101/api/v1`
--   **Production**: `https://your-domain.com/api/v1`
+-   **开发环境**: `http://localhost:8101/api/v1`
+-   **生产环境**: `https://your-domain.com/api/v1`
 
-## Authentication
+## 认证方式
 
-Most endpoints require authentication via the `Authorization` header.
+大多数接口都需要认证。
 
--   **User/Tenant/Admin APIs**: `Bearer <jwt_token>`
--   **S2S APIs**: `Bearer <client_credentials_token>` (or Basic Auth for token endpoint).
+-   **User / Tenant / Admin API**: `Authorization: Bearer <jwt_token>`
+-   **S2S API**: 每次请求直接携带 `client_id` 与 `client_secret`，推荐放在请求头中
 
-## Response Format
+## 响应格式
 
-### Standard Response
-Successful requests typically return a JSON object, often wrapped in `data`.
+### 成功响应
 
-### Error Response
-Errors return a non-2xx status code and a JSON body.
+成功时通常返回 JSON 对象，常见格式为 `data` 包裹。
+
+### 错误响应
+
+错误时返回非 2xx 状态码以及 JSON 响应体。
 
 ```json
 {
@@ -36,7 +38,8 @@ Errors return a non-2xx status code and a JSON body.
 }
 ```
 
-> **Note**: Always check the HTTP Status Code first.
+> **注意**: 请优先检查 HTTP 状态码。
 
 ## Request ID
-Every request is assigned a unique `request_id`. This ID is returned in headers (`X-Request-Id`) and often in the error body. Please quote this ID when reporting issues.
+
+每个请求都会分配唯一的 `request_id`。它会出现在响应头 `X-Request-Id` 中，也经常出现在错误响应体里。排查问题时请一并提供。
