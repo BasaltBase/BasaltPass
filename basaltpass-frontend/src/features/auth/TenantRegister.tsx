@@ -3,7 +3,7 @@ import PSkeleton from '@ui/PSkeleton'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import client from '@api/client'
 import { useConfig } from '@contexts/ConfigContext'
-import { fetchPublicTenantByCode } from '@api/publicTenant'
+import { fetchPublicTenantByCode } from '@api/public/tenant'
 import { PInput, PButton, PCheckbox, PAlert } from '@ui'
 
 const getPasswordStrength = (value: string) => {

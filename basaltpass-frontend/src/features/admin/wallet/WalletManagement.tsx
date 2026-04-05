@@ -15,7 +15,7 @@ import {
   UserGroupIcon,
   WalletIcon
 } from '@heroicons/react/24/outline';
-import { adminWalletApi, Wallet, Currency, CreateWalletRequest, AdjustBalanceRequest, AdjustOwnerWalletRequest, WalletTransaction } from '@api/adminWallet';
+import { adminWalletApi, Wallet, Currency, CreateWalletRequest, AdjustBalanceRequest, AdjustOwnerWalletRequest, WalletTransaction } from '@api/admin/wallet';
 import AdminLayout from '@features/admin/components/AdminLayout';
 import WalletStatsCard from '@features/admin/components/WalletStatsCard';
 import { PInput, PSelect, PButton, PCard, PSkeleton, PBadge, PTextarea, UserTooltip } from '@ui';

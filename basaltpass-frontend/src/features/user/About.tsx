@@ -4,8 +4,11 @@ import Layout from '@features/user/components/Layout'
 import { PCard } from '@ui'
 import { ROUTES } from '@constants'
 import { ArrowLeftIcon } from '@heroicons/react/24/outline'
+import { buildInfo } from '@shared/generated/buildInfo'
 
 const About: React.FC = () => {
+  const currentYear = new Date().getFullYear()
+
   return (
     <Layout>
       <div className="max-w-4xl mx-auto space-y-8">
@@ -64,11 +67,11 @@ const About: React.FC = () => {
           <h2 className="text-lg font-semibold text-gray-900 mb-4">版本信息</h2>
           <div className="grid grid-cols-3 gap-6 text-center">
             <div>
-              <div className="text-2xl font-bold text-gray-900">v1.0.0</div>
+              <div className="text-2xl font-bold text-gray-900">{buildInfo.version}</div>
               <div className="text-sm text-gray-500">当前版本</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-gray-900">2025</div>
+              <div className="text-2xl font-bold text-gray-900">{currentYear}</div>
               <div className="text-sm text-gray-500">发布年份</div>
             </div>
             <div>
@@ -80,6 +83,10 @@ const About: React.FC = () => {
 
         {/* 联系信息 */}
         <div className="text-center text-sm text-gray-600 pb-8">
+          <Link to={ROUTES.user.copyright} className="text-blue-600 hover:underline">
+            软件版权
+          </Link>
+          {' · '}
           <a href="https://github.com/BasaltBase/BasaltPass" className="text-blue-600 hover:underline">
             GitHub
           </a>

@@ -3,7 +3,7 @@ import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { adminUserApi, type AdminUserDetail } from '@api/admin/user'
 import { adminTenantApi, type AdminAdjustTenantUserWalletRequest } from '@api/admin/tenant'
-import { adminWalletApi, type Currency } from '@api/adminWallet'
+import { adminWalletApi, type Currency } from '@api/admin/wallet'
 import { 
   ChevronRightIcon, 
   PencilIcon,

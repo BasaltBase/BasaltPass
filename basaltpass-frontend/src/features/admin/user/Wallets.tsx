@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { adminWalletApi, type Wallet } from '@api/adminWallet'
+import { adminWalletApi, type Wallet } from '@api/admin/wallet'
 import { Link } from 'react-router-dom'
 import { ArrowPathIcon, ChevronRightIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 import AdminLayout from '@features/admin/components/AdminLayout'

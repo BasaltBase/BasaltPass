@@ -4,6 +4,7 @@ import Profile from '@pages/user/profile/Index'
 import Settings from '@pages/user/Settings'
 import Help from '@pages/user/Help'
 import About from '@pages/user/About'
+import SoftwareCopyright from '@pages/user/SoftwareCopyright'
 import Notifications from '@pages/user/Notifications'
 import { withProtected } from '@/routes/helpers'
 
@@ -15,6 +16,7 @@ export function UserCoreRoutes() {
       <Route path="/settings" element={withProtected(<Settings />)} />
       <Route path="/help" element={withProtected(<Help />)} />
       <Route path="/about" element={withProtected(<About />)} />
+      <Route path="/copyright" element={withProtected(<SoftwareCopyright />)} />
       <Route path="/notifications" element={withProtected(<Notifications />)} />
     </>
   )

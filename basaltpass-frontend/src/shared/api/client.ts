@@ -1,44 +1,18 @@
 import axios from 'axios'
-import { getAccessToken, clearAccessToken, getAuthScope, setAccessToken } from '../utils/auth'
+import { clearAccessToken, clearScopeCookies, getAccessToken, getAuthScope, setAccessToken } from '../utils/auth'
 import { updateStoredUserSessionToken } from '../utils/userSessions'
 import { setSessionNotice } from '../utils/sessionNotice'
-
-const inferDefaultApiBase = () => {
-  if (typeof window !== 'undefined' && window.location?.hostname) {
-    return `${window.location.protocol}//${window.location.hostname}:8101`
-  }
-  return 'http://127.0.0.1:8101'
-}
-
-const normalizeApiBase = (rawBase?: string) => {
-  const fallback = inferDefaultApiBase()
-  const value = String(rawBase || fallback).trim()
-
-  try {
-    const url = new URL(value)
-    return url.toString().replace(/\/$/, '')
-  } catch {
-    return fallback
-  }
-}
-
-const normalizeTimeoutMs = (rawTimeout: unknown, fallback = 30000) => {
-  const parsed = Number(rawTimeout)
-  if (Number.isFinite(parsed) && parsed > 0) {
-    return parsed
-  }
-  return fallback
-}
+import { getApiBase, getApiTimeoutMs, getConsoleUserUrl } from '../config/env'
 
 const client = axios.create({
-  baseURL: normalizeApiBase((import.meta as any).env?.VITE_API_BASE),
+  baseURL: getApiBase(),
   withCredentials: true,
-  timeout: normalizeTimeoutMs((import.meta as any).env?.VITE_API_TIMEOUT_MS, 30000),
+  timeout: getApiTimeoutMs(),
 })
 
 const buildSessionExpiredRedirect = () => {
   const scope = getAuthScope()
-  const userConsoleUrl = String((import.meta as any).env?.VITE_CONSOLE_USER_URL || '').replace(/\/+$/, '')
+  const userConsoleUrl = getConsoleUserUrl().replace(/\/+$/, '')
 
   if (scope === 'tenant' || scope === 'admin') {
     if (userConsoleUrl) {
@@ -143,8 +117,7 @@ client.interceptors.response.use(
         setSessionNotice('session_expired')
         const scope = getAuthScope()
         if (scope === 'tenant' || scope === 'admin') {
-          document.cookie = `access_token_${scope}=; Max-Age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax`
-          document.cookie = `refresh_token_${scope}=; Max-Age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax`
+          clearScopeCookies(scope)
         }
         
         // 如果是在非登录页面，跳转到登录页

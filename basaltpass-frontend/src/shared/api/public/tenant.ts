@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { getApiBase, getPublicTenantTimeoutMs, inferDefaultApiBase } from '../../config/env'
 
 type TenantPublicInfo = {
   id: number
@@ -8,17 +9,10 @@ type TenantPublicInfo = {
 
 const tenantDataCache = new Map<string, TenantPublicInfo>()
 const tenantInFlightCache = new Map<string, Promise<TenantPublicInfo>>()
-const tenantRequestTimeoutMs = Number((import.meta as any).env?.VITE_PUBLIC_TENANT_TIMEOUT_MS || 15000)
-
-const inferDefaultApiBase = () => {
-  if (typeof window !== 'undefined' && window.location?.hostname) {
-    return `${window.location.protocol}//${window.location.hostname}:8101`
-  }
-  return 'http://localhost:8101'
-}
+const tenantRequestTimeoutMs = getPublicTenantTimeoutMs()
 
 const buildBaseCandidates = () => {
-  const base = String((import.meta as any).env?.VITE_API_BASE || inferDefaultApiBase()).replace(/\/$/, '')
+  const base = getApiBase() || inferDefaultApiBase()
   const candidates = [base]
   if (base.includes('localhost')) {
     candidates.push(base.replace('localhost', '127.0.0.1'))

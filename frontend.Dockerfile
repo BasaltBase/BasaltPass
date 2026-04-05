@@ -11,6 +11,7 @@ ENV VITE_CONSOLE_ADMIN_URL=$VITE_CONSOLE_ADMIN_URL
 COPY basaltpass-frontend/package.json ./
 COPY basaltpass-frontend/package-lock.json ./
 RUN npm ci
+COPY .git ./.git
 COPY basaltpass-frontend/ ./
 RUN npm run build
 

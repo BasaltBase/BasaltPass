@@ -6,7 +6,7 @@ import {
   ArrowTrendingUpIcon,
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
-import { adminWalletApi, WalletStats } from '@api/adminWallet';
+import { adminWalletApi, WalletStats } from '@api/admin/wallet';
 import { PButton } from '@ui';
 
 interface WalletStatsCardProps {}

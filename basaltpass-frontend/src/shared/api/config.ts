@@ -1,4 +1,5 @@
 import client from './client'
+import { getPublicConfigTimeoutMs } from '../config/env'
 
 export interface PublicConfig {
   market_enabled: boolean
@@ -11,8 +12,7 @@ class ConfigAPI {
   private readonly timeoutMs: number
 
   constructor() {
-    const raw = Number((import.meta as any).env?.VITE_PUBLIC_CONFIG_TIMEOUT_MS)
-    this.timeoutMs = Number.isFinite(raw) && raw > 0 ? raw : 5000
+    this.timeoutMs = getPublicConfigTimeoutMs()
   }
 
   async getPublicConfig(): Promise<PublicConfig> {

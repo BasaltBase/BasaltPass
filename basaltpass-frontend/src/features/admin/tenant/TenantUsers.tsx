@@ -27,7 +27,7 @@ import {
   AdminTenantUpdateUserRequest,
   AdminTenantUserDetail
 } from '@api/admin/tenant'
-import { adminWalletApi, Currency } from '@api/adminWallet'
+import { adminWalletApi, Currency } from '@api/admin/wallet'
 import TenantUserDetailDrawer from '@features/admin/components/TenantUserDetailDrawer'
 import Modal from '@ui/common/Modal'
 import { PSkeleton, PBadge, PAlert, PPagination, PButton, PInput, PSelect, PPageHeader } from '@ui'

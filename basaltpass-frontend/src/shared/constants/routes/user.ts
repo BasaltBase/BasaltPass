@@ -21,5 +21,6 @@ export const USER_ROUTES = {
   securityLoginHistory: '/security/login-history',
   settings: '/settings',
   help: '/help',
-  about: '/about'
+  about: '/about',
+  copyright: '/copyright'
 } as const
