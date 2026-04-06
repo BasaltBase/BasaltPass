@@ -23,7 +23,7 @@ import { tenantAppApi } from '@api/tenant/tenantApp'
 import { appUserApi, type AppUser, type AppUsersResponse } from '@api/tenant/appUser'
 import { userPermissionsApi, type Permission, type Role, type UserPermission, type UserRole } from '@api/tenant/appPermissions'
 import useDebounce from '@hooks/useDebounce'
-import { PSkeleton, PBadge, PPagination, PPageHeader, PEmptyState, PButton } from '@ui'
+import { PSkeleton, PBadge, PPagination, PPageHeader, PEmptyState, PButton, PCard } from '@ui'
 
 export default function AppUserManagement() {
   const { id: appId } = useParams<{ id: string }>()
@@ -681,10 +681,10 @@ export default function AppUserManagement() {
                               <div key={userPerm.id} className="flex items-center justify-between rounded-lg border bg-white p-3">
                                 <div className="flex-1">
                                   <div className="text-sm font-medium text-gray-900">
-                                    {userPerm.permission.name}
+                                    {userPerm.permission?.name || `权限 #${userPerm.permission_id}`}
                                   </div>
                                   <div className="text-xs text-gray-500">
-                                    {userPerm.permission.description}
+                                    {userPerm.permission?.description || '权限详情不可用'}
                                   </div>
                                   {userPerm.expires_at && (
                                     <div className="text-xs text-orange-600 mt-1">
@@ -722,13 +722,13 @@ export default function AppUserManagement() {
                               <div key={userRole.id} className="flex items-center justify-between rounded-lg border bg-white p-3">
                                 <div className="flex-1">
                                   <div className="text-sm font-medium text-gray-900">
-                                    {userRole.role.name}
+                                    {userRole.role?.name || `角色 #${userRole.role_id}`}
                                   </div>
                                   <div className="text-xs text-gray-500">
-                                    {userRole.role.description}
+                                    {userRole.role?.description || '角色详情不可用'}
                                   </div>
                                   <div className="text-xs text-blue-600 mt-1">
-                                    包含 {userRole.role.permissions?.length || 0} 个权限
+                                    包含 {userRole.role?.permissions?.length || 0} 个权限
                                   </div>
                                   {userRole.expires_at && (
                                     <div className="text-xs text-orange-600 mt-1">

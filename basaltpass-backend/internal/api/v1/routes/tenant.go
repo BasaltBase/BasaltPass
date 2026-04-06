@@ -243,6 +243,7 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 
 	// 应用用户权限管理路由
 	tenantAppGroup.Get("/:app_id/users/:user_id/permissions", app_rbac2.GetUserPermissions)
+	tenantAppGroup.Get("/:app_id/users/:user_id/roles", app_rbac2.GetUserRoles)
 	tenantAppGroup.Post("/:app_id/users/:user_id/check-access", app_rbac2.CheckUserAccess)
 	tenantAppGroup.Post("/:app_id/users/:user_id/permissions", app_rbac2.GrantUserPermissions)
 	tenantAppGroup.Delete("/:app_id/users/:user_id/permissions/:permission_id", app_rbac2.RevokeUserPermission)

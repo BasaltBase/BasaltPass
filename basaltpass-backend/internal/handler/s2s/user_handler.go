@@ -3,10 +3,11 @@ package s2s
 import (
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
-	"basaltpass-backend/internal/service/rbac"
 	"basaltpass-backend/internal/service/wallet"
+	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -67,6 +68,15 @@ func userInTenant(userID uint, tenantID uint) (bool, error) {
 	return count > 0, err
 }
 
+func s2sAppID(c *fiber.Ctx) (uint, error) {
+	appIDAny := c.Locals("s2s_app_id")
+	appID, ok := appIDAny.(uint)
+	if !ok || appID == 0 {
+		return 0, fiber.NewError(fiber.StatusBadRequest, "invalid app context")
+	}
+	return appID, nil
+}
+
 // GET /api/v1/s2s/users/:id
 func GetUserByIDHandler(c *fiber.Ctx) error {
 	idStr := c.Params("id")
@@ -124,7 +134,23 @@ func GetUserRolesHandler(c *fiber.Ctx) error {
 		return unifiedResponse(c, fiber.StatusNotFound, nil, fiber.Map{"code": "not_found", "message": "user not found"})
 	}
 
-	roles, err := rbac.GetUserRoles(uint(uid64), tenantID)
+	appID, err := s2sAppID(c)
+	if err != nil {
+		status := fiber.StatusBadRequest
+		if ferr, ok := err.(*fiber.Error); ok {
+			status = ferr.Code
+		}
+		return unifiedResponse(c, status, nil, fiber.Map{"code": "invalid_parameter", "message": err.Error()})
+	}
+
+	var roles []model.AppRole
+	err = common.DB().Table("app_user_roles").
+		Select("app_roles.*").
+		Joins("JOIN app_roles ON app_roles.id = app_user_roles.role_id").
+		Where("app_user_roles.user_id = ? AND app_user_roles.app_id = ?", uint(uid64), appID).
+		Where("app_user_roles.expires_at IS NULL OR app_user_roles.expires_at > ?", time.Now()).
+		Order("app_roles.id ASC").
+		Find(&roles).Error
 	if err != nil {
 		return unifiedResponse(c, fiber.StatusInternalServerError, nil, fiber.Map{"code": "server_error", "message": err.Error()})
 	}
@@ -159,16 +185,65 @@ func GetUserPermissionsHandler(c *fiber.Ctx) error {
 		return unifiedResponse(c, fiber.StatusNotFound, nil, fiber.Map{"code": "not_found", "message": "user not found"})
 	}
 
-	permissionCodes, err := rbac.GetUserPermissionCodes(uint(uid64), tenantID)
+	appID, err := s2sAppID(c)
 	if err != nil {
-		return unifiedResponse(c, fiber.StatusInternalServerError, nil, fiber.Map{"code": "server_error", "message": err.Error()})
+		status := fiber.StatusBadRequest
+		if ferr, ok := err.(*fiber.Error); ok {
+			status = ferr.Code
+		}
+		return unifiedResponse(c, status, nil, fiber.Map{"code": "invalid_parameter", "message": err.Error()})
 	}
 
-	// Backward compatibility: keep returning role codes too (previously mislabeled as permissions).
-	roleCodes, err := rbac.GetUserRoleCodes(uint(uid64), tenantID)
+	permissionSet := map[string]struct{}{}
+
+	var directPermissionCodes []string
+	err = common.DB().Table("app_user_permissions").
+		Select("app_permissions.code").
+		Joins("JOIN app_permissions ON app_permissions.id = app_user_permissions.permission_id").
+		Where("app_user_permissions.user_id = ? AND app_user_permissions.app_id = ?", uint(uid64), appID).
+		Where("app_user_permissions.expires_at IS NULL OR app_user_permissions.expires_at > ?", time.Now()).
+		Pluck("app_permissions.code", &directPermissionCodes).Error
 	if err != nil {
 		return unifiedResponse(c, fiber.StatusInternalServerError, nil, fiber.Map{"code": "server_error", "message": err.Error()})
 	}
+	for _, code := range directPermissionCodes {
+		permissionSet[code] = struct{}{}
+	}
+
+	var rolePermissionCodes []string
+	err = common.DB().Table("app_user_roles").
+		Select("DISTINCT app_permissions.code").
+		Joins("JOIN app_roles ON app_roles.id = app_user_roles.role_id").
+		Joins("JOIN app_role_permissions ON app_role_permissions.app_role_id = app_roles.id").
+		Joins("JOIN app_permissions ON app_permissions.id = app_role_permissions.app_permission_id").
+		Where("app_user_roles.user_id = ? AND app_user_roles.app_id = ?", uint(uid64), appID).
+		Where("app_user_roles.expires_at IS NULL OR app_user_roles.expires_at > ?", time.Now()).
+		Pluck("app_permissions.code", &rolePermissionCodes).Error
+	if err != nil {
+		return unifiedResponse(c, fiber.StatusInternalServerError, nil, fiber.Map{"code": "server_error", "message": err.Error()})
+	}
+	for _, code := range rolePermissionCodes {
+		permissionSet[code] = struct{}{}
+	}
+
+	permissionCodes := make([]string, 0, len(permissionSet))
+	for code := range permissionSet {
+		permissionCodes = append(permissionCodes, code)
+	}
+	sort.Strings(permissionCodes)
+
+	// Backward compatibility: keep returning role codes too (previously mislabeled as permissions).
+	var roleCodes []string
+	err = common.DB().Table("app_user_roles").
+		Select("DISTINCT app_roles.code").
+		Joins("JOIN app_roles ON app_roles.id = app_user_roles.role_id").
+		Where("app_user_roles.user_id = ? AND app_user_roles.app_id = ?", uint(uid64), appID).
+		Where("app_user_roles.expires_at IS NULL OR app_user_roles.expires_at > ?", time.Now()).
+		Pluck("app_roles.code", &roleCodes).Error
+	if err != nil {
+		return unifiedResponse(c, fiber.StatusInternalServerError, nil, fiber.Map{"code": "server_error", "message": err.Error()})
+	}
+	sort.Strings(roleCodes)
 
 	return unifiedResponse(c, fiber.StatusOK, fiber.Map{
 		"permission_codes": permissionCodes,
@@ -199,10 +274,27 @@ func GetUserRoleCodesHandler(c *fiber.Ctx) error {
 	if !ok {
 		return unifiedResponse(c, fiber.StatusNotFound, nil, fiber.Map{"code": "not_found", "message": "user not found"})
 	}
-	roleCodes, err := rbac.GetUserRoleCodes(uint(uid64), tenantID)
+
+	appID, err := s2sAppID(c)
+	if err != nil {
+		status := fiber.StatusBadRequest
+		if ferr, ok := err.(*fiber.Error); ok {
+			status = ferr.Code
+		}
+		return unifiedResponse(c, status, nil, fiber.Map{"code": "invalid_parameter", "message": err.Error()})
+	}
+
+	var roleCodes []string
+	err = common.DB().Table("app_user_roles").
+		Select("DISTINCT app_roles.code").
+		Joins("JOIN app_roles ON app_roles.id = app_user_roles.role_id").
+		Where("app_user_roles.user_id = ? AND app_user_roles.app_id = ?", uint(uid64), appID).
+		Where("app_user_roles.expires_at IS NULL OR app_user_roles.expires_at > ?", time.Now()).
+		Pluck("app_roles.code", &roleCodes).Error
 	if err != nil {
 		return unifiedResponse(c, fiber.StatusInternalServerError, nil, fiber.Map{"code": "server_error", "message": err.Error()})
 	}
+	sort.Strings(roleCodes)
 	return unifiedResponse(c, fiber.StatusOK, fiber.Map{"role_codes": roleCodes}, nil)
 }
 

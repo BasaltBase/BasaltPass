@@ -68,6 +68,46 @@ export interface UpdateRoleRequest {
   permission_ids?: number[]
 }
 
+function normalizeUserPermission(item: any, appId: string, userId: string): UserPermission {
+  if (item?.permission) {
+    return {
+      ...item,
+      permission_id: item.permission_id ?? item.permission?.id ?? 0
+    }
+  }
+
+  return {
+    id: item?.id ?? 0,
+    user_id: Number(userId) || 0,
+    app_id: Number(appId) || 0,
+    permission_id: item?.permission_id ?? item?.id ?? 0,
+    granted_at: item?.granted_at || item?.created_at || '',
+    granted_by: item?.granted_by ?? 0,
+    expires_at: item?.expires_at,
+    permission: item
+  }
+}
+
+function normalizeUserRole(item: any, appId: string, userId: string): UserRole {
+  if (item?.role) {
+    return {
+      ...item,
+      role_id: item.role_id ?? item.role?.id ?? 0
+    }
+  }
+
+  return {
+    id: item?.id ?? 0,
+    user_id: Number(userId) || 0,
+    app_id: Number(appId) || 0,
+    role_id: item?.role_id ?? item?.id ?? 0,
+    assigned_at: item?.assigned_at || item?.created_at || '',
+    assigned_by: item?.assigned_by ?? 0,
+    expires_at: item?.expires_at,
+    role: item
+  }
+}
+
 // 用户权限管理API
 export const userPermissionsApi = {
   // ==================== 权限管理 ====================
@@ -81,7 +121,10 @@ export const userPermissionsApi = {
   // 获取用户在应用中的权限
   async getUserPermissions(appId: string, userId: string) {
     const response = await client.get(`/api/v1/tenant/apps/${appId}/users/${userId}/permissions`)
-    return response.data
+    return {
+      ...response.data,
+      permissions: (response.data?.permissions || []).map((item: any) => normalizeUserPermission(item, appId, userId))
+    }
   },
 
   // 授予用户权限
@@ -125,7 +168,10 @@ export const userPermissionsApi = {
   // 获取用户在应用中的角色
   async getUserRoles(appId: string, userId: string) {
     const response = await client.get(`/api/v1/tenant/apps/${appId}/users/${userId}/roles`)
-    return response.data
+    return {
+      ...response.data,
+      roles: (response.data?.roles || []).map((item: any) => normalizeUserRole(item, appId, userId))
+    }
   },
 
   // 分配角色给用户

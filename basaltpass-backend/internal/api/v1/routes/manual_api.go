@@ -17,6 +17,7 @@ func RegisterManualAPIRoutes(v1 fiber.Router) {
 	group.Get("/apps/:app_id/stats", manualapi.ManualGetAppStatsHandler)
 	group.Patch("/apps/:app_id/status", manualapi.ManualToggleAppStatusHandler)
 	group.Put("/apps/:app_id/permissions", manualapi.ManualReplaceAppPermissionsHandler)
+	group.Put("/apps/:app_id/roles", manualapi.ManualReplaceAppRolesHandler)
 	group.Get("/oauth/clients", manualapi.ManualListOAuthClientsHandler)
 	group.Post("/oauth/clients", manualapi.ManualCreateOAuthClientHandler)
 	group.Get("/oauth/clients/:client_id", manualapi.ManualGetOAuthClientHandler)

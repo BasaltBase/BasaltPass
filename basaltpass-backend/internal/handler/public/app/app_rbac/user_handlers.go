@@ -111,6 +111,42 @@ func GetUserPermissions(c *fiber.Ctx) error {
 	})
 }
 
+// GetUserRoles 获取用户在应用中的角色
+func GetUserRoles(c *fiber.Ctx) error {
+	appID, err := strconv.ParseUint(c.Params("app_id"), 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "无效的应用ID"})
+	}
+
+	userID, err := strconv.ParseUint(c.Params("user_id"), 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "无效的用户ID"})
+	}
+
+	tenantID := c.Locals("tenantID").(uint)
+
+	var app model.App
+	err = common.DB().Where("id = ? AND tenant_id = ?", appID, tenantID).First(&app).Error
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "应用不存在"})
+	}
+
+	var userRoles []model.AppRole
+	err = common.DB().Table("app_user_roles").
+		Select("app_roles.*").
+		Joins("JOIN app_roles ON app_roles.id = app_user_roles.role_id").
+		Where("app_user_roles.user_id = ? AND app_user_roles.app_id = ?", userID, appID).
+		Where("app_user_roles.expires_at IS NULL OR app_user_roles.expires_at > ?", time.Now()).
+		Preload("Permissions").
+		Find(&userRoles).Error
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "获取用户角色失败"})
+	}
+
+	return c.JSON(fiber.Map{"roles": userRoles})
+}
+
 // GrantUserPermissions 授予用户权限
 func GrantUserPermissions(c *fiber.Ctx) error {
 	appID, err := strconv.ParseUint(c.Params("app_id"), 10, 32)

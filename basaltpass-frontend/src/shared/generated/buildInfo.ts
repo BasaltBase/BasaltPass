@@ -1,6 +1,6 @@
 export const buildInfo = {
-  version: "deploy-prod-v0.1.26",
-  commit: "cac9aa3",
-  generatedAt: "2026-04-05T08:06:36.288Z",
+  version: "deploy-prod-v0.1.28",
+  commit: "39a7295",
+  generatedAt: "2026-04-06T06:38:18.479Z",
   copyrightStartYear: 2024,
 } as const

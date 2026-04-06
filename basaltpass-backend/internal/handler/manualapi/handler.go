@@ -70,6 +70,18 @@ type ManualReplaceAppPermissionsRequest struct {
 	Permissions []ManualPermissionItem `json:"permissions"`
 }
 
+type ManualRoleItem struct {
+	Code        string `json:"code"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+type ManualReplaceAppRolesRequest struct {
+	TenantID        *uint               `json:"tenant_id,omitempty"`
+	Roles           []ManualRoleItem    `json:"roles"`
+	RolePermissions map[string][]string `json:"role_permissions"`
+}
+
 type ManualUpdateAppRequest struct {
 	Name              string            `json:"name"`
 	Description       string            `json:"description"`
@@ -583,6 +595,168 @@ func ManualReplaceAppPermissionsHandler(c *fiber.Ctx) error {
 			"total_applied": len(req.Permissions),
 		},
 		"message": "app permissions replaced",
+	})
+}
+
+func ManualReplaceAppRolesHandler(c *fiber.Ctx) error {
+	var req ManualReplaceAppRolesRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request body"})
+	}
+	if len(req.Roles) == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "roles cannot be empty"})
+	}
+
+	_, tenantID, app, errResp := resolveScopedApp(c, req.TenantID)
+	if errResp != nil {
+		return errResp
+	}
+
+	tx := common.DB().Begin()
+	if tx.Error != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to start transaction"})
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	var existingPermissions []model.AppPermission
+	if dbErr := tx.Where("app_id = ? AND tenant_id = ?", app.ID, tenantID).Find(&existingPermissions).Error; dbErr != nil {
+		tx.Rollback()
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to query existing permissions"})
+	}
+	permissionIDByCode := make(map[string]uint, len(existingPermissions))
+	for _, permission := range existingPermissions {
+		permissionIDByCode[permission.Code] = permission.ID
+	}
+
+	var existingRoles []model.AppRole
+	if dbErr := tx.Where("app_id = ? AND tenant_id = ?", app.ID, tenantID).Find(&existingRoles).Error; dbErr != nil {
+		tx.Rollback()
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to query existing roles"})
+	}
+	existingRoleByCode := make(map[string]model.AppRole, len(existingRoles))
+	for _, role := range existingRoles {
+		existingRoleByCode[role.Code] = role
+	}
+
+	now := time.Now()
+	incomingRoleCodes := make(map[string]struct{}, len(req.Roles))
+	createdCount := 0
+	updatedCount := 0
+	roleIDByCode := make(map[string]uint, len(req.Roles))
+
+	for _, item := range req.Roles {
+		code := strings.TrimSpace(item.Code)
+		name := strings.TrimSpace(item.Name)
+		if code == "" || name == "" {
+			tx.Rollback()
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "role code/name are required"})
+		}
+		if _, exists := incomingRoleCodes[code]; exists {
+			tx.Rollback()
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "duplicate role code in request: " + code})
+		}
+		incomingRoleCodes[code] = struct{}{}
+
+		old, found := existingRoleByCode[code]
+		if !found {
+			newRole := model.AppRole{
+				Code:        code,
+				Name:        name,
+				Description: strings.TrimSpace(item.Description),
+				AppID:       app.ID,
+				TenantID:    tenantID,
+				CreatedAt:   now,
+				UpdatedAt:   now,
+			}
+			if dbErr := tx.Create(&newRole).Error; dbErr != nil {
+				tx.Rollback()
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to create role"})
+			}
+			roleIDByCode[code] = newRole.ID
+			createdCount++
+			continue
+		}
+
+		updates := map[string]interface{}{
+			"name":        name,
+			"description": strings.TrimSpace(item.Description),
+			"updated_at":  now,
+		}
+		if dbErr := tx.Model(&model.AppRole{}).Where("id = ?", old.ID).Updates(updates).Error; dbErr != nil {
+			tx.Rollback()
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to update role"})
+		}
+		roleIDByCode[code] = old.ID
+		updatedCount++
+	}
+
+	for roleCode, permissionCodes := range req.RolePermissions {
+		if _, ok := incomingRoleCodes[roleCode]; !ok {
+			tx.Rollback()
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "role_permissions references unknown role: " + roleCode})
+		}
+		roleID := roleIDByCode[roleCode]
+		if dbErr := tx.Exec("DELETE FROM app_role_permissions WHERE app_role_id = ?", roleID).Error; dbErr != nil {
+			tx.Rollback()
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to clear role permissions"})
+		}
+		for _, permissionCodeRaw := range permissionCodes {
+			permissionCode := strings.TrimSpace(permissionCodeRaw)
+			if permissionCode == "" {
+				continue
+			}
+			permissionID, ok := permissionIDByCode[permissionCode]
+			if !ok {
+				tx.Rollback()
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "role_permissions references unknown permission: " + permissionCode})
+			}
+			if dbErr := tx.Exec("INSERT INTO app_role_permissions (app_role_id, app_permission_id) VALUES (?, ?)", roleID, permissionID).Error; dbErr != nil {
+				tx.Rollback()
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to create role permission link"})
+			}
+		}
+	}
+
+	toDeleteIDs := make([]uint, 0)
+	for _, role := range existingRoles {
+		if _, keep := incomingRoleCodes[role.Code]; !keep {
+			toDeleteIDs = append(toDeleteIDs, role.ID)
+		}
+	}
+
+	if len(toDeleteIDs) > 0 {
+		if dbErr := tx.Exec("DELETE FROM app_role_permissions WHERE app_role_id IN ?", toDeleteIDs).Error; dbErr != nil {
+			tx.Rollback()
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to cleanup role-permission links"})
+		}
+		if dbErr := tx.Where("role_id IN ?", toDeleteIDs).Delete(&model.AppUserRole{}).Error; dbErr != nil {
+			tx.Rollback()
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to cleanup user-role links"})
+		}
+		if dbErr := tx.Where("id IN ?", toDeleteIDs).Delete(&model.AppRole{}).Error; dbErr != nil {
+			tx.Rollback()
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to delete roles"})
+		}
+	}
+
+	if dbErr := tx.Commit().Error; dbErr != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to commit role update"})
+	}
+
+	return c.JSON(fiber.Map{
+		"data": fiber.Map{
+			"app_id":        app.ID,
+			"tenant_id":     tenantID,
+			"created":       createdCount,
+			"updated":       updatedCount,
+			"deleted":       len(toDeleteIDs),
+			"total_applied": len(req.Roles),
+		},
+		"message": "app roles replaced",
 	})
 }
 
