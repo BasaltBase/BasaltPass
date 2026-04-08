@@ -16,6 +16,7 @@ import {
   WalletIcon
 } from '@heroicons/react/24/outline';
 import { adminWalletApi, Wallet, Currency, CreateWalletRequest, AdjustBalanceRequest, AdjustOwnerWalletRequest, WalletTransaction } from '@api/admin/wallet';
+import { adminGiftCardApi, type AdminGiftCard } from '@api/admin/giftCard'
 import AdminLayout from '@features/admin/components/AdminLayout';
 import WalletStatsCard from '@features/admin/components/WalletStatsCard';
 import { PInput, PSelect, PButton, PCard, PSkeleton, PBadge, PTextarea, UserTooltip } from '@ui';
@@ -43,6 +44,9 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
   const [transactionLoading, setTransactionLoading] = useState(false);
   const [quickAdjustMode, setQuickAdjustMode] = useState<'delta' | 'target'>('delta');
   const [createWalletType, setCreateWalletType] = useState<'user' | 'team'>('user');
+  const [giftCardCode, setGiftCardCode] = useState('');
+  const [giftCardLoading, setGiftCardLoading] = useState(false);
+  const [giftCardResult, setGiftCardResult] = useState<AdminGiftCard | null>(null);
   
   // Form data
   const [createForm, setCreateForm] = useState<CreateWalletRequest>({
@@ -350,6 +354,23 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
 
   const totalPages = Math.ceil(total / pageSize);
 
+  const handleGiftCardCheck = async () => {
+    if (!giftCardCode.trim()) {
+      uiAlert('请输入礼品卡卡密');
+      return;
+    }
+    try {
+      setGiftCardLoading(true);
+      const res = await adminGiftCardApi.getByCode(giftCardCode.trim());
+      setGiftCardResult(res.data);
+    } catch (error: any) {
+      setGiftCardResult(null);
+      uiAlert(error.response?.data?.error || '查询礼品卡失败');
+    } finally {
+      setGiftCardLoading(false);
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -457,6 +478,33 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                 钱包概览
               </h3>
               <WalletStatsCard />
+            </div>
+          </PCard>
+
+          <PCard variant="bordered" className="mb-6">
+            <div className="px-6 py-5 space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                <span className="inline-block w-2 h-2 bg-fuchsia-500 rounded-full mr-2"></span>
+                Gift Card 有效性查询
+              </h3>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto]">
+                <PInput
+                  value={giftCardCode}
+                  onChange={(e) => setGiftCardCode(e.target.value.toUpperCase())}
+                  placeholder="输入卡密，例如 GC-XXXXX-XXXXX"
+                  variant="rounded"
+                />
+                <PButton onClick={handleGiftCardCheck} loading={giftCardLoading} disabled={giftCardLoading}>查询</PButton>
+              </div>
+              {giftCardResult && (
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
+                  <div>卡密：<span className="font-mono">{giftCardResult.code}</span></div>
+                  <div>状态：{giftCardResult.status}</div>
+                  <div>租户 ID：{giftCardResult.tenant_id}</div>
+                  <div>金额：{giftCardResult.amount}（最小单位）</div>
+                  <div>兑换用户：{giftCardResult.redeemed_by || '-'}</div>
+                </div>
+              )}
             </div>
           </PCard>
 

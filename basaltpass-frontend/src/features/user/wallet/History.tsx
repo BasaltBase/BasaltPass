@@ -27,6 +27,47 @@ interface Tx {
   Reference: string
 }
 
+type TxDirection = 'in' | 'out'
+
+const detectDirection = (tx: Tx): TxDirection => {
+  const type = (tx.Type || '').toLowerCase()
+  const inKeywords = ['recharge', 'deposit', 'increase', 'refund', 'income']
+  const outKeywords = ['withdraw', 'decrease', 'debit', 'consume', 'payment', 'expense']
+
+  if (inKeywords.some((keyword) => type.includes(keyword))) {
+    return 'in'
+  }
+  if (outKeywords.some((keyword) => type.includes(keyword))) {
+    return 'out'
+  }
+  return tx.Amount >= 0 ? 'in' : 'out'
+}
+
+const getTypeText = (type: string) => {
+  const normalized = (type || '').toLowerCase()
+  if (normalized === 'recharge') return '充值'
+  if (normalized === 'withdraw') return '提现'
+  if (normalized === 'admin_deposit') return '管理员入账'
+  if (normalized === 's2s_wallet_increase') return 'API 入账'
+  if (normalized === 's2s_wallet_decrease') return 'API 扣费'
+  return type || '未知'
+}
+
+const getReferenceText = (reference: string) => {
+  if (!reference) return ''
+  if (reference.startsWith('apicred:recharge_code:')) return '来源：APICred 充值码'
+  if (reference.startsWith('apicred:usage_pending:')) return '来源：APICred 预扣'
+  if (reference.startsWith('apicred:usage_settle:')) return '来源：APICred 结算调整'
+  return `参考：${reference}`
+}
+
+const formatAmount = (tx: Tx, direction: TxDirection) => {
+  const absAmount = Math.abs(tx.Amount)
+  const divisor = tx.Reference?.startsWith('apicred:') ? 1_000_000 : 100
+  const sign = direction === 'in' ? '+' : '-'
+  return `${sign}¥${(absAmount / divisor).toFixed(2)}`
+}
+
 export default function History() {
   const { walletRechargeWithdrawEnabled } = useConfig()
   const [txs, setTxs] = useState<Tx[]>([])
@@ -81,10 +122,12 @@ export default function History() {
   }, [])
 
   const filteredTxs = txs.filter(tx => {
-    const matchesFilter = filter === 'all' || tx.Type === filter
+    const direction = detectDirection(tx)
+    const matchesFilter = filter === 'all' || (filter === 'in' && direction === 'in') || (filter === 'out' && direction === 'out')
     const matchesSearch = debouncedSearchTerm === '' || 
       tx.ID.toString().includes(debouncedSearchTerm) ||
-      (tx.Status && tx.Status.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
+      (tx.Status && tx.Status.toLowerCase().includes(debouncedSearchTerm.toLowerCase())) ||
+      (tx.Reference && tx.Reference.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
     return matchesFilter && matchesSearch
   })
 
@@ -120,26 +163,16 @@ export default function History() {
     }
   }
 
-  const getTypeIcon = (type: string) => {
-    if (!type) return <ArrowUpIcon className="h-4 w-4 text-gray-600" />
-    
-    return type.toLowerCase() === 'recharge' ? (
+  const getTypeIcon = (direction: TxDirection) => {
+    return direction === 'in' ? (
       <ArrowUpIcon className="h-4 w-4 text-green-600" />
     ) : (
       <ArrowDownIcon className="h-4 w-4 text-red-600" />
     )
   }
 
-  const getTypeColor = (type: string) => {
-    if (!type) return 'text-gray-600'
-    
-    return type.toLowerCase() === 'recharge' ? 'text-green-600' : 'text-red-600'
-  }
-
-  const getTypeText = (type: string) => {
-    if (!type) return '未知'
-    
-    return type.toLowerCase() === 'recharge' ? '充值' : '提现'
+  const getTypeColor = (direction: TxDirection) => {
+    return direction === 'in' ? 'text-green-600' : 'text-red-600'
   }
 
   if (isLoading) {
@@ -186,7 +219,7 @@ export default function History() {
                   <dl>
                     <dt className="text-sm font-medium text-gray-500 truncate">充值次数</dt>
                                          <dd className="text-lg font-medium text-gray-900">
-                       {txs.filter(tx => tx.Type && tx.Type.toLowerCase() === 'recharge').length}
+                       {txs.filter(tx => detectDirection(tx) === 'in').length}
                      </dd>
                   </dl>
                 </div>
@@ -202,9 +235,9 @@ export default function History() {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">提现次数</dt>
+                      <dt className="text-sm font-medium text-gray-500 truncate">出账次数</dt>
                                          <dd className="text-lg font-medium text-gray-900">
-                       {txs.filter(tx => tx.Type && tx.Type.toLowerCase() === 'withdraw').length}
+                        {txs.filter(tx => detectDirection(tx) === 'out').length}
                      </dd>
                   </dl>
                 </div>
@@ -248,8 +281,8 @@ export default function History() {
                   className="min-w-32"
                 >
                   <option value="all">全部交易</option>
-                  <option value="recharge">充值</option>
-                  <option value="withdraw">提现</option>
+                  <option value="in">入账</option>
+                  <option value="out">出账</option>
                 </PSelect>
               </div>
               <div className="flex-1 max-w-xs">
@@ -282,15 +315,14 @@ export default function History() {
                 <div className="flow-root">
                   <ul className="-my-5 divide-y divide-gray-200">
                     {filteredTxs.map((tx) => (
+                      (() => {
+                        const direction = detectDirection(tx)
+                        return (
                       <li key={tx.ID} className="py-5">
                         <div className="flex items-center space-x-4">
                           <div className="flex-shrink-0">
-                                                       <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
-                             tx.Type && tx.Type.toLowerCase() === 'recharge' 
-                               ? 'bg-green-100' 
-                               : 'bg-red-100'
-                           }`}>
-                              {getTypeIcon(tx.Type)}
+                                                       <div className={`h-10 w-10 rounded-full flex items-center justify-center ${direction === 'in' ? 'bg-green-100' : 'bg-red-100'}`}>
+                              {getTypeIcon(direction)}
                             </div>
                           </div>
                           <div className="flex-1 min-w-0">
@@ -302,11 +334,14 @@ export default function History() {
                                 <p className="text-sm text-gray-500">
                                   {new Date(tx.CreatedAt).toLocaleString('zh-CN')}
                                 </p>
+                                {tx.Reference ? (
+                                  <p className="text-xs text-gray-500 mt-1 break-all">{getReferenceText(tx.Reference)}</p>
+                                ) : null}
                               </div>
                               <div className="flex items-center space-x-4">
                                 <div className="text-right">
-                                                                     <p className={`text-sm font-medium ${getTypeColor(tx.Type)}`}>
-                                     {tx.Type && tx.Type.toLowerCase() === 'recharge' ? '+' : '-'}¥{(tx.Amount / 100).toFixed(2)}
+                                                                     <p className={`text-sm font-medium ${getTypeColor(direction)}`}>
+                                     {formatAmount(tx, direction)}
                                    </p>
                                   <PBadge variant={
                                     (() => {
@@ -325,6 +360,8 @@ export default function History() {
                           </div>
                         </div>
                       </li>
+                        )
+                      })()
                     ))}
                   </ul>
                 </div>

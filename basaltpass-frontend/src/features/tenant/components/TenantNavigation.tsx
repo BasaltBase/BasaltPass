@@ -55,6 +55,7 @@ const navigationItems: NavigationItem[] = [
       { name: '用户列表', href: ROUTES.tenant.users, icon: UsersIcon },
       { name: '团队管理', href: ROUTES.tenant.teams, icon: UsersIcon },
       { name: '钱包管理', href: ROUTES.tenant.wallets, icon: CurrencyDollarIcon },
+      { name: 'Gift Card 管理', href: ROUTES.tenant.giftCards, icon: GiftIcon },
       { name: '角色管理', href: ROUTES.tenant.roles, icon: KeyIcon },
       { name: '权限管理', href: ROUTES.tenant.permissions, icon: KeyIcon },
     ]

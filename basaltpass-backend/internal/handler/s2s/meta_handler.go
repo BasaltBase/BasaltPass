@@ -1,6 +1,9 @@
 package s2s
 
 import (
+	"basaltpass-backend/internal/common"
+	"basaltpass-backend/internal/model"
+
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -16,11 +19,20 @@ func GetMeHandler(c *fiber.Ctx) error {
 	tenantID, _ := c.Locals("s2s_tenant_id").(uint)
 	scopesAny := c.Locals("s2s_scopes")
 	scopes, _ := scopesAny.([]string)
+	tenantCode := ""
+
+	if tenantID > 0 {
+		var tenant model.Tenant
+		if err := common.DB().Select("code").First(&tenant, tenantID).Error; err == nil {
+			tenantCode = tenant.Code
+		}
+	}
 
 	return unifiedResponse(c, fiber.StatusOK, fiber.Map{
-		"client_id": clientID,
-		"app_id":    appID,
-		"tenant_id": tenantID,
-		"scopes":    scopes,
+		"client_id":   clientID,
+		"app_id":      appID,
+		"tenant_id":   tenantID,
+		"tenant_code": tenantCode,
+		"scopes":      scopes,
 	}, nil)
 }

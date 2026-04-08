@@ -108,6 +108,7 @@ func RegisterUserRoutes(v1 fiber.Router) {
 	walletGroup.Post("/recharge", user.RechargeWalletHandler)
 	walletGroup.Post("/withdraw", user.WithdrawWalletHandler)
 	walletGroup.Get("/history", user.WalletHistoryHandler)
+	walletGroup.Post("/gift-cards/redeem", user.RedeemGiftCardHandler)
 
 	// 支付系统路由（需要认证）
 	paymentGroup := v1.Group("/payment", middleware.JWTMiddleware())

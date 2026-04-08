@@ -1,12 +1,14 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react'
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getAccessToken, clearAccessToken, setAccessToken, getAuthScope } from '../utils/auth'
 import { debugAuth } from '../utils/debug'
 import client from '../api/client'
 import { decodeJWT } from '../utils/jwt'
+import { fetchPublicTenantByCode } from '../api/public/tenant'
 import {
   getUserConsoleSession,
   listUserConsoleSessions,
+  pruneExpiredUserConsoleSessions,
   removeUserConsoleSession,
   type UserConsoleSession,
   upsertUserConsoleSession,
@@ -28,6 +30,7 @@ interface User {
 interface UserTenant {
   id: number
   name?: string
+  code?: string
   role?: string
   status?: string
 }
@@ -61,6 +64,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   )
   const [isLoading, setIsLoading] = useState(true)
   const [hasChecked, setHasChecked] = useState(false)
+  const tenantHintHandledRef = useRef('')
+  const tenantHintSwitchingRef = useRef(false)
   const navigate = useNavigate()
 
   const tokenMatchesScope = useCallback((token: string) => {
@@ -220,6 +225,59 @@ export function AuthProvider({ children }: AuthProviderProps) {
       checkAuth()
     }
   }, [checkAuth, hasChecked])
+
+  useEffect(() => {
+    if (expectedScope !== 'user') {
+      return
+    }
+    if (!hasChecked || isLoading || !user || tenantHintSwitchingRef.current) {
+      return
+    }
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    const query = new URLSearchParams(window.location.search || '')
+    const tenantCode = (query.get('tenant') || query.get('tenant_code') || '').trim()
+    if (!tenantCode) {
+      return
+    }
+    if (tenantHintHandledRef.current === tenantCode) {
+      return
+    }
+
+    const applyTenantCodeHint = async () => {
+      tenantHintHandledRef.current = tenantCode
+
+      try {
+        const tenantInfo = await fetchPublicTenantByCode(tenantCode)
+        const targetTenantID = Number(tenantInfo?.id || 0)
+        if (!targetTenantID) {
+          return
+        }
+
+        if (Number(user.tenant_id || 0) === targetTenantID) {
+          return
+        }
+
+        const targetSession = pruneExpiredUserConsoleSessions().find((session) => Number(session.tenant_id) === targetTenantID)
+        if (!targetSession || !tokenMatchesScope(targetSession.token)) {
+          return
+        }
+
+        tenantHintSwitchingRef.current = true
+        setIsLoading(true)
+        await loadIdentity(targetSession.token)
+        setHasChecked(true)
+      } catch {
+      } finally {
+        tenantHintSwitchingRef.current = false
+        setIsLoading(false)
+      }
+    }
+
+    void applyTenantCodeHint()
+  }, [expectedScope, hasChecked, isLoading, loadIdentity, tokenMatchesScope, user])
 
   useEffect(() => {
     debugAuth.logState({ user, isAuthenticated: !!user, isLoading, hasChecked })

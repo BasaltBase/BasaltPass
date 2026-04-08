@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { NavigateFunction } from 'react-router-dom'
 import { ROUTES } from '@constants'
 import { getAccessToken } from '@utils/auth'
 import { decodeJWT } from '@utils/jwt'
-import { listUserConsoleSessions, removeUserConsoleSessionByKey } from '@utils/userSessions'
+import { pruneExpiredUserConsoleSessions, removeUserConsoleSessionByKey } from '@utils/userSessions'
 import type { TenantInfo } from './types'
 
 interface UseTenantSessionBootstrapOptions {
@@ -24,6 +24,8 @@ export function useTenantSessionBootstrap({
   tenantInfo,
 }: UseTenantSessionBootstrapOptions) {
   const [isResolvingTenantSession, setIsResolvingTenantSession] = useState(true)
+  const attemptedSessionKeysRef = useRef<Set<string>>(new Set())
+  const inFlightSessionKeyRef = useRef<string | null>(null)
 
   useEffect(() => {
     if (!tenantInfo?.id) {
@@ -48,7 +50,7 @@ export function useTenantSessionBootstrap({
       return
     }
 
-    const storedTenantSession = listUserConsoleSessions().find(
+    const storedTenantSession = pruneExpiredUserConsoleSessions().find(
       (session) => Number(session.tenant_id || 0) === targetTenantID,
     )
 
@@ -57,7 +59,18 @@ export function useTenantSessionBootstrap({
       return
     }
 
+    if (attemptedSessionKeysRef.current.has(storedTenantSession.key)) {
+      setIsResolvingTenantSession(false)
+      return
+    }
+
+    if (inFlightSessionKeyRef.current === storedTenantSession.key) {
+      return
+    }
+
     let cancelled = false
+    attemptedSessionKeysRef.current.add(storedTenantSession.key)
+    inFlightSessionKeyRef.current = storedTenantSession.key
     setIsResolvingTenantSession(true)
 
     login(storedTenantSession.token)
@@ -76,9 +89,17 @@ export function useTenantSessionBootstrap({
           setIsResolvingTenantSession(false)
         }
       })
+      .finally(() => {
+        if (!cancelled && inFlightSessionKeyRef.current === storedTenantSession.key) {
+          inFlightSessionKeyRef.current = null
+        }
+      })
 
     return () => {
       cancelled = true
+      if (inFlightSessionKeyRef.current === storedTenantSession.key) {
+        inFlightSessionKeyRef.current = null
+      }
     }
   }, [isAuthenticated, isAuthLoading, login, navigate, redirectAfterLogin, tenantInfo])
 

@@ -6,6 +6,7 @@ export interface UserConsoleSession {
   key: string
   user_id: number
   tenant_id: number
+  tenant_code?: string
   email: string
   nickname?: string
   avatar_url?: string
@@ -29,6 +30,7 @@ interface SessionProfileLike {
 interface SessionTenantLike {
   id: number
   name?: string
+  code?: string
 }
 
 function isBrowser() {
@@ -121,6 +123,7 @@ export function upsertUserConsoleSession(
     key,
     user_id: profile.id,
     tenant_id: tenantID,
+    tenant_code: currentTenant?.code,
     email: profile.email,
     nickname: profile.nickname,
     avatar_url: profile.avatar_url,

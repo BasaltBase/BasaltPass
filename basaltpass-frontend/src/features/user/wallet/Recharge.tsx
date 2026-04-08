@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { recharge } from '@api/user/wallet'
+import { userGiftCardApi } from '@api/user/giftCard'
 import { Currency } from '@api/user/currency'
 import { useNavigate } from 'react-router-dom'
 import Layout from '@features/user/components/Layout'
@@ -78,6 +79,8 @@ export default function Recharge() {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [giftCode, setGiftCode] = useState('')
+  const [giftRedeeming, setGiftRedeeming] = useState(false)
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -127,6 +130,27 @@ export default function Recharge() {
     setError('')
   }
 
+  const handleRedeemGiftCard = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!giftCode.trim()) {
+      setError('请输入 Gift Card 卡密')
+      return
+    }
+    setGiftRedeeming(true)
+    setError('')
+    try {
+      await userGiftCardApi.redeem(giftCode.trim())
+      setSuccess(true)
+      setTimeout(() => {
+        navigate(ROUTES.user.wallet)
+      }, 2000)
+    } catch (e: any) {
+      setError(e.response?.data?.error || 'Gift Card 兑换失败')
+    } finally {
+      setGiftRedeeming(false)
+    }
+  }
+
   if (success) {
     return (
       <Layout>
@@ -168,6 +192,27 @@ export default function Recharge() {
             <p className="text-sm text-amber-900">钱包充值功能暂未开放，如有疑问请联系客服。</p>
           </div>
         )}
+
+        <div className={`rounded-xl bg-white shadow-sm ${walletOpsDisabled ? 'opacity-50' : ''}`}>
+          <div className="px-4 py-5 sm:p-6">
+            <div className="flex items-center mb-4">
+              <CreditCardIcon className="h-6 w-6 text-purple-600 mr-2" />
+              <h3 className="text-lg font-medium text-gray-900">Gift Card 兑换</h3>
+            </div>
+            <form onSubmit={handleRedeemGiftCard} className={`space-y-4 ${walletOpsDisabled ? 'pointer-events-none' : ''}`}>
+              <PInput
+                id="gift-code"
+                label="卡密"
+                value={giftCode}
+                onChange={(e) => setGiftCode(e.target.value.toUpperCase())}
+                placeholder="例如 GC-XXXXX-XXXXX"
+              />
+              <PButton type="submit" loading={giftRedeeming} disabled={walletOpsDisabled || !giftCode.trim()}>
+                立即兑换
+              </PButton>
+            </form>
+          </div>
+        </div>
 
         {/* 错误提示 */}
         {error && (

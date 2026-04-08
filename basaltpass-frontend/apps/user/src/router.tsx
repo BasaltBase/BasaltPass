@@ -31,6 +31,7 @@ import WalletIndex from '../../../src/features/user/wallet/Index'
 import Recharge from '../../../src/features/user/wallet/Recharge'
 import Withdraw from '../../../src/features/user/wallet/Withdraw'
 import History from '../../../src/features/user/wallet/History'
+import RedeemGiftCard from '../../../src/features/user/wallet/RedeemGiftCard'
 import Payment from '../../../src/features/user/payment/Payment'
 
 import SecuritySettings from '../../../src/features/user/security/SecuritySettings'
@@ -183,6 +184,7 @@ export default function AppRouter() {
       <Route path="/wallet/recharge" element={<ProtectedRoute><Recharge /></ProtectedRoute>} />
       <Route path="/wallet/withdraw" element={<ProtectedRoute><Withdraw /></ProtectedRoute>} />
       <Route path="/wallet/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
+      <Route path="/wallet/gift-cards/redeem" element={<ProtectedRoute><RedeemGiftCard /></ProtectedRoute>} />
       <Route path="/payment" element={<ProtectedRoute><Payment /></ProtectedRoute>} />
 
       {/* Security */}

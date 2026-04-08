@@ -51,6 +51,12 @@ export function clearAccessTokenForScope(scope: ConsoleScope) {
   localStorage.removeItem(getTokenKeyForScope(scope))
 }
 
+export function clearAllAccessTokens() {
+  clearAccessTokenForScope('user')
+  clearAccessTokenForScope('tenant')
+  clearAccessTokenForScope('admin')
+}
+
 function expireCookie(name: string) {
   if (typeof document === 'undefined') {
     return
@@ -68,4 +74,10 @@ export function clearScopeCookies(scope: ConsoleScope) {
 
   expireCookie(`access_token_${scope}`)
   expireCookie(`refresh_token_${scope}`)
+}
+
+export function clearAllScopeCookies() {
+  clearScopeCookies('user')
+  clearScopeCookies('tenant')
+  clearScopeCookies('admin')
 }

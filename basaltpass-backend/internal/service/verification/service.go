@@ -5,6 +5,7 @@ import (
 	"basaltpass-backend/internal/config"
 	"basaltpass-backend/internal/model"
 	emailservice "basaltpass-backend/internal/service/email"
+	"basaltpass-backend/internal/service/wallet"
 	"basaltpass-backend/internal/utils"
 	"context"
 	"crypto/rand"
@@ -384,6 +385,11 @@ func (s *Service) CompleteSignup(req CompleteSignupRequest) (*model.User, error)
 	}
 
 	if err := tx.Create(user).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	if err := wallet.EnsureUserCreditWalletTx(tx, user.ID); err != nil {
 		tx.Rollback()
 		return nil, err
 	}

@@ -131,9 +131,11 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 	// 用户钱包管理
 	adminGroup.Get("/users/:id/wallets", walletHandler.GetUserWallets) // /tenant/users/:id/wallets
 	adminGroup.Post("/users/:id/wallets/adjust", walletHandler.AdjustUserWallet)
+	adminGroup.Get("/gift-cards/:code", admin2.GetGiftCardValidityHandler)
 	// alias user wallets
 	adminAliasGroup.Get("/users/:id/wallets", walletHandler.GetUserWallets)
 	adminAliasGroup.Post("/users/:id/wallets/adjust", walletHandler.AdjustUserWallet)
+	adminAliasGroup.Get("/gift-cards/:code", admin2.GetGiftCardValidityHandler)
 
 	// ===== 其它缺失的 /admin 别名路由补全 =====
 	// Dashboard

@@ -15,6 +15,17 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   useEffect(() => {
     // 只有在加载完成且未认证时才跳转
     if (!isLoading && !isAuthenticated) {
+      const params = new URLSearchParams(window.location.search || '')
+      const tenantCode = (params.get('tenant') || params.get('tenant_code') || '').trim()
+
+      if (tenantCode) {
+        const redirectTarget = `${window.location.pathname}${window.location.search || ''}`
+        const tenantLoginPath = `/auth/tenant/${encodeURIComponent(tenantCode)}/login?redirect=${encodeURIComponent(redirectTarget)}`
+        debugAuth.logRedirect(window.location.pathname, tenantLoginPath, 'not authenticated with tenant hint')
+        navigate(tenantLoginPath, { replace: true })
+        return
+      }
+
       debugAuth.logRedirect(window.location.pathname, '/login', 'not authenticated')
       navigate('/login', { replace: true })
     }

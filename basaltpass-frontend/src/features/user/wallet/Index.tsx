@@ -12,6 +12,7 @@ import {
   ArrowUpIcon, 
   ArrowDownIcon, 
   ClockIcon,
+  GiftIcon,
   CurrencyDollarIcon,
   ChartBarIcon
 } from '@heroicons/react/24/outline'
@@ -30,6 +31,25 @@ export default function WalletIndex() {
   }>>([])
   const [monthlyIncome, setMonthlyIncome] = useState<number>(0)   // 以最小货币单位存储
   const [monthlyExpense, setMonthlyExpense] = useState<number>(0) // 以最小货币单位存储
+
+  const getDirection = (type: string, amount: number): 'in' | 'out' => {
+    const normalized = (type || '').toLowerCase()
+    const inKeywords = ['recharge', 'deposit', 'increase', 'refund', 'income']
+    const outKeywords = ['withdraw', 'decrease', 'debit', 'consume', 'payment', 'expense']
+    if (inKeywords.some((keyword) => normalized.includes(keyword))) return 'in'
+    if (outKeywords.some((keyword) => normalized.includes(keyword))) return 'out'
+    return amount >= 0 ? 'in' : 'out'
+  }
+
+  const getTypeLabel = (type: string) => {
+    const normalized = (type || '').toLowerCase()
+    if (normalized === 'recharge') return '充值'
+    if (normalized === 'withdraw') return '提现'
+    if (normalized === 'admin_deposit') return '管理员入账'
+    if (normalized === 's2s_wallet_increase') return 'API 入账'
+    if (normalized === 's2s_wallet_decrease') return 'API 扣费'
+    return type || '交易'
+  }
 
   useEffect(() => {
     // 初始化时加载货币列表并设置默认货币
@@ -80,9 +100,9 @@ export default function WalletIndex() {
         const d = new Date(t.CreatedAt)
         if (d.getFullYear() === y && d.getMonth() === m) {
           const type = (t.Type || '').toLowerCase()
-          if (type === 'recharge') {
+          if (getDirection(type, t.Amount) === 'in') {
             income += Math.abs(t.Amount)
-          } else if (type === 'withdraw') {
+          } else if (getDirection(type, t.Amount) === 'out') {
             // 后端提现保存为负数，这里取绝对值累加支出
             expense += Math.abs(t.Amount)
           } else {
@@ -228,7 +248,7 @@ export default function WalletIndex() {
             <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
               快速操作
             </h3>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
               {walletRechargeWithdrawEnabled ? (
                 <Link
                   to={ROUTES.user.walletRecharge}
@@ -312,6 +332,22 @@ export default function WalletIndex() {
                   <p className="text-sm text-gray-500">查看历史交易</p>
                 </div>
               </Link>
+
+              <Link
+                to={ROUTES.user.walletGiftCardRedeem}
+                className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-purple-400 hover:bg-purple-50 focus-within:ring-2 focus-within:ring-purple-500 focus-within:ring-offset-2 transition-colors"
+              >
+                <div className="flex-shrink-0">
+                  <div className="h-10 w-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <GiftIcon className="h-6 w-6 text-purple-600" />
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="absolute inset-0" aria-hidden="true" />
+                  <p className="text-sm font-medium text-gray-900">兑换 Gift Card</p>
+                  <p className="text-sm text-gray-500">输入卡密兑换余额</p>
+                </div>
+              </Link>
             </div>
           </div>
         </div>
@@ -336,10 +372,11 @@ export default function WalletIndex() {
               <div className="flow-root">
                 <ul className="-my-5 divide-y divide-gray-200">
                   {txs.slice(0, 5).map((tx) => {
-                    const isRecharge = tx.Type && tx.Type.toLowerCase() === 'recharge'
-                    const iconBg = isRecharge ? 'bg-green-100' : 'bg-red-100'
-                    const amountColor = isRecharge ? 'text-green-600' : 'text-red-600'
-                    const sign = isRecharge ? '+' : '-'
+                    const direction = getDirection(tx.Type, tx.Amount)
+                    const isIncoming = direction === 'in'
+                    const iconBg = isIncoming ? 'bg-green-100' : 'bg-red-100'
+                    const amountColor = isIncoming ? 'text-green-600' : 'text-red-600'
+                    const sign = isIncoming ? '+' : '-'
                     const statusLower = (tx.Status || '').toLowerCase()
                     const statusVariant = statusLower === 'success' || statusLower === 'completed'
                       ? 'success' as const
@@ -357,7 +394,7 @@ export default function WalletIndex() {
                         <div className="flex items-center space-x-4">
                           <div className="flex-shrink-0">
                             <div className={`h-8 w-8 ${iconBg} rounded-full flex items-center justify-center`}>
-                              {isRecharge ? (
+                              {isIncoming ? (
                                 <ArrowUpIcon className="h-4 w-4 text-green-600" />
                               ) : (
                                 <ArrowDownIcon className="h-4 w-4 text-red-600" />
@@ -366,7 +403,7 @@ export default function WalletIndex() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-gray-900 truncate">
-                              {isRecharge ? '充值' : '提现'} #{tx.ID}
+                              {getTypeLabel(tx.Type)} #{tx.ID}
                             </p>
                             <p className="text-sm text-gray-500">
                               {new Date(tx.CreatedAt).toLocaleString('zh-CN')}

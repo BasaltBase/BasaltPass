@@ -4,6 +4,7 @@ import TenantLayout from '@features/tenant/components/TenantLayout'
 import { uiAlert } from '@contexts/DialogContext'
 import { PBadge, PButton, PCard, PInput, PSelect, PSkeleton, PTextarea } from '@ui'
 import { tenantWalletApi, type TenantAdjustOwnerWalletRequest, type TenantCurrency, type TenantWallet, type TenantWalletTransaction } from '@api/tenant/wallet'
+import { tenantGiftCardApi, type GiftCardItem } from '@api/tenant/giftCard'
 
 type OwnerType = 'user' | 'team'
 
@@ -17,6 +18,16 @@ export default function TenantWalletManagement() {
   const [transactionWallet, setTransactionWallet] = useState<TenantWallet | null>(null)
   const [transactionLoading, setTransactionLoading] = useState(false)
   const [transactions, setTransactions] = useState<TenantWalletTransaction[]>([])
+  const [giftCards, setGiftCards] = useState<GiftCardItem[]>([])
+  const [giftCardLoading, setGiftCardLoading] = useState(false)
+  const [giftCardSubmitting, setGiftCardSubmitting] = useState(false)
+  const [giftCardForm, setGiftCardForm] = useState({
+    currency_code: '',
+    amount: 0,
+    quantity: 10,
+    expires_at: '',
+    note: '',
+  })
   const [quickAdjustForm, setQuickAdjustForm] = useState<TenantAdjustOwnerWalletRequest & { owner_type: OwnerType; owner_id?: number }>({
     owner_type: 'user',
     owner_id: undefined,
@@ -39,6 +50,7 @@ export default function TenantWalletManagement() {
       ])
       setWallets(walletResponse.data || [])
       setCurrencies(currencyResponse.data || [])
+      await loadGiftCards()
     } catch (error) {
       console.error('加载租户钱包数据失败:', error)
       setWallets([])
@@ -89,6 +101,71 @@ export default function TenantWalletManagement() {
     if (!currency) return String(balance)
     const actualBalance = balance / Math.pow(10, currency.decimal_places)
     return `${actualBalance.toFixed(currency.decimal_places)} ${currency.symbol}`
+  }
+
+  const formatGiftCardAmount = (amount: number, currencyCode?: string) => {
+    if (!currencyCode) return String(amount)
+    const currency = currencies.find(item => item.code === currencyCode)
+    if (!currency) return String(amount)
+    const actualAmount = amount / Math.pow(10, currency.decimal_places)
+    return `${actualAmount.toFixed(currency.decimal_places)} ${currency.symbol}`
+  }
+
+  const loadGiftCards = async () => {
+    try {
+      setGiftCardLoading(true)
+      const response = await tenantGiftCardApi.list({ page: 1, page_size: 50 })
+      setGiftCards(response.data || [])
+    } catch (error) {
+      console.error('加载礼品卡失败:', error)
+      setGiftCards([])
+    } finally {
+      setGiftCardLoading(false)
+    }
+  }
+
+  const handleCreateGiftCards = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!giftCardForm.currency_code) {
+      uiAlert('请选择礼品卡币种')
+      return
+    }
+    if (giftCardForm.amount <= 0) {
+      uiAlert('请输入有效金额')
+      return
+    }
+    if (giftCardForm.quantity <= 0) {
+      uiAlert('请输入有效数量')
+      return
+    }
+
+    try {
+      setGiftCardSubmitting(true)
+      await tenantGiftCardApi.createBatch({
+        currency_code: giftCardForm.currency_code,
+        amount: giftCardForm.amount,
+        quantity: giftCardForm.quantity,
+        expires_at: giftCardForm.expires_at ? new Date(giftCardForm.expires_at).toISOString() : undefined,
+        note: giftCardForm.note || undefined,
+      })
+      uiAlert('礼品卡批次创建成功')
+      setGiftCardForm({ currency_code: '', amount: 0, quantity: 10, expires_at: '', note: '' })
+      await loadGiftCards()
+    } catch (error: any) {
+      uiAlert(error.response?.data?.error || '创建礼品卡失败')
+    } finally {
+      setGiftCardSubmitting(false)
+    }
+  }
+
+  const handleInvalidateGiftCard = async (id: number) => {
+    try {
+      await tenantGiftCardApi.invalidate(id)
+      uiAlert('礼品卡已失效')
+      await loadGiftCards()
+    } catch (error: any) {
+      uiAlert(error.response?.data?.error || '礼品卡失效失败')
+    }
   }
 
   const handleQuickAdjust = async (e: React.FormEvent) => {
@@ -184,8 +261,9 @@ export default function TenantWalletManagement() {
         </PCard>
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
-          <PCard variant="bordered">
-            <div className="p-6">
+          <div className="space-y-6">
+            <PCard variant="bordered">
+              <div className="p-6">
               <div className="mb-4 flex items-center gap-3">
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
                   <PencilIcon className="h-5 w-5" />
@@ -280,8 +358,75 @@ export default function TenantWalletManagement() {
                   <PButton type="submit" variant="primary" disabled={submitting} loading={submitting}>确认调整</PButton>
                 </div>
               </form>
-            </div>
-          </PCard>
+              </div>
+            </PCard>
+
+            <PCard variant="bordered">
+              <div className="p-6">
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-100 text-purple-700">
+                    <CurrencyDollarIcon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900">Gift Card 批量生卡</h2>
+                    <p className="text-sm text-gray-500">生成后可由用户兑换，兑换成功自动失效</p>
+                  </div>
+                </div>
+
+                <form onSubmit={handleCreateGiftCards} className="space-y-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <PSelect
+                      label="货币类型"
+                      value={giftCardForm.currency_code}
+                      onChange={(e) => setGiftCardForm({ ...giftCardForm, currency_code: (e.target as HTMLSelectElement).value })}
+                      variant="rounded"
+                    >
+                      <option value="">选择货币</option>
+                      {currencies.map(currency => (
+                        <option key={currency.code} value={currency.code}>{currency.code} - {currency.name}</option>
+                      ))}
+                    </PSelect>
+                    <PInput
+                      type="number"
+                      step="0.01"
+                      label="单卡金额"
+                      value={giftCardForm.amount}
+                      onChange={(e) => setGiftCardForm({ ...giftCardForm, amount: parseFloat(e.target.value) || 0 })}
+                      variant="rounded"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <PInput
+                      type="number"
+                      label="生成数量"
+                      value={giftCardForm.quantity}
+                      onChange={(e) => setGiftCardForm({ ...giftCardForm, quantity: parseInt(e.target.value || '0', 10) || 0 })}
+                      variant="rounded"
+                    />
+                    <PInput
+                      type="datetime-local"
+                      label="过期时间（可选）"
+                      value={giftCardForm.expires_at}
+                      onChange={(e) => setGiftCardForm({ ...giftCardForm, expires_at: e.target.value })}
+                      variant="rounded"
+                    />
+                  </div>
+
+                  <PTextarea
+                    label="备注（可选）"
+                    value={giftCardForm.note}
+                    onChange={(e) => setGiftCardForm({ ...giftCardForm, note: e.target.value })}
+                    rows={2}
+                  />
+
+                  <div className="flex justify-end">
+                    <PButton type="submit" variant="primary" loading={giftCardSubmitting} disabled={giftCardSubmitting}>批量生成</PButton>
+                  </div>
+                </form>
+              </div>
+            </PCard>
+          </div>
 
           <PCard variant="bordered">
             <div className="border-b border-gray-200 p-6">
@@ -362,6 +507,49 @@ export default function TenantWalletManagement() {
                 )}
               </div>
             )}
+
+            <div className="border-t border-gray-200 p-6">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-base font-semibold text-gray-900">Gift Card 列表</h3>
+                <PButton variant="secondary" size="sm" onClick={loadGiftCards} disabled={giftCardLoading}>刷新</PButton>
+              </div>
+              {giftCardLoading ? (
+                <PSkeleton.List items={3} />
+              ) : giftCards.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-gray-300 px-6 py-8 text-center text-sm text-gray-500">暂无礼品卡</div>
+              ) : (
+                <div className="overflow-x-auto rounded-xl border border-gray-200">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">卡密</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">金额</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">状态</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">创建时间</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">操作</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 bg-white">
+                      {giftCards.map(item => (
+                        <tr key={item.id}>
+                          <td className="px-4 py-3 text-sm font-mono text-gray-700">{item.code}</td>
+                          <td className="px-4 py-3 text-sm text-gray-700">{formatGiftCardAmount(item.amount, item.currency?.code)}</td>
+                          <td className="px-4 py-3 text-sm text-gray-700">{item.status}</td>
+                          <td className="px-4 py-3 text-sm text-gray-500">{new Date(item.created_at).toLocaleString('zh-CN')}</td>
+                          <td className="px-4 py-3 text-sm">
+                            {item.status === 'active' ? (
+                              <PButton variant="danger" size="sm" onClick={() => handleInvalidateGiftCard(item.id)}>设为失效</PButton>
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </PCard>
         </div>
       </div>

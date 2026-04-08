@@ -7,6 +7,7 @@ import (
 	"basaltpass-backend/internal/model"
 	"basaltpass-backend/internal/service/currency"
 	tenantservice "basaltpass-backend/internal/service/tenant"
+	"basaltpass-backend/internal/service/wallet"
 	"basaltpass-backend/internal/utils"
 	"errors"
 	"fmt"
@@ -121,6 +122,12 @@ func RunMigrations() {
 		log.Println("[Migration] Successfully initialized default currencies")
 	}
 
+	if created, skipped, err := currency.InitCurrenciesByCodes([]string{"CREDIT"}); err != nil {
+		log.Printf("[Migration] Failed to ensure CREDIT currency: %v", err)
+	} else {
+		log.Printf("[Migration] Ensured CREDIT currency (created=%d, skipped=%d)", created, skipped)
+	}
+
 	// 迁移钱包货币字段（在完整AutoMigrate之前处理）
 	MigrateWalletCurrencyField()
 
@@ -198,6 +205,8 @@ func RunMigrations() {
 		&model.Price{},
 		&model.Coupon{},
 		&model.CouponRedemption{},
+		&model.GiftCardBatch{},
+		&model.GiftCard{},
 		&model.Subscription{},
 		&model.SubscriptionItem{},
 		&model.UsageRecord{},
@@ -262,6 +271,13 @@ func RunMigrations() {
 	ensureUserTenantTOTPIndex()
 	migrateLegacyTOTPToTenantTable()
 	encryptExistingTOTPSecrets() // 对已存在的明文 TOTP 密钥补加密
+
+	createdWallets, err := wallet.EnsureCreditWalletsForAllUsers()
+	if err != nil {
+		log.Printf("[Migration] Failed to backfill credit wallets for all users: %v", err)
+	} else {
+		log.Printf("[Migration] Credit wallets backfilled for users (created=%d)", createdWallets)
+	}
 } // handleSpecialMigrations 处理特殊的迁移情况
 
 func handleSpecialMigrations() {

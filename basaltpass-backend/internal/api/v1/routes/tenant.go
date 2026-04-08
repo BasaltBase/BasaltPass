@@ -36,6 +36,7 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 
 	// 租户信息管理
 	tenantGroup.Get("/info", tenant2.TenantGetInfoHandler)
+	tenantGroup.Get("/currencies", walletHandler.GetCurrencies)
 	tenantGroup.Post("/liveness-check", func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
 			"ok":         true,
@@ -117,6 +118,12 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 	tenantWalletGroup.Post("/:id/freeze", walletHandler.FreezeWallet)
 	tenantWalletGroup.Post("/:id/unfreeze", walletHandler.UnfreezeWallet)
 	tenantWalletGroup.Delete("/:id", walletHandler.DeleteWallet)
+
+	tenantGiftCardGroup := tenantAdminGroup.Group("/gift-cards")
+	tenantGiftCardGroup.Get("/", tenant2.TenantListGiftCardsHandler)
+	tenantGiftCardGroup.Post("/batches", tenant2.TenantCreateGiftCardBatchHandler)
+	tenantGiftCardGroup.Get("/:code", tenant2.TenantGetGiftCardByCodeHandler)
+	tenantGiftCardGroup.Post("/:id/invalidate", tenant2.TenantInvalidateGiftCardHandler)
 
 	tenantAdminGroup.Get("/users/:id/wallets", walletHandler.GetUserWallets)
 	tenantAdminGroup.Post("/users/:id/wallets/adjust", walletHandler.AdjustUserWallet)

@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { clearAccessToken, clearScopeCookies, getAccessToken, getAuthScope, setAccessToken } from '../utils/auth'
+import { clearAllAccessTokens, clearAllScopeCookies, clearAccessToken, getAccessToken, getAuthScope, setAccessToken } from '../utils/auth'
 import { updateStoredUserSessionToken } from '../utils/userSessions'
 import { setSessionNotice } from '../utils/sessionNotice'
 import { getApiBase, getApiTimeoutMs, getConsoleUserUrl } from '../config/env'
@@ -10,7 +10,23 @@ const client = axios.create({
   timeout: getApiTimeoutMs(),
 })
 
+const isAuthEntryPath = (pathname: string) => {
+  return pathname === '/login'
+    || pathname === '/register'
+    || /^\/auth\/tenant\/[^/]+\/(login|register)$/.test(pathname)
+    || /^\/tenant\/[^/]+\/(login|register)$/.test(pathname)
+}
+
 const buildSessionExpiredRedirect = () => {
+  if (typeof window !== 'undefined') {
+    const params = new URLSearchParams(window.location.search || '')
+    const tenantCode = (params.get('tenant') || params.get('tenant_code') || '').trim()
+    if (tenantCode) {
+      const redirectTarget = `${window.location.pathname}${window.location.search || ''}`
+      return `/auth/tenant/${encodeURIComponent(tenantCode)}/login?redirect=${encodeURIComponent(redirectTarget)}`
+    }
+  }
+
   const scope = getAuthScope()
   const userConsoleUrl = getConsoleUserUrl().replace(/\/+$/, '')
 
@@ -67,14 +83,16 @@ client.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config
+    const pathname = typeof window !== 'undefined' ? (window.location.pathname || '') : ''
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       const url: string = originalRequest?.url || ''
+      const shouldSkipRefreshOnAuthPage = isAuthEntryPath(pathname)
       // 跳过认证相关接口的刷新逻辑，直接把错误抛给调用方（避免死循环/卡住登录）
       const isAuthEndpoint = url.includes('/api/v1/auth/login')
         || url.includes('/api/v1/auth/verify-2fa')
         || url.includes('/api/v1/auth/refresh')
-      if (isAuthEndpoint) {
+      if (isAuthEndpoint || shouldSkipRefreshOnAuthPage) {
         return Promise.reject(error)
       }
       if (isRefreshing) {
@@ -114,11 +132,9 @@ client.interceptors.response.use(
         // 刷新失败，清除token并处理队列
         processQueue(refreshError, null)
         clearAccessToken()
+        clearAllAccessTokens()
+        clearAllScopeCookies()
         setSessionNotice('session_expired')
-        const scope = getAuthScope()
-        if (scope === 'tenant' || scope === 'admin') {
-          clearScopeCookies(scope)
-        }
         
         // 如果是在非登录页面，跳转到登录页
         const redirectTarget = buildSessionExpiredRedirect()

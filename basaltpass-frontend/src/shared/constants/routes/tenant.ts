@@ -11,6 +11,7 @@ export const TENANT_ROUTES = {
   roles: '/tenant/roles',
   permissions: '/tenant/permissions',
   wallets: '/tenant/wallets',
+  giftCards: '/tenant/gift-cards',
   notifications: '/tenant/notifications',
   subscriptions: '/tenant/subscriptions',
   subscriptionsList: '/tenant/subscriptions/subscriptions',

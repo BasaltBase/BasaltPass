@@ -11,6 +11,7 @@ export const USER_ROUTES = {
   walletRecharge: '/wallet/recharge',
   walletWithdraw: '/wallet/withdraw',
   walletHistory: '/wallet/history',
+  walletGiftCardRedeem: '/wallet/gift-cards/redeem',
   subscriptions: '/subscriptions',
   products: '/products',
   orders: '/orders',

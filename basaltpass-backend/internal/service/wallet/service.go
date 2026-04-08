@@ -11,6 +11,83 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	CreditCurrencyCode  = "CREDIT"
+	fallbackCreditCode1 = "POINTS"
+	fallbackCreditCode2 = "USD"
+)
+
+func resolveCreditCurrency(tx *gorm.DB) (model.Currency, error) {
+	var curr model.Currency
+	if err := tx.Where("code = ? AND is_active = ?", CreditCurrencyCode, true).First(&curr).Error; err == nil {
+		return curr, nil
+	}
+	if err := tx.Where("code = ? AND is_active = ?", fallbackCreditCode1, true).First(&curr).Error; err == nil {
+		return curr, nil
+	}
+	if err := tx.Where("code = ? AND is_active = ?", fallbackCreditCode2, true).First(&curr).Error; err == nil {
+		return curr, nil
+	}
+	return model.Currency{}, errors.New("no active currency available for credit wallet")
+}
+
+// EnsureUserCreditWalletTx ensures one credit wallet exists for user under current transaction.
+func EnsureUserCreditWalletTx(tx *gorm.DB, userID uint) error {
+	if userID == 0 {
+		return errors.New("invalid user id")
+	}
+
+	curr, err := resolveCreditCurrency(tx)
+	if err != nil {
+		return err
+	}
+
+	var w model.Wallet
+	return tx.Where("user_id = ? AND currency_id = ?", userID, curr.ID).
+		FirstOrCreate(&w, model.Wallet{UserID: &userID, CurrencyID: &curr.ID}).Error
+}
+
+// EnsureCreditWalletsForAllUsers ensures every user has one credit wallet.
+func EnsureCreditWalletsForAllUsers() (int64, error) {
+	db := common.DB()
+	var users []model.User
+	if err := db.Select("id").Find(&users).Error; err != nil {
+		return 0, err
+	}
+
+	created := int64(0)
+	err := db.Transaction(func(tx *gorm.DB) error {
+		curr, err := resolveCreditCurrency(tx)
+		if err != nil {
+			return err
+		}
+
+		for _, user := range users {
+			var existing model.Wallet
+			errFind := tx.Where("user_id = ? AND currency_id = ?", user.ID, curr.ID).First(&existing).Error
+			if errFind == nil {
+				continue
+			}
+			if !errors.Is(errFind, gorm.ErrRecordNotFound) {
+				return errFind
+			}
+
+			w := model.Wallet{UserID: &user.ID, CurrencyID: &curr.ID}
+			if errCreate := tx.Create(&w).Error; errCreate != nil {
+				return errCreate
+			}
+			created++
+		}
+
+		return nil
+	})
+	if err != nil {
+		return 0, err
+	}
+
+	return created, nil
+}
+
 // GetBalance returns wallet balance for user+currency (creates row if absent)
 func GetBalance(userID uint, currencyID uint) (model.Wallet, error) {
 	// 验证货币是否存在

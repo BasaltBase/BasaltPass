@@ -116,6 +116,17 @@ func InitDefaultCurrencies() error {
 			Description:   "Ethereum cryptocurrency",
 		},
 		{
+			Code:          "CREDIT",
+			Name:          "Credit",
+			NameCN:        "信用点",
+			Symbol:        "C",
+			DecimalPlaces: 0,
+			Type:          "points",
+			IsActive:      true,
+			SortOrder:     19,
+			Description:   "User credit wallet unit",
+		},
+		{
 			Code:          "POINTS",
 			Name:          "System Points",
 			NameCN:        "系统积分",
@@ -152,6 +163,7 @@ func predefinedCurrencyCatalog() map[string]model.Currency {
 		"CAD":    {Code: "CAD", Name: "Canadian Dollar", NameCN: "加元", Symbol: "$", DecimalPlaces: 2, Type: "fiat", IsActive: true, SortOrder: 10, Description: "Canadian Dollar"},
 		"BTC":    {Code: "BTC", Name: "Bitcoin", NameCN: "比特币", Symbol: "₿", DecimalPlaces: 8, Type: "crypto", IsActive: true, SortOrder: 50, Description: "Bitcoin cryptocurrency"},
 		"ETH":    {Code: "ETH", Name: "Ethereum", NameCN: "以太坊", Symbol: "Ξ", DecimalPlaces: 18, Type: "crypto", IsActive: true, SortOrder: 51, Description: "Ethereum cryptocurrency"},
+		"CREDIT": {Code: "CREDIT", Name: "Credit", NameCN: "信用点", Symbol: "C", DecimalPlaces: 0, Type: "points", IsActive: true, SortOrder: 89, Description: "User credit wallet unit"},
 		"POINTS": {Code: "POINTS", Name: "System Points", NameCN: "系统积分", Symbol: "P", DecimalPlaces: 0, Type: "points", IsActive: true, SortOrder: 90, Description: "System reward points"},
 	}
 }
