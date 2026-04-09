@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkbasaltpass_docs=globalThis.webpackChunkbasaltpass_docs||[]).push([[5905],{4960(a){a.exports=JSON.parse('{"metadata":{"permalink":"/BasaltPassDev/blog","page":1,"postsPerPage":10,"totalPages":1,"totalCount":1,"blogDescription":"Blog","blogTitle":"Blog"}}')}}]);

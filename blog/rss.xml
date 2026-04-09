@@ -2,7 +2,7 @@
 <rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/">
     <channel>
         <title>BasaltPass Blog</title>
-        <link>https://basaltbase.github.io/BasaltPass/blog</link>
+        <link>https://basaltbase.github.io/BasaltPassDev/blog</link>
         <description>BasaltPass Blog</description>
         <lastBuildDate>Sun, 18 Feb 2024 00:00:00 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
@@ -10,13 +10,13 @@
         <language>en</language>
         <item>
             <title><![CDATA[Welcome to BasaltPass]]></title>
-            <link>https://basaltbase.github.io/BasaltPass/blog/welcome-to-basaltpass</link>
-            <guid>https://basaltbase.github.io/BasaltPass/blog/welcome-to-basaltpass</guid>
+            <link>https://basaltbase.github.io/BasaltPassDev/blog/welcome-to-basaltpass</link>
+            <guid>https://basaltbase.github.io/BasaltPassDev/blog/welcome-to-basaltpass</guid>
             <pubDate>Sun, 18 Feb 2024 00:00:00 GMT</pubDate>
             <description><![CDATA[Welcome to the official blog of BasaltPass!]]></description>
             <content:encoded><![CDATA[<p>Welcome to the official blog of <strong>BasaltPass</strong>!</p>
 <p>We are excited to introduce BasaltPass, a modern, secure, and multi-tenant authentication system designed to simplify identity management for your applications.</p>
-<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="why-basaltpass">Why BasaltPass?<a href="https://basaltbase.github.io/BasaltPass/blog/welcome-to-basaltpass#why-basaltpass" class="hash-link" aria-label="Direct link to Why BasaltPass?" title="Direct link to Why BasaltPass?" translate="no">​</a></h2>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="why-basaltpass">Why BasaltPass?<a href="https://basaltbase.github.io/BasaltPassDev/blog/welcome-to-basaltpass#why-basaltpass" class="hash-link" aria-label="Direct link to Why BasaltPass?" title="Direct link to Why BasaltPass?" translate="no">​</a></h2>
 <p>In today's digital landscape, security and scalability are paramount. Building a robust authentication system from scratch is complex and time-consuming. BasaltPass provides a ready-to-use solution that is:</p>
 <ul>
 <li class=""><strong>Multi-Tenant by Design</strong>: Seamlessly manage multiple organizations with strict data isolation.</li>
@@ -24,9 +24,9 @@
 <li class=""><strong>Secure</strong>: Implements best practices like PKCE and RBAC out of the box.</li>
 <li class=""><strong>Developer Focused</strong>: Easy to integrate with comprehensive documentation and APIs.</li>
 </ul>
-<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="whats-next">What's Next?<a href="https://basaltbase.github.io/BasaltPass/blog/welcome-to-basaltpass#whats-next" class="hash-link" aria-label="Direct link to What's Next?" title="Direct link to What's Next?" translate="no">​</a></h2>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="whats-next">What's Next?<a href="https://basaltbase.github.io/BasaltPassDev/blog/welcome-to-basaltpass#whats-next" class="hash-link" aria-label="Direct link to What's Next?" title="Direct link to What's Next?" translate="no">​</a></h2>
 <p>We are constantly working to improve BasaltPass. Stay tuned to this blog for updates on new features, tutorials, and security best practices.</p>
-<p>Check out our <a class="" href="https://basaltbase.github.io/BasaltPass/docs/intro/what-is-basaltpass">Documentation</a> to get started today!</p>]]></content:encoded>
+<p>Check out our <a class="" href="https://basaltbase.github.io/BasaltPassDev/docs/intro/what-is-basaltpass">Documentation</a> to get started today!</p>]]></content:encoded>
             <category>Introduction</category>
             <category>BasaltPass</category>
             <category>Security</category>
