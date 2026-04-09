@@ -1,6 +1,6 @@
 import client from '../client'
 
-// 租户用户管理相关的API接口
+// tenantusermanagementtranslatedAPItranslated
 
 export interface TenantUser {
   id: number
@@ -12,7 +12,7 @@ export interface TenantUser {
   last_login_at?: string
   created_at: string
   updated_at: string
-  // 新增字段：同一用户可能使用该租户的多个应用
+  // translated：translatedusercantranslatedtenanttranslatedapp
   app_count?: number
   last_authorized_at?: string
   last_active_at?: string
@@ -46,9 +46,9 @@ export interface InviteTenantUserRequest {
   message?: string
 }
 
-// 租户用户管理API
+// tenantusermanagementAPI
 export const tenantUserManagementApi = {
-  // 获取租户用户列表
+  // gettenantuserlist
   async getTenantUsers(params?: {
     page?: number
     limit?: number
@@ -60,37 +60,37 @@ export const tenantUserManagementApi = {
     return response.data
   },
 
-  // 获取租户用户统计
+  // gettenantusertranslated
   async getTenantUserStats() {
     const response = await client.get('/api/v1/tenant/users/stats')
     return response.data
   },
 
-  // 更新用户信息
+  // updateuserinfo
   async updateTenantUser(userId: number, data: UpdateTenantUserRequest) {
     const response = await client.put(`/api/v1/tenant/users/${userId}`, data)
     return response.data
   },
 
-  // 移除租户用户
+  // translatedtenantuser
   async removeTenantUser(userId: number) {
     const response = await client.delete(`/api/v1/tenant/users/${userId}`)
     return response.data
   },
 
-  // 邀请新用户
+  // invitationtranslateduser
   async inviteTenantUser(data: InviteTenantUserRequest) {
     const response = await client.post('/api/v1/tenant/users/invite', data)
     return response.data
   },
 
-  // 重新发送邀请
+  // translatedinvitation
   async resendInvitation(userId: number) {
     const response = await client.post(`/api/v1/tenant/users/${userId}/resend-invitation`)
     return response.data
   },
 
-  // 获取用户详情
+  // getuserdetails
   async getTenantUser(userId: number) {
     const response = await client.get(`/api/v1/tenant/users/${userId}`)
     return response.data

@@ -11,8 +11,10 @@ import AdminLayout from '@features/admin/components/AdminLayout'
 import { PInput, PSelect, PTextarea, PCheckbox, PButton, PSkeleton, PBadge, PAlert } from '@ui'
 import { adminTenantApi, AdminTenantDetailResponse, AdminUpdateTenantRequest, TenantSettings } from '@api/admin/tenant'
 import { ROUTES } from '@constants'
+import { useI18n } from '@shared/i18n'
 
 const EditTenant: React.FC = () => {
+  const { t } = useI18n()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [tenant, setTenant] = useState<AdminTenantDetailResponse | null>(null)
@@ -49,7 +51,6 @@ const EditTenant: React.FC = () => {
       const response = await adminTenantApi.getTenantDetail(parseInt(id))
       setTenant(response)
       
-      // 初始化表单数据
       setFormData({
         name: response.name,
         description: response.description || '',
@@ -65,8 +66,8 @@ const EditTenant: React.FC = () => {
         }
       })
     } catch (err: any) {
-      console.error('获取租户详情失败:', err)
-      setError(err.response?.data?.message || '获取租户详情失败')
+      console.error(t('adminTenantEdit.logs.fetchDetailFailed'), err)
+      setError(err.response?.data?.message || t('adminTenantEdit.errors.fetchDetailFailed'))
     } finally {
       setLoading(false)
     }
@@ -100,13 +101,12 @@ const EditTenant: React.FC = () => {
       
       await adminTenantApi.updateTenant(parseInt(id), formData)
       
-      // 更新成功后跳转到详情页
       navigate(`/admin/tenants/${id}`, { 
-        state: { message: '租户更新成功！' }
+        state: { message: t('adminTenantEdit.messages.updateSuccess') }
       })
     } catch (err: any) {
-      console.error('更新租户失败:', err)
-      setError(err.response?.data?.message || '更新租户失败')
+      console.error(t('adminTenantEdit.logs.updateFailed'), err)
+      setError(err.response?.data?.message || t('adminTenantEdit.errors.updateFailed'))
     } finally {
       setSaving(false)
     }
@@ -118,9 +118,9 @@ const EditTenant: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      active: { variant: 'success' as const, text: '活跃' },
-      suspended: { variant: 'warning' as const, text: '暂停' },
-      deleted: { variant: 'error' as const, text: '已删除' }
+      active: { variant: 'success' as const, text: t('adminTenantList.status.active') },
+      suspended: { variant: 'warning' as const, text: t('adminTenantList.status.suspended') },
+      deleted: { variant: 'error' as const, text: t('adminTenantList.status.deleted') }
     }
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.active
     return <PBadge variant={config.variant}>{config.text}</PBadge>
@@ -128,7 +128,7 @@ const EditTenant: React.FC = () => {
 
   if (loading) {
     return (
-      <AdminLayout title="编辑租户">
+      <AdminLayout title={t('adminTenantEdit.layoutTitle')}>
         <div className="py-6">
           <PSkeleton.Content cards={3} />
         </div>
@@ -138,14 +138,14 @@ const EditTenant: React.FC = () => {
 
   if (!tenant) {
     return (
-      <AdminLayout title="编辑租户">
+      <AdminLayout title={t('adminTenantEdit.layoutTitle')}>
         <div className="text-center py-12">
           <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">租户不存在</h3>
-          <p className="mt-1 text-sm text-gray-500">请检查租户ID是否正确</p>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">{t('adminTenantEdit.notFound.title')}</h3>
+          <p className="mt-1 text-sm text-gray-500">{t('adminTenantEdit.notFound.description')}</p>
           <div className="mt-6">
             <PButton onClick={() => navigate(ROUTES.admin.tenants)}>
-              返回租户列表
+              {t('adminTenantEdit.actions.backToList')}
             </PButton>
           </div>
         </div>
@@ -154,12 +154,10 @@ const EditTenant: React.FC = () => {
   }
 
   return (
-    <AdminLayout title={`编辑租户 - ${tenant.name}`}>
+    <AdminLayout title={t('adminTenantEdit.layoutTitleWithName', { name: tenant.name })}>
       <div className="space-y-6">
-        {/* 错误提示 */}
-        {error && <PAlert variant="error" title="操作失败" message={error} />}
+        {error && <PAlert variant="error" title={t('adminTenantEdit.errors.operationFailed')} message={error} />}
 
-        {/* 页面头部 */}
         <div className="lg:flex lg:items-center lg:justify-between">
           <div className="flex-1 min-w-0">
             <div className="flex items-center">
@@ -175,10 +173,10 @@ const EditTenant: React.FC = () => {
               <BuildingOfficeIcon className="h-8 w-8 mr-3 text-indigo-600" />
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">
-                  编辑租户
+                  {t('adminTenantEdit.header.title')}
                 </h1>
                 <div className="mt-1 flex items-center space-x-2">
-                  <span className="text-sm text-gray-500">代码: {tenant.code}</span>
+                  <span className="text-sm text-gray-500">{t('adminTenantList.meta.code', { value: tenant.code })}</span>
                   <span className="text-gray-300">•</span>
                   {getStatusBadge(tenant.status)}
                 </div>
@@ -187,20 +185,18 @@ const EditTenant: React.FC = () => {
           </div>
         </div>
 
-        {/* 编辑表单 */}
         <div className="bg-white shadow rounded-lg">
           <form onSubmit={handleSubmit} className="space-y-6 p-6">
-            {/* 基本信息 */}
             <div>
               <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4 flex items-center">
                 <DocumentTextIcon className="h-5 w-5 mr-2 text-gray-400" />
-                基本信息
+                {t('adminTenantEdit.sections.basicInfo')}
               </h3>
               
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div>
                   <PInput
-                    label="租户名称"
+                    label={t('adminTenantEdit.form.name')}
                     type="text"
                     name="name"
                     value={formData.name}
@@ -211,52 +207,51 @@ const EditTenant: React.FC = () => {
 
                 <div>
                   <PInput
-                    label="租户代码"
+                    label={t('adminTenantEdit.form.code')}
                     type="text"
                     value={tenant.code}
                     disabled
                   />
-                  <p className="mt-1 text-xs text-gray-500">租户代码创建后不可修改</p>
+                  <p className="mt-1 text-xs text-gray-500">{t('adminTenantEdit.form.codeHint')}</p>
                 </div>
 
                 <div className="sm:col-span-2">
                   <PTextarea
-                    label="描述"
+                    label={t('adminTenantEdit.form.description')}
                     name="description"
                     value={formData.description}
                     onChange={handleInputChange}
                     rows={3}
-                    placeholder="租户描述信息..."
+                    placeholder={t('adminTenantEdit.form.descriptionPlaceholder')}
                   />
                 </div>
 
                 <div>
                   <PSelect
-                    label="状态"
+                    label={t('adminTenantEdit.form.status')}
                     name="status"
                     value={formData.status}
                     onChange={handleInputChange}
                   >
-                    <option value="active">活跃</option>
-                    <option value="suspended">暂停</option>
-                    <option value="deleted">删除</option>
+                    <option value="active">{t('adminTenantList.status.active')}</option>
+                    <option value="suspended">{t('adminTenantList.status.suspended')}</option>
+                    <option value="deleted">{t('adminTenantList.status.deleted')}</option>
                   </PSelect>
                 </div>
               </div>
             </div>
 
-            {/* 租户设置 */}
             <div>
               <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4 flex items-center">
                 <CogIcon className="h-5 w-5 mr-2 text-gray-400" />
-                租户设置
+                {t('adminTenantEdit.sections.settings')}
               </h3>
               
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <PInput
-                      label="最大用户数"
+                      label={t('adminTenantEdit.settings.maxUsers')}
                       type="number"
                       value={formData.settings?.max_users || 0}
                       onChange={(e) => handleSettingChange('max_users', parseInt(e.target.value) || 0)}
@@ -265,7 +260,7 @@ const EditTenant: React.FC = () => {
                   </div>
                   <div>
                     <PInput
-                      label="最大应用数"
+                      label={t('adminTenantEdit.settings.maxApps')}
                       type="number"
                       value={formData.settings?.max_apps || 0}
                       onChange={(e) => handleSettingChange('max_apps', parseInt(e.target.value) || 0)}
@@ -274,7 +269,7 @@ const EditTenant: React.FC = () => {
                   </div>
                   <div>
                     <PInput
-                      label="最大存储 (MB)"
+                      label={t('adminTenantEdit.settings.maxStorage')}
                       type="number"
                       value={formData.settings?.max_storage || 0}
                       onChange={(e) => handleSettingChange('max_storage', parseInt(e.target.value) || 0)}
@@ -286,19 +281,19 @@ const EditTenant: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <PCheckbox
                     variant="switch"
-                    label="启用 API 功能"
+                    label={t('adminTenantEdit.settings.enableApi')}
                     checked={formData.settings?.enable_api || false}
                     onChange={(e) => handleSettingChange('enable_api', (e.target as HTMLInputElement).checked)}
                   />
                   <PCheckbox
                     variant="switch"
-                    label="启用 SSO 单点登录"
+                    label={t('adminTenantEdit.settings.enableSso')}
                     checked={formData.settings?.enable_sso || false}
                     onChange={(e) => handleSettingChange('enable_sso', (e.target as HTMLInputElement).checked)}
                   />
                   <PCheckbox
                     variant="switch"
-                    label="启用审计日志"
+                    label={t('adminTenantEdit.settings.enableAudit')}
                     checked={formData.settings?.enable_audit || false}
                     onChange={(e) => handleSettingChange('enable_audit', (e.target as HTMLInputElement).checked)}
                   />
@@ -306,20 +301,19 @@ const EditTenant: React.FC = () => {
               </div>
             </div>
 
-            {/* 表单按钮 */}
             <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
               <PButton
                 type="button"
                 variant="secondary"
                 onClick={handleCancel}
               >
-                取消
+                {t('adminTenantEdit.actions.cancel')}
               </PButton>
               <PButton
                 type="submit"
                 loading={saving}
               >
-                保存更改
+                {t('adminTenantEdit.actions.saveChanges')}
               </PButton>
             </div>
           </form>

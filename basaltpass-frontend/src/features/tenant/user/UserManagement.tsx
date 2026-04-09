@@ -28,6 +28,7 @@ import { tenantAppApi } from '@api/tenant/tenantApp'
 import { appUserApi, type AppUserStats } from '@api/tenant/appUser'
 import useDebounce from '@hooks/useDebounce'
 import { ROUTES } from '@constants'
+import { useI18n } from '@shared/i18n'
 import { 
   tenantUserManagementApi, 
   type TenantUser, 
@@ -46,6 +47,7 @@ interface AppWithUserStats {
 }
 
 export default function TenantUserManagement() {
+  const { t, locale } = useI18n()
   const [apps, setApps] = useState<AppWithUserStats[]>([])
   const [tenantUsers, setTenantUsers] = useState<TenantUser[]>([])
   const [tenantUserStats, setTenantUserStats] = useState<TenantUserStats>({
@@ -62,13 +64,13 @@ export default function TenantUserManagement() {
   const [roleFilter, setRoleFilter] = useState('')
   const [activeTab, setActiveTab] = useState<'apps' | 'users'>('users')
   
-  // 模态框状态
+  // 
   const [showInviteModal, setShowInviteModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [editingUser, setEditingUser] = useState<TenantUser | null>(null)
   const [submitting, setSubmitting] = useState(false)
   
-  // 表单数据
+  // 
   const [inviteFormData, setInviteFormData] = useState<InviteTenantUserRequest>({
     email: '',
     role: 'user',
@@ -80,14 +82,14 @@ export default function TenantUserManagement() {
     status: 'active'
   })
 
-  // 分页状态
+  // 
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 20,
     total: 0,
   })
 
-  // 消息提示
+  // 
   const [message, setMessage] = useState<{
     type: 'success' | 'error' | 'info';
     text: string;
@@ -131,8 +133,8 @@ export default function TenantUserManagement() {
         total: response.pagination?.total || 0,
       })
     } catch (err: any) {
-      console.error('获取租户用户列表失败:', err)
-      setError(err.response?.data?.error || '获取租户用户列表失败')
+      console.error(t('tenantUserManagement.logs.fetchTenantUsersFailed'), err)
+      setError(err.response?.data?.error || t('tenantUserManagement.errors.fetchTenantUsersFailed'))
     } finally {
       setLoading(false)
     }
@@ -148,7 +150,7 @@ export default function TenantUserManagement() {
         new_users_this_month: 0
       })
     } catch (err: any) {
-      console.error('获取租户用户统计失败:', err)
+      console.error(t('tenantUserManagement.logs.fetchTenantUserStatsFailed'), err)
     }
   }
 
@@ -156,11 +158,9 @@ export default function TenantUserManagement() {
     try {
       setLoading(true)
       
-      // 获取租户应用列表
       const appsResponse = await tenantAppApi.listTenantApps()
       const appsList = appsResponse.data?.apps || []
 
-      // 并行获取每个应用的用户统计
       const appsWithStats = await Promise.all(
         appsList.map(async (app: any) => {
           try {
@@ -174,7 +174,7 @@ export default function TenantUserManagement() {
               }
             }
           } catch (err) {
-            console.error(`获取应用 ${app.id} 用户统计失败:`, err)
+            console.error(t('tenantUserManagement.logs.fetchAppStatsFailed', { appId: app.id }), err)
             return {
               ...app,
               userStats: {
@@ -189,8 +189,8 @@ export default function TenantUserManagement() {
 
       setApps(appsWithStats)
     } catch (err: any) {
-      console.error('获取应用列表失败:', err)
-      setError(err.response?.data?.error || '获取应用列表失败')
+      console.error(t('tenantUserManagement.logs.fetchAppsFailed'), err)
+      setError(err.response?.data?.error || t('tenantUserManagement.errors.fetchAppsFailed'))
     } finally {
       setLoading(false)
     }
@@ -209,15 +209,15 @@ export default function TenantUserManagement() {
   const getStatusText = (status: string) => {
     switch (status) {
       case 'active':
-        return '活跃'
+        return t('tenantUserManagement.status.active')
       case 'inactive':
-        return '非活跃'
+        return t('tenantUserManagement.status.inactive')
       case 'suspended':
-        return '已暂停'
+        return t('tenantUserManagement.status.suspended')
       case 'pending':
-        return '待激活'
+        return t('tenantUserManagement.status.pending')
       default:
-        return '未知'
+        return t('tenantUserManagement.status.unknown')
     }
   }
 
@@ -234,14 +234,14 @@ export default function TenantUserManagement() {
   const getRoleText = (role: string) => {
     switch (role) {
       case 'owner':
-        return '所有者'
+        return t('tenantUserManagement.role.owner')
       case 'admin':
-        return '管理员'
+        return t('tenantUserManagement.role.admin')
       case 'user':
       case 'member':
-        return '成员'
+        return t('tenantUserManagement.role.member')
       default:
-        return '未知'
+        return t('tenantUserManagement.role.unknown')
     }
   }
 
@@ -266,24 +266,22 @@ export default function TenantUserManagement() {
     return matchesSearch && matchesStatus && matchesRole
   })
 
-  // 处理邀请用户
   const handleInviteUser = async () => {
     try {
       setSubmitting(true)
       await tenantUserManagementApi.inviteTenantUser(inviteFormData)
-      showMessage('success', '邀请发送成功')
+      showMessage('success', t('tenantUserManagement.messages.inviteSent'))
       setShowInviteModal(false)
       setInviteFormData({ email: '', role: 'user', message: '' })
       fetchTenantUsers()
       fetchTenantUserStats()
     } catch (err: any) {
-      showMessage('error', err.response?.data?.error || '邀请发送失败')
+      showMessage('error', err.response?.data?.error || t('tenantUserManagement.messages.inviteFailed'))
     } finally {
       setSubmitting(false)
     }
   }
 
-  // 处理编辑用户
   const handleEditUser = (user: TenantUser) => {
     setEditingUser(user)
     setEditFormData({
@@ -293,62 +291,59 @@ export default function TenantUserManagement() {
     setShowEditModal(true)
   }
 
-  // 处理更新用户
   const handleUpdateUser = async () => {
     if (!editingUser) return
     
     try {
       setSubmitting(true)
       await tenantUserManagementApi.updateTenantUser(editingUser.id, editFormData)
-      showMessage('success', '用户信息更新成功')
+      showMessage('success', t('tenantUserManagement.messages.userUpdated'))
       setShowEditModal(false)
       setEditingUser(null)
       fetchTenantUsers()
       fetchTenantUserStats()
     } catch (err: any) {
-      showMessage('error', err.response?.data?.error || '用户信息更新失败')
+      showMessage('error', err.response?.data?.error || t('tenantUserManagement.messages.userUpdateFailed'))
     } finally {
       setSubmitting(false)
     }
   }
 
-  // 处理删除用户
   const handleRemoveUser = async (user: TenantUser) => {
     if (user.role === 'owner') {
-      showMessage('error', '不能移除租户所有者')
+      showMessage('error', t('tenantUserManagement.messages.cannotRemoveOwner'))
       return
     }
 
-    if (!await uiConfirm(`确定要移除用户"${user.nickname || user.email}"吗？`)) {
+    if (!await uiConfirm(t('tenantUserManagement.confirm.removeUser', { user: user.nickname || user.email }))) {
       return
     }
 
     try {
       await tenantUserManagementApi.removeTenantUser(user.id)
-      showMessage('success', '用户移除成功')
+      showMessage('success', t('tenantUserManagement.messages.userRemoved'))
       fetchTenantUsers()
       fetchTenantUserStats()
     } catch (err: any) {
-      showMessage('error', err.response?.data?.error || '用户移除失败')
+      showMessage('error', err.response?.data?.error || t('tenantUserManagement.messages.userRemoveFailed'))
     }
   }
 
-  // 处理重新发送邀请
   const handleResendInvitation = async (user: TenantUser) => {
     try {
       await tenantUserManagementApi.resendInvitation(user.id)
-      showMessage('success', '邀请已重新发送')
+      showMessage('success', t('tenantUserManagement.messages.inviteResent'))
     } catch (err: any) {
-      showMessage('error', err.response?.data?.error || '重新发送邀请失败')
+      showMessage('error', err.response?.data?.error || t('tenantUserManagement.messages.inviteResendFailed'))
     }
   }
 
-  // 分页变化
+  // 
   const handlePageChange = (page: number) => {
     fetchTenantUsers(page, pagination.pageSize)
   }
 
-  // 计算总体统计
+  // 
   const appStats = apps.reduce((acc, app) => ({
     totalUsers: acc.totalUsers + app.userStats.total_users,
     activeUsers: acc.activeUsers + app.userStats.active_users,
@@ -366,7 +361,7 @@ export default function TenantUserManagement() {
 
   if (loading) {
     return (
-      <TenantLayout title="用户管理">
+      <TenantLayout title={t('tenantUserManagement.page.title')}>
         <div className="py-6">
           <PSkeleton.Management />
         </div>
@@ -376,7 +371,7 @@ export default function TenantUserManagement() {
 
   if (error) {
     return (
-      <TenantLayout title="用户管理">
+      <TenantLayout title={t('tenantUserManagement.page.title')}>
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-red-500" />
@@ -389,7 +384,7 @@ export default function TenantUserManagement() {
                 }}
                 size="sm"
               >
-                重试
+                {t('tenantUserManagement.common.retry')}
               </PButton>
             </div>
           </div>
@@ -399,9 +394,9 @@ export default function TenantUserManagement() {
   }
 
   return (
-    <TenantLayout title="用户管理">
+    <TenantLayout title={t('tenantUserManagement.page.title')}>
       <div className="space-y-6">
-        {/* 消息提示 */}
+        {/*  */}
         {message.visible && (
           <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg flex items-center space-x-2 ${
             message.type === 'success' ? 'bg-green-500 text-white' :
@@ -420,17 +415,17 @@ export default function TenantUserManagement() {
           </div>
         )}
 
-        {/* 页面头部 */}
+        {/*  */}
         <PPageHeader
-          title="用户管理"
-          description="管理租户用户和应用用户权限"
+          title={t('tenantUserManagement.page.title')}
+          description={t('tenantUserManagement.page.subtitle')}
           icon={<UsersIcon className="h-8 w-8 text-blue-600" />}
           actions={activeTab === 'users' ? (
-            <PButton onClick={() => setShowInviteModal(true)} leftIcon={<UserPlusIcon className="w-5 h-5" />}>邀请用户</PButton>
+            <PButton onClick={() => setShowInviteModal(true)} leftIcon={<UserPlusIcon className="w-5 h-5" />}>{t('tenantUserManagement.actions.inviteUser')}</PButton>
           ) : undefined}
         />
 
-        {/* 标签页导航 */}
+        {/*  */}
         <div className="border-b border-gray-200">
           <nav className="-mb-px flex space-x-8">
             <button
@@ -442,7 +437,7 @@ export default function TenantUserManagement() {
               }`}
             >
               <UsersIcon className="w-5 h-5 inline mr-2" />
-              租户用户
+              {t('tenantUserManagement.tabs.tenantUsers')}
             </button>
             <button
               onClick={() => setActiveTab('apps')}
@@ -453,12 +448,12 @@ export default function TenantUserManagement() {
               }`}
             >
               <CubeIcon className="w-5 h-5 inline mr-2" />
-              应用用户管理
+              {t('tenantUserManagement.tabs.appUsers')}
             </button>
           </nav>
         </div>
 
-        {/* 统计卡片 */}
+        {/*  */}
         {activeTab === 'users' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-white overflow-hidden shadow rounded-lg">
@@ -469,7 +464,7 @@ export default function TenantUserManagement() {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">总用户数</dt>
+                      <dt className="text-sm font-medium text-gray-500 truncate">{t('tenantUserManagement.stats.totalUsers')}</dt>
                       <dd className="text-lg font-medium text-gray-900">{userStats.totalUsers}</dd>
                     </dl>
                   </div>
@@ -485,7 +480,7 @@ export default function TenantUserManagement() {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">活跃用户</dt>
+                      <dt className="text-sm font-medium text-gray-500 truncate">{t('tenantUserManagement.stats.activeUsers')}</dt>
                       <dd className="text-lg font-medium text-gray-900">{userStats.activeUsers}</dd>
                     </dl>
                   </div>
@@ -501,7 +496,7 @@ export default function TenantUserManagement() {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">暂停用户</dt>
+                      <dt className="text-sm font-medium text-gray-500 truncate">{t('tenantUserManagement.stats.suspendedUsers')}</dt>
                       <dd className="text-lg font-medium text-gray-900">{userStats.suspendedUsers}</dd>
                     </dl>
                   </div>
@@ -517,7 +512,7 @@ export default function TenantUserManagement() {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">本月新用户</dt>
+                      <dt className="text-sm font-medium text-gray-500 truncate">{t('tenantUserManagement.stats.newUsersThisMonth')}</dt>
                       <dd className="text-lg font-medium text-gray-900">{userStats.newUsers}</dd>
                     </dl>
                   </div>
@@ -535,7 +530,7 @@ export default function TenantUserManagement() {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">总用户数</dt>
+                      <dt className="text-sm font-medium text-gray-500 truncate">{t('tenantUserManagement.stats.totalUsers')}</dt>
                       <dd className="text-lg font-medium text-gray-900">{appStats.totalUsers}</dd>
                     </dl>
                   </div>
@@ -551,7 +546,7 @@ export default function TenantUserManagement() {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">活跃用户</dt>
+                      <dt className="text-sm font-medium text-gray-500 truncate">{t('tenantUserManagement.stats.activeUsers')}</dt>
                       <dd className="text-lg font-medium text-gray-900">{appStats.activeUsers}</dd>
                     </dl>
                   </div>
@@ -567,7 +562,7 @@ export default function TenantUserManagement() {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">新用户</dt>
+                      <dt className="text-sm font-medium text-gray-500 truncate">{t('tenantUserManagement.stats.newUsers')}</dt>
                       <dd className="text-lg font-medium text-gray-900">{appStats.newUsers}</dd>
                     </dl>
                   </div>
@@ -583,7 +578,7 @@ export default function TenantUserManagement() {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">总应用数</dt>
+                      <dt className="text-sm font-medium text-gray-500 truncate">{t('tenantUserManagement.stats.totalApps')}</dt>
                       <dd className="text-lg font-medium text-gray-900">{appStats.totalApps}</dd>
                     </dl>
                   </div>
@@ -599,7 +594,7 @@ export default function TenantUserManagement() {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">运行应用</dt>
+                      <dt className="text-sm font-medium text-gray-500 truncate">{t('tenantUserManagement.stats.activeApps')}</dt>
                       <dd className="text-lg font-medium text-gray-900">{appStats.activeApps}</dd>
                     </dl>
                   </div>
@@ -609,7 +604,7 @@ export default function TenantUserManagement() {
           </div>
         )}
 
-        {/* 搜索和过滤 */}
+        {/*  */}
         <div className="bg-white shadow rounded-lg p-6">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
@@ -617,7 +612,7 @@ export default function TenantUserManagement() {
                 <MagnifyingGlassIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                 <PInput
                   type="text"
-                  placeholder={activeTab === 'users' ? "搜索用户邮箱或昵称..." : "搜索应用名称或描述..."}
+                  placeholder={activeTab === 'users' ? t('tenantUserManagement.filters.searchUsers') : t('tenantUserManagement.filters.searchApps')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   icon={<MagnifyingGlassIcon className="h-5 w-5" />}
@@ -633,10 +628,10 @@ export default function TenantUserManagement() {
                     onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setRoleFilter(e.target.value)}
                     className="pl-10"
                   >
-                    <option value="">所有角色</option>
-                    <option value="owner">所有者</option>
-                    <option value="admin">管理员</option>
-                      <option value="user">成员</option>
+                    <option value="">{t('tenantUserManagement.filters.allRoles')}</option>
+                    <option value="owner">{t('tenantUserManagement.role.owner')}</option>
+                    <option value="admin">{t('tenantUserManagement.role.admin')}</option>
+                    <option value="user">{t('tenantUserManagement.role.member')}</option>
                   </PSelect>
                 </div>
               </div>
@@ -649,18 +644,18 @@ export default function TenantUserManagement() {
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value)}
                   className="pl-10"
                 >
-                  <option value="">所有状态</option>
+                  <option value="">{t('tenantUserManagement.filters.allStatuses')}</option>
                   {activeTab === 'users' ? (
                     <>
-                      <option value="active">活跃</option>
-                      <option value="inactive">非活跃</option>
-                      <option value="suspended">已暂停</option>
+                      <option value="active">{t('tenantUserManagement.status.active')}</option>
+                      <option value="inactive">{t('tenantUserManagement.status.inactive')}</option>
+                      <option value="suspended">{t('tenantUserManagement.status.suspended')}</option>
                     </>
                   ) : (
                     <>
-                      <option value="active">运行中</option>
-                      <option value="inactive">已停止</option>
-                      <option value="pending">待激活</option>
+                      <option value="active">{t('tenantUserManagement.appStatus.active')}</option>
+                      <option value="inactive">{t('tenantUserManagement.appStatus.inactive')}</option>
+                      <option value="pending">{t('tenantUserManagement.appStatus.pending')}</option>
                     </>
                   )}
                 </PSelect>
@@ -669,25 +664,25 @@ export default function TenantUserManagement() {
           </div>
         </div>
 
-        {/* 主要内容 */}
+        {/*  */}
         {activeTab === 'users' ? (
-          /* 租户用户列表 */
+          /*  */
           <div className="bg-white shadow overflow-hidden sm:rounded-lg">
             <div className="px-4 py-5 sm:p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg leading-6 font-medium text-gray-900">
-                  租户用户列表 ({filteredTenantUsers.length} 个用户)
+                  {t('tenantUserManagement.list.tenantUsersCount', { count: filteredTenantUsers.length })}
                 </h3>
               </div>
 
               {filteredTenantUsers.length === 0 ? (
                 <PEmptyState
                   icon={UsersIcon}
-                  title="暂无用户"
-                  description={searchTerm ? '未找到匹配的用户' : '还没有任何用户'}
+                  title={t('tenantUserManagement.empty.noUsers')}
+                  description={searchTerm ? t('tenantUserManagement.empty.noUserMatch') : t('tenantUserManagement.empty.noUsersYet')}
                 >
                   {!searchTerm && (
-                    <PButton onClick={() => setShowInviteModal(true)} leftIcon={<UserPlusIcon className="h-4 w-4" />}>邀请用户</PButton>
+                    <PButton onClick={() => setShowInviteModal(true)} leftIcon={<UserPlusIcon className="h-4 w-4" />}>{t('tenantUserManagement.actions.inviteUser')}</PButton>
                   )}
                 </PEmptyState>
               ) : (
@@ -696,7 +691,7 @@ export default function TenantUserManagement() {
                     columns={[
                       {
                         key: 'user',
-                        title: '用户',
+                        title: t('tenantUserManagement.table.user'),
                         render: (user: TenantUser) => (
                           <div className="flex items-center">
                             {user.avatar ? (
@@ -713,43 +708,43 @@ export default function TenantUserManagement() {
                           </div>
                         )
                       },
-                      { key: 'app_count', title: '应用数', render: (u: TenantUser) => <span className="text-sm text-gray-700">{u.app_count ?? 0}</span> },
+                      { key: 'app_count', title: t('tenantUserManagement.table.appCount'), render: (u: TenantUser) => <span className="text-sm text-gray-700">{u.app_count ?? 0}</span> },
                       {
                         key: 'role',
-                        title: '角色',
+                        title: t('tenantUserManagement.table.role'),
                         render: (user: TenantUser) => (
                           <div className="flex items-center gap-2">
                             <PBadge variant={getRoleVariant(user.role) as any}>{getRoleText(user.role)}</PBadge>
                             {!user.is_tenant_user && (
-                              <PBadge variant="default">应用用户</PBadge>
+                              <PBadge variant="default">{t('tenantUserManagement.table.appUser')}</PBadge>
                             )}
                           </div>
                         )
                       },
                       {
                         key: 'status',
-                        title: '状态',
+                        title: t('tenantUserManagement.table.status'),
                         render: (user: TenantUser) => (
                           <PBadge variant={getStatusVariant(user.status) as any}>{getStatusText(user.status)}</PBadge>
                         )
                       },
                       {
                         key: 'last_login',
-                        title: '最后登录',
+                        title: t('tenantUserManagement.table.lastLogin'),
                         render: (user: TenantUser) => (
                           <span className="text-sm text-gray-500">
                             {user.last_login_at
-                              ? new Date(user.last_login_at).toLocaleDateString()
+                              ? new Date(user.last_login_at).toLocaleDateString(locale)
                               : user.last_active_at
-                              ? new Date(user.last_active_at).toLocaleDateString()
-                              : 'N/A'}
+                              ? new Date(user.last_active_at).toLocaleDateString(locale)
+                              : t('tenantUserManagement.table.notAvailable')}
                           </span>
                         )
                       },
-                      { key: 'created_at', title: '加入时间', dataIndex: 'created_at', sortable: true, sorter: (a: TenantUser, b: TenantUser) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime() },
+                      { key: 'created_at', title: t('tenantUserManagement.table.joinedAt'), dataIndex: 'created_at', sortable: true, sorter: (a: TenantUser, b: TenantUser) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime() },
                       {
                         key: 'actions',
-                        title: '操作',
+                        title: t('tenantUserManagement.table.actions'),
                         align: 'right',
                         render: (user: TenantUser) => (
                           <div className="flex items-center justify-end space-x-2">
@@ -760,7 +755,7 @@ export default function TenantUserManagement() {
                                   size="sm"
                                   onClick={() => handleEditUser(user)}
                                   className="text-blue-600 hover:text-blue-800"
-                                  title="编辑用户"
+                                  title={t('tenantUserManagement.actions.editUser')}
                                 >
                                   <PencilIcon className="h-4 w-4" />
                                 </PButton>
@@ -769,7 +764,7 @@ export default function TenantUserManagement() {
                                   size="sm"
                                   onClick={() => handleRemoveUser(user)}
                                   className="text-red-600 hover:text-red-800"
-                                  title="移除用户"
+                                  title={t('tenantUserManagement.actions.removeUser')}
                                 >
                                   <TrashIcon className="h-4 w-4" />
                                 </PButton>
@@ -781,7 +776,7 @@ export default function TenantUserManagement() {
                                 size="sm"
                                 onClick={() => handleResendInvitation(user)}
                                 className="text-green-600 hover:text-green-800"
-                                title="重新发送邀请"
+                                title={t('tenantUserManagement.actions.resendInvitation')}
                               >
                                 <EnvelopeIcon className="h-4 w-4" />
                               </PButton>
@@ -795,12 +790,16 @@ export default function TenantUserManagement() {
                     defaultSort={{ key: 'created_at', order: 'desc' }}
                   />
 
-                  {/* 分页 */}
+                  {/*  */}
                   {filteredTenantUsers.length > 0 && (
                     <div className="px-6 py-4 border-t border-gray-200">
                       <div className="flex items-center justify-between">
                         <div className="text-sm text-gray-700">
-                          显示第 {((pagination.current - 1) * pagination.pageSize) + 1} - {Math.min(pagination.current * pagination.pageSize, pagination.total)} 条，共 {pagination.total} 条
+                          {t('tenantUserManagement.pagination.showing', {
+                            start: ((pagination.current - 1) * pagination.pageSize) + 1,
+                            end: Math.min(pagination.current * pagination.pageSize, pagination.total),
+                            total: pagination.total
+                          })}
                         </div>
                         <div className="flex items-center space-x-2">
                           <button
@@ -812,7 +811,10 @@ export default function TenantUserManagement() {
                           </button>
                           
                           <span className="px-3 py-1 text-sm">
-                            第 {pagination.current} 页，共 {Math.ceil(pagination.total / pagination.pageSize)} 页
+                            {t('tenantUserManagement.pagination.pageInfo', {
+                              current: pagination.current,
+                              total: Math.ceil(pagination.total / pagination.pageSize)
+                            })}
                           </span>
                           
                           <button
@@ -831,24 +833,24 @@ export default function TenantUserManagement() {
             </div>
           </div>
         ) : (
-          /* 应用用户管理 */
+          /*  */
           <div className="bg-white shadow overflow-hidden sm:rounded-lg">
             <div className="px-4 py-5 sm:p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg leading-6 font-medium text-gray-900">
-                  应用用户管理
+                  {t('tenantUserManagement.appUsers.title')}
                 </h3>
               </div>
 
               {filteredApps.length === 0 ? (
                 <PEmptyState
                   icon={CubeIcon}
-                  title="暂无应用"
-                  description={searchTerm ? '未找到匹配的应用' : '还没有创建任何应用'}
+                  title={t('tenantUserManagement.appUsers.noApps')}
+                  description={searchTerm ? t('tenantUserManagement.appUsers.noAppMatch') : t('tenantUserManagement.appUsers.noAppsYet')}
                 >
                   {!searchTerm && (
                     <Link to={ROUTES.tenant.appsNew}>
-                      <PButton>创建应用</PButton>
+                      <PButton>{t('tenantUserManagement.appUsers.createApp')}</PButton>
                     </Link>
                   )}
                 </PEmptyState>
@@ -857,7 +859,7 @@ export default function TenantUserManagement() {
                   columns={[
                     {
                       key: 'app',
-                      title: '应用',
+                      title: t('tenantUserManagement.appTable.app'),
                       render: (app: AppWithUserStats) => (
                         <div className="flex items-center">
                           {app.logo_url ? (
@@ -876,14 +878,14 @@ export default function TenantUserManagement() {
                     },
                     {
                       key: 'status',
-                      title: '状态',
+                      title: t('tenantUserManagement.appTable.status'),
                       render: (app: AppWithUserStats) => (
                         <PBadge variant={getStatusVariant(app.status) as any}>{getStatusText(app.status)}</PBadge>
                       )
                     },
                     {
                       key: 'total_users',
-                      title: '总用户数',
+                      title: t('tenantUserManagement.appTable.totalUsers'),
                       render: (app: AppWithUserStats) => (
                         <div className="flex items-center text-sm text-gray-900">
                           <UsersIcon className="h-4 w-4 text-gray-400 mr-1" />
@@ -893,7 +895,7 @@ export default function TenantUserManagement() {
                     },
                     {
                       key: 'active_users',
-                      title: '活跃用户',
+                      title: t('tenantUserManagement.appTable.activeUsers'),
                       render: (app: AppWithUserStats) => (
                         <div className="flex items-center text-sm text-gray-900">
                           <CheckCircleIcon className="h-4 w-4 text-green-400 mr-1" />
@@ -903,7 +905,7 @@ export default function TenantUserManagement() {
                     },
                     {
                       key: 'new_users',
-                      title: '新用户',
+                      title: t('tenantUserManagement.appTable.newUsers'),
                       render: (app: AppWithUserStats) => (
                         <div className="flex items-center text-sm text-gray-900">
                           <ClockIcon className="h-4 w-4 text-yellow-400 mr-1" />
@@ -913,7 +915,7 @@ export default function TenantUserManagement() {
                     },
                     {
                       key: 'actions',
-                      title: '操作',
+                      title: t('tenantUserManagement.appTable.actions'),
                       align: 'right',
                       render: (app: AppWithUserStats) => (
                         <Link
@@ -921,7 +923,7 @@ export default function TenantUserManagement() {
                           className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200"
                         >
                           <EyeIcon className="h-4 w-4 mr-1" />
-                          管理用户
+                          {t('tenantUserManagement.appTable.manageUsers')}
                         </Link>
                       )
                     },
@@ -934,7 +936,7 @@ export default function TenantUserManagement() {
           </div>
         )}
 
-        {/* 邀请用户模态框 */}
+        {/*  */}
         {showInviteModal && (
           <InviteUserModal
             formData={inviteFormData}
@@ -945,7 +947,7 @@ export default function TenantUserManagement() {
           />
         )}
 
-        {/* 编辑用户模态框 */}
+        {/*  */}
         {showEditModal && editingUser && (
           <EditUserModal
             user={editingUser}
@@ -961,7 +963,7 @@ export default function TenantUserManagement() {
   )
 }
 
-// 邀请用户模态框组件
+// 
 const InviteUserModal: React.FC<{
   formData: InviteTenantUserRequest
   setFormData: (data: InviteTenantUserRequest) => void
@@ -969,12 +971,13 @@ const InviteUserModal: React.FC<{
   onSubmit: () => void
   onClose: () => void
 }> = ({ formData, setFormData, submitting, onSubmit, onClose }) => {
+  const { t } = useI18n()
   return (
     <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
       <div className="relative top-10 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
         <div className="mt-3">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-medium text-gray-900">邀请用户</h3>
+            <h3 className="text-lg font-medium text-gray-900">{t('tenantUserManagement.modalInvite.title')}</h3>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600"
@@ -986,7 +989,7 @@ const InviteUserModal: React.FC<{
           <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                邮箱地址 *
+                {t('tenantUserManagement.modalInvite.emailLabel')}
               </label>
               <PInput
                 type="email"
@@ -1001,10 +1004,10 @@ const InviteUserModal: React.FC<{
               <PSelect
                 value={formData.role}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, role: e.target.value as 'admin' | 'user' })}
-                label="角色 *"
+                label={t('tenantUserManagement.modalInvite.roleLabel')}
               >
-                <option value="user">成员</option>
-                <option value="admin">管理员</option>
+                <option value="user">{t('tenantUserManagement.role.member')}</option>
+                <option value="admin">{t('tenantUserManagement.role.admin')}</option>
               </PSelect>
             </div>
 
@@ -1013,8 +1016,8 @@ const InviteUserModal: React.FC<{
                 value={formData.message || ''}
                 onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                 rows={3}
-                placeholder="欢迎加入我们的团队..."
-                label="邀请消息（可选）"
+                placeholder={t('tenantUserManagement.modalInvite.messagePlaceholder')}
+                label={t('tenantUserManagement.modalInvite.messageLabel')}
               />
             </div>
 
@@ -1025,10 +1028,10 @@ const InviteUserModal: React.FC<{
                 disabled={submitting}
                 variant="secondary"
               >
-                取消
+                {t('tenantUserManagement.common.cancel')}
               </PButton>
               <PButton type="submit" loading={submitting}>
-                发送邀请
+                {t('tenantUserManagement.modalInvite.submit')}
               </PButton>
             </div>
           </form>
@@ -1038,7 +1041,7 @@ const InviteUserModal: React.FC<{
   )
 }
 
-// 编辑用户模态框组件
+// 
 const EditUserModal: React.FC<{
   user: TenantUser
   formData: UpdateTenantUserRequest
@@ -1047,12 +1050,13 @@ const EditUserModal: React.FC<{
   onSubmit: () => void
   onClose: () => void
 }> = ({ user, formData, setFormData, submitting, onSubmit, onClose }) => {
+  const { t } = useI18n()
   return (
     <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
       <div className="relative top-10 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
         <div className="mt-3">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-medium text-gray-900">编辑用户: {user.nickname}</h3>
+            <h3 className="text-lg font-medium text-gray-900">{t('tenantUserManagement.modalEdit.title', { user: user.nickname })}</h3>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600"
@@ -1064,7 +1068,7 @@ const EditUserModal: React.FC<{
           <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                用户邮箱
+                {t('tenantUserManagement.modalEdit.emailLabel')}
               </label>
               <PInput type="email" value={user.email} disabled />
             </div>
@@ -1073,10 +1077,10 @@ const EditUserModal: React.FC<{
               <PSelect
                 value={formData.role}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, role: e.target.value as 'admin' | 'user' })}
-                label="角色"
+                label={t('tenantUserManagement.modalEdit.roleLabel')}
               >
-                <option value="user">成员</option>
-                <option value="admin">管理员</option>
+                <option value="user">{t('tenantUserManagement.role.member')}</option>
+                <option value="admin">{t('tenantUserManagement.role.admin')}</option>
               </PSelect>
             </div>
 
@@ -1084,11 +1088,11 @@ const EditUserModal: React.FC<{
               <PSelect
                 value={formData.status}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' | 'suspended' })}
-                label="状态"
+                label={t('tenantUserManagement.modalEdit.statusLabel')}
               >
-                <option value="active">活跃</option>
-                <option value="inactive">非活跃</option>
-                <option value="suspended">已暂停</option>
+                <option value="active">{t('tenantUserManagement.status.active')}</option>
+                <option value="inactive">{t('tenantUserManagement.status.inactive')}</option>
+                <option value="suspended">{t('tenantUserManagement.status.suspended')}</option>
               </PSelect>
             </div>
 
@@ -1099,10 +1103,10 @@ const EditUserModal: React.FC<{
                 disabled={submitting}
                 variant="secondary"
               >
-                取消
+                {t('tenantUserManagement.common.cancel')}
               </PButton>
               <PButton type="submit" loading={submitting}>
-                更新
+                {t('tenantUserManagement.modalEdit.submit')}
               </PButton>
             </div>
           </form>

@@ -8,22 +8,22 @@ interface PEmptyStateAction {
 }
 
 interface PEmptyStateProps {
-  /** 顶部图标（传入Heroicon组件或自定义ReactNode） */
+  /** translated（translatedHeroiconcomponentortranslatedReactNode） */
   icon?: React.FC<{ className?: string }> | React.ReactNode
-  /** 主标题 */
+  /** translated */
   title?: string
-  /** 描述文字 */
+  /** descriptiontranslated */
   description?: string
-  /** 操作按钮（可选） */
+  /** translated（cantranslated） */
   action?: PEmptyStateAction
-  /** 额外内容 */
+  /** translated */
   children?: React.ReactNode
   className?: string
 }
 
 const PEmptyState: React.FC<PEmptyStateProps> = ({
   icon,
-  title = '暂无数据',
+  title = 'translatednonetranslated',
   description,
   action,
   children,

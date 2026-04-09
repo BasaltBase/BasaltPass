@@ -11,6 +11,7 @@ import PCard from '@ui/PCard'
 import PAlert from '@ui/PAlert'
 import client from '@api/client'
 import { adminSettingsCategories } from './categories'
+import { useI18n } from '@shared/i18n'
 
 interface SettingDTO {
   key: string
@@ -20,6 +21,7 @@ interface SettingDTO {
 }
 
 export default function SettingsCategoryPage() {
+  const { t } = useI18n()
   const { category } = useParams<{ category: string }>()
   const [settings, setSettings] = useState<SettingDTO[]>([])
   const [loading, setLoading] = useState(false)
@@ -28,7 +30,6 @@ export default function SettingsCategoryPage() {
 
   const categoryInfo = adminSettingsCategories.find(c => c.key === category)
   
-  // 如果分类不存在，重定向到第一个分类
   if (!categoryInfo) {
     return <Navigate to={`/admin/settings/${adminSettingsCategories[0].key}`} replace />
   }
@@ -54,7 +55,7 @@ export default function SettingsCategoryPage() {
         setSettings(list)
         setError(null)
       } catch (e: any) {
-        setError(e?.message || '加载失败')
+        setError(e?.message || t('adminSettingsCategory.errors.loadFailed'))
       } finally {
         setLoading(false)
       }
@@ -70,9 +71,9 @@ export default function SettingsCategoryPage() {
     try {
       setSaving(true)
       await client.put('/api/v1/admin/settings/bulk', Array.isArray(settings) ? settings : [])
-      uiAlert('已保存设置')
+      uiAlert(t('adminSettingsCategory.messages.saved'))
     } catch (e: any) {
-      uiAlert(e?.message || '保存失败')
+      uiAlert(e?.message || t('adminSettingsCategory.errors.saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -102,9 +103,9 @@ export default function SettingsCategoryPage() {
       case 'general.theme':
         return (
           <PSelect value={String(value || 'light')} onChange={e => onChange((e.target as HTMLSelectElement).value)}>
-            <option value="light">浅色</option>
-            <option value="dark">深色</option>
-            <option value="system">跟随系统</option>
+            <option value="light">{t('adminSettingsCategory.options.theme.light')}</option>
+            <option value="dark">{t('adminSettingsCategory.options.theme.dark')}</option>
+            <option value="system">{t('adminSettingsCategory.options.theme.system')}</option>
           </PSelect>
         )
       case 'general.timezone': {
@@ -117,9 +118,9 @@ export default function SettingsCategoryPage() {
       }
       case 'general.locale': {
         const locales = [
-          { value: 'zh-CN', label: '简体中文 (zh-CN)' },
+          { value: 'zh-CN', label: t('adminSettingsCategory.options.locale.zhCN') },
           { value: 'en-US', label: 'English (en-US)' },
-          { value: 'ja-JP', label: '日本語 (ja-JP)' },
+          { value: 'ja-JP', label: t('adminSettingsCategory.options.locale.jaJP') },
         ]
         return (
           <PSelect value={String(value || 'zh-CN')} onChange={e => onChange((e.target as HTMLSelectElement).value)}>
@@ -157,7 +158,7 @@ export default function SettingsCategoryPage() {
       case 'uploads.storage':
         return (
           <PSelect value={String(value || 'local')} onChange={e => onChange((e.target as HTMLSelectElement).value)}>
-            <option value="local">本地 (local)</option>
+            <option value="local">{t('adminSettingsCategory.options.storage.local')}</option>
             <option value="s3">Amazon S3</option>
             <option value="azure">Azure Blob</option>
             <option value="gcs">Google Cloud Storage</option>
@@ -174,7 +175,7 @@ export default function SettingsCategoryPage() {
       case 'analytics.provider':
         return (
           <PSelect value={String(value || 'none')} onChange={e => onChange((e.target as HTMLSelectElement).value)}>
-            <option value="none">不启用</option>
+            <option value="none">{t('adminSettingsCategory.options.noneDisabled')}</option>
             <option value="umami">Umami</option>
             <option value="ga4">Google Analytics 4</option>
             <option value="plausible">Plausible</option>
@@ -183,7 +184,7 @@ export default function SettingsCategoryPage() {
       case 'captcha.provider':
         return (
           <PSelect value={String(value || 'none')} onChange={e => onChange((e.target as HTMLSelectElement).value)}>
-            <option value="none">不启用</option>
+            <option value="none">{t('adminSettingsCategory.options.noneDisabled')}</option>
             <option value="recaptcha">reCAPTCHA</option>
             <option value="hcaptcha">hCaptcha</option>
           </PSelect>
@@ -194,7 +195,7 @@ export default function SettingsCategoryPage() {
 
     if (typeof value === 'boolean') {
       return (
-        <PToggle checked={!!value} onChange={e => onChange((e.target as HTMLInputElement).checked)} label={value ? '已启用' : '未启用'} />
+        <PToggle checked={!!value} onChange={e => onChange((e.target as HTMLInputElement).checked)} label={value ? t('adminSettingsCategory.toggle.enabled') : t('adminSettingsCategory.toggle.disabled')} />
       )
     }
 
@@ -234,26 +235,26 @@ export default function SettingsCategoryPage() {
   }
 
   return (
-    <AdminLayout title={`${categoryInfo.name} 设置`}>
+    <AdminLayout title={t('adminSettingsCategory.layoutTitle', { name: categoryInfo.name })}>
       <PCard variant="bordered">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">{categoryInfo.name}</h2>
-            <p className="text-sm text-gray-500">配置 {categoryInfo.name} 相关参数</p>
+            <p className="text-sm text-gray-500">{t('adminSettingsCategory.description', { name: categoryInfo.name })}</p>
           </div>
           <PButton onClick={save} loading={saving}>
-            保存
+            {t('adminSettingsCategory.actions.save')}
           </PButton>
         </div>
 
         {loading ? (
-          <div className="py-10 text-center text-gray-500">加载中...</div>
+          <div className="py-10 text-center text-gray-500">{t('adminSettingsCategory.loading')}</div>
         ) : error ? (
           <div className="py-10"><PAlert variant="error" message={error} /></div>
         ) : (
           <div className="mt-6 space-y-6">
             {filtered.length === 0 ? (
-              <div className="text-gray-500">暂无该分类的设置项</div>
+              <div className="text-gray-500">{t('adminSettingsCategory.empty')}</div>
             ) : filtered.map(s => (
               <div key={s.key} className="border-b pb-4 last:border-b-0">
                 <label className="block text-sm font-medium text-gray-700 mb-2">

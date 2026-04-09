@@ -6,13 +6,13 @@ sidebar_position: 2
 
 Understanding the core concepts of BasaltPass is essential for effective integration and management.
 
-## 1. Tenant (租户)
+## 1. Tenant
 
 A **Tenant** is the fundamental unit of isolation in BasaltPass. It represents an organization, a customer, or a project.
 -   **Isolation**: Users, roles, and data in one tenant are strictly isolated from others.
 -   **Context**: Most API calls require a tenant context (usually derived from the token or domain).
 
-## 2. User (用户)
+## 2. User
 
 A **User** is an identity within a tenant.
 -   **Attributes**: Email, phone, profile data.

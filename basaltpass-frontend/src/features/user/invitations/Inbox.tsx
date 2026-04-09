@@ -7,8 +7,10 @@ import { invitationApi, Invitation } from '@api/user/invitation'
 import { CheckIcon, XMarkIcon, ClockIcon, UserGroupIcon, EnvelopeIcon, CalendarIcon, UserIcon, ArrowLeftIcon } from '@heroicons/react/24/outline'
 import { useAuth } from '@contexts/AuthContext'
 import { ROUTES } from '@constants'
+import { useI18n } from '@shared/i18n'
 
 const Inbox: React.FC = () => {
+  const { t, locale } = useI18n()
   const { isAuthenticated, isLoading, user } = useAuth()
   const [invitations, setInvitations] = useState<Invitation[]>([])
   const [loading, setLoading] = useState(true)
@@ -25,7 +27,7 @@ const Inbox: React.FC = () => {
       const response = await invitationApi.listIncoming()
       const allInvitations = response.data
       
-      // 模拟分页（实际应该由后端实现）
+      // （）
       const startIndex = (page - 1) * pageSize
       const endIndex = startIndex + pageSize
       const paginatedInvitations = allInvitations.slice(startIndex, endIndex)
@@ -34,11 +36,11 @@ const Inbox: React.FC = () => {
       setTotalPages(Math.ceil(allInvitations.length / pageSize))
       setCurrentPage(page)
     } catch (error: any) {
-      console.error('加载邀请失败:', error)
-      // 如果是401错误，不要在这里处理，让AuthContext处理
+      console.error(t('userInvitationsInbox.logs.loadFailed'), error)
+      // 401，，AuthContext
       if (error.response?.status !== 401) {
-        // 对于其他错误，可以显示用户友好的错误信息
-        console.error('邀请加载失败:', error.response?.data?.message || error.message)
+        // ，
+        console.error(t('userInvitationsInbox.logs.loadFailedDetail'), error.response?.data?.message || error.message)
       }
     } finally {
       setLoading(false)
@@ -46,7 +48,7 @@ const Inbox: React.FC = () => {
   }
 
   useEffect(() => {
-    // 只有在认证完成且已认证时才加载数据
+    // 
     if (!isLoading && isAuthenticated) {
       load()
     }
@@ -60,9 +62,9 @@ const Inbox: React.FC = () => {
       } else {
         await invitationApi.reject(inv.id)
       }
-      load(currentPage) // 重新加载当前页
+      load(currentPage) // 
     } catch (error: any) {
-      uiAlert(error.response?.data?.message || `${action === 'accept' ? '接受' : '拒绝'}邀请失败`)
+      uiAlert(error.response?.data?.message || (action === 'accept' ? t('userInvitationsInbox.errors.acceptFailed') : t('userInvitationsInbox.errors.rejectFailed')))
     } finally {
       setActionLoading(null)
     }
@@ -70,10 +72,10 @@ const Inbox: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      pending: { text: '待处理', variant: 'warning' as const },
-      accepted: { text: '已接受', variant: 'success' as const },
-      rejected: { text: '已拒绝', variant: 'error' as const },
-      revoked: { text: '已撤回', variant: 'default' as const },
+      pending: { text: t('userInvitationsInbox.status.pending'), variant: 'warning' as const },
+      accepted: { text: t('userInvitationsInbox.status.accepted'), variant: 'success' as const },
+      rejected: { text: t('userInvitationsInbox.status.rejected'), variant: 'error' as const },
+      revoked: { text: t('userInvitationsInbox.status.revoked'), variant: 'default' as const },
     }
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending
     return <PBadge variant={config.variant}>{config.text}</PBadge>
@@ -86,31 +88,31 @@ const Inbox: React.FC = () => {
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
     
     if (diffDays === 0) {
-      return '今天 ' + date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+      return t('userInvitationsInbox.time.today', { time: date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) })
     } else if (diffDays === 1) {
-      return '昨天 ' + date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+      return t('userInvitationsInbox.time.yesterday', { time: date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) })
     } else if (diffDays < 7) {
-      return `${diffDays}天前`
+      return t('userInvitationsInbox.time.daysAgo', { days: diffDays })
     } else {
-      return date.toLocaleDateString('zh-CN')
+      return date.toLocaleDateString(locale)
     }
   }
 
     return (
     <Layout>
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* 返回按钮 */}
+        {/*  */}
         <div className="flex items-center">
           <Link
             to={ROUTES.user.teams}
             className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
           >
             <ArrowLeftIcon className="w-4 h-4 mr-2" />
-            返回团队列表
+            {t('userInvitationsInbox.actions.backToTeams')}
           </Link>
         </div>
 
-        {/* 头部区域 */}
+        {/*  */}
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8 border border-blue-100">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -118,16 +120,16 @@ const Inbox: React.FC = () => {
                 <EnvelopeIcon className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">邀请收件箱</h1>
+                <h1 className="text-3xl font-bold text-gray-900">{t('userInvitationsInbox.title')}</h1>
                 <p className="mt-2 text-lg text-gray-600">
-                  查看和管理您收到的团队邀请
+                  {t('userInvitationsInbox.description')}
                 </p>
               </div>
             </div>
             <div className="flex items-center space-x-2 bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200">
               <ClockIcon className="w-5 h-5 text-gray-500" />
               <span className="text-sm font-medium text-gray-700">
-                共 {invitations.length} 条邀请
+                {t('userInvitationsInbox.totalCount', { count: invitations.length })}
               </span>
             </div>
           </div>
@@ -135,14 +137,14 @@ const Inbox: React.FC = () => {
  
         </div>
 
-        {/* 邀请列表 */}
+        {/*  */}
         {loading ? (
           <PSkeleton.List items={3} />
         ) : invitations.length === 0 ? (
           <PEmptyState
             icon={<EnvelopeIcon className="w-12 h-12" />}
-            title="暂无邀请"
-            description="您目前没有收到任何团队邀请。当有新邀请时，它们会出现在这里。"
+            title={t('userInvitationsInbox.empty.title')}
+            description={t('userInvitationsInbox.empty.description')}
           />
         ) : (
           <div className="space-y-4">
@@ -163,7 +165,7 @@ const Inbox: React.FC = () => {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center space-x-3 mb-2">
                             <h3 className="text-lg font-semibold text-gray-900 truncate">
-                              来自团队 "{inv.team?.name}" 的邀请
+                              {t('userInvitationsInbox.inviteFromTeam', { teamName: inv.team?.name || '' })}
                             </h3>
                             {getStatusBadge(inv.status)}
                           </div>
@@ -171,7 +173,7 @@ const Inbox: React.FC = () => {
                           <div className="flex items-center space-x-6 text-sm text-gray-500 mb-3">
                             <div className="flex items-center space-x-1">
                               <UserIcon className="w-4 h-4" />
-                              <span>邀请人：{inv.inviter?.nickname || inv.inviter?.email}</span>
+                              <span>{t('userInvitationsInbox.inviter', { name: inv.inviter?.nickname || inv.inviter?.email || '' })}</span>
                             </div>
                             <div className="flex items-center space-x-1">
                               <CalendarIcon className="w-4 h-4" />
@@ -190,21 +192,21 @@ const Inbox: React.FC = () => {
                       </div>
                     </div>
                     
-                    {/* 操作按钮 */}
+                    {/*  */}
                     {inv.status === 'pending' && (
                       <div className="flex items-center space-x-3 ml-6">
                         <PButton
                           onClick={() => handleAction(inv, 'accept')}
                           loading={actionLoading === inv.id}
                         >
-                          接受邀请
+                          {t('userInvitationsInbox.actions.accept')}
                         </PButton>
                         <PButton
                           variant="secondary"
                           onClick={() => handleAction(inv, 'reject')}
                           loading={actionLoading === inv.id}
                         >
-                          拒绝
+                          {t('userInvitationsInbox.actions.reject')}
                         </PButton>
                       </div>
                     )}
@@ -215,7 +217,7 @@ const Inbox: React.FC = () => {
           </div>
         )}
 
-        {/* 分页 */}
+        {/*  */}
         {totalPages > 1 && (
           <PPagination
             currentPage={currentPage}

@@ -35,7 +35,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
   const loadNotifications = async () => {
     try {
-      // 未登录直接跳过
+      // notlogintranslated
       if (!isAuthenticated) return
       setLoading(true)
       const response = await notificationApi.getUserNotifications()
@@ -49,7 +49,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
   const refreshUnreadCount = async () => {
     try {
-      // 未登录直接跳过
+      // notlogintranslated
       if (!isAuthenticated) return
       const response = await notificationApi.getUnreadCount()
       setUnreadCount(response.data.count)
@@ -96,7 +96,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     }
   }
 
-  // 当认证完成且已登录时再拉取通知
+  // translatedalreadylogintranslatednotification
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
       loadNotifications()
@@ -104,7 +104,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     }
   }, [authLoading, isAuthenticated])
 
-  // 未登录时清空缓存数据，避免上一位用户数据泄露
+  // notlogintranslated，translatedusertranslated
   useEffect(() => {
     if (!isAuthenticated) {
       setNotifications([])
@@ -112,9 +112,9 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     }
   }, [isAuthenticated])
 
-  // 定期刷新未读数量（每30秒）
+  // translatednottranslated（translated30translated）
   useEffect(() => {
-    // 仅登录状态下才轮询未读数
+    // translatedloginstatustranslatednottranslated
     if (!isAuthenticated) return
     const interval = setInterval(refreshUnreadCount, 30000)
     return () => clearInterval(interval)

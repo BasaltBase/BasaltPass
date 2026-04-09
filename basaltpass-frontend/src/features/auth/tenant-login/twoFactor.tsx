@@ -6,26 +6,26 @@ type IconType = ComponentType<SVGProps<SVGSVGElement>>
 
 interface TwoFactorPresentation {
   icon: IconType
-  label: string
+  labelKey: string
 }
 
 const DEFAULT_PRESENTATION: TwoFactorPresentation = {
   icon: KeyIcon,
-  label: '',
+  labelKey: 'auth.twoFactor.methods.unknown',
 }
 
 const PRESENTATION_BY_METHOD: Record<string, TwoFactorPresentation> = {
   totp: {
     icon: KeyIcon,
-    label: '验证器应用 (TOTP)',
+    labelKey: 'auth.twoFactor.methods.totp',
   },
   passkey: {
     icon: ShieldCheckIcon,
-    label: 'Passkey (生物识别)',
+    labelKey: 'auth.twoFactor.methods.passkey',
   },
   email: {
     icon: EnvelopeIcon,
-    label: '邮箱验证码',
+    labelKey: 'auth.twoFactor.methods.email',
   },
 }
 
@@ -37,6 +37,6 @@ export function getTwoFactorPresentation(method: TwoFactorMethod): TwoFactorPres
 
   return {
     ...DEFAULT_PRESENTATION,
-    label: method,
+    labelKey: 'auth.twoFactor.methods.unknown',
   }
 }

@@ -4,6 +4,7 @@ import { userGiftCardApi } from '@api/user/giftCard'
 import Layout from '@features/user/components/Layout'
 import { ROUTES } from '@constants'
 import { PPageHeader, PInput, PButton } from '@ui'
+import { useI18n } from '@shared/i18n'
 import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
@@ -11,6 +12,7 @@ import {
 } from '@heroicons/react/24/outline'
 
 export default function RedeemGiftCard() {
+  const { t } = useI18n()
   const navigate = useNavigate()
   const [code, setCode] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -22,7 +24,7 @@ export default function RedeemGiftCard() {
     const trimmedCode = code.trim()
 
     if (!trimmedCode) {
-      setError('请输入 Gift Card 卡密')
+      setError(t('pages.walletRedeem.errors.requiredCode'))
       return
     }
 
@@ -36,7 +38,7 @@ export default function RedeemGiftCard() {
         navigate(ROUTES.user.wallet)
       }, 1800)
     } catch (e: any) {
-      setError(e.response?.data?.error || 'Gift Card 兑换失败')
+      setError(e.response?.data?.error || t('pages.walletRedeem.errors.redeemFailed'))
     } finally {
       setIsLoading(false)
     }
@@ -48,8 +50,8 @@ export default function RedeemGiftCard() {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <CheckCircleIcon className="mx-auto h-16 w-16 text-green-600 mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">兑换成功！</h2>
-            <p className="text-gray-600">正在跳转到钱包页面...</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('pages.walletRedeem.success.title')}</h2>
+            <p className="text-gray-600">{t('pages.walletRedeem.success.redirecting')}</p>
           </div>
         </div>
       </Layout>
@@ -59,28 +61,32 @@ export default function RedeemGiftCard() {
   return (
     <Layout>
       <div className="space-y-6">
-        <PPageHeader title="兑换 Gift Card" description="输入卡密，将余额充值到您的钱包" backTo={ROUTES.user.wallet} />
+        <PPageHeader
+          title={t('pages.walletRedeem.header.title')}
+          description={t('pages.walletRedeem.header.description')}
+          backTo={ROUTES.user.wallet}
+        />
 
         <div className="rounded-xl bg-white shadow-sm">
           <div className="px-4 py-5 sm:p-6">
             <div className="flex items-center mb-4">
               <GiftIcon className="h-6 w-6 text-purple-600 mr-2" />
-              <h3 className="text-lg font-medium text-gray-900">卡密兑换</h3>
+              <h3 className="text-lg font-medium text-gray-900">{t('pages.walletRedeem.form.title')}</h3>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <PInput
                 id="gift-card-code"
-                label="Gift Card 卡密"
+                label={t('pages.walletRedeem.form.codeLabel')}
                 value={code}
                 onChange={(e) => {
                   setCode(e.target.value.toUpperCase())
                   if (error) setError('')
                 }}
-                placeholder="例如 GC-XXXXX-XXXXX"
+                placeholder={t('pages.walletRedeem.form.codePlaceholder')}
               />
               <PButton type="submit" loading={isLoading} disabled={!code.trim()}>
-                立即兑换
+                {t('pages.walletRedeem.form.submit')}
               </PButton>
             </form>
 

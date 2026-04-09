@@ -6,8 +6,10 @@ import { tenantAppApi, CreateTenantAppRequest } from '@api/tenant/tenantApp'
 import TenantLayout from '@features/tenant/components/TenantLayout'
 import { ROUTES } from '@constants'
 import { PInput, PTextarea, PButton } from '@ui'
+import { useI18n } from '@shared/i18n'
 
 export default function CreateApp() {
+  const { t } = useI18n()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState<CreateTenantAppRequest>({
@@ -27,17 +29,16 @@ export default function CreateApp() {
     const newErrors: Record<string, string> = {}
 
     if (!formData.name.trim()) {
-      newErrors.name = '应用名称不能为空'
+      newErrors.name = t('adminCreateApp.errors.nameRequired')
     }
 
     if (!formData.description.trim()) {
-      newErrors.description = '应用描述不能为空'
+      newErrors.description = t('adminCreateApp.errors.descriptionRequired')
     }
 
-    // 验证回调地址
     const validCallbackUrls = formData.redirect_uris.filter(url => url.trim())
     if (validCallbackUrls.length === 0) {
-      newErrors.redirect_uris = '至少需要一个回调地址'
+      newErrors.redirect_uris = t('adminCreateApp.errors.redirectRequired')
     } else {
       const invalidUrls = validCallbackUrls.filter(url => {
         try {
@@ -48,16 +49,15 @@ export default function CreateApp() {
         }
       })
       if (invalidUrls.length > 0) {
-        newErrors.redirect_uris = '请输入有效的URL格式'
+        newErrors.redirect_uris = t('adminCreateApp.errors.invalidUrl')
       }
     }
 
-    // 验证其他URL字段
     if (formData.homepage_url && formData.homepage_url.trim()) {
       try {
         new URL(formData.homepage_url)
       } catch {
-        newErrors.homepage_url = '请输入有效的URL格式'
+        newErrors.homepage_url = t('adminCreateApp.errors.invalidUrl')
       }
     }
 
@@ -65,7 +65,7 @@ export default function CreateApp() {
       try {
         new URL(formData.logo_url)
       } catch {
-        newErrors.logo_url = '请输入有效的URL格式'
+        newErrors.logo_url = t('adminCreateApp.errors.invalidUrl')
       }
     }
 
@@ -73,7 +73,7 @@ export default function CreateApp() {
       try {
         new URL(formData.privacy_policy_url)
       } catch {
-        newErrors.privacy_policy_url = '请输入有效的URL格式'
+        newErrors.privacy_policy_url = t('adminCreateApp.errors.invalidUrl')
       }
     }
 
@@ -81,7 +81,7 @@ export default function CreateApp() {
       try {
         new URL(formData.terms_of_service_url)
       } catch {
-        newErrors.terms_of_service_url = '请输入有效的URL格式'
+        newErrors.terms_of_service_url = t('adminCreateApp.errors.invalidUrl')
       }
     }
 
@@ -99,11 +99,9 @@ export default function CreateApp() {
     try {
       setLoading(true)
       
-      // 过滤空的回调地址
       const cleanedData = {
         ...formData,
         redirect_uris: formData.redirect_uris.filter(url => url.trim()),
-        // 清空空字符串字段
         logo_url: formData.logo_url?.trim() || undefined,
         homepage_url: formData.homepage_url?.trim() || undefined,
         privacy_policy_url: formData.privacy_policy_url?.trim() || undefined,
@@ -122,7 +120,7 @@ export default function CreateApp() {
       }
     } catch (error) {
       console.error('Failed to create app:', error)
-      uiAlert('创建应用失败，请重试')
+      uiAlert(t('adminCreateApp.errors.createFailed'))
     } finally {
       setLoading(false)
     }
@@ -130,7 +128,6 @@ export default function CreateApp() {
 
   const handleInputChange = (field: keyof CreateTenantAppRequest, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }))
-    // 清除该字段的错误
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }))
     }
@@ -163,9 +160,8 @@ export default function CreateApp() {
   }
 
   return (
-    <TenantLayout title="创建应用">
+    <TenantLayout title={t('adminCreateApp.layoutTitle')}>
       <div className="space-y-6">
-        {/* 页面头部 */}
         <div className="bg-white shadow rounded-lg">
           <div className="px-4 py-5 sm:p-6">
             <div className="flex items-center">
@@ -175,19 +171,17 @@ export default function CreateApp() {
                 </div>
               </div>
               <div className="ml-4 flex-1">
-                <h1 className="text-2xl font-bold text-gray-900">创建应用</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{t('adminCreateApp.title')}</h1>
                 <p className="mt-1 text-sm text-gray-500">
-                  创建一个新的 OAuth2 应用，配置认证和授权设置
+                  {t('adminCreateApp.description')}
                 </p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* 创建表单 */}
         <div className="bg-white shadow rounded-lg">
           <form onSubmit={handleSubmit} className="px-4 py-5 sm:p-6 space-y-8">
-            {/* 基本信息 */}
             <div className="border-b border-gray-200 pb-6">
               <div className="flex items-center mb-6">
                 <div className="flex-shrink-0">
@@ -196,8 +190,8 @@ export default function CreateApp() {
                   </div>
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-lg font-medium text-gray-900">基本信息</h3>
-                  <p className="text-sm text-gray-500">配置应用的基本属性和展示信息</p>
+                  <h3 className="text-lg font-medium text-gray-900">{t('adminCreateApp.sections.basicInfo.title')}</h3>
+                  <p className="text-sm text-gray-500">{t('adminCreateApp.sections.basicInfo.description')}</p>
                 </div>
               </div>
               
@@ -205,11 +199,11 @@ export default function CreateApp() {
                 <div className="sm:col-span-2">
                   <PInput
                     id="name"
-                    label={<>应用名称 <span className="text-red-500">*</span></>}
+                    label={<>{t('adminCreateApp.fields.name')} <span className="text-red-500">*</span></>}
                     type="text"
                     value={formData.name}
                     onChange={(e: any) => handleInputChange('name', e.target.value)}
-                    placeholder="例如：我的网站"
+                    placeholder={t('adminCreateApp.placeholders.name')}
                     error={errors.name}
                   />
                 </div>
@@ -217,11 +211,11 @@ export default function CreateApp() {
                 <div className="sm:col-span-2">
                   <PTextarea
                     id="description"
-                    label={<>应用描述 <span className="text-red-500">*</span></>}
+                    label={<>{t('adminCreateApp.fields.description')} <span className="text-red-500">*</span></>}
                     rows={4}
                     value={formData.description}
                     onChange={(e: any) => handleInputChange('description', e.target.value)}
-                    placeholder="简要描述你的应用功能和用途..."
+                    placeholder={t('adminCreateApp.placeholders.description')}
                     error={errors.description}
                   />
                 </div>
@@ -236,25 +230,24 @@ export default function CreateApp() {
                     placeholder="https://example.com/logo.png"
                     error={errors.logo_url}
                   />
-                  {!errors.logo_url && <p className="mt-1 text-xs text-gray-500">可选 - 应用的图标或徽标链接</p>}
+                  {!errors.logo_url && <p className="mt-1 text-xs text-gray-500">{t('adminCreateApp.hints.logoUrl')}</p>}
                 </div>
 
                 <div>
                   <PInput
                     id="homepage_url"
-                    label="主页 URL"
+                    label={t('adminCreateApp.fields.homepageUrl')}
                     type="url"
                     value={formData.homepage_url}
                     onChange={(e: any) => handleInputChange('homepage_url', e.target.value)}
                     placeholder="https://example.com"
                     error={errors.homepage_url}
                   />
-                  {!errors.homepage_url && <p className="mt-1 text-xs text-gray-500">可选 - 应用的官方网站地址</p>}
+                  {!errors.homepage_url && <p className="mt-1 text-xs text-gray-500">{t('adminCreateApp.hints.homepageUrl')}</p>}
                 </div>
               </div>
             </div>
 
-            {/* OAuth 配置 */}
             <div className="border-b border-gray-200 pb-6">
               <div className="flex items-center mb-6">
                 <div className="flex-shrink-0">
@@ -263,14 +256,14 @@ export default function CreateApp() {
                   </div>
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-lg font-medium text-gray-900">OAuth 配置</h3>
-                  <p className="text-sm text-gray-500">设置OAuth2认证流程的关键参数</p>
+                  <h3 className="text-lg font-medium text-gray-900">{t('adminCreateApp.sections.oauth.title')}</h3>
+                  <p className="text-sm text-gray-500">{t('adminCreateApp.sections.oauth.description')}</p>
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">
-                  授权回调地址 <span className="text-red-500">*</span>
+                  {t('adminCreateApp.fields.redirectUris')} <span className="text-red-500">*</span>
                 </label>
                 <div className="space-y-3">
                   {formData.redirect_uris.map((url, index) => (
@@ -289,7 +282,7 @@ export default function CreateApp() {
                           variant="danger"
                           size="sm"
                           onClick={() => removeCallbackUrl(index)}
-                          title="删除回调地址"
+                          title={t('adminCreateApp.actions.removeRedirectUri')}
                         >
                           <TrashIcon className="h-4 w-4" />
                         </PButton>
@@ -302,7 +295,7 @@ export default function CreateApp() {
                     onClick={addCallbackUrl}
                     leftIcon={<PlusIcon className="h-4 w-4" />}
                   >
-                    添加回调地址
+                    {t('adminCreateApp.actions.addRedirectUri')}
                   </PButton>
                 </div>
                 {errors.redirect_uris && (
@@ -313,13 +306,12 @@ export default function CreateApp() {
                 )}
                 <div className="mt-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
                   <p className="text-sm text-blue-800">
-                    <strong>提示：</strong>用户完成OAuth授权后将重定向到这些地址。请确保地址有效且支持HTTPS。
+                    <strong>{t('adminCreateApp.hints.tipLabel')}</strong>{t('adminCreateApp.hints.redirectUris')}
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* 法律信息 */}
             <div className="pb-6">
               <div className="flex items-center mb-6">
                 <div className="flex-shrink-0">
@@ -328,8 +320,8 @@ export default function CreateApp() {
                   </div>
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-lg font-medium text-gray-900">法律信息</h3>
-                  <p className="text-sm text-gray-500">可选 - 提供隐私政策和服务条款链接</p>
+                  <h3 className="text-lg font-medium text-gray-900">{t('adminCreateApp.sections.legal.title')}</h3>
+                  <p className="text-sm text-gray-500">{t('adminCreateApp.sections.legal.description')}</p>
                 </div>
               </div>
               
@@ -337,39 +329,38 @@ export default function CreateApp() {
                 <div>
                   <PInput
                     id="privacy_policy_url"
-                    label="隐私政策 URL"
+                    label={t('adminCreateApp.fields.privacyPolicyUrl')}
                     type="url"
                     value={formData.privacy_policy_url}
                     onChange={(e: any) => handleInputChange('privacy_policy_url', e.target.value)}
                     placeholder="https://example.com/privacy"
                     error={errors.privacy_policy_url}
                   />
-                  {!errors.privacy_policy_url && <p className="mt-1 text-xs text-gray-500">用户隐私保护政策的链接</p>}
+                  {!errors.privacy_policy_url && <p className="mt-1 text-xs text-gray-500">{t('adminCreateApp.hints.privacyPolicyUrl')}</p>}
                 </div>
 
                 <div>
                   <PInput
                     id="terms_of_service_url"
-                    label="服务条款 URL"
+                    label={t('adminCreateApp.fields.termsOfServiceUrl')}
                     type="url"
                     value={formData.terms_of_service_url}
                     onChange={(e: any) => handleInputChange('terms_of_service_url', e.target.value)}
                     placeholder="https://example.com/terms"
                     error={errors.terms_of_service_url}
                   />
-                  {!errors.terms_of_service_url && <p className="mt-1 text-xs text-gray-500">应用服务使用条款的链接</p>}
+                  {!errors.terms_of_service_url && <p className="mt-1 text-xs text-gray-500">{t('adminCreateApp.hints.termsOfServiceUrl')}</p>}
                 </div>
               </div>
             </div>
 
-            {/* 提交按钮 */}
             <div className="flex flex-col sm:flex-row sm:justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-6 border-t border-gray-200">
               <PButton
                 type="button"
                 variant="secondary"
                 onClick={() => navigate(ROUTES.tenant.apps)}
               >
-                取消
+                {t('adminCreateApp.actions.cancel')}
               </PButton>
               <PButton
                 type="submit"
@@ -377,7 +368,7 @@ export default function CreateApp() {
                 loading={loading}
                 leftIcon={<RocketLaunchIcon className="h-4 w-4" />}
               >
-                创建应用
+                {t('adminCreateApp.actions.createApp')}
               </PButton>
             </div>
           </form>
@@ -391,12 +382,12 @@ export default function CreateApp() {
               <div className="h-10 w-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
                 <CheckIcon className="h-6 w-6 text-green-600" />
               </div>
-              <h3 className="text-xl font-medium text-gray-900">应用创建成功</h3>
+              <h3 className="text-xl font-medium text-gray-900">{t('adminCreateApp.modal.successTitle')}</h3>
             </div>
             
             <div className="mb-6">
               <p className="text-sm text-gray-600 mb-4">
-                请复制并妥善保存以下 <strong>Client Secret</strong>。这是您唯一一次能看到该密钥的机会，关闭此窗口后将无法再次查看。
+                {t('adminCreateApp.modal.successDescriptionPrefix')} <strong>Client Secret</strong>{t('adminCreateApp.modal.successDescriptionSuffix')}
               </p>
               
               <div className="space-y-4">
@@ -417,7 +408,7 @@ export default function CreateApp() {
             
             <div className="flex justify-end">
               <PButton type="button" onClick={handleCloseModal}>
-                我已保存，去应用列表
+                {t('adminCreateApp.modal.goToAppList')}
               </PButton>
             </div>
           </div>

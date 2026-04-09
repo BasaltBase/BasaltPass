@@ -1,62 +1,62 @@
-# BasaltPassDev -> BasaltPass 发布与部署方案
+# BasaltPassDev -> BasaltPass Release & Deployment Pipeline
 
-本文档对应仓库内新增的两条 GitHub Actions：
+This document corresponds to two GitHub Actions added in the repository:
 
-- `release-vX.Y.Z` tag: 将当前代码快照同步到开放版仓库
-- `deploy-prod-vX.Y.Z` tag: 构建镜像并部署到你的 Docker 服务器
+- `release-vX.Y.Z` tag: Syncs a snapshot of the current code to the public repository
+- `deploy-prod-vX.Y.Z` tag: Builds images and deploys to your Docker server
 
-## 推荐仓库结构
+## Recommended Repository Structure
 
-- `BasaltPassDev`: 你的主开发仓库，持续开发、提交 PR、打 tag
-- `BasaltPass`: 对外公开仓库，只接收你确认发布后的版本
+- `BasaltPassDev`: Your main development repository — continuous development, PRs, and tags
+- `BasaltPass`: Public-facing repository — only receives confirmed release versions
 
-这样做的好处是：
+Benefits:
 
-- 日常开发不会直接暴露到公开仓库
-- 开放版仓库历史可以保持更干净
-- 只有发布版本才会同步出去
+- Daily development is not directly exposed to the public repository
+- The public repository history stays cleaner
+- Only release versions are synced out
 
-## 一次性 GitHub 配置
+## One-Time GitHub Configuration
 
-### 1. 重命名当前开发仓库
+### 1. Rename the Current Development Repository
 
-把当前仓库改名为 `BasaltPassDev`。
+Rename the current repository to `BasaltPassDev`.
 
-然后新建一个公开仓库，例如：
+Then create a new public repository, e.g.:
 
 - `your-org/BasaltPass`
 
-公开仓库建议先初始化一个 `README`，确保它从一开始就存在默认分支。
+It is recommended to initialize the public repository with a `README` to ensure the default branch exists from the start.
 
-### 2. 在 `BasaltPassDev` 配置 Repository Variables
+### 2. Configure Repository Variables in `BasaltPassDev`
 
-在 GitHub 仓库 Settings -> Secrets and variables -> Actions -> Variables 中配置：
+In GitHub repository Settings -> Secrets and variables -> Actions -> Variables:
 
-- `PUBLIC_REPO`: 公开仓库名，例如 `your-org/BasaltPass`
-- `PUBLIC_REPO_BRANCH`: 公开仓库默认分支，通常是 `main`
-- `DEPLOY_HOST`: Docker 服务器 IP 或域名
-- `DEPLOY_PORT`: SSH 端口，默认 `22`
-- `DEPLOY_USER`: SSH 登录用户名
-- `DEPLOY_PATH`: 服务器部署目录，例如 `/opt/basaltpass`
-- `GHCR_NAMESPACE`: 镜像命名空间，通常填你的 GitHub 用户名或组织名
+- `PUBLIC_REPO`: Public repository name, e.g., `your-org/BasaltPass`
+- `PUBLIC_REPO_BRANCH`: Public repository default branch, usually `main`
+- `DEPLOY_HOST`: Docker server IP or domain
+- `DEPLOY_PORT`: SSH port, default `22`
+- `DEPLOY_USER`: SSH login username
+- `DEPLOY_PATH`: Server deployment directory, e.g., `/opt/basaltpass`
+- `GHCR_NAMESPACE`: Image namespace, usually your GitHub username or organization name
 
-### 3. 在 `BasaltPassDev` 配置 Repository Secrets
+### 3. Configure Repository Secrets in `BasaltPassDev`
 
-在 GitHub 仓库 Settings -> Secrets and variables -> Actions -> Secrets 中配置：
+In GitHub repository Settings -> Secrets and variables -> Actions -> Secrets:
 
-- `PUBLIC_REPO_PUSH_TOKEN`: 能写入开放版仓库的 GitHub PAT
-- `DEPLOY_SSH_PRIVATE_KEY`: 用于登录 Docker 服务器的私钥
-- `DEPLOY_GHCR_USERNAME`: 服务器拉取 GHCR 镜像使用的用户名
-- `DEPLOY_GHCR_TOKEN`: 服务器拉取 GHCR 镜像使用的 Token
+- `PUBLIC_REPO_PUSH_TOKEN`: GitHub PAT with write access to the public repository
+- `DEPLOY_SSH_PRIVATE_KEY`: Private key for SSH login to the Docker server
+- `DEPLOY_GHCR_USERNAME`: Username for pulling GHCR images on the server
+- `DEPLOY_GHCR_TOKEN`: Token for pulling GHCR images on the server
 
-权限建议：
+Permissions recommendations:
 
-- `PUBLIC_REPO_PUSH_TOKEN`: 至少要有目标公开仓库的 `contents:write`
-- `DEPLOY_GHCR_TOKEN`: 至少要有 GHCR 的 `read:packages`
+- `PUBLIC_REPO_PUSH_TOKEN`: Requires at least `contents:write` on the target public repository
+- `DEPLOY_GHCR_TOKEN`: Requires at least `read:packages` on GHCR
 
-## 服务器一次性准备
+## One-Time Server Preparation
 
-在 Docker 服务器上执行：
+On the Docker server, run:
 
 ```bash
 sudo mkdir -p /opt/basaltpass
@@ -64,63 +64,63 @@ cd /opt/basaltpass
 cp /path/to/deploy/.env.prod.example .env
 ```
 
-然后把 `.env` 里的生产环境变量改成你的实际值。
+Then edit `.env` with your actual production environment variables.
 
-服务器需要预装：
+Server prerequisites:
 
 - Docker
 - Docker Compose Plugin
 
-## Tag 约定
+## Tag Conventions
 
-### 发布到开放版仓库
+### Release to Public Repository
 
-使用以下 tag：
+Use the following tag:
 
 ```bash
 git tag release-v0.1.0
 git push origin release-v0.1.0
 ```
 
-触发后会：
+This will trigger:
 
-1. 拉取当前 `BasaltPassDev` 代码
-2. 根据 `.release-sync-ignore` 过滤不需要公开的文件
-3. 覆盖同步到 `BasaltPass`
-4. 在公开仓库打上 `v0.1.0`
+1. Pull the current `BasaltPassDev` code
+2. Filter files according to `.release-sync-ignore`
+3. Overwrite-sync to `BasaltPass`
+4. Create tag `v0.1.0` on the public repository
 
-### 部署到 Docker 服务器
+### Deploy to Docker Server
 
-使用以下 tag：
+Use the following tag:
 
 ```bash
 git tag deploy-prod-v0.1.0
 git push origin deploy-prod-v0.1.0
 ```
 
-触发后会：
+This will trigger:
 
-1. 构建后端镜像 `ghcr.io/<namespace>/basaltpass-backend:0.1.0`
-2. 构建前端镜像 `ghcr.io/<namespace>/basaltpass-frontend:0.1.0`
-3. 推送到 GHCR
-4. 通过 SSH 登录你的 Docker 服务器
-5. 执行 `docker compose pull && docker compose up -d --remove-orphans`
-6. 最长等待约 6 分钟，轮询 `http://127.0.0.1:5104/health`；如果启动期短暂返回 `502`，工作流会继续重试，只有超时后才判定失败并输出容器状态与日志
+1. Build the backend image `ghcr.io/<namespace>/basaltpass-backend:0.1.0`
+2. Build the frontend image `ghcr.io/<namespace>/basaltpass-frontend:0.1.0`
+3. Push to GHCR
+4. SSH into your Docker server
+5. Run `docker compose pull && docker compose up -d --remove-orphans`
+6. Poll `http://127.0.0.1:5104/health` for up to ~6 minutes; transient `502` responses during startup are retried, and the workflow only reports failure after timeout (outputting container status and logs)
 
-## 公开版过滤规则
+## Public Release Filter Rules
 
-`.release-sync-ignore` 用来控制哪些文件不要进入开放版仓库。
+`.release-sync-ignore` controls which files should not enter the public repository.
 
-你应该重点检查是否需要排除：
+You should review whether to exclude:
 
-- 私有说明文档
-- 内部脚本
-- 仅开发环境使用的配置
-- 仅你自己服务器使用的部署信息
+- Private documentation
+- Internal scripts
+- Dev-only configuration
+- Server-specific deployment information
 
-## 注意事项
+## Notes
 
-- 公开版同步现在采用“快照同步”，不会把 `BasaltPassDev` 的私有提交历史原样暴露到公开仓库
-- 当前部署流程默认拉取 `deploy/docker-compose.prod.yml`
-- 服务器上的生产环境变量保存在 `${DEPLOY_PATH}/.env`
-- 如果你后面要分测试环境和正式环境，建议再加 `deploy-staging-vX.Y.Z` 工作流
+- The public sync now uses a "snapshot sync" approach, which does not expose `BasaltPassDev` private commit history to the public repository
+- The current deployment workflow pulls `deploy/docker-compose.prod.yml` by default
+- Production environment variables on the server are stored at `${DEPLOY_PATH}/.env`
+- If you later need separate staging and production environments, consider adding a `deploy-staging-vX.Y.Z` workflow

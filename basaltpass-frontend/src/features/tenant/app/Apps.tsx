@@ -20,11 +20,13 @@ import TenantLayout from '@features/tenant/components/TenantLayout'
 import { tenantAppApi, TenantApp } from '@api/tenant/tenantApp'
 import { ROUTES } from '@constants'
 import { PSkeleton, PBadge, PAlert, PPageHeader, PEmptyState, PButton } from '@ui'
+import { useI18n } from '@shared/i18n'
 
 const actionButtonClass =
   'inline-flex items-center rounded-lg border p-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-2'
 
 export default function TenantAppList() {
+  const { t, locale } = useI18n()
   const [apps, setApps] = useState<TenantApp[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -39,8 +41,8 @@ export default function TenantAppList() {
       const response = await tenantAppApi.listTenantApps()
       setApps(response.data?.apps || [])
     } catch (err: any) {
-      console.error('获取应用列表失败:', err)
-      setError(err.response?.data?.error || '获取应用列表失败')
+      console.error(t('tenantAppList.logs.loadFailed'), err)
+      setError(err.response?.data?.error || t('tenantAppList.errors.loadFailed'))
     } finally {
       setLoading(false)
     }
@@ -58,15 +60,15 @@ export default function TenantAppList() {
   const getStatusText = (status: string) => {
     switch (status) {
       case 'active':
-        return '运行中'
+        return t('tenantAppList.status.active')
       case 'inactive':
-        return '已停止'
+        return t('tenantAppList.status.inactive')
       case 'pending':
-        return '待激活'
+        return t('tenantAppList.status.pending')
       case 'deleted':
-        return '已删除'
+        return t('tenantAppList.status.deleted')
       default:
-        return '未知'
+        return t('tenantAppList.status.unknown')
     }
   }
 
@@ -74,30 +76,30 @@ export default function TenantAppList() {
     try {
       const newStatus = currentStatus === 'active' ? 'inactive' : 'active'
       await tenantAppApi.toggleAppStatus(appId, newStatus)
-      // 重新获取应用列表
+      // 
       fetchApps()
     } catch (err: any) {
-      console.error('切换应用状态失败:', err)
-      uiAlert('切换应用状态失败，请重试')
+      console.error(t('tenantAppList.logs.toggleFailed'), err)
+      uiAlert(t('tenantAppList.errors.toggleFailed'))
     }
   }
 
   const handleDeleteApp = async (appId: string) => {
-    if (await uiConfirm('确定要删除这个应用吗？此操作不可恢复。')) {
+    if (await uiConfirm(t('tenantAppList.confirmDelete'))) {
       try {
         await tenantAppApi.deleteTenantApp(appId)
-        // 重新获取应用列表
+        // 
         fetchApps()
       } catch (err: any) {
-        console.error('删除应用失败:', err)
-        uiAlert('删除应用失败，请重试')
+        console.error(t('tenantAppList.logs.deleteFailed'), err)
+        uiAlert(t('tenantAppList.errors.deleteFailed'))
       }
     }
   }
 
   if (loading) {
     return (
-      <TenantLayout title="应用管理">
+      <TenantLayout title={t('tenantAppList.layoutTitle')}>
         <div className="py-6">
           <PSkeleton.Management />
         </div>
@@ -107,13 +109,13 @@ export default function TenantAppList() {
 
   if (error) {
     return (
-      <TenantLayout title="应用管理">
+      <TenantLayout title={t('tenantAppList.layoutTitle')}>
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-red-500" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">{error}</h3>
             <div className="mt-6">
-              <PButton onClick={fetchApps}>重试</PButton>
+              <PButton onClick={fetchApps}>{t('tenantAppList.actions.retry')}</PButton>
             </div>
           </div>
         </div>
@@ -122,24 +124,24 @@ export default function TenantAppList() {
   }
 
   return (
-    <TenantLayout title="应用管理">
+    <TenantLayout title={t('tenantAppList.layoutTitle')}>
       <div className="space-y-6">
-        {/* 页面头部 */}
+        {/*  */}
         <PPageHeader
-          title="应用管理"
-          description="管理您租户下的应用和服务"
+          title={t('tenantAppList.title')}
+          description={t('tenantAppList.description')}
           icon={<CubeIcon className="h-8 w-8 text-blue-600" />}
           actions={
             <Link to={ROUTES.tenant.appsNew}>
-              <PButton leftIcon={<PlusIcon className="h-4 w-4" />}>创建应用</PButton>
+              <PButton leftIcon={<PlusIcon className="h-4 w-4" />}>{t('tenantAppList.actions.createApp')}</PButton>
             </Link>
           }
         />
 
-        {/* 错误提示 */}
+        {/*  */}
         {error && <PAlert variant="error" message={error} className="mb-6" />}
 
-        {/* 应用列表 */}
+        {/*  */}
         <div className="overflow-hidden rounded-xl bg-white shadow-sm">
           <ul className="divide-y divide-gray-200">
             {apps.map((app) => (
@@ -174,7 +176,7 @@ export default function TenantAppList() {
                             </PBadge>
                             {app.oauth_client && (
                               <PBadge variant="info" className="ml-2" icon={<KeyIcon className="h-3 w-3" />}>
-                                OAuth已配置
+                                {t('tenantAppList.oauthConfigured')}
                               </PBadge>
                             )}
                           </div>
@@ -192,24 +194,24 @@ export default function TenantAppList() {
                                   rel="noopener noreferrer"
                                   className="text-blue-600 hover:text-blue-800"
                                 >
-                                  站点主页
+                                  {t('tenantAppList.homepage')}
                                 </a>
                                 <span className="mx-2">•</span>
                               </>
                             )}
-                            <span>创建于 {new Date(app.created_at).toLocaleDateString()}</span>
+                            <span>{t('tenantAppList.createdAt', { date: new Date(app.created_at).toLocaleDateString(locale) })}</span>
                             {app.last_accessed && (
                               <>
                                 <span className="mx-2">•</span>
-                                <span>最后访问 {new Date(app.last_accessed).toLocaleDateString()}</span>
+                                <span>{t('tenantAppList.lastAccessed', { date: new Date(app.last_accessed).toLocaleDateString(locale) })}</span>
                               </>
                             )}
                           </div>
                           <div className="mt-2">
                             <div className="flex items-center space-x-4 text-sm text-gray-500">
-                              <span>总用户: <span className="font-medium text-gray-900">{app.stats?.total_users || 0}</span></span>
-                              <span>活跃用户: <span className="font-medium text-green-600">{app.stats?.active_users || 0}</span></span>
-                              <span>今日请求: <span className="font-medium text-blue-600">{app.stats?.requests_today || 0}</span></span>
+                              <span>{t('tenantAppList.stats.totalUsers')}: <span className="font-medium text-gray-900">{app.stats?.total_users || 0}</span></span>
+                              <span>{t('tenantAppList.stats.activeUsers')}: <span className="font-medium text-green-600">{app.stats?.active_users || 0}</span></span>
+                              <span>{t('tenantAppList.stats.requestsToday')}: <span className="font-medium text-blue-600">{app.stats?.requests_today || 0}</span></span>
                             </div>
                           </div>
                         </div>
@@ -223,7 +225,7 @@ export default function TenantAppList() {
                             ? 'border-red-300 text-red-700 bg-white hover:bg-red-50 focus:ring-red-500'
                             : 'border-green-300 text-green-700 bg-white hover:bg-green-50 focus:ring-green-500'
                         }`}
-                        title={app.status === 'active' ? '停止应用' : '启动应用'}
+                        title={app.status === 'active' ? t('tenantAppList.actions.stopApp') : t('tenantAppList.actions.startApp')}
                       >
                         {app.status === 'active' ? (
                           <StopIcon className="h-4 w-4" />
@@ -234,42 +236,42 @@ export default function TenantAppList() {
                       <Link
                         to={`/tenant/apps/${app.id}/users`}
                         className={`${actionButtonClass} border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 focus:ring-blue-500`}
-                        title="用户权限管理"
+                        title={t('tenantAppList.actions.userPermissionManagement')}
                       >
                         <UsersIcon className="h-4 w-4" />
                       </Link>
                       <Link
                         to={`/tenant/apps/${app.id}/roles`}
                         className={`${actionButtonClass} border-green-300 bg-green-50 text-green-700 hover:bg-green-100 focus:ring-green-500`}
-                        title="角色管理"
+                        title={t('tenantAppList.actions.roleManagement')}
                       >
                         <ShieldCheckIcon className="h-4 w-4" />
                       </Link>
                       <Link
                         to={`/tenant/apps/${app.id}`}
                         className={`${actionButtonClass} border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-blue-500`}
-                        title="查看详情"
+                        title={t('tenantAppList.actions.viewDetail')}
                       >
                         <EyeIcon className="h-4 w-4" />
                       </Link>
                       <Link
                         to={`/tenant/apps/${app.id}/stats`}
                         className={`${actionButtonClass} border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-blue-500`}
-                        title="统计"
+                        title={t('tenantAppList.actions.stats')}
                       >
                         <ChartBarIcon className="h-4 w-4" />
                       </Link>
                       <Link
                         to={`/tenant/apps/${app.id}/settings`}
                         className={`${actionButtonClass} border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-blue-500`}
-                        title="设置"
+                        title={t('tenantAppList.actions.settings')}
                       >
                         <Cog6ToothIcon className="h-4 w-4" />
                       </Link>
                       <button
                         onClick={() => handleDeleteApp(app.id)}
                         className={`${actionButtonClass} border-red-300 bg-white text-red-700 hover:bg-red-50 focus:ring-red-500`}
-                        title="删除"
+                        title={t('tenantAppList.actions.delete')}
                       >
                         <TrashIcon className="h-4 w-4" />
                       </button>
@@ -280,35 +282,35 @@ export default function TenantAppList() {
             ))}
           </ul>
 
-          {/* 空状态 */}
+          {/*  */}
           {apps.length === 0 && !loading && (
             <PEmptyState
               icon={CubeIcon}
-              title="暂无应用"
-              description="开始创建您的第一个应用"
+              title={t('tenantAppList.empty.title')}
+              description={t('tenantAppList.empty.description')}
             >
               <Link to={ROUTES.tenant.appsNew}>
-                <PButton leftIcon={<PlusIcon className="h-4 w-4" />}>创建应用</PButton>
+                <PButton leftIcon={<PlusIcon className="h-4 w-4" />}>{t('tenantAppList.actions.createApp')}</PButton>
               </Link>
             </PEmptyState>
           )}
         </div>
 
-        {/* 分页 - 如果需要的话 */}
+        {/*  -  */}
         {apps.length > 0 && (
           <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
             <div className="flex-1 flex justify-between sm:hidden">
               <button className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                上一页
+                {t('tenantAppList.pagination.previous')}
               </button>
               <button className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                下一页
+                {t('tenantAppList.pagination.next')}
               </button>
             </div>
             <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm text-gray-700">
-                  显示 <span className="font-medium">1</span> 到 <span className="font-medium">{apps.length}</span> 共 <span className="font-medium">{apps.length}</span> 个应用
+                  {t('tenantAppList.pagination.summary', { to: apps.length, total: apps.length })}
                 </p>
               </div>
             </div>

@@ -9,8 +9,10 @@ import { ChevronRightIcon, ClockIcon, CreditCardIcon, ExclamationTriangleIcon } 
 import { CheckCircleIcon, ShoppingCartIcon } from '@heroicons/react/24/solid'
 import { ROUTES } from '@constants'
 import { PButton, PBadge, PEmptyState } from '@ui'
+import { useI18n } from '@shared/i18n'
 
 export default function OrderConfirmPage() {
+  const { t, locale } = useI18n()
   const { orderId } = useParams<{ orderId: string }>()
   const navigate = useNavigate()
   const [order, setOrder] = useState<OrderResponse | null>(null)
@@ -24,7 +26,7 @@ export default function OrderConfirmPage() {
     }
   }, [orderId])
 
-  // 计算倒计时
+  // 
   useEffect(() => {
     if (!order) return
 
@@ -36,9 +38,9 @@ export default function OrderConfirmPage() {
       if (distance > 0) {
         const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60))
         const seconds = Math.floor((distance % (1000 * 60)) / 1000)
-        setTimeLeft(`${minutes}分${seconds}秒`)
+        setTimeLeft(t('userOrderConfirm.timeLeft.minutesSeconds', { minutes, seconds }))
       } else {
-        setTimeLeft('已过期')
+        setTimeLeft(t('userOrderConfirm.timeLeft.expired'))
         clearInterval(timer)
       }
     }, 1000)
@@ -52,7 +54,7 @@ export default function OrderConfirmPage() {
       const orderData = await getOrder(id)
       setOrder(orderData)
     } catch (error: any) {
-      console.error('获取订单失败:', error)
+      console.error(t('userOrderConfirm.logs.fetchOrderFailed'), error)
       if (error.response?.status === 404) {
         navigate(ROUTES.user.orders)
       }
@@ -67,7 +69,7 @@ export default function OrderConfirmPage() {
     try {
       setPaying(true)
 
-      // 创建支付意图
+      // 
       const paymentData = {
         amount: order.total_amount,
         currency: order.currency,
@@ -92,14 +94,14 @@ export default function OrderConfirmPage() {
       const sessionResponse = await paymentAPI.createPaymentSession(sessionData)
       
       
-      // 跳转到支付页面（后端提供的支付模拟页面）
+      // （）
   const checkoutUrl = `http://localhost:8101/api/v1/payment/checkout/${sessionResponse.session.StripeSessionID}`
       
       window.location.href = checkoutUrl 
 
     } catch (error: any) {
-      console.error('创建支付失败:', error)
-      uiAlert(error.response?.data?.error || '创建支付失败，请重试')
+      console.error(t('userOrderConfirm.logs.createPaymentFailed'), error)
+      uiAlert(error.response?.data?.error || t('userOrderConfirm.errors.createPaymentFailed'))
     } finally {
       setPaying(false)
     }
@@ -118,7 +120,7 @@ export default function OrderConfirmPage() {
     return (
       <Layout>
         <div className="flex justify-center items-center h-64">
-          <div className="text-lg">加载中...</div>
+          <div className="text-lg">{t('userOrderConfirm.loading')}</div>
         </div>
       </Layout>
     )
@@ -129,9 +131,9 @@ export default function OrderConfirmPage() {
       <Layout>
         <PEmptyState
           icon={<ExclamationTriangleIcon className="h-12 w-12" />}
-          title="订单不存在"
-          description="请检查订单链接是否正确。"
-          action={{ label: '返回产品页面', onClick: () => navigate(ROUTES.user.products) }}
+          title={t('userOrderConfirm.empty.title')}
+          description={t('userOrderConfirm.empty.description')}
+          action={{ label: t('userOrderConfirm.actions.backToProducts'), onClick: () => navigate(ROUTES.user.products) }}
         />
       </Layout>
     )
@@ -140,39 +142,39 @@ export default function OrderConfirmPage() {
   return (
     <Layout>
       <div className="space-y-6">
-        {/* 面包屑导航 */}
+        {/*  */}
         <nav className="flex" aria-label="Breadcrumb">
           <ol className="flex items-center space-x-4">
             <li>
               <Link to={ROUTES.user.dashboard} className="text-gray-400 hover:text-gray-500">
-                仪表板
+                {t('userOrderConfirm.breadcrumb.dashboard')}
               </Link>
             </li>
             <li>
               <div className="flex items-center">
                 <ChevronRightIcon className="flex-shrink-0 h-5 w-5 text-gray-400" />
                 <Link to={ROUTES.user.products} className="ml-4 text-gray-400 hover:text-gray-500">
-                  产品与套餐
+                  {t('userOrderConfirm.breadcrumb.products')}
                 </Link>
               </div>
             </li>
             <li>
               <div className="flex items-center">
                 <ChevronRightIcon className="flex-shrink-0 h-5 w-5 text-gray-400" />
-                <span className="ml-4 text-sm font-medium text-gray-500">订单确认</span>
+                <span className="ml-4 text-sm font-medium text-gray-500">{t('userOrderConfirm.breadcrumb.confirm')}</span>
               </div>
             </li>
           </ol>
         </nav>
 
         <div className="max-w-2xl mx-auto">
-          {/* 订单状态 */}
+          {/*  */}
           <div className="bg-white shadow-lg rounded-lg border border-gray-200 overflow-hidden">
             <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <ShoppingCartIcon className="h-6 w-6 text-indigo-600 mr-2" />
-                  <h1 className="text-xl font-semibold text-gray-900">订单确认</h1>
+                  <h1 className="text-xl font-semibold text-gray-900">{t('userOrderConfirm.title')}</h1>
                 </div>
                 <div className="flex items-center space-x-2">
                   <PBadge variant={
@@ -180,34 +182,34 @@ export default function OrderConfirmPage() {
                     order.status === 'paid' ? 'success' :
                     order.status === 'expired' ? 'error' : 'default'
                   }>
-                    {order.status === 'pending' ? '待支付' :
-                     order.status === 'paid' ? '已支付' :
-                     order.status === 'expired' ? '已过期' :
-                     order.status === 'cancelled' ? '已取消' : order.status}
+                    {order.status === 'pending' ? t('userOrderConfirm.status.pending') :
+                     order.status === 'paid' ? t('userOrderConfirm.status.paid') :
+                     order.status === 'expired' ? t('userOrderConfirm.status.expired') :
+                     order.status === 'cancelled' ? t('userOrderConfirm.status.cancelled') : order.status}
                   </PBadge>
                 </div>
               </div>
             </div>
 
             <div className="px-6 py-6">
-              {/* 订单基本信息 */}
+              {/*  */}
               <div className="mb-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-3">订单信息</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-3">{t('userOrderConfirm.sections.orderInfo')}</h3>
                 <dl className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">订单号</dt>
+                    <dt className="text-sm font-medium text-gray-500">{t('userOrderConfirm.fields.orderNumber')}</dt>
                     <dd className="text-sm text-gray-900 font-mono">{order.order_number}</dd>
                   </div>
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">创建时间</dt>
-                    <dd className="text-sm text-gray-900">{new Date(order.created_at).toLocaleString()}</dd>
+                    <dt className="text-sm font-medium text-gray-500">{t('userOrderConfirm.fields.createdAt')}</dt>
+                    <dd className="text-sm text-gray-900">{new Date(order.created_at).toLocaleString(locale)}</dd>
                   </div>
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">过期时间</dt>
-                    <dd className="text-sm text-gray-900">{new Date(order.expires_at).toLocaleString()}</dd>
+                    <dt className="text-sm font-medium text-gray-500">{t('userOrderConfirm.fields.expiresAt')}</dt>
+                    <dd className="text-sm text-gray-900">{new Date(order.expires_at).toLocaleString(locale)}</dd>
                   </div>
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">剩余时间</dt>
+                    <dt className="text-sm font-medium text-gray-500">{t('userOrderConfirm.fields.timeLeft')}</dt>
                     <dd className={`text-sm font-medium flex items-center ${isExpired() ? 'text-red-600' : 'text-orange-600'}`}>
                       <ClockIcon className="h-4 w-4 mr-1" />
                       {timeLeft}
@@ -216,10 +218,10 @@ export default function OrderConfirmPage() {
                 </dl>
               </div>
 
-              {/* 产品信息 */}
+              {/*  */}
               {order.price && (
                 <div className="mb-6">
-                  <h3 className="text-lg font-medium text-gray-900 mb-3">产品详情</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-3">{t('userOrderConfirm.sections.productDetail')}</h3>
                   <div className="bg-gray-50 rounded-lg p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -228,14 +230,21 @@ export default function OrderConfirmPage() {
                         </h4>
                         <p className="text-sm text-gray-500 mt-1">{order.description}</p>
                         <div className="mt-2 flex items-center text-sm text-gray-600">
-                          <span>数量: {order.quantity}</span>
+                          <span>{t('userOrderConfirm.quantity', { count: order.quantity })}</span>
                           <span className="mx-2">|</span>
                           <span>
-                            {order.price.billing_interval_count > 1 ? order.price.billing_interval_count : ''}
-                            {order.price.billing_interval === 'month' ? '月' : 
-                             order.price.billing_interval === 'year' ? '年' : 
-                             order.price.billing_interval === 'week' ? '周' : 
-                             order.price.billing_interval === 'day' ? '日' : order.price.billing_interval}计费
+                            {t('userOrderConfirm.billing', {
+                              count: order.price.billing_interval_count > 1 ? order.price.billing_interval_count : '',
+                              unit: order.price.billing_interval === 'month'
+                                ? t('userOrderConfirm.billingUnits.month')
+                                : order.price.billing_interval === 'year'
+                                ? t('userOrderConfirm.billingUnits.year')
+                                : order.price.billing_interval === 'week'
+                                ? t('userOrderConfirm.billingUnits.week')
+                                : order.price.billing_interval === 'day'
+                                ? t('userOrderConfirm.billingUnits.day')
+                                : order.price.billing_interval
+                            })}
                           </span>
                         </div>
                       </div>
@@ -244,30 +253,30 @@ export default function OrderConfirmPage() {
                 </div>
               )}
 
-              {/* 价格详情 */}
+              {/*  */}
               <div className="mb-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-3">价格详情</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-3">{t('userOrderConfirm.sections.priceDetail')}</h3>
                 <div className="bg-gray-50 rounded-lg p-4">
                   <dl className="space-y-2">
                     <div className="flex justify-between">
-                      <dt className="text-sm text-gray-600">基础价格</dt>
+                      <dt className="text-sm text-gray-600">{t('userOrderConfirm.price.base')}</dt>
                       <dd className="text-sm text-gray-900">¥{formatAmount(order.base_amount)}</dd>
                     </div>
                     {order.discount_amount > 0 && (
                       <div className="flex justify-between">
-                        <dt className="text-sm text-gray-600">优惠折扣</dt>
+                        <dt className="text-sm text-gray-600">{t('userOrderConfirm.price.discount')}</dt>
                         <dd className="text-sm text-red-600">-¥{formatAmount(order.discount_amount)}</dd>
                       </div>
                     )}
                     {order.coupon && (
                       <div className="flex justify-between">
-                        <dt className="text-sm text-gray-600">优惠券</dt>
+                        <dt className="text-sm text-gray-600">{t('userOrderConfirm.price.coupon')}</dt>
                         <dd className="text-sm text-gray-900">{order.coupon.code}</dd>
                       </div>
                     )}
                     <div className="border-t border-gray-200 pt-2">
                       <div className="flex justify-between">
-                        <dt className="text-base font-medium text-gray-900">总计</dt>
+                        <dt className="text-base font-medium text-gray-900">{t('userOrderConfirm.price.total')}</dt>
                         <dd className="text-base font-medium text-gray-900">¥{formatAmount(order.total_amount)}</dd>
                       </div>
                     </div>
@@ -275,7 +284,7 @@ export default function OrderConfirmPage() {
                 </div>
               </div>
 
-              {/* 支付按钮 */}
+              {/*  */}
               <div className="flex flex-col sm:flex-row gap-3">
                 {order.status === 'pending' && !isExpired() ? (
                   <PButton
@@ -286,20 +295,20 @@ export default function OrderConfirmPage() {
                     leftIcon={<CreditCardIcon className="h-5 w-5" />}
                     fullWidth
                   >
-                    立即支付 ¥{formatAmount(order.total_amount)}
+                    {t('userOrderConfirm.actions.payNow', { amount: formatAmount(order.total_amount) })}
                   </PButton>
                 ) : order.status === 'paid' ? (
                   <PButton variant="secondary" disabled fullWidth leftIcon={<CheckCircleIcon className="h-5 w-5" />}>
-                    订单已支付
+                    {t('userOrderConfirm.actions.paid')}
                   </PButton>
                 ) : (
                   <PButton variant="secondary" disabled fullWidth leftIcon={<ExclamationTriangleIcon className="h-5 w-5" />}>
-                    {isExpired() ? '订单已过期' : '订单已取消'}
+                    {isExpired() ? t('userOrderConfirm.actions.expired') : t('userOrderConfirm.actions.cancelled')}
                   </PButton>
                 )}
                 
                 <Link to={ROUTES.user.products}>
-                  <PButton variant="secondary" fullWidth>返回产品页面</PButton>
+                  <PButton variant="secondary" fullWidth>{t('userOrderConfirm.actions.backToProducts')}</PButton>
                 </Link>
               </div>
             </div>

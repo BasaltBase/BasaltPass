@@ -1,13 +1,15 @@
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
+import React, { useEffect, useState } from 'react'
+import { uiAlert } from '@contexts/DialogContext'
 import { useNavigate } from 'react-router-dom';
 import { paymentAPI, CreatePaymentIntentRequest, PaymentIntent, MockStripeResponse } from '@api/subscription/payment/payment';
 import { getBalance } from '@api/user/wallet';
 import { PSelect, PInput, PButton, PAlert } from '@ui';
 import { ROUTES } from '@constants';
 import { useConfig } from '@contexts/ConfigContext';
+import { useI18n } from '@shared/i18n';
 
 const Payment: React.FC = () => {
+  const { t, locale } = useI18n();
   const { walletRechargeWithdrawEnabled } = useConfig();
   const walletOpsDisabled = !walletRechargeWithdrawEnabled;
   const [loading, setLoading] = useState(false);
@@ -28,7 +30,7 @@ const Payment: React.FC = () => {
       const response = await getBalance(currency);
       setBalance(response.data.balance);
     } catch (error) {
-      console.error('获取余额失败:', error);
+      console.error(t('pages.payment.logs.loadBalanceFailed'), error);
     }
   };
 
@@ -36,23 +38,23 @@ const Payment: React.FC = () => {
     e.preventDefault();
 
     if (walletOpsDisabled) {
-      uiAlert('钱包充值功能暂未开放');
+      uiAlert(t('pages.payment.alerts.walletDisabled'));
       return;
     }
     
     if (!amount || parseFloat(amount) <= 0) {
-      uiAlert('请输入有效的金额');
+      uiAlert(t('pages.payment.alerts.invalidAmount'));
       return;
     }
 
     setLoading(true);
     try {
-      const amountInCents = Math.round(parseFloat(amount) * 100); // 转换为分
+      const amountInCents = Math.round(parseFloat(amount) * 100); // 
       
       const request: CreatePaymentIntentRequest = {
         amount: amountInCents,
         currency,
-        description: description || `钱包充值 ${amount} ${currency}`,
+        description: description || t('pages.payment.defaultDescription', { amount, currency }),
         payment_method_types: ['card'],
         confirmation_method: 'automatic',
         capture_method: 'automatic',
@@ -66,9 +68,9 @@ const Payment: React.FC = () => {
       setPaymentIntent(response.payment_intent);
       setStripeResponse(response.stripe_mock_response);
       
-      uiAlert('支付意图创建成功！');
+      uiAlert(t('pages.payment.alerts.intentCreated'));
     } catch (error: any) {
-      uiAlert('创建失败: ' + error.message);
+      uiAlert(`${t('pages.payment.alerts.createFailedPrefix')}: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -76,11 +78,11 @@ const Payment: React.FC = () => {
 
   const handleCreatePaymentSession = async () => {
     if (walletOpsDisabled) {
-      uiAlert('钱包充值功能暂未开放');
+      uiAlert(t('pages.payment.alerts.walletDisabled'));
       return;
     }
     if (!paymentIntent) {
-      uiAlert('请先创建支付意图');
+      uiAlert(t('pages.payment.alerts.createIntentFirst'));
       return;
     }
 
@@ -95,14 +97,14 @@ const Payment: React.FC = () => {
 
       const response = await paymentAPI.createPaymentSession(sessionRequest);
       
-      // 显示Stripe模拟响应
-      uiAlert('支付会话创建成功！即将跳转到支付页面...');
+      // Stripe
+      uiAlert(t('pages.payment.alerts.sessionCreated'));
       
-      // 跳转到支付页面
+      // 
       window.open(paymentAPI.getPaymentCheckoutUrl(response.session.StripeSessionID), '_blank');
       
     } catch (error: any) {
-      uiAlert('创建支付会话失败: ' + error.message);
+      uiAlert(`${t('pages.payment.alerts.createSessionFailedPrefix')}: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -115,20 +117,20 @@ const Payment: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">钱包充值</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('pages.payment.title')}</h1>
 
         {walletOpsDisabled && (
           <div className="mb-4">
-            <PAlert variant="warning" title="功能未开放" message="钱包充值功能暂未开放，如有疑问请联系客服。" />
+            <PAlert variant="warning" title={t('pages.payment.disabled.title')} message={t('pages.payment.disabled.message')} />
           </div>
         )}
         
-        {/* 当前余额 */}
-        <PAlert variant="info" title="当前余额">
+        {/*  */}
+        <PAlert variant="info" title={t('pages.payment.currentBalanceTitle')}>
           <p className="text-2xl font-bold">{formatAmount(balance)} {currency}</p>
         </PAlert>
 
-        {/* 创建支付意图表单 */}
+        {/*  */}
         <form
           onSubmit={handleCreatePaymentIntent}
           className={`space-y-4 mb-6 ${walletOpsDisabled ? 'pointer-events-none opacity-50' : ''}`}
@@ -141,8 +143,8 @@ const Payment: React.FC = () => {
               onChange={(e) => setAmount(e.target.value)}
               step="0.01"
               min="0.01"
-              label="充值金额"
-              placeholder="请输入充值金额"
+              label={t('pages.payment.form.amountLabel')}
+              placeholder={t('pages.payment.form.amountPlaceholder')}
               required
             />
           </div>
@@ -152,11 +154,11 @@ const Payment: React.FC = () => {
               id="currency"
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
-              label="币种"
+              label={t('pages.payment.form.currencyLabel')}
             >
-              <option value="USD">USD - 美元</option>
-              <option value="CNY">CNY - 人民币</option>
-              <option value="EUR">EUR - 欧元</option>
+              <option value="USD">{t('pages.payment.form.currencyOptions.usd')}</option>
+              <option value="CNY">{t('pages.payment.form.currencyOptions.cny')}</option>
+              <option value="EUR">{t('pages.payment.form.currencyOptions.eur')}</option>
             </PSelect>
           </div>
 
@@ -166,8 +168,8 @@ const Payment: React.FC = () => {
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              label="备注（可选）"
-              placeholder="请输入备注信息"
+              label={t('pages.payment.form.noteLabel')}
+              placeholder={t('pages.payment.form.notePlaceholder')}
             />
           </div>
 
@@ -177,45 +179,45 @@ const Payment: React.FC = () => {
             loading={loading}
             fullWidth
           >
-            创建支付意图
+            {t('pages.payment.form.createIntentButton')}
           </PButton>
         </form>
 
-        {/* 支付意图信息 */}
+        {/*  */}
         {paymentIntent && (
-          <PAlert variant="success" title="支付意图已创建">
+          <PAlert variant="success" title={t('pages.payment.intent.createdTitle')}>
             <div className="space-y-2 text-sm mb-4">
-              <p><strong>ID:</strong> {paymentIntent.StripePaymentIntentID}</p>
-              <p><strong>金额:</strong> {formatAmount(paymentIntent.Amount)} {paymentIntent.Currency}</p>
-              <p><strong>状态:</strong> <span className="text-orange-600">{paymentIntent.Status}</span></p>
-              <p><strong>描述:</strong> {paymentIntent.Description}</p>
-              <p><strong>创建时间:</strong> {new Date(paymentIntent.CreatedAt).toLocaleString()}</p>
+              <p><strong>{t('pages.payment.intent.id')}</strong> {paymentIntent.StripePaymentIntentID}</p>
+              <p><strong>{t('pages.payment.intent.amount')}</strong> {formatAmount(paymentIntent.Amount)} {paymentIntent.Currency}</p>
+              <p><strong>{t('pages.payment.intent.status')}</strong> <span className="text-orange-600">{paymentIntent.Status}</span></p>
+              <p><strong>{t('pages.payment.intent.description')}</strong> {paymentIntent.Description}</p>
+              <p><strong>{t('pages.payment.intent.createdAt')}</strong> {new Date(paymentIntent.CreatedAt).toLocaleString(locale)}</p>
             </div>
             <PButton
               onClick={handleCreatePaymentSession}
               loading={loading}
               disabled={walletOpsDisabled}
             >
-              创建支付会话
+              {t('pages.payment.intent.createSessionButton')}
             </PButton>
           </PAlert>
         )}
 
-        {/* Stripe模拟响应 */}
+        {/* Stripe */}
         {stripeResponse && (
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              📋 Stripe API 模拟响应
+              {t('pages.payment.mockResponse.title')}
             </h3>
             <div className="space-y-2 text-sm">
-              <p><strong>请求URL:</strong> <code className="bg-gray-200 px-2 py-1 rounded">{stripeResponse.request_url}</code></p>
-              <p><strong>请求方法:</strong> <span className="text-blue-600">{stripeResponse.request_method}</span></p>
-              <p><strong>时间戳:</strong> {new Date(stripeResponse.timestamp).toLocaleString()}</p>
+              <p><strong>{t('pages.payment.mockResponse.requestUrl')}</strong> <code className="bg-gray-200 px-2 py-1 rounded">{stripeResponse.request_url}</code></p>
+              <p><strong>{t('pages.payment.mockResponse.requestMethod')}</strong> <span className="text-blue-600">{stripeResponse.request_method}</span></p>
+              <p><strong>{t('pages.payment.mockResponse.timestamp')}</strong> {new Date(stripeResponse.timestamp).toLocaleString(locale)}</p>
             </div>
             
             <details className="mt-4">
               <summary className="cursor-pointer font-medium text-gray-700 hover:text-gray-900">
-                查看详细响应数据
+                {t('pages.payment.mockResponse.viewDetails')}
               </summary>
               <pre className="mt-2 p-3 bg-gray-800 text-green-400 rounded text-xs overflow-x-auto">
                 {JSON.stringify(stripeResponse, null, 2)}
@@ -224,13 +226,13 @@ const Payment: React.FC = () => {
           </div>
         )}
 
-        {/* 返回按钮 */}
+        {/*  */}
         <div className="mt-6 pt-6 border-t border-gray-200">
           <PButton
             variant="ghost"
             onClick={() => navigate(ROUTES.user.wallet)}
           >
-            ← 返回钱包
+            {t('pages.payment.backToWallet')}
           </PButton>
         </div>
       </div>

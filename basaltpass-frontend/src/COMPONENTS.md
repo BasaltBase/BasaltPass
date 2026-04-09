@@ -1,16 +1,16 @@
-# BasaltPass 组件库文档
+# BasaltPass componenttranslateddocumentation
 
-## 概述
+## translated
 
-BasaltPass 组件库提供了一套统一、可访问、类型安全的 React 组件，基于 Tailwind CSS 设计系统构建。
+BasaltPass componenttranslated、cantranslated、typesecuritytranslated React component，translated Tailwind CSS translatedsystemtranslated。
 
-## 组件列表
+## componentlist
 
-### 1. PInput - 输入框组件
+### 1. PInput - translatedcomponent
 
-统一的输入框组件，支持多种变体和交互状态。
+translatedcomponent，translatedandtranslatedstatus。
 
-#### 属性接口
+#### translated
 
 ```tsx
 interface PInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
@@ -24,48 +24,48 @@ interface PInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'
 }
 ```
 
-#### 使用示例
+#### translated
 
 ```tsx
-// 基础输入框
+// translated
 <PInput
   type="email"
-  placeholder="输入邮箱地址"
+  placeholder="translatedemailtranslated"
   variant="default"
   size="md"
 />
 
-// 带图标的输入框
+// translated
 <PInput
   type="text"
-  placeholder="搜索用户"
+  placeholder="searchuser"
   leftIcon={<MagnifyingGlassIcon className="h-5 w-5" />}
   variant="filled"
 />
 
-// 密码输入框
+// passwordtranslated
 <PInput
   type="password"
-  placeholder="输入密码"
+  placeholder="translatedpassword"
   showPassword={showPassword}
   onTogglePassword={() => setShowPassword(!showPassword)}
   error={errors.password}
 />
 ```
 
-#### 变体说明
+#### translated
 
-- **default**: 标准边框样式
-- **filled**: 填充背景样式
-- **underline**: 下划线样式
+- **default**: translatedstyle
+- **filled**: translatedstyle
+- **underline**: translatedstyle
 
 ---
 
-### 2. PButton - 按钮组件
+### 2. PButton - translatedcomponent
 
-功能丰富的按钮组件，支持多种样式变体和交互状态。
+translatedcomponent，translatedstyletranslatedandtranslatedstatus。
 
-#### 属性接口
+#### translated
 
 ```tsx
 interface PButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -78,52 +78,52 @@ interface PButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 ```
 
-#### 使用示例
+#### translated
 
 ```tsx
-// 基础按钮
+// translated
 <PButton variant="primary" size="md">
-  确认
+  translated
 </PButton>
 
-// 带图标的按钮
+// translated
 <PButton
   variant="secondary"
   leftIcon={<PlusIcon className="h-5 w-5" />}
 >
-  添加用户
+  translateduser
 </PButton>
 
-// 加载状态按钮
+// translatedstatustranslated
 <PButton
   variant="primary"
   loading={isSubmitting}
   disabled={isSubmitting}
 >
-  {isSubmitting ? '提交中...' : '提交'}
+  {isSubmitting ? 'submittranslated...' : 'submit'}
 </PButton>
 
-// 全宽按钮
+// translated
 <PButton variant="gradient" fullWidth>
-  登录
+  login
 </PButton>
 ```
 
-#### 变体说明
+#### translated
 
-- **primary**: 主要操作按钮，蓝色主题
-- **secondary**: 次要操作按钮，灰色主题
-- **danger**: 危险操作按钮，红色主题
-- **ghost**: 幽灵按钮，透明背景
-- **gradient**: 渐变按钮，彩色渐变背景
+- **primary**: translated，translated
+- **secondary**: translated，translated
+- **danger**: translated，translated
+- **ghost**: translated，translated
+- **gradient**: translated，translated
 
 ---
 
-### 3. PCheckbox - 复选框组件
+### 3. PCheckbox - translatedcomponent
 
-多样化的复选框组件，支持不同的展示样式和交互模式。
+translatedcomponent，translatedstyleandtranslated。
 
-#### 属性接口
+#### translated
 
 ```tsx
 interface PCheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'type'> {
@@ -137,36 +137,36 @@ interface PCheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'si
 }
 ```
 
-#### 使用示例
+#### translated
 
 ```tsx
-// 基础复选框
+// translated
 <PCheckbox
-  label="记住我"
+  label="translated"
   checked={rememberMe}
   onChange={(e) => setRememberMe(e.target.checked)}
 />
 
-// 开关样式复选框
+// translatedstyletranslated
 <PCheckbox
   variant="switch"
-  label="启用双因素认证"
-  description="增强账户安全性"
+  label="enabledtranslated"
+  description="translatedsecuritytranslated"
   checked={enabledTwoFA}
   onChange={(e) => setEnabledTwoFA(e.target.checked)}
 />
 
-// 卡片样式复选框
+// translatedstyletranslated
 <PCheckbox
   variant="card"
   size="lg"
-  label="高级功能"
-  description="解锁所有高级特性和工具"
+  label="translated"
+  description="translatedhastranslatedandtranslated"
   checked={hasAdvancedFeatures}
   onChange={(e) => setHasAdvancedFeatures(e.target.checked)}
 />
 
-// 复杂标签复选框
+// translated
 <PCheckbox
   checked={!!checked[permission.ID]}
   onChange={() => togglePermission(permission.ID)}
@@ -178,34 +178,34 @@ interface PCheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'si
   }
 />
 
-// 不确定状态复选框
+// translatedconfirmstatustranslated
 <PCheckbox
-  label="全选"
+  label="translated"
   checked={allSelected}
   indeterminate={someSelected && !allSelected}
   onChange={handleSelectAll}
 />
 ```
 
-#### 变体说明
+#### translated
 
-- **default**: 标准复选框样式
-- **switch**: 开关切换样式
-- **card**: 卡片容器样式，适合重要选项
+- **default**: translatedstyle
+- **switch**: translatedstyle
+- **card**: translatedstyle，translated
 
-#### 特殊功能
+#### translated
 
-- **indeterminate**: 支持不确定状态，常用于全选/部分选中场景
-- **ReactNode label**: 支持复杂标签内容，可以包含图标、格式化文本等
-- **labelPosition**: 控制标签位置（左侧或右侧）
+- **indeterminate**: translatedconfirmstatus，translated/translated
+- **ReactNode label**: translated，cantranslated、translated
+- **labelPosition**: translated（translatedortranslated）
 
 ---
 
-### 4. PToggle - 开关组件
+### 4. PToggle - translatedcomponent
 
-专门的开关切换组件，提供现代化的切换体验。
+translatedcomponent，translated。
 
-#### 属性接口
+#### translated
 
 ```tsx
 interface PToggleProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'type'> {
@@ -217,100 +217,100 @@ interface PToggleProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size
 }
 ```
 
-#### 使用示例
+#### translated
 
 ```tsx
-// 基础开关
+// translated
 <PToggle
-  label="推送通知"
+  label="translatednotification"
   checked={notifications}
   onChange={(e) => setNotifications(e.target.checked)}
 />
 
-// 带描述的开关
+// translateddescriptiontranslated
 <PToggle
-  label="深色模式"
-  description="启用深色主题界面"
+  label="translated"
+  description="enabledtranslated"
   checked={darkMode}
   onChange={(e) => setDarkMode(e.target.checked)}
 />
 
-// 不同尺寸
+// translated
 <PToggle
   size="lg"
-  label="自动保存"
-  description="每30秒自动保存您的工作"
+  label="translatedsave"
+  description="translated30translatedsavetranslated"
   checked={autoSave}
   onChange={(e) => setAutoSave(e.target.checked)}
 />
 
-// 标签位置控制
+// translated
 <PToggle
-  label="高级设置"
+  label="translated"
   labelPosition="left"
   checked={advancedSettings}
   onChange={(e) => setAdvancedSettings(e.target.checked)}
 />
 
-// 错误状态
+// errorstatus
 <PToggle
-  label="实验性功能"
-  error="此功能当前不可用"
+  label="translated"
+  error="translatedcantranslated"
   checked={false}
   disabled
 />
 ```
 
-#### 设计特点
+#### translated
 
-- **专注开关体验**: 专门为开关切换场景设计，比复选框的switch变体更优化
-- **流畅动画**: 平滑的切换动画和视觉反馈
-- **一致的边框**: 与其他组件保持统一的边框宽度标准
-- **灵活布局**: 支持标签左右位置调整
+- **translated**: translated，translatedswitchtranslated
+- **translated**: translatedandtranslated
+- **translated**: andtranslatedcomponenttranslated
+- **translated**: translated
 
 ---
 
-## 设计原则
+## translated
 
-### 一致性
-- 所有组件遵循统一的 API 设计模式
-- 使用一致的属性命名约定（variant, size, error 等）
-- 统一的视觉风格和交互行为
+### translated
+- translatedhascomponenttranslated API translated
+- translated（variant, size, error translated）
+- translatedandtranslated
 
-### 可访问性
-- 完整的键盘导航支持
-- 适当的 ARIA 属性
-- 屏幕阅读器友好
-- 焦点管理和视觉指示
+### cantranslated
+- translated
+- translated ARIA translated
+- translated
+- translatedmanagementandtranslated
 
-### 类型安全
-- 完整的 TypeScript 类型定义
-- 智能代码提示和自动完成
-- 编译时类型检查
-- 泛型支持确保类型推导
+### typesecurity
+- translated TypeScript typetranslated
+- translatedandtranslated
+- translatedtypetranslated
+- translatedtypetranslated
 
-### 灵活性
-- forwardRef 模式支持 ref 传递
-- 扩展原生 HTML 属性
-- 受控和非受控模式兼容
-- 表单库集成友好
+### translated
+- forwardRef translated ref translated
+- translated HTML translated
+- translatedandtranslated
+- translated
 
-## 使用指南
+## translated
 
-### 安装导入
+### translated
 
 ```tsx
-// 单个组件导入
+// translatedcomponenttranslated
 import { PInput } from '@/components';
 
-// 多个组件导入
+// translatedcomponenttranslated
 import { PInput, PButton, PCheckbox, PToggle } from '@/components';
 ```
 
-### 表单集成
+### translated
 
 ```tsx
-// 基础表单示例
+// translated
 function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -323,7 +323,7 @@ function LoginForm() {
     <form onSubmit={handleSubmit}>
       <PInput
         type="email"
-        placeholder="邮箱地址"
+        placeholder="emailtranslated"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         leftIcon={<EnvelopeIcon className="h-5 w-5" />}
@@ -332,7 +332,7 @@ function LoginForm() {
       
       <PInput
         type="password"
-        placeholder="密码"
+        placeholder="password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         showPassword={showPassword}
@@ -341,14 +341,14 @@ function LoginForm() {
       />
       
       <PCheckbox
-        label="记住我"
+        label="translated"
         checked={rememberMe}
         onChange={(e) => setRememberMe(e.target.checked)}
       />
 
       <PToggle
-        label="启用双因素认证"
-        description="增强账户安全性"
+        label="enabledtranslated"
+        description="translatedsecuritytranslated"
         checked={enabledTwoFA}
         onChange={(e) => setEnabledTwoFA(e.target.checked)}
       />
@@ -359,49 +359,49 @@ function LoginForm() {
         fullWidth
         loading={isLoading}
       >
-        登录
+        login
       </PButton>
     </form>
   );
 }
 ```
 
-### 样式定制
+### styletranslated
 
-组件基于 Tailwind CSS 构建，支持通过 className 属性进行样式定制：
+componenttranslated Tailwind CSS translated，translated className translatedstyletranslated：
 
 ```tsx
 <PInput
   className="my-custom-input"
-  // 其他属性...
+  // translated...
 />
 ```
 
-### 响应式设计
+### responsetranslated
 
-组件内置响应式支持，在不同屏幕尺寸下自动适配：
+componenttranslatedresponsetranslated，translated：
 
 ```tsx
-// 在小屏幕上自动调整尺寸
+// translated
 <PButton size="sm" className="md:size-md lg:size-lg">
-  响应式按钮
+  responsetranslated
 </PButton>
 ```
 
-## 贡献指南
+## translated
 
-### 添加新组件
+### translatedcomponent
 
-1. 在 `src/shared/ui/` 目录下创建新 UI 组件文件
-2. 遵循现有的命名约定和 API 设计模式
-3. 确保完整的 TypeScript 类型定义
-4. 添加相应的文档和使用示例
-5. 在 `src/shared/ui/index.ts` 中导出 UI 组件
+1. translated `src/shared/ui/` translatedcreatetranslated UI componenttranslated
+2. translatedhastranslatedand API translated
+3. translated TypeScript typetranslated
+4. translateddocumentationandtranslated
+5. translated `src/shared/ui/index.ts` translated UI component
 
-### 组件开发规范
+### componenttranslated
 
-- 使用 forwardRef 模式支持 ref 传递
-- 扩展相应的 HTML 元素属性接口
-- 提供 variant 和 size 属性用于样式变体
-- 支持 error 属性用于错误状态显示
-- 确保可访问性和键盘导航支持
+- translated forwardRef translated ref translated
+- translated HTML translated
+- translated variant and size translatedstyletranslated
+- translated error translatederrorstatustranslated
+- translatedcantranslatedandtranslated

@@ -1,8 +1,10 @@
 import { useMemo, useState, useEffect } from 'react'
 import client from '@api/client'
 import { ROUTES } from '@constants'
+import { useI18n } from '@shared/i18n'
 
 function EmailChangeConfirm() {
+  const { t } = useI18n()
   const token = useMemo(() => {
     const fragment = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash
     const params = new URLSearchParams(fragment)
@@ -16,22 +18,22 @@ function EmailChangeConfirm() {
     const confirmEmailChange = async () => {
       if (!token) {
         setStatus('error')
-        setMessage('无效的验证链接')
+        setMessage(t('auth.emailChangeConfirm.messages.invalidLink'))
         return
       }
 
       try {
         const response = await client.post('/api/v1/security/email/confirm', { token })
         setStatus('success')
-        setMessage(response.data.message || '邮箱变更成功')
+        setMessage(response.data.message || t('auth.emailChangeConfirm.messages.confirmed'))
       } catch (err: any) {
         setStatus('error')
-        setMessage(err.response?.data?.error || '验证失败')
+        setMessage(err.response?.data?.error || t('auth.emailChangeConfirm.messages.confirmFailed'))
       }
     }
 
     confirmEmailChange()
-  }, [token])
+  }, [token, t])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
@@ -46,10 +48,10 @@ function EmailChangeConfirm() {
                 </svg>
               </div>
               <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                正在验证...
+                {t('auth.emailChangeConfirm.loading.title')}
               </h2>
               <p className="mt-2 text-center text-sm text-gray-600">
-                请稍候，我们正在处理您的邮箱变更请求
+                {t('auth.emailChangeConfirm.loading.description')}
               </p>
             </>
           )}
@@ -62,7 +64,7 @@ function EmailChangeConfirm() {
                 </svg>
               </div>
               <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                邮箱变更成功！
+                {t('auth.emailChangeConfirm.success.title')}
               </h2>
               <p className="mt-2 text-center text-sm text-gray-600">
                 {message}
@@ -72,7 +74,7 @@ function EmailChangeConfirm() {
                   href={ROUTES.user.login}
                   className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
-                  返回登录
+                  {t('auth.emailChangeConfirm.actions.backToLogin')}
                 </a>
               </div>
             </>
@@ -86,7 +88,7 @@ function EmailChangeConfirm() {
                 </svg>
               </div>
               <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                验证失败
+                {t('auth.emailChangeConfirm.error.title')}
               </h2>
               <p className="mt-2 text-center text-sm text-red-600">
                 {message}
@@ -96,13 +98,13 @@ function EmailChangeConfirm() {
                   href={ROUTES.user.settings}
                   className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
-                  返回设置
+                  {t('auth.emailChangeConfirm.actions.backToSettings')}
                 </a>
                 <a
                   href={ROUTES.user.login}
                   className="w-full flex justify-center py-2 px-4 border border-indigo-300 rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
-                  返回登录
+                  {t('auth.emailChangeConfirm.actions.backToLogin')}
                 </a>
               </div>
             </>

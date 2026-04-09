@@ -6,8 +6,10 @@ import { SubscriptionResponse } from '@types/domain/subscription'
 import { Link } from 'react-router-dom'
 import { ChevronRightIcon, CubeIcon, WalletIcon, QuestionMarkCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import { ROUTES } from '@constants'
+import { useI18n } from '@shared/i18n'
 
 export default function SubscriptionIndex() {
+  const { t, locale } = useI18n()
   const [subscriptions, setSubscriptions] = useState<SubscriptionResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [showCancelModal, setShowCancelModal] = useState(false)
@@ -29,7 +31,7 @@ export default function SubscriptionIndex() {
       else if (Array.isArray(raw.data?.Data)) list = raw.data.Data
       setSubscriptions(list)
     } catch (error) {
-      console.error('获取订阅列表失败:', error)
+      console.error('failed to load subscriptions:', error)
     } finally {
       setLoading(false)
     }
@@ -50,7 +52,7 @@ export default function SubscriptionIndex() {
       setShowCancelModal(false)
       setCancelTarget(null)
     } catch (error) {
-      console.error('取消订阅失败:', error)
+      console.error('failed to cancel subscription:', error)
     } finally {
       setCanceling(false)
     }
@@ -64,15 +66,15 @@ export default function SubscriptionIndex() {
   function statusBadge(status: string) {
     switch (status) {
       case 'trialing':
-        return <PBadge variant="warning">试用中</PBadge>
+        return <PBadge variant="warning">{t('pages.userSubscriptionIndex.status.trialing')}</PBadge>
       case 'active':
-        return <PBadge variant="success">进行中</PBadge>
+        return <PBadge variant="success">{t('pages.userSubscriptionIndex.status.active')}</PBadge>
       case 'canceled':
-        return <PBadge variant="error">已取消</PBadge>
+        return <PBadge variant="error">{t('pages.userSubscriptionIndex.status.canceled')}</PBadge>
       case 'past_due':
-        return <PBadge variant="orange">逾期</PBadge>
+        return <PBadge variant="orange">{t('pages.userSubscriptionIndex.status.pastDue')}</PBadge>
       case 'unpaid':
-        return <PBadge variant="error">未付款</PBadge>
+        return <PBadge variant="error">{t('pages.userSubscriptionIndex.status.unpaid')}</PBadge>
       default:
         return <PBadge variant="default">{status}</PBadge>
     }
@@ -92,11 +94,11 @@ export default function SubscriptionIndex() {
     <Layout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <PPageHeader title="我的订阅" description="管理您的所有订阅，查看状态和账单信息" />
+          <PPageHeader title={t('pages.userSubscriptionIndex.header.title')} description={t('pages.userSubscriptionIndex.header.description')} />
           <Link to={ROUTES.user.products}>
             <PButton variant="primary">
               <CubeIcon className="h-4 w-4 mr-2" />
-              浏览产品
+              {t('pages.userSubscriptionIndex.actions.browseProducts')}
             </PButton>
           </Link>
         </div>
@@ -110,15 +112,15 @@ export default function SubscriptionIndex() {
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
                         <p className="text-sm font-medium text-indigo-600 truncate">
-                          订阅 #{sub.ID}
+                          {t('pages.userSubscriptionIndex.subscription.id', { id: sub.ID })}
                         </p>
                       </div>
                       <p className="text-sm text-gray-500">
-                        产品: {sub.CurrentPrice?.Plan?.Product?.Name || '未知产品'} - 
-                        {sub.CurrentPrice?.Plan?.DisplayName || '未知套餐'}
+                        {t('pages.userSubscriptionIndex.subscription.product')}: {sub.CurrentPrice?.Plan?.Product?.Name || t('pages.userSubscriptionIndex.subscription.unknownProduct')} -
+                        {sub.CurrentPrice?.Plan?.DisplayName || t('pages.userSubscriptionIndex.subscription.unknownPlan')}
                       </p>
                       <p className="mt-1 text-sm text-gray-500">
-                        周期结束: {new Date(sub.CurrentPeriodEnd).toLocaleDateString('zh-CN')}
+                        {t('pages.userSubscriptionIndex.subscription.periodEnd')}: {new Date(sub.CurrentPeriodEnd).toLocaleDateString(locale)}
                       </p>
                     </div>
                     <div className="flex items-center space-x-3">
@@ -131,7 +133,7 @@ export default function SubscriptionIndex() {
                           variant="danger"
                           size="sm"
                         >
-                          取消订阅
+                          {t('pages.userSubscriptionIndex.actions.cancelSubscription')}
                         </PButton>
                       )}
                     </div>
@@ -140,15 +142,15 @@ export default function SubscriptionIndex() {
               ))
             ) : (
               <div className="px-4 py-8 text-center text-gray-500">
-                暂无订阅记录
+                {t('pages.userSubscriptionIndex.empty')}
               </div>
             )}
           </div>
         </PCard>
 
-        {/* 相关链接 */}
+        {/*  */}
         <PCard variant="bordered" className="rounded-xl p-6 shadow-sm">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">相关链接</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-4">{t('pages.userSubscriptionIndex.links.title')}</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Link
               to={ROUTES.user.products}
@@ -156,8 +158,8 @@ export default function SubscriptionIndex() {
             >
               <CubeIcon className="h-5 w-5 text-indigo-600 mr-3" />
               <div>
-                <p className="text-sm font-medium text-gray-900">产品与套餐</p>
-                <p className="text-xs text-gray-500">浏览可用的产品和服务</p>
+                <p className="text-sm font-medium text-gray-900">{t('pages.userSubscriptionIndex.links.productsTitle')}</p>
+                <p className="text-xs text-gray-500">{t('pages.userSubscriptionIndex.links.productsDesc')}</p>
               </div>
             </Link>
             <Link
@@ -166,8 +168,8 @@ export default function SubscriptionIndex() {
             >
               <WalletIcon className="h-5 w-5 text-green-600 mr-3" />
               <div>
-                <p className="text-sm font-medium text-gray-900">钱包</p>
-                <p className="text-xs text-gray-500">管理您的账户余额和支付</p>
+                <p className="text-sm font-medium text-gray-900">{t('pages.userSubscriptionIndex.links.walletTitle')}</p>
+                <p className="text-xs text-gray-500">{t('pages.userSubscriptionIndex.links.walletDesc')}</p>
               </div>
             </Link>
             <Link
@@ -176,15 +178,15 @@ export default function SubscriptionIndex() {
             >
               <QuestionMarkCircleIcon className="h-5 w-5 text-blue-600 mr-3" />
               <div>
-                <p className="text-sm font-medium text-gray-900">帮助中心</p>
-                <p className="text-xs text-gray-500">获取订阅相关帮助</p>
+                <p className="text-sm font-medium text-gray-900">{t('pages.userSubscriptionIndex.links.helpTitle')}</p>
+                <p className="text-xs text-gray-500">{t('pages.userSubscriptionIndex.links.helpDesc')}</p>
               </div>
             </Link>
           </div>
         </PCard>
       </div>
 
-      {/* 取消订阅确认模态框 */}
+      {/*  */}
       {showCancelModal && cancelTarget && (
         <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto w-96 rounded-2xl border bg-white p-5 shadow-xl">
@@ -193,26 +195,26 @@ export default function SubscriptionIndex() {
                 <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
               </div>
               <h3 className="text-lg font-medium text-gray-900 mt-4">
-                确认取消订阅
+                {t('pages.userSubscriptionIndex.cancelModal.title')}
               </h3>
               <div className="mt-2 px-7 py-3">
                 <p className="text-sm text-gray-500">
-                  您确定要取消以下订阅吗？
+                  {t('pages.userSubscriptionIndex.cancelModal.confirmText')}
                 </p>
                 <div className="mt-3 rounded-lg bg-gray-50 p-3">
                   <p className="text-sm font-medium text-gray-900">
-                    订阅 #{cancelTarget.ID}
+                    {t('pages.userSubscriptionIndex.subscription.id', { id: cancelTarget.ID })}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
-                    {cancelTarget.CurrentPrice?.Plan?.Product?.Name || '未知产品'} - 
-                    {cancelTarget.CurrentPrice?.Plan?.DisplayName || '未知套餐'}
+                    {cancelTarget.CurrentPrice?.Plan?.Product?.Name || t('pages.userSubscriptionIndex.subscription.unknownProduct')} -
+                    {cancelTarget.CurrentPrice?.Plan?.DisplayName || t('pages.userSubscriptionIndex.subscription.unknownPlan')}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
-                    当前状态: {cancelTarget.Status === 'trialing' ? '试用中' : '进行中'}
+                    {t('pages.userSubscriptionIndex.cancelModal.currentStatus')}: {cancelTarget.Status === 'trialing' ? t('pages.userSubscriptionIndex.status.trialing') : t('pages.userSubscriptionIndex.status.active')}
                   </p>
                 </div>
                 <p className="text-sm text-gray-500 mt-3">
-                  取消后，您将无法继续使用相关服务，直到重新订阅。
+                  {t('pages.userSubscriptionIndex.cancelModal.warning')}
                 </p>
               </div>
               <div className="flex justify-center space-x-3 mt-4">
@@ -221,14 +223,14 @@ export default function SubscriptionIndex() {
                   disabled={canceling}
                   variant="secondary"
                 >
-                  取消
+                  {t('pages.userSubscriptionIndex.cancelModal.cancel')}
                 </PButton>
                 <PButton
                   onClick={handleCancelConfirm}
                   disabled={canceling}
                   variant="danger"
                 >
-                  {canceling ? '处理中...' : '确认取消'}
+                  {canceling ? t('pages.userSubscriptionIndex.cancelModal.processing') : t('pages.userSubscriptionIndex.cancelModal.confirm')}
                 </PButton>
               </div>
             </div>

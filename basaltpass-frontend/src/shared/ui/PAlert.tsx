@@ -10,18 +10,18 @@ import {
 type AlertVariant = 'success' | 'error' | 'warning' | 'info'
 
 interface PAlertProps {
-  /** 语义类型 */
+  /** translatedtype */
   variant?: AlertVariant
-  /** 可选标题（加粗） */
+  /** cantranslated（translated） */
   title?: string
-  /** 内容（字符串或ReactNode） */
+  /** translated（translatedorReactNode） */
   children?: React.ReactNode
-  /** 简短消息（与 children 二选一，字符串快捷用法） */
+  /** translated（and children translated，translated） */
   message?: string
-  /** 是否可关闭 */
+  /** isnocantranslated */
   dismissible?: boolean
   onDismiss?: () => void
-  /** 右下角行动按钮区域 */
+  /** translated */
   actions?: React.ReactNode
   className?: string
 }
@@ -120,7 +120,7 @@ const PAlert: React.FC<PAlertProps> = ({
                 inline-flex rounded-lg p-1.5 focus:outline-none focus:ring-2 focus:ring-offset-2
                 ${c.textColor} ${c.closeHover} ${c.closeRingOffset}
               `}
-              aria-label="关闭"
+              aria-label="translated"
             >
               <XMarkIcon className="h-4 w-4" aria-hidden="true" />
             </button>

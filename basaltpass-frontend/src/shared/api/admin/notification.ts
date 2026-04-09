@@ -1,6 +1,6 @@
 import client from '../client'
 
-// 管理员级别通知接口（系统管理员）
+// managementtranslatednotificationtranslated（systemmanagementtranslated）
 export interface AdminNotification {
   id: number
   receiver_id: number
@@ -29,8 +29,8 @@ export interface AdminCreateNotificationRequest {
   title: string
   content: string
   type: 'info' | 'success' | 'warning' | 'error'
-  receiver_ids?: number[] // 为空表示全站广播
-  tenant_ids?: number[] // 指定租户范围
+  receiver_ids?: number[] // translated
+  tenant_ids?: number[] // translatedtenanttranslated
 }
 
 export interface AdminNotificationResponse {
@@ -57,58 +57,58 @@ export interface AdminNotificationStats {
   }>
 }
 
-// 管理员通知管理API
+// managementtranslatednotificationmanagementAPI
 export const adminNotificationApi = {
-  // 创建全站通知
+  // createtranslatednotification
   createNotification: (data: AdminCreateNotificationRequest) => {
     return client.post('/api/v1/admin/notifications', data)
   },
 
-  // 获取所有通知列表
+  // gettranslatedhasnotificationlist
   getNotifications: (page: number = 1, pageSize: number = 20, search?: string) => {
     const params: any = { page, page_size: pageSize }
     if (search) params.search = search
     return client.get<AdminNotificationResponse>('/api/v1/admin/notifications', { params })
   },
 
-  // 获取通知详情
+  // getnotificationdetails
   getNotification: (notificationId: number) => {
     return client.get<{ data: AdminNotification }>(`/api/v1/admin/notifications/${notificationId}`)
   },
 
-  // 更新通知
+  // updatenotification
   updateNotification: (notificationId: number, data: { title: string; content: string; type: string }) => {
     return client.put(`/api/v1/admin/notifications/${notificationId}`, data)
   },
 
-  // 删除通知
+  // deletenotification
   deleteNotification: (notificationId: number) => {
     return client.delete(`/api/v1/admin/notifications/${notificationId}`)
   },
 
-  // 获取通知统计
+  // getnotificationtranslated
   getNotificationStats: () => {
     return client.get<{ data: AdminNotificationStats }>('/api/v1/admin/notifications/stats')
   },
 
-  // 获取所有用户列表（用于选择接收者）
+  // gettranslatedhasuserlist（translated）
   getAllUsers: (search?: string) => {
     const params = search ? { search } : {}
     return client.get('/api/v1/admin/notifications/users', { params })
   },
 
-  // 获取所有租户列表（用于选择租户范围）
+  // gettranslatedhastenantlist（translatedtenanttranslated）
   getAllTenants: (search?: string) => {
     const params = search ? { search } : {}
     return client.get('/api/v1/admin/notifications/tenants', { params })
   },
 
-  // 批量删除通知
+  // translateddeletenotification
   batchDeleteNotifications: (notificationIds: number[]) => {
     return client.post('/api/v1/admin/notifications/batch-delete', { ids: notificationIds })
   },
 
-  // 重新发送通知
+  // translatednotification
   resendNotification: (notificationId: number, receiverIds?: number[]) => {
     return client.post(`/api/v1/admin/notifications/${notificationId}/resend`, { receiver_ids: receiverIds })
   }

@@ -5,7 +5,7 @@ import { adminUserApi, AdminUser, UserListParams } from '@api/admin/user'
 import { adminTenantApi, AdminTenantResponse } from '@api/admin/tenant'
 import { appApi } from '@api/admin/app'
 
-// 统一的实体类型
+// translatedtype
 export type EntityType = 'user' | 'tenant' | 'app'
 export type ContextType = 'user' | 'admin' | 'tenant'
 
@@ -20,7 +20,7 @@ export interface BaseEntityItem {
 
 interface EntitySearchSelectProps {
   entity: EntityType
-  context?: ContextType // 对 user 搜索有影响: user vs admin
+  context?: ContextType // translated user searchhastranslated: user vs admin
   value: BaseEntityItem[]
   onChange: (items: BaseEntityItem[]) => void
   placeholder?: string
@@ -33,18 +33,18 @@ interface EntitySearchSelectProps {
 }
 
 /**
- * 通用搜索+多选组件
- * - 输入关键字模糊搜索
- * - 下拉提示点击添加
- * - 支持 user / tenant / app 三类实体
- * - 根据 context 区分 user 普通与 admin 查询接口
+ * translatedsearch+translatedcomponent
+ * - translatedsearch
+ * - translated
+ * - translated user / tenant / app translated
+ * - translated context translated user translatedand admin translated
  */
 const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
   entity,
   context = 'user',
   value,
   onChange,
-  placeholder = '输入关键字搜索...',
+  placeholder = 'translatedsearch...',
   maxSelect,
   debounceMs = 300,
   limit = 10,
@@ -60,7 +60,7 @@ const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
   const inputRef = useRef<HTMLInputElement | null>(null)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
 
-  // 执行搜索
+  // translatedsearch
   const doSearch = async (q: string) => {
     if (!q.trim()) {
       setResults([])
@@ -75,11 +75,11 @@ const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
           if (context === 'admin') {
             const res = await adminUserApi.getUsers({ search: q, limit, page: 1, ...adminUserParams })
             items = res.users.map((u: AdminUser): BaseEntityItem => {
-              const memberships = u.tenant_memberships?.map(tm => tm.tenant_name).join(', ') || '无关联租户'
+              const memberships = u.tenant_memberships?.map(tm => tm.tenant_name).join(', ') || 'nonetranslatedtenant'
               return {
                 id: u.id,
                 label: u.nickname || u.email,
-                subtitle: `${u.email} - 所属租户: ${memberships}`,
+                subtitle: `${u.email} - translatedtenant: ${memberships}`,
                 avatar: u.avatar_url,
                 raw: u,
                 type: 'user'
@@ -97,7 +97,7 @@ const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
               raw: u,
               type: 'user'
             }))
-          } else { // 普通 user 场景
+          } else { // translated user translated
             const res = await userApi.search(q, limit)
             items = res.data.map((u: UserSearchResult): BaseEntityItem => ({
               id: u.id,
@@ -123,7 +123,7 @@ const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
           break
         }
         case 'app': {
-          // 现有 appApi.listApps 没有 search 参数, 先拿第一页再前端过滤
+          // translatedhas appApi.listApps translatedhas search translated, translated
             const res = await appApi.listApps(1, limit)
             const list = Array.isArray(res?.apps) ? res.apps : (res?.data?.apps || [])
             items = list
@@ -140,12 +140,12 @@ const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
           break
         }
       }
-      // 过滤已选择
+      // translatedalreadytranslated
       const filtered = items.filter(it => !value.some(v => v.id === it.id && v.type === it.type))
       setResults(filtered)
       setOpen(true)
     } catch (e) {
-      console.error('搜索失败', e)
+      console.error('searchfailed', e)
       setResults([])
       setOpen(false)
     } finally {
@@ -231,7 +231,7 @@ const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
         {loading ? (
           <div className="px-4 py-4 text-center text-gray-500">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600 mx-auto" />
-            <p className="mt-2 text-sm">搜索中...</p>
+            <p className="mt-2 text-sm">searchtranslated...</p>
           </div>
         ) : results.length > 0 ? (
           results.map(item => (
@@ -260,7 +260,7 @@ const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
         ) : query.trim() ? (
           <div className="px-4 py-6 text-center text-gray-500">
             {getIcon()}
-            <p className="text-sm mt-2">未找到匹配结果</p>
+            <p className="text-sm mt-2">nottranslatedtotranslated</p>
           </div>
         ) : null}
       </div>
@@ -272,7 +272,7 @@ const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
       <div className="space-y-2">
         <label className="flex items-center text-sm font-semibold text-gray-700">
           <MagnifyingGlassIcon className="h-5 w-5 mr-2 text-indigo-500" />
-          {entity === 'user' ? '搜索用户' : entity === 'tenant' ? '搜索租户' : '搜索应用'}
+          {entity === 'user' ? 'searchuser' : entity === 'tenant' ? 'searchtenant' : 'searchapp'}
         </label>
         <div className="relative">
           <input
@@ -296,12 +296,12 @@ const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
       
       <Dropdown />
 
-      {/* 已选择 */}
+      {/* alreadytranslated */}
       {value.length > 0 && variant === 'list' && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <label className="flex items-center text-sm font-semibold text-gray-700">
-              {getIcon()}<span className="ml-2">已选择的{entity === 'user' ? '用户' : entity === 'tenant' ? '租户' : '应用'}</span>
+              {getIcon()}<span className="ml-2">alreadytranslated{entity === 'user' ? 'user' : entity === 'tenant' ? 'tenant' : 'app'}</span>
             </label>
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">{value.length}</span>
           </div>
@@ -337,7 +337,7 @@ const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <label className="flex items-center text-xs font-semibold tracking-wide text-gray-600 uppercase">
-              {getIcon()}<span className="ml-1">已选择 {value.length}</span>
+              {getIcon()}<span className="ml-1">alreadytranslated {value.length}</span>
             </label>
             {maxSelect && (
               <span className="text-xs text-gray-400">{value.length}/{maxSelect}</span>
@@ -360,7 +360,7 @@ const EntitySearchSelect: React.FC<EntitySearchSelectProps> = ({
                 <button
                   onClick={() => removeItem(item.id)}
                   className="p-0.5 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                  aria-label="移除"
+                  aria-label="translated"
                 >
                   <XMarkIcon className="w-4 h-4" />
                 </button>

@@ -11,8 +11,10 @@ import { ChevronRightIcon, CreditCardIcon } from '@heroicons/react/24/outline'
 import { CubeIcon, WalletIcon, QuestionMarkCircleIcon, SparklesIcon, ArrowRightIcon } from '@heroicons/react/24/outline'
 import { getAccessToken } from '@utils/auth'
 import { ROUTES } from '@constants'
+import { useI18n } from '@shared/i18n'
 
 export default function ProductsPage() {
+  const { t } = useI18n()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [subscribingPrice, setSubscribingPrice] = useState<number | null>(null)
@@ -35,7 +37,7 @@ export default function ProductsPage() {
 
       setProducts(list)
     } catch (error) {
-      console.error('获取产品列表失败:', error)
+      console.error('failed to load product list:', error)
     } finally {
       setLoading(false)
     }
@@ -46,7 +48,7 @@ export default function ProductsPage() {
       setSubscribingPrice(price.ID)
   
       
-      // 检查是否有token
+      // token
         const token = getAccessToken()
       if (!token) {
 
@@ -54,13 +56,13 @@ export default function ProductsPage() {
         return
       }
       
-      // 通过API获取当前用户信息
+      // API
       
       const userResponse = await client.get('/api/v1/user/profile')
       const user = userResponse.data
       
       
-      // 创建订单
+      // 
       const orderData: CreateOrderRequest = {
         user_id: user.id,
         price_id: price.ID,
@@ -71,23 +73,23 @@ export default function ProductsPage() {
       const order = await createOrder(orderData)
       
       
-      // 跳转到订单确认页面
+      // 
       const confirmUrl = `/orders/${order.id}/confirm`
       
       navigate(confirmUrl)
       
     } catch (error: any) {
-      console.error('创建订单失败:', error)
-      console.error('错误详情:', error.response)
+      console.error('failed to create order:', error)
+      console.error('error detail:', error.response)
       
-      // 如果是401错误，说明token无效，跳转到登录页面
+      // 401，token，
       if (error.response?.status === 401) {
 
         navigate(ROUTES.user.login)
         return
       }
       
-      uiAlert(error.response?.data?.error || error.message || '创建订单失败，请重试')
+      uiAlert(error.response?.data?.error || error.message || t('pages.userSubscriptionProducts.errors.createOrderFailed'))
     } finally {
       setSubscribingPrice(null)
     }
@@ -95,10 +97,10 @@ export default function ProductsPage() {
 
   const formatPrice = (price: Price) => {
     const amount = (price.AmountCents / 100).toFixed(2)
-    const period = price.BillingPeriod === 'month' ? '月' : 
-                   price.BillingPeriod === 'year' ? '年' : 
-                   price.BillingPeriod === 'week' ? '周' : 
-                   price.BillingPeriod === 'day' ? '日' : price.BillingPeriod
+    const period = price.BillingPeriod === 'month' ? t('pages.userSubscriptionProducts.period.month') :
+                   price.BillingPeriod === 'year' ? t('pages.userSubscriptionProducts.period.year') :
+                   price.BillingPeriod === 'week' ? t('pages.userSubscriptionProducts.period.week') :
+                   price.BillingPeriod === 'day' ? t('pages.userSubscriptionProducts.period.day') : price.BillingPeriod
     const interval = price.BillingInterval > 1 ? `${price.BillingInterval}` : ''
     return `¥${amount}/${interval}${period}`
   }
@@ -127,11 +129,11 @@ export default function ProductsPage() {
     <Layout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <PPageHeader title="产品与套餐" description="浏览可用的产品和套餐，选择适合您需求的订阅方案" />
+          <PPageHeader title={t('pages.userSubscriptionProducts.header.title')} description={t('pages.userSubscriptionProducts.header.description')} />
           <Link to={ROUTES.user.subscriptions}>
             <PButton variant="primary">
               <CreditCardIcon className="h-4 w-4 mr-2" />
-              我的订阅
+              {t('pages.userSubscriptionProducts.actions.mySubscriptions')}
             </PButton>
           </Link>
         </div>
@@ -146,7 +148,7 @@ export default function ProductsPage() {
                     </div>
                     <div className="ml-4 flex-1">
                       <h3 className="text-xl font-semibold text-gray-900">{product.Name}</h3>
-                      <p className="text-sm text-gray-500">产品代码: {product.Code}</p>
+                      <p className="text-sm text-gray-500">{t('pages.userSubscriptionProducts.productCode')}: {product.Code}</p>
                     </div>
                   </div>
                   
@@ -161,7 +163,7 @@ export default function ProductsPage() {
                           <div className="flex items-center justify-between mb-3">
                             <div>
                               <h4 className="text-lg font-medium text-gray-900">{plan.DisplayName}</h4>
-                              <p className="text-sm text-gray-500">版本 v{plan.PlanVersion}</p>
+                              <p className="text-sm text-gray-500">{t('pages.userSubscriptionProducts.version')} v{plan.PlanVersion}</p>
                             </div>
                             <SparklesIcon className="h-5 w-5 text-indigo-600" />
                           </div>
@@ -176,7 +178,7 @@ export default function ProductsPage() {
                                   <span>
                                     <span className="font-medium">{feature.FeatureKey}</span>
                                     {feature.IsUnlimited ? (
-                                      <span className="ml-1 text-gray-500">(无限制)</span>
+                                      <span className="ml-1 text-gray-500">({t('pages.userSubscriptionProducts.unlimited')})</span>
                                     ) : (
                                       <>
                                         {feature.ValueText && <span className="ml-1">: {feature.ValueText}</span>}
@@ -192,7 +194,7 @@ export default function ProductsPage() {
 
                           {plan.Prices && plan.Prices.length > 0 ? (
                             <div className="space-y-2">
-                              <h5 className="text-sm font-medium text-gray-700 mb-2">可选价格:</h5>
+                              <h5 className="text-sm font-medium text-gray-700 mb-2">{t('pages.userSubscriptionProducts.availablePrices')}</h5>
                               <div className="grid gap-2">
                                 {plan.Prices.map((price, priceIndex) => (
                                   <div key={price.ID} className={`flex items-center justify-between rounded-lg border p-3 ${getPriceColor(priceIndex)}`}>
@@ -201,13 +203,13 @@ export default function ProductsPage() {
                                         <span className="text-lg font-semibold">{formatPrice(price)}</span>
                                         {price.TrialDays && price.TrialDays > 0 && (
                                           <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                                            {price.TrialDays}天免费试用
+                                            {t('pages.userSubscriptionProducts.trialDays', { days: price.TrialDays })}
                                           </span>
                                         )}
                                       </div>
                                       <p className="text-xs mt-1 opacity-75">
-                                        {price.UsageType === 'license' ? '许可证' : 
-                                         price.UsageType === 'metered' ? '按量计费' : '分层计费'}
+                                        {price.UsageType === 'license' ? t('pages.userSubscriptionProducts.usage.license') :
+                                         price.UsageType === 'metered' ? t('pages.userSubscriptionProducts.usage.metered') : t('pages.userSubscriptionProducts.usage.tiered')}
                                       </p>
                                     </div>
                                     <PButton
@@ -218,7 +220,7 @@ export default function ProductsPage() {
                                       loading={subscribingPrice === price.ID}
                                       className="ml-3"
                                     >
-                                      立即订阅
+                                      {t('pages.userSubscriptionProducts.actions.subscribeNow')}
                                       <ArrowRightIcon className="h-4 w-4 ml-1" />
                                     </PButton>
                           </div>
@@ -227,7 +229,7 @@ export default function ProductsPage() {
                             </div>
                           ) : (
                             <div className="text-center py-4 text-gray-500">
-                              <p className="text-sm">暂无可用价格选项</p>
+                              <p className="text-sm">{t('pages.userSubscriptionProducts.noPrice')}</p>
                             </div>
                           )}
                         </div>
@@ -240,16 +242,16 @@ export default function ProductsPage() {
             <div className="col-span-full">
               <PEmptyState
                 icon={<CubeIcon className="h-12 w-12" />}
-                title="暂无产品"
-                description="当前没有可用的产品。"
+                title={t('pages.userSubscriptionProducts.empty.title')}
+                description={t('pages.userSubscriptionProducts.empty.description')}
               />
             </div>
           )}
         </div>
 
-        {/* 相关链接 */}
+        {/*  */}
         <PCard variant="bordered" className="rounded-xl p-6 shadow-sm">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">相关链接</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-4">{t('pages.userSubscriptionProducts.links.title')}</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Link
               to={ROUTES.user.subscriptions}
@@ -257,8 +259,8 @@ export default function ProductsPage() {
             >
               <CreditCardIcon className="h-5 w-5 text-indigo-600 mr-3" />
               <div>
-                <p className="text-sm font-medium text-gray-900">我的订阅</p>
-                <p className="text-xs text-gray-500">查看和管理您的订阅</p>
+                <p className="text-sm font-medium text-gray-900">{t('pages.userSubscriptionProducts.links.subscriptionsTitle')}</p>
+                <p className="text-xs text-gray-500">{t('pages.userSubscriptionProducts.links.subscriptionsDesc')}</p>
               </div>
             </Link>
             <Link
@@ -267,8 +269,8 @@ export default function ProductsPage() {
             >
               <WalletIcon className="h-5 w-5 text-green-600 mr-3" />
               <div>
-                <p className="text-sm font-medium text-gray-900">钱包</p>
-                <p className="text-xs text-gray-500">管理您的账户余额</p>
+                <p className="text-sm font-medium text-gray-900">{t('pages.userSubscriptionProducts.links.walletTitle')}</p>
+                <p className="text-xs text-gray-500">{t('pages.userSubscriptionProducts.links.walletDesc')}</p>
               </div>
             </Link>
             <Link
@@ -277,8 +279,8 @@ export default function ProductsPage() {
             >
               <QuestionMarkCircleIcon className="h-5 w-5 text-blue-600 mr-3" />
               <div>
-                <p className="text-sm font-medium text-gray-900">帮助中心</p>
-                <p className="text-xs text-gray-500">获取订阅相关帮助</p>
+                <p className="text-sm font-medium text-gray-900">{t('pages.userSubscriptionProducts.links.helpTitle')}</p>
+                <p className="text-xs text-gray-500">{t('pages.userSubscriptionProducts.links.helpDesc')}</p>
               </div>
             </Link>
           </div>

@@ -3,19 +3,19 @@ import { ChevronLeftIcon } from '@heroicons/react/24/outline'
 import { Link } from 'react-router-dom'
 
 interface PPageHeaderProps {
-  /** 页面主标题 */
+  /** translated */
   title: React.ReactNode
-  /** 副标题/描述 */
+  /** translated/description */
   description?: React.ReactNode
-  /** 标题左侧图标 */
+  /** translated */
   icon?: React.ReactNode
-  /** 右侧操作区域（通常是PButton组合） */
+  /** translated（translatedisPButtontranslated） */
   actions?: React.ReactNode
-  /** 返回链接路径（使用 react-router Link） */
+  /** backtranslated（translated react-router Link） */
   backTo?: string
-  /** 返回按钮文字 */
+  /** backtranslated */
   backLabel?: string
-  /** 返回按钮点击事件（与 backTo 二选一） */
+  /** backtranslated（and backTo translated） */
   onBack?: () => void
   className?: string
 }
@@ -26,7 +26,7 @@ const PPageHeader: React.FC<PPageHeaderProps> = ({
   icon,
   actions,
   backTo,
-  backLabel = '返回',
+  backLabel = 'back',
   onBack,
   className = '',
 }) => {

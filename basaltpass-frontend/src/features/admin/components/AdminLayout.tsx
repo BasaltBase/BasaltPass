@@ -7,10 +7,12 @@ import { useAuth } from '@contexts/AuthContext'
 import { useConfig } from '@contexts/ConfigContext'
 import EnhancedNotificationIcon from '@components/EnhancedNotificationIcon'
 import ConsoleAccountSwitcherModal from '@components/ConsoleAccountSwitcherModal'
+import LanguageSwitcher from '@components/LanguageSwitcher'
 import { PButton } from '@ui'
 import { authorizeConsole, joinConsoleUrl } from '@api/console'
 import { uiAlert } from '@contexts/DialogContext'
 import { ROUTES } from '@constants'
+import { useI18n } from '@shared/i18n'
 
 interface AdminLayoutProps {
   children: ReactNode
@@ -19,6 +21,7 @@ interface AdminLayoutProps {
 }
 
 export default function AdminLayout({ children, title, actions }: AdminLayoutProps) {
+  const { t } = useI18n()
   const { user, logout, canAccessTenant } = useAuth()
   const { siteName, siteInitial, setPageTitle } = useConfig()
   const location = useLocation()
@@ -32,13 +35,11 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
     logout()
   }
 
-  // 判断当前是否在admin路径
   const isAdminPath = location.pathname.startsWith(ROUTES.admin.root)
-  const isPlatformPath = location.pathname.startsWith('/platform')
 
   useEffect(() => {
-    setPageTitle(title ? `管理控制台 - ${title}` : '管理控制台')
-  }, [setPageTitle, title])
+    setPageTitle(title ? t('adminLayout.pageTitle', { title }) : t('adminLayout.pageTitleDefault'))
+  }, [setPageTitle, t, title])
 
   useEffect(() => {
     setIsUserMenuOpen(false)
@@ -79,8 +80,8 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
       const { code } = await authorizeConsole('tenant')
       window.location.href = joinConsoleUrl(consoleTenantUrl, `tenant/dashboard?code=${encodeURIComponent(code)}`)
     } catch (error: any) {
-      const message = error?.response?.data?.error || '当前账号没有租户管理权限，或租户控制台授权失败。'
-      await uiAlert(message, '无法进入租户面板')
+      const message = error?.response?.data?.error || t('adminLayout.tenantSwitchFailed')
+      await uiAlert(message, t('adminLayout.tenantSwitchFailedTitle'))
     }
   }
 
@@ -99,17 +100,15 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
   }
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* 顶部导航栏 */}
       <header className="sticky top-0 z-40 bg-white shadow">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 justify-between items-center">
             <div className="flex items-center">
-              {/* 移动端汉堡菜单按钮 */}
               <button
                 onClick={() => setSidebarOpen(true)}
                 className="lg:hidden mr-3 inline-flex items-center justify-center rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
               >
-                <span className="sr-only">打开侧边栏</span>
+                <span className="sr-only">{t('common.openSidebar')}</span>
                 <Bars3Icon className="h-6 w-6" />
               </button>
               <Link to={ROUTES.admin.dashboard} className="flex items-center">
@@ -128,42 +127,39 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
             
             <div className="flex items-center space-x-4">
               {actions}
+              <LanguageSwitcher />
               
-              {/* 管理系统切换按钮 - 切换到管理员面板 */}
               {isAdminPath && canAccessTenant && (
                 <button
                   onClick={switchToTenant}
                   className="relative rounded-lg bg-indigo-50 px-3 py-2 text-indigo-600 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200"
-                  title="切换到租户面板"
+                  title={t('adminLayout.switchToTenantTitle')}
                 >
                   <div className="flex items-center space-x-2">
                     <ArrowsRightLeftIcon className="h-4 w-4" />
-                    <span className="text-sm font-medium">租户面板</span>
+                    <span className="text-sm font-medium">{t('adminLayout.switchToTenantLabel')}</span>
                   </div>
                 </button>
               )}
               
-              {/* 管理系统切换按钮 - 切换到用户面板 */}
               {isAdminPath && (
                 <button
                   onClick={switchToUser}
                   className="relative rounded-lg bg-green-50 px-3 py-2 text-green-600 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors duration-200"
-                  title="切换到用户面板"
+                  title={t('adminLayout.switchToUserTitle')}
                 >
                   <div className="flex items-center space-x-2">
                     <ArrowsRightLeftIcon className="h-4 w-4" />
-                    <span className="text-sm font-medium">用户面板</span>
+                    <span className="text-sm font-medium">{t('adminLayout.switchToUserLabel')}</span>
                   </div>
                 </button>
               )}
               
-              {/* 通知：使用全局 NotificationProvider 的组件 */}
               <div className="relative">
-                <span className="sr-only">查看通知</span>
+                <span className="sr-only">{t('common.viewNotifications')}</span>
                 <EnhancedNotificationIcon viewAllPath={ROUTES.admin.notifications} />
               </div>
 
-              {/* 用户菜单 */}
               <div ref={userMenuRef} className="relative">
                 <PButton
                   variant="ghost" 
@@ -171,7 +167,7 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                   className="flex items-center rounded-full bg-white p-1 text-sm focus:ring-indigo-500 focus:ring-offset-2 hover:bg-gray-50"
                 >
-                  <span className="sr-only">打开用户菜单</span>
+                  <span className="sr-only">{t('common.openUserMenu')}</span>
                   {user?.avatar_url ? (
                     <img 
                       className="h-8 w-8 rounded-full object-cover" 
@@ -186,12 +182,11 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
                   <ChevronDownIcon className="ml-1 h-4 w-4 text-gray-500" />
                 </PButton>
 
-                {/* 用户下拉菜单 */}
                 {isUserMenuOpen && (
                   <div className="absolute right-0 z-50 mt-2 w-56 origin-top-right rounded-xl bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                     <div className="px-4 py-3 border-b border-gray-200">
                       <p className="text-sm text-gray-900 font-medium">
-                        {user?.nickname || '用户'}
+                        {user?.nickname || t('common.user')}
                       </p>
                       <p className="text-sm text-gray-500 truncate">
                         {user?.email}
@@ -204,7 +199,7 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
                       onClick={() => setIsUserMenuOpen(false)}
                     >
                       <UserIcon className="mr-3 h-4 w-4" />
-                      个人资料
+                      {t('common.profile')}
                     </a>
                     
                     <Link
@@ -213,7 +208,7 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
                       onClick={() => setIsUserMenuOpen(false)}
                     >
                       <Cog6ToothIcon className="mr-3 h-4 w-4" />
-                      设置
+                      {t('common.settings')}
                     </Link>
                     
                     <PButton
@@ -225,7 +220,7 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
                       className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 justify-start"
                     >
                       <ArrowsRightLeftIcon className="mr-3 h-4 w-4" />
-                      切换账户
+                      {t('common.switchAccount')}
                     </PButton>
                     
                     <div className="border-t border-gray-200"></div>
@@ -236,7 +231,7 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
                       className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 justify-start"
                     >
                       <ArrowRightOnRectangleIcon className="mr-3 h-4 w-4" />
-                      登出
+                      {t('common.logout')}
                     </PButton>
                   </div>
                 )}
@@ -247,7 +242,6 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
       </header>
 
       <div className="flex">
-        {/* 移动端侧边栏 */}
         {sidebarOpen && (
           <div className="fixed inset-0 !m-0 z-40 flex lg:hidden">
             <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
@@ -257,7 +251,7 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
                   onClick={() => setSidebarOpen(false)}
                   className="ml-1 flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
                 >
-                  <span className="sr-only">关闭侧边栏</span>
+                  <span className="sr-only">{t('common.closeSidebar')}</span>
                   <svg className="h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
@@ -278,7 +272,6 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
           </div>
         )}
 
-        {/* 桌面端侧边栏 */}
         <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 lg:pt-16">
           <div className="flex flex-1 flex-col overflow-y-auto bg-white border-r border-gray-200">
             <div className="flex flex-1 flex-col pt-5 pb-4">
@@ -289,7 +282,6 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
           </div>
         </div>
 
-        {/* 主内容区域 */}
         <div className="lg:ml-64 flex-1">
           <main className="py-6">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

@@ -3,6 +3,7 @@ import type { NavigateFunction } from 'react-router-dom'
 import client from '@api/client'
 import { loginWithPasskey2FAFlow } from '@api/oauth/passkey'
 import { ROUTES } from '@constants'
+import { useI18n } from '@shared/i18n'
 import type { LoginTwoFactorMethod } from './types'
 
 interface UseLoginFlowOptions {
@@ -63,6 +64,7 @@ export function useLoginFlow({
   resolvedApiBase,
   siteName,
 }: UseLoginFlowOptions) {
+  const { t } = useI18n()
   const [step, setStep] = useState(1)
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
@@ -117,22 +119,22 @@ export function useLoginFlow({
         return
       }
 
-      setError('未知的登录响应')
+      setError(t('auth.flow.unknownLoginResponse'))
     } catch (error: unknown) {
       const rawMessage = extractErrorMessage(error)
       const message = rawMessage.toLowerCase()
 
       if (message.includes('invalid credentials')) {
-        setError('邮箱或手机号或密码错误')
+        setError(t('auth.flow.invalidCredentials'))
         setStep(1)
         setPassword('')
         resetTwoFactorState()
       } else if (message.includes('only administrators can login to platform')) {
-        setError('普通用户不能登录平台，请使用租户登录')
+        setError(t('auth.flow.onlyAdministratorsAllowed'))
       } else if (extractErrorCode(error) === 'ECONNABORTED' || message.includes('timeout')) {
-        setError(`登录请求超时：请确认 ${siteName} 后端已运行在 ${resolvedApiBase}`)
+        setError(t('auth.flow.loginRequestTimeout', { siteName, apiBase: resolvedApiBase }))
       } else {
-        setError(rawMessage || '登录失败，请检查您的凭据')
+        setError(rawMessage || t('auth.flow.loginFailedDefault'))
       }
     } finally {
       setIsLoading(false)
@@ -187,16 +189,16 @@ export function useLoginFlow({
           navigate(ROUTES.user.dashboard)
         }
       } else {
-        setError('二次验证失败')
+        setError(t('auth.flow.secondFactorFailed'))
       }
     } catch (error: unknown) {
       const rawMessage = extractErrorMessage(error)
       const message = rawMessage.toLowerCase()
 
       if (extractErrorCode(error) === 'ECONNABORTED' || message.includes('timeout')) {
-        setError(`二次验证请求超时：请确认 ${siteName} 后端可访问`)
+        setError(t('auth.flow.secondFactorTimeout', { siteName }))
       } else {
-        setError(rawMessage || '二次验证失败')
+        setError(rawMessage || t('auth.flow.secondFactorFailed'))
       }
     } finally {
       setIsLoading(false)

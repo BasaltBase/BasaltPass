@@ -25,17 +25,17 @@ Examples
 
 ```tsx
 // Search input with icon
-<PInput icon={<MagnifyingGlassIcon className="h-5 w-5" />} placeholder="搜索…" />
+<PInput icon={<MagnifyingGlassIcon className="h-5 w-5" />} placeholder="search…" />
 
 // Danger action
-<PButton variant="danger">删除</PButton>
+<PButton variant="danger">delete</PButton>
 
 // Select with label
-<PSelect label="状态">
-  <option value="">全部</option>
-  <option value="active">活跃</option>
+<PSelect label="status">
+  <option value="">translated</option>
+  <option value="active">translated</option>
 </PSelect>
 
 // Textarea
-<PTextarea label="备注" rows={3} />
+<PTextarea label="translated" rows={3} />
 ```

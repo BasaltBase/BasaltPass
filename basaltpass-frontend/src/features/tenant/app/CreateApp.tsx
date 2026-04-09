@@ -6,8 +6,10 @@ import { tenantAppApi, CreateTenantAppRequest } from '@api/tenant/tenantApp'
 import TenantLayout from '@features/tenant/components/TenantLayout'
 import { ROUTES } from '@constants'
 import { PButton, PCard, PInput, PPageHeader, PTextarea } from '@ui'
+import { useI18n } from '@shared/i18n'
 
 export default function CreateApp() {
+  const { t } = useI18n()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState<CreateTenantAppRequest>({
@@ -28,17 +30,17 @@ export default function CreateApp() {
     const newErrors: Record<string, string> = {}
 
     if (!formData.name.trim()) {
-      newErrors.name = '应用名称不能为空'
+      newErrors.name = t('tenantCreateApp.validation.nameRequired')
     }
 
     if (!formData.description.trim()) {
-      newErrors.description = '应用描述不能为空'
+      newErrors.description = t('tenantCreateApp.validation.descriptionRequired')
     }
 
-    // 验证回调地址
+    // 
     const validCallbackUrls = formData.redirect_uris.filter(url => url.trim())
     if (validCallbackUrls.length === 0) {
-      newErrors.redirect_uris = '至少需要一个回调地址'
+      newErrors.redirect_uris = t('tenantCreateApp.validation.redirectUrisRequired')
     } else {
       const invalidUrls = validCallbackUrls.filter(url => {
         try {
@@ -49,16 +51,16 @@ export default function CreateApp() {
         }
       })
       if (invalidUrls.length > 0) {
-        newErrors.redirect_uris = '请输入有效的URL格式'
+        newErrors.redirect_uris = t('tenantCreateApp.validation.invalidUrl')
       }
     }
 
-    // 验证其他URL字段
+    // URL
     if (formData.homepage_url && formData.homepage_url.trim()) {
       try {
         new URL(formData.homepage_url)
       } catch {
-        newErrors.homepage_url = '请输入有效的URL格式'
+        newErrors.homepage_url = t('tenantCreateApp.validation.invalidUrl')
       }
     }
 
@@ -66,7 +68,7 @@ export default function CreateApp() {
       try {
         new URL(formData.logo_url)
       } catch {
-        newErrors.logo_url = '请输入有效的URL格式'
+        newErrors.logo_url = t('tenantCreateApp.validation.invalidUrl')
       }
     }
 
@@ -74,7 +76,7 @@ export default function CreateApp() {
       try {
         new URL(formData.privacy_policy_url)
       } catch {
-        newErrors.privacy_policy_url = '请输入有效的URL格式'
+        newErrors.privacy_policy_url = t('tenantCreateApp.validation.invalidUrl')
       }
     }
 
@@ -82,7 +84,7 @@ export default function CreateApp() {
       try {
         new URL(formData.terms_of_service_url)
       } catch {
-        newErrors.terms_of_service_url = '请输入有效的URL格式'
+        newErrors.terms_of_service_url = t('tenantCreateApp.validation.invalidUrl')
       }
     }
 
@@ -100,11 +102,11 @@ export default function CreateApp() {
     try {
       setLoading(true)
       
-      // 过滤空的回调地址
+      // 
       const cleanedData = {
         ...formData,
         redirect_uris: formData.redirect_uris.filter(url => url.trim()),
-        // 清空空字符串字段
+        // 
         logo_url: formData.logo_url?.trim() || undefined,
         homepage_url: formData.homepage_url?.trim() || undefined,
         privacy_policy_url: formData.privacy_policy_url?.trim() || undefined,
@@ -122,8 +124,8 @@ export default function CreateApp() {
         navigate(ROUTES.tenant.apps)
       }
     } catch (error) {
-      console.error('Failed to create app:', error)
-      uiAlert('创建应用失败，请重试')
+      console.error(t('tenantCreateApp.logs.createFailed'), error)
+      uiAlert(t('tenantCreateApp.errors.createFailed'))
     } finally {
       setLoading(false)
     }
@@ -131,7 +133,7 @@ export default function CreateApp() {
 
   const handleInputChange = (field: keyof CreateTenantAppRequest, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }))
-    // 清除该字段的错误
+    // 
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }))
     }
@@ -164,7 +166,7 @@ export default function CreateApp() {
   }
 
   return (
-    <TenantLayout title="创建应用">
+    <TenantLayout title={t('tenantCreateApp.layoutTitle')}>
       <div className="max-w-4xl mx-auto space-y-6">
         <div>
           <PButton
@@ -174,13 +176,13 @@ export default function CreateApp() {
             leftIcon={<ArrowLeftIcon className="h-4 w-4" />}
             className="text-gray-600 hover:text-gray-800"
           >
-            返回应用列表
+            {t('tenantCreateApp.actions.backToList')}
           </PButton>
         </div>
 
         <PPageHeader
-          title="创建应用"
-          description="创建一个新的 OAuth2 应用，配置认证和授权设置。"
+          title={t('tenantCreateApp.title')}
+          description={t('tenantCreateApp.description')}
           icon={<CubeIcon className="h-8 w-8 text-indigo-600" />}
         />
 
@@ -192,8 +194,8 @@ export default function CreateApp() {
                   <RocketLaunchIcon className="h-5 w-5 text-indigo-700" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">基本信息</h2>
-                  <p className="text-sm text-gray-600">配置应用的基本属性和展示信息</p>
+                  <h2 className="text-lg font-semibold text-gray-900">{t('tenantCreateApp.sections.basicInfo.title')}</h2>
+                  <p className="text-sm text-gray-600">{t('tenantCreateApp.sections.basicInfo.description')}</p>
                 </div>
               </div>
 
@@ -205,10 +207,10 @@ export default function CreateApp() {
                     onChange={(e: any) => handleInputChange('name', e.target.value)}
                     label={
                       <span>
-                        应用名称 <span className="text-red-500">*</span>
+                        {t('tenantCreateApp.fields.name')} <span className="text-red-500">*</span>
                       </span>
                     }
-                    placeholder="例如：我的应用"
+                    placeholder={t('tenantCreateApp.placeholders.name')}
                     error={errors.name}
                     autoComplete="off"
                   />
@@ -222,10 +224,10 @@ export default function CreateApp() {
                     onChange={(e: any) => handleInputChange('description', e.target.value)}
                     label={
                       <span>
-                        应用描述 <span className="text-red-500">*</span>
+                        {t('tenantCreateApp.fields.description')} <span className="text-red-500">*</span>
                       </span>
                     }
-                    placeholder="简要描述您的应用功能和用途"
+                    placeholder={t('tenantCreateApp.placeholders.description')}
                     error={errors.description}
                   />
                 </div>
@@ -249,7 +251,7 @@ export default function CreateApp() {
                     id="homepage_url"
                     value={formData.homepage_url}
                     onChange={(e: any) => handleInputChange('homepage_url', e.target.value)}
-                    label="主页 URL"
+                    label={t('tenantCreateApp.fields.homepageUrl')}
                     placeholder="https://example.com"
                     error={errors.homepage_url}
                     autoComplete="off"
@@ -266,8 +268,8 @@ export default function CreateApp() {
                   </svg>
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">OAuth2 配置</h2>
-                  <p className="text-sm text-gray-600">配置 OAuth2 认证相关设置</p>
+                  <h2 className="text-lg font-semibold text-gray-900">{t('tenantCreateApp.sections.oauth.title')}</h2>
+                  <p className="text-sm text-gray-600">{t('tenantCreateApp.sections.oauth.description')}</p>
                 </div>
               </div>
 
@@ -276,10 +278,10 @@ export default function CreateApp() {
                   <div className="flex items-center justify-between gap-4">
                     <div>
                       <div className="text-sm font-medium text-gray-700">
-                        回调地址 (Redirect URIs) <span className="text-red-500">*</span>
+                        {t('tenantCreateApp.fields.redirectUris')} <span className="text-red-500">*</span>
                       </div>
                       <div className="mt-1 text-xs text-gray-500">
-                        OAuth2 授权完成后重定向到的地址，至少需要配置一个
+                        {t('tenantCreateApp.hints.redirectUris')}
                       </div>
                     </div>
                     <PButton
@@ -289,7 +291,7 @@ export default function CreateApp() {
                       onClick={addCallbackUrl}
                       leftIcon={<PlusIcon className="h-4 w-4" />}
                     >
-                      添加回调地址
+                      {t('tenantCreateApp.actions.addRedirectUri')}
                     </PButton>
                   </div>
 
@@ -303,7 +305,7 @@ export default function CreateApp() {
                             onChange={(e: any) => updateCallbackUrl(index, e.target.value)}
                             placeholder="https://example.com/callback"
                             error={index === 0 ? errors.redirect_uris : undefined}
-                            aria-label={`回调地址 ${index + 1}`}
+                            aria-label={t('tenantCreateApp.aria.redirectUri', { index: index + 1 })}
                             autoComplete="off"
                           />
                         </div>
@@ -315,8 +317,8 @@ export default function CreateApp() {
                             size="sm"
                             onClick={() => removeCallbackUrl(index)}
                             className="px-3"
-                            aria-label="删除回调地址"
-                            title="删除"
+                            aria-label={t('tenantCreateApp.actions.removeRedirectUri')}
+                            title={t('tenantCreateApp.actions.delete')}
                           >
                             <TrashIcon className="h-4 w-4" />
                           </PButton>
@@ -336,8 +338,8 @@ export default function CreateApp() {
                   </svg>
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">法律信息</h2>
-                  <p className="text-sm text-gray-600">配置隐私政策和服务条款链接</p>
+                  <h2 className="text-lg font-semibold text-gray-900">{t('tenantCreateApp.sections.legal.title')}</h2>
+                  <p className="text-sm text-gray-600">{t('tenantCreateApp.sections.legal.description')}</p>
                 </div>
               </div>
 
@@ -348,7 +350,7 @@ export default function CreateApp() {
                     id="privacy_policy_url"
                     value={formData.privacy_policy_url}
                     onChange={(e: any) => handleInputChange('privacy_policy_url', e.target.value)}
-                    label="隐私政策 URL"
+                    label={t('tenantCreateApp.fields.privacyPolicyUrl')}
                     placeholder="https://example.com/privacy"
                     error={errors.privacy_policy_url}
                     autoComplete="off"
@@ -361,14 +363,14 @@ export default function CreateApp() {
                     id="terms_of_service_url"
                     value={formData.terms_of_service_url}
                     onChange={(e: any) => handleInputChange('terms_of_service_url', e.target.value)}
-                    label="服务条款 URL"
+                    label={t('tenantCreateApp.fields.termsOfServiceUrl')}
                     placeholder="https://example.com/terms"
                     error={errors.terms_of_service_url}
                     autoComplete="off"
                   />
                 </div>
 
-                {/* 认证徽章 */}
+                {/*  */}
                 <div className="sm:col-span-2">
                   <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-gray-50">
                     <div className="flex items-center gap-3">
@@ -378,9 +380,9 @@ export default function CreateApp() {
                         </svg>
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">标记为认证应用</p>
+                        <p className="text-sm font-medium text-gray-900">{t('tenantCreateApp.fields.markVerifiedApp')}</p>
                         <p className="text-xs text-gray-500">
-                          认证应用将在 OAuth 授权页面显示蓝色验证徽章，表明该应用由租户运营并受信任
+                          {t('tenantCreateApp.hints.verifiedApp')}
                         </p>
                       </div>
                     </div>
@@ -410,7 +412,7 @@ export default function CreateApp() {
                 variant="secondary"
                 onClick={() => navigate(ROUTES.tenant.apps)}
               >
-                取消
+                {t('tenantCreateApp.actions.cancel')}
               </PButton>
               <PButton
                 type="submit"
@@ -418,7 +420,7 @@ export default function CreateApp() {
                 loading={loading}
                 leftIcon={<PlusIcon className="h-4 w-4" />}
               >
-                创建应用
+                {t('tenantCreateApp.actions.createApp')}
               </PButton>
             </div>
           </form>
@@ -432,12 +434,12 @@ export default function CreateApp() {
               <div className="h-10 w-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
                 <CheckIcon className="h-6 w-6 text-green-600" />
               </div>
-              <h3 className="text-xl font-medium text-gray-900">应用创建成功</h3>
+              <h3 className="text-xl font-medium text-gray-900">{t('tenantCreateApp.success.title')}</h3>
             </div>
             
             <div className="mb-6">
               <p className="text-sm text-gray-600 mb-4">
-                请复制并妥善保存以下 <strong>Client Secret</strong>。这是您唯一一次能看到该密钥的机会，关闭此窗口后将无法再次查看。
+                {t('tenantCreateApp.success.secretHintPrefix')} <strong>Client Secret</strong>{t('tenantCreateApp.success.secretHintSuffix')}
               </p>
               
               <div className="space-y-4">
@@ -458,7 +460,7 @@ export default function CreateApp() {
             
             <div className="flex justify-end">
               <PButton variant="primary" onClick={handleCloseModal}>
-                我已保存，去应用列表
+                {t('tenantCreateApp.success.confirmSaved')}
               </PButton>
             </div>
           </div>

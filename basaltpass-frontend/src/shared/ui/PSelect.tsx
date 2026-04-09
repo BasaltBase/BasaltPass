@@ -131,7 +131,7 @@ const PSelect = forwardRef<HTMLSelectElement, PSelectProps>(
           setIsOpen(false);
         }
       };
-      // 用 click（而非 mousedown）监听外部关闭，避免与选项 onClick 冲突
+      // translated click（translated mousedown）translated，translatedandtranslated onClick translated
       document.addEventListener('click', handleOutside);
       return () => document.removeEventListener('click', handleOutside);
     }, [isOpen]);

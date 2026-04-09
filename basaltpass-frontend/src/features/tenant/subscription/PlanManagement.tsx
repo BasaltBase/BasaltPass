@@ -13,6 +13,7 @@ import {
   Cog6ToothIcon
 } from '@heroicons/react/24/outline';
 import * as tenantSubscriptionAPI from '@api/tenant/subscription';
+import { useI18n } from '@shared/i18n'
 import { PInput, PSelect, PButton, PTextarea, PSkeleton, PBadge, Modal, PPageHeader } from '@ui';
 import PTable, { PTableColumn, PTableAction } from '@ui/PTable';
 import useDebounce from '@hooks/useDebounce';
@@ -20,6 +21,7 @@ import useDebounce from '@hooks/useDebounce';
 interface PlanManagementProps {}
 
 const PlanManagement: React.FC<PlanManagementProps> = () => {
+  const { t } = useI18n()
   const [plans, setPlans] = useState<tenantSubscriptionAPI.TenantPlan[]>([]);
   const [products, setProducts] = useState<tenantSubscriptionAPI.TenantProduct[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,28 +70,28 @@ const PlanManagement: React.FC<PlanManagementProps> = () => {
   };
 
   const handleDeletePlan = async (planId: number, planName: string) => {
-    if (!await uiConfirm(`确定要删除套餐"${planName}"吗？这将同时删除相关的定价配置。`)) {
+    if (!await uiConfirm(t('tenantSubscriptionPlanManagement.confirm.deletePlanByName', { name: planName }))) {
       return;
     }
 
     try {
       await tenantSubscriptionAPI.deleteTenantPlan(planId);
-      uiAlert('套餐删除成功');
+      uiAlert(t('tenantSubscriptionPlanManagement.alerts.deleteSuccess'));
       fetchData();
     } catch (error: any) {
       console.error('Failed to delete plan:', error);
-      uiAlert(`删除套餐失败: ${error.response?.data?.error || error.message}`);
+      uiAlert(`${t('tenantSubscriptionPlanManagement.alerts.deleteFailed')}: ${error.response?.data?.error || error.message}`);
     }
   };
 
   const getProductName = (productId: number) => {
     const product = products.find(p => p.ID === productId);
-    return product ? product.Name : '未知产品';
+    return product ? product.Name : t('tenantSubscriptionPlanManagement.fields.unknownProduct');
   };
 
   if (loading) {
     return (
-      <TenantLayout title="套餐管理">
+      <TenantLayout title={t('tenantSubscriptionPlanManagement.layoutTitle')}>
         <div className="py-6">
           <PSkeleton.Management />
         </div>
@@ -98,16 +100,16 @@ const PlanManagement: React.FC<PlanManagementProps> = () => {
   }
 
   return (
-    <TenantLayout title="套餐管理">
+    <TenantLayout title={t('tenantSubscriptionPlanManagement.layoutTitle')}>
       <div className="space-y-6">
         <PPageHeader
-          title="套餐管理"
-          description="管理产品的订阅套餐和功能配置"
+          title={t('tenantSubscriptionPlanManagement.header.title')}
+          description={t('tenantSubscriptionPlanManagement.header.description')}
           icon={<RocketLaunchIcon className="h-8 w-8 text-indigo-600" />}
-          actions={<PButton type="button" onClick={handleCreatePlan} leftIcon={<PlusIcon className="h-5 w-5" />}>创建套餐</PButton>}
+          actions={<PButton type="button" onClick={handleCreatePlan} leftIcon={<PlusIcon className="h-5 w-5" />}>{t('tenantSubscriptionPlanManagement.actions.createPlan')}</PButton>}
         />
 
-        {/* 筛选和搜索栏 */}
+        {/*  */}
         <div className="rounded-xl bg-white p-6 shadow-sm">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <PInput
@@ -115,13 +117,13 @@ const PlanManagement: React.FC<PlanManagementProps> = () => {
               type="text"
               value={searchTerm}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-              placeholder="搜索套餐名称或代码..."
+              placeholder={t('tenantSubscriptionPlanManagement.search.placeholder')}
             />
             <PSelect
               value={selectedProduct}
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedProduct(e.target.value)}
             >
-              <option value="all">所有产品</option>
+              <option value="all">{t('tenantSubscriptionPlanManagement.search.allProducts')}</option>
               {products.map((product) => (
                 <option key={product.ID} value={product.ID.toString()}>
                   {product.Name}
@@ -131,12 +133,12 @@ const PlanManagement: React.FC<PlanManagementProps> = () => {
           </div>
         </div>
 
-        {/* 套餐列表（统一表格组件） */}
+        {/* （） */}
         {(() => {
           const columns: PTableColumn<tenantSubscriptionAPI.TenantPlan>[] = [
             {
               key: 'name',
-              title: '套餐',
+              title: t('tenantSubscriptionPlanManagement.table.plan'),
               render: (row) => (
                 <div className="flex items-center">
                   <RocketLaunchIcon className="h-5 w-5 text-blue-600" />
@@ -147,18 +149,18 @@ const PlanManagement: React.FC<PlanManagementProps> = () => {
             },
             {
               key: 'product',
-              title: '产品',
+              title: t('tenantSubscriptionPlanManagement.table.product'),
               render: (row) => <span className="text-gray-700">{getProductName(row.ProductID)}</span>
             },
-            { key: 'code', title: '代码', dataIndex: 'Code' as any },
+            { key: 'code', title: t('tenantSubscriptionPlanManagement.table.code'), dataIndex: 'Code' as any },
             {
               key: 'features',
-              title: '功能数',
+              title: t('tenantSubscriptionPlanManagement.table.features'),
               render: (row) => <span>{row.Features?.length || 0}</span>
             },
             {
               key: 'prices',
-              title: '定价数',
+              title: t('tenantSubscriptionPlanManagement.table.prices'),
               render: (row) => <span>{row.Prices?.length || 0}</span>
             }
           ];
@@ -166,7 +168,7 @@ const PlanManagement: React.FC<PlanManagementProps> = () => {
           const actions: PTableAction<tenantSubscriptionAPI.TenantPlan>[] = [
             {
               key: 'edit',
-              label: '编辑',
+              label: t('tenantSubscriptionPlanManagement.actions.edit'),
               icon: <PencilIcon className="h-4 w-4" />,
               variant: 'secondary',
               size: 'sm',
@@ -174,11 +176,11 @@ const PlanManagement: React.FC<PlanManagementProps> = () => {
             },
             {
               key: 'delete',
-              label: '删除',
+              label: t('tenantSubscriptionPlanManagement.actions.delete'),
               icon: <TrashIcon className="h-4 w-4" />,
               variant: 'danger',
               size: 'sm',
-              confirm: '确定要删除该套餐吗？这将同时删除相关的定价配置。',
+              confirm: t('tenantSubscriptionPlanManagement.confirm.deletePlan'),
               onClick: (row) => handleDeletePlan(row.ID, row.DisplayName)
             }
           ];
@@ -189,9 +191,9 @@ const PlanManagement: React.FC<PlanManagementProps> = () => {
               data={filteredPlans}
               rowKey={(row) => row.ID}
               actions={actions}
-              emptyText="暂无套餐"
+              emptyText={t('tenantSubscriptionPlanManagement.empty.noPlans')}
               emptyContent={
-                <PButton type="button" onClick={handleCreatePlan} leftIcon={<PlusIcon className="h-5 w-5" />}>创建套餐</PButton>
+                <PButton type="button" onClick={handleCreatePlan} leftIcon={<PlusIcon className="h-5 w-5" />}>{t('tenantSubscriptionPlanManagement.actions.createPlan')}</PButton>
               }
               striped
               size="md"
@@ -200,7 +202,7 @@ const PlanManagement: React.FC<PlanManagementProps> = () => {
         })()}
       </div>
 
-      {/* 创建/编辑套餐模态框 */}
+      {/* / */}
       {showCreateModal && (
         <CreatePlanModal
           plan={editingPlan}
@@ -216,13 +218,14 @@ const PlanManagement: React.FC<PlanManagementProps> = () => {
   );
 };
 
-// 创建套餐模态框组件
+// 
 const CreatePlanModal: React.FC<{
   plan?: tenantSubscriptionAPI.TenantPlan | null;
   products: tenantSubscriptionAPI.TenantProduct[];
   onClose: () => void;
   onSuccess: () => void;
 }> = ({ plan, products, onClose, onSuccess }) => {
+  const { t } = useI18n()
   const [formData, setFormData] = useState({
     product_id: plan?.ProductID.toString() || '',
     code: plan?.Code || '',
@@ -243,7 +246,7 @@ const CreatePlanModal: React.FC<{
       try {
         metadata = JSON.parse(formData.metadata);
       } catch (e) {
-        uiAlert('元数据格式错误，请检查JSON格式');
+        uiAlert(t('tenantSubscriptionPlanManagement.alerts.invalidMetadata'));
         return;
       }
       
@@ -267,20 +270,20 @@ const CreatePlanModal: React.FC<{
       onSuccess();
     } catch (error: any) {
       console.error('Failed to save plan:', error);
-      uiAlert(`保存套餐失败: ${error.response?.data?.error || error.message}`);
+      uiAlert(`${t('tenantSubscriptionPlanManagement.alerts.saveFailed')}: ${error.response?.data?.error || error.message}`);
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <Modal open onClose={onClose} title={plan ? '编辑套餐' : '创建套餐'} widthClass="max-w-2xl">
+    <Modal open onClose={onClose} title={plan ? t('tenantSubscriptionPlanManagement.modal.editTitle') : t('tenantSubscriptionPlanManagement.modal.createTitle')} widthClass="max-w-2xl">
         <div className="mt-3">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  所属产品 *
+                  {t('tenantSubscriptionPlanManagement.modal.productLabel')}
                 </label>
                 <PSelect
                   required
@@ -288,7 +291,7 @@ const CreatePlanModal: React.FC<{
                   value={formData.product_id}
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, product_id: e.target.value })}
                 >
-                  <option value="">选择产品</option>
+                  <option value="">{t('tenantSubscriptionPlanManagement.modal.selectProduct')}</option>
                   {products.map((product) => (
                     <option key={product.ID} value={product.ID.toString()}>
                       {product.Name}
@@ -299,7 +302,7 @@ const CreatePlanModal: React.FC<{
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  套餐代码 *
+                  {t('tenantSubscriptionPlanManagement.modal.codeLabel')}
                 </label>
                 <PInput
                   type="text"
@@ -307,7 +310,7 @@ const CreatePlanModal: React.FC<{
                   disabled={!!plan}
                   value={formData.code}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, code: e.target.value })}
-                  placeholder="输入套餐代码"
+                  placeholder={t('tenantSubscriptionPlanManagement.modal.codePlaceholder')}
                 />
               </div>
             </div>
@@ -315,20 +318,20 @@ const CreatePlanModal: React.FC<{
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  套餐名称 *
+                  {t('tenantSubscriptionPlanManagement.modal.nameLabel')}
                 </label>
                 <PInput
                   type="text"
                   required
                   value={formData.display_name}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, display_name: e.target.value })}
-                  placeholder="输入套餐名称"
+                  placeholder={t('tenantSubscriptionPlanManagement.modal.namePlaceholder')}
                 />
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  版本号 *
+                  {t('tenantSubscriptionPlanManagement.modal.versionLabel')}
                 </label>
                 <PInput
                   type="number"
@@ -343,26 +346,26 @@ const CreatePlanModal: React.FC<{
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                元数据 (JSON格式)
+                {t('tenantSubscriptionPlanManagement.modal.metadataLabel')}
               </label>
               <PTextarea
                 rows={6}
                 value={formData.metadata}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, metadata: e.target.value })}
-                placeholder='{"description": "套餐描述", "features": []}'
+                placeholder={t('tenantSubscriptionPlanManagement.modal.metadataPlaceholder')}
                 className="font-mono text-sm"
               />
               <p className="mt-1 text-sm text-gray-500">
-                请输入有效的JSON格式数据
+                {t('tenantSubscriptionPlanManagement.modal.metadataHint')}
               </p>
             </div>
 
             <div className="flex justify-end space-x-3 pt-4">
               <PButton type="button" variant="secondary" onClick={onClose} disabled={submitting}>
-                取消
+                {t('tenantSubscriptionPlanManagement.actions.cancel')}
               </PButton>
               <PButton type="submit" loading={submitting}>
-                {plan ? '更新' : '创建'}
+                {plan ? t('tenantSubscriptionPlanManagement.actions.update') : t('tenantSubscriptionPlanManagement.actions.create')}
               </PButton>
             </div>
           </form>

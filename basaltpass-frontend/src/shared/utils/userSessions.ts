@@ -128,7 +128,7 @@ export function upsertUserConsoleSession(
     nickname: profile.nickname,
     avatar_url: profile.avatar_url,
     tenant_role: profile.tenant_role,
-    tenant_name: currentTenant?.name || (tenantID === 0 ? '平台账户' : undefined),
+    tenant_name: currentTenant?.name || (tenantID === 0 ? 'translated' : undefined),
     is_super_admin: !!profile.is_super_admin,
     token,
     last_used_at: new Date().toISOString(),

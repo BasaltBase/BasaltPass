@@ -72,7 +72,7 @@ const PTable = <T extends unknown>({
   rowKey,
   actions = [],
   loading = false,
-  emptyText = '暂无数据',
+  emptyText = 'translatednonetranslated',
   emptyContent,
   striped = true,
   size = 'md',
@@ -88,7 +88,7 @@ const PTable = <T extends unknown>({
   const currentSort = sortState ?? innerSort;
 
   const sortedData = useMemo(() => {
-    // 安全检查：确保 data 是数组
+    // securitytranslated：translated data istranslated
     if (!Array.isArray(data)) {
       console.warn('PTable: data prop is not an array:', data)
       return []
@@ -162,7 +162,7 @@ const PTable = <T extends unknown>({
                   scope="col"
                   className={`${cellPadding} ${alignClass('right')} text-xs font-medium text-gray-500 uppercase tracking-wider`}
                 >
-                  操作
+                  translated
                 </th>
               )}
             </tr>

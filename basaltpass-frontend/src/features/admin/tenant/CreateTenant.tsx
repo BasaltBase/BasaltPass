@@ -12,6 +12,7 @@ import AdminLayout from '@features/admin/components/AdminLayout'
 import { EntitySearchSelect, BaseEntityItem, PInput, PTextarea, PButton } from '@ui'
 import { adminTenantApi, AdminCreateTenantRequest, TenantSettings } from '@api/admin/tenant'
 import { ROUTES } from '@constants'
+import { useI18n } from '@shared/i18n'
 
 const slugifyTenantCode = (name: string) => {
   return name
@@ -23,6 +24,7 @@ const slugifyTenantCode = (name: string) => {
 }
 
 const CreateTenant: React.FC = () => {
+  const { t } = useI18n()
   const navigate = useNavigate()
   const [formData, setFormData] = useState<AdminCreateTenantRequest>({
     name: '',
@@ -74,7 +76,6 @@ const CreateTenant: React.FC = () => {
       }
     })
 
-    // 实时验证代码格式
     if (name === 'name' && !isCodeManuallyEdited) {
       validateCode(slugifyTenantCode(value))
     } else if (name === 'code') {
@@ -110,10 +111,9 @@ const CreateTenant: React.FC = () => {
       return
     }
 
-    // 验证代码格式：只允许小写字母、数字和连字符
     const codeRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
     if (!codeRegex.test(code)) {
-      setCodeError('代码只能包含小写字母、数字和连字符')
+      setCodeError(t('adminTenantCreate.errors.codeFormatInvalid'))
     } else {
       setCodeError(null)
     }
@@ -123,22 +123,22 @@ const CreateTenant: React.FC = () => {
     e.preventDefault()
     
     if (!formData.name.trim()) {
-      setError('租户名称不能为空')
+      setError(t('adminTenantCreate.errors.nameRequired'))
       return
     }
 
     if (!formData.code.trim()) {
-      setError('租户代码不能为空')
+      setError(t('adminTenantCreate.errors.codeRequired'))
       return
     }
 
     if (!formData.owner_email.trim() && selectedOwner.length === 0) {
-      setError('请选择租户所有者')
+      setError(t('adminTenantCreate.errors.ownerRequired'))
       return
     }
 
     if (codeError) {
-      setError('请修正代码格式错误')
+      setError(t('adminTenantCreate.errors.fixCodeFormat'))
       return
     }
 
@@ -146,7 +146,6 @@ const CreateTenant: React.FC = () => {
       setLoading(true)
       setError(null)
       
-      // 使用选中的用户邮箱或手动输入的邮箱
       const ownerEmail = selectedOwner.length > 0 
         ? selectedOwner[0].raw.email
         : formData.owner_email
@@ -158,13 +157,12 @@ const CreateTenant: React.FC = () => {
       
       await adminTenantApi.createTenant(requestData)
       
-      // 创建成功后跳转到租户列表
       navigate(ROUTES.admin.tenants, { 
-        state: { message: '租户创建成功！' }
+        state: { message: t('adminTenantCreate.messages.createSuccess') }
       })
     } catch (err: any) {
-      console.error('创建租户失败:', err)
-      setError(err.response?.data?.message || '创建租户失败')
+      console.error(t('adminTenantCreate.logs.createFailed'), err)
+      setError(err.response?.data?.message || t('adminTenantCreate.errors.createFailed'))
     } finally {
       setLoading(false)
     }
@@ -175,23 +173,20 @@ const CreateTenant: React.FC = () => {
   }
 
   return (
-    <AdminLayout title="创建租户">
+    <AdminLayout title={t('adminTenantCreate.layoutTitle')}>
       <div className="space-y-6">
-        {/* 页面头部 */}
         <div>
           <h1 className="text-3xl font-bold text-gray-900 flex items-center">
             <BuildingOfficeIcon className="h-8 w-8 mr-3 text-indigo-600" />
-            创建新租户
+            {t('adminTenantCreate.header.title')}
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            为平台创建一个新的租户组织
+            {t('adminTenantCreate.header.description')}
           </p>
         </div>
 
-        {/* 表单区域 */}
         <div className="bg-white shadow-lg rounded-xl border border-gray-100">
           <form onSubmit={handleSubmit} className="p-8 space-y-8">
-            {/* 错误提示 */}
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-md p-4">
                 <div className="flex">
@@ -199,58 +194,54 @@ const CreateTenant: React.FC = () => {
                     <ExclamationTriangleIcon className="h-5 w-5 text-red-400" />
                   </div>
                   <div className="ml-3">
-                    <h3 className="text-sm font-medium text-red-800">创建失败</h3>
+                    <h3 className="text-sm font-medium text-red-800">{t('adminTenantCreate.errors.createFailedTitle')}</h3>
                     <div className="mt-2 text-sm text-red-700">{error}</div>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* 基本信息 */}
             <div className="space-y-6">
               <div className="border-b border-gray-200 pb-4">
                 <h3 className="text-lg font-medium text-gray-900 flex items-center">
                   <DocumentTextIcon className="h-5 w-5 mr-2 text-indigo-500" />
-                  基本信息
+                  {t('adminTenantCreate.sections.basicInfo')}
                 </h3>
               </div>
 
-              {/* 租户名称 */}
               <div className="space-y-2">
                 <PInput
-                  label={<span className="flex items-center"><BuildingOfficeIcon className="h-5 w-5 mr-2 text-indigo-500" />租户名称<span className="text-red-500 ml-1">*</span></span>}
+                  label={<span className="flex items-center"><BuildingOfficeIcon className="h-5 w-5 mr-2 text-indigo-500" />{t('adminTenantCreate.form.name')}<span className="text-red-500 ml-1">*</span></span>}
                   id="name"
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  placeholder="输入租户名称"
+                  placeholder={t('adminTenantCreate.form.namePlaceholder')}
                   required
                 />
-                <p className="text-xs text-gray-500">租户的显示名称，用于在平台中标识该组织</p>
+                <p className="text-xs text-gray-500">{t('adminTenantCreate.form.nameHint')}</p>
               </div>
 
-              {/* 租户代码 */}
               <div className="space-y-2">
                 <PInput
-                  label={<span className="flex items-center"><DocumentTextIcon className="h-5 w-5 mr-2 text-indigo-500" />租户代码<span className="text-red-500 ml-1">*</span></span>}
+                  label={<span className="flex items-center"><DocumentTextIcon className="h-5 w-5 mr-2 text-indigo-500" />{t('adminTenantCreate.form.code')}<span className="text-red-500 ml-1">*</span></span>}
                   id="code"
                   name="code"
                   value={formData.code}
                   onChange={handleInputChange}
-                  placeholder={generatedCodePlaceholder || 'tenant-code'}
+                  placeholder={generatedCodePlaceholder || t('adminTenantCreate.form.codeDefaultPlaceholder')}
                   required
                   error={codeError || undefined}
                 />
                 {!codeError && (
-                  <p className="text-xs text-gray-500">会根据租户名称自动生成，支持小写字母、数字和连字符</p>
+                  <p className="text-xs text-gray-500">{t('adminTenantCreate.form.codeHint')}</p>
                 )}
               </div>
 
-              {/* 所有者选择 */}
               <div className="space-y-2">
                 <label className="flex items-center text-sm font-semibold text-gray-700">
                   <UserIcon className="h-5 w-5 mr-2 text-indigo-500" />
-                  租户所有者 <span className="text-red-500 ml-1">*</span>
+                  {t('adminTenantCreate.form.owner')} <span className="text-red-500 ml-1">*</span>
                 </label>
                 <div className="bg-gray-50 rounded-lg p-4">
                   <EntitySearchSelect
@@ -259,19 +250,18 @@ const CreateTenant: React.FC = () => {
                     adminUserParams={{ unassigned_only: true }}
                     value={selectedOwner}
                     onChange={setSelectedOwner}
-                    placeholder="搜索用户名或邮箱..."
+                    placeholder={t('adminTenantCreate.form.searchOwnerPlaceholder')}
                     maxSelect={1}
                     variant="chips"
                     limit={10}
                   />
                 </div>
-                <p className="text-xs text-gray-500">搜索并选择一个用户作为该租户的所有者</p>
+                <p className="text-xs text-gray-500">{t('adminTenantCreate.form.ownerHint')}</p>
                 
-                {/* 备用邮箱输入 */}
                 {selectedOwner.length === 0 && (
                   <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                     <p className="text-sm text-yellow-800 mb-2">
-                      如果找不到用户，您也可以直接输入邮箱地址：
+                      {t('adminTenantCreate.form.fallbackOwnerText')}
                     </p>
                     <PInput
                       type="email"
@@ -279,40 +269,38 @@ const CreateTenant: React.FC = () => {
                       name="owner_email"
                       value={formData.owner_email}
                       onChange={handleInputChange}
-                      placeholder="admin@example.com"
+                      placeholder={t('adminTenantCreate.form.ownerEmailPlaceholder')}
                     />
-                    <p className="text-xs text-yellow-600 mt-1">该邮箱必须对应平台中的现有用户</p>
+                    <p className="text-xs text-yellow-600 mt-1">{t('adminTenantCreate.form.ownerEmailHint')}</p>
                   </div>
                 )}
               </div>
 
-              {/* 描述 */}
               <div className="space-y-2">
                 <PTextarea
-                  label={<span className="flex items-center"><DocumentTextIcon className="h-5 w-5 mr-2 text-indigo-500" />描述 (可选)</span>}
+                  label={<span className="flex items-center"><DocumentTextIcon className="h-5 w-5 mr-2 text-indigo-500" />{t('adminTenantCreate.form.description')}</span>}
                   id="description"
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
                   rows={3}
-                  placeholder="描述该租户的用途或特点..."
+                  placeholder={t('adminTenantCreate.form.descriptionPlaceholder')}
                 />
-                <p className="text-xs text-gray-500">租户的详细描述信息</p>
+                <p className="text-xs text-gray-500">{t('adminTenantCreate.form.descriptionHint')}</p>
               </div>
             </div>
 
-            {/* 配额设置 */}
             <div className="space-y-6">
               <div className="border-b border-gray-200 pb-4">
                 <h3 className="text-lg font-medium text-gray-900 flex items-center">
                   <CogIcon className="h-5 w-5 mr-2 text-indigo-500" />
-                  租户配额
+                  {t('adminTenantCreate.sections.quota')}
                 </h3>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <PInput
-                  label={<span>最大应用数 <span className="text-red-500 ml-1">*</span></span>}
+                  label={<span>{t('adminTenantCreate.quota.maxApps')} <span className="text-red-500 ml-1">*</span></span>}
                   type="number"
                   min={1}
                   value={formData.max_apps}
@@ -320,7 +308,7 @@ const CreateTenant: React.FC = () => {
                   required
                 />
                 <PInput
-                  label={<span>最大用户数 <span className="text-red-500 ml-1">*</span></span>}
+                  label={<span>{t('adminTenantCreate.quota.maxUsers')} <span className="text-red-500 ml-1">*</span></span>}
                   type="number"
                   min={1}
                   value={formData.max_users}
@@ -328,7 +316,7 @@ const CreateTenant: React.FC = () => {
                   required
                 />
                 <PInput
-                  label={<span>每小时最大 Token 数 <span className="text-red-500 ml-1">*</span></span>}
+                  label={<span>{t('adminTenantCreate.quota.maxTokensPerHour')} <span className="text-red-500 ml-1">*</span></span>}
                   type="number"
                   min={1}
                   value={formData.max_tokens_per_hour}
@@ -338,12 +326,11 @@ const CreateTenant: React.FC = () => {
               </div>
             </div>
 
-            {/* 高级设置 */}
             <div className="space-y-6">
               <div className="border-b border-gray-200 pb-4">
                 <h3 className="text-lg font-medium text-gray-900 flex items-center">
                   <CogIcon className="h-5 w-5 mr-2 text-indigo-500" />
-                  高级设置 <span className="text-sm text-gray-500 ml-2">(可选)</span>
+                  {t('adminTenantCreate.sections.advanced')} <span className="text-sm text-gray-500 ml-2">{t('adminTenantCreate.common.optional')}</span>
                 </h3>
               </div>
 
@@ -354,29 +341,27 @@ const CreateTenant: React.FC = () => {
                   </div>
                   <div className="ml-3">
                     <p className="text-sm text-gray-700">
-                      租户创建后，系统将自动为其分配默认配置和资源配额。
-                      您可以在租户管理页面中进一步调整高级设置。
+                      {t('adminTenantCreate.advanced.tip')}
                     </p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* 操作按钮 */}
             <div className="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
               <PButton
                 type="button"
                 variant="secondary"
                 onClick={handleCancel}
               >
-                取消
+                {t('adminTenantCreate.actions.cancel')}
               </PButton>
               <PButton
                 type="submit"
                 loading={loading || !!codeError}
                 leftIcon={<BuildingOfficeIcon className="h-4 w-4" />}
               >
-                创建租户
+                {t('adminTenantCreate.actions.createTenant')}
               </PButton>
             </div>
           </form>

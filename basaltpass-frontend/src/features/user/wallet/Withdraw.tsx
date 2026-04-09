@@ -7,6 +7,7 @@ import CurrencySelector from '@features/user/components/CurrencySelector'
 import { PButton, PInput } from '@ui'
 import { ROUTES } from '@constants'
 import { useConfig } from '@contexts/ConfigContext'
+import { useI18n } from '@shared/i18n'
 import { 
   ArrowDownIcon,
   CreditCardIcon,
@@ -21,25 +22,25 @@ import {
 const withdrawMethods = [
   {
     id: 'alipay',
-    name: '支付宝',
+    name: 'Alipay',
     icon: QrCodeIcon,
-    description: '实时到账',
+    description: 'Instant arrival',
     color: 'text-blue-600',
     bgColor: 'bg-blue-100'
   },
   {
     id: 'bank',
-    name: '银行卡',
+    name: 'Bank Card',
     icon: CreditCardIcon,
-    description: '1-3个工作日',
+    description: '1-3 business days',
     color: 'text-indigo-600',
     bgColor: 'bg-indigo-100'
   },
   {
     id: 'wechat',
-    name: '微信支付',
+    name: 'WeChat Pay',
     icon: QrCodeIcon,
-    description: '实时到账',
+    description: 'Instant arrival',
     color: 'text-green-600',
     bgColor: 'bg-green-100'
   }
@@ -48,6 +49,7 @@ const withdrawMethods = [
 const quickAmounts = [50, 100, 200, 500, 1000, 2000]
 
 export default function Withdraw() {
+  const { t } = useI18n()
   const { walletRechargeWithdrawEnabled } = useConfig()
   const walletOpsDisabled = !walletRechargeWithdrawEnabled
   const navigate = useNavigate()
@@ -63,22 +65,22 @@ export default function Withdraw() {
     e.preventDefault()
 
     if (walletOpsDisabled) {
-      setError('钱包提现功能暂未开放')
+      setError(t('pages.walletWithdraw.errors.disabled'))
       return
     }
     
     if (!amount || parseFloat(amount) <= 0) {
-      setError('请输入有效的提现金额')
+      setError(t('pages.walletWithdraw.errors.invalidAmount'))
       return
     }
 
     if (!selectedCurrency) {
-      setError('请选择提现货币')
+      setError(t('pages.walletWithdraw.errors.selectCurrency'))
       return
     }
 
     if (!accountInfo.trim()) {
-      setError('请输入收款账户信息')
+      setError(t('pages.walletWithdraw.errors.accountRequired'))
       return
     }
 
@@ -86,7 +88,7 @@ export default function Withdraw() {
     setError('')
     
     try {
-      // 根据货币的小数位数计算最小单位金额
+      // 
       const decimals = selectedCurrency.decimal_places
       const amountInSmallestUnit = Math.round(Number(amount) * Math.pow(10, decimals))
       
@@ -96,7 +98,7 @@ export default function Withdraw() {
         navigate(ROUTES.user.wallet)
       }, 3000)
     } catch (e: any) {
-      setError(e.response?.data?.error || '提现失败，请重试')
+      setError(e.response?.data?.error || t('pages.walletWithdraw.errors.withdrawFailed'))
     } finally {
       setIsLoading(false)
     }
@@ -115,13 +117,13 @@ export default function Withdraw() {
   const getAccountPlaceholder = () => {
     switch (selectedMethod) {
       case 'alipay':
-        return '请输入支付宝账号'
+        return t('pages.walletWithdraw.form.accountPlaceholder.alipay')
       case 'bank':
-        return '请输入银行卡号'
+        return t('pages.walletWithdraw.form.accountPlaceholder.bank')
       case 'wechat':
-        return '请输入微信账号'
+        return t('pages.walletWithdraw.form.accountPlaceholder.wechat')
       default:
-        return '请输入账户信息'
+        return t('pages.walletWithdraw.form.accountPlaceholder.default')
     }
   }
 
@@ -131,9 +133,9 @@ export default function Withdraw() {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <CheckCircleIcon className="mx-auto h-16 w-16 text-green-600 mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">提现申请已提交！</h2>
-            <p className="text-gray-600 mb-4">我们将在1-3个工作日内处理您的提现请求</p>
-            <p className="text-sm text-gray-500">正在跳转到钱包页面...</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('pages.walletWithdraw.success.title')}</h2>
+            <p className="text-gray-600 mb-4">{t('pages.walletWithdraw.success.description')}</p>
+            <p className="text-sm text-gray-500">{t('pages.walletWithdraw.success.redirecting')}</p>
           </div>
         </div>
       </Layout>
@@ -143,7 +145,7 @@ export default function Withdraw() {
   return (
     <Layout>
       <div className="space-y-6">
-        {/* 页面标题 */}
+        {/*  */}
         <div className="flex items-center">
           <PButton 
             variant="ghost"
@@ -154,20 +156,20 @@ export default function Withdraw() {
             <ArrowLeftIcon className="h-5 w-5" />
           </PButton>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">提现资金</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('pages.walletWithdraw.header.title')}</h1>
             <p className="mt-1 text-sm text-gray-500">
-              选择提现方式并输入金额
+              {t('pages.walletWithdraw.header.description')}
             </p>
           </div>
         </div>
 
         {walletOpsDisabled && (
           <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
-            <p className="text-sm text-amber-900">钱包提现功能暂未开放，如有疑问请联系客服。</p>
+            <p className="text-sm text-amber-900">{t('pages.walletWithdraw.notice.disabled')}</p>
           </div>
         )}
 
-        {/* 错误提示 */}
+        {/*  */}
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4">
             <div className="flex">
@@ -175,7 +177,7 @@ export default function Withdraw() {
                 <ExclamationTriangleIcon className="h-5 w-5 text-red-400" />
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-red-800">提现失败</p>
+                <p className="text-sm font-medium text-red-800">{t('pages.walletWithdraw.errors.title')}</p>
                 <div className="mt-2 text-sm text-red-700">{error}</div>
               </div>
             </div>
@@ -183,33 +185,33 @@ export default function Withdraw() {
         )}
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* 提现表单 */}
+          {/*  */}
           <div className={`rounded-xl bg-white shadow-sm ${walletOpsDisabled ? 'opacity-50' : ''}`}>
             <div className="px-4 py-5 sm:p-6">
               <div className="flex items-center mb-6">
                 <ArrowDownIcon className="h-6 w-6 text-red-600 mr-2" />
-                <h3 className="text-lg font-medium text-gray-900">提现信息</h3>
+                <h3 className="text-lg font-medium text-gray-900">{t('pages.walletWithdraw.form.title')}</h3>
               </div>
               
               <form onSubmit={submit} className={`space-y-6 ${walletOpsDisabled ? 'pointer-events-none' : ''}`}>
-                {/* 金额输入 */}
+                {/*  */}
                 <div>
                   <PInput
                     id="amount"
                     type="number"
-                    label="提现金额 (CNY)"
+                    label={t('pages.walletWithdraw.form.amountLabel')}
                     value={amount}
                     onChange={(e) => handleAmountChange(e.target.value)}
-                    placeholder="0.00"
+                    placeholder={t('pages.walletWithdraw.form.amountPlaceholder')}
                     min="0.01"
                     step="0.01"
                   />
                 </div>
 
-                {/* 快速金额选择 */}
+                {/*  */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    快速选择金额
+                    {t('pages.walletWithdraw.form.quickAmountLabel')}
                   </label>
                   <div className="grid grid-cols-3 gap-2">
                     {quickAmounts.map((value) => (
@@ -226,10 +228,10 @@ export default function Withdraw() {
                   </div>
                 </div>
 
-                {/* 提现方式选择 */}
+                {/*  */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">
-                    选择提现方式
+                    {t('pages.walletWithdraw.form.methodLabel')}
                   </label>
                   <div className="space-y-3">
                     {withdrawMethods.map((method) => (
@@ -247,8 +249,8 @@ export default function Withdraw() {
                             <method.icon className={`h-6 w-6 ${method.color}`} />
                           </div>
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-900">{method.name}</p>
-                            <p className="text-sm text-gray-500">{method.description}</p>
+                            <p className="text-sm font-medium text-gray-900">{t(`pages.walletWithdraw.methods.${method.id}.name`)}</p>
+                            <p className="text-sm text-gray-500">{t(`pages.walletWithdraw.methods.${method.id}.description`)}</p>
                           </div>
                           {selectedMethod === method.id && (
                             <div className="h-5 w-5 bg-red-600 rounded-full flex items-center justify-center">
@@ -261,19 +263,19 @@ export default function Withdraw() {
                   </div>
                 </div>
 
-                {/* 收款账户信息 */}
+                {/*  */}
                 <div>
                   <PInput
                     id="accountInfo"
                     type="text"
-                    label="收款账户信息"
+                    label={t('pages.walletWithdraw.form.accountLabel')}
                     value={accountInfo}
                     onChange={(e) => setAccountInfo(e.target.value)}
                     placeholder={getAccountPlaceholder()}
                   />
                 </div>
 
-                {/* 提交按钮 */}
+                {/*  */}
                 <PButton
                   type="submit"
                   variant="danger"
@@ -281,100 +283,100 @@ export default function Withdraw() {
                   disabled={walletOpsDisabled || isLoading || !amount || parseFloat(amount) <= 0 || !accountInfo.trim()}
                   loading={isLoading}
                 >
-                  {isLoading ? '处理中...' : `提现 ¥${amount || '0.00'}`}
+                  {isLoading ? t('pages.walletWithdraw.form.submitting') : t('pages.walletWithdraw.form.submitWithAmount', { amount: amount || '0.00' })}
                 </PButton>
               </form>
             </div>
           </div>
 
-          {/* 提现说明 */}
+          {/*  */}
           <div className="space-y-6">
-            {/* 提现说明 */}
+            {/*  */}
             <div className="rounded-xl bg-white shadow-sm">
               <div className="px-4 py-5 sm:p-6">
                 <div className="flex items-center mb-4">
                   <BanknotesIcon className="h-6 w-6 text-red-600 mr-2" />
-                  <h3 className="text-lg font-medium text-gray-900">提现说明</h3>
+                  <h3 className="text-lg font-medium text-gray-900">{t('pages.walletWithdraw.guide.title')}</h3>
                 </div>
                 <div className="space-y-3 text-sm text-gray-600">
                   <div className="flex items-start">
                     <div className="h-2 w-2 bg-red-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                    <p>支付宝/微信提现通常在24小时内到账</p>
+                    <p>{t('pages.walletWithdraw.guide.items.alipayWechat')}</p>
                   </div>
                   <div className="flex items-start">
                     <div className="h-2 w-2 bg-red-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                    <p>银行卡提现需要1-3个工作日</p>
+                    <p>{t('pages.walletWithdraw.guide.items.bank')}</p>
                   </div>
                   <div className="flex items-start">
                     <div className="h-2 w-2 bg-red-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                    <p>单笔提现限额：¥50 - ¥50,000</p>
+                    <p>{t('pages.walletWithdraw.guide.items.limit')}</p>
                   </div>
                   <div className="flex items-start">
                     <div className="h-2 w-2 bg-red-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                    <p>提现手续费：免费</p>
+                    <p>{t('pages.walletWithdraw.guide.items.fee')}</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* 重要提示 */}
+            {/*  */}
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <div className="flex">
                 <div className="flex-shrink-0">
                   <InformationCircleIcon className="h-5 w-5 text-yellow-400" />
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-yellow-800">重要提示</h3>
+                  <h3 className="text-sm font-medium text-yellow-800">{t('pages.walletWithdraw.important.title')}</h3>
                   <div className="mt-2 text-sm text-yellow-700">
                     <ul className="list-disc list-inside space-y-1">
-                      <li>请确保收款账户信息准确无误</li>
-                      <li>提现申请提交后无法取消</li>
-                      <li>如遇问题请及时联系客服</li>
-                      <li>工作日9:00-18:00处理提现申请</li>
+                      <li>{t('pages.walletWithdraw.important.items.account')}</li>
+                      <li>{t('pages.walletWithdraw.important.items.noCancel')}</li>
+                      <li>{t('pages.walletWithdraw.important.items.support')}</li>
+                      <li>{t('pages.walletWithdraw.important.items.worktime')}</li>
                     </ul>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* 常见问题 */}
+            {/*  */}
             <div className="rounded-xl bg-white shadow-sm">
               <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">常见问题</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">{t('pages.walletWithdraw.faq.title')}</h3>
                 <div className="space-y-3 text-sm">
                   <div>
-                    <p className="font-medium text-gray-900">提现多久到账？</p>
-                    <p className="text-gray-600">支付宝/微信24小时内，银行卡1-3个工作日。</p>
+                    <p className="font-medium text-gray-900">{t('pages.walletWithdraw.faq.q1')}</p>
+                    <p className="text-gray-600">{t('pages.walletWithdraw.faq.a1')}</p>
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">提现失败怎么办？</p>
-                    <p className="text-gray-600">请检查账户信息是否正确，或联系客服处理。</p>
+                    <p className="font-medium text-gray-900">{t('pages.walletWithdraw.faq.q2')}</p>
+                    <p className="text-gray-600">{t('pages.walletWithdraw.faq.a2')}</p>
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">可以取消提现吗？</p>
-                    <p className="text-gray-600">提现申请提交后无法取消，请确认信息后再提交。</p>
+                    <p className="font-medium text-gray-900">{t('pages.walletWithdraw.faq.q3')}</p>
+                    <p className="text-gray-600">{t('pages.walletWithdraw.faq.a3')}</p>
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">提现手续费是多少？</p>
-                    <p className="text-gray-600">目前提现完全免费，不收取任何手续费。</p>
+                    <p className="font-medium text-gray-900">{t('pages.walletWithdraw.faq.q4')}</p>
+                    <p className="text-gray-600">{t('pages.walletWithdraw.faq.a4')}</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* 安全提示 */}
+            {/*  */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex">
                 <div className="flex-shrink-0">
                   <BanknotesIcon className="h-5 w-5 text-blue-400" />
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-blue-800">安全提示</h3>
+                  <h3 className="text-sm font-medium text-blue-800">Security Tips</h3>
                   <div className="mt-2 text-sm text-blue-700">
                     <ul className="list-disc list-inside space-y-1">
-                      <li>请确保在安全的网络环境下操作</li>
-                      <li>不要将账户信息告知他人</li>
-                      <li>定期检查提现记录</li>
+                      <li>Please operate in a secure network environment</li>
+                      <li>Do not share account information with others</li>
+                      <li>Review withdrawal records regularly</li>
                     </ul>
                   </div>
                 </div>

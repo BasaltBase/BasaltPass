@@ -1,6 +1,7 @@
 import React from 'react'
 import { XMarkIcon, EnvelopeIcon, ClockIcon, ShieldCheckIcon, DevicePhoneMobileIcon } from '@heroicons/react/24/outline'
 import { AdminTenantUserDetail } from '@api/admin/tenant'
+import { useI18n } from '@shared/i18n/useI18n'
 import { PSkeleton } from '@ui'
 
 interface TenantUserDetailDrawerProps {
@@ -18,6 +19,8 @@ const TenantUserDetailDrawer: React.FC<TenantUserDetailDrawerProps> = ({
   error,
   onClose
 }) => {
+  const { t, locale } = useI18n()
+
   if (!open) {
     return null
   }
@@ -28,10 +31,10 @@ const TenantUserDetailDrawer: React.FC<TenantUserDetailDrawerProps> = ({
       <div className="relative w-full max-w-xl bg-white shadow-xl h-full overflow-y-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">用户详情</h2>
-            <p className="mt-1 text-sm text-gray-500">查看租户用户的基本信息和关联数据</p>
+            <h2 className="text-lg font-semibold text-gray-900">{t('adminTenantUserDetailDrawer.title')}</h2>
+            <p className="mt-1 text-sm text-gray-500">{t('adminTenantUserDetailDrawer.description')}</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600" aria-label="关闭">
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600" aria-label={t('adminTenantUserDetailDrawer.actions.close')}>
             <XMarkIcon className="w-5 h-5" />
           </button>
         </div>
@@ -50,36 +53,36 @@ const TenantUserDetailDrawer: React.FC<TenantUserDetailDrawerProps> = ({
           {!loading && !error && user && (
             <>
               <section>
-                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">基本信息</h3>
+                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">{t('adminTenantUserDetailDrawer.sections.basicInfo')}</h3>
                 <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-600">
                   <div>
-                    <span className="font-medium text-gray-900">昵称</span>
-                    <p className="mt-1">{user.nickname || '—'}</p>
+                    <span className="font-medium text-gray-900">{t('adminTenantUserDetailDrawer.fields.nickname')}</span>
+                    <p className="mt-1">{user.nickname || t('adminTenantUserDetailDrawer.common.empty')}</p>
                   </div>
                   <div className="flex items-center space-x-2">
                     <EnvelopeIcon className="w-4 h-4 text-gray-400" />
                     <div>
-                      <span className="font-medium text-gray-900">邮箱</span>
+                      <span className="font-medium text-gray-900">{t('adminTenantUserDetailDrawer.fields.email')}</span>
                       <p className="mt-1 break-all">{user.email}</p>
                     </div>
                   </div>
                   <div>
-                    <span className="font-medium text-gray-900">用户类型</span>
-                    <p className="mt-1">{user.user_type === 'tenant_user' ? '租户管理员' : '应用用户'}</p>
+                    <span className="font-medium text-gray-900">{t('adminTenantUserDetailDrawer.fields.userType')}</span>
+                    <p className="mt-1">{user.user_type === 'tenant_user' ? t('adminTenantUserDetailDrawer.userType.tenantAdmin') : t('adminTenantUserDetailDrawer.userType.appUser')}</p>
                   </div>
                   <div>
-                    <span className="font-medium text-gray-900">角色</span>
-                    <p className="mt-1">{translateRole(user.role)}</p>
+                    <span className="font-medium text-gray-900">{t('adminTenantUserDetailDrawer.fields.role')}</span>
+                    <p className="mt-1">{translateRole(user.role, t)}</p>
                   </div>
                   <div>
-                    <span className="font-medium text-gray-900">状态</span>
-                    <p className="mt-1">{translateStatus(user.status)}</p>
+                    <span className="font-medium text-gray-900">{t('adminTenantUserDetailDrawer.fields.status')}</span>
+                    <p className="mt-1">{translateStatus(user.status, t)}</p>
                   </div>
                   {user.phone && (
                     <div className="flex items-center space-x-2">
                       <DevicePhoneMobileIcon className="w-4 h-4 text-gray-400" />
                       <div>
-                        <span className="font-medium text-gray-900">手机号</span>
+                        <span className="font-medium text-gray-900">{t('adminTenantUserDetailDrawer.fields.phone')}</span>
                         <p className="mt-1">{user.phone}</p>
                       </div>
                     </div>
@@ -88,21 +91,21 @@ const TenantUserDetailDrawer: React.FC<TenantUserDetailDrawerProps> = ({
               </section>
 
               <section>
-                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">时间信息</h3>
+                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">{t('adminTenantUserDetailDrawer.sections.timeInfo')}</h3>
                 <div className="mt-3 space-y-3 text-sm text-gray-600">
                   <div className="flex items-center space-x-2">
                     <ClockIcon className="w-4 h-4 text-gray-400" />
                     <div>
-                      <span className="font-medium text-gray-900">创建时间</span>
-                      <p className="mt-1">{formatDate(user.created_at)}</p>
+                      <span className="font-medium text-gray-900">{t('adminTenantUserDetailDrawer.fields.createdAt')}</span>
+                      <p className="mt-1">{formatDate(user.created_at, locale, t('adminTenantUserDetailDrawer.common.empty'))}</p>
                     </div>
                   </div>
                   {user.last_active_at && (
                     <div className="flex items-center space-x-2">
                       <ClockIcon className="w-4 h-4 text-gray-400" />
                       <div>
-                        <span className="font-medium text-gray-900">最后活跃</span>
-                        <p className="mt-1">{formatDate(user.last_active_at)}</p>
+                        <span className="font-medium text-gray-900">{t('adminTenantUserDetailDrawer.fields.lastActive')}</span>
+                        <p className="mt-1">{formatDate(user.last_active_at, locale, t('adminTenantUserDetailDrawer.common.empty'))}</p>
                       </div>
                     </div>
                   )}
@@ -110,8 +113,8 @@ const TenantUserDetailDrawer: React.FC<TenantUserDetailDrawerProps> = ({
                     <div className="flex items-center space-x-2">
                       <ClockIcon className="w-4 h-4 text-gray-400" />
                       <div>
-                        <span className="font-medium text-gray-900">最近登录</span>
-                        <p className="mt-1">{formatDate(user.last_login_at)}</p>
+                        <span className="font-medium text-gray-900">{t('adminTenantUserDetailDrawer.fields.lastLogin')}</span>
+                        <p className="mt-1">{formatDate(user.last_login_at, locale, t('adminTenantUserDetailDrawer.common.empty'))}</p>
                       </div>
                     </div>
                   )}
@@ -120,7 +123,7 @@ const TenantUserDetailDrawer: React.FC<TenantUserDetailDrawerProps> = ({
 
               {user.permissions && user.permissions.length > 0 && (
                 <section>
-                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">权限</h3>
+                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">{t('adminTenantUserDetailDrawer.sections.permissions')}</h3>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {user.permissions.map((permission) => (
                       <span
@@ -137,15 +140,15 @@ const TenantUserDetailDrawer: React.FC<TenantUserDetailDrawerProps> = ({
 
               {user.apps && user.apps.length > 0 && (
                 <section>
-                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">关联应用</h3>
+                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">{t('adminTenantUserDetailDrawer.sections.apps')}</h3>
                   <ul className="mt-3 space-y-2 text-sm text-gray-600">
                     {user.apps.map((app) => (
                       <li key={app.id} className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2">
                         <div>
                           <p className="font-medium text-gray-900">{app.name}</p>
-                          {app.role && <p className="text-xs text-gray-500 mt-0.5">角色: {app.role}</p>}
+                          {app.role && <p className="text-xs text-gray-500 mt-0.5">{t('adminTenantUserDetailDrawer.meta.roleWithValue', { role: app.role })}</p>}
                         </div>
-                        {app.added_at && <p className="text-xs text-gray-400">加入时间: {formatDate(app.added_at)}</p>}
+                        {app.added_at && <p className="text-xs text-gray-400">{t('adminTenantUserDetailDrawer.meta.joinedAtWithValue', { time: formatDate(app.added_at, locale, t('adminTenantUserDetailDrawer.common.empty')) })}</p>}
                       </li>
                     ))}
                   </ul>
@@ -154,7 +157,7 @@ const TenantUserDetailDrawer: React.FC<TenantUserDetailDrawerProps> = ({
 
               {user.extra_info && (
                 <section>
-                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">附加信息</h3>
+                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">{t('adminTenantUserDetailDrawer.sections.extraInfo')}</h3>
                   <div className="mt-3 text-sm text-gray-600 space-y-2">
                     {Object.entries(user.extra_info).map(([key, value]) => (
                       <div key={key}>
@@ -173,38 +176,38 @@ const TenantUserDetailDrawer: React.FC<TenantUserDetailDrawerProps> = ({
   )
 }
 
-const translateRole = (role: string) => {
+const translateRole = (role: string, t: (key: string, params?: Record<string, string | number>) => string) => {
   switch (role) {
     case 'owner':
-      return '所有者'
+      return t('adminTenantUserDetailDrawer.role.owner')
     case 'admin':
-      return '管理员'
+      return t('adminTenantUserDetailDrawer.role.admin')
     case 'member':
-      return '成员'
+      return t('adminTenantUserDetailDrawer.role.member')
     default:
       return role
   }
 }
 
-const translateStatus = (status: string) => {
+const translateStatus = (status: string, t: (key: string, params?: Record<string, string | number>) => string) => {
   switch (status) {
     case 'active':
-      return '活跃'
+      return t('adminTenantUserDetailDrawer.status.active')
     case 'suspended':
-      return '暂停'
+      return t('adminTenantUserDetailDrawer.status.suspended')
     case 'banned':
-      return '封禁'
+      return t('adminTenantUserDetailDrawer.status.banned')
     default:
       return status
   }
 }
 
-const formatDate = (value?: string) => {
+const formatDate = (value: string | undefined, locale: string, emptyLabel: string) => {
   if (!value) {
-    return '—'
+    return emptyLabel
   }
 
-  return new Date(value).toLocaleString('zh-CN', {
+  return new Date(value).toLocaleString(locale, {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',

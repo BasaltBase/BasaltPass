@@ -26,7 +26,7 @@ const PCheckbox = forwardRef<HTMLInputElement, PCheckboxProps>(
     ...props 
   }, ref) => {
 
-    // 基础样式
+    // translatedstyle
     const baseStyles = `
       relative inline-flex items-center justify-center
       border-2 rounded transition-all duration-200 ease-in-out
@@ -34,14 +34,14 @@ const PCheckbox = forwardRef<HTMLInputElement, PCheckboxProps>(
       disabled:opacity-50 disabled:cursor-not-allowed
     `;
 
-    // 尺寸样式
+    // translatedstyle
     const sizeStyles = {
       sm: 'h-4 w-4',
       md: 'h-5 w-5', 
       lg: 'h-6 w-6'
     };
 
-    // 变体样式
+    // translatedstyle
     const getVariantStyles = () => {
       const isChecked = checked || indeterminate;
       
@@ -87,14 +87,14 @@ const PCheckbox = forwardRef<HTMLInputElement, PCheckboxProps>(
 
     const variantStyles = getVariantStyles();
 
-    // 标签样式
+    // translatedstyle
     const labelStyles = `
       ${size === 'sm' ? 'text-sm' : size === 'lg' ? 'text-base' : 'text-sm'}
       ${disabled ? 'text-gray-400' : 'text-gray-700'}
       font-medium select-none cursor-pointer
     `;
 
-    // 描述样式
+    // descriptionstyle
     const descriptionStyles = `
       ${size === 'sm' ? 'text-xs' : 'text-sm'}
       text-gray-500 mt-1

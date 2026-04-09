@@ -7,6 +7,7 @@ import { getSecurityStatus, SecurityStatus } from '@api/user/security'
 import { getProfile, UserBasicProfile } from '@api/user/profile'
 import { ROUTES } from '@constants'
 import { useConfig } from '@contexts/ConfigContext'
+import { useI18n } from '@shared/i18n'
 import {
   WalletIcon, 
   UserIcon, 
@@ -51,6 +52,7 @@ interface WalletHistoryItem {
 
 export default function Dashboard() {
   const { marketEnabled, walletRechargeWithdrawEnabled } = useConfig()
+  const { t, locale } = useI18n()
   const [userProfile, setUserProfile] = useState<UserBasicProfile | null>(null)
   const [securityStatus, setSecurityStatus] = useState<SecurityStatus | null>(null)
   const [recentTransactions, setRecentTransactions] = useState<RecentTransaction[]>([])
@@ -63,11 +65,11 @@ export default function Dashboard() {
         setIsLoading(true)
         setError(null)
 
-        // 并行获取用户信息、安全状态和交易历史
+        // 、
         const [profileResponse, securityResponse, historyResponse] = await Promise.all([
           getProfile(),
           getSecurityStatus(),
-          getWalletHistory(undefined, 3) // 获取最近3条交易记录（跨所有钱包）
+          getWalletHistory(undefined, 3) // 3（）
         ])
 
         setUserProfile(profileResponse.data)
@@ -95,13 +97,13 @@ export default function Dashboard() {
               transaction.Reference?.trim()
                 ? transaction.Reference
                 : transaction.Type === 'withdraw'
-                  ? '钱包提现'
-                  : '钱包充值',
+                  ? t('pages.dashboard.recentTransactions.withdrawFallback')
+                  : t('pages.dashboard.recentTransactions.rechargeFallback'),
           }))
         )
       } catch (err) {
-        console.error('获取数据失败:', err)
-        setError('获取数据失败，请稍后重试')
+        console.error('Failed to load dashboard data:', err)
+        setError(t('pages.dashboard.errors.loadFailedMessage'))
       } finally {
         setIsLoading(false)
       }
@@ -110,9 +112,14 @@ export default function Dashboard() {
     fetchData()
   }, [])
 
-  // 根据安全状态计算安全等级
+  // 
   const getSecurityLevel = () => {
-    if (!securityStatus) return { level: '未知', description: '加载中...' }
+    if (!securityStatus) {
+      return {
+        level: t('pages.dashboard.securityLevels.unknown'),
+        description: t('pages.dashboard.securityLevels.loading'),
+      }
+    }
     
     let score = 0
     if (securityStatus.password_set) score += 1
@@ -121,23 +128,42 @@ export default function Dashboard() {
     if (securityStatus.email_verified) score += 1
     if (securityStatus.phone_verified) score += 1
 
-    if (score >= 5) return { level: '高', description: '已启用2FA' }
-    if (score >= 3) return { level: '中', description: '建议启用2FA' }
-    return { level: '低', description: '需要加强安全设置' }
+    if (score >= 5) {
+      return {
+        level: t('pages.dashboard.securityLevels.high'),
+        description: t('pages.dashboard.securityLevels.highDescription'),
+      }
+    }
+    if (score >= 3) {
+      return {
+        level: t('pages.dashboard.securityLevels.medium'),
+        description: t('pages.dashboard.securityLevels.mediumDescription'),
+      }
+    }
+    return {
+      level: t('pages.dashboard.securityLevels.low'),
+      description: t('pages.dashboard.securityLevels.lowDescription'),
+    }
   }
 
   const securityLevel = getSecurityLevel()
 
   const stats = [
     {
-      name: '账户状态',
-      value: userProfile?.banned ? '已封禁' : '正常',
+      id: 'accountStatus',
+      name: t('pages.dashboard.stats.accountStatus'),
+      value: userProfile?.banned
+        ? t('pages.dashboard.stats.accountStatusBanned')
+        : t('pages.dashboard.stats.accountStatusNormal'),
       icon: UserIcon,
-      change: userProfile?.banned ? '账户已被封禁，请联系管理员' : '账户运行正常',
+      change: userProfile?.banned
+        ? t('pages.dashboard.stats.accountStatusBannedHint')
+        : t('pages.dashboard.stats.accountStatusNormalHint'),
       changeType: userProfile?.banned ? ('negative' as const) : ('positive' as const),
     },
     {
-      name: '安全等级',
+      id: 'securityLevel',
+      name: t('pages.dashboard.stats.securityLevel'),
       value: securityLevel.level,
       icon: ShieldCheckIcon,
       change: securityLevel.description,
@@ -158,9 +184,9 @@ export default function Dashboard() {
         <Layout>
         <PAlert
           variant="error"
-          title="加载失败"
+          title={t('pages.dashboard.errors.loadFailedTitle')}
           message={error}
-          actions={<PButton type="button" onClick={() => window.location.reload()}>重试</PButton>}
+          actions={<PButton type="button" onClick={() => window.location.reload()}>{t('pages.dashboard.errors.retry')}</PButton>}
         />
         </Layout>
       )
@@ -169,10 +195,13 @@ export default function Dashboard() {
   return (
     <Layout>
       <div className="space-y-6">
-        {/* 页面标题 */}
-        <PPageHeader title="仪表板" description="欢迎回来！这里是您的账户概览" />
+        {/*  */}
+        <PPageHeader
+          title={t('pages.dashboard.header.title')}
+          description={t('pages.dashboard.header.description')}
+        />
 
-        {/* 统计卡片 */}
+        {/*  */}
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           {stats.map((item) => (
             <PCard
@@ -190,7 +219,7 @@ export default function Dashboard() {
               </dt>
               <dd className="ml-16 flex items-baseline">
                 <p className={`text-2xl font-semibold ${
-                  item.name === '账户状态' && userProfile?.banned 
+                  item.id === 'accountStatus' && userProfile?.banned
                     ? 'text-red-600' 
                     : 'text-gray-900'
                 }`}>{item.value}</p>
@@ -211,7 +240,11 @@ export default function Dashboard() {
                       <ArrowDownIcon className="h-4 w-4 flex-shrink-0 self-center" />
                     )}
                     <span className="sr-only">
-                      {item.changeType === 'positive' ? '增加' : item.changeType === 'negative' ? '警告' : '状态'}
+                      {item.changeType === 'positive'
+                        ? t('pages.dashboard.srOnly.positive')
+                        : item.changeType === 'negative'
+                          ? t('pages.dashboard.srOnly.negative')
+                          : t('pages.dashboard.srOnly.neutral')}
                     </span>
                     {item.change}
                   </p>
@@ -221,10 +254,10 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* 快速操作 */}
+        {/*  */}
         <PCard>
           <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
-            快速操作
+            {t('pages.dashboard.quickActions.title')}
           </h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
               {walletRechargeWithdrawEnabled ? (
@@ -237,22 +270,22 @@ export default function Dashboard() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <span className="absolute inset-0" aria-hidden="true" />
-                    <p className="text-sm font-medium text-gray-900">充值</p>
-                    <p className="text-sm text-gray-500">向钱包充值</p>
+                    <p className="text-sm font-medium text-gray-900">{t('pages.dashboard.quickActions.recharge')}</p>
+                    <p className="text-sm text-gray-500">{t('pages.dashboard.quickActions.rechargeDesc')}</p>
                   </div>
                 </Link>
               ) : (
                 <div
                   className={quickActionDisabledClass}
                   aria-disabled
-                  title="钱包充值暂未开放"
+                  title={t('pages.dashboard.quickActions.rechargeDisabledTitle')}
                 >
                   <div className="flex-shrink-0">
                     <ArrowUpIcon className="h-6 w-6 text-gray-400" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-500">充值</p>
-                    <p className="text-sm text-gray-400">向钱包充值（暂未开放）</p>
+                    <p className="text-sm font-medium text-gray-500">{t('pages.dashboard.quickActions.recharge')}</p>
+                    <p className="text-sm text-gray-400">{t('pages.dashboard.quickActions.rechargeDisabledDesc')}</p>
                   </div>
                 </div>
               )}
@@ -267,22 +300,22 @@ export default function Dashboard() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <span className="absolute inset-0" aria-hidden="true" />
-                    <p className="text-sm font-medium text-gray-900">提现</p>
-                    <p className="text-sm text-gray-500">从钱包提现</p>
+                    <p className="text-sm font-medium text-gray-900">{t('pages.dashboard.quickActions.withdraw')}</p>
+                    <p className="text-sm text-gray-500">{t('pages.dashboard.quickActions.withdrawDesc')}</p>
                   </div>
                 </Link>
               ) : (
                 <div
                   className={quickActionDisabledClass}
                   aria-disabled
-                  title="钱包提现暂未开放"
+                  title={t('pages.dashboard.quickActions.withdrawDisabledTitle')}
                 >
                   <div className="flex-shrink-0">
                     <ArrowDownIcon className="h-6 w-6 text-gray-400" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-500">提现</p>
-                    <p className="text-sm text-gray-400">从钱包提现（暂未开放）</p>
+                    <p className="text-sm font-medium text-gray-500">{t('pages.dashboard.quickActions.withdraw')}</p>
+                    <p className="text-sm text-gray-400">{t('pages.dashboard.quickActions.withdrawDisabledDesc')}</p>
                   </div>
                 </div>
               )}
@@ -296,8 +329,8 @@ export default function Dashboard() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <span className="absolute inset-0" aria-hidden="true" />
-                  <p className="text-sm font-medium text-gray-900">交易记录</p>
-                  <p className="text-sm text-gray-500">查看历史记录</p>
+                  <p className="text-sm font-medium text-gray-900">{t('pages.dashboard.quickActions.history')}</p>
+                  <p className="text-sm text-gray-500">{t('pages.dashboard.quickActions.historyDesc')}</p>
                 </div>
               </Link>
 
@@ -311,8 +344,8 @@ export default function Dashboard() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <span className="absolute inset-0" aria-hidden="true" />
-                  <p className="text-sm font-medium text-gray-900">安全设置</p>
-                  <p className="text-sm text-gray-500">管理账户安全</p>
+                  <p className="text-sm font-medium text-gray-900">{t('pages.dashboard.quickActions.security')}</p>
+                  <p className="text-sm text-gray-500">{t('pages.dashboard.quickActions.securityDesc')}</p>
                 </div>
               </Link>
 
@@ -325,8 +358,8 @@ export default function Dashboard() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <span className="absolute inset-0" aria-hidden="true" />
-                  <p className="text-sm font-medium text-gray-900">团队管理</p>
-                  <p className="text-sm text-gray-500">管理团队和成员</p>
+                  <p className="text-sm font-medium text-gray-900">{t('pages.dashboard.quickActions.teams')}</p>
+                  <p className="text-sm text-gray-500">{t('pages.dashboard.quickActions.teamsDesc')}</p>
                 </div>
               </Link>
 
@@ -340,8 +373,8 @@ export default function Dashboard() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <span className="absolute inset-0" aria-hidden="true" />
-                    <p className="text-sm font-medium text-gray-900">订阅管理</p>
-                    <p className="text-sm text-gray-500">管理订阅计划</p>
+                    <p className="text-sm font-medium text-gray-900">{t('pages.dashboard.quickActions.subscriptions')}</p>
+                    <p className="text-sm text-gray-500">{t('pages.dashboard.quickActions.subscriptionsDesc')}</p>
                   </div>
                 </Link>
               )}
@@ -355,8 +388,8 @@ export default function Dashboard() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <span className="absolute inset-0" aria-hidden="true" />
-                  <p className="text-sm font-medium text-gray-900">通知中心</p>
-                  <p className="text-sm text-gray-500">查看系统通知</p>
+                  <p className="text-sm font-medium text-gray-900">{t('pages.dashboard.quickActions.notifications')}</p>
+                  <p className="text-sm text-gray-500">{t('pages.dashboard.quickActions.notificationsDesc')}</p>
                 </div>
               </Link>
 
@@ -369,8 +402,8 @@ export default function Dashboard() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <span className="absolute inset-0" aria-hidden="true" />
-                  <p className="text-sm font-medium text-gray-900">个人资料</p>
-                  <p className="text-sm text-gray-500">编辑个人信息</p>
+                  <p className="text-sm font-medium text-gray-900">{t('pages.dashboard.quickActions.profile')}</p>
+                  <p className="text-sm text-gray-500">{t('pages.dashboard.quickActions.profileDesc')}</p>
                 </div>
               </Link>
 
@@ -383,8 +416,8 @@ export default function Dashboard() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <span className="absolute inset-0" aria-hidden="true" />
-                  <p className="text-sm font-medium text-gray-900">系统设置</p>
-                  <p className="text-sm text-gray-500">配置系统偏好</p>
+                  <p className="text-sm font-medium text-gray-900">{t('pages.dashboard.quickActions.settings')}</p>
+                  <p className="text-sm text-gray-500">{t('pages.dashboard.quickActions.settingsDesc')}</p>
                 </div>
               </Link>
 
@@ -397,30 +430,30 @@ export default function Dashboard() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <span className="absolute inset-0" aria-hidden="true" />
-                  <p className="text-sm font-medium text-gray-900">帮助中心</p>
-                  <p className="text-sm text-gray-500">获取使用帮助</p>
+                  <p className="text-sm font-medium text-gray-900">{t('pages.dashboard.quickActions.help')}</p>
+                  <p className="text-sm text-gray-500">{t('pages.dashboard.quickActions.helpDesc')}</p>
                 </div>
               </Link>
             </div>
         </PCard>
 
-        {/* 最近交易 */}
+        {/*  */}
         <PCard>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-medium leading-6 text-gray-900">
-              最近交易
+              {t('pages.dashboard.recentTransactions.title')}
             </h3>
               <Link
                 to={ROUTES.user.walletHistory}
                 className="text-sm font-medium text-blue-600 hover:text-indigo-700"
               >
-                查看全部
+                {t('pages.dashboard.recentTransactions.viewAll')}
               </Link>
             </div>
             <div className="flow-root">
               <ul className="-my-5 divide-y divide-gray-200">
                 {recentTransactions.length === 0 ? (
-                  <li className="py-6 text-sm text-gray-500">暂无交易记录</li>
+                  <li className="py-6 text-sm text-gray-500">{t('pages.dashboard.recentTransactions.empty')}</li>
                 ) : recentTransactions.map((transaction) => (
                   <li key={transaction.id} className="py-4">
                     <div className="flex items-center space-x-4">
@@ -442,7 +475,7 @@ export default function Dashboard() {
                           {transaction.description}
                         </p>
                         <p className="text-sm text-gray-500">
-                          {new Date(transaction.date).toLocaleDateString('zh-CN')}
+                          {new Date(transaction.date).toLocaleDateString(locale)}
                         </p>
                       </div>
                       <div className="flex-shrink-0 text-right">
@@ -455,8 +488,11 @@ export default function Dashboard() {
                           transaction.status === 'completed' ? 'success' :
                           transaction.status === 'pending' ? 'warning' : 'error'
                         }>
-                          {transaction.status === 'completed' ? '已完成' : 
-                           transaction.status === 'pending' ? '处理中' : '失败'}
+                          {transaction.status === 'completed'
+                            ? t('pages.dashboard.recentTransactions.status.completed')
+                            : transaction.status === 'pending'
+                              ? t('pages.dashboard.recentTransactions.status.pending')
+                              : t('pages.dashboard.recentTransactions.status.failed')}
                         </PBadge>
                       </div>
                     </div>

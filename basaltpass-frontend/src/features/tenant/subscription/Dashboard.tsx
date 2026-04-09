@@ -19,8 +19,10 @@ import {
   TenantSubscriptionStats
 } from '@api/tenant/subscription'
 import { ROUTES } from '@constants'
+import { useI18n } from '@shared/i18n'
 
 export default function TenantSubscriptionDashboard() {
+  const { t } = useI18n()
   const [stats, setStats] = useState<TenantSubscriptionStats | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -34,7 +36,7 @@ export default function TenantSubscriptionDashboard() {
       const data = await tenantSubscriptionAPI.adminGetSubscriptionStats()
       setStats(data)
     } catch (error) {
-      console.error('获取统计数据失败:', error)
+      console.error(t('tenantSubscriptionDashboard.logs.loadStatsFailed'), error)
     } finally {
       setLoading(false)
     }
@@ -46,43 +48,43 @@ export default function TenantSubscriptionDashboard() {
 
   const managementItems = [
     {
-      name: '产品管理',
-      description: '管理产品目录和产品信息',
+      name: t('tenantSubscriptionDashboard.management.products.name'),
+      description: t('tenantSubscriptionDashboard.management.products.description'),
       href: ROUTES.tenant.subscriptionProducts,
       icon: CubeIcon,
       color: 'bg-blue-500',
     },
     {
-      name: '套餐管理',
-      description: '配置产品套餐和功能特性',
+      name: t('tenantSubscriptionDashboard.management.plans.name'),
+      description: t('tenantSubscriptionDashboard.management.plans.description'),
       href: ROUTES.tenant.plans,
       icon: ChartBarIcon,
       color: 'bg-green-500',
     },
     {
-      name: '定价管理',
-      description: '设置套餐价格和计费规则',
+      name: t('tenantSubscriptionDashboard.management.prices.name'),
+      description: t('tenantSubscriptionDashboard.management.prices.description'),
       href: ROUTES.tenant.prices,
       icon: CurrencyDollarIcon,
       color: 'bg-yellow-500',
     },
     {
-      name: '订阅管理',
-      description: '查看和管理客户订阅',
+      name: t('tenantSubscriptionDashboard.management.subscriptions.name'),
+      description: t('tenantSubscriptionDashboard.management.subscriptions.description'),
       href: ROUTES.tenant.subscriptionsList,
       icon: UserGroupIcon,
       color: 'bg-indigo-500',
     },
     {
-      name: '账单管理',
-      description: '查看账单和支付记录',
+      name: t('tenantSubscriptionDashboard.management.invoices.name'),
+      description: t('tenantSubscriptionDashboard.management.invoices.description'),
       href: ROUTES.tenant.invoices,
       icon: DocumentTextIcon,
       color: 'bg-indigo-500',
     },
     {
-      name: '优惠券管理',
-      description: '创建和管理优惠券',
+      name: t('tenantSubscriptionDashboard.management.coupons.name'),
+      description: t('tenantSubscriptionDashboard.management.coupons.description'),
       href: ROUTES.tenant.coupons,
       icon: TicketIcon,
       color: 'bg-blue-500',
@@ -91,7 +93,7 @@ export default function TenantSubscriptionDashboard() {
 
   if (loading) {
     return (
-      <TenantLayout title="订阅系统">
+      <TenantLayout title={t('tenantSubscriptionDashboard.layoutTitle')}>
         <div className="animate-pulse">
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {[1, 2, 3, 4].map((i) => (
@@ -116,9 +118,9 @@ export default function TenantSubscriptionDashboard() {
   }
 
   return (
-    <TenantLayout title="订阅系统">
+    <TenantLayout title={t('tenantSubscriptionDashboard.layoutTitle')}>
       <div className="space-y-6">
-        {/* 统计卡片 */}
+        {/*  */}
         {stats && (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             <div className="overflow-hidden rounded-xl bg-white shadow-sm">
@@ -129,7 +131,7 @@ export default function TenantSubscriptionDashboard() {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">总订阅数</dt>
+                      <dt className="text-sm font-medium text-gray-500 truncate">{t('tenantSubscriptionDashboard.stats.totalSubscriptions')}</dt>
                       <dd className="text-lg font-medium text-gray-900">{stats.total_subscriptions}</dd>
                     </dl>
                   </div>
@@ -145,7 +147,7 @@ export default function TenantSubscriptionDashboard() {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">活跃订阅</dt>
+                      <dt className="text-sm font-medium text-gray-500 truncate">{t('tenantSubscriptionDashboard.stats.activeSubscriptions')}</dt>
                       <dd className="text-lg font-medium text-gray-900">{stats.active_subscriptions}</dd>
                     </dl>
                   </div>
@@ -161,7 +163,7 @@ export default function TenantSubscriptionDashboard() {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">月收入</dt>
+                      <dt className="text-sm font-medium text-gray-500 truncate">{t('tenantSubscriptionDashboard.stats.monthlyRevenue')}</dt>
                       <dd className="text-lg font-medium text-gray-900">
                         {formatCurrency(stats.monthly_revenue_cents)}
                       </dd>
@@ -179,7 +181,7 @@ export default function TenantSubscriptionDashboard() {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">客户数量</dt>
+                      <dt className="text-sm font-medium text-gray-500 truncate">{t('tenantSubscriptionDashboard.stats.customerCount')}</dt>
                       <dd className="text-lg font-medium text-gray-900">{stats.total_users}</dd>
                     </dl>
                   </div>
@@ -189,10 +191,10 @@ export default function TenantSubscriptionDashboard() {
           </div>
         )}
 
-        {/* 管理功能网格 */}
+        {/*  */}
         <div className="rounded-xl bg-white shadow-sm">
           <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">订阅管理</h3>
+            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">{t('tenantSubscriptionDashboard.sections.subscriptionManagement')}</h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {managementItems.map((item) => (
                 <Link
@@ -224,54 +226,54 @@ export default function TenantSubscriptionDashboard() {
           </div>
         </div>
 
-        {/* 快速操作 */}
+        {/*  */}
         <div className="rounded-xl bg-white shadow-sm">
           <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">快速操作</h3>
+            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">{t('tenantSubscriptionDashboard.sections.quickActions')}</h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <Link
                 to={`${ROUTES.tenant.subscriptionProducts}?action=create`}
                 className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 <PlusIcon className="h-4 w-4 mr-2" />
-                创建产品
+                {t('tenantSubscriptionDashboard.actions.createProduct')}
               </Link>
               <Link
                 to={`${ROUTES.tenant.plans}?action=create`}
                 className="inline-flex items-center rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
               >
                 <PlusIcon className="h-4 w-4 mr-2" />
-                创建套餐
+                {t('tenantSubscriptionDashboard.actions.createPlan')}
               </Link>
               <Link
                 to={`${ROUTES.tenant.prices}?action=create`}
                 className="inline-flex items-center rounded-lg bg-yellow-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
               >
                 <PlusIcon className="h-4 w-4 mr-2" />
-                设置价格
+                {t('tenantSubscriptionDashboard.actions.setPrice')}
               </Link>
               <Link
                 to={`${ROUTES.tenant.coupons}?action=create`}
                 className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
               >
                 <PlusIcon className="h-4 w-4 mr-2" />
-                创建优惠券
+                {t('tenantSubscriptionDashboard.actions.createCoupon')}
               </Link>
             </div>
           </div>
         </div>
 
-        {/* 状态概览 */}
+        {/*  */}
         {stats && (
         <div className="rounded-xl bg-white shadow-sm">
             <div className="px-4 py-5 sm:p-6">
-              <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">订阅状态概览</h3>
+              <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">{t('tenantSubscriptionDashboard.sections.subscriptionStatusOverview')}</h3>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div className="rounded-xl bg-green-50 p-4">
                   <div className="flex items-center">
                     <ArrowTrendingUpIcon className="h-8 w-8 text-green-500" />
                     <div className="ml-3">
-                      <p className="text-sm font-medium text-green-800">活跃订阅</p>
+                      <p className="text-sm font-medium text-green-800">{t('tenantSubscriptionDashboard.status.active')}</p>
                       <p className="text-2xl font-bold text-green-900">{stats.active_subscriptions}</p>
                     </div>
                   </div>
@@ -281,7 +283,7 @@ export default function TenantSubscriptionDashboard() {
                   <div className="flex items-center">
                     <ArrowTrendingDownIcon className="h-8 w-8 text-red-500" />
                     <div className="ml-3">
-                      <p className="text-sm font-medium text-red-800">已取消订阅</p>
+                      <p className="text-sm font-medium text-red-800">{t('tenantSubscriptionDashboard.status.canceled')}</p>
                       <p className="text-2xl font-bold text-red-900">{stats.canceled_subscriptions}</p>
                     </div>
                   </div>
@@ -291,7 +293,7 @@ export default function TenantSubscriptionDashboard() {
                   <div className="flex items-center">
                     <ChartBarIcon className="h-8 w-8 text-yellow-500" />
                     <div className="ml-3">
-                      <p className="text-sm font-medium text-yellow-800">暂停订阅</p>
+                      <p className="text-sm font-medium text-yellow-800">{t('tenantSubscriptionDashboard.status.paused')}</p>
                       <p className="text-2xl font-bold text-yellow-900">{stats.paused_subscriptions}</p>
                     </div>
                   </div>

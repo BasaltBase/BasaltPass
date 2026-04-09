@@ -6,13 +6,13 @@ interface MarketFeatureRouteProps {
 }
 
 /**
- * 保护需要市场功能的路由
- * 如果市场功能被禁用，则重定向到首页
+ * translatedmarkettranslatedroute
+ * translatedmarkettranslateddisabled，translatedtotranslated
  */
 export default function MarketFeatureRoute({ children }: MarketFeatureRouteProps) {
   const { marketEnabled } = useConfig();
 
-  // 如果市场功能被禁用，重定向到首页
+  // translatedmarkettranslateddisabled，translatedtotranslated
   if (!marketEnabled) {
     return <Navigate to="/" replace />;
   }

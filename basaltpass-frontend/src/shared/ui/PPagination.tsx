@@ -2,19 +2,19 @@ import React from 'react'
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 
 interface PPaginationProps {
-  /** 当前页（从1开始） */
+  /** translated（translated1start） */
   currentPage: number
-  /** 总页数 */
+  /** translated */
   totalPages: number
-  /** 页码切换回调 */
+  /** translated */
   onPageChange: (page: number) => void
-  /** 总条数（可选，用于显示 "第 x-y 条，共 z 条"）*/
+  /** translated（cantranslated，translated "translated x-y translated，translated z translated"）*/
   total?: number
-  /** 每页条数（可选，配合 total 使用） */
+  /** translated（cantranslated，translated total translated） */
   pageSize?: number
-  /** 是否显示页码信息文字 */
+  /** isnotranslatedinfotranslated */
   showInfo?: boolean
-  /** 是否显示跳页数字按钮 */
+  /** isnotranslated */
   showPageNumbers?: boolean
   className?: string
 }
@@ -34,7 +34,7 @@ const PPagination: React.FC<PPaginationProps> = ({
   const canPrev = currentPage > 1
   const canNext = currentPage < totalPages
 
-  // 生成显示的页码列表（带省略号逻辑）
+  // translatedlist（translated）
   const getPageNumbers = (): (number | '...')[] => {
     if (totalPages <= 7) {
       return Array.from({ length: totalPages }, (_, i) => i + 1)
@@ -56,38 +56,38 @@ const PPagination: React.FC<PPaginationProps> = ({
   const btnInactive = `${btnBase} bg-white border-gray-300 text-gray-700 hover:bg-gray-50`
   const btnDisabled = `${btnBase} bg-white border-gray-200 text-gray-300 cursor-not-allowed`
 
-  // 信息文字
+  // infotranslated
   let infoText = ''
   if (showInfo && total !== undefined && pageSize !== undefined) {
     const from = (currentPage - 1) * pageSize + 1
     const to = Math.min(currentPage * pageSize, total)
-    infoText = `第 ${from}–${to} 条，共 ${total} 条`
+    infoText = `translated ${from}–${to} translated，translated ${total} translated`
   } else if (showInfo && totalPages > 1) {
-    infoText = `第 ${currentPage} 页，共 ${totalPages} 页`
+    infoText = `translated ${currentPage} translated，translated ${totalPages} translated`
   }
 
   return (
     <div className={`flex items-center justify-between py-3 ${className}`}>
-      {/* 左侧信息 */}
+      {/* translatedinfo */}
       <div className="text-sm text-gray-500">
         {infoText}
       </div>
 
-      {/* 右侧分页按钮 */}
+      {/* translated */}
       <div className="flex items-center">
-        <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="分页">
-          {/* 上一页 */}
+        <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="translated">
+          {/* translated */}
           <button
             type="button"
             onClick={() => canPrev && onPageChange(currentPage - 1)}
             disabled={!canPrev}
             className={`${canPrev ? btnInactive : btnDisabled} rounded-l-md`}
-            aria-label="上一页"
+            aria-label="translated"
           >
             <ChevronLeftIcon className="h-4 w-4" />
           </button>
 
-          {/* 页码数字 */}
+          {/* translated */}
           {showPageNumbers && getPageNumbers().map((p, idx) =>
             p === '...' ? (
               <span
@@ -109,13 +109,13 @@ const PPagination: React.FC<PPaginationProps> = ({
             )
           )}
 
-          {/* 下一页 */}
+          {/* translated */}
           <button
             type="button"
             onClick={() => canNext && onPageChange(currentPage + 1)}
             disabled={!canNext}
             className={`${canNext ? btnInactive : btnDisabled} rounded-r-md`}
-            aria-label="下一页"
+            aria-label="translated"
           >
             <ChevronRightIcon className="h-4 w-4" />
           </button>

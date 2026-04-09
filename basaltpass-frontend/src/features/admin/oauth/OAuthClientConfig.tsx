@@ -17,10 +17,12 @@ import AdminLayout from '@features/admin/components/AdminLayout'
 import { ROUTES } from '@constants'
 import { OAuthScopePicker } from '@components'
 import { PSkeleton, PBadge, PAlert, PButton, PCard, PInput, PPageHeader } from '@ui'
+import { useI18n } from '@shared/i18n'
 
 export default function OAuthClientConfig() {
   const { appId } = useParams<{ appId: string }>()
   const navigate = useNavigate()
+  const { t } = useI18n()
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [client, setClient] = useState<OAuthClientInfo | null>(null)
@@ -74,7 +76,6 @@ export default function OAuthClientConfig() {
       const response = await appApi.getOAuthClient(appId)
       setClient(response)
       
-      // 如果存在OAuth客户端，填充表单
       if (response) {
         setFormData(prev => ({
           ...prev,
@@ -86,7 +87,7 @@ export default function OAuthClientConfig() {
       }
     } catch (error) {
       console.error('Failed to load OAuth client:', error)
-      setError('加载OAuth配置失败')
+      setError(t('adminOAuthClientConfig.errors.loadFailed'))
     } finally {
       setLoading(false)
     }
@@ -99,14 +100,12 @@ export default function OAuthClientConfig() {
     try {
       setSaving(true)
       
-      // 过滤空的重定向URI
       const cleanedData = {
         ...formData,
         redirect_uris: (formData.redirect_uris || []).filter(uri => uri.trim())
       }
 
       if (client) {
-        // 更新现有客户端
         const updateData: UpdateOAuthClientRequest = {
           grant_types: cleanedData.grant_types,
           response_types: cleanedData.response_types,
@@ -115,7 +114,6 @@ export default function OAuthClientConfig() {
         }
         await appApi.updateOAuthClient(client.id, updateData)
       } else {
-        // 创建新客户端
         await appApi.createOAuthClient(cleanedData)
       }
       
@@ -123,14 +121,14 @@ export default function OAuthClientConfig() {
       setError(null)
     } catch (error) {
       console.error('Failed to save OAuth client:', error)
-      setError(client ? '更新OAuth配置失败' : '创建OAuth配置失败')
+      setError(client ? t('adminOAuthClientConfig.errors.updateFailed') : t('adminOAuthClientConfig.errors.createFailed'))
     } finally {
       setSaving(false)
     }
   }
 
   const handleRegenerateSecret = async () => {
-    if (!client || !await uiConfirm('确定要重新生成客户端密钥吗？这将使现有的密钥失效。')) {
+    if (!client || !await uiConfirm(t('adminOAuthClientConfig.confirmRegenerateSecret'))) {
       return
     }
 
@@ -141,7 +139,7 @@ export default function OAuthClientConfig() {
       setError(null)
     } catch (error) {
       console.error('Failed to regenerate secret:', error)
-      setError('重新生成密钥失败')
+      setError(t('adminOAuthClientConfig.errors.regenerateFailed'))
     } finally {
       setSaving(false)
     }
@@ -149,9 +147,9 @@ export default function OAuthClientConfig() {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text).then(() => {
-      uiAlert('已复制到剪贴板')
+      uiAlert(t('adminOAuthClientConfig.messages.copied'))
     }).catch(() => {
-      uiAlert('复制失败，请手动复制')
+      uiAlert(t('adminOAuthClientConfig.messages.copyFailed'))
     })
   }
 
@@ -188,14 +186,26 @@ export default function OAuthClientConfig() {
   const pickerMetas = (scopeMetas || [])
 
   const availableGrantTypes = [
-    { id: 'authorization_code', name: '授权码模式', description: '标准的OAuth2流程' },
-    { id: 'refresh_token', name: '刷新令牌', description: '使用刷新令牌获取新的访问令牌' },
-    { id: 'client_credentials', name: '客户端凭据', description: '服务器到服务器的认证' }
+    {
+      id: 'authorization_code',
+      name: t('adminOAuthClientConfig.grantTypes.authorizationCode.name'),
+      description: t('adminOAuthClientConfig.grantTypes.authorizationCode.description')
+    },
+    {
+      id: 'refresh_token',
+      name: t('adminOAuthClientConfig.grantTypes.refreshToken.name'),
+      description: t('adminOAuthClientConfig.grantTypes.refreshToken.description')
+    },
+    {
+      id: 'client_credentials',
+      name: t('adminOAuthClientConfig.grantTypes.clientCredentials.name'),
+      description: t('adminOAuthClientConfig.grantTypes.clientCredentials.description')
+    }
   ]
 
   if (loading) {
     return (
-      <AdminLayout title="OAuth客户端配置">
+      <AdminLayout title={t('adminOAuthClientConfig.layoutTitle')}>
         <div className="py-6">
           <PSkeleton.Content cards={3} />
         </div>
@@ -204,31 +214,28 @@ export default function OAuthClientConfig() {
   }
 
   return (
-    <AdminLayout title="OAuth客户端配置">
+    <AdminLayout title={t('adminOAuthClientConfig.layoutTitle')}>
       <div className="space-y-6">
-        {/* 页面头部 */}
         <PPageHeader
-          title="OAuth 客户端配置"
-          description={client ? '管理现有的 OAuth 客户端' : '为应用创建 OAuth 客户端'}
+          title={t('adminOAuthClientConfig.header.title')}
+          description={client ? t('adminOAuthClientConfig.header.descriptionEdit') : t('adminOAuthClientConfig.header.descriptionCreate')}
           icon={<KeyIcon className="h-8 w-8 text-indigo-600" />}
         />
 
-        {/* 错误提示 */}
         {error && <PAlert variant="error" message={error} className="mb-6" />}
 
         <div className="space-y-8">
-          {/* 客户端信息 */}
           {client && (
             <PCard className="rounded-xl p-0 shadow-sm">
               <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900">客户端凭据</h3>
+                <h3 className="text-lg font-medium text-gray-900">{t('adminOAuthClientConfig.credentials.title')}</h3>
                 <p className="mt-1 text-sm text-gray-500">
-                  在你的应用中使用这些凭据进行OAuth认证
+                  {t('adminOAuthClientConfig.credentials.description')}
                 </p>
               </div>
               <div className="px-6 py-4 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">客户端 ID</label>
+                  <label className="block text-sm font-medium text-gray-700">{t('adminOAuthClientConfig.credentials.clientId')}</label>
                   <div className="mt-1 flex items-center space-x-2">
                     <PInput
                       type="text"
@@ -239,7 +246,7 @@ export default function OAuthClientConfig() {
                     <button
                       onClick={() => copyToClipboard(client.client_id)}
                       className="inline-flex items-center rounded-lg border border-gray-300 p-2 text-gray-700 transition-colors hover:bg-gray-50"
-                      title="复制"
+                      title={t('adminOAuthClientConfig.actions.copy')}
                     >
                       <ClipboardDocumentIcon className="h-4 w-4" />
                     </button>
@@ -247,7 +254,7 @@ export default function OAuthClientConfig() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">客户端密钥</label>
+                  <label className="block text-sm font-medium text-gray-700">{t('adminOAuthClientConfig.credentials.clientSecret')}</label>
                   <div className="mt-1 flex items-center space-x-2">
                     <PInput
                       type={showSecret ? "text" : "password"}
@@ -258,14 +265,14 @@ export default function OAuthClientConfig() {
                     <button
                       onClick={() => setShowSecret(!showSecret)}
                       className="inline-flex items-center rounded-lg border border-gray-300 p-2 text-gray-700 transition-colors hover:bg-gray-50"
-                      title={showSecret ? "隐藏" : "显示"}
+                      title={showSecret ? t('adminOAuthClientConfig.actions.hide') : t('adminOAuthClientConfig.actions.show')}
                     >
                       {showSecret ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
                     </button>
                     <button
                       onClick={() => copyToClipboard(client.client_secret)}
                       className="inline-flex items-center rounded-lg border border-gray-300 p-2 text-gray-700 transition-colors hover:bg-gray-50"
-                      title="复制"
+                      title={t('adminOAuthClientConfig.actions.copy')}
                     >
                       <ClipboardDocumentIcon className="h-4 w-4" />
                     </button>
@@ -273,21 +280,21 @@ export default function OAuthClientConfig() {
                       onClick={handleRegenerateSecret}
                       disabled={saving}
                       className="inline-flex items-center rounded-lg border border-yellow-300 p-2 text-yellow-700 transition-colors hover:bg-yellow-50 disabled:opacity-50"
-                      title="重新生成"
+                      title={t('adminOAuthClientConfig.actions.regenerate')}
                     >
                       <ArrowPathIcon className="h-4 w-4" />
                     </button>
                   </div>
                   <p className="mt-1 text-sm text-gray-500">
-                    请妥善保管客户端密钥，不要在客户端代码中暴露
+                    {t('adminOAuthClientConfig.credentials.secretHint')}
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">客户端类型</label>
+                  <label className="block text-sm font-medium text-gray-700">{t('adminOAuthClientConfig.credentials.clientType')}</label>
                   <div className="mt-1">
                     <PBadge variant={client.client_type === 'public' ? 'info' : 'success'}>
-                      {client.client_type === 'public' ? '公开客户端' : '机密客户端'}
+                      {client.client_type === 'public' ? t('adminOAuthClientConfig.clientTypes.public.name') : t('adminOAuthClientConfig.clientTypes.confidential.name')}
                     </PBadge>
                   </div>
                 </div>
@@ -295,32 +302,30 @@ export default function OAuthClientConfig() {
             </PCard>
           )}
 
-          {/* 配置表单 */}
           <PCard className="rounded-xl p-0 shadow-sm">
             <form onSubmit={handleCreateOrUpdate}>
               <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900">OAuth 配置</h3>
+                <h3 className="text-lg font-medium text-gray-900">{t('adminOAuthClientConfig.form.title')}</h3>
                 <p className="mt-1 text-sm text-gray-500">
-                  配置OAuth客户端的行为和权限
+                  {t('adminOAuthClientConfig.form.description')}
                 </p>
               </div>
 
               <div className="px-6 py-4 space-y-6">
-                {/* 客户端类型 */}
                 {!client && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">客户端类型</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">{t('adminOAuthClientConfig.form.clientType')}</label>
                     <div className="space-y-3">
                       {[
                         { 
                           id: 'public', 
-                          name: '公开客户端', 
-                          description: '前端应用（如SPA、移动应用），无法安全存储密钥'
+                          name: t('adminOAuthClientConfig.clientTypes.public.name'),
+                          description: t('adminOAuthClientConfig.clientTypes.public.description')
                         },
                         { 
                           id: 'confidential', 
-                          name: '机密客户端', 
-                          description: '后端应用，可以安全存储客户端密钥'
+                          name: t('adminOAuthClientConfig.clientTypes.confidential.name'),
+                          description: t('adminOAuthClientConfig.clientTypes.confidential.description')
                         }
                       ].map((type) => (
                         <div
@@ -354,9 +359,8 @@ export default function OAuthClientConfig() {
                   </div>
                 )}
 
-                {/* 授权类型 */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">授权类型</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">{t('adminOAuthClientConfig.form.grantTypes')}</label>
                   <div className="space-y-2">
                     {availableGrantTypes.map((grantType) => (
                       <div key={grantType.id} className="flex items-start">
@@ -386,9 +390,8 @@ export default function OAuthClientConfig() {
                   </div>
                 </div>
 
-                {/* 权限范围 */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">权限范围</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">{t('adminOAuthClientConfig.form.scopes')}</label>
                   <OAuthScopePicker
                     metas={pickerMetas}
                     selected={formData.scopes || []}
@@ -399,10 +402,9 @@ export default function OAuthClientConfig() {
                   />
                 </div>
 
-                {/* 重定向URI */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    重定向 URI
+                    {t('adminOAuthClientConfig.form.redirectUris')}
                   </label>
                   <div className="space-y-2">
                     {(formData.redirect_uris || []).map((uri, index) => (
@@ -431,20 +433,19 @@ export default function OAuthClientConfig() {
                       className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
                     >
                       <PlusIcon className="h-4 w-4 mr-2" />
-                      添加重定向URI
+                      {t('adminOAuthClientConfig.actions.addRedirectUri')}
                     </button>
                   </div>
                   <p className="mt-1 text-sm text-gray-500">
-                    用户授权后将重定向到这些地址
+                    {t('adminOAuthClientConfig.form.redirectUrisHint')}
                   </p>
                 </div>
               </div>
 
-              {/* 提交按钮 */}
               <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3">
-                <PButton type="button" variant="secondary" onClick={() => navigate(ROUTES.admin.apps)}>取消</PButton>
+                <PButton type="button" variant="secondary" onClick={() => navigate(ROUTES.admin.apps)}>{t('adminOAuthClientConfig.actions.cancel')}</PButton>
                 <PButton type="submit" disabled={saving} loading={saving}>
-                  {client ? '更新配置' : '创建客户端'}
+                  {client ? t('adminOAuthClientConfig.actions.updateConfig') : t('adminOAuthClientConfig.actions.createClient')}
                 </PButton>
               </div>
             </form>

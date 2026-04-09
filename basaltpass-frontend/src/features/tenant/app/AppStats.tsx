@@ -15,6 +15,7 @@ import TenantLayout from '@features/tenant/components/TenantLayout'
 import { tenantAppApi, TenantApp } from '@api/tenant/tenantApp'
 import { ROUTES } from '@constants'
 import { PSkeleton, PButton } from '@ui'
+import { useI18n } from '@shared/i18n'
 
 interface AppStatsData {
   period: string
@@ -44,6 +45,7 @@ interface AppStatsData {
 }
 
 export default function AppStats() {
+  const { t, locale } = useI18n()
   const { id } = useParams<{ id: string }>()
   const [app, setApp] = useState<TenantApp | null>(null)
   const [stats, setStats] = useState<AppStatsData | null>(null)
@@ -65,8 +67,8 @@ export default function AppStats() {
       const response = await tenantAppApi.getTenantApp(id)
       setApp(response.data)
     } catch (err: any) {
-      console.error('获取应用信息失败:', err)
-      setError(err.response?.data?.error || '获取应用信息失败')
+      console.error(t('tenantAppStats.logs.fetchAppFailed'), err)
+      setError(err.response?.data?.error || t('tenantAppStats.errors.fetchAppFailed'))
     }
   }
 
@@ -78,8 +80,8 @@ export default function AppStats() {
       const response = await tenantAppApi.getAppStats(id, period)
       setStats(response.data)
     } catch (err: any) {
-      console.error('获取统计数据失败:', err)
-      setError(err.response?.data?.error || '获取统计数据失败')
+      console.error(t('tenantAppStats.logs.fetchStatsFailed'), err)
+      setError(err.response?.data?.error || t('tenantAppStats.errors.fetchStatsFailed'))
     } finally {
       setLoading(false)
     }
@@ -102,11 +104,11 @@ export default function AppStats() {
       return '--'
     }
     if (seconds < 60) {
-      return `${seconds}秒`
+      return t('tenantAppStats.duration.seconds', { seconds })
     } else if (seconds < 3600) {
-      return `${Math.floor(seconds / 60)}分${seconds % 60}秒`
+      return t('tenantAppStats.duration.minutesSeconds', { minutes: Math.floor(seconds / 60), seconds: seconds % 60 })
     } else {
-      return `${Math.floor(seconds / 3600)}小时${Math.floor((seconds % 3600) / 60)}分`
+      return t('tenantAppStats.duration.hoursMinutes', { hours: Math.floor(seconds / 3600), minutes: Math.floor((seconds % 3600) / 60) })
     }
   }
 
@@ -120,19 +122,19 @@ export default function AppStats() {
   const getPeriodText = (period: string) => {
     switch (period) {
       case '7d':
-        return '最近7天'
+        return t('tenantAppStats.period.recent7d')
       case '30d':
-        return '最近30天'
+        return t('tenantAppStats.period.recent30d')
       case '90d':
-        return '最近90天'
+        return t('tenantAppStats.period.recent90d')
       default:
-        return '最近30天'
+        return t('tenantAppStats.period.recent30d')
     }
   }
 
   if (loading && !stats) {
     return (
-      <TenantLayout title="应用统计">
+      <TenantLayout title={t('tenantAppStats.layoutTitle')}>
         <div className="py-6">
           <PSkeleton.Dashboard statsCount={2} />
         </div>
@@ -142,13 +144,13 @@ export default function AppStats() {
 
   if (error) {
     return (
-      <TenantLayout title="应用统计">
+      <TenantLayout title={t('tenantAppStats.layoutTitle')}>
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <DocumentChartBarIcon className="mx-auto h-12 w-12 text-red-500" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">{error}</h3>
             <div className="mt-6">
-              <PButton onClick={fetchAppStats}>重试</PButton>
+              <PButton onClick={fetchAppStats}>{t('tenantAppStats.actions.retry')}</PButton>
             </div>
           </div>
         </div>
@@ -158,14 +160,14 @@ export default function AppStats() {
 
   if (!app || !stats) {
     return (
-      <TenantLayout title="应用统计">
+      <TenantLayout title={t('tenantAppStats.layoutTitle')}>
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <ChartBarIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">无数据</h3>
+            <h3 className="mt-2 text-sm font-medium text-gray-900">{t('tenantAppStats.empty.noData')}</h3>
             <div className="mt-6">
               <Link to={ROUTES.tenant.apps}>
-                <PButton>返回应用列表</PButton>
+                <PButton>{t('tenantAppStats.actions.backToList')}</PButton>
               </Link>
             </div>
           </div>
@@ -175,9 +177,9 @@ export default function AppStats() {
   }
 
   return (
-    <TenantLayout title={`${app.name} - 统计分析`}>
+    <TenantLayout title={t('tenantAppStats.layoutWithApp', { name: app.name })}>
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        {/* 导航栏 */}
+        {/*  */}
         <div className="mb-6">
           <nav className="flex items-center space-x-4">
             <Link
@@ -185,7 +187,7 @@ export default function AppStats() {
               className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700"
             >
               <ArrowLeftIcon className="w-4 h-4 mr-1" />
-              应用列表
+              {t('tenantAppStats.breadcrumb.apps')}
             </Link>
             <span className="text-gray-300">/</span>
             <Link
@@ -195,16 +197,16 @@ export default function AppStats() {
               {app.name}
             </Link>
             <span className="text-gray-300">/</span>
-            <span className="text-sm text-gray-900">统计分析</span>
+            <span className="text-sm text-gray-900">{t('tenantAppStats.breadcrumb.stats')}</span>
           </nav>
         </div>
 
-        {/* 页面标题和时间段选择 */}
+        {/*  */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">统计分析</h1>
-              <p className="mt-2 text-gray-600">查看应用的详细使用统计和分析数据</p>
+              <h1 className="text-3xl font-bold text-gray-900">{t('tenantAppStats.title')}</h1>
+              <p className="mt-2 text-gray-600">{t('tenantAppStats.description')}</p>
             </div>
             <div className="flex items-center space-x-3">
               <select
@@ -212,30 +214,30 @@ export default function AppStats() {
                 onChange={(e) => setPeriod(e.target.value)}
                 className="border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
               >
-                <option value="7d">最近7天</option>
-                <option value="30d">最近30天</option>
-                <option value="90d">最近90天</option>
+                <option value="7d">{t('tenantAppStats.period.recent7d')}</option>
+                <option value="30d">{t('tenantAppStats.period.recent30d')}</option>
+                <option value="90d">{t('tenantAppStats.period.recent90d')}</option>
               </select>
             </div>
           </div>
         </div>
 
-        {/* 核心指标卡片 */}
+        {/*  */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* 总用户数 */}
+          {/*  */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">总用户数</p>
+                <p className="text-sm font-medium text-gray-600">{t('tenantAppStats.metrics.totalUsers')}</p>
                 <p className="text-3xl font-bold text-gray-900">{formatNumber(stats.total_users)}</p>
                 <div className="flex items-center mt-2">
                   {stats.new_users > 0 ? (
                     <>
                       <ArrowTrendingUpIcon className="w-4 h-4 text-green-500 mr-1" />
-                      <span className="text-sm text-green-600">+{stats.new_users} 新增</span>
+                      <span className="text-sm text-green-600">{t('tenantAppStats.metrics.newUsers', { count: stats.new_users })}</span>
                     </>
                   ) : (
-                    <span className="text-sm text-gray-400">暂无新增</span>
+                    <span className="text-sm text-gray-400">{t('tenantAppStats.metrics.noNewUsers')}</span>
                   )}
                 </div>
               </div>
@@ -245,15 +247,15 @@ export default function AppStats() {
             </div>
           </div>
 
-          {/* 活跃用户数 */}
+          {/*  */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">活跃用户</p>
+                <p className="text-sm font-medium text-gray-600">{t('tenantAppStats.metrics.activeUsers')}</p>
                 <p className="text-3xl font-bold text-gray-900">{formatNumber(stats.active_users)}</p>
                 <div className="flex items-center mt-2">
                   <span className="text-sm text-gray-500">
-                    活跃率 {stats.total_users > 0 ? ((stats.active_users / stats.total_users) * 100).toFixed(1) + '%' : '--'}
+                    {t('tenantAppStats.metrics.activeRate')}{' '}{stats.total_users > 0 ? ((stats.active_users / stats.total_users) * 100).toFixed(1) + '%' : '--'}
                   </span>
                 </div>
               </div>
@@ -263,15 +265,15 @@ export default function AppStats() {
             </div>
           </div>
 
-          {/* 今日请求数 */}
+          {/*  */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">今日请求</p>
+                <p className="text-sm font-medium text-gray-600">{t('tenantAppStats.metrics.requestsToday')}</p>
                 <p className="text-3xl font-bold text-gray-900">{formatNumber(stats.requests_today)}</p>
                 <div className="flex items-center mt-2">
                   <span className="text-sm text-gray-500">
-                    本周 {formatNumber(stats.requests_this_week)}
+                    {t('tenantAppStats.metrics.thisWeek')} {formatNumber(stats.requests_this_week)}
                   </span>
                 </div>
               </div>
@@ -281,15 +283,15 @@ export default function AppStats() {
             </div>
           </div>
 
-          {/* 平均会话时长 */}
+          {/*  */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">平均会话时长</p>
+                <p className="text-sm font-medium text-gray-600">{t('tenantAppStats.metrics.avgSessionDuration')}</p>
                 <p className="text-3xl font-bold text-gray-900">{formatDuration(stats.avg_session_duration)}</p>
                 <div className="flex items-center mt-2">
                   <span className="text-sm text-gray-500">
-                    转换率 {formatPercentage(stats.conversion_rate)}
+                    {t('tenantAppStats.metrics.conversionRate')} {formatPercentage(stats.conversion_rate)}
                   </span>
                 </div>
               </div>
@@ -300,12 +302,12 @@ export default function AppStats() {
           </div>
         </div>
 
-        {/* 图表和详细数据 */}
+        {/*  */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* 用户增长趋势 */}
+          {/*  */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-medium text-gray-900">用户增长趋势</h3>
+              <h3 className="text-lg font-medium text-gray-900">{t('tenantAppStats.sections.userGrowth')}</h3>
               <CalendarIcon className="w-5 h-5 text-gray-400" />
             </div>
             
@@ -314,14 +316,14 @@ export default function AppStats() {
                 {stats.user_growth.slice(-7).map((item, index) => (
                   <div key={index} className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">
-                      {new Date(item.date).toLocaleDateString()}
+                      {new Date(item.date).toLocaleDateString(locale)}
                     </span>
                     <div className="flex items-center space-x-4">
                       <span className="text-sm text-blue-600">
-                        +{item.new_users} 新增
+                        {t('tenantAppStats.metrics.newUsers', { count: item.new_users })}
                       </span>
                       <span className="text-sm font-medium text-gray-900">
-                        总计 {formatNumber(item.total_users)}
+                        {t('tenantAppStats.metrics.total')} {formatNumber(item.total_users)}
                       </span>
                     </div>
                   </div>
@@ -330,15 +332,15 @@ export default function AppStats() {
             ) : (
               <div className="text-center py-8">
                 <ChartBarIcon className="mx-auto h-12 w-12 text-gray-300" />
-                <p className="mt-2 text-sm text-gray-500">暂无数据</p>
+                <p className="mt-2 text-sm text-gray-500">{t('tenantAppStats.empty.noData')}</p>
               </div>
             )}
           </div>
 
-          {/* 请求量趋势 */}
+          {/*  */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-medium text-gray-900">请求量趋势</h3>
+              <h3 className="text-lg font-medium text-gray-900">{t('tenantAppStats.sections.requestTrend')}</h3>
               <ArrowTrendingUpIcon className="w-5 h-5 text-gray-400" />
             </div>
             
@@ -347,7 +349,7 @@ export default function AppStats() {
                 {stats.request_timeline.slice(-7).map((item, index) => (
                   <div key={index} className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">
-                      {new Date(item.date).toLocaleDateString()}
+                      {new Date(item.date).toLocaleDateString(locale)}
                     </span>
                     <div className="flex items-center">
                       <div className="w-32 bg-gray-200 rounded-full h-2 mr-3">
@@ -368,14 +370,14 @@ export default function AppStats() {
             ) : (
               <div className="text-center py-8">
                 <ChartBarIcon className="mx-auto h-12 w-12 text-gray-300" />
-                <p className="mt-2 text-sm text-gray-500">暂无数据</p>
+                <p className="mt-2 text-sm text-gray-500">{t('tenantAppStats.empty.noData')}</p>
               </div>
             )}
           </div>
 
-          {/* 热门页面 */}
+          {/*  */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-6">热门页面</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-6">{t('tenantAppStats.sections.topPages')}</h3>
             
             {stats.top_pages && stats.top_pages.length > 0 ? (
               <div className="space-y-4">
@@ -386,14 +388,14 @@ export default function AppStats() {
                         {page.path}
                       </p>
                       <p className="text-sm text-gray-500">
-                        {page.unique_visitors} 独立访客
+                        {t('tenantAppStats.metrics.uniqueVisitors', { count: page.unique_visitors })}
                       </p>
                     </div>
                     <div className="ml-4 text-right">
                       <p className="text-sm font-medium text-gray-900">
                         {formatNumber(page.views)}
                       </p>
-                      <p className="text-sm text-gray-500">浏览量</p>
+                      <p className="text-sm text-gray-500">{t('tenantAppStats.metrics.pageViews')}</p>
                     </div>
                   </div>
                 ))}
@@ -401,18 +403,18 @@ export default function AppStats() {
             ) : (
               <div className="text-center py-8">
                 <DocumentChartBarIcon className="mx-auto h-12 w-12 text-gray-300" />
-                <p className="mt-2 text-sm text-gray-500">暂无页面访问数据</p>
+                <p className="mt-2 text-sm text-gray-500">{t('tenantAppStats.empty.noPageData')}</p>
               </div>
             )}
           </div>
 
-          {/* 用户类型分布 */}
+          {/*  */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-6">用户类型分布</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-6">{t('tenantAppStats.sections.userTypeDistribution')}</h3>
             
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">新用户</span>
+                <span className="text-sm text-gray-600">{t('tenantAppStats.metrics.newUserType')}</span>
                 <div className="flex items-center">
                   <div className="w-24 bg-gray-200 rounded-full h-2 mr-3">
                     <div 
@@ -429,7 +431,7 @@ export default function AppStats() {
               </div>
               
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">回访用户</span>
+                <span className="text-sm text-gray-600">{t('tenantAppStats.metrics.returningUsers')}</span>
                 <div className="flex items-center">
                   <div className="w-24 bg-gray-200 rounded-full h-2 mr-3">
                     <div 
@@ -448,20 +450,20 @@ export default function AppStats() {
 
             <div className="mt-6 pt-4 border-t border-gray-200">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">时间段</span>
+                <span className="text-gray-600">{t('tenantAppStats.metrics.timePeriod')}</span>
                 <span className="font-medium text-gray-900">{getPeriodText(period)}</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* 操作按钮 */}
+        {/*  */}
         <div className="mt-8 flex justify-end space-x-3">
           <Link to={`/tenant/apps/${app.id}`}>
-            <PButton variant="secondary">返回详情</PButton>
+            <PButton variant="secondary">{t('tenantAppStats.actions.backToDetail')}</PButton>
           </Link>
           <Link to={`/tenant/apps/${app.id}/settings`}>
-            <PButton>应用设置</PButton>
+            <PButton>{t('tenantAppStats.actions.appSettings')}</PButton>
           </Link>
         </div>
       </div>

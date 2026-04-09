@@ -23,7 +23,7 @@ const PButton = forwardRef<HTMLButtonElement, PButtonProps>(
     ...props 
   }, ref) => {
     
-    // 基础样式
+    // translatedstyle
     const baseStyles = `
       inline-flex items-center justify-center border font-medium
       focus:outline-none focus:ring-2 focus:ring-offset-2 
@@ -31,7 +31,7 @@ const PButton = forwardRef<HTMLButtonElement, PButtonProps>(
       disabled:opacity-50 disabled:cursor-not-allowed
     `;
 
-    // 变体样式
+    // translatedstyle
     const variantStyles = {
       primary: `
         border-transparent text-white bg-indigo-600 
@@ -59,14 +59,14 @@ const PButton = forwardRef<HTMLButtonElement, PButtonProps>(
       `
     };
 
-    // 尺寸样式
+    // translatedstyle
     const sizeStyles = {
       sm: 'px-3 py-1.5 text-sm rounded-lg',
       md: 'px-4 py-2.5 text-sm rounded-lg',
       lg: 'px-6 py-3 text-base rounded-xl'
     };
 
-    // 宽度样式
+    // translatedstyle
     const widthStyles = fullWidth ? 'w-full' : '';
 
     const buttonClasses = `

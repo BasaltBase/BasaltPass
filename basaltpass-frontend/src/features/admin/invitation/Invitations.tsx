@@ -6,8 +6,10 @@ import PTable, { PTableColumn } from '@ui/PTable'
 import { adminInvitationApi, AdminInvitationBrief } from '@api/admin/invitation'
 import { adminTeamApi } from '@api/admin/team'
 import { FunnelIcon, PlusIcon, ArrowPathIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { useI18n } from '@shared/i18n'
 
 export default function AdminInvitationsPage() {
+  const { t, locale } = useI18n()
   const [list, setList] = useState<AdminInvitationBrief[]>([])
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
@@ -54,32 +56,40 @@ export default function AdminInvitationsPage() {
   }
 
   const removeInvitation = async (inv: AdminInvitationBrief) => {
-    if(!await uiConfirm('确认删除邀请记录?')) return
+    if(!await uiConfirm(t('adminInvitations.confirmDelete'))) return
     await adminInvitationApi.remove(inv.id)
     load()
   }
 
+  const getStatusText = (statusValue: string) => {
+    if (statusValue === 'pending') return t('adminInvitations.status.pending')
+    if (statusValue === 'accepted') return t('adminInvitations.status.accepted')
+    if (statusValue === 'rejected') return t('adminInvitations.status.rejected')
+    if (statusValue === 'revoked') return t('adminInvitations.status.revoked')
+    return statusValue
+  }
+
   const columns: PTableColumn<AdminInvitationBrief>[] = [
     { key: 'id', title: 'ID', dataIndex: 'id', sortable: true, align: 'center' },
-    { key: 'team', title: '团队', align: 'left', render: (inv) => `${inv.team_name}#${inv.team_id}` },
-    { key: 'inviter', title: '邀请人', align: 'center', render: (inv) => inv.inviter_id },
-    { key: 'invitee', title: '被邀请人', align: 'center', render: (inv) => inv.invitee_id },
+    { key: 'team', title: t('adminInvitations.columns.team'), align: 'left', render: (inv) => `${inv.team_name}#${inv.team_id}` },
+    { key: 'inviter', title: t('adminInvitations.columns.inviter'), align: 'center', render: (inv) => inv.inviter_id },
+    { key: 'invitee', title: t('adminInvitations.columns.invitee'), align: 'center', render: (inv) => inv.invitee_id },
     {
-      key: 'status', title: '状态', align: 'center', render: (inv) => (
+      key: 'status', title: t('adminInvitations.columns.status'), align: 'center', render: (inv) => (
         <PBadge variant={inv.status==='pending'?'warning':inv.status==='accepted'?'success':inv.status==='rejected'?'error':'default'}>
-          {inv.status}
+          {getStatusText(inv.status)}
         </PBadge>
       )
     },
-    { key: 'remark', title: '备注', className: 'max-w-xs truncate', render: (inv) => inv.remark || '' },
-    { key: 'created_at', title: '创建时间', sortable: true, render: (inv) => new Date(inv.created_at).toLocaleString() },
+    { key: 'remark', title: t('adminInvitations.columns.remark'), className: 'max-w-xs truncate', render: (inv) => inv.remark || '' },
+    { key: 'created_at', title: t('adminInvitations.columns.createdAt'), sortable: true, render: (inv) => new Date(inv.created_at).toLocaleString(locale) },
     {
-      key: 'actions', title: '操作', align: 'right', render: (inv) => (
+      key: 'actions', title: t('adminInvitations.columns.actions'), align: 'right', render: (inv) => (
         <div className='flex items-center justify-end space-x-2'>
           {inv.status==='pending' && <>
-            <PButton size='sm' variant='secondary' onClick={()=>updateStatus(inv,'accepted')}>接受</PButton>
-            <PButton size='sm' variant='ghost' onClick={()=>updateStatus(inv,'rejected')}>拒绝</PButton>
-            <PButton size='sm' variant='ghost' onClick={()=>updateStatus(inv,'revoked')}>撤回</PButton>
+            <PButton size='sm' variant='secondary' onClick={()=>updateStatus(inv,'accepted')}>{t('adminInvitations.actions.accept')}</PButton>
+            <PButton size='sm' variant='ghost' onClick={()=>updateStatus(inv,'rejected')}>{t('adminInvitations.actions.reject')}</PButton>
+            <PButton size='sm' variant='ghost' onClick={()=>updateStatus(inv,'revoked')}>{t('adminInvitations.actions.revoke')}</PButton>
           </>}
           <PButton size='sm' variant='danger' leftIcon={<TrashIcon className='h-4 w-4'/>} onClick={()=>removeInvitation(inv)}/>
         </div>
@@ -88,26 +98,26 @@ export default function AdminInvitationsPage() {
   ]
 
   return (
-    <AdminLayout title="邀请管理" actions={<PButton size='sm' leftIcon={<PlusIcon className='h-4 w-4'/>} onClick={()=>setShowCreate(true)}>新建邀请</PButton>}>
+    <AdminLayout title={t('adminInvitations.title')} actions={<PButton size='sm' leftIcon={<PlusIcon className='h-4 w-4'/>} onClick={()=>setShowCreate(true)}>{t('adminInvitations.actions.createInvitation')}</PButton>}>
       <div className='space-y-6'>
         <div className='flex flex-wrap items-center gap-4'>
-          <div className='w-56'><PInput placeholder='搜索备注/团队' value={keyword} onChange={e=>{setPage(1); setKeyword(e.target.value)}}/></div>
+          <div className='w-56'><PInput placeholder={t('adminInvitations.filters.searchPlaceholder')} value={keyword} onChange={e=>{setPage(1); setKeyword(e.target.value)}}/></div>
           <div className='w-40'>
             <PSelect value={status} onChange={e=>{setPage(1); setStatus(e.target.value)}}>
-              <option value=''>全部状态</option>
-              <option value='pending'>待处理</option>
-              <option value='accepted'>已接受</option>
-              <option value='rejected'>已拒绝</option>
-              <option value='revoked'>已撤回</option>
+              <option value=''>{t('adminInvitations.filters.allStatus')}</option>
+              <option value='pending'>{t('adminInvitations.status.pending')}</option>
+              <option value='accepted'>{t('adminInvitations.status.accepted')}</option>
+              <option value='rejected'>{t('adminInvitations.status.rejected')}</option>
+              <option value='revoked'>{t('adminInvitations.status.revoked')}</option>
             </PSelect>
           </div>
           <div className='w-48'>
             <PSelect value={teamId} onChange={e=>{setPage(1); setTeamId(e.target.value)}}>
-              <option value=''>全部团队</option>
+              <option value=''>{t('adminInvitations.filters.allTeams')}</option>
               {teamOptions.map(o=> <option key={o.value} value={o.value}>{o.label}</option>)}
             </PSelect>
           </div>
-          <PButton variant='ghost' size='sm' leftIcon={<FunnelIcon className='h-4 w-4'/>}>筛选</PButton>
+          <PButton variant='ghost' size='sm' leftIcon={<FunnelIcon className='h-4 w-4'/>}>{t('adminInvitations.filters.filter')}</PButton>
         </div>
         <PTable
           columns={columns}
@@ -127,16 +137,16 @@ export default function AdminInvitationsPage() {
       {showCreate && (
         <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/30'>
           <div className='bg-white rounded-lg shadow-lg w-full max-w-md p-6 space-y-4'>
-            <h2 className='text-lg font-semibold'>新建邀请</h2>
+            <h2 className='text-lg font-semibold'>{t('adminInvitations.createModal.title')}</h2>
             <PSelect value={createForm.team_id} onChange={e=>setCreateForm(f=>({...f, team_id:e.target.value}))}>
-              <option value=''>选择团队</option>
+              <option value=''>{t('adminInvitations.createModal.selectTeam')}</option>
               {teamOptions.map(o=> <option key={o.value} value={o.value}>{o.label}</option>)}
             </PSelect>
-            <PInput placeholder='被邀请用户ID(多个逗号分隔)' value={createForm.invitee_ids} onChange={e=>setCreateForm(f=>({...f, invitee_ids:e.target.value}))}/>
-            <PInput placeholder='备注' value={createForm.remark} onChange={e=>setCreateForm(f=>({...f, remark:e.target.value}))}/>
+            <PInput placeholder={t('adminInvitations.createModal.inviteePlaceholder')} value={createForm.invitee_ids} onChange={e=>setCreateForm(f=>({...f, invitee_ids:e.target.value}))}/>
+            <PInput placeholder={t('adminInvitations.createModal.remarkPlaceholder')} value={createForm.remark} onChange={e=>setCreateForm(f=>({...f, remark:e.target.value}))}/>
             <div className='flex justify-end space-x-2'>
-              <PButton variant='ghost' onClick={()=>setShowCreate(false)}>取消</PButton>
-              <PButton onClick={handleCreate}>创建</PButton>
+              <PButton variant='ghost' onClick={()=>setShowCreate(false)}>{t('adminInvitations.actions.cancel')}</PButton>
+              <PButton onClick={handleCreate}>{t('adminInvitations.actions.create')}</PButton>
             </div>
           </div>
         </div>

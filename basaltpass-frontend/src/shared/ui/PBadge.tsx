@@ -13,13 +13,13 @@ type BadgeVariant =
 type BadgeSize = 'sm' | 'md'
 
 interface PBadgeProps {
-  /** 语义色变体 */
+  /** translated */
   variant?: BadgeVariant
-  /** 尺寸 */
+  /** translated */
   size?: BadgeSize
-  /** 可选图标（渲染在文字左侧） */
+  /** cantranslated（translated） */
   icon?: React.ReactNode
-  /** 是否显示圆点 */
+  /** isnotranslated */
   dot?: boolean
   className?: string
   children: React.ReactNode

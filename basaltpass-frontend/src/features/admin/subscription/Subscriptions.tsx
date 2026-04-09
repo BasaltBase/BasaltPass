@@ -7,6 +7,7 @@ import { adminTenantApi, AdminTenantResponse } from '@api/admin/tenant'
 import useDebounce from '@hooks/useDebounce'
 import UserTooltip from '@ui/UserTooltip'
 import { ROUTES } from '@constants'
+import { useI18n } from '@i18n/useI18n'
 
 interface Subscription {
   ID: number
@@ -30,11 +31,12 @@ interface Subscription {
     Email: string
     Nickname: string
   }
-  // 新增：租户ID
+  // tenant ID
   TenantID?: number
 }
 
 export default function AdminSubscriptions() {
+  const { t, locale } = useI18n()
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedSubscription, setSelectedSubscription] = useState<Subscription | null>(null)
@@ -45,7 +47,7 @@ export default function AdminSubscriptions() {
   const [searchTerm, setSearchTerm] = useState('')
   const debouncedSearchTerm = useDebounce(searchTerm, 200)
   const [statusFilter, setStatusFilter] = useState('')
-  // 新增：租户筛选
+  // tenant filter
   const [tenants, setTenants] = useState<AdminTenantResponse[]>([])
   const [selectedTenantId, setSelectedTenantId] = useState<string>('')
 
@@ -56,12 +58,17 @@ export default function AdminSubscriptions() {
   }, [tenants])
 
   const renderTenantInfo = (tenantId?: number) => {
-    if (!tenantId) return <span className="text-gray-400">系统级</span>
-    const t = tenantMap.get(tenantId)
-    if (!t) return <span className="text-gray-400">租户 #{tenantId}</span>
+    if (!tenantId) return <span className="text-gray-400">{t('adminSubscriptionSubscriptions.tenant.systemLevel')}</span>
+    const tenant = tenantMap.get(tenantId)
+    if (!tenant) return <span className="text-gray-400">{t('adminSubscriptionSubscriptions.tenant.tenantId', { id: tenantId })}</span>
     return (
       <span>
-        租户: {t.name} ({t.code}) · 计划: {t.plan} · 状态: {t.status}
+        {t('adminSubscriptionSubscriptions.tenant.summary', {
+          name: tenant.name,
+          code: tenant.code,
+          plan: tenant.plan,
+          status: tenant.status,
+        })}
       </span>
     )
   }
@@ -80,7 +87,7 @@ export default function AdminSubscriptions() {
       const res = await adminTenantApi.getTenantList({ page: 1, limit: 1000 })
       setTenants(res.tenants || [])
     } catch (e) {
-      console.error('获取租户列表失败:', e)
+      console.error(t('adminSubscriptionSubscriptions.logs.fetchTenantsFailed'), e)
     }
   }
 
@@ -92,7 +99,6 @@ export default function AdminSubscriptions() {
       const res = await adminListSubscriptions(params)
       
       
-      // 根据实际API响应结构调整数据提取
       let list: Subscription[] = []
       if (res.data && res.data.data && Array.isArray(res.data.data)) {
         list = res.data.data
@@ -102,7 +108,7 @@ export default function AdminSubscriptions() {
       
       setSubscriptions(list)
     } catch (error) {
-      console.error('获取订阅列表失败:', error)
+      console.error(t('adminSubscriptionSubscriptions.logs.fetchSubscriptionsFailed'), error)
     } finally {
       setLoading(false)
     }
@@ -123,7 +129,7 @@ export default function AdminSubscriptions() {
       setShowCancelModal(false)
       setCancelTarget(null)
     } catch (error) {
-      console.error('取消订阅失败:', error)
+      console.error(t('adminSubscriptionSubscriptions.logs.cancelSubscriptionFailed'), error)
     } finally {
       setCanceling(false)
     }
@@ -140,13 +146,11 @@ export default function AdminSubscriptions() {
       
       const res = await adminGetSubscription(subscription.ID)
       
-      // 修复：API返回格式是 {data: subscription}，所以直接使用 res.data
       setSelectedSubscription(res.data)
       setShowDetailModal(true)
       
     } catch (error) {
-      console.error('获取订阅详情失败:', error)
-      // 如果获取详情失败，就用列表中的数据
+      console.error(t('adminSubscriptionSubscriptions.logs.fetchSubscriptionDetailFailed'), error)
       
       setSelectedSubscription(subscription)
       setShowDetailModal(true)
@@ -161,12 +165,12 @@ export default function AdminSubscriptions() {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { text: string; className: string }> = {
-      trialing: { text: '试用中', className: 'bg-yellow-100 text-yellow-800' },
-      active: { text: '进行中', className: 'bg-green-100 text-green-800' },
-      paused: { text: '已暂停', className: 'bg-gray-100 text-gray-800' },
-      canceled: { text: '已取消', className: 'bg-red-100 text-red-800' },
-      overdue: { text: '逾期', className: 'bg-orange-100 text-orange-800' },
-      expired: { text: '已过期', className: 'bg-red-100 text-red-800' }
+      trialing: { text: t('adminSubscriptionSubscriptions.status.trialing'), className: 'bg-yellow-100 text-yellow-800' },
+      active: { text: t('adminSubscriptionSubscriptions.status.active'), className: 'bg-green-100 text-green-800' },
+      paused: { text: t('adminSubscriptionSubscriptions.status.paused'), className: 'bg-gray-100 text-gray-800' },
+      canceled: { text: t('adminSubscriptionSubscriptions.status.canceled'), className: 'bg-red-100 text-red-800' },
+      overdue: { text: t('adminSubscriptionSubscriptions.status.overdue'), className: 'bg-orange-100 text-orange-800' },
+      expired: { text: t('adminSubscriptionSubscriptions.status.expired'), className: 'bg-red-100 text-red-800' }
     }
     const config = statusMap[status] || { text: status, className: 'bg-gray-100 text-gray-800' }
     return (
@@ -180,11 +184,11 @@ export default function AdminSubscriptions() {
     try {
       const date = new Date(dateString)
       if (isNaN(date.getTime())) {
-        return '无效日期'
+        return t('adminSubscriptionSubscriptions.common.invalidDate')
       }
-      return date.toLocaleDateString('zh-CN')
+      return date.toLocaleDateString(locale)
     } catch (error) {
-      return '无效日期'
+      return t('adminSubscriptionSubscriptions.common.invalidDate')
     }
   }
 
@@ -202,35 +206,33 @@ export default function AdminSubscriptions() {
 
   if (loading) {
     return (
-      <AdminLayout title="订阅管理">
+      <AdminLayout title={t('adminSubscriptionSubscriptions.layoutTitle')}>
         <div className="flex justify-center items-center h-64">
-          <div className="text-lg">加载中...</div>
+          <div className="text-lg">{t('adminSubscriptionSubscriptions.common.loading')}</div>
         </div>
       </AdminLayout>
     )
   }
 
   return (
-    <AdminLayout title="订阅管理">
+    <AdminLayout title={t('adminSubscriptionSubscriptions.layoutTitle')}>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-semibold text-gray-900">订阅管理</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">{t('adminSubscriptionSubscriptions.title')}</h1>
           <div className="flex space-x-4 items-center">
-            {/* 新增：租户筛选 */}
             <select
               value={selectedTenantId}
               onChange={(e) => setSelectedTenantId(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-md text-sm"
             >
-              <option value="">全部租户</option>
+              <option value="">{t('adminSubscriptionSubscriptions.filters.allTenants')}</option>
               {tenants.map(t => (
                 <option key={t.id} value={t.id}>{t.name} ({t.code})</option>
               ))}
             </select>
-            {/* 现有搜索与状态过滤 */}
             <input
               type="text"
-              placeholder="搜索订阅ID、用户ID、产品名称..."
+              placeholder={t('adminSubscriptionSubscriptions.filters.searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-md text-sm"
@@ -240,13 +242,13 @@ export default function AdminSubscriptions() {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-md text-sm"
             >
-              <option value="">全部状态</option>
-              <option value="trialing">试用中</option>
-              <option value="active">进行中</option>
-              <option value="paused">已暂停</option>
-              <option value="canceled">已取消</option>
-              <option value="overdue">逾期</option>
-              <option value="expired">已过期</option>
+              <option value="">{t('adminSubscriptionSubscriptions.filters.allStatuses')}</option>
+              <option value="trialing">{t('adminSubscriptionSubscriptions.status.trialing')}</option>
+              <option value="active">{t('adminSubscriptionSubscriptions.status.active')}</option>
+              <option value="paused">{t('adminSubscriptionSubscriptions.status.paused')}</option>
+              <option value="canceled">{t('adminSubscriptionSubscriptions.status.canceled')}</option>
+              <option value="overdue">{t('adminSubscriptionSubscriptions.status.overdue')}</option>
+              <option value="expired">{t('adminSubscriptionSubscriptions.status.expired')}</option>
             </select>
           </div>
         </div>
@@ -254,7 +256,7 @@ export default function AdminSubscriptions() {
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
           <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
             <p className="text-sm text-gray-600">
-              共 {filteredSubscriptions.length} 条订阅记录
+              {t('adminSubscriptionSubscriptions.meta.count', { count: filteredSubscriptions.length })}
             </p>
           </div>
           <ul className="divide-y divide-gray-200">
@@ -267,12 +269,12 @@ export default function AdminSubscriptions() {
                         <div className="flex-1">
                           <div className="flex items-center space-x-2">
                             <p className="text-sm font-medium text-indigo-600">
-                              订阅 #{subscription.ID}
+                              {t('adminSubscriptionSubscriptions.meta.subscriptionId', { id: subscription.ID })}
                             </p>
                             {getStatusBadge(subscription.Status)}
                           </div>
                           <p className="mt-1 text-sm text-gray-900">
-                            用户:
+                            {t('adminSubscriptionSubscriptions.meta.userLabel')}
                             <span className="ml-2">
                               <UserTooltip
                                 userId={subscription.UserID}
@@ -283,8 +285,8 @@ export default function AdminSubscriptions() {
                             </span>
                           </p>
                           <p className="mt-1 text-sm text-gray-500">
-                            {subscription.CurrentPrice?.Plan?.Product?.Name || '未知产品'} - 
-                            {subscription.CurrentPrice?.Plan?.DisplayName || '未知套餐'}
+                            {subscription.CurrentPrice?.Plan?.Product?.Name || t('adminSubscriptionSubscriptions.common.unknownProduct')} - 
+                            {subscription.CurrentPrice?.Plan?.DisplayName || t('adminSubscriptionSubscriptions.common.unknownPlan')}
                             {subscription.CurrentPrice && (
                               <span className="ml-2">
                                 {formatPrice(subscription.CurrentPrice.AmountCents, subscription.CurrentPrice.Currency)}
@@ -292,9 +294,8 @@ export default function AdminSubscriptions() {
                             )}
                           </p>
                           <p className="mt-1 text-sm text-gray-500">
-                            周期结束: {formatDate(subscription.CurrentPeriodEnd)}
+                            {t('adminSubscriptionSubscriptions.meta.periodEnd', { date: formatDate(subscription.CurrentPeriodEnd) })}
                           </p>
-                          {/* 新增：租户信息 */}
                           <p className="mt-1 text-xs text-gray-500">
                             {renderTenantInfo(subscription.TenantID as unknown as number)}
                           </p>
@@ -306,14 +307,14 @@ export default function AdminSubscriptions() {
                         onClick={() => handleViewDetail(subscription)}
                         className="text-indigo-600 hover:text-indigo-900 text-sm"
                       >
-                        详情
+                        {t('adminSubscriptionSubscriptions.actions.detail')}
                       </button>
                       {(subscription.Status === 'trialing' || subscription.Status === 'active') && (
                         <button
                           onClick={() => handleCancelClick(subscription)}
                           className="text-red-600 hover:text-red-900 text-sm"
                         >
-                          取消
+                          {t('adminSubscriptionSubscriptions.actions.cancel')}
                         </button>
                       )}
                     </div>
@@ -322,19 +323,18 @@ export default function AdminSubscriptions() {
               ))
             ) : (
               <li className="px-4 py-8 text-center text-gray-500">
-                暂无订阅数据
+                {t('adminSubscriptionSubscriptions.empty.noData')}
               </li>
             )}
           </ul>
         </div>
 
-      {/* 详情模态框 */}
       {showDetailModal && selectedSubscription && (
         <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10">
           <div className="w-3/4 max-w-4xl p-6 border shadow-lg rounded-md bg-white">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-semibold text-gray-900">
-                订阅详情 #{selectedSubscription.ID}
+                {t('adminSubscriptionSubscriptions.modal.detailTitle', { id: selectedSubscription.ID })}
               </h3>
               <button
                 onClick={() => setShowDetailModal(false)}
@@ -347,13 +347,13 @@ export default function AdminSubscriptions() {
             <div className="grid grid-cols-2 gap-8">
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">订阅状态</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminSubscriptionSubscriptions.fields.subscriptionStatus')}</label>
                   <div>
                     {getStatusBadge(selectedSubscription.Status)}
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">用户ID</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminSubscriptionSubscriptions.fields.userId')}</label>
                   <p className="text-sm text-gray-900">
                     <UserTooltip
                       userId={selectedSubscription.UserID}
@@ -364,23 +364,22 @@ export default function AdminSubscriptions() {
                   </p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">产品信息</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminSubscriptionSubscriptions.fields.productInfo')}</label>
                   <p className="text-sm text-gray-900">
-                    {selectedSubscription.CurrentPrice?.Plan?.Product?.Name || '未知产品'} - 
-                    {selectedSubscription.CurrentPrice?.Plan?.DisplayName || '未知套餐'}
+                    {selectedSubscription.CurrentPrice?.Plan?.Product?.Name || t('adminSubscriptionSubscriptions.common.unknownProduct')} - 
+                    {selectedSubscription.CurrentPrice?.Plan?.DisplayName || t('adminSubscriptionSubscriptions.common.unknownPlan')}
                   </p>
                 </div>
                 {selectedSubscription.CurrentPrice && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">价格</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminSubscriptionSubscriptions.fields.price')}</label>
                     <p className="text-sm text-gray-900">
                       {formatPrice(selectedSubscription.CurrentPrice.AmountCents, selectedSubscription.CurrentPrice.Currency)}
                     </p>
                   </div>
                 )}
-                {/* 新增：租户信息 */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">租户</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminSubscriptionSubscriptions.fields.tenant')}</label>
                   <p className="text-sm text-gray-900">
                     {renderTenantInfo(selectedSubscription.TenantID as unknown as number)}
                   </p>
@@ -389,28 +388,28 @@ export default function AdminSubscriptions() {
               
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">当前周期结束</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminSubscriptionSubscriptions.fields.currentPeriodEnd')}</label>
                   <p className="text-sm text-gray-900">
                     {formatDate(selectedSubscription.CurrentPeriodEnd)}
                   </p>
                 </div>
                 {selectedSubscription.CreatedAt && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">创建时间</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminSubscriptionSubscriptions.fields.createdAt')}</label>
                     <p className="text-sm text-gray-900">
                       {formatDate(selectedSubscription.CreatedAt)}
                     </p>
                   </div>
                 )}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">订阅ID</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminSubscriptionSubscriptions.fields.subscriptionId')}</label>
                   <p className="text-sm text-gray-900">
                     #{selectedSubscription.ID}
                   </p>
                 </div>
                 {selectedSubscription.User?.Nickname && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">用户昵称</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminSubscriptionSubscriptions.fields.userNickname')}</label>
                     <p className="text-sm text-gray-900">
                       {selectedSubscription.User.Nickname}
                     </p>
@@ -428,21 +427,20 @@ export default function AdminSubscriptions() {
                   }}
                   className="px-6 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                 >
-                  取消订阅
+                  {t('adminSubscriptionSubscriptions.actions.cancelSubscription')}
                 </button>
               )}
               <button
                 onClick={() => setShowDetailModal(false)}
                 className="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
               >
-                关闭
+                {t('adminSubscriptionSubscriptions.actions.close')}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* 取消订阅确认模态框 */}
       {showCancelModal && cancelTarget && (
         <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
@@ -451,18 +449,18 @@ export default function AdminSubscriptions() {
                 <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
               </div>
               <h3 className="text-lg font-medium text-gray-900 mt-4">
-                确认取消订阅
+                {t('adminSubscriptionSubscriptions.cancelModal.title')}
               </h3>
               <div className="mt-2 px-7 py-3">
                 <p className="text-sm text-gray-500">
-                  您确定要取消以下订阅吗？
+                  {t('adminSubscriptionSubscriptions.cancelModal.confirmText')}
                 </p>
                 <div className="mt-3 p-3 bg-gray-50 rounded-md">
                   <p className="text-sm font-medium text-gray-900">
-                    订阅 #{cancelTarget.ID}
+                    {t('adminSubscriptionSubscriptions.meta.subscriptionId', { id: cancelTarget.ID })}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
-                    用户:
+                    {t('adminSubscriptionSubscriptions.meta.userLabel')}
                     <span className="ml-1">
                       <UserTooltip
                         userId={cancelTarget.UserID}
@@ -472,15 +470,20 @@ export default function AdminSubscriptions() {
                     </span>
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
-                    {cancelTarget.CurrentPrice?.Plan?.Product?.Name || '未知产品'} - 
-                    {cancelTarget.CurrentPrice?.Plan?.DisplayName || '未知套餐'}
+                    {cancelTarget.CurrentPrice?.Plan?.Product?.Name || t('adminSubscriptionSubscriptions.common.unknownProduct')} - 
+                    {cancelTarget.CurrentPrice?.Plan?.DisplayName || t('adminSubscriptionSubscriptions.common.unknownPlan')}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
-                    当前状态: {cancelTarget.Status === 'trialing' ? '试用中' : '进行中'}
+                    {t('adminSubscriptionSubscriptions.cancelModal.currentStatus', {
+                      status:
+                        cancelTarget.Status === 'trialing'
+                          ? t('adminSubscriptionSubscriptions.status.trialing')
+                          : t('adminSubscriptionSubscriptions.status.active'),
+                    })}
                   </p>
                 </div>
                 <p className="text-sm text-gray-500 mt-3">
-                  取消后，用户将无法继续使用相关服务，直到重新订阅。
+                  {t('adminSubscriptionSubscriptions.cancelModal.warning')}
                 </p>
               </div>
               <div className="flex justify-center space-x-3 mt-4">
@@ -489,14 +492,14 @@ export default function AdminSubscriptions() {
                   disabled={canceling}
                   className="px-4 py-2 bg-gray-300 text-gray-700 text-base font-medium rounded-md shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-50"
                 >
-                  取消
+                  {t('adminSubscriptionSubscriptions.actions.cancel')}
                 </button>
                 <button
                   onClick={handleCancelConfirm}
                   disabled={canceling}
                   className="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50"
                 >
-                  {canceling ? '处理中...' : '确认取消'}
+                  {canceling ? t('adminSubscriptionSubscriptions.actions.processing') : t('adminSubscriptionSubscriptions.actions.confirmCancel')}
                 </button>
               </div>
             </div>

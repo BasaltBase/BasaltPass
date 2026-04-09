@@ -1,6 +1,6 @@
 import client from '../client'
 
-// 用户级别通知接口
+// usertranslatednotificationtranslated
 export interface UserNotification {
   id: number
   user_id: number
@@ -45,9 +45,9 @@ export interface UserNotificationPreferences {
   push_enabled: boolean
 }
 
-// 用户通知API
+// usernotificationAPI
 export const userNotificationApi = {
-  // 获取用户的通知列表
+  // getusertranslatednotificationlist
   getNotifications: (page: number = 1, pageSize: number = 20, filters?: {
     is_read?: boolean
     type?: string
@@ -60,89 +60,89 @@ export const userNotificationApi = {
     return client.get<UserNotificationResponse>('/api/v1/notifications', { params })
   },
 
-  // 获取通知详情
+  // getnotificationdetails
   getNotification: (notificationId: number) => {
     return client.get<{ data: UserNotification }>(`/api/v1/notifications/${notificationId}`)
   },
 
-  // 获取未读通知数量
+  // getnottranslatednotificationtranslated
   getUnreadCount: () => {
     return client.get<{ data: { count: number } }>('/api/v1/notifications/unread-count')
   },
 
-  // 标记通知为已读
+  // translatednotificationtranslatedalreadytranslated
   markAsRead: (notificationId: number) => {
     return client.put(`/api/v1/notifications/${notificationId}/read`)
   },
 
-  // 标记多个通知为已读
+  // translatednotificationtranslatedalreadytranslated
   markMultipleAsRead: (notificationIds: number[]) => {
     return client.put('/api/v1/notifications/mark-read', { ids: notificationIds })
   },
 
-  // 标记所有通知为已读
+  // translatedhasnotificationtranslatedalreadytranslated
   markAllAsRead: () => {
     return client.put('/api/v1/notifications/mark-all-read')
   },
 
-  // 删除通知
+  // deletenotification
   deleteNotification: (notificationId: number) => {
     return client.delete(`/api/v1/notifications/${notificationId}`)
   },
 
-  // 批量删除通知
+  // translateddeletenotification
   batchDeleteNotifications: (notificationIds: number[]) => {
     return client.post('/api/v1/notifications/batch-delete', { ids: notificationIds })
   },
 
-  // 清空所有已读通知
+  // translatedhasalreadytranslatednotification
   clearReadNotifications: () => {
     return client.delete('/api/v1/notifications/clear-read')
   },
 
-  // 获取通知设置
+  // getnotificationtranslated
   getNotificationSettings: () => {
     return client.get<{ data: UserNotificationSettings }>('/api/v1/notifications/settings')
   },
 
-  // 更新通知设置
+  // updatenotificationtranslated
   updateNotificationSettings: (settings: Partial<UserNotificationSettings>) => {
     return client.put('/api/v1/notifications/settings', settings)
   },
 
-  // 获取应用通知偏好设置
+  // getappnotificationtranslated
   getNotificationPreferences: () => {
     return client.get<{ data: UserNotificationPreferences[] }>('/api/v1/notifications/preferences')
   },
 
-  // 更新应用通知偏好设置
+  // updateappnotificationtranslated
   updateNotificationPreferences: (appId: number, preferences: Partial<UserNotificationPreferences>) => {
     return client.put(`/api/v1/notifications/preferences/${appId}`, preferences)
   },
 
-  // 测试通知设置
+  // translatednotificationtranslated
   testNotificationSettings: (type: 'email' | 'sms' | 'push') => {
     return client.post('/api/v1/notifications/test', { type })
   },
 
-  // 获取重要通知列表
+  // gettranslatednotificationlist
   getImportantNotifications: (page: number = 1, pageSize: number = 20) => {
     return client.get<UserNotificationResponse>('/api/v1/notifications/important', {
       params: { page, page_size: pageSize }
     })
   },
 
-  // 标记通知为重要
+  // translatednotificationtranslated
   markAsImportant: (notificationId: number) => {
     return client.put(`/api/v1/notifications/${notificationId}/important`)
   },
 
-  // 取消标记重要
+  // canceltranslated
   unmarkAsImportant: (notificationId: number) => {
     return client.delete(`/api/v1/notifications/${notificationId}/important`)
   },
 
-  // 订阅/取消订阅应用通知
+  // subscription/cancelsubscriptionappnotification
   subscribeApp: (appId: number) => {
     return client.post(`/api/v1/notifications/subscribe/${appId}`)
   },

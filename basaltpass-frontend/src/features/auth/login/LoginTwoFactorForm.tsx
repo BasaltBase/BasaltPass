@@ -2,6 +2,7 @@ import { PAlert, PButton, PInput } from '@ui'
 import type { FormEventHandler, RefObject } from 'react'
 import { getTwoFactorPresentation } from '../tenant-login/twoFactor'
 import type { LoginTwoFactorMethod } from './types'
+import { useI18n } from '@shared/i18n'
 
 interface LoginTwoFactorFormProps {
   available2FAMethods: LoginTwoFactorMethod[]
@@ -34,6 +35,8 @@ export function LoginTwoFactorForm({
   twoFAType,
   verifySecondFactor,
 }: LoginTwoFactorFormProps) {
+  const { t } = useI18n()
+
   const renderInputForm = () => {
     if (twoFAType === 'totp') {
       return (
@@ -45,8 +48,8 @@ export function LoginTwoFactorForm({
               type="text"
               required
               maxLength={6}
-              label="二步验证码"
-              placeholder="请输入6位验证码"
+              label={t('auth.twoFactor.codeLabel')}
+              placeholder={t('auth.twoFactor.codePlaceholder')}
               inputMode="numeric"
               autoComplete="one-time-code"
               ref={totpInputRef}
@@ -62,7 +65,7 @@ export function LoginTwoFactorForm({
           </div>
           <div>
             <PButton type="submit" disabled={isLoading} variant="primary" fullWidth loading={isLoading}>
-              验证登录
+              {t('auth.twoFactor.verifyLogin')}
             </PButton>
           </div>
         </form>
@@ -78,15 +81,15 @@ export function LoginTwoFactorForm({
               name="email-code"
               type="text"
               required
-              label="邮箱验证码"
-              placeholder="请输入邮箱收到的验证码"
+              label={t('auth.twoFactor.emailCodeLabel')}
+              placeholder={t('auth.twoFactor.emailCodePlaceholder')}
               value={emailCode}
               onChange={(event) => setEmailCode(event.target.value)}
             />
           </div>
           <div>
             <PButton type="submit" disabled={isLoading} variant="primary" fullWidth loading={isLoading}>
-              验证登录
+              {t('auth.twoFactor.verifyLogin')}
             </PButton>
           </div>
         </form>
@@ -98,7 +101,7 @@ export function LoginTwoFactorForm({
       return (
         <form className="space-y-6" onSubmit={submit2FAVerify}>
           <div className="space-y-4">
-            <PAlert variant="info" title="使用Passkey进行二次验证" message="点击验证后，您的设备将提示您进行生物识别验证或使用安全密钥。" />
+            <PAlert variant="info" title={t('auth.twoFactor.passkeyInfoTitle')} message={t('auth.twoFactor.passkeyInfoMessage')} />
           </div>
           <div>
             <PButton
@@ -109,7 +112,7 @@ export function LoginTwoFactorForm({
               loading={isLoading}
               leftIcon={<Icon className="h-5 w-5" />}
             >
-              使用Passkey验证
+              {t('auth.twoFactor.passkeyButton')}
             </PButton>
           </div>
         </form>
@@ -126,10 +129,10 @@ export function LoginTwoFactorForm({
 
     return (
       <div>
-        <h3 className="mb-4 text-lg font-medium text-gray-900">选择验证方式</h3>
+        <h3 className="mb-4 text-lg font-medium text-gray-900">{t('auth.twoFactor.chooseMethod')}</h3>
         <div className="space-y-3">
           {available2FAMethods.map((method) => {
-            const { icon: Icon, label } = getTwoFactorPresentation(method)
+            const { icon: Icon, labelKey } = getTwoFactorPresentation(method)
             const isSelected = method === twoFAType
 
             return (
@@ -147,7 +150,7 @@ export function LoginTwoFactorForm({
                 }`}
               >
                 <span className={`font-medium ${isSelected ? 'text-white' : 'text-gray-900'}`}>
-                  {label}
+                  {t(labelKey)}
                 </span>
                 {isSelected && (
                   <div className="ml-auto">
@@ -163,14 +166,15 @@ export function LoginTwoFactorForm({
   }
 
   const renderBody = () => {
-    const { label } = getTwoFactorPresentation(twoFAType)
+    const { labelKey } = getTwoFactorPresentation(twoFAType)
+    const methodLabel = t(labelKey)
 
     if (available2FAMethods.length > 1) {
       return (
         <div className="space-y-6">
           {renderMethodSelection()}
           <div className="border-t pt-6">
-            <h4 className="mb-4 text-md font-medium text-gray-900">使用 {label} 验证</h4>
+            <h4 className="mb-4 text-md font-medium text-gray-900">{t('auth.twoFactor.useMethod', { method: methodLabel })}</h4>
             {renderInputForm()}
           </div>
         </div>
@@ -180,8 +184,8 @@ export function LoginTwoFactorForm({
     return (
       <div className="space-y-6">
         <div>
-          <h3 className="mb-2 text-lg font-medium text-gray-900">二次验证</h3>
-          <p className="text-sm text-gray-600">请使用 {label} 完成验证</p>
+          <h3 className="mb-2 text-lg font-medium text-gray-900">{t('auth.twoFactor.title')}</h3>
+          <p className="text-sm text-gray-600">{t('auth.twoFactor.subtitle', { method: methodLabel })}</p>
         </div>
         {renderInputForm()}
       </div>
@@ -192,13 +196,13 @@ export function LoginTwoFactorForm({
     <div className="mt-6">
       {error && (
         <div className="mb-6">
-          <PAlert variant="error" title="登录失败" message={error} />
+          <PAlert variant="error" title={t('auth.login.errorTitle')} message={error} />
         </div>
       )}
       {renderBody()}
       <div className="mt-4">
         <PButton type="button" variant="ghost" fullWidth onClick={resetToPasswordStep}>
-          返回重新输入账号信息
+          {t('auth.twoFactor.backToPassword')}
         </PButton>
       </div>
     </div>

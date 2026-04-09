@@ -1,6 +1,6 @@
 import client from '../client'
 
-// 租户相关的API接口
+// tenanttranslatedAPItranslated
 
 export interface Tenant {
   id: number | string
@@ -90,15 +90,15 @@ export interface LivenessCheckResponse {
   checked_at: string
 }
 
-// 租户管理员API (/admin)
+// tenantmanagementtranslatedAPI (/admin)
 export const tenantApi = {
-  // 获取当前租户详细信息（控制台专用）
+  // gettranslatedtenanttranslatedinfo（translated）
   async getTenantInfo(): Promise<{ data: TenantInfo }> {
     const response = await client.get('/api/v1/tenant/info')
     return response.data
   },
 
-  // 调试用户状态 - 临时调试方法
+  // translateduserstatus - translated
   async debugUserStatus() {
     const response = await client.get('/api/v1/user/debug')
     return response.data
@@ -110,9 +110,9 @@ export const tenantApi = {
   },
 }
 
-// 租户级别API (/tenant) - 用于租户自己获取信息
+// tenanttranslatedAPI (/tenant) - translatedtenanttranslatedgetinfo
 export const tenantSelfApi = {
-  // 获取当前租户信息
+  // gettranslatedtenantinfo
   async getTenantInfo(): Promise<{ data: TenantInfo }> {
     const response = await client.get('/api/v1/tenant/info')
     return response.data

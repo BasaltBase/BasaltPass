@@ -13,11 +13,13 @@ import {
   listTenantUserSubscriptions,
   getTenantUserSubscription,
 } from '@api/tenant/subscription'
+import { useI18n } from '@shared/i18n'
 import { PInput, PSelect, PButton, PTextarea, PBadge, Modal, PPageHeader } from '@ui'
 import useDebounce from '@hooks/useDebounce'
 import { ROUTES } from '@constants'
 
 export default function TenantSubscriptions() {
+  const { t, locale } = useI18n()
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -42,7 +44,7 @@ export default function TenantSubscriptions() {
       const data = await listTenantUserSubscriptions(params)
       setSubscriptions(data.data || [])
     } catch (error) {
-      console.error('获取订阅列表失败:', error)
+      console.error(t('tenantSubscriptionSubscriptions.logs.fetchFailed'), error)
     } finally {
       setLoading(false)
     }
@@ -68,7 +70,7 @@ export default function TenantSubscriptions() {
       setCancelTarget(null)
       setCancelReason('')
     } catch (error) {
-      console.error('取消订阅失败:', error)
+      console.error(t('tenantSubscriptionSubscriptions.logs.cancelFailed'), error)
     } finally {
       setCancelling(false)
     }
@@ -86,7 +88,7 @@ export default function TenantSubscriptions() {
   })
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('zh-CN')
+    return new Date(dateString).toLocaleDateString(locale)
   }
 
   const getStatusBadge = (status: string) => {
@@ -106,7 +108,7 @@ export default function TenantSubscriptions() {
 
   if (loading) {
     return (
-      <TenantLayout title="订阅管理">
+      <TenantLayout title={t('tenantSubscriptionSubscriptions.layoutTitle')}>
         <div className="animate-pulse">
           <div className="overflow-hidden rounded-xl bg-white shadow-sm">
             <ul className="divide-y divide-gray-200">
@@ -129,21 +131,21 @@ export default function TenantSubscriptions() {
   }
 
   return (
-    <TenantLayout title="订阅管理">
+    <TenantLayout title={t('tenantSubscriptionSubscriptions.layoutTitle')}>
       <div className="space-y-6">
         <PPageHeader
-          title="订阅管理"
-          description="查看、筛选并管理所有订阅"
+          title={t('tenantSubscriptionSubscriptions.header.title')}
+          description={t('tenantSubscriptionSubscriptions.header.description')}
         />
 
-        {/* 搜索和过滤 */}
+        {/*  */}
         <div className="rounded-xl bg-white p-4 shadow-sm">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <PInput
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="搜索订阅ID、客户ID或产品名称..."
+                placeholder={t('tenantSubscriptionSubscriptions.search.placeholder')}
                 icon={<MagnifyingGlassIcon className="h-5 w-5" />}
               />
             </div>
@@ -152,12 +154,12 @@ export default function TenantSubscriptions() {
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
-                <option value="">所有状态</option>
-                <option value="active">活跃</option>
-                <option value="canceled">已取消</option>
-                <option value="paused">已暂停</option>
-                <option value="past_due">逾期</option>
-                <option value="unpaid">未支付</option>
+                <option value="">{t('tenantSubscriptionSubscriptions.filters.allStatus')}</option>
+                <option value="active">{t('tenantSubscriptionSubscriptions.filters.active')}</option>
+                <option value="canceled">{t('tenantSubscriptionSubscriptions.filters.canceled')}</option>
+                <option value="paused">{t('tenantSubscriptionSubscriptions.filters.paused')}</option>
+                <option value="past_due">{t('tenantSubscriptionSubscriptions.filters.pastDue')}</option>
+                <option value="unpaid">{t('tenantSubscriptionSubscriptions.filters.unpaid')}</option>
               </PSelect>
             </div>
             {(searchTerm || statusFilter) && (
@@ -169,13 +171,13 @@ export default function TenantSubscriptions() {
                 variant="secondary"
                 size="sm"
               >
-                清除
+                {t('tenantSubscriptionSubscriptions.actions.clear')}
               </PButton>
             )}
           </div>
         </div>
 
-        {/* 订阅列表 */}
+        {/*  */}
         <div className="overflow-hidden rounded-xl bg-white shadow-sm">
           <ul className="divide-y divide-gray-200">
             {filteredSubscriptions.length > 0 ? (
@@ -188,29 +190,29 @@ export default function TenantSubscriptions() {
                           <div className="flex-1">
                             <div className="flex items-center space-x-2">
                               <p className="text-sm font-medium text-blue-600">
-                                订阅 #{subscription.ID}
+                                {t('tenantSubscriptionSubscriptions.fields.subscriptionId', { id: subscription.ID })}
                               </p>
                               {getStatusBadge(subscription.Status)}
                             </div>
                             <div className="mt-1 flex items-center space-x-4 text-sm text-gray-500">
-                              <span>客户ID: {subscription.UserID}</span>
+                              <span>{t('tenantSubscriptionSubscriptions.fields.customerId')}: {subscription.UserID}</span>
                               <span>•</span>
                               <span>
-                                产品: {subscription.CurrentPrice?.Plan?.Product?.Name} - {subscription.CurrentPrice?.Plan?.DisplayName}
+                                {t('tenantSubscriptionSubscriptions.fields.product')}: {subscription.CurrentPrice?.Plan?.Product?.Name} - {subscription.CurrentPrice?.Plan?.DisplayName}
                               </span>
                               <span>•</span>
                               <span>
-                                价格: {tenantSubscriptionAPI.formatPrice(subscription.CurrentPrice?.AmountCents || 0, subscription.CurrentPrice?.Currency || 'CNY')}
+                                {t('tenantSubscriptionSubscriptions.fields.price')}: {tenantSubscriptionAPI.formatPrice(subscription.CurrentPrice?.AmountCents || 0, subscription.CurrentPrice?.Currency || 'CNY')}
                               </span>
                             </div>
                             <div className="mt-1 flex items-center space-x-4 text-sm text-gray-500">
-                              <span>开始时间: {formatDate(subscription.StartAt)}</span>
+                              <span>{t('tenantSubscriptionSubscriptions.fields.startAt')}: {formatDate(subscription.StartAt)}</span>
                               <span>•</span>
-                              <span>当前周期: {formatDate(subscription.CurrentPeriodStart)} - {formatDate(subscription.CurrentPeriodEnd)}</span>
+                              <span>{t('tenantSubscriptionSubscriptions.fields.currentPeriod')}: {formatDate(subscription.CurrentPeriodStart)} - {formatDate(subscription.CurrentPeriodEnd)}</span>
                               {subscription.CanceledAt && (
                                 <>
                                   <span>•</span>
-                                  <span className="text-red-600">取消时间: {formatDate(subscription.CanceledAt)}</span>
+                                  <span className="text-red-600">{t('tenantSubscriptionSubscriptions.fields.canceledAt')}: {formatDate(subscription.CanceledAt)}</span>
                                 </>
                               )}
                             </div>
@@ -224,14 +226,14 @@ export default function TenantSubscriptions() {
                             variant="danger"
                             size="sm"
                           >
-                            取消订阅
+                            {t('tenantSubscriptionSubscriptions.actions.cancelSubscription')}
                           </PButton>
                         )}
                         <Link
                           to={`/tenant/subscriptions/detail/${subscription.ID}`}
                           className="text-sm font-medium text-blue-600 transition-colors hover:text-blue-800"
                         >
-                          查看详情
+                          {t('tenantSubscriptionSubscriptions.actions.viewDetail')}
                         </Link>
                       </div>
                     </div>
@@ -255,10 +257,10 @@ export default function TenantSubscriptions() {
                     />
                   </svg>
                   <h3 className="mt-2 text-sm font-medium text-gray-900">
-                    {searchTerm || statusFilter ? '未找到匹配的订阅' : '暂无订阅'}
+                    {searchTerm || statusFilter ? t('tenantSubscriptionSubscriptions.empty.noMatchTitle') : t('tenantSubscriptionSubscriptions.empty.noDataTitle')}
                   </h3>
                   <p className="mt-1 text-sm text-gray-500">
-                    {searchTerm || statusFilter ? '请尝试修改搜索条件' : '客户的订阅信息将在此处显示'}
+                    {searchTerm || statusFilter ? t('tenantSubscriptionSubscriptions.empty.noMatchDescription') : t('tenantSubscriptionSubscriptions.empty.noDataDescription')}
                   </p>
                 </div>
               </li>
@@ -266,7 +268,7 @@ export default function TenantSubscriptions() {
           </ul>
         </div>
 
-        {/* 取消订阅确认模态框 */}
+        {/*  */}
         {showCancelModal && cancelTarget && (
           <Modal
             open={showCancelModal}
@@ -275,7 +277,7 @@ export default function TenantSubscriptions() {
               setCancelTarget(null)
               setCancelReason('')
             }}
-            title="取消订阅"
+            title={t('tenantSubscriptionSubscriptions.modal.title')}
             widthClass="max-w-md"
           >
               <div className="mt-3 text-center">
@@ -284,20 +286,20 @@ export default function TenantSubscriptions() {
                 </div>
                 <div className="mt-2">
                   <p className="text-sm text-gray-500">
-                    确定要取消订阅 #{cancelTarget.ID} 吗？
+                    {t('tenantSubscriptionSubscriptions.modal.confirmText', { id: cancelTarget.ID })}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
-                    产品: {cancelTarget.CurrentPrice?.Plan?.Product?.Name} - {cancelTarget.CurrentPrice?.Plan?.DisplayName}
+                    {t('tenantSubscriptionSubscriptions.fields.product')}: {cancelTarget.CurrentPrice?.Plan?.Product?.Name} - {cancelTarget.CurrentPrice?.Plan?.DisplayName}
                   </p>
                   <div className="mt-4">
                     <label className="block text-sm font-medium text-gray-700 mb-2 text-left">
-                      取消原因 (可选)
+                      {t('tenantSubscriptionSubscriptions.modal.reasonLabel')}
                     </label>
                     <PTextarea
                       value={cancelReason}
                       onChange={(e) => setCancelReason(e.target.value)}
                       rows={3}
-                      placeholder="请输入取消原因..."
+                      placeholder={t('tenantSubscriptionSubscriptions.modal.reasonPlaceholder')}
                     />
                   </div>
                 </div>
@@ -311,14 +313,14 @@ export default function TenantSubscriptions() {
                     disabled={cancelling}
                     variant="secondary"
                   >
-                    取消
+                    {t('tenantSubscriptionSubscriptions.actions.cancel')}
                   </PButton>
                   <PButton
                     onClick={handleCancelConfirm}
                     loading={cancelling}
                     variant="danger"
                   >
-                    确认取消
+                    {t('tenantSubscriptionSubscriptions.actions.confirmCancel')}
                   </PButton>
                 </div>
               </div>

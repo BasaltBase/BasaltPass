@@ -18,8 +18,10 @@ import {
 import { PInput, PSelect, PButton, PSkeleton, Modal, PPageHeader } from '@ui'
 import PTable, { PTableColumn, PTableAction } from '@ui/PTable'
 import { ROUTES } from '@constants'
+import { useI18n } from '@shared/i18n'
 
 export default function TenantPlans() {
+  const { t, locale } = useI18n()
   const [searchParams] = useSearchParams()
   const [plans, setPlans] = useState<TenantPlan[]>([])
   const [products, setProducts] = useState<TenantProduct[]>([])
@@ -40,7 +42,7 @@ export default function TenantPlans() {
   useEffect(() => {
     fetchData()
     
-    // 检查是否需要自动打开创建模态框
+    // 
     if (searchParams.get('action') === 'create') {
       setShowModal(true)
     }
@@ -56,7 +58,7 @@ export default function TenantPlans() {
       setPlans(plansRes.data || [])
       setProducts(productsRes.data || [])
     } catch (error) {
-      console.error('获取套餐列表失败:', error)
+      console.error(t('tenantSubscriptionPlans.logs.loadFailed'), error)
     } finally {
       setLoading(false)
     }
@@ -75,7 +77,7 @@ export default function TenantPlans() {
       resetForm()
       fetchData()
     } catch (error) {
-      console.error('操作失败:', error)
+      console.error(t('tenantSubscriptionPlans.logs.operationFailed'), error)
     }
   }
 
@@ -106,7 +108,7 @@ export default function TenantPlans() {
       setShowDeleteModal(false)
       setDeleteTarget(null)
     } catch (error) {
-      console.error('删除失败:', error)
+      console.error(t('tenantSubscriptionPlans.logs.deleteFailed'), error)
     } finally {
       setDeleting(false)
     }
@@ -130,7 +132,7 @@ export default function TenantPlans() {
 
   const getProductName = (productId: number) => {
     const product = products.find(p => p.ID === productId)
-    return product ? product.Name : `产品 ${productId}`
+    return product ? product.Name : t('tenantSubscriptionPlans.fields.productWithId', { id: productId })
   }
 
   if (loading) {
@@ -147,28 +149,28 @@ export default function TenantPlans() {
     <TenantLayout>
       <div className="py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* 页面头部 */}
+          {/*  */}
           <PPageHeader
-            title="套餐管理"
-            description="维护产品套餐与版本"
-            actions={<PButton type="button" onClick={() => setShowModal(true)} leftIcon={<PlusIcon className="h-5 w-5" />}>创建套餐</PButton>}
+            title={t('tenantSubscriptionPlans.title')}
+            description={t('tenantSubscriptionPlans.description')}
+            actions={<PButton type="button" onClick={() => setShowModal(true)} leftIcon={<PlusIcon className="h-5 w-5" />}>{t('tenantSubscriptionPlans.actions.createPlan')}</PButton>}
           />
 
-          {/* 套餐列表（统一表格组件） */}
+          {/* （） */}
           <div className="mt-8">
             {(() => {
               const columns: PTableColumn<TenantPlan>[] = [
-                { key: 'name', title: '套餐', render: (row) => row.DisplayName },
-                { key: 'code', title: '代码', dataIndex: 'Code' as any },
-                { key: 'product', title: '产品', render: (row) => getProductName(row.ProductID) },
-                { key: 'version', title: '版本', render: (row) => `v${row.PlanVersion}` },
-                { key: 'prices', title: '定价数量', render: (row) => row.Prices?.length || 0 },
-                { key: 'created', title: '创建时间', render: (row) => new Date(row.CreatedAt).toLocaleString('zh-CN') },
+                { key: 'name', title: t('tenantSubscriptionPlans.table.plan'), render: (row) => row.DisplayName },
+                { key: 'code', title: t('tenantSubscriptionPlans.table.code'), dataIndex: 'Code' as any },
+                { key: 'product', title: t('tenantSubscriptionPlans.table.product'), render: (row) => getProductName(row.ProductID) },
+                { key: 'version', title: t('tenantSubscriptionPlans.table.version'), render: (row) => `v${row.PlanVersion}` },
+                { key: 'prices', title: t('tenantSubscriptionPlans.table.priceCount'), render: (row) => row.Prices?.length || 0 },
+                { key: 'created', title: t('tenantSubscriptionPlans.table.createdAt'), render: (row) => new Date(row.CreatedAt).toLocaleString(locale) },
               ];
 
               const actions: PTableAction<TenantPlan>[] = [
-                { key: 'edit', label: '编辑', icon: <PencilIcon className="h-4 w-4" />, variant: 'secondary', size: 'sm', onClick: (row) => handleEdit(row) },
-                { key: 'delete', label: '删除', icon: <TrashIcon className="h-4 w-4" />, variant: 'danger', size: 'sm', confirm: '确定要删除该套餐吗？此操作无法撤销。', onClick: (row) => handleDeleteClick(row) },
+                { key: 'edit', label: t('tenantSubscriptionPlans.actions.edit'), icon: <PencilIcon className="h-4 w-4" />, variant: 'secondary', size: 'sm', onClick: (row) => handleEdit(row) },
+                { key: 'delete', label: t('tenantSubscriptionPlans.actions.delete'), icon: <TrashIcon className="h-4 w-4" />, variant: 'danger', size: 'sm', confirm: t('tenantSubscriptionPlans.deleteModal.confirmAction'), onClick: (row) => handleDeleteClick(row) },
               ];
 
               return (
@@ -177,8 +179,8 @@ export default function TenantPlans() {
                   data={plans}
                   rowKey={(row) => row.ID}
                   actions={actions}
-                  emptyText="暂无套餐数据"
-                  emptyContent={<PButton type="button" onClick={() => setShowModal(true)} leftIcon={<PlusIcon className="h-5 w-5" />}>创建套餐</PButton>}
+                  emptyText={t('tenantSubscriptionPlans.empty.table')}
+                  emptyContent={<PButton type="button" onClick={() => setShowModal(true)} leftIcon={<PlusIcon className="h-5 w-5" />}>{t('tenantSubscriptionPlans.actions.createPlan')}</PButton>}
                   striped
                   size="md"
                 />
@@ -188,21 +190,21 @@ export default function TenantPlans() {
         </div>
       </div>
 
-      {/* 创建/编辑套餐模态框 */}
+      {/* / */}
       {showModal && (
-        <Modal open={showModal} onClose={handleCancel} title={editingPlan ? '编辑套餐' : '创建套餐'} widthClass="max-w-md">
+        <Modal open={showModal} onClose={handleCancel} title={editingPlan ? t('tenantSubscriptionPlans.actions.editPlan') : t('tenantSubscriptionPlans.actions.createPlan')} widthClass="max-w-md">
             <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
-              {editingPlan ? '编辑套餐' : '创建套餐'}
+              {editingPlan ? t('tenantSubscriptionPlans.actions.editPlan') : t('tenantSubscriptionPlans.actions.createPlan')}
             </h3>
             <form onSubmit={handleSubmit} className="space-y-4">
               <PSelect
-                label="产品"
+                label={t('tenantSubscriptionPlans.fields.product')}
                 value={formData.product_id}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, product_id: parseInt(e.target.value) })}
                 required
                 disabled={!!editingPlan}
               >
-                <option value="">请选择产品</option>
+                <option value="">{t('tenantSubscriptionPlans.fields.selectProduct')}</option>
                 {products.map((product) => (
                   <option key={product.ID} value={product.ID}>
                     {product.Name}
@@ -210,7 +212,7 @@ export default function TenantPlans() {
                 ))}
               </PSelect>
               <PInput
-                label="套餐代码"
+                label={t('tenantSubscriptionPlans.fields.planCode')}
                 type="text"
                 value={formData.code}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, code: e.target.value })}
@@ -218,14 +220,14 @@ export default function TenantPlans() {
                 disabled={!!editingPlan}
               />
               <PInput
-                label="套餐名称"
+                label={t('tenantSubscriptionPlans.fields.planName')}
                 type="text"
                 value={formData.display_name}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, display_name: e.target.value })}
                 required
               />
               <PInput
-                label="套餐版本"
+                label={t('tenantSubscriptionPlans.fields.planVersion')}
                 type="number"
                 value={formData.plan_version}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, plan_version: parseInt(e.target.value) })}
@@ -234,22 +236,22 @@ export default function TenantPlans() {
                 disabled={!!editingPlan}
               />
               <div className="flex justify-end space-x-3 pt-4">
-                <PButton type="button" variant="secondary" onClick={handleCancel}>取消</PButton>
-                <PButton type="submit">{editingPlan ? '更新' : '创建'}</PButton>
+                <PButton type="button" variant="secondary" onClick={handleCancel}>{t('tenantSubscriptionPlans.actions.cancel')}</PButton>
+                <PButton type="submit">{editingPlan ? t('tenantSubscriptionPlans.actions.update') : t('tenantSubscriptionPlans.actions.create')}</PButton>
               </div>
             </form>
         </Modal>
       )}
 
-      {/* 删除确认模态框 */}
+      {/*  */}
       {showDeleteModal && deleteTarget && (
-        <Modal open={showDeleteModal} onClose={() => setShowDeleteModal(false)} title="确认删除" widthClass="max-w-md">
+        <Modal open={showDeleteModal} onClose={() => setShowDeleteModal(false)} title={t('tenantSubscriptionPlans.deleteModal.title')} widthClass="max-w-md">
             <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
               <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
             </div>
-            <h3 className="text-lg font-medium text-center text-gray-900 mb-2">确认删除</h3>
+            <h3 className="text-lg font-medium text-center text-gray-900 mb-2">{t('tenantSubscriptionPlans.deleteModal.title')}</h3>
             <p className="text-sm text-gray-500 text-center mb-6">
-              确定要删除套餐 "{deleteTarget.DisplayName}" 吗？此操作无法撤销。
+              {t('tenantSubscriptionPlans.deleteModal.confirmMessage', { name: deleteTarget.DisplayName })}
             </p>
             <div className="flex justify-center space-x-3">
               <PButton
@@ -258,7 +260,7 @@ export default function TenantPlans() {
                 onClick={() => setShowDeleteModal(false)}
                 disabled={deleting}
               >
-                取消
+                {t('tenantSubscriptionPlans.actions.cancel')}
               </PButton>
               <PButton
                 type="button"
@@ -266,7 +268,7 @@ export default function TenantPlans() {
                 onClick={handleDeleteConfirm}
                 disabled={deleting}
               >
-                {deleting ? '删除中...' : '确认删除'}
+                {deleting ? t('tenantSubscriptionPlans.actions.deleting') : t('tenantSubscriptionPlans.actions.confirmDelete')}
               </PButton>
             </div>
         </Modal>

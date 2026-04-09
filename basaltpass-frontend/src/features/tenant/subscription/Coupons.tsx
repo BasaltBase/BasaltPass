@@ -17,9 +17,11 @@ import {
   UpdateTenantCouponRequest,
 } from '@api/tenant/subscription'
 import { ROUTES } from '@constants'
+import { useI18n } from '@shared/i18n'
 import { PSkeleton, PBadge, PButton, PInput, PSelect, PCheckbox, Modal, PPageHeader } from '@ui'
 
 export default function TenantCoupons() {
+  const { t, locale } = useI18n()
   const [searchParams] = useSearchParams()
   const [coupons, setCoupons] = useState<TenantCoupon[]>([])
   const [loading, setLoading] = useState(true)
@@ -41,7 +43,7 @@ export default function TenantCoupons() {
   useEffect(() => {
     fetchData()
     
-    // 检查是否需要自动打开创建模态框
+    // 
     if (searchParams.get('action') === 'create') {
       setShowModal(true)
     }
@@ -53,7 +55,7 @@ export default function TenantCoupons() {
       const data = await tenantSubscriptionAPI.adminListCoupons()
       setCoupons(data.data || [])
     } catch (error) {
-      console.error('获取优惠券列表失败:', error)
+      console.error(t('tenantSubscriptionCoupons.logs.fetchFailed'), error)
     } finally {
       setLoading(false)
     }
@@ -62,12 +64,12 @@ export default function TenantCoupons() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      // 处理 discount_value 数据转换
+      //  discount_value 
       const submitData = {
         ...formData,
         discount_value: formData.discount_type === 'fixed' 
-          ? Math.round(formData.discount_value * 100) // 固定金额：元转分
-          : Math.round(formData.discount_value) // 百分比：保持整数
+          ? Math.round(formData.discount_value * 100) // ：
+          : Math.round(formData.discount_value) // ：
       }
       
       if (editingCoupon) {
@@ -80,7 +82,7 @@ export default function TenantCoupons() {
       resetForm()
       fetchData()
     } catch (error) {
-      console.error('操作失败:', error)
+      console.error(t('tenantSubscriptionCoupons.logs.submitFailed'), error)
     }
   }
 
@@ -91,8 +93,8 @@ export default function TenantCoupons() {
       name: coupon.Name,
       discount_type: coupon.DiscountType,
       discount_value: coupon.DiscountType === 'fixed' 
-        ? Math.round(coupon.DiscountValue / 100 * 100) / 100 // 分转元，保留2位小数
-        : coupon.DiscountValue, // 百分比直接使用
+        ? Math.round(coupon.DiscountValue / 100 * 100) / 100 // ，2
+        : coupon.DiscountValue, // 
       duration: coupon.Duration,
       duration_in_cycles: coupon.DurationInCycles,
       max_redemptions: coupon.MaxRedemptions,
@@ -118,7 +120,7 @@ export default function TenantCoupons() {
       setShowDeleteModal(false)
       setDeleteTarget(null)
     } catch (error) {
-      console.error('删除失败:', error)
+      console.error(t('tenantSubscriptionCoupons.logs.deleteFailed'), error)
     } finally {
       setDeleting(false)
     }
@@ -153,11 +155,11 @@ export default function TenantCoupons() {
   const formatDuration = (duration: string, cycles?: number) => {
     switch (duration) {
       case 'once':
-        return '一次性'
+        return t('tenantSubscriptionCoupons.duration.once')
       case 'repeating':
-        return cycles ? `重复 ${cycles} 次` : '重复'
+        return cycles ? t('tenantSubscriptionCoupons.duration.repeatingWithCycles', { cycles }) : t('tenantSubscriptionCoupons.duration.repeating')
       case 'forever':
-        return '永久'
+        return t('tenantSubscriptionCoupons.duration.forever')
       default:
         return duration
     }
@@ -182,24 +184,24 @@ export default function TenantCoupons() {
     <TenantLayout>
       <div className="py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* 页面头部 */}
+          {/*  */}
           <PPageHeader
-            title="优惠券管理"
-            description="创建、编辑和停用订阅优惠券"
+            title={t('tenantSubscriptionCoupons.header.title')}
+            description={t('tenantSubscriptionCoupons.header.description')}
             actions={
               <PButton type="button" onClick={() => setShowModal(true)} leftIcon={<PlusIcon className="h-5 w-5" />}>
-                创建优惠券
+                {t('tenantSubscriptionCoupons.actions.createCoupon')}
               </PButton>
             }
           />
 
-          {/* 优惠券列表 */}
+          {/*  */}
           <div className="mt-8">
             <div className="overflow-hidden rounded-xl bg-white shadow-sm">
               <ul className="divide-y divide-gray-200">
                 {coupons.length === 0 ? (
                   <li className="px-6 py-8 text-center text-gray-500">
-                    暂无优惠券数据
+                    {t('tenantSubscriptionCoupons.empty.noData')}
                   </li>
                 ) : (
                   coupons.map((coupon) => (
@@ -214,27 +216,27 @@ export default function TenantCoupons() {
                                 </p>
                                 <PBadge variant="default">{coupon.Code}</PBadge>
                                 {coupon.IsActive ? (
-                                  <CheckCircleIcon className="h-5 w-5 text-green-500" title="活跃" />
+                                  <CheckCircleIcon className="h-5 w-5 text-green-500" title={t('tenantSubscriptionCoupons.status.active')} />
                                 ) : (
-                                  <XCircleIcon className="h-5 w-5 text-red-500" title="停用" />
+                                  <XCircleIcon className="h-5 w-5 text-red-500" title={t('tenantSubscriptionCoupons.status.inactive')} />
                                 )}
                                 {isExpired(coupon.ExpiresAt) && (
-                                  <PBadge variant="error">已过期</PBadge>
+                                  <PBadge variant="error">{t('tenantSubscriptionCoupons.status.expired')}</PBadge>
                                 )}
                               </div>
                               <div className="mt-2 flex items-center text-sm text-gray-500 space-x-4">
-                                <span>折扣: {formatDiscount(coupon.DiscountType, coupon.DiscountValue)}</span>
-                                <span>持续时间: {formatDuration(coupon.Duration, coupon.DurationInCycles)}</span>
-                                <span>已使用: {coupon.RedeemedCount} 次</span>
+                                <span>{t('tenantSubscriptionCoupons.fields.discount')}: {formatDiscount(coupon.DiscountType, coupon.DiscountValue)}</span>
+                                <span>{t('tenantSubscriptionCoupons.fields.duration')}: {formatDuration(coupon.Duration, coupon.DurationInCycles)}</span>
+                                <span>{t('tenantSubscriptionCoupons.fields.redeemed')}: {coupon.RedeemedCount} {t('tenantSubscriptionCoupons.fields.times')}</span>
                                 {coupon.MaxRedemptions && (
-                                  <span>最大使用: {coupon.MaxRedemptions} 次</span>
+                                  <span>{t('tenantSubscriptionCoupons.fields.maxRedemptions')}: {coupon.MaxRedemptions} {t('tenantSubscriptionCoupons.fields.times')}</span>
                                 )}
                               </div>
                               <div className="mt-2 text-sm text-gray-600">
                                 <div className="flex items-center space-x-4">
-                                  <span>创建时间: {new Date(coupon.CreatedAt).toLocaleString('zh-CN')}</span>
+                                  <span>{t('tenantSubscriptionCoupons.fields.createdAt')}: {new Date(coupon.CreatedAt).toLocaleString(locale)}</span>
                                   {coupon.ExpiresAt && (
-                                    <span>过期时间: {new Date(coupon.ExpiresAt).toLocaleString('zh-CN')}</span>
+                                    <span>{t('tenantSubscriptionCoupons.fields.expiresAt')}: {new Date(coupon.ExpiresAt).toLocaleString(locale)}</span>
                                   )}
                                 </div>
                               </div>
@@ -245,14 +247,14 @@ export default function TenantCoupons() {
                           <button
                             onClick={() => handleEdit(coupon)}
                             className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-indigo-50 hover:text-indigo-600"
-                            title="编辑"
+                            title={t('tenantSubscriptionCoupons.actions.edit')}
                           >
                             <PencilIcon className="h-5 w-5" />
                           </button>
                           <button
                             onClick={() => handleDeleteClick(coupon)}
                             className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
-                            title="删除"
+                            title={t('tenantSubscriptionCoupons.actions.delete')}
                           >
                             <TrashIcon className="h-5 w-5" />
                           </button>
@@ -267,29 +269,29 @@ export default function TenantCoupons() {
         </div>
       </div>
 
-      {/* 创建/编辑优惠券模态框 */}
+      {/* / */}
       {showModal && (
         <Modal
           open={showModal}
           onClose={handleCancel}
-          title={editingCoupon ? '编辑优惠券' : '创建优惠券'}
+          title={editingCoupon ? t('tenantSubscriptionCoupons.modal.editTitle') : t('tenantSubscriptionCoupons.modal.createTitle')}
           widthClass="max-w-md"
         >
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <PInput
-                  label="优惠券代码"
+                  label={t('tenantSubscriptionCoupons.modal.codeLabel')}
                   type="text"
                   value={formData.code}
                   onChange={(e) => setFormData({...formData, code: e.target.value.toUpperCase()})}
                   required
                   disabled={!!editingCoupon}
-                  placeholder="例: SAVE20"
+                  placeholder={t('tenantSubscriptionCoupons.modal.codePlaceholder')}
                 />
               </div>
               <div>
                 <PInput
-                  label="优惠券名称"
+                  label={t('tenantSubscriptionCoupons.modal.nameLabel')}
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
@@ -298,18 +300,18 @@ export default function TenantCoupons() {
               </div>
               <div>
                 <PSelect
-                  label="折扣类型"
+                  label={t('tenantSubscriptionCoupons.modal.discountTypeLabel')}
                   value={formData.discount_type}
                   onChange={(e) => setFormData({...formData, discount_type: e.target.value as 'percent' | 'fixed'})}
                   required
                 >
-                  <option value="percent">百分比</option>
-                  <option value="fixed">固定金额</option>
+                  <option value="percent">{t('tenantSubscriptionCoupons.modal.discountTypePercent')}</option>
+                  <option value="fixed">{t('tenantSubscriptionCoupons.modal.discountTypeFixed')}</option>
                 </PSelect>
               </div>
               <div>
                 <PInput
-                  label="折扣值"
+                  label={t('tenantSubscriptionCoupons.modal.discountValueLabel')}
                   type="number"
                   value={formData.discount_value}
                   onChange={(e) => setFormData({...formData, discount_value: parseFloat(e.target.value) || 0})}
@@ -319,25 +321,25 @@ export default function TenantCoupons() {
                   required
                 />
                 <p className="mt-1 text-sm text-gray-500">
-                  {formData.discount_type === 'percent' ? '输入百分比（如：20 表示 20%）' : '输入金额（单位：元）'}
+                  {formData.discount_type === 'percent' ? t('tenantSubscriptionCoupons.modal.discountHintPercent') : t('tenantSubscriptionCoupons.modal.discountHintFixed')}
                 </p>
               </div>
               <div>
                 <PSelect
-                  label="持续时间"
+                  label={t('tenantSubscriptionCoupons.modal.durationLabel')}
                   value={formData.duration}
                   onChange={(e) => setFormData({...formData, duration: e.target.value as 'once' | 'repeating' | 'forever'})}
                   required
                 >
-                  <option value="once">一次性</option>
-                  <option value="repeating">重复</option>
-                  <option value="forever">永久</option>
+                  <option value="once">{t('tenantSubscriptionCoupons.duration.once')}</option>
+                  <option value="repeating">{t('tenantSubscriptionCoupons.duration.repeating')}</option>
+                  <option value="forever">{t('tenantSubscriptionCoupons.duration.forever')}</option>
                 </PSelect>
               </div>
               {formData.duration === 'repeating' && (
                 <div>
                   <PInput
-                    label="重复次数"
+                    label={t('tenantSubscriptionCoupons.modal.repeatCyclesLabel')}
                     type="number"
                     value={formData.duration_in_cycles || ''}
                     onChange={(e) => setFormData({...formData, duration_in_cycles: e.target.value ? parseInt(e.target.value) : undefined})}
@@ -347,7 +349,7 @@ export default function TenantCoupons() {
               )}
               <div>
                 <PInput
-                  label="最大使用次数（可选）"
+                  label={t('tenantSubscriptionCoupons.modal.maxRedemptionsLabel')}
                   type="number"
                   value={formData.max_redemptions || ''}
                   onChange={(e) => setFormData({...formData, max_redemptions: e.target.value ? parseInt(e.target.value) : undefined})}
@@ -356,42 +358,42 @@ export default function TenantCoupons() {
               </div>
               <div>
                 <PInput
-                  label="过期时间（可选）"
+                  label={t('tenantSubscriptionCoupons.modal.expiresAtLabel')}
                   type="datetime-local"
                   value={formData.expires_at || ''}
                   onChange={(e) => setFormData({...formData, expires_at: e.target.value || undefined})}
                 />
               </div>
               <PCheckbox
-                label="启用优惠券"
+                label={t('tenantSubscriptionCoupons.modal.activeLabel')}
                 checked={formData.is_active}
                 onChange={(e) => setFormData({...formData, is_active: (e.target as HTMLInputElement).checked})}
               />
               <div className="flex justify-end space-x-3 pt-4">
                 <PButton type="button" onClick={handleCancel} variant="secondary">
-                  取消
+                  {t('tenantSubscriptionCoupons.actions.cancel')}
                 </PButton>
                 <PButton type="submit">
-                  {editingCoupon ? '更新' : '创建'}
+                  {editingCoupon ? t('tenantSubscriptionCoupons.actions.update') : t('tenantSubscriptionCoupons.actions.create')}
                 </PButton>
               </div>
             </form>
         </Modal>
       )}
 
-      {/* 删除确认模态框 */}
+      {/*  */}
       {showDeleteModal && deleteTarget && (
         <Modal
           open={showDeleteModal}
           onClose={() => setShowDeleteModal(false)}
-          title="确认删除"
+          title={t('tenantSubscriptionCoupons.deleteModal.title')}
           widthClass="max-w-md"
         >
             <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
               <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
             </div>
             <p className="text-sm text-gray-500 text-center mb-6">
-              确定要删除优惠券 "{deleteTarget.Name}" ({deleteTarget.Code}) 吗？此操作无法撤销。
+              {t('tenantSubscriptionCoupons.deleteModal.description', { name: deleteTarget.Name, code: deleteTarget.Code })}
             </p>
             <div className="flex justify-center space-x-3">
               <PButton
@@ -399,14 +401,14 @@ export default function TenantCoupons() {
                 disabled={deleting}
                 variant="secondary"
               >
-                取消
+                {t('tenantSubscriptionCoupons.actions.cancel')}
               </PButton>
               <PButton
                 onClick={handleDeleteConfirm}
                 disabled={deleting}
                 variant="danger"
               >
-                {deleting ? '删除中...' : '确认删除'}
+                {deleting ? t('tenantSubscriptionCoupons.deleteModal.deleting') : t('tenantSubscriptionCoupons.deleteModal.confirmDelete')}
               </PButton>
             </div>
         </Modal>

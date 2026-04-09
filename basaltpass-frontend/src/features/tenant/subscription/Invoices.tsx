@@ -12,11 +12,13 @@ import {
   TenantInvoice,
   CreateTenantInvoiceRequest,
 } from '@api/tenant/subscription'
+import { useI18n } from '@shared/i18n'
 import { PInput, PSelect, PButton, PSkeleton, PBadge, Modal, PPageHeader } from '@ui'
 import PTable, { PTableColumn } from '@ui/PTable'
 import { ROUTES } from '@constants'
 
 export default function TenantInvoices() {
+  const { t, locale } = useI18n()
   const [searchParams] = useSearchParams()
   const [invoices, setInvoices] = useState<TenantInvoice[]>([])
   const [loading, setLoading] = useState(true)
@@ -31,7 +33,7 @@ export default function TenantInvoices() {
   useEffect(() => {
     fetchData()
     
-    // 检查是否需要自动打开创建模态框
+    // 
     if (searchParams.get('action') === 'create') {
       setShowModal(true)
     }
@@ -43,7 +45,7 @@ export default function TenantInvoices() {
       const data = await tenantSubscriptionAPI.adminListInvoices()
       setInvoices(data.data || [])
     } catch (error) {
-      console.error('获取账单列表失败:', error)
+      console.error(t('tenantSubscriptionInvoices.logs.fetchFailed'), error)
     } finally {
       setLoading(false)
     }
@@ -57,7 +59,7 @@ export default function TenantInvoices() {
       resetForm()
       fetchData()
     } catch (error) {
-      console.error('创建账单失败:', error)
+      console.error(t('tenantSubscriptionInvoices.logs.createFailed'), error)
     }
   }
 
@@ -93,15 +95,15 @@ export default function TenantInvoices() {
   const getStatusText = (status: string) => {
     switch (status) {
       case 'paid':
-        return '已支付'
+        return t('tenantSubscriptionInvoices.status.paid')
       case 'posted':
-        return '已发布'
+        return t('tenantSubscriptionInvoices.status.posted')
       case 'draft':
-        return '草稿'
+        return t('tenantSubscriptionInvoices.status.draft')
       case 'void':
-        return '已作废'
+        return t('tenantSubscriptionInvoices.status.void')
       case 'uncollectible':
-        return '无法收取'
+        return t('tenantSubscriptionInvoices.status.uncollectible')
       default:
         return status
     }
@@ -121,28 +123,28 @@ export default function TenantInvoices() {
     <TenantLayout>
       <div className="py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* 页面头部 */}
+          {/*  */}
           <PPageHeader
-            title="账单管理"
-            description="查看并创建租户账单记录"
+            title={t('tenantSubscriptionInvoices.header.title')}
+            description={t('tenantSubscriptionInvoices.header.description')}
             actions={
               <PButton
                 type="button"
                 onClick={() => setShowModal(true)}
                 leftIcon={<PlusIcon className="h-5 w-5" />}
               >
-                创建账单
+                {t('tenantSubscriptionInvoices.actions.createInvoice')}
               </PButton>
             }
           />
 
-          {/* 账单列表（统一表格组件） */}
+          {/* （） */}
           <div className="mt-8">
             {(() => {
               const columns: PTableColumn<TenantInvoice>[] = [
                 {
                   key: 'invoice',
-                  title: '账单',
+                  title: t('tenantSubscriptionInvoices.table.invoice'),
                   render: (row) => (
                     <div className="flex items-center">
                       <DocumentTextIcon className="h-5 w-5 text-gray-400" />
@@ -150,27 +152,27 @@ export default function TenantInvoices() {
                     </div>
                   )
                 },
-                { key: 'user', title: '客户ID', dataIndex: 'user_id' as any },
+                { key: 'user', title: t('tenantSubscriptionInvoices.table.customerId'), dataIndex: 'user_id' as any },
                 {
                   key: 'amount',
-                  title: '总金额',
+                  title: t('tenantSubscriptionInvoices.table.totalAmount'),
                   render: (row) => formatPrice(row.total_cents, row.currency)
                 },
                 {
                   key: 'subscription',
-                  title: '订阅ID',
+                  title: t('tenantSubscriptionInvoices.table.subscriptionId'),
                   render: (row) => row.subscription_id ? String(row.subscription_id) : '-'
                 },
                 {
                   key: 'status',
-                  title: '状态',
+                  title: t('tenantSubscriptionInvoices.table.status'),
                   render: (row) => (
                     <PBadge variant={getStatusVariant(row.status) as any}>{getStatusText(row.status)}</PBadge>
                   )
                 },
-                { key: 'created', title: '创建时间', render: (row) => new Date(row.created_at).toLocaleString('zh-CN') },
-                { key: 'due', title: '到期时间', render: (row) => row.due_at ? new Date(row.due_at).toLocaleString('zh-CN') : '-' },
-                { key: 'paid', title: '支付时间', render: (row) => row.paid_at ? new Date(row.paid_at).toLocaleString('zh-CN') : '-' },
+                { key: 'created', title: t('tenantSubscriptionInvoices.table.createdAt'), render: (row) => new Date(row.created_at).toLocaleString(locale) },
+                { key: 'due', title: t('tenantSubscriptionInvoices.table.dueAt'), render: (row) => row.due_at ? new Date(row.due_at).toLocaleString(locale) : '-' },
+                { key: 'paid', title: t('tenantSubscriptionInvoices.table.paidAt'), render: (row) => row.paid_at ? new Date(row.paid_at).toLocaleString(locale) : '-' },
               ];
 
               return (
@@ -178,9 +180,9 @@ export default function TenantInvoices() {
                   columns={columns}
                   data={invoices}
                   rowKey={(row) => row.id}
-                  emptyText="暂无账单数据"
+                  emptyText={t('tenantSubscriptionInvoices.empty.noData')}
                   emptyContent={
-                    <PButton type="button" onClick={() => setShowModal(true)} leftIcon={<PlusIcon className="h-5 w-5" />}>创建账单</PButton>
+                    <PButton type="button" onClick={() => setShowModal(true)} leftIcon={<PlusIcon className="h-5 w-5" />}>{t('tenantSubscriptionInvoices.actions.createInvoice')}</PButton>
                   }
                   striped
                   size="md"
@@ -191,12 +193,12 @@ export default function TenantInvoices() {
         </div>
       </div>
 
-      {/* 创建账单模态框 */}
+      {/*  */}
       {showModal && (
-        <Modal open={showModal} onClose={handleCancel} title="创建账单" widthClass="max-w-md">
+        <Modal open={showModal} onClose={handleCancel} title={t('tenantSubscriptionInvoices.modal.title')} widthClass="max-w-md">
             <form onSubmit={handleSubmit} className="space-y-4">
               <PInput
-                label="客户ID"
+                label={t('tenantSubscriptionInvoices.modal.customerIdLabel')}
                 type="number"
                 value={formData.user_id || ''}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({
@@ -207,7 +209,7 @@ export default function TenantInvoices() {
                 required
               />
               <PInput
-                label="订阅ID（可选）"
+                label={t('tenantSubscriptionInvoices.modal.subscriptionIdLabel')}
                 type="number"
                 value={formData.subscription_id ?? ''}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({
@@ -219,18 +221,18 @@ export default function TenantInvoices() {
                 min={1}
               />
               <PSelect
-                label="货币"
+                label={t('tenantSubscriptionInvoices.modal.currencyLabel')}
                 value={formData.currency}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, currency: e.target.value })}
                 required
               >
-                <option value="CNY">人民币 (CNY)</option>
-                <option value="USD">美元 (USD)</option>
-                <option value="EUR">欧元 (EUR)</option>
+                <option value="CNY">{t('tenantSubscriptionInvoices.modal.currencyCny')}</option>
+                <option value="USD">{t('tenantSubscriptionInvoices.modal.currencyUsd')}</option>
+                <option value="EUR">{t('tenantSubscriptionInvoices.modal.currencyEur')}</option>
               </PSelect>
               <div>
                 <PInput
-                  label="总金额（分）"
+                  label={t('tenantSubscriptionInvoices.modal.totalCentsLabel')}
                   type="number"
                   value={formData.total_cents}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({
@@ -241,11 +243,11 @@ export default function TenantInvoices() {
                   required
                 />
                 <p className="mt-1 text-sm text-gray-500">
-                  当前金额: {formatPrice(formData.total_cents, formData.currency)}
+                  {t('tenantSubscriptionInvoices.modal.currentAmount')}: {formatPrice(formData.total_cents, formData.currency)}
                 </p>
               </div>
               <PInput
-                label="到期时间（可选）"
+                label={t('tenantSubscriptionInvoices.modal.dueAtLabel')}
                 type="datetime-local"
                 value={formData.due_at || ''}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({
@@ -259,9 +261,9 @@ export default function TenantInvoices() {
                   variant="secondary"
                   onClick={handleCancel}
                 >
-                  取消
+                  {t('tenantSubscriptionInvoices.actions.cancel')}
                 </PButton>
-                <PButton type="submit">创建</PButton>
+                <PButton type="submit">{t('tenantSubscriptionInvoices.actions.create')}</PButton>
               </div>
             </form>
         </Modal>

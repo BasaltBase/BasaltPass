@@ -7,9 +7,11 @@ import { useAuth } from '@contexts/AuthContext'
 import { useConfig } from '@contexts/ConfigContext'
 import EnhancedNotificationIcon from '@components/EnhancedNotificationIcon'
 import ConsoleAccountSwitcherModal from '@components/ConsoleAccountSwitcherModal'
+import LanguageSwitcher from '@components/LanguageSwitcher'
 import { PButton } from '@ui'
 import { authorizeConsole, joinConsoleUrl } from '@api/console'
 import { ROUTES } from '@constants'
+import { useI18n } from '@shared/i18n'
 
 interface TenantLayoutProps {
   children: ReactNode
@@ -18,6 +20,7 @@ interface TenantLayoutProps {
 }
 
 export default function TenantLayout({ children, title, actions }: TenantLayoutProps) {
+  const { t } = useI18n()
   const { user, logout, canAccessAdmin } = useAuth()
   const { siteName, siteInitial, setPageTitle } = useConfig()
   const location = useLocation()
@@ -31,13 +34,12 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
     logout()
   }
 
-  // 判断当前是否在tenant路径
+  // tenant
   const isTenantPath = location.pathname.startsWith(ROUTES.tenant.root)
-  const isAdminPath = location.pathname.startsWith(ROUTES.admin.root)
 
   useEffect(() => {
-    setPageTitle(title ? `租户控制台 - ${title}` : '租户控制台')
-  }, [setPageTitle, title])
+    setPageTitle(title ? t('tenantLayout.pageTitle', { title }) : t('tenantLayout.pageTitleDefault'))
+  }, [setPageTitle, t, title])
 
   useEffect(() => {
     setIsUserMenuOpen(false)
@@ -94,17 +96,17 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* 顶部导航栏 */}
+      {/*  */}
       <header className="sticky top-0 bg-white shadow z-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 justify-between items-center">
             <div className="flex items-center">
-              {/* 移动端汉堡菜单按钮 */}
+              {/*  */}
               <button
                 onClick={() => setSidebarOpen(true)}
                 className="mr-3 inline-flex items-center justify-center rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 lg:hidden"
               >
-                <span className="sr-only">打开侧边栏</span>
+                <span className="sr-only">{t('common.openSidebar')}</span>
                 <Bars3Icon className="h-6 w-6" />
               </button>
               <Link to={ROUTES.tenant.dashboard} className="flex items-center">
@@ -113,7 +115,7 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
                 </div>
                 <div className="ml-2 flex items-baseline">
                   <span className="text-xl font-bold text-gray-900">{siteName}</span>
-                  <span className="ml-2 text-sm font-medium text-gray-500">租户控制台</span>
+                  <span className="ml-2 text-sm font-medium text-gray-500">{t('tenantLayout.consoleTitle')}</span>
                 </div>
               </Link>
               {title && (
@@ -126,42 +128,43 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
             
             <div className="flex items-center space-x-4">
               {actions}
+              <LanguageSwitcher />
               
-              {/* 管理系统切换按钮 - 切换到管理员面板 */}
+              {/*  -  */}
               {isTenantPath && canAccessAdmin && (
                 <button
                   onClick={switchToAdmin}
                   className="relative rounded-lg bg-indigo-50 px-3 py-2 text-indigo-600 transition-colors duration-200 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                  title="切换到管理员面板"
+                  title={t('tenantLayout.switchToAdminTitle')}
                 >
                   <div className="flex items-center space-x-2">
                     <ArrowsRightLeftIcon className="h-4 w-4" />
-                    <span className="text-sm font-medium">管理员面板</span>
+                    <span className="text-sm font-medium">{t('tenantLayout.switchToAdminLabel')}</span>
                   </div>
                 </button>
               )}
               
-              {/* 管理系统切换按钮 - 切换到用户面板 */}
+              {/*  -  */}
               {isTenantPath && (
                 <button
                   onClick={switchToUser}
                   className="relative rounded-lg bg-green-50 px-3 py-2 text-green-600 transition-colors duration-200 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                  title="切换到用户面板"
+                  title={t('tenantLayout.switchToUserTitle')}
                 >
                   <div className="flex items-center space-x-2">
                     <ArrowsRightLeftIcon className="h-4 w-4" />
-                    <span className="text-sm font-medium">用户面板</span>
+                    <span className="text-sm font-medium">{t('tenantLayout.switchToUserLabel')}</span>
                   </div>
                 </button>
               )}
               
-              {/* 通知：使用全局 NotificationProvider 的组件，跳转到租户通知页 */}
+              {/* ： NotificationProvider ， */}
               <div className="relative">
-                <span className="sr-only">查看通知</span>
+                <span className="sr-only">{t('common.viewNotifications')}</span>
                 <EnhancedNotificationIcon viewAllPath={ROUTES.tenant.notifications} />
               </div>
 
-              {/* 用户菜单 */}
+              {/*  */}
               <div ref={userMenuRef} className="relative">
                 <PButton
                   variant="ghost" 
@@ -169,7 +172,7 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                   className="flex items-center rounded-full bg-white p-1 text-sm focus:ring-blue-500 focus:ring-offset-2 hover:bg-gray-50"
                 >
-                  <span className="sr-only">打开用户菜单</span>
+                  <span className="sr-only">{t('common.openUserMenu')}</span>
                   {user?.avatar_url ? (
                     <img 
                       className="h-8 w-8 rounded-full object-cover" 
@@ -184,12 +187,12 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
                   <ChevronDownIcon className="ml-1 h-4 w-4 text-gray-500" />
                 </PButton>
 
-                {/* 用户下拉菜单 */}
+                {/*  */}
                 {isUserMenuOpen && (
                   <div className="absolute right-0 z-50 mt-2 w-56 origin-top-right rounded-xl bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                     <div className="px-4 py-3 border-b border-gray-200">
                       <p className="text-sm text-gray-900 font-medium">
-                        {user?.nickname || '租户用户'}
+                        {user?.nickname || t('common.tenantUser')}
                       </p>
                       <p className="text-sm text-gray-500 truncate">
                         {user?.email}
@@ -202,7 +205,7 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
                       onClick={() => setIsUserMenuOpen(false)}
                     >
                       <UserIcon className="mr-3 h-4 w-4" />
-                      个人资料
+                      {t('common.profile')}
                     </a>
                     
                     <a
@@ -211,7 +214,7 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
                       onClick={() => setIsUserMenuOpen(false)}
                     >
                       <Cog6ToothIcon className="mr-3 h-4 w-4" />
-                      租户设置
+                      {t('tenantLayout.tenantSettings')}
                     </a>
                     
                     <PButton
@@ -223,7 +226,7 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
                       className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 justify-start"
                     >
                       <ArrowsRightLeftIcon className="mr-3 h-4 w-4" />
-                      切换账户
+                      {t('common.switchAccount')}
                     </PButton>
                     
                     <div className="border-t border-gray-200"></div>
@@ -234,7 +237,7 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
                       className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 justify-start"
                     >
                       <ArrowRightOnRectangleIcon className="mr-3 h-4 w-4" />
-                      登出
+                      {t('common.logout')}
                     </PButton>
                   </div>
                 )}
@@ -245,7 +248,7 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
       </header>
 
       <div className="flex">
-        {/* 移动端侧边栏 */}
+        {/*  */}
         {sidebarOpen && (
           <div className="fixed inset-0 !m-0 z-40 flex lg:hidden">
             <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
@@ -255,7 +258,7 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
                   onClick={() => setSidebarOpen(false)}
                   className="ml-1 flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
                 >
-                  <span className="sr-only">关闭侧边栏</span>
+                  <span className="sr-only">{t('common.closeSidebar')}</span>
                   <svg className="h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
@@ -268,7 +271,7 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
                   </div>
                   <div className="ml-2 flex items-baseline">
                     <span className="text-xl font-bold text-gray-900">{siteName}</span>
-                    <span className="ml-2 text-sm font-medium text-gray-500">租户控制台</span>
+                    <span className="ml-2 text-sm font-medium text-gray-500">{t('tenantLayout.consoleTitle')}</span>
                   </div>
                 </div>
                 <nav className="mt-5 space-y-1 px-2">
@@ -279,7 +282,7 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
           </div>
         )}
 
-        {/* 桌面端侧边栏 */}
+        {/*  */}
         <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 lg:pt-16">
           <div className="flex flex-1 flex-col overflow-y-auto bg-white border-r border-gray-200">
             <div className="flex flex-1 flex-col pt-5 pb-4">
@@ -290,7 +293,7 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
           </div>
         </div>
 
-        {/* 主内容区域 */}
+        {/*  */}
         <div className="lg:ml-64 flex-1">
           <main className="py-6">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

@@ -2,22 +2,22 @@
 sidebar_position: 8
 ---
 
-# CORS Configuration
+# CORS 配置
 
-Cross-Origin Resource Sharing (CORS) is a security feature that restricts web pages from making requests to a different domain than the one that served the web page.
+跨域资源共享 (CORS) 是一种安全机制，限制网页向与提供该网页的域不同的域发起请求。
 
-## Why is it needed?
-If your frontend is hosted at `https://myapp.com` and BasaltPass is at `https://auth.example.com`, the browser will block requests unless BasaltPass explicitly allows `https://myapp.com`.
+## 为什么需要 CORS？
+如果您的前端托管在 `https://myapp.com`，而 BasaltPass 在 `https://auth.example.com`，浏览器将阻止请求，除非 BasaltPass 明确允许 `https://myapp.com`。
 
-## Configuring Allowed Origins
+## 配置允许的来源
 
-1.  **Global Policy**: Set `BASALTPASS_SERVER_CORS_ALLOWED_ORIGINS` env var.
-    -   This applies to generic API endpoints.
-2.  **Client Policy**: Set **Allowed Origins** in the OAuth Client settings.
-    -   This is critical for the Token Endpoint when called from a browser (PKCE flow).
+1.  **全局策略**: 设置 `BASALTPASS_SERVER_CORS_ALLOWED_ORIGINS` 环境变量。
+    -   这适用于通用 API 端点。
+2.  **客户端策略**: 在 OAuth 客户端设置中设置 **允许的来源 (Allowed Origins)**。
+    -   当从浏览器调用令牌端点 (PKCE 流程) 时，这一点至关重要。
 
-## Troubleshooting
+## 故障排除
 
--   Check the browser console/Network tab.
--   Look for the `Access-Control-Allow-Origin` header in the response.
--   Ensure you include the protocol (e.g., `https://`) and port if non-standard.
+-   检查浏览器控制台/网络标签页。
+-   在响应中查找 `Access-Control-Allow-Origin` 头部。
+-   确保包含协议 (例如 `https://`) 和非标准端口。

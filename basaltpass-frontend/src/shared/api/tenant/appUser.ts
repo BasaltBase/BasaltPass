@@ -1,6 +1,6 @@
 import client from '../client'
 
-// 应用用户管理相关的API接口
+// appusermanagementtranslatedAPItranslated
 
 export interface AppUser {
   id: number
@@ -43,9 +43,9 @@ export interface AppUsersResponse {
   }
 }
 
-// 应用用户管理API
+// appusermanagementAPI
 export const appUserApi = {
-  // 根据状态获取应用用户列表
+  // translatedstatusgetappuserlist
   async getAppUsersByStatus(appId: string, status?: string, page = 1, limit = 20) {
     const params: any = { page, limit }
     if (status) {
@@ -58,19 +58,19 @@ export const appUserApi = {
     return response.data
   },
 
-  // 获取应用用户统计
+  // getappusertranslated
   async getAppUserStats(appId: string) {
     const response = await client.get(`/api/v1/tenant/apps/${appId}/users/stats`)
     return response.data
   },
 
-  // 更新用户状态（封禁/解封/限制）- 使用租户权限
+  // updateuserstatus（translated/translated/translated）- translatedtenantpermission
   async updateUserStatus(appId: string, userId: string, data: UpdateAppUserStatusRequest) {
     const response = await client.put(`/api/v1/tenant/apps/${appId}/users/${userId}/status`, data)
     return response.data
   },
 
-  // 撤销用户授权
+  // translatedusertranslated
   async revokeUserAuthorization(appId: string, userId: string) {
     const response = await client.delete(`/api/v1/tenant/apps/${appId}/users/${userId}`)
     return response.data

@@ -1,8 +1,8 @@
 import client from '../client';
 
-// 租户订阅管理API
+// tenantsubscriptionmanagementAPI
 
-// ==================== 产品管理 ====================
+// ==================== translatedmanagement ====================
 
 export interface TenantProduct {
   ID: number;
@@ -33,7 +33,7 @@ export interface UpdateTenantProductRequest {
   metadata?: Record<string, any>;
 }
 
-// ==================== 套餐管理 ====================
+// ==================== translatedmanagement ====================
 
 export interface TenantPlan {
   ID: number;
@@ -81,7 +81,7 @@ export interface UpdateTenantPlanRequest {
   metadata?: Record<string, any>;
 }
 
-// ==================== 定价管理 ====================
+// ==================== translatedmanagement ====================
 
 export interface TenantPrice {
   ID: number;
@@ -123,7 +123,7 @@ export interface UpdateTenantPriceRequest {
   metadata?: Record<string, any>;
 }
 
-// ==================== 订阅管理 ====================
+// ==================== subscriptionmanagement ====================
 
 export interface Subscription {
   ID: number;
@@ -147,7 +147,7 @@ export interface Subscription {
   CurrentPrice: TenantPrice;
   NextPrice?: TenantPrice | null;
   Coupon?: TenantCoupon | null;
-  User?: any; // 用户信息，通常不完整
+  User?: any; // userinfo，translated
   Items?: any[] | null;
   Events?: any[] | null;
   Invoices?: any[] | null;
@@ -166,7 +166,7 @@ export interface CancelTenantSubscriptionRequest {
   reason?: string;
 }
 
-// ==================== 优惠券管理 ====================
+// ==================== translatedmanagement ====================
 
 export interface TenantCoupon {
   ID: number;
@@ -210,7 +210,7 @@ export interface UpdateTenantCouponRequest {
   metadata?: Record<string, any>;
 }
 
-// ==================== 账单管理 ====================
+// ==================== translatedmanagement ====================
 
 export interface TenantInvoice {
   id: number;
@@ -237,7 +237,7 @@ export interface CreateTenantInvoiceRequest {
   metadata?: Record<string, any>;
 }
 
-// ==================== 统计信息 ====================
+// ==================== translatedinfo ====================
 
 export interface TenantSubscriptionStats {
   total_subscriptions: number;
@@ -248,30 +248,30 @@ export interface TenantSubscriptionStats {
   monthly_revenue_cents: number;
 }
 
-// ==================== API 客户端类 ====================
+// ==================== API translated ====================
 
 class TenantSubscriptionAPI {
-  // ========== 产品管理 ==========
+  // ========== translatedmanagement ==========
 
-  // 租户管理员：创建产品
+  // tenantmanagementtranslated：createtranslated
   async createProduct(data: CreateTenantProductRequest): Promise<TenantProduct> {
     const response = await client.post('/api/v1/tenant/subscription/products', data);
     return response.data.data;
   }
 
-  // 获取产品详情（管理员或普通用户）
+  // gettranslateddetails（managementtranslatedortranslateduser）
   async getProduct(id: number): Promise<TenantProduct> {
     const response = await client.get(`/api/v1/tenant/subscription/products/${id}`);
     return response.data.data;
   }
 
-  // 租户管理员：获取产品详情
+  // tenantmanagementtranslated：gettranslateddetails
   async adminGetProduct(id: number): Promise<TenantProduct> {
     const response = await client.get(`/api/v1/tenant/subscription/products/${id}`);
     return response.data.data;
   }
 
-  // 列出产品（管理员或普通用户）
+  // translated（managementtranslatedortranslateduser）
   async listProducts(params?: {
     page?: number;
     page_size?: number;
@@ -281,7 +281,7 @@ class TenantSubscriptionAPI {
     return response.data;
   }
 
-  // 租户管理员：列出产品
+  // tenantmanagementtranslated：translated
   async adminListProducts(params?: {
     page?: number;
     page_size?: number;
@@ -291,38 +291,38 @@ class TenantSubscriptionAPI {
     return response.data;
   }
 
-  // 租户管理员：更新产品
+  // tenantmanagementtranslated：updatetranslated
   async updateProduct(id: number, data: UpdateTenantProductRequest): Promise<TenantProduct> {
     const response = await client.put(`/api/v1/tenant/subscription/products/${id}`, data);
     return response.data.data;
   }
 
-  // 租户管理员：删除产品
+  // tenantmanagementtranslated：deletetranslated
   async deleteProduct(id: number): Promise<void> {
     await client.delete(`/api/v1/tenant/subscription/products/${id}`);
   }
 
-  // ========== 套餐管理 ==========
+  // ========== translatedmanagement ==========
 
-  // 租户管理员：创建套餐
+  // tenantmanagementtranslated：createtranslated
   async createPlan(data: CreateTenantPlanRequest): Promise<TenantPlan> {
     const response = await client.post('/api/v1/tenant/subscription/plans', data);
     return response.data.data;
   }
 
-  // 获取套餐详情（管理员或普通用户）
+  // gettranslateddetails（managementtranslatedortranslateduser）
   async getPlan(id: number): Promise<TenantPlan> {
     const response = await client.get(`/api/v1/tenant/subscription/plans/${id}`);
     return response.data.data;
   }
 
-  // 租户管理员：获取套餐详情
+  // tenantmanagementtranslated：gettranslateddetails
   async adminGetPlan(id: number): Promise<TenantPlan> {
     const response = await client.get(`/api/v1/tenant/subscription/plans/${id}`);
     return response.data.data;
   }
 
-  // 列出套餐（管理员或普通用户）
+  // translated（managementtranslatedortranslateduser）
   async listPlans(params?: {
     page?: number;
     page_size?: number;
@@ -333,7 +333,7 @@ class TenantSubscriptionAPI {
     return response.data;
   }
 
-  // 租户管理员：列出套餐
+  // tenantmanagementtranslated：translated
   async adminListPlans(params?: {
     page?: number;
     page_size?: number;
@@ -344,38 +344,38 @@ class TenantSubscriptionAPI {
     return response.data;
   }
 
-  // 租户管理员：更新套餐
+  // tenantmanagementtranslated：updatetranslated
   async updatePlan(id: number, data: UpdateTenantPlanRequest): Promise<TenantPlan> {
     const response = await client.put(`/api/v1/tenant/subscription/plans/${id}`, data);
     return response.data.data;
   }
 
-  // 租户管理员：删除套餐
+  // tenantmanagementtranslated：deletetranslated
   async deletePlan(id: number): Promise<void> {
     await client.delete(`/api/v1/tenant/subscription/plans/${id}`);
   }
 
-  // ========== 定价管理 ==========
+  // ========== translatedmanagement ==========
 
-  // 租户管理员：创建定价
+  // tenantmanagementtranslated：createtranslated
   async createPrice(data: CreateTenantPriceRequest): Promise<TenantPrice> {
     const response = await client.post('/api/v1/tenant/subscription/prices', data);
     return response.data.data;
   }
 
-  // 获取定价详情（管理员或普通用户）
+  // gettranslateddetails（managementtranslatedortranslateduser）
   async getPrice(id: number): Promise<TenantPrice> {
     const response = await client.get(`/api/v1/tenant/subscription/prices/${id}`);
     return response.data.data;
   }
 
-  // 租户管理员：获取定价详情
+  // tenantmanagementtranslated：gettranslateddetails
   async adminGetPrice(id: number): Promise<TenantPrice> {
     const response = await client.get(`/api/v1/tenant/subscription/prices/${id}`);
     return response.data.data;
   }
 
-  // 列出定价（管理员或普通用户）
+  // translated（managementtranslatedortranslateduser）
   async listPrices(params?: {
     page?: number;
     page_size?: number;
@@ -387,7 +387,7 @@ class TenantSubscriptionAPI {
     return response.data;
   }
 
-  // 租户管理员：列出定价
+  // tenantmanagementtranslated：translated
   async adminListPrices(params?: {
     page?: number;
     page_size?: number;
@@ -399,38 +399,38 @@ class TenantSubscriptionAPI {
     return response.data;
   }
 
-  // 租户管理员：更新定价
+  // tenantmanagementtranslated：updatetranslated
   async updatePrice(id: number, data: UpdateTenantPriceRequest): Promise<TenantPrice> {
     const response = await client.put(`/api/v1/tenant/subscription/prices/${id}`, data);
     return response.data.data;
   }
 
-  // 租户管理员：删除定价
+  // tenantmanagementtranslated：deletetranslated
   async deletePrice(id: number): Promise<void> {
     await client.delete(`/api/v1/tenant/subscription/prices/${id}`);
   }
 
-  // ========== 订阅管理 ==========
+  // ========== subscriptionmanagement ==========
 
-  // 租户管理员：创建订阅
+  // tenantmanagementtranslated：createsubscription
   async createSubscription(data: CreateTenantSubscriptionRequest): Promise<Subscription> {
     const response = await client.post('/api/v1/tenant/subscription/subscriptions', data);
     return response.data.data;
   }
 
-  // 获取订阅详情（管理员或普通用户）
+  // getsubscriptiondetails（managementtranslatedortranslateduser）
   async getSubscription(id: number): Promise<Subscription> {
     const response = await client.get(`/api/v1/tenant/subscription/subscriptions/${id}`);
     return response.data.data;
   }
 
-  // 租户管理员：获取订阅详情
+  // tenantmanagementtranslated：getsubscriptiondetails
   async adminGetSubscription(id: number): Promise<Subscription> {
     const response = await client.get(`/api/v1/tenant/subscription/subscriptions/${id}`);
     return response.data.data;
   }
 
-  // 列出订阅（管理员或普通用户）
+  // translatedsubscription（managementtranslatedortranslateduser）
   async listSubscriptions(params?: {
     page?: number;
     page_size?: number;
@@ -442,7 +442,7 @@ class TenantSubscriptionAPI {
     return response.data;
   }
 
-  // 租户管理员：列出订阅
+  // tenantmanagementtranslated：translatedsubscription
   async adminListSubscriptions(params?: {
     page?: number;
     page_size?: number;
@@ -454,14 +454,14 @@ class TenantSubscriptionAPI {
     return response.data;
   }
 
-  // 租户管理员：取消订阅
+  // tenantmanagementtranslated：cancelsubscription
   async cancelSubscription(id: number, data?: CancelTenantSubscriptionRequest): Promise<void> {
     await client.post(`/api/v1/tenant/subscription/subscriptions/${id}/cancel`, data || {});
   }
 
-  // ========== 优惠券管理 ==========
+  // ========== translatedmanagement ==========
 
-  // 列出优惠券（管理员或普通用户）
+  // translated（managementtranslatedortranslateduser）
   async listCoupons(params?: {
     page?: number;
     page_size?: number;
@@ -473,7 +473,7 @@ class TenantSubscriptionAPI {
     return response.data;
   }
 
-  // 租户管理员：列出优惠券
+  // tenantmanagementtranslated：translated
   async adminListCoupons(params?: {
     page?: number;
     page_size?: number;
@@ -485,50 +485,50 @@ class TenantSubscriptionAPI {
     return response.data;
   }
 
-  // 租户管理员：创建优惠券
+  // tenantmanagementtranslated：createtranslated
   async createCoupon(data: CreateTenantCouponRequest): Promise<TenantCoupon> {
     const response = await client.post('/api/v1/tenant/subscription/coupons', data);
     return response.data.data;
   }
 
-  // 获取优惠券详情（管理员或普通用户）
+  // gettranslateddetails（managementtranslatedortranslateduser）
   async getCoupon(code: string): Promise<TenantCoupon> {
     const response = await client.get(`/api/v1/tenant/subscription/coupons/${code}`);
     return response.data.data;
   }
 
-  // 租户管理员：获取优惠券详情
+  // tenantmanagementtranslated：gettranslateddetails
   async adminGetCoupon(code: string): Promise<TenantCoupon> {
     const response = await client.get(`/api/v1/tenant/subscription/coupons/${code}`);
     return response.data.data;
   }
 
-  // 租户管理员：更新优惠券
+  // tenantmanagementtranslated：updatetranslated
   async updateCoupon(code: string, data: UpdateTenantCouponRequest): Promise<TenantCoupon> {
     const response = await client.put(`/api/v1/tenant/subscription/coupons/${code}`, data);
     return response.data.data;
   }
 
-  // 租户管理员：删除优惠券
+  // tenantmanagementtranslated：deletetranslated
   async deleteCoupon(code: string): Promise<void> {
     await client.delete(`/api/v1/tenant/subscription/coupons/${code}`);
   }
 
-  // 验证优惠券（管理员或普通用户）
+  // translated（managementtranslatedortranslateduser）
   async validateCoupon(code: string): Promise<{ valid: boolean; data?: TenantCoupon; error?: string }> {
     const response = await client.get(`/api/v1/tenant/subscription/coupons/${code}/validate`);
     return response.data;
   }
 
-  // ========== 账单管理 ==========
+  // ========== translatedmanagement ==========
 
-  // 租户管理员：创建账单
+  // tenantmanagementtranslated：createtranslated
   async createInvoice(data: CreateTenantInvoiceRequest): Promise<TenantInvoice> {
     const response = await client.post('/api/v1/tenant/subscription/invoices', data);
     return response.data.data;
   }
 
-  // 列出账单（管理员或普通用户）
+  // translated（managementtranslatedortranslateduser）
   async listInvoices(params?: {
     page?: number;
     page_size?: number;
@@ -541,7 +541,7 @@ class TenantSubscriptionAPI {
     return response.data;
   }
 
-  // 租户管理员：列出账单
+  // tenantmanagementtranslated：translated
   async adminListInvoices(params?: {
     page?: number;
     page_size?: number;
@@ -554,23 +554,23 @@ class TenantSubscriptionAPI {
     return response.data;
   }
 
-  // ========== 统计信息 ==========
+  // ========== translatedinfo ==========
 
-  // 获取订阅统计（管理员或普通用户）
+  // getsubscriptiontranslated（managementtranslatedortranslateduser）
   async getSubscriptionStats(): Promise<TenantSubscriptionStats> {
     const response = await client.get('/api/v1/tenant/subscription/stats');
     return response.data.data;
   }
 
-  // 租户管理员：获取订阅统计
+  // tenantmanagementtranslated：getsubscriptiontranslated
   async adminGetSubscriptionStats(): Promise<TenantSubscriptionStats> {
     const response = await client.get('/api/v1/tenant/subscription/stats');
     return response.data.data;
   }
 
-  // ========== 租户用户订阅查看（不需要管理员权限） ==========
+  // ========== tenantusersubscriptiontranslated（translatedmanagementtranslatedpermission） ==========
 
-  // 租户用户：获取租户下所有订阅列表
+  // tenantuser：gettenanttranslatedhassubscriptionlist
   async listTenantSubscriptions(params?: {
     page?: number;
     page_size?: number;
@@ -582,13 +582,13 @@ class TenantSubscriptionAPI {
     return response.data;
   }
 
-  // 租户用户：获取订阅详情
+  // tenantuser：getsubscriptiondetails
   async getTenantSubscription(id: number): Promise<Subscription> {
     const response = await client.get(`/api/v1/tenant/subscriptions/${id}`);
     return response.data.data;
   }
 
-  // ========== 辅助方法 ==========
+  // ========== translated ==========
 
   formatPrice(amountCents: number, currency: string): string {
     const amount = amountCents / 100;
@@ -600,23 +600,23 @@ class TenantSubscriptionAPI {
 
   formatBillingPeriod(period: string, interval: number): string {
     const periodMap: Record<string, string> = {
-      day: '天',
-      week: '周',
-      month: '月',
-      year: '年'
+      day: 'translated',
+      week: 'translated',
+      month: 'translated',
+      year: 'translated'
     };
 
     const periodText = periodMap[period] || period;
-    return interval === 1 ? `每${periodText}` : `每${interval}${periodText}`;
+    return interval === 1 ? `translated${periodText}` : `translated${interval}${periodText}`;
   }
 
   formatSubscriptionStatus(status: string): { text: string; color: string } {
     const statusMap: Record<string, { text: string; color: string }> = {
-      active: { text: '活跃', color: 'green' },
-      canceled: { text: '已取消', color: 'red' },
-      paused: { text: '已暂停', color: 'yellow' },
-      past_due: { text: '逾期', color: 'orange' },
-      unpaid: { text: '未支付', color: 'red' },
+      active: { text: 'translated', color: 'green' },
+      canceled: { text: 'alreadycancel', color: 'red' },
+      paused: { text: 'alreadytranslated', color: 'yellow' },
+      past_due: { text: 'translated', color: 'orange' },
+      unpaid: { text: 'notpayment', color: 'red' },
     };
 
     return statusMap[status] || { text: status, color: 'gray' };
@@ -624,21 +624,21 @@ class TenantSubscriptionAPI {
 
   formatInvoiceStatus(status: string): { text: string; color: string } {
     const statusMap: Record<string, { text: string; color: string }> = {
-      draft: { text: '草稿', color: 'gray' },
-      posted: { text: '已发布', color: 'blue' },
-      paid: { text: '已支付', color: 'green' },
-      void: { text: '已作废', color: 'red' },
-      uncollectible: { text: '无法收取', color: 'orange' },
+      draft: { text: 'translated', color: 'gray' },
+      posted: { text: 'alreadytranslated', color: 'blue' },
+      paid: { text: 'alreadypayment', color: 'green' },
+      void: { text: 'alreadytranslated', color: 'red' },
+      uncollectible: { text: 'nonetranslated', color: 'orange' },
     };
 
     return statusMap[status] || { text: status, color: 'gray' };
   }
 }
 
-// 导出API实例
+// translatedAPItranslated
 export const tenantSubscriptionAPI = new TenantSubscriptionAPI();
 
-// 导出普通租户用户访问的快捷函数（只读）
+// translatedtenantusertranslated（translated）
 export const {
   getProduct: getTenantProduct,
   listProducts: listTenantProducts,
@@ -651,8 +651,8 @@ export const {
   
   getSubscription: getTenantSubscription,
   listSubscriptions: listTenantSubscriptions,
-  listTenantSubscriptions: listTenantUserSubscriptions, // 新增：专门为租户用户提供的订阅列表
-  getTenantSubscription: getTenantUserSubscription, // 新增：专门为租户用户提供的订阅详情
+  listTenantSubscriptions: listTenantUserSubscriptions, // translated：translatedtenantusertranslatedsubscriptionlist
+  getTenantSubscription: getTenantUserSubscription, // translated：translatedtenantusertranslatedsubscriptiondetails
   
   listCoupons: listTenantCoupons,
   getCoupon: getTenantCoupon,
@@ -663,7 +663,7 @@ export const {
   getSubscriptionStats: getTenantSubscriptionStats,
 } = tenantSubscriptionAPI;
 
-// 导出租户管理员访问的快捷函数（完整CRUD）
+// translatedtenantmanagementtranslated（translatedCRUD）
 export const {
   createProduct: createTenantProduct,
   adminGetProduct: adminGetTenantProduct,

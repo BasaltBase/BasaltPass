@@ -1,4 +1,4 @@
-// 管理员API导出
+// managementtranslatedAPItranslated
 export * from './notification'
 export * from './tenant'
 export * from './settings'

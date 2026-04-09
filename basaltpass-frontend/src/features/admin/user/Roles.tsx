@@ -8,6 +8,7 @@ import AdminLayout from '@features/admin/components/AdminLayout'
 import { PCheckbox, PButton, PInput, PAlert } from '@ui'
 import PTable, { PTableColumn } from '@ui/PTable'
 import { ROUTES } from '@constants'
+import { useI18n } from '@shared/i18n'
 
 interface RawRole {
   ID: number
@@ -27,6 +28,7 @@ interface Role {
 }
 
 export default function Roles() {
+  const { t } = useI18n()
   const [roles, setRoles] = useState<Role[]>([])
   const [name, setName] = useState('')
   const [desc, setDesc] = useState('')
@@ -56,7 +58,7 @@ export default function Roles() {
 
   const createRole = async () => {
     if (!name.trim()) {
-      setError('请输入角色名称')
+      setError(t('adminRoles.errors.roleNameRequired'))
       return
     }
 
@@ -69,7 +71,7 @@ export default function Roles() {
       setShowCreateModal(false)
       load()
     } catch (e: any) {
-      setError(e.response?.data?.error || '创建角色失败')
+      setError(e.response?.data?.error || t('adminRoles.errors.createRoleFailed'))
     } finally {
       setCreating(false)
     }
@@ -100,21 +102,21 @@ export default function Roles() {
       await setRolePermissions(assigningRole.ID, ids)
       setAssigningRole(null)
     } catch (e:any) {
-      uiAlert(e.response?.data?.error || '保存失败')
+      uiAlert(e.response?.data?.error || t('adminRoles.errors.saveFailed'))
     } finally {
       setSavingPerms(false)
     }
   }
 
   return (
-    <AdminLayout title="角色管理">
+    <AdminLayout title={t('adminRoles.layoutTitle')}>
       <div className="space-y-6">
 
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">角色管理</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('adminRoles.header.title')}</h1>
             <p className="mt-1 text-sm text-gray-500">
-              管理系统角色和权限
+              {t('adminRoles.header.description')}
             </p>
           </div>
           <PButton
@@ -122,26 +124,26 @@ export default function Roles() {
             variant="primary"
             leftIcon={<PlusIcon className="h-4 w-4" />}
           >
-            添加角色
+            {t('adminRoles.actions.addRole')}
           </PButton>
         </div>
 
         <div className="bg-white shadow rounded-lg">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">角色列表</h3>
+            <h3 className="text-lg font-medium text-gray-900">{t('adminRoles.list.title')}</h3>
           </div>
           <div className="overflow-x-auto">
             {(() => {
               const columns: PTableColumn<Role>[] = [
                 { key: 'id', title: 'ID', dataIndex: 'ID', sortable: true },
-                { key: 'name', title: '名称', dataIndex: 'name', sortable: true },
-                { key: 'description', title: '描述', dataIndex: 'description' },
+                { key: 'name', title: t('adminRoles.table.name'), dataIndex: 'name', sortable: true },
+                { key: 'description', title: t('adminRoles.table.description'), dataIndex: 'description' },
                 {
                   key: 'actions',
-                  title: '操作',
+                  title: t('adminRoles.table.actions'),
                   align: 'right',
                   render: (r) => (
-                    <PButton variant="secondary" size="sm" onClick={() => openAssign(r)}>分配权限</PButton>
+                    <PButton variant="secondary" size="sm" onClick={() => openAssign(r)}>{t('adminRoles.actions.assignPermissions')}</PButton>
                   )
                 }
               ]
@@ -151,7 +153,7 @@ export default function Roles() {
                   columns={columns}
                   data={roles}
                   rowKey={(row) => row.ID}
-                  emptyText="暂无角色"
+                  emptyText={t('adminRoles.list.empty')}
                   defaultSort={{ key: 'id', order: 'asc' }}
                 />
               )
@@ -159,12 +161,11 @@ export default function Roles() {
           </div>
         </div>
 
-        {/* 创建角色模态框 */}
         {showCreateModal && (
         <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10">
           <div className="w-3/4 max-w-4xl p-6 border shadow-lg rounded-md bg-white">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">创建新角色</h2>
+              <h2 className="text-xl font-semibold text-gray-900">{t('adminRoles.createModal.title')}</h2>
               <PButton 
                 variant="ghost"
                 size="sm"
@@ -176,36 +177,33 @@ export default function Roles() {
             </div>
             
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* 第一行：角色名称和角色描述 */}
               <div className="grid grid-cols-2 gap-6">
                 <PInput
                   type="text"
-                  label={<>角色名称 <span className="text-red-500">*</span></>}
-                  placeholder="输入角色名称"
+                  label={<>{t('adminRoles.createModal.roleNameLabel')} <span className="text-red-500">*</span></>}
+                  placeholder={t('adminRoles.createModal.roleNamePlaceholder')}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
                 />
                 <PInput
                   type="text"
-                  label="角色描述"
-                  placeholder="输入角色描述"
+                  label={t('adminRoles.createModal.roleDescLabel')}
+                  placeholder={t('adminRoles.createModal.roleDescPlaceholder')}
                   value={desc}
                   onChange={(e) => setDesc(e.target.value)}
                 />
               </div>
 
-              {/* 错误信息显示 */}
               {error && <PAlert variant="error" message={error} />}
 
-              {/* 按钮区域 */}
               <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
                 <PButton
                   type="button"
                   variant="secondary"
                   onClick={() => setShowCreateModal(false)}
                 >
-                  取消
+                  {t('adminRoles.actions.cancel')}
                 </PButton>
                 <PButton
                   type="submit"
@@ -213,19 +211,18 @@ export default function Roles() {
                   disabled={creating}
                   loading={creating}
                 >
-                  创建角色
+                  {t('adminRoles.actions.createRole')}
                 </PButton>
               </div>
             </form>
           </div>
         </div>
       )}
-      {/* 权限分配模态框 */}
       {assigningRole && (
         <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10">
           <div className="w-3/4 max-w-4xl p-6 border shadow-lg rounded-md bg-white">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">为角色分配权限 - {assigningRole.name}</h2>
+              <h2 className="text-xl font-semibold text-gray-900">{t('adminRoles.assignModal.title', { role: assigningRole.name })}</h2>
               <PButton 
                 variant="ghost"
                 size="sm"
@@ -250,8 +247,8 @@ export default function Roles() {
               ))}
             </div>
             <div className="flex justify-end gap-3 mt-6">
-              <PButton variant="secondary" onClick={() => setAssigningRole(null)}>取消</PButton>
-              <PButton variant="primary" disabled={savingPerms} loading={savingPerms} onClick={saveAssign}>保存</PButton>
+              <PButton variant="secondary" onClick={() => setAssigningRole(null)}>{t('adminRoles.actions.cancel')}</PButton>
+              <PButton variant="primary" disabled={savingPerms} loading={savingPerms} onClick={saveAssign}>{t('adminRoles.actions.save')}</PButton>
             </div>
           </div>
         </div>

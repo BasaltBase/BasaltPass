@@ -1,99 +1,99 @@
-# BasaltPass 租户用户隔离实现总结
+# BasaltPass Tenant User Isolation — Implementation Summary
 
-## 概述
+## Overview
 
-本次更新实现了完整的租户用户隔离系统，确保每个租户的用户只能访问自己租户的数据和服务。
+This update implements a complete tenant user isolation system, ensuring that each tenant's users can only access data and services within their own tenant.
 
-## 主要变更
+## Key Changes
 
-### 1. 数据库模型变更
+### 1. Database Model Changes
 
-#### User表更新
-- **添加 `tenant_id` 字段**：标识用户所属的租户
-  - `tenant_id = 0`：平台级用户（admin和tenant_admin）
-  - `tenant_id > 0`：普通租户用户
+#### User Table Update
+- **Added `tenant_id` field**: Identifies the tenant a user belongs to
+  - `tenant_id = 0`: Platform-level users (admin and tenant_admin)
+  - `tenant_id > 0`: Regular tenant users
   
-- **修改唯一约束**：
-  - 旧：`email` 全局唯一
-  - 新：`(email, tenant_id)` 复合唯一索引
-  - 旧：`phone` 全局唯一
-  - 新：`(phone, tenant_id)` 复合唯一索引
+- **Modified unique constraints**:
+  - Old: `email` globally unique
+  - New: `(email, tenant_id)` composite unique index
+  - Old: `phone` globally unique
+  - New: `(phone, tenant_id)` composite unique index
   
-这意味着：同一个邮箱/手机号可以在不同租户下注册不同的账户。
+This means: the same email/phone number can register different accounts under different tenants.
 
-#### 数据库迁移
-- 添加了 `handleUserTenantIDMigration()` 函数处理现有数据的迁移
-- 为现有用户自动分配tenant_id（从tenant_admins或app_users表推断）
-- admin用户（is_system_admin=true）的tenant_id保持为0
+#### Database Migration
+- Added `handleUserTenantIDMigration()` function to handle migration of existing data
+- Automatically assigns `tenant_id` to existing users (inferred from `tenant_admins` or `app_users` tables)
+- Admin users (`is_system_admin=true`) keep `tenant_id` as 0
 
-### 2. 认证和授权变更
+### 2. Authentication and Authorization Changes
 
-#### 注册流程
-- **RegisterRequest** 添加 `tenant_id` 字段
-- 注册时检查用户是否已存在：`(email/phone) AND tenant_id`
-- 第一个用户（系统管理员）的tenant_id自动设置为0
+#### Registration Flow
+- **RegisterRequest** adds `tenant_id` field
+- Registration checks if user already exists: `(email/phone) AND tenant_id`
+- The first user (system admin) automatically has `tenant_id` set to 0
 
-#### 登录流程  
-- **LoginRequest** 添加 `tenant_id` 字段
-- 登录分为两种模式：
-  1. **平台登录** (`tenant_id = 0`)
-     - 只允许 `is_system_admin = true` 或存在于 `tenant_admins` 表的用户登录
-     - 普通用户尝试平台登录会收到错误："only administrators can login to platform"
+#### Login Flow
+- **LoginRequest** adds `tenant_id` field
+- Login is divided into two modes:
+  1. **Platform Login** (`tenant_id = 0`)
+     - Only allows users with `is_system_admin = true` or existing in the `tenant_admins` table
+     - Regular users attempting platform login receive an error: "only administrators can login to platform"
   
-  2. **租户登录** (`tenant_id > 0`)
-     - 只查询该租户下的用户
-     - 验证 `user.tenant_id == req.tenant_id`
+  2. **Tenant Login** (`tenant_id > 0`)
+     - Only queries users under that tenant
+     - Validates `user.tenant_id == req.tenant_id`
 
-#### JWT Token变更
-- Token中的 `tid` (tenant_id) 现在直接来自 `user.tenant_id`
-- `GenerateTokenPair()` 自动从数据库获取用户的tenant_id
-- Middleware已经在提取和验证tenant_id
+#### JWT Token Changes
+- The `tid` (tenant_id) in the token now comes directly from `user.tenant_id`
+- `GenerateTokenPair()` automatically retrieves the user's `tenant_id` from the database
+- Middleware already extracts and validates `tenant_id`
 
-### 3. OAuth2授权流程变更
+### 3. OAuth2 Authorization Flow Changes
 
-#### 授权验证
-- 新增 `ValidateUserTenant()` 方法验证用户是否属于应用所在的租户
-- 在授权请求和授权同意两个环节都进行验证
-- 系统管理员（is_system_admin=true）可以访问所有租户的应用
+#### Authorization Validation
+- Added `ValidateUserTenant()` method to verify the user belongs to the application's tenant
+- Validation occurs at both the authorization request and consent stages
+- System admins (`is_system_admin=true`) can access applications across all tenants
 
-#### 登录页面重定向
-- 新增 `buildLoginURLWithTenant()` 函数
-- OAuth授权时自动重定向到租户特定的登录页面：`/tenant/{tenant_code}/login`
-- 租户登录页面会自动带上tenant_id进行登录
+#### Login Page Redirect
+- Added `buildLoginURLWithTenant()` function
+- OAuth authorization automatically redirects to tenant-specific login page: `/tenant/{tenant_code}/login`
+- The tenant login page automatically includes `tenant_id` when logging in
 
-### 4. 前端变更
+### 4. Frontend Changes
 
-#### 新增组件
-- **TenantLogin.tsx**：租户专属登录页面
-  - 路由：`/tenant/:tenantCode/login`
-  - 自动加载租户信息
-  - 登录时带上 `tenant_id`
-  - 提供友好的租户信息展示
+#### New Components
+- **TenantLogin.tsx**: Tenant-specific login page
+  - Route: `/tenant/:tenantCode/login`
+  - Automatically loads tenant information
+  - Includes `tenant_id` when logging in
+  - Provides a user-friendly tenant info display
 
-#### 登录页面更新
-- **Login.tsx**：平台登录页面
-  - 登录时 `tenant_id = 0`
-  - 新增错误处理："普通用户不能登录平台，请使用租户登录"
+#### Login Page Updates
+- **Login.tsx**: Platform login page
+  - Login with `tenant_id = 0`
+  - Added error handling: "Regular users cannot login to platform, please use tenant login"
 
-#### 路由配置
-- 添加租户登录路由：`/tenant/:tenantCode/login`
-- 公开API路由：`GET /api/v1/public/tenants/by-code/:code`
+#### Route Configuration
+- Added tenant login route: `/tenant/:tenantCode/login`
+- Public API route: `GET /api/v1/public/tenants/by-code/:code`
 
-### 5. API变更
+### 5. API Changes
 
-#### 新增端点
+#### New Endpoint
 ```go
 GET /api/v1/public/tenants/by-code/:code
 ```
-返回租户公开信息（id, name, code, description, status, plan）
+Returns tenant public information (id, name, code, description, status, plan)
 
-#### 修改端点
+#### Modified Endpoints
 ```go
 POST /api/v1/auth/login
 Request: {
   "identifier": "email or phone",
   "password": "password",
-  "tenant_id": 0  // 新增字段
+  "tenant_id": 0  // New field
 }
 ```
 
@@ -102,161 +102,161 @@ POST /api/v1/signup/start
 Request: {
   "email": "user@example.com",
   "password": "password",
-  "tenant_id": 1  // 新增字段
+  "tenant_id": 1  // New field
 }
 ```
 
-## 租户隔离检查点
+## Tenant Isolation Checkpoints
 
-系统在以下关键点进行租户隔离检查：
+The system performs tenant isolation checks at the following critical points:
 
-### 1. 注册检查
-- ✅ 检查 `(email/phone, tenant_id)` 组合的唯一性
-- ✅ 第一个用户自动成为系统管理员（tenant_id=0）
+### 1. Registration Check
+- ✅ Checks `(email/phone, tenant_id)` combination uniqueness
+- ✅ First user automatically becomes system admin (`tenant_id=0`)
 
-### 2. 登录检查
-- ✅ 平台登录只允许admin和tenant_admin
-- ✅ 租户登录验证用户的tenant_id
-- ✅ 跨租户登录被拒绝
+### 2. Login Check
+- ✅ Platform login only allows admin and tenant_admin
+- ✅ Tenant login validates user's `tenant_id`
+- ✅ Cross-tenant login is rejected
 
-### 3. OAuth授权检查
-- ✅ 验证用户的tenant_id与应用的tenant_id一致
-- ✅ 授权码生成时记录tenant_id
-- ✅ 重定向到租户特定的登录页面
+### 3. OAuth Authorization Check
+- ✅ Validates user's `tenant_id` matches the application's `tenant_id`
+- ✅ Authorization code records `tenant_id` during generation
+- ✅ Redirects to tenant-specific login page
 
-### 4. JWT Token检查
-- ✅ Token中包含用户的tenant_id
-- ✅ Middleware提取并验证tenant_id
-- ✅ Token中的tenant_id与用户记录一致
+### 4. JWT Token Check
+- ✅ Token contains the user's `tenant_id`
+- ✅ Middleware extracts and validates `tenant_id`
+- ✅ Token's `tenant_id` matches the user record
 
-### 5. 数据访问检查（待实现）
-以下功能需要在后续添加tenant_id检查：
-- ⏳ 用户查询
-- ⏳ 通知发送
-- ⏳ 权限分配
-- ⏳ 团队管理
-- ⏳ 订单/订阅管理
+### 5. Data Access Check (Pending)
+The following features need `tenant_id` checks added in subsequent updates:
+- ⏳ User queries
+- ⏳ Notification sending
+- ⏳ Permission assignment
+- ⏳ Team management
+- ⏳ Order/subscription management
 
-## 测试
+## Testing
 
-### 测试脚本
-创建了 `test/test_tenant_isolation.py` Python测试脚本：
+### Test Script
+Created `test/test_tenant_isolation.py` Python test script:
 
-测试场景：
-1. ✅ 创建两个租户
-2. ✅ 在每个租户下注册相同邮箱的用户
-3. ✅ 测试用户可以登录自己的租户
-4. ✅ 测试用户不能登录其他租户
-5. ✅ 测试普通用户不能登录平台
-6. ⏳ 测试OAuth授权的租户验证
-7. ⏳ 测试数据隔离（用户查询、通知等）
+Test scenarios:
+1. ✅ Create two tenants
+2. ✅ Register users with the same email under each tenant
+3. ✅ Test that users can log in to their own tenant
+4. ✅ Test that users cannot log in to other tenants
+5. ✅ Test that regular users cannot log in to the platform
+6. ⏳ Test OAuth authorization tenant validation
+7. ⏳ Test data isolation (user queries, notifications, etc.)
 
-### 运行测试
+### Running Tests
 ```bash
 cd /workspaces/WorkPlace/BasaltPass
 python test/test_tenant_isolation.py
 ```
 
-## 安全考虑
+## Security Considerations
 
-### 已实现的安全措施
-1. ✅ **用户隔离**：相同邮箱/手机号可以在不同租户下注册
-2. ✅ **登录隔离**：用户只能登录自己所属的租户
-3. ✅ **平台访问限制**：普通用户不能登录平台控制台
-4. ✅ **OAuth隔离**：OAuth授权验证租户归属
-5. ✅ **Token隔离**：JWT token包含tenant_id
+### Implemented Security Measures
+1. ✅ **User Isolation**: Same email/phone can register under different tenants
+2. ✅ **Login Isolation**: Users can only log in to their own tenant
+3. ✅ **Platform Access Restriction**: Regular users cannot log in to the platform console
+4. ✅ **OAuth Isolation**: OAuth authorization validates tenant ownership
+5. ✅ **Token Isolation**: JWT token contains `tenant_id`
 
-### 需要注意的地方
-1. ⚠️ **数据查询**：所有涉及用户的查询都需要添加 `tenant_id` 过滤
-2. ⚠️ **跨租户操作**：确保没有API允许跨租户访问数据
-3. ⚠️ **Session管理**：Cookie/Session应该与tenant关联
-4. ⚠️ **API权限**：所有tenant相关的API都需要验证tenant_id
+### Considerations
+1. ⚠️ **Data Queries**: All user-related queries must add `tenant_id` filtering
+2. ⚠️ **Cross-Tenant Operations**: Ensure no API allows cross-tenant data access
+3. ⚠️ **Session Management**: Cookies/sessions should be associated with the tenant
+4. ⚠️ **API Permissions**: All tenant-related APIs must validate `tenant_id`
 
-## 下一步工作
+## Next Steps
 
-### 高优先级
-1. **添加租户隔离检查到所有用户查询**
-   - 用户列表查询
-   - 用户搜索
-   - 用户详情查询
+### High Priority
+1. **Add tenant isolation checks to all user queries**
+   - User list queries
+   - User search
+   - User detail queries
 
-2. **完善Session/Cookie管理**
-   - Session与tenant关联
-   - Cookie domain与tenant关联（如果使用子域名）
+2. **Improve Session/Cookie management**
+   - Associate sessions with tenants
+   - Associate cookie domains with tenants (if using subdomains)
 
-3. **测试和验证**
-   - 运行完整的测试套件
-   - 测试所有用户相关的API
-   - 测试OAuth完整流程
+3. **Testing and verification**
+   - Run the complete test suite
+   - Test all user-related APIs
+   - Test the full OAuth flow
 
-### 中优先级
-4. **添加租户隔离到其他功能**
-   - 通知系统
-   - 权限管理
-   - 团队管理
-   - 订单/订阅系统
+### Medium Priority
+4. **Add tenant isolation to other features**
+   - Notification system
+   - Permission management
+   - Team management
+   - Order/subscription system
 
-5. **前端改进**
-   - 租户注册页面
-   - 租户选择器（如果一个用户属于多个租户作为admin）
-   - 更好的错误提示
+5. **Frontend improvements**
+   - Tenant registration page
+   - Tenant selector (if a user belongs to multiple tenants as admin)
+   - Better error messages
 
-### 低优先级
-6. **性能优化**
-   - 添加tenant_id索引优化
-   - 缓存租户信息
+### Low Priority
+6. **Performance optimization**
+   - Add `tenant_id` index optimization
+   - Cache tenant information
 
-7. **文档更新**
-   - API文档更新
-   - 用户手册更新
-   - 开发文档更新
+7. **Documentation updates**
+   - API documentation updates
+   - User manual updates
+   - Developer documentation updates
 
-## 迁移指南
+## Migration Guide
 
-### 对于现有系统
-如果你已经有用户数据：
+### For Existing Systems
+If you already have user data:
 
-1. **备份数据库**
+1. **Backup the database**
 ```bash
-# 创建数据库备份
+# Create database backup
 mysqldump -u user -p database_name > backup.sql
 ```
 
-2. **运行迁移**
-迁移会自动执行：
-- 添加tenant_id字段
-- 为现有用户分配tenant_id
-- 创建新的复合唯一索引
+2. **Run migration**
+Migration runs automatically:
+- Adds the `tenant_id` field
+- Assigns `tenant_id` to existing users
+- Creates new composite unique indexes
 
-3. **验证迁移**
+3. **Verify migration**
 ```sql
--- 检查所有用户都有tenant_id
+-- Check all users have tenant_id
 SELECT COUNT(*) FROM users WHERE tenant_id IS NULL;
 
--- 检查索引是否创建
+-- Check if indexes are created
 SHOW INDEX FROM users;
 ```
 
-### 对于新系统
-直接运行应用，会自动创建正确的表结构。
+### For New Systems
+Simply run the application — it will automatically create the correct table structure.
 
-## 配置说明
+## Configuration Notes
 
-无需额外配置，所有变更都是代码级别的。
+No additional configuration is required; all changes are at the code level.
 
-## 兼容性
+## Compatibility
 
-- ✅ 向后兼容现有API
-- ✅ 现有用户会自动迁移
-- ⚠️ 需要更新SDK和客户端库以支持tenant_id参数
+- ✅ Backward compatible with existing APIs
+- ✅ Existing users will be automatically migrated
+- ⚠️ SDKs and client libraries need to be updated to support the `tenant_id` parameter
 
-## 总结
+## Summary
 
-本次更新实现了完整的租户用户隔离系统，主要特点：
+This update implements a complete tenant user isolation system with the following key features:
 
-1. **数据隔离**：用户数据按租户完全隔离
-2. **登录隔离**：租户登录与平台登录分离
-3. **OAuth隔离**：OAuth授权验证租户归属
-4. **安全增强**：防止跨租户访问和数据泄露
+1. **Data Isolation**: User data is fully isolated by tenant
+2. **Login Isolation**: Tenant login and platform login are separated
+3. **OAuth Isolation**: OAuth authorization validates tenant ownership
+4. **Security Enhancement**: Prevents cross-tenant access and data leakage
 
-系统现在支持真正的多租户架构，每个租户的用户只能访问自己租户的数据和服务。
+The system now supports a true multi-tenant architecture where each tenant's users can only access their own tenant's data and services.

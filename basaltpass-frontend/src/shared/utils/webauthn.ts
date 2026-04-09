@@ -1,18 +1,18 @@
-// WebAuthn工具函数
+// WebAuthntranslated
 
-// 检查浏览器是否支持WebAuthn
+// translatedisnotranslatedWebAuthn
 export function isWebAuthnSupported(): boolean {
   return !!(navigator.credentials && navigator.credentials.get)
 }
 
-// 检查是否支持Passkey
+// translatedisnotranslatedPasskey
 export function isPasskeySupported(): boolean {
   return isWebAuthnSupported() && 
     'PublicKeyCredential' in window &&
     typeof PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === 'function'
 }
 
-// Base64URL编码
+// Base64URLtranslated
 export function base64URLEncode(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer)
   let binary = ''
@@ -25,9 +25,9 @@ export function base64URLEncode(buffer: ArrayBuffer): string {
     .replace(/=/g, '')
 }
 
-// Base64URL解码
+// Base64URLtranslated
 export function base64URLDecode(str: string): ArrayBuffer {
-  // 补齐padding
+  // translatedpadding
   str += '==='.slice((str.length + 3) % 4)
   str = str.replace(/-/g, '+').replace(/_/g, '/')
   
@@ -39,7 +39,7 @@ export function base64URLDecode(str: string): ArrayBuffer {
   return bytes.buffer
 }
 
-// 转换服务器响应为浏览器API格式
+// translatedservicetranslatedresponsetranslatedAPItranslated
 export function parseCreationOptionsFromJSON(options: any): CredentialCreationOptions {
   return {
     publicKey: {
@@ -57,7 +57,7 @@ export function parseCreationOptionsFromJSON(options: any): CredentialCreationOp
   }
 }
 
-// 转换服务器响应为浏览器API格式
+// translatedservicetranslatedresponsetranslatedAPItranslated
 export function parseRequestOptionsFromJSON(options: any): CredentialRequestOptions {
   return {
     publicKey: {
@@ -71,7 +71,7 @@ export function parseRequestOptionsFromJSON(options: any): CredentialRequestOpti
   }
 }
 
-// 转换浏览器响应为服务器格式
+// translatedresponsetranslatedservicetranslated
 export function formatCredentialCreationResponse(credential: PublicKeyCredential): any {
   const response = credential.response as AuthenticatorAttestationResponse
   
@@ -86,7 +86,7 @@ export function formatCredentialCreationResponse(credential: PublicKeyCredential
   }
 }
 
-// 转换浏览器响应为服务器格式
+// translatedresponsetranslatedservicetranslated
 export function formatCredentialAssertionResponse(credential: PublicKeyCredential): any {
   const response = credential.response as AuthenticatorAssertionResponse
   
@@ -103,53 +103,53 @@ export function formatCredentialAssertionResponse(credential: PublicKeyCredentia
   }
 }
 
-// Passkey注册
+// Passkeyregister
 export async function registerPasskey(options: any): Promise<PublicKeyCredential> {
   if (!isWebAuthnSupported()) {
-    throw new Error('WebAuthn不受此浏览器支持')
+    throw new Error('WebAuthntranslated')
   }
 
   const creationOptions = parseCreationOptionsFromJSON(options)
   
   const credential = await navigator.credentials.create(creationOptions) as PublicKeyCredential
   if (!credential) {
-    throw new Error('创建凭证失败')
+    throw new Error('createtranslatedfailed')
   }
 
   return credential
 }
 
-// Passkey登录
+// Passkeylogin
 export async function loginWithPasskey(options: any): Promise<PublicKeyCredential> {
   if (!isWebAuthnSupported()) {
-    throw new Error('WebAuthn不受此浏览器支持')
+    throw new Error('WebAuthntranslated')
   }
 
   const requestOptions = parseRequestOptionsFromJSON(options)
   
   const credential = await navigator.credentials.get(requestOptions) as PublicKeyCredential
   if (!credential) {
-    throw new Error('获取凭证失败')
+    throw new Error('gettranslatedfailed')
   }
 
   return credential
 }
 
-// 显示用户友好的错误信息
+// translatedusertranslatederrorinfo
 export function getWebAuthnErrorMessage(error: any): string {
   if (error.name === 'NotSupportedError') {
-    return '此浏览器不支持WebAuthn'
+    return 'translatedWebAuthn'
   } else if (error.name === 'SecurityError') {
-    return '安全错误：请确保使用HTTPS连接'
+    return 'securityerror：pleasetranslatedHTTPStranslated'
   } else if (error.name === 'NotAllowedError') {
-    return '用户取消了操作或超时'
+    return 'usercanceltranslatedortranslated'
   } else if (error.name === 'InvalidStateError') {
-    return '认证器状态无效'
+    return 'translatedstatusnonetranslated'
   } else if (error.name === 'ConstraintError') {
-    return '认证器不满足要求'
+    return 'translated'
   } else if (error.name === 'UnknownError') {
-    return '未知错误，请重试'
+    return 'nottranslatederror，pleasetranslated'
   } else {
-    return error.message || '操作失败，请重试'
+    return error.message || 'translatedfailed，pleasetranslated'
   }
 } 

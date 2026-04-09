@@ -4,6 +4,7 @@ import { Modal, PButton } from '@ui'
 import { uiAlert } from '@contexts/DialogContext'
 import { authorizeConsoleWithToken, joinConsoleUrl, type ConsoleTarget } from '@api/console'
 import { clearAccessTokenForScope, clearScopeCookies } from '@utils/auth'
+import { useI18n } from '@shared/i18n'
 import {
   listUserConsoleSessions,
   pruneExpiredUserConsoleSessions,
@@ -50,24 +51,24 @@ function getSessionAccent(session: UserConsoleSession) {
   return 'bg-slate-300'
 }
 
-function getSessionBadges(session: UserConsoleSession) {
+function getSessionBadges(session: UserConsoleSession, t: (key: string, params?: Record<string, string | number>) => string) {
   const badges: Array<{ label: string; className: string }> = []
 
   if (session.is_super_admin) {
     badges.push({
-      label: '平台管理员',
+      label: t('consoleSwitcher.badges.platformAdmin'),
       className: 'border border-slate-300 bg-slate-100 text-slate-700',
     })
   }
 
   if (session.tenant_id > 0) {
     badges.push({
-      label: session.tenant_name || `租户 ${session.tenant_id}`,
+      label: session.tenant_name || t('consoleSwitcher.badges.tenantFallback', { tenantId: session.tenant_id }),
       className: 'border border-slate-300 bg-white text-slate-700',
     })
   } else {
     badges.push({
-      label: '平台账户',
+      label: t('consoleSwitcher.badges.platformAccount'),
       className: 'border border-slate-300 bg-white text-slate-700',
     })
   }
@@ -93,6 +94,7 @@ export default function ConsoleAccountSwitcherModal({
   consoleTenantUrl = '',
   consoleAdminUrl = '',
 }: ConsoleAccountSwitcherModalProps) {
+  const { t } = useI18n()
   const [switchingId, setSwitchingId] = useState<string | null>(null)
   const [sessions, setSessions] = useState<UserConsoleSession[]>([])
   const [cleanedCount, setCleanedCount] = useState(0)
@@ -113,7 +115,7 @@ export default function ConsoleAccountSwitcherModal({
     if (currentScope === 'tenant' && currentTenantId > 0) {
       actions.push({
         id: `tenant:${session.key}:${currentTenantId}`,
-        label: '进入当前租户面板',
+        label: t('consoleSwitcher.actions.enterCurrentTenantPanel'),
         target: 'tenant',
         tenantId: currentTenantId,
         href: joinConsoleUrl(consoleTenantUrl, `tenant/dashboard?code=__CODE__`),
@@ -123,7 +125,7 @@ export default function ConsoleAccountSwitcherModal({
     if (currentScope === 'admin' && canAccessAdminConsole(session)) {
       actions.push({
         id: `admin:${session.key}`,
-        label: '进入管理员面板',
+        label: t('consoleSwitcher.actions.enterAdminPanel'),
         target: 'admin',
         href: joinConsoleUrl(consoleAdminUrl, 'admin/dashboard?code=__CODE__'),
       })
@@ -132,7 +134,7 @@ export default function ConsoleAccountSwitcherModal({
     if (currentScope === 'tenant' && canAccessAdminConsole(session)) {
       actions.push({
         id: `admin:${session.key}`,
-        label: '切到管理员面板',
+        label: t('consoleSwitcher.actions.switchToAdminPanel'),
         target: 'admin',
         href: joinConsoleUrl(consoleAdminUrl, 'admin/dashboard?code=__CODE__'),
       })
@@ -141,7 +143,7 @@ export default function ConsoleAccountSwitcherModal({
     if (currentScope === 'admin' && canAccessTenantConsole(session)) {
       actions.push({
         id: `tenant:${session.key}:${session.tenant_id}`,
-        label: '切到默认租户面板',
+        label: t('consoleSwitcher.actions.switchToDefaultTenantPanel'),
         target: 'tenant',
         tenantId: session.tenant_id,
         href: joinConsoleUrl(consoleTenantUrl, 'tenant/dashboard?code=__CODE__'),
@@ -162,9 +164,9 @@ export default function ConsoleAccountSwitcherModal({
         setSessions((current) => current.filter((item) => item.key !== session.key))
       }
       const message = error?.response?.status === 401
-        ? '该账户的登录会话已失效，系统已将其标记为退出状态，请重新登录该账户。'
-        : error?.response?.data?.error || error?.message || '账户切换失败，请重新登录目标账户。'
-      await uiAlert(message, '无法切换账户')
+        ? t('consoleSwitcher.errors.sessionExpired')
+        : error?.response?.data?.error || error?.message || t('consoleSwitcher.errors.switchFailed')
+      await uiAlert(message, t('consoleSwitcher.errors.switchFailedTitle'))
       setSwitchingId(null)
     }
   }
@@ -199,16 +201,16 @@ export default function ConsoleAccountSwitcherModal({
     })
 
     return [
-      { key: 'actionable', title: '可直接切换', description: '这些账户可以立即进入当前目标控制台。', sessions: actionable },
-      { key: 'unavailable', title: '仅保留会话', description: '这些账户已登录，但当前没有匹配的控制台切换入口。', sessions: unavailable },
+      { key: 'actionable', title: t('consoleSwitcher.groups.actionable.title'), description: t('consoleSwitcher.groups.actionable.description'), sessions: actionable },
+      { key: 'unavailable', title: t('consoleSwitcher.groups.unavailable.title'), description: t('consoleSwitcher.groups.unavailable.description'), sessions: unavailable },
     ].filter((group) => group.sessions.length > 0)
-  }, [sessions, currentScope, currentTenantId, currentUserId, consoleTenantUrl, consoleAdminUrl])
+  }, [sessions, currentScope, currentTenantId, currentUserId, consoleTenantUrl, consoleAdminUrl, t])
 
   return (
     <Modal
       open={open}
-      title="切换账户"
-      description="这里列出当前浏览器里已经登录过的 user 账户。选择一个账户后，系统会自动为目标控制台重新签发对应的会话。"
+      title={t('consoleSwitcher.title')}
+      description={t('consoleSwitcher.description')}
       onClose={() => {
         if (!switchingId) {
           onClose()
@@ -219,7 +221,7 @@ export default function ConsoleAccountSwitcherModal({
       <div className="space-y-4">
         {cleanedCount > 0 ? (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            已自动清理 {cleanedCount} 个失效的历史登录账户。这些账户需要重新登录后才能再次切换。
+            {t('consoleSwitcher.cleanedNotice', { count: cleanedCount })}
           </div>
         ) : null}
         <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4">
@@ -229,11 +231,10 @@ export default function ConsoleAccountSwitcherModal({
             </div>
             <div className="min-w-0">
               <div className="text-sm font-semibold text-slate-900">
-                {currentScope === 'admin' ? '管理员控制台切换' : '租户控制台切换'}
+                {currentScope === 'admin' ? t('consoleSwitcher.switchTitleAdmin') : t('consoleSwitcher.switchTitleTenant')}
               </div>
               <div className="mt-1 text-sm leading-6 text-slate-600">
-                系统会复用浏览器里已存在的 user 会话，为目标控制台重新签发对应的 token 与 cookie，
-                这样你不需要先退回用户面板再重新登录。
+                {t('consoleSwitcher.switchDescription')}
               </div>
             </div>
           </div>
@@ -241,7 +242,7 @@ export default function ConsoleAccountSwitcherModal({
 
         {sessions.length === 0 ? (
           <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-5 py-8 text-center text-sm text-slate-500">
-            当前浏览器还没有可用的 user 会话，请先在用户面板登录目标账户。
+            {t('consoleSwitcher.empty')}
           </div>
         ) : (
           sessionGroups.map((group) => (
@@ -257,7 +258,7 @@ export default function ConsoleAccountSwitcherModal({
                 const isCurrentUser = currentSessionKey
                   ? session.key === currentSessionKey
                   : currentUserId > 0 && session.user_id === currentUserId
-                const badges = getSessionBadges(session)
+                const badges = getSessionBadges(session, t)
 
                 return (
                   <div
@@ -287,7 +288,7 @@ export default function ConsoleAccountSwitcherModal({
                                 <span className="truncate text-sm font-semibold text-slate-900">{displayName}</span>
                                 {isCurrentUser ? (
                                   <span className="rounded border border-slate-300 bg-white px-2 py-0.5 text-[11px] font-medium text-slate-600">
-                                    当前使用中
+                                    {t('consoleSwitcher.currentInUse')}
                                   </span>
                                 ) : null}
                               </div>
@@ -333,12 +334,12 @@ export default function ConsoleAccountSwitcherModal({
                             onClick={() => void handleSignOut(session)}
                             className="text-slate-500 hover:text-red-600"
                           >
-                            退出账户
+                            {t('consoleSwitcher.actions.signOutAccount')}
                           </PButton>
 
                           {actions.length === 0 ? (
                             <div className="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
-                              当前没有可用的控制台切换入口
+                              {t('consoleSwitcher.noAvailableAction')}
                             </div>
                           ) : null}
                         </div>

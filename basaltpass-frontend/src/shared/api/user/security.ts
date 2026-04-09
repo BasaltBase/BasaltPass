@@ -21,20 +21,20 @@ export interface UpdateContactRequest {
   phone?: string
 }
 
-// 2FA相关
+// 2FAtranslated
 export const setup2FA = () => client.post('/api/v1/security/2fa/setup')
 export const verify2FA = (code: string) => client.post('/api/v1/security/2fa/verify', { code })
 export const disable2FA = (code: string) => client.post('/api/v1/security/2fa/disable', { code })
 
-// 获取安全状态
+// getsecuritystatus
 export const getSecurityStatus = (): Promise<{ data: SecurityStatus }> => 
   client.get('/api/v1/security/status')
 
-// 密码管理
+// passwordmanagement
 export const changePassword = (data: ChangePasswordRequest) => 
   client.post('/api/v1/security/password/change', data)
 
-// 联系方式管理
+// translatedmanagement
 export const updateContact = (data: UpdateContactRequest) => 
   client.put('/api/v1/security/contact', data)
 
@@ -50,9 +50,9 @@ export const resendEmailVerification = () =>
 export const resendPhoneVerification = () => 
   client.post('/api/v1/security/phone/resend')
 
-// 新的安全功能
+// translatedsecuritytranslated
 
-// 邮箱变更
+// emailtranslated
 export const startEmailChange = async (newEmail: string, currentPassword: string) => {
   return client.post('/api/v1/user/security/email/change', {
     new_email: newEmail,
@@ -60,7 +60,7 @@ export const startEmailChange = async (newEmail: string, currentPassword: string
   })
 }
 
-// 增强的密码修改功能
+// translatedpasswordtranslated
 export const enhancedChangePassword = async (data: {
   current_password: string
   new_password: string
@@ -70,14 +70,14 @@ export const enhancedChangePassword = async (data: {
   return client.post('/api/v1/user/security/password/change', data)
 }
 
-// 开始密码重置流程
+// startpasswordresettranslated
 export const startPasswordReset = async (email: string) => {
   return client.post('/api/v1/security/password/reset', {
     email
   })
 }
 
-// 确认密码重置
+// translatedpasswordreset
 export const confirmPasswordReset = async (token: string, newPassword: string, confirmPassword: string) => {
   return client.post('/api/v1/security/password/confirm', {
     token,
@@ -86,7 +86,7 @@ export const confirmPasswordReset = async (token: string, newPassword: string, c
   })
 }
 
-// 生成设备指纹
+// translated
 export const generateDeviceFingerprint = (): string => {
   const canvas = document.createElement('canvas')
   const ctx = canvas.getContext('2d')
@@ -106,7 +106,7 @@ export const generateDeviceFingerprint = (): string => {
     navigator.platform
   ].join('|')
   
-  // 简单的hash函数
+  // translatedhashtranslated
   let hash = 0
   for (let i = 0; i < fingerprint.length; i++) {
     const char = fingerprint.charCodeAt(i)

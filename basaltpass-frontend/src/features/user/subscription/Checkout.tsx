@@ -5,8 +5,10 @@ import Layout from '@features/user/components/Layout';
 import { PCard, PButton, PInput, PSelect } from '@ui';
 import { subscriptionAPI, Product, Price, CheckoutResponse } from '@api/subscription/subscription';
 import { ROUTES } from '@constants';
+import { useI18n } from '@shared/i18n';
 
 const SubscriptionCheckout: React.FC = () => {
+  const { t, locale } = useI18n();
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedPrice, setSelectedPrice] = useState<Price | null>(null);
@@ -26,7 +28,7 @@ const SubscriptionCheckout: React.FC = () => {
       const response = await subscriptionAPI.getProducts();
       setProducts(response.data || []);
     } catch (error) {
-      console.error('加载产品失败:', error);
+      console.error('failed to load products:', error);
     }
   };
 
@@ -46,7 +48,7 @@ const SubscriptionCheckout: React.FC = () => {
 
   const handleCheckout = async () => {
     if (!selectedPrice) {
-      uiAlert('请选择一个价格');
+      uiAlert(t('pages.userSubscriptionCheckout.errors.selectPrice'));
       return;
     }
 
@@ -61,16 +63,16 @@ const SubscriptionCheckout: React.FC = () => {
       setCheckoutResponse(response);
       setStep('checkout');
 
-      // 如果有支付会话，跳转到支付页面
+      // ，
       if (response.payment_session) {
         window.open(subscriptionAPI.getPaymentCheckoutUrl(response.payment_session.stripe_session_id), '_blank');
       } else {
-        // 免费订阅，直接显示成功
+        // ，
         setStep('success');
       }
 
     } catch (error: any) {
-      uiAlert('创建订阅失败: ' + error.message);
+      uiAlert(t('pages.userSubscriptionCheckout.errors.checkoutFailed') + ': ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -80,7 +82,7 @@ const SubscriptionCheckout: React.FC = () => {
     if (!selectedPrice) return 0;
     
     const baseAmount = selectedPrice.amount_cents * quantity;
-    // 这里可以添加优惠券折扣计算逻辑
+    // 
     return baseAmount;
   };
 
@@ -90,7 +92,7 @@ const SubscriptionCheckout: React.FC = () => {
 
   const renderProductSelection = () => (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">选择订阅套餐</h2>
+      <h2 className="text-2xl font-bold text-gray-900">{t('pages.userSubscriptionCheckout.select.title')}</h2>
       
       {products.map((product) => (
         <div key={product.id} className="bg-white border border-gray-200 rounded-lg p-6">
@@ -101,10 +103,10 @@ const SubscriptionCheckout: React.FC = () => {
             <div key={plan.id} className="mb-4">
               <h4 className="text-lg font-medium text-gray-800 mb-2">{plan.display_name}</h4>
               
-              {/* 显示套餐功能 */}
+              {/*  */}
               {plan.features && plan.features.length > 0 && (
                 <div className="mb-3">
-                  <h5 className="text-sm font-medium text-gray-700 mb-1">功能特性：</h5>
+                  <h5 className="text-sm font-medium text-gray-700 mb-1">{t('pages.userSubscriptionCheckout.select.features')}</h5>
                   <ul className="text-sm text-gray-600 space-y-1">
                     {plan.features.map((feature) => (
                       <li key={feature.id} className="flex items-center">
@@ -116,7 +118,7 @@ const SubscriptionCheckout: React.FC = () => {
                 </div>
               )}
               
-              {/* 显示价格选项 */}
+              {/*  */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {plan.prices?.map((price) => (
                   <div
@@ -137,7 +139,7 @@ const SubscriptionCheckout: React.FC = () => {
                       </div>
                       {price.trial_days && price.trial_days > 0 && (
                         <div className="text-sm text-green-600 mt-1">
-                          {price.trial_days}天免费试用
+                          {t('pages.userSubscriptionCheckout.select.trialDays', { days: price.trial_days })}
                         </div>
                       )}
                     </div>
@@ -149,11 +151,11 @@ const SubscriptionCheckout: React.FC = () => {
         </div>
       ))}
 
-      {/* 数量选择 */}
+      {/*  */}
       {selectedPrice && (
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
           <PInput
-            label="数量"
+            label={t('pages.userSubscriptionCheckout.select.quantityLabel')}
             type="number"
             min={1}
             value={quantity}
@@ -163,36 +165,36 @@ const SubscriptionCheckout: React.FC = () => {
         </div>
       )}
 
-      {/* 优惠券 */}
+      {/*  */}
       {selectedPrice && (
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            优惠券代码（可选）
+            {t('pages.userSubscriptionCheckout.select.couponLabel')}
           </label>
           <div className="flex gap-2">
             <PInput
               value={couponCode}
               onChange={(e) => setCouponCode(e.target.value)}
               onBlur={validateCoupon}
-              placeholder="输入优惠券代码"
+              placeholder={t('pages.userSubscriptionCheckout.select.couponPlaceholder')}
               className="flex-1"
-              error={couponValid === false ? '优惠券无效或已过期' : undefined}
+              error={couponValid === false ? t('pages.userSubscriptionCheckout.select.couponInvalid') : undefined}
             />
             <PButton onClick={validateCoupon} variant="primary">
-              验证
+              {t('pages.userSubscriptionCheckout.select.validateCoupon')}
             </PButton>
           </div>
           {couponValid === true && (
-            <p className="text-green-600 text-sm mt-1">优惠券有效</p>
+            <p className="text-green-600 text-sm mt-1">{t('pages.userSubscriptionCheckout.select.couponValid')}</p>
           )}
         </div>
       )}
 
-      {/* 总计和结账按钮 */}
+      {/*  */}
       {selectedPrice && (
         <div className="bg-white border border-gray-200 rounded-lg p-6">
           <div className="flex justify-between items-center mb-4">
-            <span className="text-lg font-medium text-gray-900">总计</span>
+            <span className="text-lg font-medium text-gray-900">{t('pages.userSubscriptionCheckout.select.total')}</span>
             <span className="text-2xl font-bold text-gray-900">
               {formatAmount(calculateTotal())} {selectedPrice.currency}
             </span>
@@ -205,7 +207,7 @@ const SubscriptionCheckout: React.FC = () => {
             variant="primary"
             fullWidth
           >
-            创建订阅
+            {t('pages.userSubscriptionCheckout.select.createSubscription')}
           </PButton>
         </div>
       )}
@@ -215,15 +217,15 @@ const SubscriptionCheckout: React.FC = () => {
   const renderCheckoutResult = () => (
     <div className="max-w-2xl mx-auto">
       <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">订阅创建成功</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('pages.userSubscriptionCheckout.result.successTitle')}</h2>
         
         {checkoutResponse && (
           <div className="space-y-4">
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-blue-900 mb-2">订阅信息</h3>
+              <h3 className="text-lg font-semibold text-blue-900 mb-2">{t('pages.userSubscriptionCheckout.result.subscriptionInfo')}</h3>
               <div className="space-y-2 text-sm">
-                <p><strong>订阅ID:</strong> {checkoutResponse.subscription.id}</p>
-                <p><strong>状态:</strong> 
+                <p><strong>{t('pages.userSubscriptionCheckout.result.subscriptionId')}</strong> {checkoutResponse.subscription.id}</p>
+                <p><strong>{t('pages.userSubscriptionCheckout.result.status')}</strong>
                   <span className={`ml-2 px-2 py-1 rounded text-xs ${
                     checkoutResponse.subscription.status === 'active' ? 'bg-green-100 text-green-800' :
                     checkoutResponse.subscription.status === 'pending' ? 'bg-orange-100 text-orange-800' :
@@ -232,22 +234,22 @@ const SubscriptionCheckout: React.FC = () => {
                     {subscriptionAPI.formatSubscriptionStatus(checkoutResponse.subscription.status).text}
                   </span>
                 </p>
-                <p><strong>开始时间:</strong> {new Date(checkoutResponse.subscription.start_at).toLocaleString()}</p>
-                <p><strong>当前周期:</strong> {new Date(checkoutResponse.subscription.current_period_start).toLocaleDateString()} - {new Date(checkoutResponse.subscription.current_period_end).toLocaleDateString()}</p>
+                <p><strong>{t('pages.userSubscriptionCheckout.result.startAt')}</strong> {new Date(checkoutResponse.subscription.start_at).toLocaleString(locale)}</p>
+                <p><strong>{t('pages.userSubscriptionCheckout.result.currentPeriod')}</strong> {new Date(checkoutResponse.subscription.current_period_start).toLocaleDateString(locale)} - {new Date(checkoutResponse.subscription.current_period_end).toLocaleDateString(locale)}</p>
               </div>
             </div>
 
             {checkoutResponse.payment_session && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <h3 className="text-lg font-semibold text-yellow-900 mb-2">支付信息</h3>
+                <h3 className="text-lg font-semibold text-yellow-900 mb-2">{t('pages.userSubscriptionCheckout.result.paymentInfo')}</h3>
                 <p className="text-sm text-yellow-800 mb-3">
-                  支付页面已在新窗口打开，请完成支付以激活订阅。
+                  {t('pages.userSubscriptionCheckout.result.paymentHint')}
                 </p>
                 <PButton
                   onClick={() => window.open(subscriptionAPI.getPaymentCheckoutUrl(checkoutResponse.payment_session.stripe_session_id), '_blank')}
                   variant="secondary"
                 >
-                  重新打开支付页面
+                  {t('pages.userSubscriptionCheckout.result.reopenPayment')}
                 </PButton>
               </div>
             )}
@@ -255,16 +257,16 @@ const SubscriptionCheckout: React.FC = () => {
             {checkoutResponse.stripe_response && (
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  📋 Stripe API 模拟响应
+                  {t('pages.userSubscriptionCheckout.result.stripeMock')}
                 </h3>
                 <div className="space-y-2 text-sm">
-                  <p><strong>请求URL:</strong> <code className="bg-gray-200 px-2 py-1 rounded">{checkoutResponse.stripe_response.request_url}</code></p>
-                  <p><strong>时间戳:</strong> {new Date(checkoutResponse.stripe_response.timestamp).toLocaleString()}</p>
+                  <p><strong>{t('pages.userSubscriptionCheckout.result.requestUrl')}</strong> <code className="bg-gray-200 px-2 py-1 rounded">{checkoutResponse.stripe_response.request_url}</code></p>
+                  <p><strong>{t('pages.userSubscriptionCheckout.result.timestamp')}</strong> {new Date(checkoutResponse.stripe_response.timestamp).toLocaleString(locale)}</p>
                 </div>
                 
                 <details className="mt-4">
                   <summary className="cursor-pointer font-medium text-gray-700 hover:text-gray-900">
-                    查看详细响应数据
+                    {t('pages.userSubscriptionCheckout.result.viewDetails')}
                   </summary>
                   <pre className="mt-2 p-3 bg-gray-800 text-green-400 rounded text-xs overflow-x-auto">
                     {JSON.stringify(checkoutResponse.stripe_response, null, 2)}
@@ -281,7 +283,7 @@ const SubscriptionCheckout: React.FC = () => {
             variant="primary"
             className="flex-1"
           >
-            查看我的订阅
+            {t('pages.userSubscriptionCheckout.result.viewSubscriptions')}
           </PButton>
           <PButton
             onClick={() => {
@@ -292,7 +294,7 @@ const SubscriptionCheckout: React.FC = () => {
             variant="secondary"
             className="flex-1"
           >
-            创建另一个订阅
+            {t('pages.userSubscriptionCheckout.result.createAnother')}
           </PButton>
         </div>
       </div>
@@ -303,8 +305,8 @@ const SubscriptionCheckout: React.FC = () => {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">订阅服务</h1>
-          <p className="mt-2 text-gray-600">选择适合您的订阅套餐</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('pages.userSubscriptionCheckout.header.title')}</h1>
+          <p className="mt-2 text-gray-600">{t('pages.userSubscriptionCheckout.header.description')}</p>
         </div>
 
         {step === 'select' && renderProductSelection()}

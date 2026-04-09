@@ -2,29 +2,29 @@
 sidebar_position: 3
 ---
 
-# Frontend Architecture
+# 前端架构
 
-BasaltPass uses a modern React-based stack for its frontend applications.
+BasaltPass 使用基于 React 的现代技术栈构建前端应用。
 
-## Tech Stack
+## 技术栈
 
--   **Framework**: React 18
--   **Build Tool**: Vite
--   **Language**: TypeScript
--   **Styling**: Tailwind CSS
+-   **框架**: React 18
+-   **构建工具**: Vite
+-   **语言**: TypeScript
+-   **样式**: Tailwind CSS
 
-## Multi-App Structure
+## 多应用结构
 
-The frontend is a monorepo containing multiple distinct applications, usually found in `basaltpass-frontend/apps/`:
+前端是一个包含多个独立应用的 monorepo，通常位于 `basaltpass-frontend/apps/`：
 
-1.  **User Console**: For end-users to manage their profile and security.
-    -   通过统一前端入口 `5104` 提供
-2.  **Tenant Console**: For organization admins to manage users and subscriptions.
-    -   通过统一前端入口 `5104` 提供
-3.  **Admin Console**: For platform operators to manage the entire instance.
-    -   通过统一前端入口 `5104` 提供
+1.  **用户控制台**: 供终端用户管理其个人资料和安全设置。
+    -   通过统一前端网关 `5104` 端口提供服务
+2.  **租户控制台**: 供组织管理员管理用户和订阅。
+    -   通过统一前端网关 `5104` 端口提供服务
+3.  **管理后台**: 供平台运维人员管理整个实例。
+    -   通过统一前端网关 `5104` 端口提供服务
 
-## Backend Integration
+## 后端集成
 
--   **Default API URL**: `http://localhost:8101`
--   **CORS**: In development, the backend permits loose CORS policies. In production, strict origin whitelisting is enforced.
+-   **默认 API URL**: `http://localhost:8101`
+-   **CORS**: 开发环境中，后端允许宽松的 CORS 策略。生产环境中强制执行严格的来源白名单。

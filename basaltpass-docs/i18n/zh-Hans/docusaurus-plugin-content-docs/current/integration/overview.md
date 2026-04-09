@@ -2,23 +2,23 @@
 sidebar_position: 1
 ---
 
-# Integration Overview
+# 集成概览
 
-Integrating your application with BasaltPass involves delegated authentication and authorization.
+将您的应用程序与 BasaltPass 集成涉及委托认证和授权。
 
-## Steps
+## 步骤
 
-1.  **Register your app**: Obtain a `client_id` and `client_secret` (for confidential clients).
-2.  **Choose a Flow**:
-    -   **Authorization Code**: Standard for server-side web apps.
-    -   **PKCE**: Standard for SPAs (Single Page Apps) and Mobile apps.
-    -   **Client Credentials**: Standard for Machine-to-Machine communication.
-3.  **Implement Login**: Redirect users to BasaltPass for authentication.
-4.  **Handle Tokens**: Validate and store tokens securely.
-5.  **Access Resources**: Use tokens to access protected APIs (yours or others).
+1.  **注册您的应用**: 获取 `client_id` 和 `client_secret` (适用于机密客户端)。
+2.  **选择流程**:
+    -   **授权码模式 (Authorization Code)**: 适用于服务端 Web 应用。
+    -   **PKCE**: 适用于 SPA (单页应用) 和移动应用。
+    -   **客户端凭证模式 (Client Credentials)**: 适用于机器对机器 (M2M) 通信。
+3.  **实现登录**: 将用户重定向到 BasaltPass 进行认证。
+4.  **处理令牌**: 安全地验证和存储令牌。
+5.  **访问资源**: 使用令牌访问受保护的 API (您自己的或他人的)。
 
-## Why Delegated Auth?
+## 为什么使用委托认证？
 
--   **Security**: Don't handle passwords directly.
--   **SSO**: Single Sign-On across multiple apps.
--   **Centralized Policies**: Enforce MFA, password policies centrally.
+-   **安全性**: 不直接处理密码。
+-   **SSO**: 跨多个应用的单点登录。
+-   **集中策略**: 集中实施 MFA、密码策略等。

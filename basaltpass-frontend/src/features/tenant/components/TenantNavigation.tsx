@@ -18,9 +18,10 @@ import {
 } from '@heroicons/react/24/outline'
 import { ROUTES } from '@constants'
 import { useConfig } from '@contexts/ConfigContext'
+import { useI18n } from '@shared/i18n'
 
 interface NavigationItem {
-  name: string
+  key: string
   href?: string
   icon: React.ComponentType<any>
   children?: NavigationItem[]
@@ -30,62 +31,63 @@ interface NavigationItem {
 
 const navigationItems: NavigationItem[] = [
   {
-    name: '仪表板',
+    key: 'tenantNav.dashboard',
     href: ROUTES.tenant.dashboard,
     icon: ChartBarIcon,
   },
   {
-    name: '租户信息',
+    key: 'tenantNav.info',
     href: ROUTES.tenant.info,
     icon: InformationCircleIcon,
   },
   {
-    name: '应用管理',
+    key: 'tenantNav.appManagement',
     icon: CubeIcon,
     children: [
-      { name: '我的应用', href: ROUTES.tenant.apps, icon: CubeIcon },
-      { name: 'OAuth客户端', href: ROUTES.tenant.oauthClients, icon: KeyIcon },
-      { name: '自动化令牌', href: ROUTES.tenant.automationTokens, icon: KeyIcon },
+      { key: 'tenantNav.myApps', href: ROUTES.tenant.apps, icon: CubeIcon },
+      { key: 'tenantNav.oauthClients', href: ROUTES.tenant.oauthClients, icon: KeyIcon },
+      { key: 'tenantNav.automationTokens', href: ROUTES.tenant.automationTokens, icon: KeyIcon },
     ]
   },
   {
-    name: '用户管理',
+    key: 'tenantNav.userManagement',
     icon: UsersIcon,
     children: [
-      { name: '用户列表', href: ROUTES.tenant.users, icon: UsersIcon },
-      { name: '团队管理', href: ROUTES.tenant.teams, icon: UsersIcon },
-      { name: '钱包管理', href: ROUTES.tenant.wallets, icon: CurrencyDollarIcon },
-      { name: 'Gift Card 管理', href: ROUTES.tenant.giftCards, icon: GiftIcon },
-      { name: '角色管理', href: ROUTES.tenant.roles, icon: KeyIcon },
-      { name: '权限管理', href: ROUTES.tenant.permissions, icon: KeyIcon },
+      { key: 'tenantNav.userList', href: ROUTES.tenant.users, icon: UsersIcon },
+      { key: 'tenantNav.teamManagement', href: ROUTES.tenant.teams, icon: UsersIcon },
+      { key: 'tenantNav.walletManagement', href: ROUTES.tenant.wallets, icon: CurrencyDollarIcon },
+      { key: 'tenantNav.giftCardManagement', href: ROUTES.tenant.giftCards, icon: GiftIcon },
+      { key: 'tenantNav.roleManagement', href: ROUTES.tenant.roles, icon: KeyIcon },
+      { key: 'tenantNav.permissionManagement', href: ROUTES.tenant.permissions, icon: KeyIcon },
     ]
   },
   {
-    name: '通知管理',
+    key: 'tenantNav.notificationManagement',
     href: ROUTES.tenant.notifications,
     icon: BellIcon,
   },
   {
-    name: '订阅管理',
+    key: 'tenantNav.subscriptionManagement',
     icon: CreditCardIcon,
     requiresMarket: true,
     children: [
-      { name: '订阅概览', href: ROUTES.tenant.subscriptions, icon: ChartBarIcon },
-      { name: '产品管理', href: ROUTES.tenant.subscriptionProducts, icon: CubeIcon },
-      { name: '套餐管理', href: ROUTES.tenant.plans, icon: RocketLaunchIcon },
-      { name: '定价管理', href: ROUTES.tenant.prices, icon: CurrencyDollarIcon },
-      { name: '优惠券管理', href: ROUTES.tenant.coupons, icon: GiftIcon },
-      { name: '状态管理', href: ROUTES.tenant.subscriptionStatus, icon: CreditCardIcon },
+      { key: 'tenantNav.subscriptionOverview', href: ROUTES.tenant.subscriptions, icon: ChartBarIcon },
+      { key: 'tenantNav.productManagement', href: ROUTES.tenant.subscriptionProducts, icon: CubeIcon },
+      { key: 'tenantNav.planManagement', href: ROUTES.tenant.plans, icon: RocketLaunchIcon },
+      { key: 'tenantNav.priceManagement', href: ROUTES.tenant.prices, icon: CurrencyDollarIcon },
+      { key: 'tenantNav.couponManagement', href: ROUTES.tenant.coupons, icon: GiftIcon },
+      { key: 'tenantNav.statusManagement', href: ROUTES.tenant.subscriptionStatus, icon: CreditCardIcon },
     ]
   },
 ]
 
 export default function TenantNavigation() {
+  const { t } = useI18n()
   const location = useLocation()
   const { marketEnabled } = useConfig()
-  const [expandedSections, setExpandedSections] = useState<string[]>(['应用管理', '订阅管理'])
+  const [expandedSections, setExpandedSections] = useState<string[]>(['tenantNav.appManagement', 'tenantNav.subscriptionManagement'])
 
-  // 根据市场功能配置过滤导航项
+  // 
   const navigation = navigationItems.filter(item => {
     if (item.requiresMarket && !marketEnabled) {
       return false
@@ -93,11 +95,11 @@ export default function TenantNavigation() {
     return true
   })
 
-  const toggleSection = (sectionName: string) => {
+  const toggleSection = (sectionKey: string) => {
     setExpandedSections(prev => 
-      prev.includes(sectionName)
-        ? prev.filter(name => name !== sectionName)
-        : [...prev, sectionName]
+      prev.includes(sectionKey)
+        ? prev.filter(name => name !== sectionKey)
+        : [...prev, sectionKey]
     )
   }
 
@@ -106,7 +108,7 @@ export default function TenantNavigation() {
   }
 
   const renderNavigationItem = (item: NavigationItem, depth = 0) => {
-    const isExpanded = expandedSections.includes(item.name)
+    const isExpanded = expandedSections.includes(item.key)
     const isCurrent = item.href ? isCurrentPath(item.href) : false
     const hasCurrentChild = item.children?.some(child => child.href && isCurrentPath(child.href))
     const sharedStateClass = hasCurrentChild || isCurrent
@@ -115,15 +117,15 @@ export default function TenantNavigation() {
 
     if (item.children) {
       return (
-        <div key={item.name}>
+        <div key={item.key}>
           <button
-            onClick={() => toggleSection(item.name)}
+            onClick={() => toggleSection(item.key)}
             className={`w-full flex items-center justify-between px-3 py-2 text-left text-sm font-medium rounded-lg transition-colors ${sharedStateClass}`}
             style={{ paddingLeft: `${0.75 + depth * 1}rem` }}
           >
             <div className="flex items-center">
               <item.icon className="h-5 w-5 mr-3" />
-              {item.name}
+              {t(item.key)}
             </div>
             {isExpanded ? (
               <ChevronDownIcon className="h-4 w-4" />
@@ -142,7 +144,7 @@ export default function TenantNavigation() {
 
     return (
       <Link
-        key={item.name}
+        key={item.key}
         to={item.href!}
         className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
           isCurrent
@@ -152,7 +154,7 @@ export default function TenantNavigation() {
         style={{ paddingLeft: `${0.75 + depth * 1}rem` }}
       >
         <item.icon className="h-5 w-5 mr-3" />
-        {item.name}
+        {t(item.key)}
       </Link>
     )
   }

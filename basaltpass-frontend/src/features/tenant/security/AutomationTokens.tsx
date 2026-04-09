@@ -9,13 +9,14 @@ import TenantLayout from '@features/tenant/components/TenantLayout'
 import { tenantManualApi, TenantManualApiKey } from '@api/tenant/manualApi'
 import { Modal, PAlert, PBadge, PButton, PInput, PPageHeader, PSkeleton } from '@ui'
 import { uiConfirm } from '@contexts/DialogContext'
+import { useI18n } from '@shared/i18n'
 
-const formatDateTime = (value?: string) => {
+const formatDateTime = (value: string | undefined, locale: string) => {
   if (!value) return '-'
 
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
-  return date.toLocaleString()
+  return date.toLocaleString(locale)
 }
 
 const toDatetimeLocalValue = (value?: string) => {
@@ -28,6 +29,7 @@ const toDatetimeLocalValue = (value?: string) => {
 }
 
 export default function TenantAutomationTokens() {
+  const { t, locale } = useI18n()
   const [keys, setKeys] = useState<TenantManualApiKey[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -46,7 +48,7 @@ export default function TenantAutomationTokens() {
       const response = await tenantManualApi.listKeys()
       setKeys(response.data || [])
     } catch (err: any) {
-      setError(err.response?.data?.error || '加载自动化令牌失败')
+      setError(err.response?.data?.error || t('tenantAutomationTokens.errors.loadFailed'))
       setKeys([])
     } finally {
       setLoading(false)
@@ -78,21 +80,21 @@ export default function TenantAutomationTokens() {
       resetForm()
       await loadKeys()
     } catch (err: any) {
-      setError(err.response?.data?.error || '创建自动化令牌失败')
+      setError(err.response?.data?.error || t('tenantAutomationTokens.errors.createFailed'))
     } finally {
       setSubmitting(false)
     }
   }
 
   const handleDelete = async (key: TenantManualApiKey) => {
-    const confirmed = await uiConfirm(`确定删除令牌 "${key.name}" 吗？删除后自动化脚本将立即失效。`)
+    const confirmed = await uiConfirm(t('tenantAutomationTokens.confirmDelete', { name: key.name }))
     if (!confirmed) return
 
     try {
       await tenantManualApi.deleteKey(key.id)
       await loadKeys()
     } catch (err: any) {
-      setError(err.response?.data?.error || '删除自动化令牌失败')
+      setError(err.response?.data?.error || t('tenantAutomationTokens.errors.deleteFailed'))
     }
   }
 
@@ -102,25 +104,25 @@ export default function TenantAutomationTokens() {
   }
 
   return (
-    <TenantLayout title="自动化令牌">
+    <TenantLayout title={t('tenantAutomationTokens.layoutTitle')}>
       <div className="space-y-6 p-6">
         <PPageHeader
-          title="自动化令牌"
-          description="为脚本、CLI 或 CI 任务创建 tenant 级访问令牌。令牌明文只会在创建成功时显示一次。"
+          title={t('tenantAutomationTokens.title')}
+          description={t('tenantAutomationTokens.description')}
           icon={<KeyIcon className="h-8 w-8 text-indigo-600" />}
           actions={
             <PButton onClick={() => setModalOpen(true)} leftIcon={<PlusIcon className="h-4 w-4" />}>
-              创建令牌
+              {t('tenantAutomationTokens.actions.createToken')}
             </PButton>
           }
         />
 
-        <PAlert variant="info" title="使用方式">
-          自动化接口使用 `X-API-Key` 请求头，而不是当前控制台登录态里的 JWT。创建后请把令牌保存到脚本密钥管理中。
+        <PAlert variant="info" title={t('tenantAutomationTokens.alerts.usageTitle')}>
+          {t('tenantAutomationTokens.alerts.usageDescription')}
         </PAlert>
 
         {error && (
-          <PAlert variant="error" title="请求失败" dismissible onDismiss={() => setError('')}>
+          <PAlert variant="error" title={t('tenantAutomationTokens.alerts.requestFailed')} dismissible onDismiss={() => setError('')}>
             {error}
           </PAlert>
         )}
@@ -128,17 +130,17 @@ export default function TenantAutomationTokens() {
         {createdToken && (
           <PAlert
             variant="success"
-            title="令牌已创建"
+            title={t('tenantAutomationTokens.alerts.tokenCreated')}
             dismissible
             onDismiss={() => setCreatedToken('')}
             actions={
               <PButton variant="secondary" size="sm" onClick={() => handleCopy(createdToken)} leftIcon={<ClipboardDocumentIcon className="h-4 w-4" />}>
-                复制令牌
+                {t('tenantAutomationTokens.actions.copyToken')}
               </PButton>
             }
           >
             <div className="space-y-2">
-              <p>这段明文只会显示这一次，请立即复制保存。</p>
+              <p>{t('tenantAutomationTokens.alerts.tokenCreatedHint')}</p>
               <code className="block overflow-x-auto rounded-lg bg-green-100 px-3 py-2 text-xs text-green-900">
                 {createdToken}
               </code>
@@ -152,9 +154,9 @@ export default function TenantAutomationTokens() {
           ) : !hasKeys ? (
             <div className="px-6 py-16 text-center text-gray-500">
               <KeyIcon className="mx-auto mb-3 h-12 w-12 text-gray-300" />
-              <p>还没有自动化令牌。</p>
+              <p>{t('tenantAutomationTokens.empty.noTokens')}</p>
               <PButton className="mt-4" onClick={() => setModalOpen(true)}>
-                创建第一个令牌
+                {t('tenantAutomationTokens.actions.createFirstToken')}
               </PButton>
             </div>
           ) : (
@@ -162,13 +164,13 @@ export default function TenantAutomationTokens() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">名称</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">前缀</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">状态</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">上次使用</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">过期时间</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">创建时间</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">操作</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tenantAutomationTokens.table.name')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tenantAutomationTokens.table.prefix')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tenantAutomationTokens.table.status')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tenantAutomationTokens.table.lastUsed')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tenantAutomationTokens.table.expiresAt')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tenantAutomationTokens.table.createdAt')}</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t('tenantAutomationTokens.table.actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
@@ -182,18 +184,18 @@ export default function TenantAutomationTokens() {
                         </td>
                         <td className="px-6 py-4">
                           <PBadge variant={expired ? 'warning' : 'success'}>
-                            {expired ? '已过期' : '可用'}
+                            {expired ? t('tenantAutomationTokens.status.expired') : t('tenantAutomationTokens.status.active')}
                           </PBadge>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-600">{formatDateTime(key.last_used_at)}</td>
-                        <td className="px-6 py-4 text-sm text-gray-600">{formatDateTime(key.expires_at)}</td>
-                        <td className="px-6 py-4 text-sm text-gray-600">{formatDateTime(key.created_at)}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600">{formatDateTime(key.last_used_at, locale)}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600">{formatDateTime(key.expires_at, locale)}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600">{formatDateTime(key.created_at, locale)}</td>
                         <td className="px-6 py-4 text-right">
                           <button
                             type="button"
                             onClick={() => handleDelete(key)}
                             className="rounded-lg p-2 text-red-600 transition-colors hover:bg-red-50 hover:text-red-700"
-                            title="删除令牌"
+                            title={t('tenantAutomationTokens.actions.deleteToken')}
                           >
                             <TrashIcon className="h-4 w-4" />
                           </button>
@@ -208,34 +210,34 @@ export default function TenantAutomationTokens() {
         </div>
 
         {modalOpen && (
-          <Modal open={modalOpen} onClose={() => { setModalOpen(false); resetForm() }} title="创建自动化令牌" widthClass="max-w-lg">
+          <Modal open={modalOpen} onClose={() => { setModalOpen(false); resetForm() }} title={t('tenantAutomationTokens.modal.title')} widthClass="max-w-lg">
             <form onSubmit={handleCreate} className="space-y-5">
               <PInput
-                label="令牌名称"
+                label={t('tenantAutomationTokens.modal.tokenName')}
                 value={name}
                 onChange={(event) => setName(event.target.value)}
-                placeholder="例如：deploy-bot、nightly-sync"
+                placeholder={t('tenantAutomationTokens.modal.tokenNamePlaceholder')}
                 required
                 autoFocus
               />
 
               <PInput
-                label="过期时间"
+                label={t('tenantAutomationTokens.modal.expiresAt')}
                 type="datetime-local"
                 value={toDatetimeLocalValue(expiresAt)}
                 onChange={(event) => setExpiresAt(event.target.value)}
               />
 
-              <PAlert variant="warning" title="安全提示">
-                建议为每个自动化脚本单独创建一个令牌，并设置合理的过期时间，便于后续轮换和吊销。
+              <PAlert variant="warning" title={t('tenantAutomationTokens.modal.securityTitle')}>
+                {t('tenantAutomationTokens.modal.securityHint')}
               </PAlert>
 
               <div className="flex justify-end gap-3 border-t border-gray-200 pt-4">
                 <PButton type="button" variant="secondary" onClick={() => { setModalOpen(false); resetForm() }}>
-                  取消
+                  {t('tenantAutomationTokens.actions.cancel')}
                 </PButton>
                 <PButton type="submit" loading={submitting}>
-                  创建令牌
+                  {t('tenantAutomationTokens.actions.createToken')}
                 </PButton>
               </div>
             </form>

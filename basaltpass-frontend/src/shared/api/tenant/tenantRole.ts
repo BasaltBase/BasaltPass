@@ -1,4 +1,4 @@
-// 角色和权限管理 API
+// roleandpermissionmanagement API
 import client from '../client'
 
 export interface Role {
@@ -47,7 +47,7 @@ export interface TenantUser {
   role: string // tenant role: owner, admin, member
 }
 
-// 获取租户角色列表
+// gettenantrolelist
 export const getTenantRoles = (params?: {
   page?: number
   page_size?: number
@@ -57,22 +57,22 @@ export const getTenantRoles = (params?: {
   return client.get('/api/v1/tenant/roles', { params })
 }
 
-// 创建租户角色
+// createtenantrole
 export const createTenantRole = (data: CreateRoleRequest) => {
   return client.post('/api/v1/tenant/roles', data)
 }
 
-// 更新租户角色
+// updatetenantrole
 export const updateTenantRole = (id: number, data: CreateRoleRequest) => {
   return client.put(`/api/v1/tenant/roles/${id}`, data)
 }
 
-// 删除租户角色
+// deletetenantrole
 export const deleteTenantRole = (id: number) => {
   return client.delete(`/api/v1/tenant/roles/${id}`)
 }
 
-// 获取租户用户列表（用于角色分配）
+// gettenantuserlist（translatedroletranslated）
 export const getTenantUsersForRole = (params?: {
   page?: number
   page_size?: number
@@ -81,12 +81,12 @@ export const getTenantUsersForRole = (params?: {
   return client.get('/api/v1/tenant/roles/users', { params })
 }
 
-// 分配用户角色
+// translateduserrole
 export const assignUserRoles = (data: UserRoleRequest) => {
   return client.post('/api/v1/tenant/roles/assign', data)
 }
 
-// 获取用户角色
+// getuserrole
 export const getUserRoles = (userId: number) => {
   return client.get(`/api/v1/tenant/roles/users/${userId}`)
 }

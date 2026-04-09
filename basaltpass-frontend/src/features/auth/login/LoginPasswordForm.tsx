@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { PButton, PCheckbox, PInput } from '@ui'
 import type { FormEventHandler } from 'react'
+import { useI18n } from '@shared/i18n'
 
 interface LoginPasswordFormProps {
   identifier: string
@@ -27,6 +28,8 @@ export function LoginPasswordForm({
   showPassword,
   submitPasswordLogin,
 }: LoginPasswordFormProps) {
+  const { t } = useI18n()
+
   return (
     <form className="mt-6 space-y-5" onSubmit={submitPasswordLogin}>
       <div className="space-y-4">
@@ -35,8 +38,8 @@ export function LoginPasswordForm({
           name="identifier"
           type="text"
           required
-          label="邮箱或手机号"
-          placeholder="请输入邮箱或手机号"
+          label={t('auth.passwordForm.identifierLabel')}
+          placeholder={t('auth.passwordForm.identifierPlaceholder')}
           value={identifier}
           onChange={(event) => setIdentifier(event.target.value)}
         />
@@ -45,8 +48,8 @@ export function LoginPasswordForm({
           name="password"
           type="password"
           required
-          label="密码"
-          placeholder="请输入密码"
+          label={t('auth.passwordForm.passwordLabel')}
+          placeholder={t('auth.passwordForm.passwordPlaceholder')}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           showPassword={showPassword}
@@ -59,13 +62,13 @@ export function LoginPasswordForm({
           <PCheckbox
             checked={rememberMe}
             onChange={(event) => setRememberMe(event.target.checked)}
-            label="记住我"
+            label={t('auth.passwordForm.rememberMe')}
           />
-          <p className="mt-1 text-xs text-gray-500">在此设备保持 30 天登录状态</p>
+          <p className="mt-1 text-xs text-gray-500">{t('auth.passwordForm.rememberMeHint')}</p>
         </div>
         <div className="pt-1 text-sm">
           <Link to="/reset-password" className="font-medium text-blue-600 hover:text-blue-500">
-            忘记密码？
+            {t('auth.passwordForm.forgotPassword')}
           </Link>
         </div>
       </div>
@@ -77,7 +80,7 @@ export function LoginPasswordForm({
         fullWidth
         loading={isLoading}
       >
-        登录
+        {t('auth.passwordForm.loginButton')}
       </PButton>
     </form>
   )

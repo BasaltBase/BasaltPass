@@ -21,7 +21,7 @@ export default function CurrencySelector({ value, onChange, className = '' }: Cu
     try {
       const response = await getCurrencies()
       setCurrencies(response.data)
-      // 只有在没有选中货币且有可用货币时，才设置默认货币
+      // ，
       if (!value && response.data.length > 0) {
         const defaultCurrency = response.data.find(c => c.code === 'USD') || response.data[0]
         onChange(defaultCurrency)
@@ -57,7 +57,7 @@ export default function CurrencySelector({ value, onChange, className = '' }: Cu
               </span>
             </>
           ) : (
-            <span className="block truncate text-gray-400">选择货币</span>
+            <span className="block truncate text-gray-400">Select currency</span>
           )}
         </span>
         <span className="ml-3 absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
@@ -85,12 +85,12 @@ export default function CurrencySelector({ value, onChange, className = '' }: Cu
                 </span>
                 {currency.type === 'crypto' && (
                   <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
-                    加密
+                    Crypto
                   </span>
                 )}
                 {currency.type === 'points' && (
                   <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
-                    积分
+                    Points
                   </span>
                 )}
               </div>

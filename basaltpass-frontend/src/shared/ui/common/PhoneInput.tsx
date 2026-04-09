@@ -17,7 +17,7 @@ interface PhoneInputProps {
 export function PhoneInput({
   value,
   onChange,
-  placeholder = "请输入手机号码",
+  placeholder = "please enterphone numbertranslated",
   disabled = false,
   label,
   required = false,
@@ -30,7 +30,7 @@ export function PhoneInput({
   const [error, setError] = useState<string>('')
   const [isFocused, setIsFocused] = useState(false)
 
-  // 使用指定的默认国家代码创建验证器
+  // translateddefaulttranslatedcreatetranslated
   const validator = React.useMemo(
     () => new (phoneValidator.constructor as any)(defaultCountryCode),
     [defaultCountryCode]
@@ -53,7 +53,7 @@ export function PhoneInput({
       return
     }
 
-    // 尝试标准化为E.164格式
+    // translatedE.164translated
     const result = validator.normalizeToE164(rawValue)
     if (result.error) {
       setIsValid(false)
@@ -73,7 +73,7 @@ export function PhoneInput({
   const handleBlur = () => {
     setIsFocused(false)
     
-    // 失焦时如果有有效的手机号，格式化显示
+    // translatedhashastranslatedphone number，translated
     if (isValid && inputValue) {
       const result = validator.normalizeToE164(inputValue)
       if (result.phone) {
@@ -149,7 +149,7 @@ export function PhoneInput({
         )}
       </div>
 
-      {/* 错误信息 */}
+      {/* errorinfo */}
       {showValidation && error && (
         <p className="text-sm text-red-600 flex items-center mt-1">
           <ExclamationCircleIcon className="h-4 w-4 mr-1" />
@@ -157,10 +157,10 @@ export function PhoneInput({
         </p>
       )}
 
-      {/* 帮助提示 */}
+      {/* translated */}
       {!error && isFocused && (
         <p className="text-sm text-gray-500 mt-1">
-          支持国际格式，如 +8613812345678 或 13812345678
+          translated，translated +8613812345678 or 13812345678
         </p>
       )}
     </div>

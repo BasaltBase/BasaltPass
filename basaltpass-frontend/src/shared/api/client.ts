@@ -40,15 +40,15 @@ const buildSessionExpiredRedirect = () => {
   return '/login'
 }
 
-// 是否正在刷新token的标志
+// isnotranslatedtokentranslated
 let isRefreshing = false
-// 等待刷新完成的请求队列
+// translatedrequesttranslated
 let failedQueue: Array<{
   resolve: (value?: any) => void
   reject: (error?: any) => void
 }> = []
 
-// 处理队列中的请求
+// translatedrequest
 const processQueue = (error: any, token: string | null = null) => {
   failedQueue.forEach(({ resolve, reject }) => {
     if (error) {
@@ -76,7 +76,7 @@ client.interceptors.request.use((config) => {
   return config
 })
 
-// 响应拦截器 - 处理401错误和自动刷新token
+// responsetranslated - translated401errorandtranslatedtoken
 client.interceptors.response.use(
   (response) => {
     return response
@@ -88,7 +88,7 @@ client.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       const url: string = originalRequest?.url || ''
       const shouldSkipRefreshOnAuthPage = isAuthEntryPath(pathname)
-      // 跳过认证相关接口的刷新逻辑，直接把错误抛给调用方（避免死循环/卡住登录）
+      // translated，translatederrortranslated（translated/translatedlogin）
       const isAuthEndpoint = url.includes('/api/v1/auth/login')
         || url.includes('/api/v1/auth/verify-2fa')
         || url.includes('/api/v1/auth/refresh')
@@ -96,7 +96,7 @@ client.interceptors.response.use(
         return Promise.reject(error)
       }
       if (isRefreshing) {
-        // 如果正在刷新token，将请求加入队列
+        // translatedtoken，translatedrequesttranslated
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject })
         }).then(token => {
@@ -111,32 +111,32 @@ client.interceptors.response.use(
       isRefreshing = true
 
       try {
-        // 尝试刷新token
+        // translatedtoken
         const response = await client.post('/api/v1/auth/refresh')
         const { access_token } = response.data
         
-        // 更新本地存储的token
+        // updatetranslatedtoken
         setAccessToken(access_token)
         if (getAuthScope() === 'user') {
           updateStoredUserSessionToken(access_token)
         }
         
-        // 处理队列中的请求
+        // translatedrequest
         processQueue(null, access_token)
         
-        // 重试原请求
+        // translatedrequest
         originalRequest.headers.Authorization = 'Bearer ' + access_token
         return client(originalRequest)
         
       } catch (refreshError) {
-        // 刷新失败，清除token并处理队列
+        // translatedfailed，translatedtokentranslated
         processQueue(refreshError, null)
         clearAccessToken()
         clearAllAccessTokens()
         clearAllScopeCookies()
         setSessionNotice('session_expired')
         
-        // 如果是在非登录页面，跳转到登录页
+        // translatedistranslatedlogintranslated，translatedtologintranslated
         const redirectTarget = buildSessionExpiredRedirect()
         if (window.location.pathname + window.location.search !== redirectTarget) {
           window.location.href = redirectTarget

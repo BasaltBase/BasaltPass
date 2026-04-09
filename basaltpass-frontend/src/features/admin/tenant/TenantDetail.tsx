@@ -17,8 +17,10 @@ import AdminLayout from '@features/admin/components/AdminLayout'
 import { PInput, PSelect, PTextarea, PCheckbox, PButton, PSkeleton, PBadge, PAlert, PCard, PPageHeader } from '@ui'
 import { adminTenantApi, AdminTenantDetailResponse, AdminUpdateTenantRequest, TenantSettings } from '@api/admin/tenant'
 import { ROUTES } from '@constants'
+import { useI18n } from '@i18n/useI18n'
 
 const TenantDetail: React.FC = () => {
+  const { t, locale } = useI18n()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [tenant, setTenant] = useState<AdminTenantDetailResponse | null>(null)
@@ -56,7 +58,6 @@ const TenantDetail: React.FC = () => {
       const response = await adminTenantApi.getTenantDetail(parseInt(id))
       setTenant(response)
       
-      // 初始化表单数据
       setFormData({
         name: response.name,
         description: response.description || '',
@@ -72,8 +73,8 @@ const TenantDetail: React.FC = () => {
         }
       })
     } catch (err: any) {
-      console.error('获取租户详情失败:', err)
-      setError(err.response?.data?.message || '获取租户详情失败')
+      console.error(t('adminTenantDetail.logs.fetchDetailFailed'), err)
+      setError(err.response?.data?.message || t('adminTenantDetail.errors.fetchDetailFailed'))
     } finally {
       setLoading(false)
     }
@@ -107,12 +108,11 @@ const TenantDetail: React.FC = () => {
       
       await adminTenantApi.updateTenant(parseInt(id), formData)
       
-      // 刷新数据
       await fetchTenantDetail()
       setEditMode(false)
     } catch (err: any) {
-      console.error('更新租户失败:', err)
-      setError(err.response?.data?.message || '更新租户失败')
+      console.error(t('adminTenantDetail.logs.updateFailed'), err)
+      setError(err.response?.data?.message || t('adminTenantDetail.errors.updateFailed'))
     } finally {
       setUpdating(false)
     }
@@ -121,7 +121,7 @@ const TenantDetail: React.FC = () => {
   const handleDelete = async () => {
     if (!id || !tenant) return
     
-    if (!await uiConfirm(`确定要删除租户 "${tenant.name}" 吗？此操作不可恢复。`)) {
+    if (!await uiConfirm(t('adminTenantDetail.confirm.delete', { name: tenant.name }))) {
       return
     }
     
@@ -131,13 +131,12 @@ const TenantDetail: React.FC = () => {
       
       await adminTenantApi.deleteTenant(parseInt(id))
       
-      // 删除成功后跳转到列表页
       navigate(ROUTES.admin.tenants, { 
-        state: { message: '租户删除成功！' }
+        state: { message: t('adminTenantDetail.messages.deleteSuccess') }
       })
     } catch (err: any) {
-      console.error('删除租户失败:', err)
-      setError(err.response?.data?.message || '删除租户失败')
+      console.error(t('adminTenantDetail.logs.deleteFailed'), err)
+      setError(err.response?.data?.message || t('adminTenantDetail.errors.deleteFailed'))
     } finally {
       setUpdating(false)
     }
@@ -145,9 +144,9 @@ const TenantDetail: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      active: { variant: 'success' as const, text: '活跃' },
-      suspended: { variant: 'warning' as const, text: '暂停' },
-      deleted: { variant: 'error' as const, text: '已删除' }
+      active: { variant: 'success' as const, text: t('adminTenantDetail.status.active') },
+      suspended: { variant: 'warning' as const, text: t('adminTenantDetail.status.suspended') },
+      deleted: { variant: 'error' as const, text: t('adminTenantDetail.status.deleted') }
     }
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.active
     return <PBadge variant={config.variant}>{config.text}</PBadge>
@@ -155,13 +154,13 @@ const TenantDetail: React.FC = () => {
 
   const formatDate = (dateString?: string) => {
     if (!dateString) {
-      return '--'
+      return t('adminTenantDetail.common.emptyValue')
     }
-    return new Date(dateString).toLocaleString('zh-CN')
+    return new Date(dateString).toLocaleString(locale)
   }
 
   const formatNumber = (value?: number | null) => {
-    return new Intl.NumberFormat('zh-CN').format(value ?? 0)
+    return new Intl.NumberFormat(locale).format(value ?? 0)
   }
 
   const tenantLoginUrl = useMemo(() => {
@@ -176,7 +175,7 @@ const TenantDetail: React.FC = () => {
 
   if (loading) {
     return (
-      <AdminLayout title="租户详情">
+      <AdminLayout title={t('adminTenantDetail.layoutTitle')}>
         <div className="py-6">
           <PSkeleton.DetailPage />
         </div>
@@ -186,14 +185,14 @@ const TenantDetail: React.FC = () => {
 
   if (!tenant) {
     return (
-      <AdminLayout title="租户详情">
+      <AdminLayout title={t('adminTenantDetail.layoutTitle')}>
         <div className="text-center py-12">
           <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">租户不存在</h3>
-          <p className="mt-1 text-sm text-gray-500">请检查租户ID是否正确</p>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">{t('adminTenantDetail.notFound.title')}</h3>
+          <p className="mt-1 text-sm text-gray-500">{t('adminTenantDetail.notFound.description')}</p>
           <div className="mt-6">
             <PButton onClick={() => navigate(ROUTES.admin.tenants)}>
-              返回租户列表
+              {t('adminTenantDetail.actions.backToList')}
             </PButton>
           </div>
         </div>
@@ -202,17 +201,15 @@ const TenantDetail: React.FC = () => {
   }
 
   return (
-    <AdminLayout title={`租户详情 - ${tenant.name}`}>
+    <AdminLayout title={t('adminTenantDetail.layoutTitleWithName', { name: tenant.name })}>
       <div className="space-y-6">
-        {/* 错误提示 */}
-        {error && <PAlert variant="error" title="操作失败" message={error} />}
+        {error && <PAlert variant="error" title={t('adminTenantDetail.errors.operationFailed')} message={error} />}
 
-        {/* 页面头部 */}
         <div className="lg:flex lg:items-center lg:justify-between">
           <div className="flex-1 min-w-0">
             <PPageHeader
               title={tenant.name}
-              description={`代码: ${tenant.code}`}
+              description={t('adminTenantDetail.meta.code', { code: tenant.code })}
               icon={<BuildingOfficeIcon className="h-8 w-8 text-indigo-600" />}
             />
             <div className="mt-2 flex items-center space-x-2">
@@ -227,7 +224,7 @@ const TenantDetail: React.FC = () => {
             >
               <span className="inline-flex items-center">
                 <PencilIcon className="h-4 w-4 mr-2" />
-                {editMode ? '取消编辑' : '编辑'}
+                {editMode ? t('adminTenantDetail.actions.cancelEdit') : t('adminTenantDetail.actions.edit')}
               </span>
             </PButton>
             <PButton
@@ -237,28 +234,26 @@ const TenantDetail: React.FC = () => {
             >
               <span className="inline-flex items-center">
                 <TrashIcon className="h-4 w-4 mr-2" />
-                删除
+                {t('adminTenantDetail.actions.delete')}
               </span>
             </PButton>
           </div>
         </div>
 
-        {/* 主要内容 */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* 左侧：基本信息 */}
           <div className="lg:col-span-2">
             <PCard className="rounded-xl p-0 shadow-sm">
               <div className="px-4 py-5 sm:p-6">
                 <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4 flex items-center">
                   <DocumentTextIcon className="h-5 w-5 mr-2 text-gray-400" />
-                  基本信息
+                  {t('adminTenantDetail.sections.basicInfo')}
                 </h3>
                 
                 {editMode ? (
                   <form onSubmit={handleUpdate} className="space-y-4">
                     <div>
                       <PInput
-                        label="租户名称"
+                        label={t('adminTenantDetail.form.name')}
                         type="text"
                         name="name"
                         value={formData.name}
@@ -269,25 +264,25 @@ const TenantDetail: React.FC = () => {
 
                     <div>
                       <PTextarea
-                        label="描述"
+                        label={t('adminTenantDetail.form.description')}
                         name="description"
                         value={formData.description}
                         onChange={handleInputChange}
                         rows={3}
-                        placeholder="租户描述信息..."
+                        placeholder={t('adminTenantDetail.form.descriptionPlaceholder')}
                       />
                     </div>
 
                     <div>
                       <PSelect
-                        label="状态"
+                        label={t('adminTenantDetail.form.status')}
                         name="status"
                         value={formData.status}
                         onChange={handleInputChange}
                       >
-                        <option value="active">活跃</option>
-                        <option value="suspended">暂停</option>
-                        <option value="deleted">删除</option>
+                        <option value="active">{t('adminTenantDetail.status.active')}</option>
+                        <option value="suspended">{t('adminTenantDetail.status.suspended')}</option>
+                        <option value="deleted">{t('adminTenantDetail.status.deleted')}</option>
                       </PSelect>
                     </div>
 
@@ -297,34 +292,34 @@ const TenantDetail: React.FC = () => {
                         variant="secondary"
                         onClick={() => setEditMode(false)}
                       >
-                        取消
+                        {t('adminTenantDetail.actions.cancel')}
                       </PButton>
                       <PButton
                         type="submit"
                         loading={updating}
                       >
-                        保存
+                        {t('adminTenantDetail.actions.save')}
                       </PButton>
                     </div>
                   </form>
                 ) : (
                   <div className="space-y-4">
                     <div>
-                      <dt className="text-sm font-medium text-gray-500">租户代码</dt>
+                      <dt className="text-sm font-medium text-gray-500">{t('adminTenantDetail.meta.tenantCode')}</dt>
                       <dd className="mt-1 text-sm text-gray-900 font-mono">{tenant.code}</dd>
                     </div>
                     <div>
-                      <dt className="text-sm font-medium text-gray-500">描述</dt>
+                      <dt className="text-sm font-medium text-gray-500">{t('adminTenantDetail.meta.description')}</dt>
                       <dd className="mt-1 text-sm text-gray-900">
-                        {tenant.description || '暂无描述'}
+                        {tenant.description || t('adminTenantDetail.common.noDescription')}
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-sm font-medium text-gray-500">所有者邮箱</dt>
+                      <dt className="text-sm font-medium text-gray-500">{t('adminTenantDetail.meta.ownerEmail')}</dt>
                       <dd className="mt-1 text-sm text-gray-900">{tenant.owner_email}</dd>
                     </div>
                     <div>
-                      <dt className="text-sm font-medium text-gray-500">租户登录台 URL</dt>
+                      <dt className="text-sm font-medium text-gray-500">{t('adminTenantDetail.meta.loginUrl')}</dt>
                       <dd className="mt-1 text-sm">
                         <a
                           href={tenantLoginUrl}
@@ -337,11 +332,11 @@ const TenantDetail: React.FC = () => {
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-sm font-medium text-gray-500">创建时间</dt>
+                      <dt className="text-sm font-medium text-gray-500">{t('adminTenantDetail.meta.createdAt')}</dt>
                       <dd className="mt-1 text-sm text-gray-900">{formatDate(tenant.created_at)}</dd>
                     </div>
                     <div>
-                      <dt className="text-sm font-medium text-gray-500">更新时间</dt>
+                      <dt className="text-sm font-medium text-gray-500">{t('adminTenantDetail.meta.updatedAt')}</dt>
                       <dd className="mt-1 text-sm text-gray-900">{formatDate(tenant.updated_at)}</dd>
                     </div>
                   </div>
@@ -349,12 +344,11 @@ const TenantDetail: React.FC = () => {
               </div>
             </PCard>
 
-            {/* 租户设置 */}
             <PCard className="mt-6 rounded-xl p-0 shadow-sm">
               <div className="px-4 py-5 sm:p-6">
                 <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4 flex items-center">
                   <CogIcon className="h-5 w-5 mr-2 text-gray-400" />
-                  租户设置
+                  {t('adminTenantDetail.sections.settings')}
                 </h3>
                 
                 {editMode ? (
@@ -362,7 +356,7 @@ const TenantDetail: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
                         <PInput
-                          label="最大用户数"
+                          label={t('adminTenantDetail.settings.maxUsers')}
                           type="number"
                           value={formData.settings?.max_users || 0}
                           onChange={(e) => handleSettingChange('max_users', parseInt(e.target.value) || 0)}
@@ -371,7 +365,7 @@ const TenantDetail: React.FC = () => {
                       </div>
                       <div>
                         <PInput
-                          label="最大应用数"
+                          label={t('adminTenantDetail.settings.maxApps')}
                           type="number"
                           value={formData.settings?.max_apps || 0}
                           onChange={(e) => handleSettingChange('max_apps', parseInt(e.target.value) || 0)}
@@ -380,7 +374,7 @@ const TenantDetail: React.FC = () => {
                       </div>
                       <div>
                         <PInput
-                          label="最大存储 (MB)"
+                          label={t('adminTenantDetail.settings.maxStorage')}
                           type="number"
                           value={formData.settings?.max_storage || 0}
                           onChange={(e) => handleSettingChange('max_storage', parseInt(e.target.value) || 0)}
@@ -392,19 +386,19 @@ const TenantDetail: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <PCheckbox
                         variant="switch"
-                        label="启用 API 功能"
+                        label={t('adminTenantDetail.settings.enableApi')}
                         checked={formData.settings?.enable_api || false}
                         onChange={(e) => handleSettingChange('enable_api', (e.target as HTMLInputElement).checked)}
                       />
                       <PCheckbox
                         variant="switch"
-                        label="启用 SSO 单点登录"
+                        label={t('adminTenantDetail.settings.enableSso')}
                         checked={formData.settings?.enable_sso || false}
                         onChange={(e) => handleSettingChange('enable_sso', (e.target as HTMLInputElement).checked)}
                       />
                       <PCheckbox
                         variant="switch"
-                        label="启用审计日志"
+                        label={t('adminTenantDetail.settings.enableAudit')}
                         checked={formData.settings?.enable_audit || false}
                         onChange={(e) => handleSettingChange('enable_audit', (e.target as HTMLInputElement).checked)}
                       />
@@ -414,53 +408,53 @@ const TenantDetail: React.FC = () => {
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <dt className="text-sm font-medium text-gray-500">最大用户数</dt>
+                        <dt className="text-sm font-medium text-gray-500">{t('adminTenantDetail.settings.maxUsers')}</dt>
                         <dd className="mt-1 text-lg font-semibold text-gray-900">
                           {tenant.settings?.max_users || 0}
                         </dd>
                       </div>
                       <div>
-                        <dt className="text-sm font-medium text-gray-500">最大应用数</dt>
+                        <dt className="text-sm font-medium text-gray-500">{t('adminTenantDetail.settings.maxApps')}</dt>
                         <dd className="mt-1 text-lg font-semibold text-gray-900">
                           {tenant.settings?.max_apps || 0}
                         </dd>
                       </div>
                       <div>
-                        <dt className="text-sm font-medium text-gray-500">最大存储</dt>
+                        <dt className="text-sm font-medium text-gray-500">{t('adminTenantDetail.settings.maxStorageSimple')}</dt>
                         <dd className="mt-1 text-lg font-semibold text-gray-900">
-                          {tenant.settings?.max_storage || 0} MB
+                          {t('adminTenantDetail.settings.maxStorageValue', { value: tenant.settings?.max_storage || 0 })}
                         </dd>
                       </div>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <dt className="text-sm font-medium text-gray-500">API 功能</dt>
+                        <dt className="text-sm font-medium text-gray-500">{t('adminTenantDetail.settings.apiFeature')}</dt>
                         <dd className="mt-1">
                           {tenant.settings?.enable_api ? (
                             <CheckCircleIcon className="h-5 w-5 text-green-500" />
                           ) : (
-                            <span className="text-gray-400">未启用</span>
+                            <span className="text-gray-400">{t('adminTenantDetail.common.disabled')}</span>
                           )}
                         </dd>
                       </div>
                       <div>
-                        <dt className="text-sm font-medium text-gray-500">SSO 单点登录</dt>
+                        <dt className="text-sm font-medium text-gray-500">{t('adminTenantDetail.settings.ssoFeature')}</dt>
                         <dd className="mt-1">
                           {tenant.settings?.enable_sso ? (
                             <CheckCircleIcon className="h-5 w-5 text-green-500" />
                           ) : (
-                            <span className="text-gray-400">未启用</span>
+                            <span className="text-gray-400">{t('adminTenantDetail.common.disabled')}</span>
                           )}
                         </dd>
                       </div>
                       <div>
-                        <dt className="text-sm font-medium text-gray-500">审计日志</dt>
+                        <dt className="text-sm font-medium text-gray-500">{t('adminTenantDetail.settings.auditFeature')}</dt>
                         <dd className="mt-1">
                           {tenant.settings?.enable_audit ? (
                             <CheckCircleIcon className="h-5 w-5 text-green-500" />
                           ) : (
-                            <span className="text-gray-400">未启用</span>
+                            <span className="text-gray-400">{t('adminTenantDetail.common.disabled')}</span>
                           )}
                         </dd>
                       </div>
@@ -471,60 +465,57 @@ const TenantDetail: React.FC = () => {
             </PCard>
           </div>
 
-          {/* 右侧：统计信息 */}
           <div className="space-y-6">
-            {/* 快速统计 */}
             <PCard className="rounded-xl p-0 shadow-sm">
               <div className="px-4 py-5 sm:p-6">
                 <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4 flex items-center">
                   <ChartBarIcon className="h-5 w-5 mr-2 text-gray-400" />
-                  统计信息
+                  {t('adminTenantDetail.sections.statistics')}
                 </h3>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">用户数量</dt>
+                    <dt className="text-sm font-medium text-gray-500">{t('adminTenantDetail.stats.userCount')}</dt>
                     <dd className="mt-1 text-2xl font-semibold text-indigo-600">
                       {formatNumber(tenant.user_count)}
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">应用数量</dt>
+                    <dt className="text-sm font-medium text-gray-500">{t('adminTenantDetail.stats.appCount')}</dt>
                     <dd className="mt-1 text-2xl font-semibold text-indigo-600">
                       {formatNumber(tenant.app_count)}
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">存储使用</dt>
+                    <dt className="text-sm font-medium text-gray-500">{t('adminTenantDetail.stats.storageUsed')}</dt>
                     <dd className="mt-1 text-2xl font-semibold text-green-600">
-                      {formatNumber(tenant.stats?.storage_used)} MB
+                      {t('adminTenantDetail.stats.storageUsedValue', { value: formatNumber(tenant.stats?.storage_used) })}
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">API 调用（本月）</dt>
+                    <dt className="text-sm font-medium text-gray-500">{t('adminTenantDetail.stats.apiCallsThisMonth')}</dt>
                     <dd className="mt-1 text-2xl font-semibold text-blue-600">
                       {formatNumber(tenant.stats?.api_calls_this_month)}
                     </dd>
                   </div>
                   <div className="sm:col-span-2">
-                    <dt className="text-sm font-medium text-gray-500">最近活跃时间</dt>
+                    <dt className="text-sm font-medium text-gray-500">{t('adminTenantDetail.stats.lastActiveAt')}</dt>
                     <dd
                       className={`mt-1 text-lg font-semibold ${
                         tenant.stats?.last_active_at ? 'text-gray-700' : 'text-gray-400'
                       }`}
                     >
-                      {tenant.stats?.last_active_at ? formatDate(tenant.stats.last_active_at) : '--'}
+                      {tenant.stats?.last_active_at ? formatDate(tenant.stats.last_active_at) : t('adminTenantDetail.common.emptyValue')}
                     </dd>
                   </div>
                 </div>
               </div>
             </PCard>
 
-            {/* 应用列表 */}
             <PCard className="rounded-xl p-0 shadow-sm">
               <div className="px-4 py-5 sm:p-6">
                 <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4 flex items-center">
                   <CubeIcon className="h-5 w-5 mr-2 text-gray-400" />
-                  应用列表
+                  {t('adminTenantDetail.sections.apps')}
                 </h3>
                 {tenant.recent_apps && tenant.recent_apps.length > 0 ? (
                   <div className="space-y-3">
@@ -540,15 +531,15 @@ const TenantDetail: React.FC = () => {
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-xs text-gray-500">创建于</p>
-                          <p className="text-xs text-gray-900">{new Date(app.created_at).toLocaleDateString()}</p>
+                          <p className="text-xs text-gray-500">{t('adminTenantDetail.meta.createdAtLabel')}</p>
+                          <p className="text-xs text-gray-900">{new Date(app.created_at).toLocaleDateString(locale)}</p>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="text-center py-6 text-gray-500 text-sm">
-                    暂无应用
+                    {t('adminTenantDetail.empty.noApps')}
                   </div>
                 )}
               </div>

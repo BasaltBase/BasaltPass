@@ -32,11 +32,11 @@ export default function OAuthClientDetailModal({ client, isOpen, onClose, onUpda
 
   const copyToClipboard = async (text: string) => {
     await navigator.clipboard.writeText(text)
-    uiAlert('已复制到剪贴板')
+    uiAlert('Copied to clipboard')
   }
 
   const handleRegenerateSecret = async () => {
-    if (!client || !await uiConfirm('确定要重新生成客户端密钥吗？这会使现有的密钥失效。')) return
+    if (!client || !await uiConfirm('Are you sure you want to regenerate the client secret? This will invalidate the current secret.')) return
 
     setIsRegenerating(true)
     try {
@@ -48,14 +48,14 @@ export default function OAuthClientDetailModal({ client, isOpen, onClose, onUpda
         ''
 
       if (!secret) {
-        uiAlert('密钥已重新生成，但未返回新密钥')
+        uiAlert('Secret was regenerated, but no new secret was returned')
       }
 
       setNewSecret(secret)
       onUpdate?.()
     } catch (err) {
-      console.error('重新生成密钥失败:', err)
-      uiAlert('重新生成密钥失败')
+      console.error('Failed to regenerate secret:', err)
+      uiAlert('Failed to regenerate secret')
     } finally {
       setIsRegenerating(false)
     }
@@ -76,7 +76,7 @@ export default function OAuthClientDetailModal({ client, isOpen, onClose, onUpda
     if (!client) return
     const cleaned = uris.map(u => u.trim()).filter(Boolean)
     if (cleaned.length === 0) {
-      setUriError('至少需要一条回调地址')
+      setUriError('At least one callback address is required')
       return
     }
     setIsSavingUris(true)
@@ -86,7 +86,7 @@ export default function OAuthClientDetailModal({ client, isOpen, onClose, onUpda
       setEditingUris(false)
       onUpdate?.()
     } catch (err: any) {
-      setUriError(err?.response?.data?.error || '保存失败')
+      setUriError(err?.response?.data?.error || 'Save failed')
     } finally {
       setIsSavingUris(false)
     }
@@ -118,8 +118,8 @@ export default function OAuthClientDetailModal({ client, isOpen, onClose, onUpda
                 <KeyIcon className="h-5 w-5 text-white" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-gray-900">OAuth客户端详情</h3>
-                <p className="mt-0.5 text-sm text-gray-500">查看配置与重新生成密钥</p>
+                <h3 className="text-xl font-semibold text-gray-900">OAuth Client Details</h3>
+                <p className="mt-0.5 text-sm text-gray-500">View configuration and regenerate secret</p>
               </div>
             </div>
             <button
@@ -130,7 +130,7 @@ export default function OAuthClientDetailModal({ client, isOpen, onClose, onUpda
               }}
               className="text-gray-400 hover:text-gray-600 transition-colors duration-200 p-2 hover:bg-gray-100 rounded-lg"
             >
-              <span className="sr-only">关闭</span>
+              <span className="sr-only">Close</span>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -148,7 +148,7 @@ export default function OAuthClientDetailModal({ client, isOpen, onClose, onUpda
                   type="button"
                   onClick={() => copyToClipboard(client.client_id)}
                   className="text-gray-600 hover:text-gray-800"
-                  title="复制"
+                  title="Copy"
                 >
                   <ClipboardDocumentIcon className="h-4 w-4" />
                 </button>
@@ -156,18 +156,18 @@ export default function OAuthClientDetailModal({ client, isOpen, onClose, onUpda
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">状态</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
               <span
                 className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                   client.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                 }`}
               >
-                {client.is_active ? '激活' : '停用'}
+                {client.is_active ? 'Active' : 'Disabled'}
               </span>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">创建时间</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Created At</label>
               <p className="text-sm text-gray-900">{client.created_at}</p>
             </div>
           </div>
@@ -183,33 +183,33 @@ export default function OAuthClientDetailModal({ client, isOpen, onClose, onUpda
                 onClick={handleRegenerateSecret}
                 leftIcon={<ArrowPathIcon className="h-4 w-4" />}
               >
-                重新生成
+                Regenerate
               </PButton>
             </div>
             {newSecret ? (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <p className="text-xs text-yellow-800 mb-2">请立即复制保存；关闭后将无法再次查看。</p>
+                <p className="text-xs text-yellow-800 mb-2">Copy and save it now; it will not be shown again after closing.</p>
                 <div className="flex items-center space-x-2">
                   <code className="flex-1 text-xs bg-white p-2 rounded border border-yellow-200 break-all">{newSecret}</code>
                   <button
                     type="button"
                     onClick={() => copyToClipboard(newSecret)}
                     className="text-yellow-700 hover:text-yellow-900"
-                    title="复制"
+                    title="Copy"
                   >
                     <ClipboardDocumentIcon className="h-4 w-4" />
                   </button>
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-gray-500">密钥已加密存储，无法查看（可重新生成）</p>
+              <p className="text-sm text-gray-500">The secret is stored encrypted and cannot be viewed (you can regenerate it)</p>
             )}
           </div>
 
           {/* Redirect URIs with inline editing */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium text-gray-700">回调地址 (Redirect URIs)</label>
+              <label className="block text-sm font-medium text-gray-700">Callback Addresses (Redirect URIs)</label>
               {!editingUris && (
                 <PButton
                   type="button"
@@ -218,7 +218,7 @@ export default function OAuthClientDetailModal({ client, isOpen, onClose, onUpda
                   onClick={startEditUris}
                   leftIcon={<PencilIcon className="h-4 w-4" />}
                 >
-                  编辑
+                  Edit
                 </PButton>
               )}
             </div>
@@ -237,7 +237,7 @@ export default function OAuthClientDetailModal({ client, isOpen, onClose, onUpda
                       type="button"
                       onClick={() => removeUri(index)}
                       className="text-red-500 hover:text-red-700 p-1"
-                      title="删除"
+                      title="Delete"
                     >
                       <TrashIcon className="h-4 w-4" />
                     </button>
@@ -250,7 +250,7 @@ export default function OAuthClientDetailModal({ client, isOpen, onClose, onUpda
                   className="flex items-center space-x-1 text-sm text-indigo-600 hover:text-indigo-800"
                 >
                   <PlusIcon className="h-4 w-4" />
-                  <span>添加一条</span>
+                  <span>Add one</span>
                 </button>
 
                 {uriError && <p className="text-sm text-red-600">{uriError}</p>}
@@ -263,7 +263,7 @@ export default function OAuthClientDetailModal({ client, isOpen, onClose, onUpda
                     onClick={saveUris}
                     leftIcon={<CheckIcon className="h-4 w-4" />}
                   >
-                    保存
+                    Save
                   </PButton>
                   <PButton
                     type="button"
@@ -272,14 +272,14 @@ export default function OAuthClientDetailModal({ client, isOpen, onClose, onUpda
                     onClick={cancelEditUris}
                     leftIcon={<XMarkIcon className="h-4 w-4" />}
                   >
-                    取消
+                    Cancel
                   </PButton>
                 </div>
               </div>
             ) : (
               <div className="space-y-2">
                 {(client.redirect_uris || []).length === 0 ? (
-                  <div className="text-sm text-gray-500">未配置</div>
+                  <div className="text-sm text-gray-500">Not configured</div>
                 ) : (
                   (client.redirect_uris || []).map((uri, index) => (
                     <div key={index} className="text-sm bg-gray-50 p-2 rounded border border-gray-200 break-all font-mono">
@@ -295,7 +295,7 @@ export default function OAuthClientDetailModal({ client, isOpen, onClose, onUpda
             <label className="block text-sm font-medium text-gray-700 mb-2">Scopes</label>
             <div className="flex flex-wrap gap-2">
               {(client.scopes || []).length === 0 ? (
-                <span className="text-sm text-gray-500">未配置</span>
+                <span className="text-sm text-gray-500">Not configured</span>
               ) : (
                 (client.scopes || []).map((scope) => (
                   <span key={scope} className="inline-flex px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">
@@ -316,7 +316,7 @@ export default function OAuthClientDetailModal({ client, isOpen, onClose, onUpda
                 onClose()
               }}
             >
-              关闭
+              Close
             </PButton>
           </div>
         </div>

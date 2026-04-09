@@ -6,9 +6,9 @@ export type SessionNoticeCode =
 const SESSION_NOTICE_KEY = 'bp_session_notice'
 
 const NOTICE_MESSAGES: Record<SessionNoticeCode, string> = {
-  session_expired: '当前登录会话已过期，请重新登录。',
-  tenant_access_required: '当前账号没有可用的租户控制台访问权限，请重新登录或切换其他账户。',
-  admin_access_required: '当前账号没有可用的管理员控制台访问权限，请重新登录或切换其他账户。',
+  session_expired: 'translatedloginsessionalreadytranslated，pleasetranslatedlogin。',
+  tenant_access_required: 'translatedhascantranslatedtenanttranslatedpermission，pleasetranslatedloginortranslated。',
+  admin_access_required: 'translatedhascantranslatedmanagementtranslatedpermission，pleasetranslatedloginortranslated。',
 }
 
 function isBrowser() {

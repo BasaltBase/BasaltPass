@@ -20,10 +20,12 @@ import { adminGiftCardApi, type AdminGiftCard } from '@api/admin/giftCard'
 import AdminLayout from '@features/admin/components/AdminLayout';
 import WalletStatsCard from '@features/admin/components/WalletStatsCard';
 import { PInput, PSelect, PButton, PCard, PSkeleton, PBadge, PTextarea, UserTooltip } from '@ui';
+import { useI18n } from '@i18n/useI18n';
 
 interface WalletManagementProps {}
 
 const WalletManagement: React.FC<WalletManagementProps> = () => {
+  const { t, locale } = useI18n();
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [currencies, setCurrencies] = useState<Currency[]>([]);
   const [loading, setLoading] = useState(false);
@@ -73,7 +75,6 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
     currency_code: '',
   });
 
-  // 加载钱包列表
   const loadWallets = async (page = currentPage, size = pageSize) => {
     try {
       setLoading(true);
@@ -95,7 +96,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
         setTotal(0);
       }
     } catch (error) {
-      console.error('加载钱包列表失败:', error);
+      console.error(t('adminWalletManagement.logs.loadWalletsFailed'), error);
       setWallets([]);
       setTotal(0);
     } finally {
@@ -103,7 +104,6 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
     }
   };
 
-  // 加载货币列表
   const loadCurrencies = async () => {
     try {
       const response = await adminWalletApi.getCurrencies();
@@ -114,7 +114,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
         setCurrencies([]);
       }
     } catch (error) {
-      console.error('加载货币列表失败:', error);
+      console.error(t('adminWalletManagement.logs.loadCurrenciesFailed'), error);
       setCurrencies([]);
     }
   };
@@ -125,36 +125,33 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
   }, []);
 
   useEffect(() => {
-    setCurrentPage(1); // 重置到第一页
+    setCurrentPage(1);
     loadWallets(1, pageSize);
   }, [filters, pageSize]);
 
-  // 创建钱包
   const handleCreateWallet = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // 验证必须选择钱包类型
     if (!createForm.user_id && !createForm.team_id) {
-      uiAlert('请选择钱包类型并输入对应的ID');
+      uiAlert(t('adminWalletManagement.errors.selectWalletTypeAndId'));
       return;
     }
     
     setCreateLoading(true);
     try {
       await adminWalletApi.createWallet(createForm);
-      uiAlert('钱包创建成功');
+      uiAlert(t('adminWalletManagement.messages.createWalletSuccess'));
       setCreateModalVisible(false);
       setCreateForm({ currency_code: '', initial_balance: 0, user_id: undefined, team_id: undefined });
       setCreateWalletType('user');
       loadWallets();
     } catch (error: any) {
-      uiAlert(error.response?.data?.error || '创建钱包失败');
+      uiAlert(error.response?.data?.error || t('adminWalletManagement.errors.createWalletFailed'));
     } finally {
       setCreateLoading(false);
     }
   };
 
-  // 调整余额
   const handleAdjustBalance = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedWallet) return;
@@ -162,13 +159,13 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
     setAdjustLoading(true);
     try {
       await adminWalletApi.adjustBalance(selectedWallet.id, adjustForm);
-      uiAlert('余额调整成功');
+      uiAlert(t('adminWalletManagement.messages.adjustBalanceSuccess'));
       setAdjustModalVisible(false);
       setAdjustForm({ amount: 0, reason: '' });
       setSelectedWallet(null);
       loadWallets();
     } catch (error: any) {
-      uiAlert(error.response?.data?.error || '调整余额失败');
+      uiAlert(error.response?.data?.error || t('adminWalletManagement.errors.adjustBalanceFailed'));
     } finally {
       setAdjustLoading(false);
     }
@@ -208,19 +205,19 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
     e.preventDefault();
 
     if (!quickAdjustForm.owner_id) {
-      uiAlert('请输入用户或团队 ID');
+      uiAlert(t('adminWalletManagement.errors.inputOwnerId'));
       return;
     }
     if (!quickAdjustForm.currency_code) {
-      uiAlert('请选择货币类型');
+      uiAlert(t('adminWalletManagement.errors.selectCurrency'));
       return;
     }
     if (!quickAdjustForm.reason.trim()) {
-      uiAlert('请输入调整原因');
+      uiAlert(t('adminWalletManagement.errors.inputReason'));
       return;
     }
     if (!quickAdjustForm.amount) {
-      uiAlert('调整金额不能为 0');
+      uiAlert(t('adminWalletManagement.errors.amountNotZero'));
       return;
     }
 
@@ -231,7 +228,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
         const existingWallet = await resolveOwnerWallet();
         const currencyMeta = existingWallet?.currency || currencies.find(currency => currency.code === quickAdjustForm.currency_code);
         if (!currencyMeta) {
-          uiAlert('未找到对应货币配置');
+          uiAlert(t('adminWalletManagement.errors.currencyMetaNotFound'));
           return;
         }
         const targetSmallest = convertToSmallestUnit(quickAdjustForm.amount, currencyMeta.decimal_places);
@@ -239,7 +236,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
         const deltaSmallest = targetSmallest - currentSmallest;
         requestAmount = convertFromSmallestUnit(deltaSmallest, currencyMeta.decimal_places);
         if (!requestAmount) {
-          uiAlert('目标余额与当前余额相同，无需调整');
+          uiAlert(t('adminWalletManagement.errors.noAdjustNeeded'));
           return;
         }
       }
@@ -260,13 +257,13 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
         });
       }
 
-      uiAlert('余额调整成功');
+      uiAlert(t('adminWalletManagement.messages.adjustBalanceSuccess'));
       setQuickAdjustModalVisible(false);
       setQuickAdjustMode('delta');
       resetQuickAdjustForm();
       loadWallets();
     } catch (error: any) {
-      uiAlert(error.response?.data?.error || '调整余额失败');
+      uiAlert(error.response?.data?.error || t('adminWalletManagement.errors.adjustBalanceFailed'));
     } finally {
       setAdjustLoading(false);
     }
@@ -280,74 +277,67 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
       const response = await adminWalletApi.getWalletTransactions(wallet.id, { page: 1, page_size: 50 });
       setTransactions(response.data || []);
     } catch (error: any) {
-      uiAlert(error.response?.data?.error || '加载交易记录失败');
+      uiAlert(error.response?.data?.error || t('adminWalletManagement.errors.loadTransactionsFailed'));
       setTransactions([]);
     } finally {
       setTransactionLoading(false);
     }
   };
 
-  // 冻结钱包
   const handleFreezeWallet = async (wallet: Wallet) => {
-    if (!await uiConfirm('确定要冻结这个钱包吗？')) return;
+    if (!await uiConfirm(t('adminWalletManagement.confirm.freezeWallet'))) return;
     
     try {
       await adminWalletApi.freezeWallet(wallet.id);
-      uiAlert('钱包已冻结');
+      uiAlert(t('adminWalletManagement.messages.walletFrozen'));
       loadWallets();
     } catch (error: any) {
-      uiAlert(error.response?.data?.error || '冻结钱包失败');
+      uiAlert(error.response?.data?.error || t('adminWalletManagement.errors.freezeWalletFailed'));
     }
   };
 
-  // 解冻钱包
   const handleUnfreezeWallet = async (wallet: Wallet) => {
-    if (!await uiConfirm('确定要解冻这个钱包吗？')) return;
+    if (!await uiConfirm(t('adminWalletManagement.confirm.unfreezeWallet'))) return;
     
     try {
       await adminWalletApi.unfreezeWallet(wallet.id);
-      uiAlert('钱包已解冻');
+      uiAlert(t('adminWalletManagement.messages.walletUnfrozen'));
       loadWallets();
     } catch (error: any) {
-      uiAlert(error.response?.data?.error || '解冻钱包失败');
+      uiAlert(error.response?.data?.error || t('adminWalletManagement.errors.unfreezeWalletFailed'));
     }
   };
 
-  // 删除钱包
   const handleDeleteWallet = async (wallet: Wallet) => {
-    if (!await uiConfirm('确定要删除这个钱包吗？只能删除余额为0的钱包。')) return;
+    if (!await uiConfirm(t('adminWalletManagement.confirm.deleteWallet'))) return;
     
     try {
       await adminWalletApi.deleteWallet(wallet.id);
-      uiAlert('钱包已删除');
+      uiAlert(t('adminWalletManagement.messages.walletDeleted'));
       loadWallets();
     } catch (error: any) {
-      uiAlert(error.response?.data?.error || '删除钱包失败');
+      uiAlert(error.response?.data?.error || t('adminWalletManagement.errors.deleteWalletFailed'));
     }
   };
 
-  // 格式化余额显示
   const formatBalance = (balance: number, currency: Currency) => {
-    // 后端返回的余额是以最小单位计算的整数，需要转换为实际金额
     const actualBalance = balance / Math.pow(10, currency.decimal_places);
     return `${actualBalance.toFixed(currency.decimal_places)} ${currency.symbol}`;
   };
 
-  // 获取钱包类型标签
   const getWalletTypeTag = (wallet: Wallet) => {
     if (wallet.user_id) {
-      return <PBadge variant="info"><UsersIcon className="w-3 h-3 mr-1" />用户钱包</PBadge>;
+      return <PBadge variant="info"><UsersIcon className="w-3 h-3 mr-1" />{t('adminWalletManagement.walletType.userWallet')}</PBadge>;
     } else if (wallet.team_id) {
-      return <PBadge variant="success"><UserGroupIcon className="w-3 h-3 mr-1" />团队钱包</PBadge>;
+      return <PBadge variant="success"><UserGroupIcon className="w-3 h-3 mr-1" />{t('adminWalletManagement.walletType.teamWallet')}</PBadge>;
     }
-    return <PBadge variant="default">未知类型</PBadge>;
+    return <PBadge variant="default">{t('adminWalletManagement.walletType.unknown')}</PBadge>;
   };
 
-  // 获取钱包状态标签
   const getStatusTag = (status: string) => {
     switch (status) {
-      case 'active': return <PBadge variant="success">活跃</PBadge>;
-      case 'frozen': return <PBadge variant="error">冻结</PBadge>;
+      case 'active': return <PBadge variant="success">{t('adminWalletManagement.status.active')}</PBadge>;
+      case 'frozen': return <PBadge variant="error">{t('adminWalletManagement.status.frozen')}</PBadge>;
       default: return <PBadge variant="default">{status}</PBadge>;
     }
   };
@@ -356,7 +346,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
 
   const handleGiftCardCheck = async () => {
     if (!giftCardCode.trim()) {
-      uiAlert('请输入礼品卡卡密');
+      uiAlert(t('adminWalletManagement.errors.inputGiftCardCode'));
       return;
     }
     try {
@@ -365,7 +355,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
       setGiftCardResult(res.data);
     } catch (error: any) {
       setGiftCardResult(null);
-      uiAlert(error.response?.data?.error || '查询礼品卡失败');
+      uiAlert(error.response?.data?.error || t('adminWalletManagement.errors.queryGiftCardFailed'));
     } finally {
       setGiftCardLoading(false);
     }
@@ -374,7 +364,6 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
   return (
     <AdminLayout>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-        {/* 页面标题 */}
         <PCard variant="bordered" className="border-b-0 rounded-none">
           <div className="px-4 py-6 sm:px-6 lg:px-8">
             <div className="flex items-center">
@@ -384,9 +373,9 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                 </div>
               </div>
               <div className="ml-4">
-                <h1 className="text-2xl font-bold text-gray-900">钱包管理</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{t('adminWalletManagement.title')}</h1>
                 <p className="mt-1 text-sm text-gray-500">
-                  管理用户和团队的各种货币钱包，包括余额调整、冻结解冻等操作
+                  {t('adminWalletManagement.description')}
                 </p>
               </div>
             </div>
@@ -394,12 +383,11 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
         </PCard>
 
         <div className="px-4 py-6 sm:px-6 lg:px-8">
-          {/* 快速操作卡片 */}
           <PCard variant="bordered" className="mb-6">
             <div className="px-6 py-5">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <span className="inline-block w-2 h-2 bg-indigo-500 rounded-full mr-2"></span>
-                快速操作
+                {t('adminWalletManagement.sections.quickActions')}
               </h3>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
                 <PButton
@@ -413,8 +401,8 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                     </div>
                   </div>
                   <div className="flex-1 min-w-0 text-left">
-                    <p className="text-sm font-medium text-gray-900">创建钱包</p>
-                    <p className="text-sm text-gray-500">为用户或团队创建新钱包</p>
+                    <p className="text-sm font-medium text-gray-900">{t('adminWalletManagement.actions.createWallet')}</p>
+                    <p className="text-sm text-gray-500">{t('adminWalletManagement.actions.createWalletDesc')}</p>
                   </div>
                 </PButton>
 
@@ -429,8 +417,8 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                     </div>
                   </div>
                   <div className="flex-1 min-w-0 text-left">
-                    <p className="text-sm font-medium text-gray-900">直接调余额</p>
-                    <p className="text-sm text-gray-500">按用户/团队和币种快速调整</p>
+                    <p className="text-sm font-medium text-gray-900">{t('adminWalletManagement.actions.quickAdjust')}</p>
+                    <p className="text-sm text-gray-500">{t('adminWalletManagement.actions.quickAdjustDesc')}</p>
                   </div>
                 </PButton>
 
@@ -446,8 +434,8 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                     </div>
                   </div>
                   <div className="flex-1 min-w-0 text-left">
-                    <p className="text-sm font-medium text-gray-900">刷新数据</p>
-                    <p className="text-sm text-gray-500">重新加载钱包列表</p>
+                    <p className="text-sm font-medium text-gray-900">{t('adminWalletManagement.actions.refresh')}</p>
+                    <p className="text-sm text-gray-500">{t('adminWalletManagement.actions.refreshDesc')}</p>
                   </div>
                 </PButton>
 
@@ -462,20 +450,19 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                     </div>
                   </div>
                   <div className="flex-1 min-w-0 text-left">
-                    <p className="text-sm font-medium text-gray-900">财务分析</p>
-                    <p className="text-sm text-gray-500">查看钱包统计报告</p>
+                    <p className="text-sm font-medium text-gray-900">{t('adminWalletManagement.actions.financeAnalytics')}</p>
+                    <p className="text-sm text-gray-500">{t('adminWalletManagement.actions.financeAnalyticsDesc')}</p>
                   </div>
                 </PButton>
               </div>
             </div>
           </PCard>
 
-          {/* 钱包统计 */}
           <PCard variant="bordered" className="mb-6">
             <div className="px-6 py-5">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                钱包概览
+                {t('adminWalletManagement.sections.walletOverview')}
               </h3>
               <WalletStatsCard />
             </div>
@@ -485,36 +472,35 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
             <div className="px-6 py-5 space-y-4">
               <h3 className="text-lg font-semibold text-gray-900 flex items-center">
                 <span className="inline-block w-2 h-2 bg-fuchsia-500 rounded-full mr-2"></span>
-                Gift Card 有效性查询
+                {t('adminWalletManagement.sections.giftCardQuery')}
               </h3>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto]">
                 <PInput
                   value={giftCardCode}
                   onChange={(e) => setGiftCardCode(e.target.value.toUpperCase())}
-                  placeholder="输入卡密，例如 GC-XXXXX-XXXXX"
+                  placeholder={t('adminWalletManagement.giftCard.inputPlaceholder')}
                   variant="rounded"
                 />
-                <PButton onClick={handleGiftCardCheck} loading={giftCardLoading} disabled={giftCardLoading}>查询</PButton>
+                <PButton onClick={handleGiftCardCheck} loading={giftCardLoading} disabled={giftCardLoading}>{t('adminWalletManagement.actions.query')}</PButton>
               </div>
               {giftCardResult && (
                 <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
-                  <div>卡密：<span className="font-mono">{giftCardResult.code}</span></div>
-                  <div>状态：{giftCardResult.status}</div>
-                  <div>租户 ID：{giftCardResult.tenant_id}</div>
-                  <div>金额：{giftCardResult.amount}（最小单位）</div>
-                  <div>兑换用户：{giftCardResult.redeemed_by || '-'}</div>
+                  <div>{t('adminWalletManagement.giftCard.code', { code: giftCardResult.code })}</div>
+                  <div>{t('adminWalletManagement.giftCard.status', { status: giftCardResult.status })}</div>
+                  <div>{t('adminWalletManagement.giftCard.tenantId', { id: giftCardResult.tenant_id })}</div>
+                  <div>{t('adminWalletManagement.giftCard.amount', { amount: giftCardResult.amount })}</div>
+                  <div>{t('adminWalletManagement.giftCard.redeemedBy', { user: giftCardResult.redeemed_by || '-' })}</div>
                 </div>
               )}
             </div>
           </PCard>
 
-          {/* 筛选器 */}
           <PCard variant="bordered" className="mb-6">
             <div className="px-6 py-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900 flex items-center">
                   <span className="inline-block w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
-                  筛选条件
+                  {t('adminWalletManagement.sections.filters')}
                 </h3>
                 <PButton
                   onClick={() => setFilters({ user_id: '', team_id: '', currency_code: '' })}
@@ -523,7 +509,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                   className="inline-flex items-center"
                 >
                   <FunnelIcon className="h-4 w-4 mr-1" />
-                  清除筛选
+                  {t('adminWalletManagement.actions.clearFilters')}
                 </PButton>
               </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
@@ -532,8 +518,8 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                   id="user-id"
                   value={filters.user_id}
                   onChange={(e) => setFilters({ ...filters, user_id: e.target.value })}
-                  placeholder="输入用户ID"
-                  label={<><UsersIcon className="inline h-4 w-4 mr-1" />用户ID</>}
+                  placeholder={t('adminWalletManagement.filters.userIdPlaceholder')}
+                  label={<><UsersIcon className="inline h-4 w-4 mr-1" />{t('adminWalletManagement.filters.userId')}</>}
                   variant="rounded"
                 />
               </div>
@@ -542,8 +528,8 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                   id="team-id"
                   value={filters.team_id}
                   onChange={(e) => setFilters({ ...filters, team_id: e.target.value })}
-                  placeholder="输入团队ID"
-                  label={<><UserGroupIcon className="inline h-4 w-4 mr-1" />团队ID</>}
+                  placeholder={t('adminWalletManagement.filters.teamIdPlaceholder')}
+                  label={<><UserGroupIcon className="inline h-4 w-4 mr-1" />{t('adminWalletManagement.filters.teamId')}</>}
                   variant="rounded"
                 />
               </div>
@@ -552,10 +538,10 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                   id="currency"
                   value={filters.currency_code}
                   onChange={(e) => setFilters({ ...filters, currency_code: e.target.value })}
-                  label={<><CurrencyDollarIcon className="inline h-4 w-4 mr-1" />货币类型</>}
+                  label={<><CurrencyDollarIcon className="inline h-4 w-4 mr-1" />{t('adminWalletManagement.filters.currency')}</>}
                   variant="rounded"
                 >
-                  <option value="">全部货币</option>
+                  <option value="">{t('adminWalletManagement.filters.allCurrencies')}</option>
                   {Array.isArray(currencies) && currencies.map(currency => (
                     <option key={currency.code} value={currency.code}>
                       {currency.code} - {currency.name}
@@ -568,29 +554,28 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                   id="page-size"
                   value={pageSize}
                   onChange={(e) => setPageSize(Number(e.target.value))}
-                  label="每页显示"
+                  label={t('adminWalletManagement.filters.pageSize')}
                   variant="rounded"
                 >
-                  <option value={10}>10 条</option>
-                  <option value={20}>20 条</option>
-                  <option value={50}>50 条</option>
-                  <option value={100}>100 条</option>
+                  <option value={10}>{t('adminWalletManagement.filters.pageSizeOption', { size: 10 })}</option>
+                  <option value={20}>{t('adminWalletManagement.filters.pageSizeOption', { size: 20 })}</option>
+                  <option value={50}>{t('adminWalletManagement.filters.pageSizeOption', { size: 50 })}</option>
+                  <option value={100}>{t('adminWalletManagement.filters.pageSizeOption', { size: 100 })}</option>
                 </PSelect>
               </div>
               </div>
             </div>
           </PCard>
 
-          {/* 钱包表格 */}
           <PCard variant="bordered" className="overflow-hidden">
             <div className="px-6 py-5 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900 flex items-center">
                   <span className="inline-block w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                  钱包列表
+                  {t('adminWalletManagement.sections.walletList')}
                 </h3>
                 <div className="text-sm text-gray-500 bg-gray-50 px-3 py-1 rounded-full">
-                  共 {total} 个钱包
+                  {t('adminWalletManagement.meta.totalWallets', { total })}
                 </div>
               </div>
             </div>            {loading ? (
@@ -601,22 +586,22 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                   <thead className="bg-gray-50">
                     <tr>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        钱包信息
+                        {t('adminWalletManagement.table.walletInfo')}
                       </th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        所有者
+                        {t('adminWalletManagement.table.owner')}
                       </th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        货币 & 余额
+                        {t('adminWalletManagement.table.currencyAndBalance')}
                       </th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        状态
+                        {t('adminWalletManagement.table.status')}
                       </th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        创建时间
+                        {t('adminWalletManagement.table.createdAt')}
                       </th>
                       <th scope="col" className="relative px-6 py-3">
-                        <span className="sr-only">操作</span>
+                        <span className="sr-only">{t('adminWalletManagement.table.actions')}</span>
                       </th>
                     </tr>
                   </thead>
@@ -632,7 +617,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                             </div>
                             <div className="ml-4">
                               <div className="text-sm font-medium text-gray-900">
-                                钱包 #{wallet.id}
+                                {t('adminWalletManagement.meta.walletId', { id: wallet.id })}
                               </div>
                               <div className="text-sm text-gray-500">
                                 {getWalletTypeTag(wallet)}
@@ -653,7 +638,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                                   <UserTooltip
                                     userId={wallet.user_id}
                                     triggerLabel={wallet.user.username || wallet.user.email}
-                                    fallbackLabel={`用户 #${wallet.user_id}`}
+                                    fallbackLabel={t('adminWalletManagement.meta.userId', { id: wallet.user_id })}
                                     className="cursor-default border-b border-dotted border-gray-300 text-gray-900"
                                   />
                                 </div>
@@ -695,7 +680,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                           {getStatusTag(wallet.status)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(wallet.created_at).toLocaleString('zh-CN')}
+                          {new Date(wallet.created_at).toLocaleString(locale)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex space-x-2">
@@ -704,7 +689,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                               variant="secondary"
                               size="sm"
                               className="inline-flex items-center p-2 rounded-full"
-                              title="查看交易记录"
+                              title={t('adminWalletManagement.actions.viewTransactions')}
                             >
                               <EyeIcon className="h-4 w-4" />
                             </PButton>
@@ -717,7 +702,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                               variant="primary"
                               size="sm"
                               className="inline-flex items-center p-2 rounded-full"
-                              title="调整余额"
+                              title={t('adminWalletManagement.actions.adjustBalance')}
                             >
                               <PencilIcon className="h-4 w-4" />
                             </PButton>
@@ -728,7 +713,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                                 variant="danger"
                                 size="sm"
                                 className="inline-flex items-center p-2 rounded-full"
-                                title="冻结钱包"
+                                title={t('adminWalletManagement.actions.freezeWallet')}
                               >
                                 <LockClosedIcon className="h-4 w-4" />
                               </PButton>
@@ -738,7 +723,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                                 variant="secondary"
                                 size="sm"
                                 className="inline-flex items-center p-2 rounded-full bg-green-600 text-white hover:bg-green-700"
-                                title="解冻钱包"
+                                title={t('adminWalletManagement.actions.unfreezeWallet')}
                               >
                                 <LockOpenIcon className="h-4 w-4" />
                               </PButton>
@@ -750,7 +735,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                               variant={wallet.balance !== 0 ? 'secondary' : 'danger'}
                               size="sm"
                               className={`inline-flex items-center p-2 rounded-full ${wallet.balance !== 0 ? 'text-gray-400 bg-gray-200 cursor-not-allowed' : ''}`}
-                              title="删除钱包"
+                              title={t('adminWalletManagement.actions.deleteWallet')}
                             >
                               <TrashIcon className="h-4 w-4" />
                             </PButton>
@@ -762,9 +747,9 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                         <td colSpan={6} className="px-6 py-12 text-center">
                           <div className="text-center">
                             <WalletIcon className="mx-auto h-12 w-12 text-gray-400" />
-                            <h3 className="mt-2 text-sm font-medium text-gray-900">暂无钱包</h3>
+                            <h3 className="mt-2 text-sm font-medium text-gray-900">{t('adminWalletManagement.empty.noWallets')}</h3>
                             <p className="mt-1 text-sm text-gray-500">
-                              开始创建第一个钱包吧
+                              {t('adminWalletManagement.empty.createFirstWallet')}
                             </p>
                             <div className="mt-6">
                               <PButton
@@ -772,7 +757,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                                 variant="primary"
                               >
                                 <PlusIcon className="h-4 w-4 mr-2" />
-                                创建钱包
+                                {t('adminWalletManagement.actions.createWallet')}
                               </PButton>
                             </div>
                           </div>
@@ -784,7 +769,6 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
               </div>
             )}
 
-            {/* 分页控件 */}
             {!loading && total > 0 && (
               <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-4">
                 <div className="flex flex-1 justify-between sm:hidden">
@@ -799,7 +783,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                     disabled={currentPage <= 1}
                     variant="secondary"
                   >
-                    上一页
+                    {t('adminWalletManagement.pagination.prev')}
                   </PButton>
                   <PButton
                     onClick={() => {
@@ -813,15 +797,17 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                     variant="secondary"
                     className="ml-3"
                   >
-                    下一页
+                    {t('adminWalletManagement.pagination.next')}
                   </PButton>
                 </div>
                 <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                   <div>
                     <p className="text-sm text-gray-700">
-                      显示第 <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> 到{' '}
-                      <span className="font-medium">{Math.min(currentPage * pageSize, total)}</span> 条，
-                      共 <span className="font-medium">{total}</span> 条记录
+                      {t('adminWalletManagement.pagination.summary', {
+                        from: (currentPage - 1) * pageSize + 1,
+                        to: Math.min(currentPage * pageSize, total),
+                        total,
+                      })}
                     </p>
                   </div>
                   <div>
@@ -839,13 +825,13 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                         size="sm"
                         className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:bg-gray-100"
                       >
-                        <span className="sr-only">上一页</span>
+                        <span className="sr-only">{t('adminWalletManagement.pagination.prev')}</span>
                         <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                           <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
                         </svg>
                       </PButton>
                       
-                      {/* 页码按钮 */}
+                      {/* Page buttons */}
                       {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                         let pageNum;
                         if (totalPages <= 5) {
@@ -887,7 +873,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                         size="sm"
                         className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:bg-gray-100"
                       >
-                        <span className="sr-only">下一页</span>
+                        <span className="sr-only">{t('adminWalletManagement.pagination.next')}</span>
                         <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                           <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
                         </svg>
@@ -900,7 +886,6 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
           </PCard>
         </div>
 
-        {/* 创建钱包模态框 */}
         {createModalVisible && (
           <div className="fixed inset-0 !m-0 bg-black bg-opacity-60 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
             <PCard variant="elevated" className="relative mx-auto border-0 w-full max-w-md rounded-2xl">
@@ -910,7 +895,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                     <div className="h-8 w-8 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center mr-3">
                       <PlusIcon className="h-5 w-5 text-white" />
                     </div>
-                    <h3 className="text-xl font-semibold text-gray-900">创建钱包</h3>
+                    <h3 className="text-xl font-semibold text-gray-900">{t('adminWalletManagement.createModal.title')}</h3>
                   </div>
                   <PButton
                     onClick={() => {
@@ -931,7 +916,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                 <form onSubmit={handleCreateWallet} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      钱包类型 *
+                      {t('adminWalletManagement.createModal.walletType')} *
                     </label>
                     <div className="grid grid-cols-2 gap-3">
                       <label className={`relative flex cursor-pointer rounded-lg border p-4 shadow-sm focus:outline-none transition-colors ${
@@ -952,8 +937,8 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                         />
                         <span className="flex flex-1">
                           <span className="flex flex-col">
-                            <span className="block text-sm font-medium text-gray-900">用户钱包</span>
-                            <span className="mt-1 flex items-center text-sm text-gray-500">为特定用户创建钱包</span>
+                            <span className="block text-sm font-medium text-gray-900">{t('adminWalletManagement.walletType.userWallet')}</span>
+                            <span className="mt-1 flex items-center text-sm text-gray-500">{t('adminWalletManagement.createModal.userWalletDesc')}</span>
                           </span>
                         </span>
                         <svg className={`ml-3 h-5 w-5 ${createWalletType === 'user' ? 'text-indigo-600' : 'text-transparent'}`} viewBox="0 0 20 20" fill="currentColor">
@@ -978,8 +963,8 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                         />
                         <span className="flex flex-1">
                           <span className="flex flex-col">
-                            <span className="block text-sm font-medium text-gray-900">团队钱包</span>
-                            <span className="mt-1 flex items-center text-sm text-gray-500">为团队创建钱包</span>
+                            <span className="block text-sm font-medium text-gray-900">{t('adminWalletManagement.walletType.teamWallet')}</span>
+                            <span className="mt-1 flex items-center text-sm text-gray-500">{t('adminWalletManagement.createModal.teamWalletDesc')}</span>
                           </span>
                         </span>
                         <svg className={`ml-3 h-5 w-5 ${createWalletType === 'team' ? 'text-indigo-600' : 'text-transparent'}`} viewBox="0 0 20 20" fill="currentColor">
@@ -992,7 +977,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                   <div>
                     <PInput
                       type="number"
-                      label={`${createWalletType === 'user' ? '用户' : '团队'} ID *`}
+                      label={`${createWalletType === 'user' ? t('adminWalletManagement.filters.userId') : t('adminWalletManagement.filters.teamId')} ID *`}
                       value={createForm.user_id || createForm.team_id || ''}
                       onChange={(e) => {
                         const value = e.target.value ? parseInt(e.target.value) : undefined;
@@ -1002,7 +987,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                           setCreateForm({ ...createForm, team_id: value, user_id: undefined });
                         }
                       }}
-                      placeholder={`输入${createWalletType === 'user' ? '用户' : '团队'} ID`}
+                      placeholder={`${t('adminWalletManagement.createModal.inputPrefix')}${createWalletType === 'user' ? t('adminWalletManagement.filters.userId') : t('adminWalletManagement.filters.teamId')} ID`}
                       required
                       icon={<UsersIcon className="h-5 w-5" />}
                       variant="rounded"
@@ -1011,13 +996,13 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
 
                   <div>
                     <PSelect
-                      label="货币类型 *"
+                      label={`${t('adminWalletManagement.filters.currency')} *`}
                       value={createForm.currency_code}
                       onChange={(e) => setCreateForm({ ...createForm, currency_code: (e.target as HTMLSelectElement).value })}
                       required
                       variant="rounded"
                     >
-                      <option value="">选择货币</option>
+                      <option value="">{t('adminWalletManagement.walletModal.selectCurrency')}</option>
                       {currencies.map(currency => (
                         <option key={currency.code} value={currency.code}>
                           {currency.code} - {currency.name}
@@ -1028,7 +1013,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
 
                   <div>
                     <PInput
-                      label="初始余额"
+                      label={t('adminWalletManagement.createModal.initialBalance')}
                       type="number"
                       step="0.01"
                       value={createForm.initial_balance}
@@ -1037,7 +1022,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                       icon={<CurrencyDollarIcon className="h-5 w-5" />}
                       variant="rounded"
                     />
-                    <div className="mt-1 text-xs font-medium text-gray-500">{createForm.currency_code || 'CUR'}</div>
+                    <div className="mt-1 text-xs font-medium text-gray-500">{createForm.currency_code || t('adminWalletManagement.common.currencyAbbr')}</div>
                   </div>
 
                   <div className="flex justify-end space-x-3 pt-4">
@@ -1049,7 +1034,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                       }}
                       variant="secondary"
                     >
-                      取消
+                      {t('adminWalletManagement.actions.cancel')}
                     </PButton>
                     <PButton
                       type="submit"
@@ -1057,7 +1042,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                       loading={createLoading}
                       variant="primary"
                     >
-                      创建钱包
+                      {t('adminWalletManagement.actions.createWallet')}
                     </PButton>
                   </div>
                 </form>
@@ -1075,7 +1060,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                     <div className="h-8 w-8 rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 flex items-center justify-center mr-3">
                       <PencilIcon className="h-5 w-5 text-white" />
                     </div>
-                    <h3 className="text-xl font-semibold text-gray-900">按用户/团队直接调余额</h3>
+                    <h3 className="text-xl font-semibold text-gray-900">{t('adminWalletManagement.quickAdjustModal.title')}</h3>
                   </div>
                   <PButton
                     onClick={() => {
@@ -1093,51 +1078,51 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                 </div>
 
                 <div className="mb-6 rounded-xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 p-4 text-sm text-amber-900">
-                  不需要先找到钱包 ID。输入用户或团队 ID、币种和金额即可直接调整余额；若该币种钱包不存在，可自动创建。
+                  {t('adminWalletManagement.quickAdjustModal.description')}
                 </div>
 
                 <form onSubmit={handleQuickAdjust} className="space-y-4">
                   <div>
                     <PSelect
-                      label="调整方式 *"
+                      label={`${t('adminWalletManagement.quickAdjustModal.adjustMode')} *`}
                       value={quickAdjustMode}
                       onChange={(e) => setQuickAdjustMode((e.target as HTMLSelectElement).value as 'delta' | 'target')}
                       variant="rounded"
                     >
-                      <option value="delta">按增减额调整</option>
-                      <option value="target">设置目标余额</option>
+                      <option value="delta">{t('adminWalletManagement.quickAdjustModal.modeDelta')}</option>
+                      <option value="target">{t('adminWalletManagement.quickAdjustModal.modeTarget')}</option>
                     </PSelect>
                   </div>
 
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <PSelect
-                      label="对象类型 *"
+                      label={`${t('adminWalletManagement.quickAdjustModal.ownerType')} *`}
                       value={quickAdjustForm.owner_type}
                       onChange={(e) => setQuickAdjustForm({ ...quickAdjustForm, owner_type: (e.target as HTMLSelectElement).value as 'user' | 'team' })}
                       variant="rounded"
                     >
-                      <option value="user">用户</option>
-                      <option value="team">团队</option>
+                      <option value="user">{t('adminWalletManagement.filters.userId')}</option>
+                      <option value="team">{t('adminWalletManagement.filters.teamId')}</option>
                     </PSelect>
 
                     <PInput
                       type="number"
-                      label={`${quickAdjustForm.owner_type === 'user' ? '用户' : '团队'} ID *`}
+                      label={`${quickAdjustForm.owner_type === 'user' ? t('adminWalletManagement.filters.userId') : t('adminWalletManagement.filters.teamId')} ID *`}
                       value={quickAdjustForm.owner_id || ''}
                       onChange={(e) => setQuickAdjustForm({ ...quickAdjustForm, owner_id: e.target.value ? parseInt(e.target.value, 10) : undefined })}
-                      placeholder={`输入${quickAdjustForm.owner_type === 'user' ? '用户' : '团队'} ID`}
+                      placeholder={`${t('adminWalletManagement.createModal.inputPrefix')}${quickAdjustForm.owner_type === 'user' ? t('adminWalletManagement.filters.userId') : t('adminWalletManagement.filters.teamId')} ID`}
                       variant="rounded"
                     />
                   </div>
 
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <PSelect
-                      label="货币类型 *"
+                      label={`${t('adminWalletManagement.filters.currency')} *`}
                       value={quickAdjustForm.currency_code}
                       onChange={(e) => setQuickAdjustForm({ ...quickAdjustForm, currency_code: (e.target as HTMLSelectElement).value })}
                       variant="rounded"
                     >
-                      <option value="">选择货币</option>
+                      <option value="">{t('adminWalletManagement.walletModal.selectCurrency')}</option>
                       {currencies.map(currency => (
                         <option key={currency.code} value={currency.code}>
                           {currency.code} - {currency.name}
@@ -1146,23 +1131,23 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                     </PSelect>
 
                     <PInput
-                      label={quickAdjustMode === 'delta' ? '调整金额 *' : '目标余额 *'}
+                      label={quickAdjustMode === 'delta' ? `${t('adminWalletManagement.quickAdjustModal.adjustAmount')} *` : `${t('adminWalletManagement.quickAdjustModal.targetBalance')} *`}
                       type="number"
                       step="0.01"
                       value={quickAdjustForm.amount}
                       onChange={(e) => setQuickAdjustForm({ ...quickAdjustForm, amount: parseFloat(e.target.value) || 0 })}
-                      placeholder={quickAdjustMode === 'delta' ? '正数增加，负数减少' : '设置为该余额'}
+                      placeholder={quickAdjustMode === 'delta' ? t('adminWalletManagement.walletModal.amountPlaceholder') : t('adminWalletManagement.quickAdjustModal.targetPlaceholder')}
                       icon={<CurrencyDollarIcon className="h-5 w-5" />}
                       variant="rounded"
                     />
                   </div>
 
                   <PTextarea
-                    label="调整原因 *"
+                    label={`${t('adminWalletManagement.walletModal.reason')} *`}
                     value={quickAdjustForm.reason}
                     onChange={(e) => setQuickAdjustForm({ ...quickAdjustForm, reason: e.target.value })}
                     rows={3}
-                    placeholder="例如：人工补偿、手工扣费、测试数据修正"
+                    placeholder={t('adminWalletManagement.quickAdjustModal.reasonPlaceholder')}
                     required
                   />
 
@@ -1173,13 +1158,13 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                       onChange={(e) => setQuickAdjustForm({ ...quickAdjustForm, create_if_missing: e.target.checked })}
                       className="h-4 w-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
                     />
-                    钱包不存在时自动创建
+                    {t('adminWalletManagement.quickAdjustModal.createIfMissing')}
                   </label>
 
                   <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
                     {quickAdjustMode === 'delta'
-                      ? '当前模式下，正数表示增加余额，负数表示减少余额。'
-                      : '当前模式下，系统会先查出当前余额，再自动计算出需要补差的增减额。'}
+                      ? t('adminWalletManagement.quickAdjustModal.deltaTip')
+                      : t('adminWalletManagement.quickAdjustModal.targetTip')}
                   </div>
 
                   <div className="flex justify-end space-x-3 pt-4">
@@ -1191,7 +1176,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                       }}
                       variant="secondary"
                     >
-                      取消
+                      {t('adminWalletManagement.actions.cancel')}
                     </PButton>
                     <PButton
                       type="submit"
@@ -1199,7 +1184,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                       loading={adjustLoading}
                       variant="primary"
                     >
-                      确认调整
+                      {t('adminWalletManagement.actions.confirmAdjust')}
                     </PButton>
                   </div>
                 </form>
@@ -1214,9 +1199,12 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
               <div className="p-6">
                 <div className="mb-6 flex items-center justify-between">
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-900">钱包 #{transactionWallet.id} 交易记录</h3>
+                    <h3 className="text-xl font-semibold text-gray-900">{t('adminWalletManagement.transactionsModal.title', { id: transactionWallet.id })}</h3>
                     <p className="mt-1 text-sm text-gray-500">
-                      {transactionWallet.currency.code} · 当前余额 {formatBalance(transactionWallet.balance, transactionWallet.currency)}
+                      {t('adminWalletManagement.transactionsModal.subtitle', {
+                        currency: transactionWallet.currency.code,
+                        balance: formatBalance(transactionWallet.balance, transactionWallet.currency),
+                      })}
                     </p>
                   </div>
                   <PButton
@@ -1227,7 +1215,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                     }}
                     variant="secondary"
                   >
-                    关闭
+                    {t('adminWalletManagement.actions.close')}
                   </PButton>
                 </div>
 
@@ -1235,18 +1223,18 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                   <PSkeleton.List items={3} />
                 ) : transactions.length === 0 ? (
                   <div className="rounded-xl border border-dashed border-gray-300 px-6 py-10 text-center text-sm text-gray-500">
-                    暂无交易记录
+                    {t('adminWalletManagement.transactionsModal.noTransactions')}
                   </div>
                 ) : (
                   <div className="overflow-x-auto rounded-xl border border-gray-200">
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
                         <tr>
-                          <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">类型</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">金额</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">状态</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">备注</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">时间</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('adminWalletManagement.transactionsModal.type')}</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('adminWalletManagement.transactionsModal.amount')}</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('adminWalletManagement.transactionsModal.status')}</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('adminWalletManagement.transactionsModal.remark')}</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('adminWalletManagement.transactionsModal.time')}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100 bg-white">
@@ -1258,7 +1246,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-700">{tx.status}</td>
                             <td className="px-4 py-3 text-sm text-gray-500">{tx.description || '-'}</td>
-                            <td className="px-4 py-3 text-sm text-gray-500">{new Date(tx.created_at).toLocaleString('zh-CN')}</td>
+                            <td className="px-4 py-3 text-sm text-gray-500">{new Date(tx.created_at).toLocaleString(locale)}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -1270,7 +1258,6 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
           </div>
         )}
 
-        {/* 调整余额模态框 */}
         {adjustModalVisible && selectedWallet && (
           <div className="fixed inset-0 !m-0 bg-black bg-opacity-60 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
             <PCard variant="elevated" className="relative mx-auto border-0 w-full max-w-md rounded-2xl">
@@ -1281,7 +1268,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                       <PencilIcon className="h-5 w-5 text-white" />
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900">
-                      调整余额 - 钱包 #{selectedWallet.id}
+                      {t('adminWalletManagement.adjustModal.title', { id: selectedWallet.id })}
                     </h3>
                   </div>
                   <PButton
@@ -1301,7 +1288,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                 </div>
 
                 <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-200">
-                  <div className="text-sm font-medium text-blue-700 mb-1">当前余额</div>
+                  <div className="text-sm font-medium text-blue-700 mb-1">{t('adminWalletManagement.adjustModal.currentBalance')}</div>
                   <div className="text-2xl font-bold text-blue-900">
                     {formatBalance(selectedWallet.balance, selectedWallet.currency)}
                   </div>
@@ -1310,28 +1297,28 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                 <form onSubmit={handleAdjustBalance} className="space-y-4">
                   <div>
                     <PInput
-                      label="调整金额 *"
+                      label={`${t('adminWalletManagement.adjustModal.adjustAmount')} *`}
                       type="number"
                       step="0.01"
                       value={adjustForm.amount}
                       onChange={(e) => setAdjustForm({ ...adjustForm, amount: parseFloat(e.target.value) || 0 })}
-                      placeholder="输入正数增加，负数减少"
+                      placeholder={t('adminWalletManagement.adjustModal.amountPlaceholder')}
                       required
                       icon={<CurrencyDollarIcon className="h-5 w-5" />}
                       variant="rounded"
                     />
                     <p className="mt-1 text-xs text-gray-500">
-                      输入正数增加余额，负数减少余额
+                      {t('adminWalletManagement.adjustModal.amountTip')}
                     </p>
                   </div>
 
                   <div>
                     <PTextarea
-                      label="调整原因 *"
+                      label={`${t('adminWalletManagement.walletModal.reason')} *`}
                       value={adjustForm.reason}
                       onChange={(e) => setAdjustForm({ ...adjustForm, reason: e.target.value })}
                       rows={3}
-                      placeholder="请输入调整原因"
+                      placeholder={t('adminWalletManagement.adjustModal.reasonPlaceholder')}
                       required
                     />
                   </div>
@@ -1346,7 +1333,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                       }}
                       variant="secondary"
                     >
-                      取消
+                      {t('adminWalletManagement.actions.cancel')}
                     </PButton>
                     <PButton
                       type="submit"
@@ -1354,7 +1341,7 @@ const WalletManagement: React.FC<WalletManagementProps> = () => {
                       loading={adjustLoading}
                       variant="primary"
                     >
-                      确认调整
+                      {t('adminWalletManagement.actions.confirmAdjust')}
                     </PButton>
                   </div>
                 </form>

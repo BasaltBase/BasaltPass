@@ -1,46 +1,46 @@
-# EntitySearchSelect 组件集成指南
+# EntitySearchSelect componenttranslated
 
-## 概述
-`EntitySearchSelect` 是一个通用的搜索选择组件，支持用户、租户和应用的搜索与选择功能。
+## translated
+`EntitySearchSelect` istranslatedsearchtranslatedcomponent，translateduser、tenantandapptranslatedsearchandtranslated。
 
-## 快速开始
+## translatedstart
 
-### 1. 基本导入
+### 1. translated
 ```typescript
 import { EntitySearchSelect, BaseEntityItem } from '@/components'
 ```
 
-### 2. 基本用法示例
+### 2. translated
 
-#### 用户搜索（普通用户上下文）
+#### usersearch（translatedusertranslated）
 ```typescript
 const [selectedUsers, setSelectedUsers] = useState<BaseEntityItem[]>([])
 
 <EntitySearchSelect
   entity="user"
-  context="user"  // 普通用户权限
+  context="user"  // translateduserpermission
   value={selectedUsers}
   onChange={setSelectedUsers}
-  placeholder="搜索用户..."
+  placeholder="searchuser..."
   variant="chips"
 />
 ```
 
-#### 用户搜索（管理员上下文）
+#### usersearch（managementtranslated）
 ```typescript
 const [selectedAdminUsers, setSelectedAdminUsers] = useState<BaseEntityItem[]>([])
 
 <EntitySearchSelect
   entity="user"
-  context="admin"  // 管理员权限，可搜索所有用户
+  context="admin"  // managementtranslatedpermission，cansearchtranslatedhasuser
   value={selectedAdminUsers}
   onChange={setSelectedAdminUsers}
-  placeholder="搜索平台用户..."
+  placeholder="searchtranslateduser..."
   variant="list"
 />
 ```
 
-#### 租户搜索
+#### tenantsearch
 ```typescript
 const [selectedTenants, setSelectedTenants] = useState<BaseEntityItem[]>([])
 
@@ -49,13 +49,13 @@ const [selectedTenants, setSelectedTenants] = useState<BaseEntityItem[]>([])
   context="admin"
   value={selectedTenants}
   onChange={setSelectedTenants}
-  placeholder="搜索租户..."
+  placeholder="searchtenant..."
   variant="chips"
   maxSelect={3}
 />
 ```
 
-#### 应用搜索
+#### appsearch
 ```typescript
 const [selectedApps, setSelectedApps] = useState<BaseEntityItem[]>([])
 
@@ -64,127 +64,127 @@ const [selectedApps, setSelectedApps] = useState<BaseEntityItem[]>([])
   context="admin"
   value={selectedApps}
   onChange={setSelectedApps}
-  placeholder="搜索应用..."
+  placeholder="searchapp..."
   variant="list"
   limit={8}
 />
 ```
 
-## API 参考
+## API translated
 
 ### Props
-| 属性 | 类型 | 默认值 | 说明 |
+| translated | type | defaultvalue | translated |
 |-----|------|-------|------|
-| `entity` | `'user' \| 'tenant' \| 'app'` | - | 搜索的实体类型 |
-| `context` | `'user' \| 'admin' \| 'tenant'` | - | 搜索上下文，影响可访问的数据范围 |
-| `value` | `BaseEntityItem[]` | - | 当前选中的项目列表 |
-| `onChange` | `(items: BaseEntityItem[]) => void` | - | 选中项变化回调 |
-| `placeholder` | `string` | `'搜索...'` | 输入框占位符 |
-| `variant` | `'chips' \| 'list'` | `'chips'` | 显示模式 |
-| `maxSelect` | `number` | `Infinity` | 最大选择数量 |
-| `limit` | `number` | `10` | 搜索结果数量限制 |
+| `entity` | `'user' \| 'tenant' \| 'app'` | - | searchtranslatedtype |
+| `context` | `'user' \| 'admin' \| 'tenant'` | - | searchtranslated，translatedcantranslated |
+| `value` | `BaseEntityItem[]` | - | translatedlist |
+| `onChange` | `(items: BaseEntityItem[]) => void` | - | translated |
+| `placeholder` | `string` | `'search...'` | translated |
+| `variant` | `'chips' \| 'list'` | `'chips'` | translated |
+| `maxSelect` | `number` | `Infinity` | translated |
+| `limit` | `number` | `10` | searchtranslated |
 
-### BaseEntityItem 接口
+### BaseEntityItem translated
 ```typescript
 interface BaseEntityItem {
   id: string
   title: string
   subtitle?: string
   avatar?: string
-  raw: any  // 原始数据对象
+  raw: any  // translated
 }
 ```
 
-## 集成场景
+## translated
 
-### 1. 团队邀请功能
-已集成在 `Invite.tsx` 中，用于邀请用户加入团队。
+### 1. teaminvitationtranslated
+alreadytranslated `Invite.tsx` translated，translatedinvitationusertranslatedteam。
 
-### 2. 管理员创建租户
-已集成在 `CreateTenant.tsx` 中，用于选择租户负责人。
+### 2. managementtranslatedcreatetenant
+alreadytranslated `CreateTenant.tsx` translated，translatedtenanttranslated。
 
-### 3. 权限分配
+### 3. permissiontranslated
 ```typescript
-// 为用户分配权限时选择用户
+// translatedusertranslatedpermissiontranslateduser
 <EntitySearchSelect
   entity="user"
   context="admin"
   value={selectedUsers}
   onChange={setSelectedUsers}
-  placeholder="选择要分配权限的用户..."
+  placeholder="translatedpermissiontranslateduser..."
   variant="list"
   maxSelect={10}
 />
 ```
 
-### 4. 资源分配
+### 4. translated
 ```typescript
-// 为租户分配应用时选择应用
+// translatedtenanttranslatedapptranslatedapp
 <EntitySearchSelect
   entity="app"
   context="admin"
   value={selectedApps}
   onChange={setSelectedApps}
-  placeholder="选择要分配的应用..."
+  placeholder="translatedapp..."
   variant="chips"
 />
 ```
 
-### 5. 批量操作
+### 5. translated
 ```typescript
-// 批量操作时选择目标
+// translated
 <EntitySearchSelect
   entity="tenant"
   context="admin"
   value={selectedTenants}
   onChange={setSelectedTenants}
-  placeholder="选择要操作的租户..."
+  placeholder="translatedtenant..."
   variant="list"
   maxSelect={50}
   limit={20}
 />
 ```
 
-## 样式自定义
+## styletranslated
 
-组件使用 Tailwind CSS 构建，支持通过以下方式自定义样式：
+componenttranslated Tailwind CSS translated，translatedstyle：
 
-### 1. 容器样式
-组件会自动适应父容器的宽度，你可以通过包装 div 来控制宽度：
+### 1. translatedstyle
+componenttranslated，translatedcantranslated div translated：
 ```tsx
 <div className="max-w-md">
   <EntitySearchSelect ... />
 </div>
 ```
 
-### 2. 主题颜色
-组件使用 Tailwind 的颜色系统，主要颜色为 `indigo`、`blue`、`green` 等。
+### 2. translated
+componenttranslated Tailwind translatedsystem，translated `indigo`、`blue`、`green` translated。
 
-## 注意事项
+## translated
 
-1. **权限控制**：确保 `context` 参数与当前用户权限匹配
-2. **性能优化**：对于大量数据，建议设置合适的 `limit` 值
-3. **错误处理**：组件内部已处理 API 错误，会在搜索失败时显示提示
-4. **响应式设计**：组件在移动端和桌面端都有良好的显示效果
+1. **permissiontranslated**：translated `context` translatedandtranslateduserpermissiontranslated
+2. **translated**：translated，translated `limit` value
+3. **errortranslated**：componenttranslatedalreadytranslated API error，translatedsearchfailedtranslated
+4. **responsetranslated**：componenttranslatedandtranslatedhastranslated
 
-## 故障排除
+## translated
 
-### 1. 搜索无结果
-- 检查 API 接口是否正常
-- 确认搜索关键词是否正确
-- 验证用户权限是否足够
+### 1. searchnonetranslated
+- translated API translatedisnotranslated
+- translatedsearchtranslatedisnotranslated
+- translateduserpermissionisnotranslated
 
-### 2. 下拉框位置异常
-- 组件使用 Portal 渲染，确保没有 CSS 冲突
-- 检查父容器的 `overflow` 设置
+### 2. translated
+- componenttranslated Portal translated，translatedhas CSS translated
+- translated `overflow` translated
 
-### 3. 性能问题
-- 减少 `limit` 值
-- 增加搜索防抖时间（组件内置 300ms）
+### 3. translated
+- translated `limit` value
+- translatedsearchtranslatedtime（componenttranslated 300ms）
 
-## 扩展开发
+## translated
 
-如需添加新的实体类型，需要：
-1. 在组件中添加新的 `entity` 类型
-2. 实现对应的搜索 API 调用
-3. 添加实体特定的显示逻辑
+translatedtype，translated：
+1. translatedcomponenttranslated `entity` type
+2. translatedsearch API translated
+3. translated

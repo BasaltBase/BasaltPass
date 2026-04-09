@@ -1,7 +1,8 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useMemo } from 'react'
 import TenantRoute from '../../../src/features/tenant/components/TenantRoute'
-import { consumeSessionNotice, getSessionNoticeMessage, peekSessionNotice } from '../../../src/shared/utils/sessionNotice'
+import { consumeSessionNotice, peekSessionNotice } from '../../../src/shared/utils/sessionNotice'
+import { useI18n } from '../../../src/shared/i18n'
 
 import TenantDashboard from '../../../src/features/tenant/Dashboard'
 import TenantInfo from '../../../src/features/tenant/TenantInfo'
@@ -39,12 +40,13 @@ import PriceManagement from '../../../src/features/tenant/subscription/PriceMana
 import NotFound from '../../../src/features/NotFound'
 
 function Entry() {
-  const notice = useMemo(() => {
+  const { t } = useI18n()
+  const noticeCode = useMemo(() => {
     const current = peekSessionNotice()
     if (!current) {
       return ''
     }
-    return getSessionNoticeMessage(consumeSessionNotice())
+    return consumeSessionNotice() || ''
   }, [])
   const userUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || ''
   const joinUrl = (base: string, path: string) => {
@@ -56,20 +58,20 @@ function Entry() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="max-w-md w-full bg-white rounded-lg shadow p-6">
-        <h1 className="text-lg font-semibold text-gray-900">租户控制台</h1>
-        {notice ? (
+        <h1 className="text-lg font-semibold text-gray-900">{t('entry.tenantConsole')}</h1>
+        {noticeCode ? (
           <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-            {notice === '当前登录会话已过期，请重新登录。' ? '当前租户会话已过期，请重新登录后再进入租户控制台。' : notice}
+            {noticeCode === 'session_expired' ? t('entry.tenantSessionExpired') : t(`sessionNotice.${noticeCode}`)}
           </div>
         ) : null}
         <p className="mt-2 text-sm text-gray-600">
-          请从用户控制台点击“租户管理”进入（按需授权）。
+          {t('entry.tenantEntryHelp')}
         </p>
         <a
           className="mt-4 inline-block text-purple-600 hover:underline"
-          href={joinUrl(userUrl, notice ? 'login' : 'dashboard')}
+          href={joinUrl(userUrl, noticeCode ? 'login' : 'dashboard')}
         >
-          {notice ? '前往重新登录' : '返回用户控制台'}
+          {noticeCode ? t('common.relogin') : t('common.backToUserConsole')}
         </a>
       </div>
     </div>

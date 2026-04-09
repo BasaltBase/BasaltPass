@@ -8,6 +8,7 @@ import CurrencySelector from '@features/user/components/CurrencySelector'
 import { PInput, PButton } from '@ui'
 import { ROUTES } from '@constants'
 import { useConfig } from '@contexts/ConfigContext'
+import { useI18n } from '@shared/i18n'
 import { 
   ArrowUpIcon,
   CreditCardIcon,
@@ -21,25 +22,25 @@ import {
 const paymentMethods = [
   {
     id: 'alipay',
-    name: '支付宝',
+    name: 'Alipay',
     icon: QrCodeIcon,
-    description: '扫码支付',
+    description: 'Scan to pay',
     color: 'text-blue-600',
     bgColor: 'bg-blue-100'
   },
   {
     id: 'wechat',
-    name: '微信支付',
+    name: 'WeChat Pay',
     icon: QrCodeIcon,
-    description: '扫码支付',
+    description: 'Scan to pay',
     color: 'text-green-600',
     bgColor: 'bg-green-100'
   },
   {
     id: 'bank',
-    name: '银行卡',
+    name: 'Bank Card',
     icon: CreditCardIcon,
-    description: '在线支付',
+    description: 'Online payment',
     color: 'text-indigo-600',
     bgColor: 'bg-indigo-100'
   }
@@ -47,7 +48,7 @@ const paymentMethods = [
 
 const quickAmounts = [50, 100, 200, 500, 1000, 2000]
 
-// 根据货币类型获取合适的快速金额
+// 
 const getQuickAmounts = (currency: Currency): number[] => {
   switch (currency.type) {
     case 'crypto':
@@ -64,12 +65,13 @@ const getQuickAmounts = (currency: Currency): number[] => {
   }
 }
 
-// 格式化金额显示
+// 
 const formatAmount = (amount: number, currency: Currency): string => {
   return amount.toFixed(Math.min(currency.decimal_places, 8))
 }
 
 export default function Recharge() {
+  const { t } = useI18n()
   const { walletRechargeWithdrawEnabled } = useConfig()
   const walletOpsDisabled = !walletRechargeWithdrawEnabled
   const navigate = useNavigate()
@@ -86,17 +88,17 @@ export default function Recharge() {
     e.preventDefault()
 
     if (walletOpsDisabled) {
-      setError('钱包充值功能暂未开放')
+      setError(t('pages.walletRecharge.errors.disabled'))
       return
     }
     
     if (!amount || parseFloat(amount) <= 0) {
-      setError('请输入有效的充值金额')
+      setError(t('pages.walletRecharge.errors.invalidAmount'))
       return
     }
 
     if (!selectedCurrency) {
-      setError('请选择充值货币')
+      setError(t('pages.walletRecharge.errors.selectCurrency'))
       return
     }
 
@@ -104,7 +106,7 @@ export default function Recharge() {
     setError('')
     
     try {
-      // 根据货币的小数位数计算最小单位金额
+      // 
       const decimals = selectedCurrency.decimal_places
       const amountInSmallestUnit = Math.round(Number(amount) * Math.pow(10, decimals))
       
@@ -114,7 +116,7 @@ export default function Recharge() {
         navigate(ROUTES.user.wallet)
       }, 2000)
     } catch (e: any) {
-      setError(e.response?.data?.error || '充值失败，请重试')
+      setError(e.response?.data?.error || t('pages.walletRecharge.errors.rechargeFailed'))
     } finally {
       setIsLoading(false)
     }
@@ -133,7 +135,7 @@ export default function Recharge() {
   const handleRedeemGiftCard = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!giftCode.trim()) {
-      setError('请输入 Gift Card 卡密')
+      setError(t('pages.walletRecharge.errors.giftCodeRequired'))
       return
     }
     setGiftRedeeming(true)
@@ -145,7 +147,7 @@ export default function Recharge() {
         navigate(ROUTES.user.wallet)
       }, 2000)
     } catch (e: any) {
-      setError(e.response?.data?.error || 'Gift Card 兑换失败')
+      setError(e.response?.data?.error || t('pages.walletRecharge.errors.giftRedeemFailed'))
     } finally {
       setGiftRedeeming(false)
     }
@@ -157,8 +159,8 @@ export default function Recharge() {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <CheckCircleIcon className="mx-auto h-16 w-16 text-green-600 mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">充值成功！</h2>
-            <p className="text-gray-600">正在跳转到钱包页面...</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('pages.walletRecharge.success.title')}</h2>
+            <p className="text-gray-600">{t('pages.walletRecharge.success.redirecting')}</p>
           </div>
         </div>
       </Layout>
@@ -168,7 +170,7 @@ export default function Recharge() {
   return (
     <Layout>
       <div className="space-y-6">
-        {/* 页面标题 */}
+        {/*  */}
         <div className="flex items-center">
           <PButton 
             onClick={() => navigate(ROUTES.user.wallet)}
@@ -177,19 +179,19 @@ export default function Recharge() {
             className="mr-2"
             leftIcon={<ArrowLeftIcon className="h-5 w-5" />}
           >
-            返回
+            {t('pages.walletRecharge.header.back')}
           </PButton>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">充值钱包</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('pages.walletRecharge.header.title')}</h1>
             <p className="mt-1 text-sm text-gray-500">
-              选择充值方式并输入金额
+              {t('pages.walletRecharge.header.description')}
             </p>
           </div>
         </div>
 
         {walletOpsDisabled && (
           <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
-            <p className="text-sm text-amber-900">钱包充值功能暂未开放，如有疑问请联系客服。</p>
+            <p className="text-sm text-amber-900">{t('pages.walletRecharge.notice.disabled')}</p>
           </div>
         )}
 
@@ -197,24 +199,24 @@ export default function Recharge() {
           <div className="px-4 py-5 sm:p-6">
             <div className="flex items-center mb-4">
               <CreditCardIcon className="h-6 w-6 text-purple-600 mr-2" />
-              <h3 className="text-lg font-medium text-gray-900">Gift Card 兑换</h3>
+              <h3 className="text-lg font-medium text-gray-900">{t('pages.walletRecharge.giftCard.title')}</h3>
             </div>
             <form onSubmit={handleRedeemGiftCard} className={`space-y-4 ${walletOpsDisabled ? 'pointer-events-none' : ''}`}>
               <PInput
                 id="gift-code"
-                label="卡密"
+                label={t('pages.walletRecharge.giftCard.codeLabel')}
                 value={giftCode}
                 onChange={(e) => setGiftCode(e.target.value.toUpperCase())}
-                placeholder="例如 GC-XXXXX-XXXXX"
+                placeholder={t('pages.walletRecharge.giftCard.codePlaceholder')}
               />
               <PButton type="submit" loading={giftRedeeming} disabled={walletOpsDisabled || !giftCode.trim()}>
-                立即兑换
+                {t('pages.walletRecharge.giftCard.submit')}
               </PButton>
             </form>
           </div>
         </div>
 
-        {/* 错误提示 */}
+        {/*  */}
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4">
             <div className="flex">
@@ -222,7 +224,7 @@ export default function Recharge() {
                 <ExclamationTriangleIcon className="h-5 w-5 text-red-400" />
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-red-800">充值失败</p>
+                <p className="text-sm font-medium text-red-800">{t('pages.walletRecharge.errors.title')}</p>
                 <div className="mt-2 text-sm text-red-700">{error}</div>
               </div>
             </div>
@@ -230,19 +232,19 @@ export default function Recharge() {
         )}
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* 充值表单 */}
+          {/*  */}
           <div className={`rounded-xl bg-white shadow-sm ${walletOpsDisabled ? 'opacity-50' : ''}`}>
             <div className="px-4 py-5 sm:p-6">
               <div className="flex items-center mb-6">
                 <ArrowUpIcon className="h-6 w-6 text-green-600 mr-2" />
-                <h3 className="text-lg font-medium text-gray-900">充值信息</h3>
+                <h3 className="text-lg font-medium text-gray-900">{t('pages.walletRecharge.form.title')}</h3>
               </div>
               
               <form onSubmit={submit} className={`space-y-6 ${walletOpsDisabled ? 'pointer-events-none' : ''}`}>
-                {/* 货币选择 */}
+                {/*  */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    选择货币
+                    {t('pages.walletRecharge.form.currencyLabel')}
                   </label>
                   <CurrencySelector
                     value={selectedCurrency?.code || ''}
@@ -251,25 +253,25 @@ export default function Recharge() {
                   />
                 </div>
 
-                {/* 金额输入 */}
+                {/*  */}
                 <div>
                   <PInput
                     id="amount"
                     type="number"
-                    label={`充值金额 ${selectedCurrency ? `(${selectedCurrency.code})` : ''}`}
+                    label={t('pages.walletRecharge.form.amountLabel', { currency: selectedCurrency?.code || '' })}
                     value={amount}
                     onChange={(e) => handleAmountChange(e.target.value)}
-                    placeholder="0.00"
+                    placeholder={t('pages.walletRecharge.form.amountPlaceholder')}
                     min="0.01"
                     step={selectedCurrency ? `0.${'0'.repeat(Math.max(0, selectedCurrency.decimal_places - 1))}1` : "0.01"}
                   />
                 </div>
 
-                {/* 快速金额选择 */}
+                {/*  */}
                 {selectedCurrency && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      快速选择金额
+                      {t('pages.walletRecharge.form.quickAmountLabel')}
                     </label>
                     <div className="grid grid-cols-3 gap-2">
                       {getQuickAmounts(selectedCurrency).map((value) => (
@@ -287,10 +289,10 @@ export default function Recharge() {
                   </div>
                 )}
 
-                {/* 支付方式选择 */}
+                {/*  */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">
-                    选择支付方式
+                    {t('pages.walletRecharge.form.methodLabel')}
                   </label>
                   <div className="space-y-3">
                     {paymentMethods.map((method) => (
@@ -308,8 +310,8 @@ export default function Recharge() {
                             <method.icon className={`h-6 w-6 ${method.color}`} />
                           </div>
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-900">{method.name}</p>
-                            <p className="text-sm text-gray-500">{method.description}</p>
+                            <p className="text-sm font-medium text-gray-900">{t(`pages.walletRecharge.paymentMethods.${method.id}.name`)}</p>
+                            <p className="text-sm text-gray-500">{t(`pages.walletRecharge.paymentMethods.${method.id}.description`)}</p>
                           </div>
                           {selectedMethod === method.id && (
                             <div className="h-5 w-5 bg-indigo-600 rounded-full flex items-center justify-center">
@@ -322,84 +324,88 @@ export default function Recharge() {
                   </div>
                 </div>
 
-                {/* 提交按钮 */}
+                {/*  */}
                 <PButton
                   type="submit"
                   disabled={walletOpsDisabled || !amount || parseFloat(amount) <= 0 || !selectedCurrency}
                   loading={isLoading}
                   fullWidth
                 >
-                  {`充值 ${selectedCurrency?.symbol || ''}${amount || '0.00'} ${selectedCurrency?.code || ''}`}
+                  {t('pages.walletRecharge.form.submitWithAmount', {
+                    symbol: selectedCurrency?.symbol || '',
+                    amount: amount || '0.00',
+                    code: selectedCurrency?.code || '',
+                  })}
                 </PButton>
               </form>
             </div>
           </div>
 
-          {/* 充值说明 */}
+          {/*  */}
           <div className="space-y-6">
-            {/* 充值说明 */}
+            {/*  */}
             <div className="rounded-xl bg-white shadow-sm">
               <div className="px-4 py-5 sm:p-6">
                 <div className="flex items-center mb-4">
                   <BanknotesIcon className="h-6 w-6 text-blue-600 mr-2" />
-                  <h3 className="text-lg font-medium text-gray-900">充值说明</h3>
+                  <h3 className="text-lg font-medium text-gray-900">{t('pages.walletRecharge.guide.title')}</h3>
                 </div>
                 <div className="space-y-3 text-sm text-gray-600">
                   <div className="flex items-start">
                     <div className="h-2 w-2 bg-blue-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                    <p>充值金额将实时到账到您的钱包余额</p>
+                    <p>{t('pages.walletRecharge.guide.items.realtime')}</p>
                   </div>
                   <div className="flex items-start">
                     <div className="h-2 w-2 bg-blue-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                    <p>支持支付宝、微信支付和银行卡等多种支付方式</p>
+                    <p>{t('pages.walletRecharge.guide.items.methods')}</p>
                   </div>
                   <div className="flex items-start">
                     <div className="h-2 w-2 bg-blue-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                    <p>单笔充值限额：¥50 - ¥50,000</p>
+                    <p>{t('pages.walletRecharge.guide.items.limit')}</p>
                   </div>
                   <div className="flex items-start">
                     <div className="h-2 w-2 bg-blue-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                    <p>充值不收取任何手续费</p>
+                    <p>{t('pages.walletRecharge.guide.items.fee')}</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* 安全提示 */}
+            {/*  */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex">
                 <div className="flex-shrink-0">
                   <BanknotesIcon className="h-5 w-5 text-blue-400" />
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-blue-800">安全提示</h3>
+                  <h3 className="text-sm font-medium text-blue-800">{t('pages.walletRecharge.security.title')}</h3>
                   <div className="mt-2 text-sm text-blue-700">
                     <ul className="list-disc list-inside space-y-1">
-                      <li>请确保在安全的网络环境下进行充值</li>
-                      <li>不要将支付密码告知他人</li>
-                      <li>如遇问题请及时联系客服</li>
+                      <li>{t('pages.walletRecharge.security.items.network')}</li>
+                      <li>{t('pages.walletRecharge.security.items.password')}</li>
+                      <li>{t('pages.walletRecharge.security.items.support')}</li>
                     </ul>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* 常见问题 */}
+            {/*  */}
             <div className="rounded-xl bg-white shadow-sm">
               <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">常见问题</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">{t('pages.walletRecharge.faq.title')}</h3>
                 <div className="space-y-3 text-sm">
                   <div>
-                    <p className="font-medium text-gray-900">充值多久到账？</p>
-                    <p className="text-gray-600">充值通常在1-5分钟内到账，如遇延迟请稍后查看。</p>
+                    <p className="font-medium text-gray-900">{t('pages.walletRecharge.faq.q1')}</p>
+                    <p className="text-gray-600">{t('pages.walletRecharge.faq.a1')}</p>
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">充值失败怎么办？</p>
-                    <p className="text-gray-600">请检查网络连接和支付信息，或尝试其他支付方式。</p>
+                    <p className="font-medium text-gray-900">{t('pages.walletRecharge.faq.q2')}</p>
+                    <p className="text-gray-600">{t('pages.walletRecharge.faq.a2')}</p>
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">可以取消充值吗？</p>
-                    <p className="text-gray-600">充值成功后无法取消，请确认金额后再进行充值。</p>
+                    <p className="font-medium text-gray-900">{t('pages.walletRecharge.faq.q3')}</p>
+                    <p className="text-gray-600">{t('pages.walletRecharge.faq.a3')}</p>
                   </div>
                 </div>
               </div>

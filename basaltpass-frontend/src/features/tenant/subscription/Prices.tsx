@@ -18,8 +18,10 @@ import {
 import { PInput, PSelect, PButton, PSkeleton, Modal, PPageHeader } from '@ui'
 import PTable, { PTableColumn, PTableAction } from '@ui/PTable'
 import { ROUTES } from '@constants'
+import { useI18n } from '@shared/i18n'
 
 export default function TenantPrices() {
+  const { t, locale } = useI18n()
   const [searchParams] = useSearchParams()
   const [prices, setPrices] = useState<TenantPrice[]>([])
   const [plans, setPlans] = useState<TenantPlan[]>([])
@@ -43,7 +45,7 @@ export default function TenantPrices() {
   useEffect(() => {
     fetchData()
     
-    // 检查是否需要自动打开创建模态框
+    // 
     if (searchParams.get('action') === 'create') {
       setShowModal(true)
     }
@@ -59,7 +61,7 @@ export default function TenantPrices() {
       setPrices(pricesRes.data || [])
       setPlans(plansRes.data || [])
     } catch (error) {
-      console.error('获取定价列表失败:', error)
+      console.error(t('tenantSubscriptionPrices.logs.loadFailed'), error)
     } finally {
       setLoading(false)
     }
@@ -78,7 +80,7 @@ export default function TenantPrices() {
       resetForm()
       fetchData()
     } catch (error) {
-      console.error('操作失败:', error)
+      console.error(t('tenantSubscriptionPrices.logs.operationFailed'), error)
     }
   }
 
@@ -113,7 +115,7 @@ export default function TenantPrices() {
       setShowDeleteModal(false)
       setDeleteTarget(null)
     } catch (error) {
-      console.error('删除失败:', error)
+      console.error(t('tenantSubscriptionPrices.logs.deleteFailed'), error)
     } finally {
       setDeleting(false)
     }
@@ -140,7 +142,7 @@ export default function TenantPrices() {
 
   const getPlanName = (planId: number) => {
     const plan = plans.find(p => p.ID === planId)
-    return plan ? plan.DisplayName : `套餐 ${planId}`
+    return plan ? plan.DisplayName : t('tenantSubscriptionPrices.fields.planWithId', { id: planId })
   }
 
   const formatPrice = (amountCents: number, currency: string) => {
@@ -165,28 +167,28 @@ export default function TenantPrices() {
     <TenantLayout>
       <div className="py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* 页面头部 */}
+          {/*  */}
           <PPageHeader
-            title="定价管理"
-            description="维护套餐价格、计费周期与试用配置"
-            actions={<PButton type="button" onClick={() => setShowModal(true)} leftIcon={<PlusIcon className="h-5 w-5" />}>创建定价</PButton>}
+            title={t('tenantSubscriptionPrices.title')}
+            description={t('tenantSubscriptionPrices.description')}
+            actions={<PButton type="button" onClick={() => setShowModal(true)} leftIcon={<PlusIcon className="h-5 w-5" />}>{t('tenantSubscriptionPrices.actions.createPrice')}</PButton>}
           />
 
-          {/* 定价列表（统一表格组件） */}
+          {/* （） */}
           <div className="mt-8">
             {(() => {
               const columns: PTableColumn<TenantPrice>[] = [
-                { key: 'plan', title: '套餐', render: (row) => getPlanName(row.PlanID) },
-                { key: 'amount', title: '价格', render: (row) => formatPrice(row.AmountCents, row.Currency) },
-                { key: 'billing', title: '计费周期', render: (row) => formatBillingPeriod(row.BillingPeriod, row.BillingInterval) },
-                { key: 'usage', title: '使用类型', dataIndex: 'UsageType' as any },
-                { key: 'trial', title: '试用期', render: (row) => (row.TrialDays ? `${row.TrialDays} 天` : '-') },
-                { key: 'created', title: '创建时间', render: (row) => new Date(row.CreatedAt).toLocaleString('zh-CN') },
+                { key: 'plan', title: t('tenantSubscriptionPrices.table.plan'), render: (row) => getPlanName(row.PlanID) },
+                { key: 'amount', title: t('tenantSubscriptionPrices.table.price'), render: (row) => formatPrice(row.AmountCents, row.Currency) },
+                { key: 'billing', title: t('tenantSubscriptionPrices.table.billingPeriod'), render: (row) => formatBillingPeriod(row.BillingPeriod, row.BillingInterval) },
+                { key: 'usage', title: t('tenantSubscriptionPrices.table.usageType'), dataIndex: 'UsageType' as any },
+                { key: 'trial', title: t('tenantSubscriptionPrices.table.trialPeriod'), render: (row) => (row.TrialDays ? t('tenantSubscriptionPrices.fields.trialDays', { days: row.TrialDays }) : '-') },
+                { key: 'created', title: t('tenantSubscriptionPrices.table.createdAt'), render: (row) => new Date(row.CreatedAt).toLocaleString(locale) },
               ];
 
               const actions: PTableAction<TenantPrice>[] = [
-                { key: 'edit', label: '编辑', icon: <PencilIcon className="h-4 w-4" />, variant: 'secondary', size: 'sm', onClick: (row) => handleEdit(row) },
-                { key: 'delete', label: '删除', icon: <TrashIcon className="h-4 w-4" />, variant: 'danger', size: 'sm', confirm: '确定要删除该定价吗？', onClick: (row) => handleDeleteClick(row) },
+                { key: 'edit', label: t('tenantSubscriptionPrices.actions.edit'), icon: <PencilIcon className="h-4 w-4" />, variant: 'secondary', size: 'sm', onClick: (row) => handleEdit(row) },
+                { key: 'delete', label: t('tenantSubscriptionPrices.actions.delete'), icon: <TrashIcon className="h-4 w-4" />, variant: 'danger', size: 'sm', confirm: t('tenantSubscriptionPrices.deleteModal.confirmAction'), onClick: (row) => handleDeleteClick(row) },
               ];
 
               return (
@@ -195,9 +197,9 @@ export default function TenantPrices() {
                   data={prices}
                   rowKey={(row) => row.ID}
                   actions={actions}
-                  emptyText="暂无定价数据"
+                  emptyText={t('tenantSubscriptionPrices.empty.table')}
                   emptyContent={
-                    <PButton type="button" onClick={() => setShowModal(true)} leftIcon={<PlusIcon className="h-5 w-5" />}>创建定价</PButton>
+                    <PButton type="button" onClick={() => setShowModal(true)} leftIcon={<PlusIcon className="h-5 w-5" />}>{t('tenantSubscriptionPrices.actions.createPrice')}</PButton>
                   }
                   striped
                   size="md"
@@ -208,21 +210,21 @@ export default function TenantPrices() {
         </div>
       </div>
 
-      {/* 创建/编辑定价模态框 */}
+      {/* / */}
       {showModal && (
-        <Modal open={showModal} onClose={handleCancel} title={editingPrice ? '编辑定价' : '创建定价'} widthClass="max-w-md">
+        <Modal open={showModal} onClose={handleCancel} title={editingPrice ? t('tenantSubscriptionPrices.actions.editPrice') : t('tenantSubscriptionPrices.actions.createPrice')} widthClass="max-w-md">
             <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
-              {editingPrice ? '编辑定价' : '创建定价'}
+              {editingPrice ? t('tenantSubscriptionPrices.actions.editPrice') : t('tenantSubscriptionPrices.actions.createPrice')}
             </h3>
             <form onSubmit={handleSubmit} className="space-y-4">
               <PSelect
-                label="套餐"
+                label={t('tenantSubscriptionPrices.fields.plan')}
                 value={formData.plan_id}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, plan_id: parseInt(e.target.value) })}
                 required
                 disabled={!!editingPrice}
               >
-                <option value="">请选择套餐</option>
+                <option value="">{t('tenantSubscriptionPrices.fields.selectPlan')}</option>
                 {plans.map((plan) => (
                   <option key={plan.ID} value={plan.ID}>
                     {plan.DisplayName}
@@ -230,18 +232,18 @@ export default function TenantPrices() {
                 ))}
               </PSelect>
               <PSelect
-                label="货币"
+                label={t('tenantSubscriptionPrices.fields.currency')}
                 value={formData.currency}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, currency: e.target.value })}
                 required
               >
-                <option value="CNY">人民币 (CNY)</option>
-                <option value="USD">美元 (USD)</option>
-                <option value="EUR">欧元 (EUR)</option>
+                <option value="CNY">{t('tenantSubscriptionPrices.currency.cny')}</option>
+                <option value="USD">{t('tenantSubscriptionPrices.currency.usd')}</option>
+                <option value="EUR">{t('tenantSubscriptionPrices.currency.eur')}</option>
               </PSelect>
               <div>
                 <PInput
-                  label="价格（分）"
+                  label={t('tenantSubscriptionPrices.fields.priceCents')}
                   type="number"
                   value={formData.amount_cents}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, amount_cents: parseInt(e.target.value) })}
@@ -249,22 +251,22 @@ export default function TenantPrices() {
                   required
                 />
                 <p className="mt-1 text-sm text-gray-500">
-                  当前价格: {formatPrice(formData.amount_cents, formData.currency)}
+                  {t('tenantSubscriptionPrices.fields.currentPrice')}: {formatPrice(formData.amount_cents, formData.currency)}
                 </p>
               </div>
               <PSelect
-                label="计费周期"
+                label={t('tenantSubscriptionPrices.fields.billingPeriod')}
                 value={formData.billing_period}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, billing_period: e.target.value })}
                 required
               >
-                <option value="day">天</option>
-                <option value="week">周</option>
-                <option value="month">月</option>
-                <option value="year">年</option>
+                <option value="day">{t('tenantSubscriptionPrices.period.day')}</option>
+                <option value="week">{t('tenantSubscriptionPrices.period.week')}</option>
+                <option value="month">{t('tenantSubscriptionPrices.period.month')}</option>
+                <option value="year">{t('tenantSubscriptionPrices.period.year')}</option>
               </PSelect>
               <PInput
-                label="计费间隔"
+                label={t('tenantSubscriptionPrices.fields.billingInterval')}
                 type="number"
                 value={formData.billing_interval}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, billing_interval: parseInt(e.target.value) })}
@@ -272,38 +274,38 @@ export default function TenantPrices() {
                 required
               />
               <PInput
-                label="试用天数（可选）"
+                label={t('tenantSubscriptionPrices.fields.trialDaysOptional')}
                 type="number"
                 value={formData.trial_days || ''}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, trial_days: e.target.value ? parseInt(e.target.value) : undefined })}
                 min={0}
               />
               <PSelect
-                label="使用类型"
+                label={t('tenantSubscriptionPrices.fields.usageType')}
                 value={formData.usage_type}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, usage_type: e.target.value })}
                 required
               >
-                <option value="licensed">许可</option>
-                <option value="metered">计量</option>
+                <option value="licensed">{t('tenantSubscriptionPrices.usage.licensed')}</option>
+                <option value="metered">{t('tenantSubscriptionPrices.usage.metered')}</option>
               </PSelect>
               <div className="flex justify-end space-x-3 pt-4">
-                <PButton type="button" variant="secondary" onClick={handleCancel}>取消</PButton>
-                <PButton type="submit">{editingPrice ? '更新' : '创建'}</PButton>
+                <PButton type="button" variant="secondary" onClick={handleCancel}>{t('tenantSubscriptionPrices.actions.cancel')}</PButton>
+                <PButton type="submit">{editingPrice ? t('tenantSubscriptionPrices.actions.update') : t('tenantSubscriptionPrices.actions.create')}</PButton>
               </div>
             </form>
         </Modal>
       )}
 
-      {/* 删除确认模态框 */}
+      {/*  */}
       {showDeleteModal && deleteTarget && (
-        <Modal open={showDeleteModal} onClose={() => setShowDeleteModal(false)} title="确认删除" widthClass="max-w-md">
+        <Modal open={showDeleteModal} onClose={() => setShowDeleteModal(false)} title={t('tenantSubscriptionPrices.deleteModal.title')} widthClass="max-w-md">
             <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
               <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
             </div>
-            <h3 className="text-lg font-medium text-center text-gray-900 mb-2">确认删除</h3>
+            <h3 className="text-lg font-medium text-center text-gray-900 mb-2">{t('tenantSubscriptionPrices.deleteModal.title')}</h3>
             <p className="text-sm text-gray-500 text-center mb-6">
-              确定要删除定价 "{formatPrice(deleteTarget.AmountCents, deleteTarget.Currency)}" 吗？此操作无法撤销。
+              {t('tenantSubscriptionPrices.deleteModal.confirmMessage', { price: formatPrice(deleteTarget.AmountCents, deleteTarget.Currency) })}
             </p>
             <div className="flex justify-center space-x-3">
               <PButton
@@ -312,7 +314,7 @@ export default function TenantPrices() {
                 onClick={() => setShowDeleteModal(false)}
                 disabled={deleting}
               >
-                取消
+                {t('tenantSubscriptionPrices.actions.cancel')}
               </PButton>
               <PButton
                 type="button"
@@ -320,7 +322,7 @@ export default function TenantPrices() {
                 onClick={handleDeleteConfirm}
                 disabled={deleting}
               >
-                {deleting ? '删除中...' : '确认删除'}
+                {deleting ? t('tenantSubscriptionPrices.actions.deleting') : t('tenantSubscriptionPrices.actions.confirmDelete')}
               </PButton>
             </div>
         </Modal>

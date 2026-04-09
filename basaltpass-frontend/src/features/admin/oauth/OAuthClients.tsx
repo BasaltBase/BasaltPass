@@ -17,6 +17,7 @@ import AdminLayout from '@features/admin/components/AdminLayout'
 import { ROUTES } from '@constants'
 import { OAuthScopePicker } from '@components'
 import { PSkeleton, PBadge, PAlert, PPageHeader, PPagination, PButton, PInput, PTextarea, Modal } from '@ui'
+import { useI18n } from '@shared/i18n'
 
 interface CreateClientModalProps {
   isOpen: boolean
@@ -25,6 +26,7 @@ interface CreateClientModalProps {
 }
 
 function CreateClientModal({ isOpen, onClose, onSuccess }: CreateClientModalProps) {
+  const { t, locale } = useI18n()
   const [formData, setFormData] = useState<CreateClientRequest>({
     name: '',
     description: '',
@@ -54,7 +56,7 @@ function CreateClientModal({ isOpen, onClose, onSuccess }: CreateClientModalProp
         setScopeDefaults(data?.defaults || ['openid', 'profile', 'email'])
       } catch (e: any) {
         if (cancelled) return
-        setScopeError(e?.response?.data?.error || '加载 scopes 失败')
+        setScopeError(e?.response?.data?.error || t('adminOAuthClients.errors.loadScopesFailed'))
       } finally {
         if (cancelled) return
         setScopeLoading(false)
@@ -84,7 +86,6 @@ function CreateClientModal({ isOpen, onClose, onSuccess }: CreateClientModalProp
     setError('')
 
     try {
-      // 过滤空的URI和Origins
       const cleanedData = {
         ...formData,
         redirect_uris: formData.redirect_uris.filter(uri => uri.trim() !== ''),
@@ -94,7 +95,6 @@ function CreateClientModal({ isOpen, onClose, onSuccess }: CreateClientModalProp
       await oauthApi.createClient(cleanedData)
       onSuccess()
       onClose()
-      // 重置表单
       setFormData({
         name: '',
         description: '',
@@ -103,7 +103,7 @@ function CreateClientModal({ isOpen, onClose, onSuccess }: CreateClientModalProp
         allowed_origins: ['']
       })
     } catch (err: any) {
-      setError(err.response?.data?.error || '创建失败')
+      setError(err.response?.data?.error || t('adminOAuthClients.errors.createFailed'))
     } finally {
       setIsLoading(false)
     }
@@ -154,7 +154,7 @@ function CreateClientModal({ isOpen, onClose, onSuccess }: CreateClientModalProp
   if (!isOpen) return null
 
   return (
-    <Modal open={isOpen} onClose={onClose} title="创建OAuth2客户端" widthClass="max-w-6xl">
+    <Modal open={isOpen} onClose={onClose} title={t('adminOAuthClients.createModal.title')} widthClass="max-w-6xl">
       <div className="space-y-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -162,24 +162,24 @@ function CreateClientModal({ isOpen, onClose, onSuccess }: CreateClientModalProp
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <PInput
-                  label="应用名称 *"
+                  label={t('adminOAuthClients.createModal.appNameLabel')}
                   type="text"
                   required
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="输入应用名称"
+                  placeholder={t('adminOAuthClients.createModal.appNamePlaceholder')}
                 />
                 <PTextarea
-                  label="应用描述"
+                  label={t('adminOAuthClients.createModal.appDescriptionLabel')}
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="输入应用描述"
+                  placeholder={t('adminOAuthClients.createModal.appDescriptionPlaceholder')}
                   rows={3}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">重定向URI *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminOAuthClients.createModal.redirectUriLabel')}</label>
                 {formData.redirect_uris.map((uri, index) => (
                   <div key={index} className="flex gap-2 mb-2">
                     <PInput
@@ -196,18 +196,18 @@ function CreateClientModal({ isOpen, onClose, onSuccess }: CreateClientModalProp
                         variant="ghost"
                         onClick={() => removeRedirectURI(index)}
                       >
-                        删除
+                        {t('adminOAuthClients.actions.delete')}
                       </PButton>
                     )}
                   </div>
                 ))}
                 <PButton type="button" variant="ghost" size="sm" onClick={addRedirectURI}>
-                  + 添加重定向URI
+                  {t('adminOAuthClients.createModal.addRedirectUri')}
                 </PButton>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">允许的CORS源</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminOAuthClients.createModal.allowedCorsOriginsLabel')}</label>
                 {formData.allowed_origins?.map((origin, index) => (
                   <div key={index} className="flex gap-2 mb-2">
                     <PInput
@@ -222,12 +222,12 @@ function CreateClientModal({ isOpen, onClose, onSuccess }: CreateClientModalProp
                       variant="ghost"
                       onClick={() => removeAllowedOrigin(index)}
                     >
-                      删除
+                      {t('adminOAuthClients.actions.delete')}
                     </PButton>
                   </div>
                 ))}
                 <PButton type="button" variant="ghost" size="sm" onClick={addAllowedOrigin}>
-                  + 添加CORS源
+                  {t('adminOAuthClients.createModal.addCorsOrigin')}
                 </PButton>
               </div>
             </div>
@@ -235,7 +235,7 @@ function CreateClientModal({ isOpen, onClose, onSuccess }: CreateClientModalProp
             {/* Right column: scopes */}
             <div className="lg:pt-1">
               <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                <label className="block text-sm font-medium text-gray-700 mb-2">权限范围</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminOAuthClients.createModal.scopesLabel')}</label>
                 <OAuthScopePicker
                   metas={scopeMetas}
                   selected={formData.scopes || []}
@@ -257,8 +257,8 @@ function CreateClientModal({ isOpen, onClose, onSuccess }: CreateClientModalProp
 
           {error && <PAlert variant="error" message={error} />}
           <div className="flex justify-end gap-3 border-t border-gray-200 pt-6">
-            <PButton type="button" variant="secondary" onClick={onClose}>取消</PButton>
-            <PButton type="submit" disabled={isLoading} loading={isLoading}>创建</PButton>
+            <PButton type="button" variant="secondary" onClick={onClose}>{t('adminOAuthClients.actions.cancel')}</PButton>
+            <PButton type="submit" disabled={isLoading} loading={isLoading}>{t('adminOAuthClients.actions.createClient')}</PButton>
           </div>
         </form>
       </div>
@@ -274,12 +274,13 @@ interface ClientDetailModalProps {
 }
 
 function ClientDetailModal({ client, isOpen, onClose, onUpdate }: ClientDetailModalProps) {
+  const { t, locale } = useI18n()
   const [showSecret, setShowSecret] = useState(false)
   const [newSecret, setNewSecret] = useState('')
   const [isRegenerating, setIsRegenerating] = useState(false)
 
   const handleRegenerateSecret = async () => {
-    if (!client || !await uiConfirm('确定要重新生成客户端密钥吗？这会使现有的密钥失效。')) return
+    if (!client || !await uiConfirm(t('adminOAuthClients.confirmRegenerateSecret'))) return
 
     setIsRegenerating(true)
     try {
@@ -288,7 +289,7 @@ function ClientDetailModal({ client, isOpen, onClose, onUpdate }: ClientDetailMo
       setShowSecret(true)
       onUpdate()
     } catch (err) {
-      console.error('重新生成密钥失败:', err)
+      console.error(t('adminOAuthClients.logs.regenerateSecretFailed'), err)
     } finally {
       setIsRegenerating(false)
     }
@@ -297,40 +298,38 @@ function ClientDetailModal({ client, isOpen, onClose, onUpdate }: ClientDetailMo
   if (!isOpen || !client) return null
 
   return (
-    <Modal open={isOpen} onClose={onClose} title="客户端详情" widthClass="max-w-4xl">
+    <Modal open={isOpen} onClose={onClose} title={t('adminOAuthClients.detailModal.title')} widthClass="max-w-4xl">
       <div className="space-y-6">
         <div className="grid grid-cols-2 gap-8">
-          {/* 左侧信息 */}
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">应用名称</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminOAuthClients.detailModal.appName')}</label>
               <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-md">{client.name}</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">应用描述</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminOAuthClients.detailModal.appDescription')}</label>
               <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-md">{client.description || '-'}</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">客户端ID</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminOAuthClients.detailModal.clientId')}</label>
               <p className="text-sm text-gray-900 font-mono bg-gray-100 p-3 rounded-md">
                 {client.client_id}
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">状态</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminOAuthClients.columns.status')}</label>
               <PBadge variant={client.is_active ? 'success' : 'error'}>
-                {client.is_active ? '激活' : '停用'}
+                {client.is_active ? t('adminOAuthClients.status.active') : t('adminOAuthClients.status.inactive')}
               </PBadge>
             </div>
           </div>
 
-          {/* 右侧信息 */}
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">客户端密钥</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminOAuthClients.detailModal.clientSecret')}</label>
               <div className="flex items-center gap-2">
                 {newSecret ? (
                   <p className="text-sm text-gray-900 font-mono bg-yellow-100 p-3 rounded-md flex-1">
@@ -346,34 +345,33 @@ function ClientDetailModal({ client, isOpen, onClose, onUpdate }: ClientDetailMo
                   disabled={isRegenerating}
                   variant="secondary"
                 >
-                  {isRegenerating ? '生成中...' : '重新生成'}
+                  {isRegenerating ? t('adminOAuthClients.actions.generating') : t('adminOAuthClients.actions.regenerate')}
                 </PButton>
               </div>
               {newSecret && (
                 <p className="text-sm text-yellow-600 mt-2 bg-yellow-50 p-2 rounded-md">
-                  ⚠️ 请妥善保存新密钥，关闭后将无法再次查看
+                  {t('adminOAuthClients.detailModal.newSecretWarning')}
                 </p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">创建时间</label>
-              <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-md">{client.created_at}</p>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminOAuthClients.columns.createdAt')}</label>
+              <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-md">{new Date(client.created_at).toLocaleString(locale)}</p>
             </div>
 
             {client.last_used_at && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">最后使用</label>
-                <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-md">{client.last_used_at}</p>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminOAuthClients.detailModal.lastUsedAt')}</label>
+                <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-md">{new Date(client.last_used_at).toLocaleString(locale)}</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* 全宽信息 */}
         <div className="mt-8 space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">重定向URI</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminOAuthClients.detailModal.redirectUris')}</label>
             <div className="space-y-2">
               {client.redirect_uris.map((uri, index) => (
                 <p key={index} className="text-sm text-gray-900 font-mono bg-gray-100 p-3 rounded-md">
@@ -384,7 +382,7 @@ function ClientDetailModal({ client, isOpen, onClose, onUpdate }: ClientDetailMo
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">权限范围</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminOAuthClients.detailModal.scopes')}</label>
             <div className="flex flex-wrap gap-2">
               {client.scopes.map((scope) => (
                 <span key={scope} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
@@ -395,9 +393,8 @@ function ClientDetailModal({ client, isOpen, onClose, onUpdate }: ClientDetailMo
           </div>
         </div>
 
-        {/* 按钮区域 */}
         <div className="mt-6 flex justify-end border-t border-gray-200 pt-6">
-          <PButton variant="secondary" onClick={onClose}>关闭</PButton>
+          <PButton variant="secondary" onClick={onClose}>{t('adminOAuthClients.actions.close')}</PButton>
         </div>
       </div>
     </Modal>
@@ -405,6 +402,7 @@ function ClientDetailModal({ client, isOpen, onClose, onUpdate }: ClientDetailMo
 }
 
 export default function OAuthClients() {
+  const { t } = useI18n()
   const [clients, setClients] = useState<OAuthClient[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -424,7 +422,7 @@ export default function OAuthClients() {
       setClients(response.data.data.clients)
       setTotal(response.data.data.total)
     } catch (err: any) {
-      setError(err.response?.data?.error || '加载失败')
+      setError(err.response?.data?.error || t('adminOAuthClients.errors.loadFailed'))
     } finally {
       setLoading(false)
     }
@@ -441,13 +439,13 @@ export default function OAuthClients() {
   }
 
   const handleDelete = async (client: OAuthClient) => {
-    if (!await uiConfirm(`确定要删除客户端 "${client.name}" 吗？此操作不可恢复。`)) return
+    if (!await uiConfirm(t('adminOAuthClients.confirmDelete', { name: client.name }))) return
 
     try {
       await oauthApi.deleteClient(client.client_id)
       loadClients()
     } catch (err: any) {
-      uiAlert(err.response?.data?.error || '删除失败')
+      uiAlert(err.response?.data?.error || t('adminOAuthClients.errors.deleteFailed'))
     }
   }
 
@@ -459,20 +457,19 @@ export default function OAuthClients() {
   const totalPages = Math.ceil(total / pageSize)
 
   return (
-    <AdminLayout title="OAuth客户端管理">
+    <AdminLayout title={t('adminOAuthClients.layoutTitle')}>
       <div className="space-y-6">
         <PPageHeader
-          title="OAuth2客户端管理"
-          description="管理业务应用的OAuth2客户端配置"
+          title={t('adminOAuthClients.title')}
+          description={t('adminOAuthClients.description')}
           icon={<KeyIcon className="h-8 w-8 text-indigo-600" />}
           actions={
             <PButton onClick={() => setShowCreateModal(true)} leftIcon={<PlusIcon className="h-4 w-4" />}>
-              创建客户端
+              {t('adminOAuthClients.actions.createClient')}
             </PButton>
           }
         />
 
-        {/* 搜索 */}
         <div className="bg-white p-4 rounded-lg shadow">
           <form onSubmit={handleSearch} className="flex gap-4">
             <div className="flex-1">
@@ -482,16 +479,15 @@ export default function OAuthClients() {
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="搜索客户端名称、描述或ID..."
+                  placeholder={t('adminOAuthClients.searchPlaceholder')}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
-            <PButton type="submit">搜索</PButton>
+            <PButton type="submit">{t('adminOAuthClients.actions.search')}</PButton>
           </form>
         </div>
 
-        {/* 客户端列表 */}
         <div className="bg-white shadow rounded-lg">
           {loading ? (
             <PSkeleton.List items={4} />
@@ -499,12 +495,12 @@ export default function OAuthClients() {
             <div className="p-8 text-center">
               <ExclamationTriangleIcon className="h-8 w-8 text-red-500 mx-auto" />
               <p className="mt-2 text-red-600">{error}</p>
-              <PButton onClick={loadClients} className="mt-4">重新加载</PButton>
+              <PButton onClick={loadClients} className="mt-4">{t('adminOAuthClients.actions.reload')}</PButton>
             </div>
           ) : clients.length === 0 ? (
             <div className="p-8 text-center">
-              <p className="text-gray-500">暂无OAuth2客户端</p>
-              <PButton onClick={() => setShowCreateModal(true)} className="mt-4">创建第一个客户端</PButton>
+              <p className="text-gray-500">{t('adminOAuthClients.emptyTitle')}</p>
+              <PButton onClick={() => setShowCreateModal(true)} className="mt-4">{t('adminOAuthClients.emptyAction')}</PButton>
             </div>
           ) : (
             <>
@@ -513,19 +509,19 @@ export default function OAuthClients() {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        应用信息
+                        {t('adminOAuthClients.columns.appInfo')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        客户端ID
+                        {t('adminOAuthClients.columns.clientId')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        状态
+                        {t('adminOAuthClients.columns.status')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        创建时间
+                        {t('adminOAuthClients.columns.createdAt')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        操作
+                        {t('adminOAuthClients.columns.actions')}
                       </th>
                     </tr>
                   </thead>
@@ -549,7 +545,7 @@ export default function OAuthClients() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <PBadge variant={client.is_active ? 'success' : 'error'}>
-                            {client.is_active ? '激活' : '停用'}
+                            {client.is_active ? t('adminOAuthClients.status.active') : t('adminOAuthClients.status.inactive')}
                           </PBadge>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -560,14 +556,14 @@ export default function OAuthClients() {
                             <button
                               onClick={() => handleViewDetail(client)}
                               className="text-blue-600 hover:text-blue-900"
-                              title="查看详情"
+                              title={t('adminOAuthClients.actions.viewDetail')}
                             >
                               <EyeIcon className="h-4 w-4" />
                             </button>
                             <button
                               onClick={() => handleDelete(client)}
                               className="text-red-600 hover:text-red-900"
-                              title="删除"
+                              title={t('adminOAuthClients.actions.delete')}
                             >
                               <TrashIcon className="h-4 w-4" />
                             </button>
@@ -579,7 +575,6 @@ export default function OAuthClients() {
                 </table>
               </div>
 
-              {/* 分页 */}
               {totalPages > 1 && (
                 <div className="px-6 py-3 border-t border-gray-200">
                   <PPagination
@@ -596,14 +591,12 @@ export default function OAuthClients() {
           )}
         </div>
 
-      {/* 创建客户端模态框 */}
       <CreateClientModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onSuccess={loadClients}
       />
 
-      {/* 客户端详情模态框 */}
       <ClientDetailModal
         client={selectedClient}
         isOpen={showDetailModal}

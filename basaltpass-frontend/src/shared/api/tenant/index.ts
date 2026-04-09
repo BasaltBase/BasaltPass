@@ -1,2 +1,2 @@
-// 租户API导出
+// tenantAPItranslated
 export * from './notification'

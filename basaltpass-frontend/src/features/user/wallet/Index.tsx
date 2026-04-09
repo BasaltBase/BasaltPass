@@ -6,6 +6,7 @@ import Layout from '@features/user/components/Layout'
 import CurrencySelector from '@features/user/components/CurrencySelector'
 import { ROUTES } from '@constants'
 import { useConfig } from '@contexts/ConfigContext'
+import { useI18n } from '@shared/i18n'
 import { PSkeleton, PPageHeader, PBadge } from '@ui'
 import { 
   WalletIcon, 
@@ -19,6 +20,7 @@ import {
 
 export default function WalletIndex() {
   const { walletRechargeWithdrawEnabled } = useConfig()
+  const { t, locale } = useI18n()
   const [balance, setBalance] = useState<number | null>(null)
   const [selectedCurrency, setSelectedCurrency] = useState<Currency | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -29,8 +31,8 @@ export default function WalletIndex() {
     Status: string
     CreatedAt: string
   }>>([])
-  const [monthlyIncome, setMonthlyIncome] = useState<number>(0)   // 以最小货币单位存储
-  const [monthlyExpense, setMonthlyExpense] = useState<number>(0) // 以最小货币单位存储
+  const [monthlyIncome, setMonthlyIncome] = useState<number>(0)   // 
+  const [monthlyExpense, setMonthlyExpense] = useState<number>(0) // 
 
   const getDirection = (type: string, amount: number): 'in' | 'out' => {
     const normalized = (type || '').toLowerCase()
@@ -43,22 +45,22 @@ export default function WalletIndex() {
 
   const getTypeLabel = (type: string) => {
     const normalized = (type || '').toLowerCase()
-    if (normalized === 'recharge') return '充值'
-    if (normalized === 'withdraw') return '提现'
-    if (normalized === 'admin_deposit') return '管理员入账'
-    if (normalized === 's2s_wallet_increase') return 'API 入账'
-    if (normalized === 's2s_wallet_decrease') return 'API 扣费'
-    return type || '交易'
+    if (normalized === 'recharge') return t('pages.wallet.transactionTypes.recharge')
+    if (normalized === 'withdraw') return t('pages.wallet.transactionTypes.withdraw')
+    if (normalized === 'admin_deposit') return t('pages.wallet.transactionTypes.adminDeposit')
+    if (normalized === 's2s_wallet_increase') return t('pages.wallet.transactionTypes.apiIncrease')
+    if (normalized === 's2s_wallet_decrease') return t('pages.wallet.transactionTypes.apiDecrease')
+    return type || t('pages.wallet.transactionTypes.default')
   }
 
   useEffect(() => {
-    // 初始化时加载货币列表并设置默认货币
+    // 
     loadDefaultCurrency()
   }, [])
 
   useEffect(() => {
     if (selectedCurrency) {
-      // 并行加载余额与最近交易
+      // 
       loadData(selectedCurrency.code)
     }
   }, [selectedCurrency])
@@ -67,7 +69,7 @@ export default function WalletIndex() {
     try {
       const response = await getCurrencies()
       if (response.data.length > 0) {
-        // 优先选择USD，如果没有则选择第一个
+        // USD，
         const defaultCurrency = response.data.find(c => c.code === 'USD') || response.data[0]
         setSelectedCurrency(defaultCurrency)
       } else {
@@ -84,13 +86,13 @@ export default function WalletIndex() {
     try {
       const [balanceRes, historyRes] = await Promise.all([
         getBalance(currencyCode),
-        // 拉更多一些记录以覆盖当月，若当月交易较多可在后端增加聚合接口
+        // ，
         getHistory(currencyCode, 200)
       ])
       setBalance(balanceRes.data.balance)
       const list = historyRes.data || []
       setTxs(list)
-      // 计算当月收入/支出（以交易时间为准）
+      // /（）
       const now = new Date()
       const y = now.getFullYear()
       const m = now.getMonth()
@@ -103,10 +105,10 @@ export default function WalletIndex() {
           if (getDirection(type, t.Amount) === 'in') {
             income += Math.abs(t.Amount)
           } else if (getDirection(type, t.Amount) === 'out') {
-            // 后端提现保存为负数，这里取绝对值累加支出
+            // ，
             expense += Math.abs(t.Amount)
           } else {
-            // 兜底：按金额正负划分
+            // ：
             if (t.Amount >= 0) income += t.Amount
             else expense += Math.abs(t.Amount)
           }
@@ -116,7 +118,7 @@ export default function WalletIndex() {
       setMonthlyExpense(expense)
     } catch (error) {
       console.error('Failed to load wallet data:', error)
-      // 出错时保底：余额置空、交易清空
+      // ：、
       setBalance(null)
       setTxs([])
       setMonthlyIncome(0)
@@ -140,7 +142,7 @@ export default function WalletIndex() {
 
   const walletStats = [
     {
-      name: '当前余额',
+      name: t('pages.wallet.stats.currentBalance'),
       value: selectedCurrency && balance !== null 
         ? formatBalance(balance, selectedCurrency)
         : '--',
@@ -149,14 +151,14 @@ export default function WalletIndex() {
       bgColor: 'bg-blue-100'
     },
     {
-      name: '本月收入',
+      name: t('pages.wallet.stats.monthlyIncome'),
       value: selectedCurrency ? `+${formatWithCurrency(monthlyIncome, selectedCurrency)}` : '--',
       icon: ChartBarIcon,
       color: 'text-green-600',
       bgColor: 'bg-green-100'
     },
     {
-      name: '本月支出',
+      name: t('pages.wallet.stats.monthlyExpense'),
       value: selectedCurrency ? `-${formatWithCurrency(monthlyExpense, selectedCurrency)}` : '--',
       icon: ChartBarIcon,
       color: 'text-red-600',
@@ -177,9 +179,9 @@ export default function WalletIndex() {
   return (
     <Layout>
       <div className="space-y-6">
-        {/* 页面标题和货币选择 */}
+        {/*  */}
         <div className="flex items-center justify-between">
-          <PPageHeader title="我的钱包" description="管理您的资金和交易" />
+          <PPageHeader title={t('pages.wallet.title')} description={t('pages.wallet.description')} />
           {!isLoading && (
             <div className="w-64">
               <CurrencySelector
@@ -193,13 +195,15 @@ export default function WalletIndex() {
           )}
         </div>
 
-        {/* 钱包概览 */}
+        {/*  */}
         <div className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg">
           <div className="px-6 py-8">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-blue-100 text-sm font-medium">
-                  当前余额 {selectedCurrency && `(${selectedCurrency.code})`}
+                  {selectedCurrency
+                    ? t('pages.wallet.overview.currentBalanceWithCode', { code: selectedCurrency.code })
+                    : t('pages.wallet.stats.currentBalance')}
                 </p>
                 <p className="text-white text-3xl font-bold">
                   {selectedCurrency && balance !== null 
@@ -208,7 +212,7 @@ export default function WalletIndex() {
                   }
                 </p>
                 <p className="text-blue-100 text-sm mt-1">
-                  最后更新: {new Date().toLocaleString('zh-CN')}
+                  {t('pages.wallet.overview.lastUpdated', { time: new Date().toLocaleString(locale) })}
                 </p>
               </div>
               <div className="h-16 w-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
@@ -218,7 +222,7 @@ export default function WalletIndex() {
           </div>
         </div>
 
-        {/* 统计卡片 */}
+        {/*  */}
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
           {walletStats.map((stat) => (
             <div
@@ -242,11 +246,11 @@ export default function WalletIndex() {
           ))}
         </div>
 
-        {/* 快速操作 */}
+        {/*  */}
         <div className="rounded-xl bg-white shadow-sm">
           <div className="px-4 py-5 sm:p-6">
             <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
-              快速操作
+              {t('pages.wallet.quickActions.title')}
             </h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
               {walletRechargeWithdrawEnabled ? (
@@ -261,15 +265,15 @@ export default function WalletIndex() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <span className="absolute inset-0" aria-hidden="true" />
-                    <p className="text-sm font-medium text-gray-900">充值</p>
-                    <p className="text-sm text-gray-500">向钱包充值资金</p>
+                    <p className="text-sm font-medium text-gray-900">{t('pages.wallet.quickActions.recharge')}</p>
+                    <p className="text-sm text-gray-500">{t('pages.wallet.quickActions.rechargeDesc')}</p>
                   </div>
                 </Link>
               ) : (
                 <div
                   className="relative rounded-lg border border-gray-200 bg-gray-50 px-6 py-5 shadow-sm flex items-center space-x-3 opacity-60 cursor-not-allowed grayscale"
                   aria-disabled
-                  title="钱包充值暂未开放"
+                  title={t('pages.wallet.quickActions.rechargeDisabledTitle')}
                 >
                   <div className="flex-shrink-0">
                     <div className="h-10 w-10 bg-gray-200 rounded-lg flex items-center justify-center">
@@ -277,8 +281,8 @@ export default function WalletIndex() {
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-500">充值</p>
-                    <p className="text-sm text-gray-400">暂未开放</p>
+                    <p className="text-sm font-medium text-gray-500">{t('pages.wallet.quickActions.recharge')}</p>
+                    <p className="text-sm text-gray-400">{t('pages.wallet.quickActions.notAvailable')}</p>
                   </div>
                 </div>
               )}
@@ -295,15 +299,15 @@ export default function WalletIndex() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <span className="absolute inset-0" aria-hidden="true" />
-                    <p className="text-sm font-medium text-gray-900">提现</p>
-                    <p className="text-sm text-gray-500">从钱包提取资金</p>
+                    <p className="text-sm font-medium text-gray-900">{t('pages.wallet.quickActions.withdraw')}</p>
+                    <p className="text-sm text-gray-500">{t('pages.wallet.quickActions.withdrawDesc')}</p>
                   </div>
                 </Link>
               ) : (
                 <div
                   className="relative rounded-lg border border-gray-200 bg-gray-50 px-6 py-5 shadow-sm flex items-center space-x-3 opacity-60 cursor-not-allowed grayscale"
                   aria-disabled
-                  title="钱包提现暂未开放"
+                  title={t('pages.wallet.quickActions.withdrawDisabledTitle')}
                 >
                   <div className="flex-shrink-0">
                     <div className="h-10 w-10 bg-gray-200 rounded-lg flex items-center justify-center">
@@ -311,8 +315,8 @@ export default function WalletIndex() {
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-500">提现</p>
-                    <p className="text-sm text-gray-400">暂未开放</p>
+                    <p className="text-sm font-medium text-gray-500">{t('pages.wallet.quickActions.withdraw')}</p>
+                    <p className="text-sm text-gray-400">{t('pages.wallet.quickActions.notAvailable')}</p>
                   </div>
                 </div>
               )}
@@ -328,8 +332,8 @@ export default function WalletIndex() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <span className="absolute inset-0" aria-hidden="true" />
-                  <p className="text-sm font-medium text-gray-900">交易记录</p>
-                  <p className="text-sm text-gray-500">查看历史交易</p>
+                  <p className="text-sm font-medium text-gray-900">{t('pages.wallet.quickActions.history')}</p>
+                  <p className="text-sm text-gray-500">{t('pages.wallet.quickActions.historyDesc')}</p>
                 </div>
               </Link>
 
@@ -344,30 +348,30 @@ export default function WalletIndex() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <span className="absolute inset-0" aria-hidden="true" />
-                  <p className="text-sm font-medium text-gray-900">兑换 Gift Card</p>
-                  <p className="text-sm text-gray-500">输入卡密兑换余额</p>
+                  <p className="text-sm font-medium text-gray-900">{t('pages.wallet.quickActions.redeemGiftCard')}</p>
+                  <p className="text-sm text-gray-500">{t('pages.wallet.quickActions.redeemGiftCardDesc')}</p>
                 </div>
               </Link>
             </div>
           </div>
         </div>
 
-        {/* 最近交易预览（真实数据） */}
+        {/* （） */}
         <div className="rounded-xl bg-white shadow-sm">
           <div className="px-4 py-5 sm:p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-medium leading-6 text-gray-900">
-                最近交易
+                {t('pages.wallet.recentTransactions.title')}
               </h3>
               <Link
                 to={ROUTES.user.walletHistory}
                 className="text-sm font-medium text-blue-600 hover:text-blue-500"
               >
-                查看全部
+                {t('pages.wallet.recentTransactions.viewAll')}
               </Link>
             </div>
             {txs.length === 0 ? (
-              <div className="text-center py-8 text-sm text-gray-500">暂无最近交易</div>
+              <div className="text-center py-8 text-sm text-gray-500">{t('pages.wallet.recentTransactions.empty')}</div>
             ) : (
               <div className="flow-root">
                 <ul className="-my-5 divide-y divide-gray-200">
@@ -406,13 +410,17 @@ export default function WalletIndex() {
                               {getTypeLabel(tx.Type)} #{tx.ID}
                             </p>
                             <p className="text-sm text-gray-500">
-                              {new Date(tx.CreatedAt).toLocaleString('zh-CN')}
+                              {new Date(tx.CreatedAt).toLocaleString(locale)}
                             </p>
                           </div>
                           <div className="flex-shrink-0 text-right">
                             <p className={`text-sm font-medium ${amountColor}`}>{formatTxAmount()}</p>
                             <PBadge variant={statusVariant}>
-                              {statusLower === 'success' || statusLower === 'completed' ? '已完成' : statusLower === 'pending' ? '处理中' : (tx.Status || '未知')}
+                              {statusLower === 'success' || statusLower === 'completed'
+                                ? t('pages.wallet.recentTransactions.status.completed')
+                                : statusLower === 'pending'
+                                  ? t('pages.wallet.recentTransactions.status.processing')
+                                  : (tx.Status || t('pages.wallet.recentTransactions.status.unknown'))}
                             </PBadge>
                           </div>
                         </div>

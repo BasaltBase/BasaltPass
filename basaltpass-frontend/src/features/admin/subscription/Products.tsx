@@ -12,8 +12,10 @@ import PTextarea from '@ui/PTextarea'
 import PCheckbox from '@ui/PCheckbox'
 import PTable, { PTableColumn, PTableAction } from '@ui/PTable'
 import { ROUTES } from '@constants'
+import { useI18n } from '@shared/i18n'
 
 export default function AdminProducts() {
+  const { t } = useI18n()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -21,10 +23,8 @@ export default function AdminProducts() {
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
-  // 新增：租户筛选相关状态
   const [tenants, setTenants] = useState<AdminTenantResponse[]>([])
   const [selectedTenantId, setSelectedTenantId] = useState<string>('')
-  // 分页状态
   const [page, setPage] = useState<number>(1)
   const [pageSize, setPageSize] = useState<number>(20)
   const [total, setTotal] = useState<number>(0)
@@ -41,9 +41,7 @@ export default function AdminProducts() {
     fetchProducts()
   }, [])
 
-  // 当切换租户筛选时，刷新列表
   useEffect(() => {
-    // 切换租户时重置到第1页
     setPage(1)
   }, [selectedTenantId])
 
@@ -56,7 +54,7 @@ export default function AdminProducts() {
       const res = await adminTenantApi.getTenantList({ page: 1, limit: 1000 })
       setTenants(res.tenants || [])
     } catch (e) {
-      console.error('获取租户列表失败:', e)
+      console.error(t('adminSubscriptionProducts.logs.fetchTenantsFailed'), e)
     }
   }
 
@@ -90,7 +88,7 @@ export default function AdminProducts() {
       setTotal(pager.total)
       setTotalPages(pager.totalPages)
     } catch (error) {
-      console.error('获取产品列表失败:', error)
+      console.error(t('adminSubscriptionProducts.logs.fetchProductsFailed'), error)
     } finally {
       setLoading(false)
     }
@@ -109,7 +107,7 @@ export default function AdminProducts() {
       setFormData({ code: '', name: '', description: '', is_active: true })
       fetchProducts()
     } catch (error) {
-      console.error('操作失败:', error)
+      console.error(t('adminSubscriptionProducts.logs.operationFailed'), error)
     }
   }
 
@@ -119,7 +117,7 @@ export default function AdminProducts() {
       code: product.Code,
       name: product.Name,
       description: product.Description || '',
-      is_active: true // 假设默认激活
+      is_active: true
     })
     setShowModal(true)
   }
@@ -139,7 +137,7 @@ export default function AdminProducts() {
       setShowDeleteModal(false)
       setDeleteTarget(null)
     } catch (error) {
-      console.error('删除失败:', error)
+      console.error(t('adminSubscriptionProducts.logs.deleteFailed'), error)
     } finally {
       setDeleting(false)
     }
@@ -157,57 +155,55 @@ export default function AdminProducts() {
   }, [tenants])
 
   const renderTenantInfo = (tenantId?: number) => {
-    if (!tenantId) return <span className="text-gray-400">系统级</span>
-    const t = tenantMap.get(tenantId)
-    if (!t) return <span className="text-gray-400">租户 #{tenantId}</span>
+    if (!tenantId) return <span className="text-gray-400">{t('adminSubscriptionProducts.tenant.systemLevel')}</span>
+    const tenant = tenantMap.get(tenantId)
+    if (!tenant) return <span className="text-gray-400">{t('adminSubscriptionProducts.tenant.tenantId', { id: tenantId })}</span>
     return (
       <span>
-        租户: {t.name} ({t.code}) · 计划: {t.plan} · 状态: {t.status}
+        {t('adminSubscriptionProducts.tenant.summary', { name: tenant.name, code: tenant.code, plan: tenant.plan, status: tenant.status })}
       </span>
     )
   }
 
   if (loading) {
     return (
-      <AdminLayout title="产品管理">
+      <AdminLayout title={t('adminSubscriptionProducts.layoutTitle')}>
         <div className="flex justify-center items-center h-64">
-          <div className="text-lg">加载中...</div>
+          <div className="text-lg">{t('adminSubscriptionProducts.common.loading')}</div>
         </div>
       </AdminLayout>
     )
   }
 
   return (
-    <AdminLayout title="产品管理">
+    <AdminLayout title={t('adminSubscriptionProducts.layoutTitle')}>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-semibold text-gray-900">产品管理</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">{t('adminSubscriptionProducts.title')}</h1>
           <div className="flex items-center space-x-3">
-            {/* 新增：租户筛选 */}
             <PSelect
               value={selectedTenantId}
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedTenantId(e.target.value)}
             >
-              <option value="">全部租户</option>
+              <option value="">{t('adminSubscriptionProducts.filters.allTenants')}</option>
               {tenants.map(t => (
                 <option key={t.id} value={t.id}>{t.name} ({t.code})</option>
               ))}
             </PSelect>
-            <PButton type="button" onClick={() => setShowModal(true)} leftIcon={<PlusIcon className="h-5 w-5" />}>新建产品</PButton>
+            <PButton type="button" onClick={() => setShowModal(true)} leftIcon={<PlusIcon className="h-5 w-5" />}>{t('adminSubscriptionProducts.actions.createProduct')}</PButton>
           </div>
         </div>
-        {/* 产品列表（统一表格组件） */}
         {(() => {
           const columns: PTableColumn<Product>[] = [
-            { key: 'name', title: '名称', dataIndex: 'Name' as any },
-            { key: 'code', title: '代码', dataIndex: 'Code' as any },
-            { key: 'desc', title: '描述', render: (row) => row.Description || '-' },
-            { key: 'tenant', title: '租户', render: (row) => renderTenantInfo(row.TenantID as unknown as number) },
+            { key: 'name', title: t('adminSubscriptionProducts.table.name'), dataIndex: 'Name' as any },
+            { key: 'code', title: t('adminSubscriptionProducts.table.code'), dataIndex: 'Code' as any },
+            { key: 'desc', title: t('adminSubscriptionProducts.table.description'), render: (row) => row.Description || '-' },
+            { key: 'tenant', title: t('adminSubscriptionProducts.table.tenant'), render: (row) => renderTenantInfo(row.TenantID as unknown as number) },
           ]
 
           const actions: PTableAction<Product>[] = [
-            { key: 'edit', label: '编辑', icon: <PencilIcon className="h-4 w-4" />, variant: 'secondary', size: 'sm', onClick: (row) => handleEdit(row) },
-            { key: 'delete', label: '删除', icon: <TrashIcon className="h-4 w-4" />, variant: 'danger', size: 'sm', confirm: '确定要删除该产品吗？此操作无法撤销。', onClick: (row) => handleDeleteClick(row) },
+            { key: 'edit', label: t('adminSubscriptionProducts.actions.edit'), icon: <PencilIcon className="h-4 w-4" />, variant: 'secondary', size: 'sm', onClick: (row) => handleEdit(row) },
+            { key: 'delete', label: t('adminSubscriptionProducts.actions.delete'), icon: <TrashIcon className="h-4 w-4" />, variant: 'danger', size: 'sm', confirm: t('adminSubscriptionProducts.confirm.deleteProduct'), onClick: (row) => handleDeleteClick(row) },
           ]
 
           return (
@@ -216,15 +212,14 @@ export default function AdminProducts() {
               data={products}
               rowKey={(row) => row.ID}
               actions={actions}
-              emptyText="暂无产品数据"
+              emptyText={t('adminSubscriptionProducts.empty.noProducts')}
               striped
             />
           )
         })()}
 
-        {/* 分页控件 */}
         <div className="flex items-center justify-between py-3">
-          <div className="text-sm text-gray-600">共 {total} 条 · 第 {page} / {totalPages} 页</div>
+          <div className="text-sm text-gray-600">{t('adminSubscriptionProducts.pagination.summary', { total, page, totalPages })}</div>
           <div className="flex items-center space-x-2">
             <PButton
               type="button"
@@ -232,21 +227,21 @@ export default function AdminProducts() {
               size="sm"
               disabled={page <= 1}
               onClick={() => setPage(p => Math.max(1, p - 1))}
-            >上一页</PButton>
+            >{t('adminSubscriptionProducts.pagination.prev')}</PButton>
             <PButton
               type="button"
               variant="secondary"
               size="sm"
               disabled={page >= totalPages}
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-            >下一页</PButton>
+            >{t('adminSubscriptionProducts.pagination.next')}</PButton>
             <PSelect
               value={pageSize}
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) => { setPageSize(parseInt(e.target.value)); setPage(1) }}
             >
-              <option value={10}>每页 10</option>
-              <option value={20}>每页 20</option>
-              <option value={50}>每页 50</option>
+              <option value={10}>{t('adminSubscriptionProducts.pagination.pageSize', { size: 10 })}</option>
+              <option value={20}>{t('adminSubscriptionProducts.pagination.pageSize', { size: 20 })}</option>
+              <option value={50}>{t('adminSubscriptionProducts.pagination.pageSize', { size: 50 })}</option>
             </PSelect>
           </div>
         </div>
@@ -256,56 +251,52 @@ export default function AdminProducts() {
           <div className="w-3/4 max-w-4xl p-5 border shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <h3 className="text-lg font-medium text-gray-900 mb-6">
-                {editingProduct ? '编辑产品' : '新建产品'}
+                {editingProduct ? t('adminSubscriptionProducts.modal.editTitle') : t('adminSubscriptionProducts.modal.createTitle')}
               </h3>
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* 第一行：产品代码和产品名称 */}
                 <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">产品代码</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminSubscriptionProducts.form.code')}</label>
                     <PInput
                       type="text"
                       required
                       disabled={!!editingProduct}
                       value={formData.code}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, code: e.target.value })}
-                      placeholder="请输入产品代码"
+                      placeholder={t('adminSubscriptionProducts.form.codePlaceholder')}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">产品名称</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminSubscriptionProducts.form.name')}</label>
                     <PInput
                       type="text"
                       required
                       value={formData.name}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="请输入产品名称"
+                      placeholder={t('adminSubscriptionProducts.form.namePlaceholder')}
                     />
                   </div>
                 </div>
 
-                {/* 第二行：产品描述（全宽） */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">产品描述</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminSubscriptionProducts.form.description')}</label>
                   <PTextarea
                     value={formData.description}
                     onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, description: e.target.value })}
                     rows={4}
-                    placeholder="请输入产品描述"
+                    placeholder={t('adminSubscriptionProducts.form.descriptionPlaceholder')}
                   />
                 </div>
 
-                {/* 第三行：激活状态 */}
                 <div className="flex items-center">
                   <PCheckbox
                     checked={formData.is_active}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, is_active: e.target.checked })}
                   >
-                    激活状态
+                    {t('adminSubscriptionProducts.form.activeStatus')}
                   </PCheckbox>
                 </div>
 
-                {/* 按钮区域 */}
                 <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
                   <PButton
                     type="button"
@@ -316,10 +307,10 @@ export default function AdminProducts() {
                       setFormData({ code: '', name: '', description: '', is_active: true })
                     }}
                   >
-                    取消
+                    {t('adminSubscriptionProducts.actions.cancel')}
                   </PButton>
                   <PButton type="submit">
-                    {editingProduct ? '更新' : '创建'}
+                    {editingProduct ? t('adminSubscriptionProducts.actions.update') : t('adminSubscriptionProducts.actions.create')}
                   </PButton>
                 </div>
               </form>
@@ -328,7 +319,6 @@ export default function AdminProducts() {
         </div>
       )}
 
-      {/* 删除产品确认模态框 */}
       {showDeleteModal && deleteTarget && (
         <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
@@ -337,18 +327,18 @@ export default function AdminProducts() {
                 <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
               </div>
               <h3 className="text-lg font-medium text-gray-900 mt-4">
-                确认删除产品
+                {t('adminSubscriptionProducts.deleteModal.title')}
               </h3>
               <div className="mt-2 px-7 py-3">
                 <p className="text-sm text-gray-500">
-                  您确定要删除以下产品吗？
+                  {t('adminSubscriptionProducts.deleteModal.confirmText')}
                 </p>
                 <div className="mt-3 p-3 bg-gray-50 rounded-md">
                   <p className="text-sm font-medium text-gray-900">
                     {deleteTarget.Name}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
-                    代码: {deleteTarget.Code}
+                    {t('adminSubscriptionProducts.deleteModal.code', { code: deleteTarget.Code })}
                   </p>
                   {deleteTarget.Description && (
                     <p className="text-sm text-gray-500 mt-1">
@@ -357,7 +347,7 @@ export default function AdminProducts() {
                   )}
                 </div>
                 <p className="text-sm text-gray-500 mt-3">
-                  删除后，该产品及其相关的套餐和价格将无法恢复。
+                  {t('adminSubscriptionProducts.deleteModal.warning')}
                 </p>
               </div>
               <div className="flex justify-center space-x-3 mt-4">
@@ -367,7 +357,7 @@ export default function AdminProducts() {
                   onClick={handleDeleteCancel}
                   disabled={deleting}
                 >
-                  取消
+                  {t('adminSubscriptionProducts.actions.cancel')}
                 </PButton>
                 <PButton
                   type="button"
@@ -375,7 +365,7 @@ export default function AdminProducts() {
                   onClick={handleDeleteConfirm}
                   disabled={deleting}
                 >
-                  {deleting ? '删除中...' : '确认删除'}
+                  {deleting ? t('adminSubscriptionProducts.deleteModal.deleting') : t('adminSubscriptionProducts.deleteModal.confirmDelete')}
                 </PButton>
               </div>
             </div>

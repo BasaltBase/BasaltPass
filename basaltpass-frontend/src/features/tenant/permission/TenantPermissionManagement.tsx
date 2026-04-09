@@ -28,9 +28,11 @@ import {
   type CreateTenantPermissionRequest
 } from '@api/tenant/tenantPermission'
 import { ROUTES } from '@constants'
+import { useI18n } from '@shared/i18n'
 
 export default function TenantPermissionManagement() {
   const navigate = useNavigate()
+  const { t, locale } = useI18n()
   
   const [permissions, setPermissions] = useState<TenantPermission[]>([])
   const [categories, setCategories] = useState<string[]>([])
@@ -43,13 +45,13 @@ export default function TenantPermissionManagement() {
 
   const { pagination, setPage, setTotal, resetPage } = usePagination({ pageSize })
 
-  // 模态框状态
+  // 
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [editingPermission, setEditingPermission] = useState<TenantPermission | null>(null)
   const [submitting, setSubmitting] = useState(false)
   
-  // 表单数据
+  // 
   const [formData, setFormData] = useState<CreateTenantPermissionRequest>({
     code: '',
     name: '',
@@ -79,8 +81,8 @@ export default function TenantPermissionManagement() {
       setTotal(response.data.data.pagination.total)
       setError('')
     } catch (err: any) {
-      console.error('获取权限列表失败:', err)
-      setError(err.response?.data?.error || '获取权限列表失败')
+      console.error(t('tenantPermissionManagement.logs.loadPermissionsFailed'), err)
+      setError(err.response?.data?.error || t('tenantPermissionManagement.errors.loadPermissionsFailed'))
     } finally {
       setLoading(false)
     }
@@ -91,7 +93,7 @@ export default function TenantPermissionManagement() {
       const response = await getTenantPermissionCategories()
       setCategories(response.data.data.categories || [])
     } catch (err: any) {
-      console.error('获取分类失败:', err)
+      console.error(t('tenantPermissionManagement.logs.loadCategoriesFailed'), err)
     }
   }
 
@@ -118,17 +120,17 @@ export default function TenantPermissionManagement() {
   }
 
   const handleDeletePermission = async (permission: TenantPermission) => {
-    if (!await uiConfirm(`确定要删除权限"${permission.name}"吗？这将会影响所有使用此权限的角色。`)) {
+    if (!await uiConfirm(t('tenantPermissionManagement.confirm.deletePermission', { name: permission.name }))) {
       return
     }
 
     try {
       await deleteTenantPermission(permission.id)
       await fetchPermissions()
-      uiAlert('权限删除成功')
+      uiAlert(t('tenantPermissionManagement.success.deleteSuccess'))
     } catch (err: any) {
-      console.error('删除权限失败:', err)
-      uiAlert(err.response?.data?.error || '删除权限失败')
+      console.error(t('tenantPermissionManagement.logs.deleteFailed'), err)
+      uiAlert(err.response?.data?.error || t('tenantPermissionManagement.errors.deleteFailed'))
     }
   }
 
@@ -137,22 +139,22 @@ export default function TenantPermissionManagement() {
       setSubmitting(true)
       
       if (editingPermission) {
-        // 更新权限
+        // 
         await updateTenantPermission(editingPermission.id, formData)
-        uiAlert('权限更新成功')
+        uiAlert(t('tenantPermissionManagement.success.updateSuccess'))
         setShowEditModal(false)
       } else {
-        // 创建权限
+        // 
         await createTenantPermission(formData)
-        uiAlert('权限创建成功')
+        uiAlert(t('tenantPermissionManagement.success.createSuccess'))
         setShowCreateModal(false)
       }
       
       await fetchPermissions()
       await fetchCategories()
     } catch (err: any) {
-      console.error('保存权限失败:', err)
-      uiAlert(err.response?.data?.error || '保存权限失败')
+      console.error(t('tenantPermissionManagement.logs.saveFailed'), err)
+      uiAlert(err.response?.data?.error || t('tenantPermissionManagement.errors.saveFailed'))
     } finally {
       setSubmitting(false)
     }
@@ -160,28 +162,28 @@ export default function TenantPermissionManagement() {
 
   const columns: PTableColumn<TenantPermission>[] = [
     {
-      title: '权限代码',
+      title: t('tenantPermissionManagement.table.code'),
       key: 'code',
       render: (permission) => (
         <div className="font-mono text-sm text-blue-600">{permission.code}</div>
       )
     },
     {
-      title: '权限名称',
+      title: t('tenantPermissionManagement.table.name'),
       key: 'name',
       render: (permission) => (
         <div className="font-medium text-gray-900">{permission.name}</div>
       )
     },
     {
-      title: '分类',
+      title: t('tenantPermissionManagement.table.category'),
       key: 'category',
       render: (permission) => (
         <PBadge variant="purple" icon={<TagIcon className="h-3 w-3" />}>{permission.category}</PBadge>
       )
     },
     {
-      title: '描述',
+      title: t('tenantPermissionManagement.table.description'),
       key: 'description',
       render: (permission) => (
         <div className="text-sm text-gray-600 max-w-md truncate">
@@ -190,11 +192,11 @@ export default function TenantPermissionManagement() {
       )
     },
     {
-      title: '创建时间',
+      title: t('tenantPermissionManagement.table.createdAt'),
       key: 'created_at',
       render: (permission) => (
         <div className="text-sm text-gray-500">
-          {new Date(permission.created_at).toLocaleDateString('zh-CN')}
+          {new Date(permission.created_at).toLocaleDateString(locale)}
         </div>
       )
     }
@@ -202,12 +204,12 @@ export default function TenantPermissionManagement() {
 
   const actions: PTableAction<TenantPermission>[] = [
     {
-      label: '编辑',
+      label: t('tenantPermissionManagement.actions.edit'),
       onClick: handleEditPermission,
       icon: <PencilIcon className="h-4 w-4" />
     },
     {
-      label: '删除',
+      label: t('tenantPermissionManagement.actions.delete'),
       onClick: handleDeletePermission,
       icon: <TrashIcon className="h-4 w-4" />,
       danger: true
@@ -216,16 +218,16 @@ export default function TenantPermissionManagement() {
 
   if (error && permissions.length === 0) {
     return (
-      <TenantLayout title="权限管理">
+      <TenantLayout title={t('tenantPermissionManagement.layoutTitle')}>
         <div className="space-y-6">
           <div className="bg-red-50 border border-red-200 rounded-lg p-6">
             <div className="flex items-center">
               <ExclamationTriangleIcon className="h-6 w-6 text-red-600 mr-3" />
               <div className="flex-1">
-                <h3 className="text-lg font-medium text-red-900">加载失败</h3>
+                <h3 className="text-lg font-medium text-red-900">{t('tenantPermissionManagement.state.loadFailed')}</h3>
                 <p className="mt-1 text-sm text-red-700">{error}</p>
               </div>
-              <PButton onClick={() => { setError(''); fetchPermissions(); }}>重试</PButton>
+              <PButton onClick={() => { setError(''); fetchPermissions(); }}>{t('tenantPermissionManagement.actions.retry')}</PButton>
             </div>
           </div>
         </div>
@@ -234,27 +236,27 @@ export default function TenantPermissionManagement() {
   }
 
   return (
-    <TenantLayout title="权限管理">
+    <TenantLayout title={t('tenantPermissionManagement.layoutTitle')}>
       <div className="space-y-6">
-        {/* 页面头部 */}
+        {/*  */}
         <PPageHeader
-          title="租户权限管理"
-          description="管理租户级别的权限和访问控制"
+          title={t('tenantPermissionManagement.header.title')}
+          description={t('tenantPermissionManagement.header.description')}
           icon={<KeyIcon className="h-8 w-8 text-blue-600" />}
           actions={
             <div className="flex space-x-3">
-              <PButton variant="secondary" onClick={() => navigate(ROUTES.tenant.roles)} leftIcon={<ShieldCheckIcon className="h-4 w-4" />}>角色管理</PButton>
-              <PButton onClick={handleCreatePermission} leftIcon={<PlusIcon className="h-4 w-4" />}>创建权限</PButton>
+              <PButton variant="secondary" onClick={() => navigate(ROUTES.tenant.roles)} leftIcon={<ShieldCheckIcon className="h-4 w-4" />}>{t('tenantPermissionManagement.actions.roleManagement')}</PButton>
+              <PButton onClick={handleCreatePermission} leftIcon={<PlusIcon className="h-4 w-4" />}>{t('tenantPermissionManagement.actions.createPermission')}</PButton>
             </div>
           }
         />
 
-        {/* 搜索和过滤 */}
+        {/*  */}
         <div className="bg-white shadow rounded-lg p-6">
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1">
               <PInput
-                placeholder="搜索权限名称、代码或描述..."
+                placeholder={t('tenantPermissionManagement.search.placeholder')}
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm((e.target as HTMLInputElement).value)
@@ -271,7 +273,7 @@ export default function TenantPermissionManagement() {
                   setPagination(prev => ({ ...prev, current: 1 }))
                 }}
               >
-                <option value="">所有分类</option>
+                <option value="">{t('tenantPermissionManagement.search.allCategories')}</option>
                 {categories.map(category => (
                   <option key={category} value={category}>{category}</option>
                 ))}
@@ -280,7 +282,7 @@ export default function TenantPermissionManagement() {
           </div>
         </div>
 
-        {/* 权限列表 */}
+        {/*  */}
         <div>
           <PTable<TenantPermission>
             data={permissions}
@@ -288,10 +290,10 @@ export default function TenantPermissionManagement() {
             actions={actions}
             rowKey={(row) => String(row.id)}
             loading={loading}
-            emptyText={searchTerm || selectedCategory ? '未找到匹配的权限' : '还没有创建任何权限'}
+            emptyText={searchTerm || selectedCategory ? t('tenantPermissionManagement.empty.filtered') : t('tenantPermissionManagement.empty.noData')}
             emptyContent={!searchTerm && !selectedCategory ? (
               <PButton onClick={handleCreatePermission} leftIcon={<PlusIcon className="h-4 w-4" />}>
-                创建权限
+                {t('tenantPermissionManagement.actions.createPermission')}
               </PButton>
             ) : undefined}
             pagination={{
@@ -304,10 +306,10 @@ export default function TenantPermissionManagement() {
         </div>
       </div>
 
-      {/* 创建权限模态框 */}
+      {/*  */}
       {showCreateModal && (
         <PermissionModal
-          title="创建权限"
+          title={t('tenantPermissionManagement.modal.createTitle')}
           formData={formData}
           setFormData={setFormData}
           submitting={submitting}
@@ -317,10 +319,10 @@ export default function TenantPermissionManagement() {
         />
       )}
 
-      {/* 编辑权限模态框 */}
+      {/*  */}
       {showEditModal && (
         <PermissionModal
-          title="编辑权限"
+          title={t('tenantPermissionManagement.modal.editTitle')}
           formData={formData}
           setFormData={setFormData}
           submitting={submitting}
@@ -334,7 +336,7 @@ export default function TenantPermissionManagement() {
   )
 }
 
-// 权限模态框组件
+// 
 const PermissionModal: React.FC<{
   title: string
   formData: CreateTenantPermissionRequest
@@ -345,6 +347,8 @@ const PermissionModal: React.FC<{
   isEdit?: boolean
   categories: string[]
 }> = ({ title, formData, setFormData, submitting, onSubmit, onClose, isEdit = false, categories }) => {
+  const { t } = useI18n()
+
   return (
     <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
       <div className="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
@@ -361,10 +365,10 @@ const PermissionModal: React.FC<{
 
           <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }}>
             <div className="space-y-4">
-              {/* 权限代码 */}
+              {/*  */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  权限代码 <span className="text-red-500">*</span>
+                  {t('tenantPermissionManagement.modal.codeLabel')} <span className="text-red-500">{t('tenantPermissionManagement.modal.required')}</span>
                 </label>
                 <PInput
                   type="text"
@@ -372,31 +376,31 @@ const PermissionModal: React.FC<{
                   disabled={isEdit}
                   value={formData.code}
                   onChange={(e) => setFormData({ ...formData, code: (e.target as HTMLInputElement).value })}
-                  placeholder="如: tenant.users.view"
+                  placeholder={t('tenantPermissionManagement.modal.codePlaceholder')}
                 />
                 <p className="mt-1 text-xs text-gray-500">
-                  权限代码一旦创建后不可修改，请谨慎填写
+                  {t('tenantPermissionManagement.modal.codeHint')}
                 </p>
               </div>
 
-              {/* 权限名称 */}
+              {/*  */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  权限名称 <span className="text-red-500">*</span>
+                  {t('tenantPermissionManagement.modal.nameLabel')} <span className="text-red-500">{t('tenantPermissionManagement.modal.required')}</span>
                 </label>
                 <PInput
                   type="text"
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: (e.target as HTMLInputElement).value })}
-                  placeholder="如: 查看用户"
+                  placeholder={t('tenantPermissionManagement.modal.namePlaceholder')}
                 />
               </div>
 
-              {/* 权限分类 */}
+              {/*  */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  权限分类 <span className="text-red-500">*</span>
+                  {t('tenantPermissionManagement.modal.categoryLabel')} <span className="text-red-500">{t('tenantPermissionManagement.modal.required')}</span>
                 </label>
                 {categories.length > 0 ? (
                   <PSelect
@@ -404,11 +408,11 @@ const PermissionModal: React.FC<{
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: (e.target as HTMLSelectElement).value })}
                   >
-                    <option value="">选择分类</option>
+                    <option value="">{t('tenantPermissionManagement.modal.selectCategory')}</option>
                     {categories.map(cat => (
                       <option key={cat} value={cat}>{cat}</option>
                     ))}
-                    <option value="__new__">+ 创建新分类</option>
+                    <option value="__new__">{t('tenantPermissionManagement.modal.newCategory')}</option>
                   </PSelect>
                 ) : null}
                 {(!categories.length || formData.category === '__new__') && (
@@ -417,33 +421,33 @@ const PermissionModal: React.FC<{
                     required
                     value={formData.category === '__new__' ? '' : formData.category}
                     onChange={(e) => setFormData({ ...formData, category: (e.target as HTMLInputElement).value })}
-                    placeholder="如: 用户管理"
+                    placeholder={t('tenantPermissionManagement.modal.newCategoryPlaceholder')}
                     className="mt-2"
                   />
                 )}
               </div>
 
-              {/* 描述 */}
+              {/*  */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  描述
+                  {t('tenantPermissionManagement.modal.descriptionLabel')}
                 </label>
                 <PTextarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: (e.target as HTMLTextAreaElement).value })}
-                  placeholder="描述此权限的用途和作用..."
+                  placeholder={t('tenantPermissionManagement.modal.descriptionPlaceholder')}
                   rows={3}
                 />
               </div>
             </div>
 
-            {/* 按钮 */}
+            {/*  */}
             <div className="mt-6 flex justify-end space-x-3">
               <PButton type="button" variant="secondary" onClick={onClose} disabled={submitting}>
-                取消
+                {t('tenantPermissionManagement.actions.cancel')}
               </PButton>
               <PButton type="submit" disabled={submitting}>
-                {submitting ? '提交中...' : (isEdit ? '更新' : '创建')}
+                {submitting ? t('tenantPermissionManagement.actions.submitting') : (isEdit ? t('tenantPermissionManagement.actions.update') : t('tenantPermissionManagement.actions.create'))}
               </PButton>
             </div>
           </form>

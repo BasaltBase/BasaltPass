@@ -2,23 +2,23 @@
 sidebar_position: 9
 ---
 
-# Coupon System
+# 优惠券系统
 
-The Tenant Coupon System allows organizations to manage their own discounts and promotions independently.
+租户优惠券系统允许组织独立管理自己的折扣和促销活动。
 
-## Features
+## 功能特性
 
--   **Tenant Isolation**: Coupons are unique to a tenant and cannot be used elsewhere.
--   **Discount Types**:
-    -   **Percentage**: e.g., 20% off.
-    -   **Fixed Amount**: e.g., $10 off.
--   **Constraints**: Max redemptions, Expiration dates.
+-   **租户隔离**: 优惠券仅属于特定租户，不能在其他地方使用。
+-   **折扣类型**:
+    -   **百分比**: 例如打 8 折。
+    -   **固定金额**: 例如减 10 元。
+-   **约束**: 最大兑换次数、过期日期。
 
-## API Usage
+## API 使用
 
-All endpoints are under `/api/v1/admin/subscription/coupons` (Tenant Admin).
+所有端点位于 `/api/v1/admin/subscription/coupons` (租户管理员)。
 
-### Create Coupon
+### 创建优惠券
 
 ```http
 POST /api/v1/admin/subscription/coupons
@@ -33,16 +33,16 @@ Authorization: Bearer <tenant_admin_token>
   "max_redemptions": 100
 }
 ```
-*Note: `discount_value` for percentage is in basis points (2000 = 20.00%).*
+*注意: 百分比的 `discount_value` 以基点表示 (2000 = 20.00%)。*
 
-### Validate Coupon
+### 验证优惠券
 
 ```http
 GET /api/v1/admin/subscription/coupons/WELCOME20/validate
 ```
 
-## Data Model
+## 数据模型
 
--   **Code**: Unique identifier (within tenant).
--   **IsActive**: Whether the coupon can be redeemed.
--   **RedeemedCount**: Tracks usage.
+-   **Code**: 唯一标识符 (租户内)。
+-   **IsActive**: 优惠券是否可兑换。
+-   **RedeemedCount**: 跟踪使用次数。

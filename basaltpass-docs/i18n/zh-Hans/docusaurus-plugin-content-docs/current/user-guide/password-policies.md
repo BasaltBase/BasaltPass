@@ -2,21 +2,21 @@
 sidebar_position: 4
 ---
 
-# Password Policies
+# 密码策略
 
-Admins can configure password complexity requirements to enhance security.
+管理员可以配置密码复杂度要求以增强安全性。
 
-## Configuration Options
+## 配置选项
 
--   **Minimum Length**: Minimum number of characters.
--   **Character Types**: Require uppercase, lowercase, numbers, or special symbols.
--   **History**: Prevent reuse of recent passwords.
+-   **最小长度**: 最少字符数。
+-   **字符类型**: 要求大写字母、小写字母、数字或特殊符号。
+-   **历史记录**: 防止重复使用最近的密码。
 
-## Enforcement
+## 执行时机
 
-Policies are enforced during:
-1.  User Registration.
-2.  Password Change (by user).
-3.  Password Reset (via email).
+策略在以下情况下执行：
+1.  用户注册。
+2.  用户修改密码。
+3.  通过电子邮件重置密码。
 
-Errors will be returned if the new password does not meet the criteria.
+如果新密码不符合条件，将返回错误。

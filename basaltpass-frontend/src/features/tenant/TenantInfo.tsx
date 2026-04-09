@@ -17,8 +17,10 @@ import {
 import TenantLayout from '@features/tenant/components/TenantLayout'
 import { tenantApi, TenantInfo } from '@api/tenant/tenant'
 import { PSkeleton, PBadge, PButton, PCard, PInput, PPageHeader } from '@ui'
+import { useI18n } from '@shared/i18n'
 
 export default function TenantInfoPage() {
+  const { t, locale } = useI18n()
   const [tenantInfo, setTenantInfo] = useState<TenantInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -35,15 +37,15 @@ export default function TenantInfoPage() {
       const response = await tenantApi.getTenantInfo()
       setTenantInfo(response.data)
     } catch (err: any) {
-      console.error('获取租户信息失败:', err)
-      setError(err.response?.data?.error || '获取租户信息失败')
+      console.error(t('tenantInfoPage.logs.fetchTenantInfoFailed'), err)
+      setError(err.response?.data?.error || t('tenantInfoPage.errors.fetchTenantInfoFailed'))
       
-      // 如果获取租户信息失败，尝试获取调试信息
+      // ，
       try {
         const debugResponse = await tenantApi.debugUserStatus()
         setDebugInfo(debugResponse)
       } catch (debugErr) {
-        console.error('获取调试信息失败:', debugErr)
+        console.error(t('tenantInfoPage.logs.fetchDebugInfoFailed'), debugErr)
       }
     } finally {
       setLoading(false)
@@ -51,14 +53,14 @@ export default function TenantInfoPage() {
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('zh-CN')
+    return new Date(dateString).toLocaleString(locale)
   }
 
   const getPlanDisplayName = (plan: string) => {
     const planNames = {
-      free: '免费版',
-      pro: '专业版',
-      enterprise: '企业版'
+      free: t('tenantInfoPage.plan.free'),
+      pro: t('tenantInfoPage.plan.pro'),
+      enterprise: t('tenantInfoPage.plan.enterprise')
     }
     return planNames[plan as keyof typeof planNames] || plan
   }
@@ -83,9 +85,9 @@ export default function TenantInfoPage() {
 
   const getStatusDisplayName = (status: string) => {
     const statusNames = {
-      active: '正常',
-      suspended: '暂停',
-      deleted: '已删除'
+      active: t('tenantInfoPage.status.active'),
+      suspended: t('tenantInfoPage.status.suspended'),
+      deleted: t('tenantInfoPage.status.deleted')
     }
     return statusNames[status as keyof typeof statusNames] || status
   }
@@ -96,7 +98,7 @@ export default function TenantInfoPage() {
       setCopiedField(field)
       setTimeout(() => setCopiedField(null), 2000)
     } catch (err) {
-      console.error('复制失败:', err)
+      console.error(t('tenantInfoPage.logs.copyFailed'), err)
     }
   }
 
@@ -112,7 +114,7 @@ export default function TenantInfoPage() {
 
   if (loading) {
     return (
-      <TenantLayout title="租户信息">
+      <TenantLayout title={t('tenantInfoPage.layoutTitle')}>
         <div className="py-6">
           <PSkeleton.Content cards={3} />
         </div>
@@ -122,27 +124,27 @@ export default function TenantInfoPage() {
 
   if (error) {
     return (
-      <TenantLayout title="租户信息">
+      <TenantLayout title={t('tenantInfoPage.layoutTitle')}>
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center max-w-2xl">
             <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-red-500" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">{error}</h3>
             
-            {/* 调试信息 */}
+            {/*  */}
             {debugInfo && (
               <div className="mt-6 p-4 bg-gray-50 rounded-lg text-left">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">调试信息:</h4>
+                <h4 className="text-sm font-medium text-gray-700 mb-2">{t('tenantInfoPage.debug.title')}</h4>
                 <div className="text-xs text-gray-600 space-y-1">
-                  <div>用户ID: {debugInfo.user_id}</div>
-                  <div>租户ID: {debugInfo.tenant_id || '未设置'}</div>
-                  <div>用户邮箱: {debugInfo.user?.email}</div>
-                  <div>租户关联数量: {debugInfo.tenant_associations?.length || 0}</div>
+                  <div>{t('tenantInfoPage.debug.userId', { value: debugInfo.user_id })}</div>
+                  <div>{t('tenantInfoPage.debug.tenantId', { value: debugInfo.tenant_id || t('tenantInfoPage.values.notSet') })}</div>
+                  <div>{t('tenantInfoPage.debug.userEmail', { value: debugInfo.user?.email })}</div>
+                  <div>{t('tenantInfoPage.debug.tenantAssociationsCount', { count: debugInfo.tenant_associations?.length || 0 })}</div>
                   {debugInfo.tenant_associations?.length > 0 && (
                     <div className="mt-2">
-                      <div className="font-medium">租户关联:</div>
+                      <div className="font-medium">{t('tenantInfoPage.debug.tenantAssociations')}</div>
                       {debugInfo.tenant_associations.map((ta: any, index: number) => (
                         <div key={index} className="ml-2">
-                          - {ta.Tenant?.name} (角色: {ta.Role})
+                          - {t('tenantInfoPage.debug.tenantAssociationItem', { name: ta.Tenant?.name, role: ta.Role })}
                         </div>
                       ))}
                     </div>
@@ -152,7 +154,7 @@ export default function TenantInfoPage() {
             )}
             
             <div className="mt-6">
-              <PButton onClick={fetchTenantInfo}>重试</PButton>
+              <PButton onClick={fetchTenantInfo}>{t('tenantInfoPage.actions.retry')}</PButton>
             </div>
           </div>
         </div>
@@ -162,11 +164,11 @@ export default function TenantInfoPage() {
 
   if (!tenantInfo) {
     return (
-      <TenantLayout title="租户信息">
+      <TenantLayout title={t('tenantInfoPage.layoutTitle')}>
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <InformationCircleIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">未找到租户信息</h3>
+            <h3 className="mt-2 text-sm font-medium text-gray-900">{t('tenantInfoPage.empty.notFound')}</h3>
           </div>
         </div>
       </TenantLayout>
@@ -174,52 +176,52 @@ export default function TenantInfoPage() {
   }
 
   return (
-      <TenantLayout title="租户信息">
+      <TenantLayout title={t('tenantInfoPage.layoutTitle')}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <PPageHeader
-          title="租户信息"
-          description="查看您的租户的基础信息和统计数据"
+          title={t('tenantInfoPage.title')}
+          description={t('tenantInfoPage.description')}
           icon={<BuildingOffice2Icon className="h-8 w-8 text-blue-600" />}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* 基础信息 */}
+          {/*  */}
           <div className="lg:col-span-2">
             <PCard className="rounded-xl p-0 shadow-sm">
               <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900">基础信息</h3>
+                <h3 className="text-lg font-medium text-gray-900">{t('tenantInfoPage.sections.basicInfo')}</h3>
               </div>
               <div className="px-6 py-6">
                 <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">租户名称</dt>
+                    <dt className="text-sm font-medium text-gray-500">{t('tenantInfoPage.fields.tenantName')}</dt>
                     <dd className="mt-1 text-sm text-gray-900 font-semibold">{tenantInfo.name}</dd>
                   </div>
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">租户代码</dt>
+                    <dt className="text-sm font-medium text-gray-500">{t('tenantInfoPage.fields.tenantCode')}</dt>
                     <dd className="mt-1 text-sm text-gray-900 font-mono">{tenantInfo.code}</dd>
                   </div>
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">套餐类型</dt>
+                    <dt className="text-sm font-medium text-gray-500">{t('tenantInfoPage.fields.planType')}</dt>
                     <dd className="mt-1">
                       <PBadge variant={getPlanVariant(tenantInfo.plan) as any}>{getPlanDisplayName(tenantInfo.plan)}</PBadge>
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">状态</dt>
+                    <dt className="text-sm font-medium text-gray-500">{t('tenantInfoPage.fields.status')}</dt>
                     <dd className="mt-1">
                       <PBadge variant={getStatusVariant(tenantInfo.status) as any} icon={<CheckCircleIcon className="h-3 w-3" />}>{getStatusDisplayName(tenantInfo.status)}</PBadge>
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">创建时间</dt>
+                    <dt className="text-sm font-medium text-gray-500">{t('tenantInfoPage.fields.createdAt')}</dt>
                     <dd className="mt-1 text-sm text-gray-900 flex items-center">
                       <CalendarDaysIcon className="h-4 w-4 mr-1 text-gray-400" />
                       {formatDate(tenantInfo.created_at)}
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">更新时间</dt>
+                    <dt className="text-sm font-medium text-gray-500">{t('tenantInfoPage.fields.updatedAt')}</dt>
                     <dd className="mt-1 text-sm text-gray-900 flex items-center">
                       <ClockIcon className="h-4 w-4 mr-1 text-gray-400" />
                       {formatDate(tenantInfo.updated_at)}
@@ -227,7 +229,7 @@ export default function TenantInfoPage() {
                   </div>
                   {tenantInfo.description && (
                     <div className="sm:col-span-2">
-                      <dt className="text-sm font-medium text-gray-500">描述</dt>
+                      <dt className="text-sm font-medium text-gray-500">{t('tenantInfoPage.fields.description')}</dt>
                       <dd className="mt-1 text-sm text-gray-900">{tenantInfo.description}</dd>
                     </div>
                   )}
@@ -236,23 +238,23 @@ export default function TenantInfoPage() {
             </PCard>
           </div>
 
-          {/* 统计信息 */}
+          {/*  */}
           <div className="space-y-6">
-            {/* 用户访问链接 */}
+            {/*  */}
             <PCard className="rounded-xl p-0 shadow-sm">
               <div className="px-6 py-4 border-b border-gray-200">
                 <div className="flex items-center">
                   <LinkIcon className="h-5 w-5 text-blue-500 mr-2" />
-                  <h3 className="text-lg font-medium text-gray-900">用户访问链接</h3>
+                  <h3 className="text-lg font-medium text-gray-900">{t('tenantInfoPage.userAccessLinks.title')}</h3>
                 </div>
-                <p className="mt-1 text-sm text-gray-500">分享这些链接给您的用户进行登录或注册</p>
+                <p className="mt-1 text-sm text-gray-500">{t('tenantInfoPage.userAccessLinks.description')}</p>
               </div>
               <div className="px-6 py-6">
                 <div className="space-y-4">
-                  {/* 登录链接 */}
+                  {/*  */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      登录页面
+                      {t('tenantInfoPage.userAccessLinks.loginPage')}
                     </label>
                     <div className="flex items-center space-x-2">
                       <PInput
@@ -265,7 +267,7 @@ export default function TenantInfoPage() {
                         type="button"
                         variant="secondary"
                         onClick={() => copyToClipboard(getLoginUrl(), 'login')}
-                        title="复制链接"
+                        title={t('tenantInfoPage.actions.copyLink')}
                       >
                         {copiedField === 'login' ? (
                           <CheckIcon className="h-5 w-5 text-green-500" />
@@ -276,10 +278,10 @@ export default function TenantInfoPage() {
                     </div>
                   </div>
 
-                  {/* 注册链接 */}
+                  {/*  */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      注册页面
+                      {t('tenantInfoPage.userAccessLinks.registerPage')}
                     </label>
                     <div className="flex items-center space-x-2">
                       <PInput
@@ -292,7 +294,7 @@ export default function TenantInfoPage() {
                         type="button"
                         variant="secondary"
                         onClick={() => copyToClipboard(getRegisterUrl(), 'register')}
-                        title="复制链接"
+                        title={t('tenantInfoPage.actions.copyLink')}
                       >
                         {copiedField === 'register' ? (
                           <CheckIcon className="h-5 w-5 text-green-500" />
@@ -303,12 +305,12 @@ export default function TenantInfoPage() {
                     </div>
                   </div>
 
-                  {/* 提示信息 */}
+                  {/*  */}
                   <div className="mt-4 rounded-lg bg-blue-50 p-3">
                     <div className="flex">
                       <InformationCircleIcon className="h-5 w-5 text-blue-400 mr-2 flex-shrink-0 mt-0.5" />
                       <div className="text-sm text-blue-700">
-                        <p>将这些链接分享给您的用户，他们可以通过这些链接直接访问您租户的登录和注册页面。</p>
+                        <p>{t('tenantInfoPage.userAccessLinks.tip')}</p>
                       </div>
                     </div>
                   </div>
@@ -316,17 +318,17 @@ export default function TenantInfoPage() {
               </div>
             </PCard>
 
-            {/* 使用统计 */}
+            {/*  */}
             <PCard className="rounded-xl p-0 shadow-sm">
               <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900">使用统计</h3>
+                <h3 className="text-lg font-medium text-gray-900">{t('tenantInfoPage.sections.usageStats')}</h3>
               </div>
               <div className="px-6 py-6">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <UsersIcon className="h-5 w-5 text-blue-500 mr-2" />
-                      <span className="text-sm font-medium text-gray-700">用户数量</span>
+                      <span className="text-sm font-medium text-gray-700">{t('tenantInfoPage.stats.totalUsers')}</span>
                     </div>
                     <span className="text-lg font-semibold text-blue-600">
                       {tenantInfo.stats.total_users}
@@ -336,7 +338,7 @@ export default function TenantInfoPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <CubeIcon className="h-5 w-5 text-green-500 mr-2" />
-                      <span className="text-sm font-medium text-gray-700">应用总数</span>
+                      <span className="text-sm font-medium text-gray-700">{t('tenantInfoPage.stats.totalApps')}</span>
                     </div>
                     <span className="text-lg font-semibold text-green-600">
                       {tenantInfo.stats.total_apps}
@@ -346,7 +348,7 @@ export default function TenantInfoPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <CheckCircleIcon className="h-5 w-5 text-emerald-500 mr-2" />
-                      <span className="text-sm font-medium text-gray-700">活跃应用</span>
+                      <span className="text-sm font-medium text-gray-700">{t('tenantInfoPage.stats.activeApps')}</span>
                     </div>
                     <span className="text-lg font-semibold text-emerald-600">
                       {tenantInfo.stats.active_apps}
@@ -356,7 +358,7 @@ export default function TenantInfoPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <KeyIcon className="h-5 w-5 text-indigo-500 mr-2" />
-                      <span className="text-sm font-medium text-gray-700">OAuth客户端</span>
+                      <span className="text-sm font-medium text-gray-700">{t('tenantInfoPage.stats.oauthClients')}</span>
                     </div>
                     <span className="text-lg font-semibold text-indigo-600">
                       {tenantInfo.stats.total_clients}
@@ -366,7 +368,7 @@ export default function TenantInfoPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <CpuChipIcon className="h-5 w-5 text-yellow-500 mr-2" />
-                      <span className="text-sm font-medium text-gray-700">活跃令牌</span>
+                      <span className="text-sm font-medium text-gray-700">{t('tenantInfoPage.stats.activeTokens')}</span>
                     </div>
                     <span className="text-lg font-semibold text-yellow-600">
                       {tenantInfo.stats.active_tokens}
@@ -376,17 +378,17 @@ export default function TenantInfoPage() {
               </div>
             </PCard>
 
-            {/* 配额信息 */}
+            {/*  */}
             {tenantInfo.quota && (
               <PCard className="rounded-xl p-0 shadow-sm">
                 <div className="px-6 py-4 border-b border-gray-200">
-                  <h3 className="text-lg font-medium text-gray-900">配额限制</h3>
+                  <h3 className="text-lg font-medium text-gray-900">{t('tenantInfoPage.sections.quota')}</h3>
                 </div>
                 <div className="px-6 py-6">
                   <div className="space-y-4">
                     <div>
                       <div className="flex justify-between text-sm">
-                        <span className="font-medium text-gray-700">应用数量</span>
+                        <span className="font-medium text-gray-700">{t('tenantInfoPage.quota.apps')}</span>
                         <span className="text-gray-500">
                           {tenantInfo.stats.total_apps} / {tenantInfo.quota.max_apps}
                         </span>
@@ -403,7 +405,7 @@ export default function TenantInfoPage() {
                     
                     <div>
                       <div className="flex justify-between text-sm">
-                        <span className="font-medium text-gray-700">用户数量</span>
+                        <span className="font-medium text-gray-700">{t('tenantInfoPage.quota.users')}</span>
                         <span className="text-gray-500">
                           {tenantInfo.stats.total_users} / {tenantInfo.quota.max_users}
                         </span>
@@ -420,7 +422,7 @@ export default function TenantInfoPage() {
                     
                     <div className="pt-2 border-t border-gray-200">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-gray-700">每小时令牌限制</span>
+                        <span className="text-sm font-medium text-gray-700">{t('tenantInfoPage.quota.tokensPerHour')}</span>
                         <span className="text-sm text-gray-500">
                           {tenantInfo.quota.max_tokens_per_hour.toLocaleString()}
                         </span>

@@ -8,6 +8,7 @@ import PInput from '@ui/PInput'
 import PButton from '@ui/PButton'
 import UserTooltip from '@ui/UserTooltip'
 import { ROUTES } from '@constants'
+import { useI18n } from '@shared/i18n'
 
 interface Log {
   ID: number
@@ -23,6 +24,7 @@ interface Log {
 }
 
 export default function Logs() {
+  const { t, locale } = useI18n()
   const [logs, setLogs] = useState<Log[]>([])
   const [loading, setLoading] = useState(false)
   const [keyword, setKeyword] = useState('')
@@ -52,7 +54,7 @@ export default function Logs() {
     { key: 'id', title: 'ID', dataIndex: 'ID', sortable: true, align: 'center' },
     {
       key: 'user',
-      title: '用户ID',
+      title: t('adminLogs.columns.userId'),
       sortable: true,
       align: 'center',
       sorter: (a,b)=> a.UserID - b.UserID,
@@ -64,32 +66,32 @@ export default function Logs() {
         />
       )
     },
-    { key: 'action', title: '操作', align: 'left', render: (row)=> row.Action },
-    { key: 'resource', title: '资源', align: 'left', render: (row)=> (row.Data?.slice(0,50) || '') },
-    { key: 'ip', title: 'IP地址', align: 'center', render: (row)=> row.IP },
-    { key: 'created_at', title: '时间', sortable: true, render: (row)=> new Date(row.CreatedAt).toLocaleString() },
+    { key: 'action', title: t('adminLogs.columns.action'), align: 'left', render: (row)=> row.Action },
+    { key: 'resource', title: t('adminLogs.columns.resource'), align: 'left', render: (row)=> (row.Data?.slice(0,50) || '') },
+    { key: 'ip', title: t('adminLogs.columns.ipAddress'), align: 'center', render: (row)=> row.IP },
+    { key: 'created_at', title: t('adminLogs.columns.time'), sortable: true, render: (row)=> new Date(row.CreatedAt).toLocaleString(locale) },
   ]
 
   return (
-    <AdminLayout title="操作日志" actions={
+    <AdminLayout title={t('adminLogs.layoutTitle')} actions={
       <PButton variant="ghost" size="sm" leftIcon={<ArrowPathIcon className="h-4 w-4" />} onClick={load} disabled={loading}>
-        刷新
+        {t('adminLogs.actions.refresh')}
       </PButton>
     }>
       <div className="space-y-6">
 
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">审计日志</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('adminLogs.title')}</h1>
           <p className="mt-1 text-sm text-gray-500">
-            查看系统操作审计记录
+            {t('adminLogs.description')}
           </p>
         </div>
 
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-medium text-gray-900">操作日志</h3>
+          <h3 className="text-lg font-medium text-gray-900">{t('adminLogs.sectionTitle')}</h3>
           <div className="relative w-72">
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <PInput placeholder="搜索 ID/用户/操作/IP/资源" value={keyword} onChange={(e)=>setKeyword(e.target.value)} className="pl-9" />
+            <PInput placeholder={t('adminLogs.searchPlaceholder')} value={keyword} onChange={(e)=>setKeyword(e.target.value)} className="pl-9" />
           </div>
         </div>
         <PTable

@@ -2,23 +2,23 @@
 sidebar_position: 7
 ---
 
-# Forgot Password
+# 忘记密码
 
-The self-service password reset flow allows users to regain access without admin intervention.
+自助密码重置流程允许用户在无需管理员干预的情况下重新获得访问权限。
 
-## Flow
+## 流程
 
-1.  User clicks **Forgot Password** on the login page.
-2.  User enters their registered email address.
-3.  BasaltPass sends an email with a unique, time-limited link.
-4.  User clicks the link and enters a new password.
+1.  用户在登录页面点击 **忘记密码**。
+2.  用户输入其注册的电子邮件地址。
+3.  BasaltPass 发送一封包含唯一、限时链接的电子邮件。
+4.  用户点击链接并输入新密码。
 
-## Prerequisites
+## 前提条件
 
--   **Email Service**: Must be configured (SMTP/SES/etc.).
--   **Verified Email**: The user must have a verified email address (optional, depending on settings).
+-   **邮件服务**: 必须已配置 (SMTP/SES 等)。
+-   **已验证的邮箱**: 用户必须有已验证的电子邮件地址 (可选，取决于设置)。
 
-## Security
+## 安全性
 
--   Links expire after a short period (e.g., 15 minutes).
--   Links are invalidated once used.
+-   链接在短时间后过期 (例如 15 分钟)。
+-   链接使用后即失效。

@@ -57,7 +57,7 @@ function fallbackModal(options: { message: string; title: string; type: DialogTy
     }
 
     const cancel = document.createElement('button')
-    cancel.textContent = '取消'
+    cancel.textContent = 'cancel'
     cancel.style.cssText = `padding:8px 14px;border:1px solid rgba(${blackRgb},.14);background:#ffffff;border-radius:14px;cursor:pointer;`
     cancel.onclick = () => {
       cleanup()
@@ -65,7 +65,7 @@ function fallbackModal(options: { message: string; title: string; type: DialogTy
     }
 
     const ok = document.createElement('button')
-    ok.textContent = '确定'
+    ok.textContent = 'confirm'
     ok.style.cssText = 'padding:8px 14px;border:none;background:#2563eb;color:#ffffff;border-radius:14px;cursor:pointer;'
     ok.onclick = () => {
       cleanup()
@@ -100,21 +100,21 @@ export function uiAlert(message: string, title?: string) {
     void dialogBridge.alert(message, title)
     return
   }
-  void fallbackModal({ type: 'alert', message, title: title || '提示' })
+  void fallbackModal({ type: 'alert', message, title: title || 'translated' })
 }
 
 export function uiConfirm(message: string, title?: string): Promise<boolean> {
   if (dialogBridge) {
     return dialogBridge.confirm(message, title)
   }
-  return fallbackModal({ type: 'confirm', message, title: title || '确认操作' }).then((value) => value === true)
+  return fallbackModal({ type: 'confirm', message, title: title || 'translated' }).then((value) => value === true)
 }
 
 export function uiPrompt(message: string, defaultValue?: string, title?: string): Promise<string | null> {
   if (dialogBridge) {
     return dialogBridge.prompt(message, defaultValue, title)
   }
-  return fallbackModal({ type: 'prompt', message, defaultValue, title: title || '请输入' }).then((value) => {
+  return fallbackModal({ type: 'prompt', message, defaultValue, title: title || 'please enter' }).then((value) => {
     if (typeof value === 'string') {
       return value
     }
@@ -149,14 +149,14 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
   }, [popNext])
 
   const api = useMemo<DialogContextValue>(() => ({
-    alert: async (message: string, title = '提示') => {
+    alert: async (message: string, title = 'translated') => {
       await enqueue({ type: 'alert', message, title })
     },
-    confirm: async (message: string, title = '确认操作') => {
+    confirm: async (message: string, title = 'translated') => {
       const result = await enqueue({ type: 'confirm', message, title })
       return result === true
     },
-    prompt: async (message: string, defaultValue = '', title = '请输入') => {
+    prompt: async (message: string, defaultValue = '', title = 'please enter') => {
       const result = await enqueue({ type: 'prompt', message, defaultValue, title })
       if (typeof result === 'string') {
         return result
@@ -180,13 +180,13 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
       {children}
       <Modal
         open={!!active}
-        title={active?.title || '提示'}
+        title={active?.title || 'translated'}
         onClose={() => closeWith(active?.type === 'confirm' ? false : null)}
         footer={(
           <div className="flex justify-end gap-3">
             {active?.type !== 'alert' && (
               <PButton type="button" variant="secondary" onClick={() => closeWith(active?.type === 'confirm' ? false : null)}>
-                取消
+                cancel
               </PButton>
             )}
             <PButton
@@ -194,7 +194,7 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
               variant={active?.type === 'alert' ? 'primary' : 'danger'}
               onClick={() => closeWith(active?.type === 'prompt' ? promptValue : true)}
             >
-              确定
+              confirm
             </PButton>
           </div>
         )}

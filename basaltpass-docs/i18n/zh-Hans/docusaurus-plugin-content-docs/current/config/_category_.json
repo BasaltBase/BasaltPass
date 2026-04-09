@@ -1,8 +1,8 @@
 {
-    "label": "Configuration",
+    "label": "配置",
     "position": 4,
     "link": {
         "type": "generated-index",
-        "description": "Advanced configuration for BasaltPass deployments."
+        "description": "BasaltPass 部署的高级配置。"
     }
 }

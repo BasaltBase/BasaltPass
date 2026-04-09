@@ -2,28 +2,28 @@
 sidebar_position: 5
 ---
 
-# Logging
+# 日志
 
-BasaltPass provides structured logging to help with monitoring and debugging.
+BasaltPass 提供结构化日志以帮助监控和调试。
 
-## Log Levels
+## 日志级别
 
-Can be configured via `config.yaml` or env vars.
+可通过 `config.yaml` 或环境变量配置。
 
--   **debug**: Detailed information for development.
--   **info**: General operational events (startup, shutdown).
--   **warn**: Non-critical issues (e.g., failed login attempts).
--   **error**: Critical failures (e.g., DB connection lost).
+-   **debug**: 用于开发的详细信息。
+-   **info**: 一般运行事件 (启动、关闭)。
+-   **warn**: 非关键问题 (例如登录失败)。
+-   **error**: 严重故障 (例如数据库连接丢失)。
 
-## Output
+## 输出
 
-Logs are written to `stdout` by default, making it compatible with containerized environments (Docker, Kubernetes).
+日志默认写入 `stdout`，与容器化环境 (Docker、Kubernetes) 兼容。
 
-## Configuration
+## 配置
 
 ```bash
 export BASALTPASS_LOG_LEVEL=info
-export BASALTPASS_LOG_FORMAT=json  # or text
+export BASALTPASS_LOG_FORMAT=json  # 或 text
 ```
 
-**JSON format** is recommended for production as it can be easily parsed by log aggregators like ELK or Splunk.
+**JSON 格式** 推荐用于生产环境，因为它可以被 ELK 或 Splunk 等日志聚合器轻松解析。

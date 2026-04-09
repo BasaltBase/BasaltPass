@@ -1,6 +1,6 @@
 import client from '../client'
 
-// 用户相关接口定义
+// usertranslated
 export interface AdminUser {
   id: number
   email: string
@@ -138,63 +138,63 @@ export interface CreateUserRequest {
   role_ids?: number[]
 }
 
-// Admin用户管理API
+// AdminusermanagementAPI
 export const adminUserApi = {
-  // 获取用户列表
+  // getuserlist
   async getUsers(params: UserListParams = {}) {
     const response = await client.get('/api/v1/admin/users', { params })
     return response.data as UserListResponse
   },
 
-  // 获取用户详情
+  // getuserdetails
   async getUser(id: number) {
     const response = await client.get(`/api/v1/admin/users/${id}`)
     return response.data as AdminUserDetail
   },
 
-  // 获取用户摘要
+  // getusertranslated
   async getUserSummary(id: number) {
     const response = await client.get(`/api/v1/admin/users/${id}/summary`)
     return response.data as AdminUserSummary
   },
 
-  // 更新用户信息
+  // updateuserinfo
   async updateUser(id: number, data: UpdateUserRequest) {
     const response = await client.put(`/api/v1/admin/users/${id}`, data)
     return response.data
   },
 
-  // 封禁/解封用户
+  // translated/translateduser
   async banUser(id: number, data: BanUserRequest) {
     const response = await client.post(`/api/v1/admin/users/${id}/ban`, data)
     return response.data
   },
 
-  // 删除用户
+  // deleteuser
   async deleteUser(id: number) {
     const response = await client.delete(`/api/v1/admin/users/${id}`)
     return response.data
   },
 
-  // 获取用户统计
+  // getusertranslated
   async getUserStats() {
     const response = await client.get('/api/v1/admin/users/stats')
     return response.data as UserStats
   },
 
-  // 分配全局角色
+  // translatedrole
   async assignGlobalRole(id: number, data: AssignGlobalRoleRequest) {
     const response = await client.post(`/api/v1/admin/users/${id}/roles`, data)
     return response.data
   },
 
-  // 移除全局角色
+  // translatedrole
   async removeGlobalRole(id: number, roleId: number) {
     const response = await client.delete(`/api/v1/admin/users/${id}/roles/${roleId}`)
     return response.data
   },
 
-  // 创建用户
+  // createuser
   async createUser(data: CreateUserRequest) {
     const response = await client.post('/api/v1/admin/users', data)
     return response.data as AdminUser

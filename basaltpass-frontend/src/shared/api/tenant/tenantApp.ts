@@ -1,6 +1,6 @@
 import client from '../client'
 
-// 租户应用管理相关的API接口
+// tenantappmanagementtranslatedAPItranslated
 
 export interface TenantOAuthClientSummary {
   id: number
@@ -63,9 +63,9 @@ export interface UpdateTenantAppRequest {
   settings?: Record<string, any>
 }
 
-// 租户应用管理API
+// tenantappmanagementAPI
 export const tenantAppApi = {
-  // 获取租户应用列表
+  // gettenantapplist
   async listTenantApps(page = 1, limit = 20) {
     const response = await client.get('/api/v1/tenant/apps', {
       params: { page, limit }
@@ -73,37 +73,37 @@ export const tenantAppApi = {
     return response.data
   },
 
-  // 获取租户应用详情
+  // gettenantappdetails
   async getTenantApp(id: string) {
     const response = await client.get(`/api/v1/tenant/apps/${id}`)
     return response.data
   },
 
-  // 创建租户应用
+  // createtenantapp
   async createTenantApp(data: CreateTenantAppRequest) {
     const response = await client.post('/api/v1/tenant/apps', data)
     return response.data
   },
 
-  // 更新租户应用
+  // updatetenantapp
   async updateTenantApp(id: string, data: UpdateTenantAppRequest) {
     const response = await client.put(`/api/v1/tenant/apps/${id}`, data)
     return response.data
   },
 
-  // 删除租户应用
+  // deletetenantapp
   async deleteTenantApp(id: string) {
     const response = await client.delete(`/api/v1/tenant/apps/${id}`)
     return response.data
   },
 
-  // 切换应用状态
+  // translatedappstatus
   async toggleAppStatus(id: string, status: 'active' | 'inactive') {
     const response = await client.patch(`/api/v1/tenant/apps/${id}/status`, { status })
     return response.data
   },
 
-  // 获取应用统计信息
+  // getapptranslatedinfo
   async getAppStats(id: string, period = '7d') {
     const response = await client.get(`/api/v1/tenant/apps/${id}/stats`, {
       params: { period }

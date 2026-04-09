@@ -1,19 +1,19 @@
 import React from 'react'
 
 // ─────────────────────────────────────────────
-// 基础 PSkeleton
+// translated PSkeleton
 // ─────────────────────────────────────────────
 
 interface PSkeletonProps {
-  /** 形状变体 */
+  /** translated */
   variant?: 'text' | 'circle' | 'rect' | 'button'
-  /** 宽度（Tailwind 类或 CSS 值）*/
+  /** translated（Tailwind translatedor CSS value）*/
   width?: string
-  /** 高度（Tailwind 类或 CSS 值）*/
+  /** translated（Tailwind translatedor CSS value）*/
   height?: string
-  /** 文本变体时渲染的行数 */
+  /** translated */
   lines?: number
-  /** 是否开启脉冲动画 */
+  /** isnotranslated */
   animated?: boolean
   className?: string
 }
@@ -69,15 +69,15 @@ function PSkeletonBase({
 PSkeletonBase.displayName = 'PSkeleton'
 
 // ─────────────────────────────────────────────
-// 预设：通用卡片骨架屏
+// translated：translated
 // ─────────────────────────────────────────────
 
 interface CardSkeletonProps {
-  /** 是否显示顶部图标/头像 */
+  /** isnotranslated/translated */
   showIcon?: boolean
-  /** 文本行数 */
+  /** translated */
   lines?: number
-  /** 是否显示底部操作按钮 */
+  /** isnotranslated */
   showFooter?: boolean
   animated?: boolean
   className?: string
@@ -123,7 +123,7 @@ function CardSkeleton({
 }
 
 // ─────────────────────────────────────────────
-// 预设：应用卡片网格骨架屏（3 列）
+// translated：apptranslated（3 translated）
 // ─────────────────────────────────────────────
 
 interface AppCardGridSkeletonProps {
@@ -147,7 +147,7 @@ function AppCardGridSkeleton({
 }
 
 // ─────────────────────────────────────────────
-// 预设：详情页骨架屏（带头部 + 多个信息区块）
+// translated：detailstranslated（translated + translatedinfotranslated）
 // ─────────────────────────────────────────────
 
 interface DetailPageSkeletonProps {
@@ -161,14 +161,14 @@ function DetailPageSkeleton({ animated = true, className = '' }: DetailPageSkele
 
   return (
     <div className={`space-y-6 ${className}`}>
-      {/* 顶部返回 + 标题 */}
+      {/* translatedback + translated */}
       <div className="flex items-center space-x-3">
         <div className={`h-8 w-8 rounded ${block}`} />
         <div className={`h-7 w-48 ${block}`} />
         <div className={`h-5 w-16 rounded-full ml-2 ${block}`} />
       </div>
 
-      {/* 主信息卡片 */}
+      {/* translatedinfotranslated */}
       <div className="bg-white rounded-lg shadow p-6 space-y-4">
         <div className="flex items-center space-x-4">
           <div className={`h-16 w-16 rounded-xl ${block}`} />
@@ -185,7 +185,7 @@ function DetailPageSkeleton({ animated = true, className = '' }: DetailPageSkele
         </div>
       </div>
 
-      {/* 信息网格：两列 */}
+      {/* infotranslated：translated */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {[0, 1, 2, 3].map((i) => (
           <div key={i} className="bg-white rounded-lg shadow p-5 space-y-3">
@@ -196,7 +196,7 @@ function DetailPageSkeleton({ animated = true, className = '' }: DetailPageSkele
         ))}
       </div>
 
-      {/* 底部操作按钮 */}
+      {/* translated */}
       <div className="flex space-x-3">
         <div className={`h-9 w-28 rounded-md ${block}`} />
         <div className={`h-9 w-28 rounded-md ${block}`} />
@@ -206,7 +206,7 @@ function DetailPageSkeleton({ animated = true, className = '' }: DetailPageSkele
 }
 
 // ─────────────────────────────────────────────
-// 预设：表格骨架屏
+// translated：translated
 // ─────────────────────────────────────────────
 
 interface TableSkeletonProps {
@@ -227,13 +227,13 @@ function TableSkeleton({
 
   return (
     <div className={`bg-white rounded-lg shadow overflow-hidden ${className}`}>
-      {/* 表头 */}
+      {/* translated */}
       <div className="border-b border-gray-100 px-4 py-3 flex space-x-4">
         {Array.from({ length: cols }).map((_, i) => (
           <div key={i} className={`h-4 flex-1 ${block}`} style={{ maxWidth: i === 0 ? '6rem' : undefined }} />
         ))}
       </div>
-      {/* 表行 */}
+      {/* translated */}
       {Array.from({ length: rows }).map((_, rowIdx) => (
         <div key={rowIdx} className="px-4 py-3 flex space-x-4 border-b border-gray-50">
           {Array.from({ length: cols }).map((_, colIdx) => (
@@ -250,7 +250,7 @@ function TableSkeleton({
 }
 
 // ─────────────────────────────────────────────
-// 预设：列表条目骨架屏
+// translated：listtranslated
 // ─────────────────────────────────────────────
 
 interface ListSkeletonProps {
@@ -286,7 +286,7 @@ function ListSkeleton({
 }
 
 // ─────────────────────────────────────────────
-// 预设：全屏路由级加载（认证检查时使用）
+// translated：translatedroutetranslated（translated）
 // ─────────────────────────────────────────────
 
 interface PageLoaderProps {
@@ -294,19 +294,19 @@ interface PageLoaderProps {
   animated?: boolean
 }
 
-function PageLoader({ message = '加载中...', animated = true }: PageLoaderProps) {
+function PageLoader({ message = 'loading...', animated = true }: PageLoaderProps) {
   const pulse = animated ? 'animate-pulse' : ''
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="flex flex-col items-center space-y-6 w-80">
-        {/* Logo 占位 */}
+        {/* Logo translated */}
         <div className={`h-12 w-12 rounded-2xl bg-gray-200 ${pulse}`} />
-        {/* 标题占位 */}
+        {/* translated */}
         <div className="w-full space-y-3">
           <div className={`h-5 w-2/3 mx-auto rounded bg-gray-200 ${pulse}`} />
           <div className={`h-3 w-1/2 mx-auto rounded bg-gray-200 ${pulse}`} />
         </div>
-        {/* 进度条动画 */}
+        {/* translated */}
         <div className="w-full bg-gray-100 rounded-full h-1 overflow-hidden">
           <div
             className="h-1 bg-indigo-400 rounded-full"
@@ -329,7 +329,7 @@ function PageLoader({ message = '加载中...', animated = true }: PageLoaderPro
 }
 
 // ─────────────────────────────────────────────
-// 预设：Dashboard 骨架屏（统计卡片 + 图表区域）
+// translated：Dashboard translated（translated + translated）
 // ─────────────────────────────────────────────
 
 interface DashboardPageSkeletonProps {
@@ -348,13 +348,13 @@ function DashboardPageSkeleton({
 
   return (
     <div className={`space-y-6 ${className}`}>
-      {/* 页面标题 */}
+      {/* translated */}
       <div className="space-y-2">
         <div className={`h-7 w-40 ${block}`} />
         <div className={`h-4 w-64 ${block}`} />
       </div>
 
-      {/* 统计卡片行 */}
+      {/* translated */}
       <div className={`grid gap-4 grid-cols-2 lg:grid-cols-${Math.min(statsCount, 4)}`}>
         {Array.from({ length: statsCount }).map((_, i) => (
           <div key={i} className="bg-white rounded-lg shadow p-5 space-y-3">
@@ -368,7 +368,7 @@ function DashboardPageSkeleton({
         ))}
       </div>
 
-      {/* 图表/内容区域 */}
+      {/* translated/translated */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-white rounded-lg shadow p-5 space-y-4">
           <div className={`h-5 w-32 ${block}`} />
@@ -384,7 +384,7 @@ function DashboardPageSkeleton({
 }
 
 // ─────────────────────────────────────────────
-// 预设：通用管理页面骨架屏（带顶部操作栏 + 表格）
+// translated：translatedmanagementtranslated（translated + translated）
 // ─────────────────────────────────────────────
 
 interface ManagementPageSkeletonProps {
@@ -407,7 +407,7 @@ function ManagementPageSkeleton({
 
   return (
     <div className={`space-y-4 ${className}`}>
-      {/* 标题行 */}
+      {/* translated */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <div className={`h-6 w-36 ${block}`} />
@@ -416,7 +416,7 @@ function ManagementPageSkeleton({
         <div className={`h-9 w-24 rounded-md ${block}`} />
       </div>
 
-      {/* 搜索/过滤栏 */}
+      {/* search/translated */}
       {showSearch && (
         <div className="flex space-x-3">
           <div className={`h-9 flex-1 max-w-xs rounded-md ${block}`} />
@@ -424,14 +424,14 @@ function ManagementPageSkeleton({
         </div>
       )}
 
-      {/* 表格 */}
+      {/* translated */}
       <TableSkeleton rows={rows} cols={cols} animated={animated} />
     </div>
   )
 }
 
 // ─────────────────────────────────────────────
-// 预设：通用内容页骨架屏（带标题 + 卡片列表）
+// translated：translated（translated + translatedlist）
 // ─────────────────────────────────────────────
 
 interface ContentPageSkeletonProps {
@@ -464,7 +464,7 @@ function ContentPageSkeleton({
 }
 
 // ─────────────────────────────────────────────
-// 组合导出（支持 PSkeleton.Card、PSkeleton.AppCardGrid 等）
+// translated（translated PSkeleton.Card、PSkeleton.AppCardGrid translated）
 // ─────────────────────────────────────────────
 
 const PSkeleton = Object.assign(PSkeletonBase, {

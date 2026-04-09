@@ -9,12 +9,12 @@ interface MarketProtectedRouteProps {
 const MarketProtectedRoute: React.FC<MarketProtectedRouteProps> = ({ children }) => {
   const { marketEnabled, loading } = useConfig()
 
-  // 如果配置还在加载中，显示加载状态
+  // translatedconfigtranslatedloading，translatedstatus
   if (loading) {
     return <PSkeleton.PageLoader />
   }
 
-  // 如果市场功能未启用，重定向到仪表板
+  // translatedmarkettranslatednotenabled，translatedtotranslated
   if (!marketEnabled) {
     return <Navigate to="/dashboard" replace />
   }

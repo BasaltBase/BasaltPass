@@ -2,24 +2,24 @@
 sidebar_position: 6
 ---
 
-# Email Templates
+# 邮件模板
 
-BasaltPass allows you to customize the emails sent to users (e.g., verification codes, password resets).
+BasaltPass 允许您自定义发送给用户的邮件 (例如验证码、密码重置)。
 
-## Template Format
+## 模板格式
 
-Emails are rendered using Go's `html/template` engine.
+邮件使用 Go 的 `html/template` 引擎渲染。
 
-## Customizing
+## 自定义方式
 
-Currently, templates are embedded in the backend binary for simplicity. To customize them:
+目前，模板嵌入在后端二进制文件中以简化部署。如需自定义：
 
-1.  **Fork the Repository**: Modify the templates in `internal/email/templates/`.
-2.  **Rebuild**: Compile the backend with your changes.
+1.  **Fork 仓库**: 修改 `internal/email/templates/` 中的模板。
+2.  **重新编译**: 使用您的修改重新编译后端。
 
-## Available Variables
+## 可用变量
 
--   `{{.Code}}`: The verification code.
--   `{{.ExpiresIn}}`: Time until expiration.
--   `{{.Link}}`: The action link (if applicable).
--   `{{.AppName}}`: The name of your BasaltPass instance.
+-   `{{.Code}}`: 验证码。
+-   `{{.ExpiresIn}}`: 到期时间。
+-   `{{.Link}}`: 操作链接 (如果适用)。
+-   `{{.AppName}}`: 您的 BasaltPass 实例名称。

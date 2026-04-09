@@ -1,6 +1,6 @@
 import { getAccessToken } from './auth'
 
-// 调试工具，用于输出认证状态信息
+// translated，translatedstatusinfo
 export const debugAuth = {
   log: (message: string, data?: any) => {
     if (import.meta.env.DEV) {

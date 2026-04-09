@@ -5,7 +5,7 @@ interface ConfigContextType {
   config: PublicConfig | null
   loading: boolean
   marketEnabled: boolean
-  /** 与后台 features.wallet_recharge_withdraw_enabled 一致，默认关闭 */
+  /** andtranslated features.wallet_recharge_withdraw_enabled translated，defaulttranslated */
   walletRechargeWithdrawEnabled: boolean
   siteName: string
   siteInitial: string

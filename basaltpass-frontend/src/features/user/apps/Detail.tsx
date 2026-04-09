@@ -4,6 +4,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import Layout from '@features/user/components/Layout'
 import { userAppsApi, UserApp } from '@api/user/apps'
 import { PCard, PSkeleton, PAlert, PButton } from '@ui'
+import { useI18n } from '@shared/i18n'
 import { 
   ArrowLeftIcon, 
   CubeIcon, 
@@ -13,6 +14,7 @@ import {
 } from '@heroicons/react/24/outline'
 
 export default function UserAppDetail() {
+  const { t, locale } = useI18n()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [app, setApp] = useState<UserApp | null>(null)
@@ -34,26 +36,26 @@ export default function UserAppDetail() {
       if (foundApp) {
         setApp(foundApp)
       } else {
-        setError('应用不存在或未授权')
+        setError(t('userAppDetail.errors.notFoundOrUnauthorized'))
       }
     } catch (e: any) {
       console.error(e)
-      setError(e?.response?.data?.error || '加载失败')
+      setError(e?.response?.data?.error || t('userAppDetail.errors.loadFailed'))
     } finally {
       setLoading(false)
     }
   }
 
   const revoke = async () => {
-    if (!app || !await uiConfirm(`确定要撤销对「${app.app_name}」的授权吗？`)) return
+    if (!app || !await uiConfirm(t('userAppDetail.confirmRevoke', { appName: app.app_name }))) return
     try {
       setRevoking(true)
       await userAppsApi.revoke(app.app_id)
-      uiAlert('已撤销授权')
+      uiAlert(t('userAppDetail.messages.revoked'))
       navigate('/my-apps')
     } catch (e: any) {
       console.error(e)
-      uiAlert(e?.response?.data?.error || '撤销失败')
+      uiAlert(e?.response?.data?.error || t('userAppDetail.errors.revokeFailed'))
       setRevoking(false)
     }
   }
@@ -74,9 +76,9 @@ export default function UserAppDetail() {
         <div className="space-y-6">
           <Link to="/my-apps" className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900">
             <ArrowLeftIcon className="w-4 h-4 mr-1" />
-            返回
+            {t('userAppDetail.actions.back')}
           </Link>
-          <PAlert variant="error" title="加载失败" message={error || '应用不存在'} actions={[{ label: '重试', onClick: load }]} />
+          <PAlert variant="error" title={t('userAppDetail.errors.title')} message={error || t('userAppDetail.errors.notFound')} actions={[{ label: t('userAppDetail.actions.retry'), onClick: load }]} />
         </div>
       </Layout>
     )
@@ -85,13 +87,13 @@ export default function UserAppDetail() {
   return (
     <Layout>
       <div className="space-y-6 max-w-4xl mx-auto">
-        {/* 返回按钮 */}
+        {/*  */}
         <Link to="/my-apps" className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900">
           <ArrowLeftIcon className="w-4 h-4 mr-1" />
-          返回我的应用
+          {t('userAppDetail.actions.backToMyApps')}
         </Link>
 
-        {/* 应用头部 */}
+        {/*  */}
         <PCard>
           <div className="flex items-start space-x-6">
             {app.app_icon_url ? (
@@ -103,42 +105,42 @@ export default function UserAppDetail() {
             )}
             <div className="flex-1">
               <h1 className="text-2xl font-bold text-gray-900">{app.app_name}</h1>
-              <p className="mt-2 text-gray-600">{app.app_description || '暂无描述'}</p>
+              <p className="mt-2 text-gray-600">{app.app_description || t('userAppDetail.noDescription')}</p>
             </div>
           </div>
         </PCard>
 
-        {/* 授权信息 */}
+        {/*  */}
         <PCard>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">授权信息</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('userAppDetail.sections.authorizationInfo')}</h2>
           <div className="space-y-3">
             <div className="flex items-center justify-between py-2 border-b border-gray-100">
-              <span className="text-sm text-gray-600">首次授权时间</span>
+              <span className="text-sm text-gray-600">{t('userAppDetail.fields.firstAuthorizedAt')}</span>
               <span className="text-sm font-medium text-gray-900">
-                {new Date(app.first_authorized_at).toLocaleString()}
+                {new Date(app.first_authorized_at).toLocaleString(locale)}
               </span>
             </div>
             <div className="flex items-center justify-between py-2 border-b border-gray-100">
-              <span className="text-sm text-gray-600">最近活跃时间</span>
+              <span className="text-sm text-gray-600">{t('userAppDetail.fields.lastActiveAt')}</span>
               <span className="text-sm font-medium text-gray-900">
-                {app.last_active_at ? new Date(app.last_active_at).toLocaleString() : '—'}
+                {app.last_active_at ? new Date(app.last_active_at).toLocaleString(locale) : t('userAppDetail.dash')}
               </span>
             </div>
             <div className="flex items-center justify-between py-2 border-b border-gray-100">
-              <span className="text-sm text-gray-600">最近授权时间</span>
+              <span className="text-sm text-gray-600">{t('userAppDetail.fields.lastAuthorizedAt')}</span>
               <span className="text-sm font-medium text-gray-900">
-                {new Date(app.last_authorized_at).toLocaleString()}
+                {new Date(app.last_authorized_at).toLocaleString(locale)}
               </span>
             </div>
           </div>
         </PCard>
 
-        {/* 授权范围 */}
+        {/*  */}
         {app.scopes && (
           <PCard>
             <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
               <ShieldCheckIcon className="h-5 w-5 mr-2 text-gray-400" />
-              授权范围
+              {t('userAppDetail.sections.scopes')}
             </h2>
             <div className="flex flex-wrap gap-2">
               {app.scopes.split(/[ ,]+/).filter(Boolean).map((scope) => (
@@ -151,12 +153,12 @@ export default function UserAppDetail() {
               ))}
             </div>
             <p className="mt-4 text-xs text-gray-500">
-              该应用已被授权访问上述范围内的数据和功能。如果你不再信任此应用，可以随时撤销授权。
+              {t('userAppDetail.scopeHint')}
             </p>
           </PCard>
         )}
 
-        {/* 操作按钮 */}
+        {/*  */}
         <div className="flex justify-end">
           <PButton
             onClick={revoke}
@@ -165,7 +167,7 @@ export default function UserAppDetail() {
             variant="danger"
             leftIcon={<TrashIcon className="h-4 w-4" />}
           >
-            撤销授权
+            {t('userAppDetail.actions.revoke')}
           </PButton>
         </div>
       </div>

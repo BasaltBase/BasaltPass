@@ -1,8 +1,10 @@
 import { useMemo, useState, useEffect } from 'react'
 import client from '@api/client'
 import { ROUTES } from '@constants'
+import { useI18n } from '@shared/i18n'
 
 function EmailChangeCancel() {
+  const { t } = useI18n()
   const token = useMemo(() => {
     const fragment = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash
     const params = new URLSearchParams(fragment)
@@ -16,22 +18,22 @@ function EmailChangeCancel() {
     const cancelEmailChange = async () => {
       if (!token) {
         setStatus('error')
-        setMessage('无效的取消链接')
+        setMessage(t('auth.emailChangeCancel.messages.invalidLink'))
         return
       }
 
       try {
         const response = await client.post('/api/v1/security/email/cancel', { token })
         setStatus('success')
-        setMessage(response.data.message || '邮箱变更已取消')
+        setMessage(response.data.message || t('auth.emailChangeCancel.messages.cancelled'))
       } catch (err: any) {
         setStatus('error')
-        setMessage(err.response?.data?.error || '取消失败')
+        setMessage(err.response?.data?.error || t('auth.emailChangeCancel.messages.cancelFailed'))
       }
     }
 
     cancelEmailChange()
-  }, [token])
+  }, [token, t])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-yellow-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -46,10 +48,10 @@ function EmailChangeCancel() {
                 </svg>
               </div>
               <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                正在处理...
+                {t('auth.emailChangeCancel.loading.title')}
               </h2>
               <p className="mt-2 text-center text-sm text-gray-600">
-                请稍候，我们正在取消您的邮箱变更请求
+                {t('auth.emailChangeCancel.loading.description')}
               </p>
             </>
           )}
@@ -62,7 +64,7 @@ function EmailChangeCancel() {
                 </svg>
               </div>
               <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                邮箱变更已取消
+                {t('auth.emailChangeCancel.success.title')}
               </h2>
               <p className="mt-2 text-center text-sm text-gray-600">
                 {message}
@@ -76,10 +78,10 @@ function EmailChangeCancel() {
                   </div>
                   <div className="ml-3">
                     <h3 className="text-sm font-medium text-yellow-800">
-                      取消成功
+                      {t('auth.emailChangeCancel.success.cardTitle')}
                     </h3>
                     <div className="mt-2 text-sm text-yellow-700">
-                      <p>您的邮箱变更请求已被取消，您的邮箱地址保持不变。</p>
+                      <p>{t('auth.emailChangeCancel.success.cardDescription')}</p>
                     </div>
                   </div>
                 </div>
@@ -89,7 +91,7 @@ function EmailChangeCancel() {
                   href={ROUTES.user.settings}
                   className="flex w-full justify-center rounded-lg border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                 >
-                  返回账户设置
+                  {t('auth.emailChangeCancel.actions.backToSettings')}
                 </a>
               </div>
             </>
@@ -103,7 +105,7 @@ function EmailChangeCancel() {
                 </svg>
               </div>
               <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                操作失败
+                {t('auth.emailChangeCancel.error.title')}
               </h2>
               <p className="mt-2 text-center text-sm text-red-600">
                 {message}
@@ -117,14 +119,14 @@ function EmailChangeCancel() {
                   </div>
                   <div className="ml-3">
                     <h3 className="text-sm font-medium text-red-800">
-                      取消失败
+                      {t('auth.emailChangeCancel.error.cardTitle')}
                     </h3>
                     <div className="mt-2 text-sm text-red-700">
-                      <p>可能的原因：</p>
+                      <p>{t('auth.emailChangeCancel.error.possibleReasons')}</p>
                       <ul className="mt-1 list-disc pl-5">
-                        <li>取消链接已过期</li>
-                        <li>邮箱变更请求已被处理</li>
-                        <li>无效的取消令牌</li>
+                        <li>{t('auth.emailChangeCancel.error.reasonExpired')}</li>
+                        <li>{t('auth.emailChangeCancel.error.reasonAlreadyHandled')}</li>
+                        <li>{t('auth.emailChangeCancel.error.reasonInvalidToken')}</li>
                       </ul>
                     </div>
                   </div>
@@ -135,13 +137,13 @@ function EmailChangeCancel() {
                   href={ROUTES.user.settings}
                   className="flex w-full justify-center rounded-lg border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                 >
-                  返回账户设置
+                  {t('auth.emailChangeCancel.actions.backToSettings')}
                 </a>
                 <a
                   href={ROUTES.user.login}
                   className="flex w-full justify-center rounded-lg border border-indigo-300 bg-white px-4 py-2 text-sm font-medium text-indigo-600 shadow-sm hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                 >
-                  返回登录
+                  {t('auth.emailChangeCancel.actions.backToLogin')}
                 </a>
               </div>
             </>

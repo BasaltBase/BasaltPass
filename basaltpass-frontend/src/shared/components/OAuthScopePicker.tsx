@@ -52,7 +52,7 @@ export default function OAuthScopePicker({
       ) : null}
 
       {loading ? (
-        <div className="text-sm text-gray-500">加载中...</div>
+        <div className="text-sm text-gray-500">loading...</div>
       ) : Object.keys(scopeGroups).length === 0 ? (
         <div className={`grid grid-cols-2 ${gridColsMd} gap-3`}>
           {fallbackScopes.map((scope) => (

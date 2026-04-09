@@ -5,8 +5,10 @@ import { PCard, PButton, PInput } from '@ui';
 import { teamApi, CreateTeamRequest } from '@api/user/team';
 import { UserGroupIcon, DocumentTextIcon, PhotoIcon } from '@heroicons/react/24/outline';
 import { ROUTES } from '@constants';
+import { useI18n } from '@shared/i18n';
 
 const CreateTeam: React.FC = () => {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [formData, setFormData] = useState<CreateTeamRequest>({
     name: '',
@@ -28,7 +30,7 @@ const CreateTeam: React.FC = () => {
     e.preventDefault();
     
     if (!formData.name.trim()) {
-      setError('团队名称不能为空');
+      setError(t('pages.teamCreate.errors.nameRequired'));
       return;
     }
 
@@ -38,12 +40,12 @@ const CreateTeam: React.FC = () => {
       
       await teamApi.createTeam(formData);
       
-      // 创建成功后跳转到团队列表
+      // 
       navigate(ROUTES.user.teams, { 
-        state: { message: '团队创建成功！' }
+        state: { message: t('pages.teamCreate.messages.createSuccess') }
       });
     } catch (err: any) {
-      setError(err.response?.data?.message || '创建团队失败');
+      setError(err.response?.data?.message || t('pages.teamCreate.errors.createFailed'));
     } finally {
       setLoading(false);
     }
@@ -53,9 +55,9 @@ const CreateTeam: React.FC = () => {
     <Layout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">创建新团队</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('pages.teamCreate.title')}</h1>
           <p className="mt-1 text-sm text-gray-500">
-            创建一个新的团队，开始协作工作
+            {t('pages.teamCreate.description')}
           </p>
         </div>
 
@@ -70,7 +72,7 @@ const CreateTeam: React.FC = () => {
                     </svg>
                   </div>
                   <div className="ml-3">
-                    <h3 className="text-sm font-medium text-red-800">创建失败</h3>
+                    <h3 className="text-sm font-medium text-red-800">{t('pages.teamCreate.errors.title')}</h3>
                     <div className="mt-2 text-sm text-red-700">{error}</div>
                   </div>
                 </div>
@@ -80,7 +82,7 @@ const CreateTeam: React.FC = () => {
             <div className="space-y-2">
               <label htmlFor="name" className="flex items-center text-sm font-semibold text-gray-700">
                 <UserGroupIcon className="h-5 w-5 mr-2 text-indigo-500" />
-                团队名称 <span className="text-red-500 ml-1">*</span>
+                {t('pages.teamCreate.fields.name')} <span className="text-red-500 ml-1">*</span>
               </label>
               <PInput
                 type="text"
@@ -88,7 +90,7 @@ const CreateTeam: React.FC = () => {
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                placeholder="输入团队名称"
+                placeholder={t('pages.teamCreate.placeholders.name')}
                 size="lg"
                 required
               />
@@ -97,7 +99,7 @@ const CreateTeam: React.FC = () => {
             <div className="space-y-2">
               <label htmlFor="description" className="flex items-center text-sm font-semibold text-gray-700">
                 <DocumentTextIcon className="h-5 w-5 mr-2 text-indigo-500" />
-                团队描述
+                {t('pages.teamCreate.fields.description')}
               </label>
               <textarea
                 id="description"
@@ -106,14 +108,14 @@ const CreateTeam: React.FC = () => {
                 onChange={handleInputChange}
                 rows={4}
                 className="block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300 resize-none"
-                placeholder="描述团队的目的和职责..."
+                placeholder={t('pages.teamCreate.placeholders.description')}
               />
             </div>
 
             <div className="space-y-2">
               <label htmlFor="avatar_url" className="flex items-center text-sm font-semibold text-gray-700">
                 <PhotoIcon className="h-5 w-5 mr-2 text-indigo-500" />
-                团队头像URL
+                {t('pages.teamCreate.fields.avatarUrl')}
               </label>
               <PInput
                 type="url"
@@ -129,7 +131,7 @@ const CreateTeam: React.FC = () => {
                   <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
                     <PhotoIcon className="h-4 w-4 text-gray-400" />
                   </div>
-                  <span className="text-xs text-gray-500">头像预览已启用</span>
+                  <span className="text-xs text-gray-500">{t('pages.teamCreate.avatarPreviewEnabled')}</span>
                 </div>
               )}
             </div>
@@ -141,7 +143,7 @@ const CreateTeam: React.FC = () => {
                 onClick={() => navigate(ROUTES.user.teams)}
                 size="lg"
               >
-                取消
+                {t('pages.teamCreate.actions.cancel')}
               </PButton>
               <PButton
                 type="submit"
@@ -150,7 +152,7 @@ const CreateTeam: React.FC = () => {
                 loading={loading}
                 size="lg"
               >
-                创建团队
+                {t('pages.teamCreate.actions.create')}
               </PButton>
             </div>
           </form>

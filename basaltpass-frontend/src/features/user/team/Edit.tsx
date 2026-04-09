@@ -4,8 +4,10 @@ import Layout from '@features/user/components/Layout';
 import { PCard, PInput, PButton, PSkeleton, PAlert, PTextarea, PPageHeader } from '@ui';
 import { teamApi, TeamResponse, CreateTeamRequest } from '@api/user/team';
 import { UserGroupIcon, DocumentTextIcon, PhotoIcon } from '@heroicons/react/24/outline';
+import { useI18n } from '@shared/i18n';
 
 const EditTeam: React.FC = () => {
+  const { t } = useI18n();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [team, setTeam] = useState<TeamResponse | null>(null);
@@ -36,7 +38,7 @@ const EditTeam: React.FC = () => {
         avatar_url: teamData.avatar_url || '',
       });
     } catch (err: any) {
-      setError(err.response?.data?.message || '加载团队信息失败');
+      setError(err.response?.data?.message || t('pages.teamEdit.errors.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -54,7 +56,7 @@ const EditTeam: React.FC = () => {
     e.preventDefault();
     
     if (!formData.name.trim()) {
-      setError('团队名称不能为空');
+      setError(t('pages.teamEdit.errors.nameRequired'));
       return;
     }
 
@@ -62,15 +64,15 @@ const EditTeam: React.FC = () => {
       setSaving(true);
       setError(null);
       
-      // 这里需要根据实际的API调整，可能需要使用不同的方法
+      // API，
       // await teamApi.updateTeam(parseInt(id!), formData);
       
-      // 暂时模拟更新成功
+      // 
       navigate(`/teams/${id}`, { 
-        state: { message: '团队信息更新成功！' }
+        state: { message: t('pages.teamEdit.messages.updateSuccess') }
       });
     } catch (err: any) {
-      setError(err.response?.data?.message || '更新团队失败');
+      setError(err.response?.data?.message || t('pages.teamEdit.errors.updateFailed'));
     } finally {
       setSaving(false);
     }
@@ -89,7 +91,7 @@ const EditTeam: React.FC = () => {
   if (error && !team) {
     return (
       <Layout>
-        <PAlert variant="error" title="加载失败" message={error} />
+        <PAlert variant="error" title={t('pages.teamEdit.errors.titleLoad')} message={error} />
       </Layout>
     );
   }
@@ -97,16 +99,16 @@ const EditTeam: React.FC = () => {
   return (
     <Layout>
       <div className="space-y-6">
-        <PPageHeader title="编辑团队" description="修改团队信息和设置" />
+        <PPageHeader title={t('pages.teamEdit.title')} description={t('pages.teamEdit.description')} />
 
         <div className="bg-white shadow-lg rounded-xl border border-gray-100">
           <form onSubmit={handleSubmit} className="p-8 space-y-8">
-            {error && <PAlert variant="error" title="更新失败" message={error} />}
+            {error && <PAlert variant="error" title={t('pages.teamEdit.errors.titleUpdate')} message={error} />}
 
             <div className="space-y-2">
               <label htmlFor="name" className="flex items-center text-sm font-semibold text-gray-700">
                 <UserGroupIcon className="h-5 w-5 mr-2 text-indigo-500" />
-                团队名称 <span className="text-red-500 ml-1">*</span>
+                {t('pages.teamEdit.fields.name')} <span className="text-red-500 ml-1">*</span>
               </label>
               <div className="relative">
                 <PInput
@@ -115,7 +117,7 @@ const EditTeam: React.FC = () => {
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  placeholder="输入团队名称"
+                  placeholder={t('pages.teamEdit.placeholders.name')}
                   required
                   icon={<UserGroupIcon className="h-5 w-5" />}
                 />
@@ -125,7 +127,7 @@ const EditTeam: React.FC = () => {
             <div className="space-y-2">
               <label htmlFor="description" className="flex items-center text-sm font-semibold text-gray-700">
                 <DocumentTextIcon className="h-5 w-5 mr-2 text-indigo-500" />
-                团队描述
+                {t('pages.teamEdit.fields.description')}
               </label>
               <PTextarea
                 id="description"
@@ -133,14 +135,14 @@ const EditTeam: React.FC = () => {
                 value={formData.description}
                 onChange={handleInputChange}
                 rows={4}
-                placeholder="描述团队的目的和职责..."
+                placeholder={t('pages.teamEdit.placeholders.description')}
               />
             </div>
 
             <div className="space-y-2">
               <label htmlFor="avatar_url" className="flex items-center text-sm font-semibold text-gray-700">
                 <PhotoIcon className="h-5 w-5 mr-2 text-indigo-500" />
-                团队头像URL
+                {t('pages.teamEdit.fields.avatarUrl')}
               </label>
               <div className="relative">
                 <PInput
@@ -158,7 +160,7 @@ const EditTeam: React.FC = () => {
                   <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
                     <PhotoIcon className="h-4 w-4 text-gray-400" />
                   </div>
-                  <span className="text-xs text-gray-500">头像预览已启用</span>
+                  <span className="text-xs text-gray-500">{t('pages.teamEdit.avatarPreviewEnabled')}</span>
                 </div>
               )}
             </div>
@@ -169,7 +171,7 @@ const EditTeam: React.FC = () => {
                 variant="secondary"
                 onClick={() => navigate(`/teams/${id}`)}
               >
-                取消
+                {t('pages.teamEdit.actions.cancel')}
               </PButton>
               <PButton
                 type="submit"
@@ -177,7 +179,7 @@ const EditTeam: React.FC = () => {
                 disabled={saving}
                 loading={saving}
               >
-                保存更改
+                {t('pages.teamEdit.actions.save')}
               </PButton>
             </div>
           </form>

@@ -2,22 +2,22 @@
 sidebar_position: 6
 ---
 
-# Audit Logs
+# 审计日志
 
-BasaltPass records significant actions for security and compliance.
+BasaltPass 记录重要操作以满足安全和合规要求。
 
-## What is Logged?
+## 记录内容
 
--   **Authentication**: Login successes and failures.
--   **User Management**: User creation, deletion, role assignment.
--   **Configuration**: Changes to tenant settings.
--   **System**: Critical errors or startup events.
+-   **认证**: 登录成功和失败。
+-   **用户管理**: 用户创建、删除、角色分配。
+-   **配置**: 租户设置的更改。
+-   **系统**: 关键错误或启动事件。
 
-## Viewing Logs
+## 查看日志
 
-Tenant Admins can view logs in the **Console** under **Audit Logs**.
--   Filter by Date Range.
--   Filter by Actor (User).
--   Filter by Action Type.
+租户管理员可以在 **控制台** 的 **审计日志** 下查看日志。
+-   按日期范围筛选。
+-   按操作者 (用户) 筛选。
+-   按操作类型筛选。
 
-Logs are retained according to the platform's configured audit retention policy.
+日志根据平台配置的审计保留策略进行保留。

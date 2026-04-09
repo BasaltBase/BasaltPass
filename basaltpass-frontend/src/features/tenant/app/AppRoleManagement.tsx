@@ -16,8 +16,10 @@ import { tenantAppApi } from '@api/tenant/tenantApp'
 import { userPermissionsApi, type Permission, type Role } from '@api/tenant/appPermissions'
 import useDebounce from '@hooks/useDebounce'
 import { PSkeleton, PPageHeader, PEmptyState, PButton, PInput, PTextarea, PBadge } from '@ui'
+import { useI18n } from '@shared/i18n'
 
 export default function AppRoleManagement() {
+  const { t, locale } = useI18n()
   const { id: appId } = useParams<{ id: string }>()
   const navigate = useNavigate()
   
@@ -29,13 +31,13 @@ export default function AppRoleManagement() {
   const [searchTerm, setSearchTerm] = useState('')
   const debouncedSearchTerm = useDebounce(searchTerm, 200)
   
-  // 模态框状态
+  // 
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [editingRole, setEditingRole] = useState<Role | null>(null)
   const [submitting, setSubmitting] = useState(false)
   
-  // 表单数据
+  // 
   const [formData, setFormData] = useState({
     code: '',
     name: '',
@@ -57,8 +59,8 @@ export default function AppRoleManagement() {
       const response = await tenantAppApi.getTenantApp(appId)
       setApp(response.data)
     } catch (err: any) {
-      console.error('获取应用信息失败:', err)
-      setError(err.response?.data?.error || '获取应用信息失败')
+      console.error(t('tenantAppRoleManagement.logs.fetchAppFailed'), err)
+      setError(err.response?.data?.error || t('tenantAppRoleManagement.errors.fetchAppFailed'))
     }
   }
 
@@ -74,8 +76,8 @@ export default function AppRoleManagement() {
       setRoles(rolesRes.roles || [])
       setPermissions(permissionsRes.permissions || [])
     } catch (err: any) {
-      console.error('获取角色和权限失败:', err)
-      setError(err.response?.data?.error || '获取角色和权限失败')
+      console.error(t('tenantAppRoleManagement.logs.fetchRolesAndPermissionsFailed'), err)
+      setError(err.response?.data?.error || t('tenantAppRoleManagement.errors.fetchRolesAndPermissionsFailed'))
     } finally {
       setLoading(false)
     }
@@ -106,17 +108,17 @@ export default function AppRoleManagement() {
   const handleDeleteRole = async (role: Role) => {
     if (!appId) return
     
-    if (!await uiConfirm(`确定要删除角色"${role.name}"吗？这将会影响所有拥有此角色的用户。`)) {
+    if (!await uiConfirm(t('tenantAppRoleManagement.confirmDelete', { name: role.name }))) {
       return
     }
 
     try {
       await userPermissionsApi.deleteRole(appId, role.id)
       await fetchRolesAndPermissions()
-      uiAlert('角色删除成功')
+      uiAlert(t('tenantAppRoleManagement.success.deleteSuccess'))
     } catch (err: any) {
-      console.error('删除角色失败:', err)
-      uiAlert(err.response?.data?.error || '删除角色失败')
+      console.error(t('tenantAppRoleManagement.logs.deleteFailed'), err)
+      uiAlert(err.response?.data?.error || t('tenantAppRoleManagement.errors.deleteFailed'))
     }
   }
 
@@ -127,25 +129,25 @@ export default function AppRoleManagement() {
       setSubmitting(true)
       
       if (editingRole) {
-        // 更新角色
+        // 
         await userPermissionsApi.updateRole(appId, editingRole.id, {
           name: formData.name,
           description: formData.description,
           permission_ids: formData.permission_ids
         })
-        uiAlert('角色更新成功')
+        uiAlert(t('tenantAppRoleManagement.success.updateSuccess'))
         setShowEditModal(false)
       } else {
-        // 创建角色
+        // 
         await userPermissionsApi.createRole(appId, formData)
-        uiAlert('角色创建成功')
+        uiAlert(t('tenantAppRoleManagement.success.createSuccess'))
         setShowCreateModal(false)
       }
       
       await fetchRolesAndPermissions()
     } catch (err: any) {
-      console.error('保存角色失败:', err)
-      uiAlert(err.response?.data?.error || '保存角色失败')
+      console.error(t('tenantAppRoleManagement.logs.saveFailed'), err)
+      uiAlert(err.response?.data?.error || t('tenantAppRoleManagement.errors.saveFailed'))
     } finally {
       setSubmitting(false)
     }
@@ -171,7 +173,7 @@ export default function AppRoleManagement() {
 
   if (loading) {
     return (
-      <TenantLayout title="角色管理">
+      <TenantLayout title={t('tenantAppRoleManagement.layoutTitle')}>
         <div className="py-6">
           <PSkeleton.Management />
         </div>
@@ -181,13 +183,13 @@ export default function AppRoleManagement() {
 
   if (error) {
     return (
-      <TenantLayout title="角色管理">
+      <TenantLayout title={t('tenantAppRoleManagement.layoutTitle')}>
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-red-500" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">{error}</h3>
             <div className="mt-6">
-              <PButton onClick={() => { setError(''); fetchRolesAndPermissions() }}>重试</PButton>
+              <PButton onClick={() => { setError(''); fetchRolesAndPermissions() }}>{t('tenantAppRoleManagement.actions.retry')}</PButton>
             </div>
           </div>
         </div>
@@ -196,29 +198,29 @@ export default function AppRoleManagement() {
   }
 
   return (
-    <TenantLayout title="角色管理">
+    <TenantLayout title={t('tenantAppRoleManagement.layoutTitle')}>
       <div className="space-y-6">
-        {/* 页面头部 */}
+        {/*  */}
         <PPageHeader
-          title="角色管理"
-          description={`管理应用 "${app?.name}" 的角色和权限`}
+          title={t('tenantAppRoleManagement.title')}
+          description={t('tenantAppRoleManagement.description', { name: app?.name || '-' })}
           icon={<ShieldCheckIcon className="h-8 w-8 text-green-600" />}
           actions={
             <div className="flex space-x-3">
-              <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/permissions`)} leftIcon={<KeyIcon className="h-4 w-4" />}>权限管理</PButton>
-              <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/users`)}>用户管理</PButton>
-              <PButton onClick={handleCreateRole} leftIcon={<PlusIcon className="h-4 w-4" />}>创建角色</PButton>
+              <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/permissions`)} leftIcon={<KeyIcon className="h-4 w-4" />}>{t('tenantAppRoleManagement.actions.permissionManagement')}</PButton>
+              <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/users`)}>{t('tenantAppRoleManagement.actions.userManagement')}</PButton>
+              <PButton onClick={handleCreateRole} leftIcon={<PlusIcon className="h-4 w-4" />}>{t('tenantAppRoleManagement.actions.createRole')}</PButton>
             </div>
           }
         />
 
-        {/* 搜索 */}
+        {/*  */}
         <div className="rounded-xl bg-white p-6 shadow-sm">
           <div className="relative">
             <MagnifyingGlassIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
             <input
               type="text"
-              placeholder="搜索角色名称、代码或描述..."
+              placeholder={t('tenantAppRoleManagement.searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
@@ -226,23 +228,23 @@ export default function AppRoleManagement() {
           </div>
         </div>
 
-        {/* 角色列表 */}
+        {/*  */}
         <div className="overflow-hidden rounded-xl bg-white shadow-sm">
           <div className="px-4 py-5 sm:p-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg leading-6 font-medium text-gray-900">
-                角色列表 ({filteredRoles.length} 个角色)
+                {t('tenantAppRoleManagement.list.title', { count: filteredRoles.length })}
               </h3>
             </div>
 
             {filteredRoles.length === 0 ? (
               <PEmptyState
                 icon={ShieldCheckIcon}
-                title="暂无角色"
-                description={searchTerm ? '未找到匹配的角色' : '还没有创建任何角色'}
+                title={t('tenantAppRoleManagement.empty.title')}
+                description={searchTerm ? t('tenantAppRoleManagement.empty.searchNoResult') : t('tenantAppRoleManagement.empty.noRole')}
               >
                 {!searchTerm && (
-                  <PButton onClick={handleCreateRole} leftIcon={<PlusIcon className="h-4 w-4" />}>创建角色</PButton>
+                  <PButton onClick={handleCreateRole} leftIcon={<PlusIcon className="h-4 w-4" />}>{t('tenantAppRoleManagement.actions.createRole')}</PButton>
                 )}
               </PEmptyState>
             ) : (
@@ -254,7 +256,7 @@ export default function AppRoleManagement() {
                         <ShieldCheckIcon className="h-8 w-8 text-green-600 mr-3" />
                         <div>
                           <h4 className="text-lg font-medium text-gray-900">{role.name}</h4>
-                          <p className="text-sm text-gray-500">代码: {role.code}</p>
+                          <p className="text-sm text-gray-500">{t('tenantAppRoleManagement.fields.code')}: {role.code}</p>
                         </div>
                       </div>
                       <div className="flex space-x-2">
@@ -284,10 +286,10 @@ export default function AppRoleManagement() {
                     <div className="flex items-center justify-between text-sm">
                       <div className="flex items-center text-blue-600">
                         <KeyIcon className="h-4 w-4 mr-1" />
-                        {role.permissions?.length || 0} 个权限
+                        {t('tenantAppRoleManagement.fields.permissionCount', { count: role.permissions?.length || 0 })}
                       </div>
                       <div className="text-gray-500">
-                        {new Date(role.created_at).toLocaleDateString()}
+                        {new Date(role.created_at).toLocaleDateString(locale)}
                       </div>
                     </div>
 
@@ -297,7 +299,7 @@ export default function AppRoleManagement() {
                           <PBadge key={permission.id} variant="info">{permission.name}</PBadge>
                         ))}
                         {role.permissions.length > 3 && (
-                          <PBadge variant="default">+{role.permissions.length - 3} 更多</PBadge>
+                          <PBadge variant="default">{t('tenantAppRoleManagement.fields.moreCount', { count: role.permissions.length - 3 })}</PBadge>
                         )}
                       </div>
                     )}
@@ -309,10 +311,10 @@ export default function AppRoleManagement() {
         </div>
       </div>
 
-      {/* 创建角色模态框 */}
+      {/*  */}
       {showCreateModal && (
         <RoleModal
-          title="创建角色"
+          title={t('tenantAppRoleManagement.modal.createTitle')}
           formData={formData}
           setFormData={setFormData}
           permissions={permissions}
@@ -322,10 +324,10 @@ export default function AppRoleManagement() {
         />
       )}
 
-      {/* 编辑角色模态框 */}
+      {/*  */}
       {showEditModal && (
         <RoleModal
-          title="编辑角色"
+          title={t('tenantAppRoleManagement.modal.editTitle')}
           formData={formData}
           setFormData={setFormData}
           permissions={permissions}
@@ -339,7 +341,7 @@ export default function AppRoleManagement() {
   )
 }
 
-// 角色模态框组件
+// 
 const RoleModal: React.FC<{
   title: string
   formData: any
@@ -350,6 +352,7 @@ const RoleModal: React.FC<{
   onClose: () => void
   isEdit?: boolean
 }> = ({ title, formData, setFormData, permissions, submitting, onSubmit, onClose, isEdit = false }) => {
+  const { t } = useI18n()
   const getPermissionsByCategory = () => {
     const categories: { [key: string]: Permission[] } = {}
     permissions.forEach(permission => {
@@ -379,7 +382,7 @@ const RoleModal: React.FC<{
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  角色代码 *
+                  {t('tenantAppRoleManagement.fields.roleCodeRequired')}
                 </label>
                 <PInput
                   type="text"
@@ -387,39 +390,39 @@ const RoleModal: React.FC<{
                   value={formData.code}
                   onChange={(e) => setFormData({ ...formData, code: (e.target as HTMLInputElement).value })}
                   disabled={isEdit}
-                  placeholder="例如: admin, user, editor"
+                  placeholder={t('tenantAppRoleManagement.placeholders.roleCode')}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  角色名称 *
+                  {t('tenantAppRoleManagement.fields.roleNameRequired')}
                 </label>
                 <PInput
                   type="text"
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: (e.target as HTMLInputElement).value })}
-                  placeholder="例如: 管理员, 普通用户, 编辑者"
+                  placeholder={t('tenantAppRoleManagement.placeholders.roleName')}
                 />
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                角色描述
+                {t('tenantAppRoleManagement.fields.roleDescription')}
               </label>
               <PTextarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: (e.target as HTMLTextAreaElement).value })}
                 rows={3}
-                placeholder="描述该角色的用途和职责"
+                placeholder={t('tenantAppRoleManagement.placeholders.roleDescription')}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">
-                权限分配 ({formData.permission_ids.length} 个已选)
+                {t('tenantAppRoleManagement.fields.permissionAssignment', { count: formData.permission_ids.length })}
               </label>
               <div className="max-h-80 overflow-y-auto rounded-lg border border-gray-200 p-4">
                 {Object.entries(getPermissionsByCategory()).map(([category, categoryPermissions]) => (
@@ -466,8 +469,8 @@ const RoleModal: React.FC<{
             </div>
 
             <div className="flex justify-end space-x-3">
-              <PButton type="button" variant="secondary" onClick={onClose} disabled={submitting}>取消</PButton>
-              <PButton type="submit" loading={submitting}>{isEdit ? '更新' : '创建'}</PButton>
+              <PButton type="button" variant="secondary" onClick={onClose} disabled={submitting}>{t('tenantAppRoleManagement.actions.cancel')}</PButton>
+              <PButton type="submit" loading={submitting}>{isEdit ? t('tenantAppRoleManagement.actions.update') : t('tenantAppRoleManagement.actions.create')}</PButton>
             </div>
           </form>
         </div>

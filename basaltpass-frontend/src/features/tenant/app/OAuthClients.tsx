@@ -15,9 +15,11 @@ import { tenantOAuthApi, TenantAppWithClients, TenantOAuthClient } from '@api/te
 import { PButton, PInput, PSkeleton, PBadge, PPagination, PPageHeader } from '@ui'
 import CreateOAuthClientModal from '@features/tenant/app/components/CreateOAuthClientModal'
 import OAuthClientDetailModal from '@features/tenant/app/components/OAuthClientDetailModal'
+import { useI18n } from '@shared/i18n'
 
 
 export default function TenantOAuthClients() {
+  const { t } = useI18n()
   const [apps, setApps] = useState<TenantAppWithClients[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -37,7 +39,7 @@ export default function TenantOAuthClients() {
       setApps(response.data.apps || [])
       setTotal(response.data.total || 0)
     } catch (err: any) {
-      setError(err.response?.data?.error || '加载失败')
+      setError(err.response?.data?.error || t('tenantOAuthClients.errors.loadFailed'))
       setApps([])
       setTotal(0)
     } finally {
@@ -56,13 +58,13 @@ export default function TenantOAuthClients() {
   }
 
   const handleDelete = async (client: TenantOAuthClient) => {
-    if (!await uiConfirm(`确定要删除OAuth客户端 "${client.client_id}" 吗？此操作不可恢复。`)) return
+    if (!await uiConfirm(t('tenantOAuthClients.confirmDelete', { id: client.client_id }))) return
 
     try {
       await tenantOAuthApi.deleteClient(client.client_id)
       loadAppsWithClients()
     } catch (err: any) {
-      uiAlert(err.response?.data?.error || '删除失败')
+      uiAlert(err.response?.data?.error || t('tenantOAuthClients.errors.deleteFailed'))
     }
   }
 
@@ -74,24 +76,24 @@ export default function TenantOAuthClients() {
   const totalPages = Math.ceil(total / pageSize)
 
   return (
-    <TenantLayout title="OAuth客户端管理">
+    <TenantLayout title={t('tenantOAuthClients.layoutTitle')}>
       <div>
-        {/* 页面头部 */}
+        {/*  */}
         <PPageHeader
-          title="OAuth客户端管理"
-          description="管理应用的 OAuth2 客户端配置"
+          title={t('tenantOAuthClients.title')}
+          description={t('tenantOAuthClients.description')}
           icon={<KeyIcon className="h-8 w-8 text-indigo-600" />}
           actions={
             <PButton
               onClick={() => setShowCreateModal(true)}
               leftIcon={<PlusIcon className="h-4 w-4" />}
             >
-              创建客户端
+              {t('tenantOAuthClients.actions.createClient')}
             </PButton>
           }
         />
 
-        {/* 搜索 */}
+        {/*  */}
         <div className="flex justify-between items-center mb-6">
           <form onSubmit={handleSearch} className="flex items-center space-x-2">
             <div className="min-w-[240px]">
@@ -99,17 +101,17 @@ export default function TenantOAuthClients() {
                 type="text"
                 value={search}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
-                placeholder="搜索应用..."
+                placeholder={t('tenantOAuthClients.searchPlaceholder')}
                 icon={<MagnifyingGlassIcon className="h-5 w-5" />}
                 variant="rounded"
                 autoComplete="off"
               />
             </div>
-            <PButton type="submit" variant="primary">搜索</PButton>
+            <PButton type="submit" variant="primary">{t('tenantOAuthClients.actions.search')}</PButton>
           </form>
         </div>
 
-        {/* 应用和客户端列表 */}
+        {/*  */}
         <div className="rounded-xl bg-white shadow-sm">
           {loading ? (
             <PSkeleton.List items={3} />
@@ -118,14 +120,14 @@ export default function TenantOAuthClients() {
               <ExclamationTriangleIcon className="h-8 w-8 text-red-500 mx-auto" />
               <p className="mt-2 text-red-600">{error}</p>
               <div className="mt-2">
-                <PButton onClick={loadAppsWithClients}>重新加载</PButton>
+                <PButton onClick={loadAppsWithClients}>{t('tenantOAuthClients.actions.reload')}</PButton>
               </div>
             </div>
           ) : !apps || apps.length === 0 ? (
             <div className="p-8 text-center">
-              <p className="text-gray-500">暂无应用</p>
+              <p className="text-gray-500">{t('tenantOAuthClients.empty.noApps')}</p>
               <PButton onClick={() => setShowCreateModal(true)} className="mt-2">
-                创建第一个OAuth客户端
+                {t('tenantOAuthClients.actions.createFirstClient')}
               </PButton>
             </div>
           ) : (
@@ -138,16 +140,16 @@ export default function TenantOAuthClients() {
                       <p className="text-sm text-gray-500">{app.description}</p>
                     </div>
                     <PBadge variant={app.status === 'active' ? 'success' : 'error'}>
-                      {app.status === 'active' ? '激活' : '停用'}
+                      {app.status === 'active' ? t('tenantOAuthClients.status.active') : t('tenantOAuthClients.status.inactive')}
                     </PBadge>
                   </div>
 
                   {!app.oauth_clients || app.oauth_clients.length === 0 ? (
                     <div className="rounded-xl bg-gray-50 py-8 text-center">
                       <KeyIcon className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-gray-500 mb-4">该应用暂无OAuth客户端</p>
+                      <p className="text-gray-500 mb-4">{t('tenantOAuthClients.empty.noClientsForApp')}</p>
                       <PButton onClick={() => setShowCreateModal(true)}>
-                        创建OAuth客户端
+                        {t('tenantOAuthClients.actions.createClient')}
                       </PButton>
                     </div>
                   ) : (
@@ -156,16 +158,16 @@ export default function TenantOAuthClients() {
                         <thead className="bg-gray-50">
                           <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              客户端ID
+                              {t('tenantOAuthClients.columns.clientId')}
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              状态
+                              {t('tenantOAuthClients.columns.status')}
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              创建时间
+                              {t('tenantOAuthClients.columns.createdAt')}
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              操作
+                              {t('tenantOAuthClients.columns.actions')}
                             </th>
                           </tr>
                         </thead>
@@ -179,7 +181,7 @@ export default function TenantOAuthClients() {
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <PBadge variant={client.is_active ? 'success' : 'error'}>
-                                  {client.is_active ? '激活' : '停用'}
+                                  {client.is_active ? t('tenantOAuthClients.status.active') : t('tenantOAuthClients.status.inactive')}
                                 </PBadge>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -190,14 +192,14 @@ export default function TenantOAuthClients() {
                                   <button
                                     onClick={() => handleViewDetail(client)}
                                     className="rounded-lg p-2 text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700"
-                                    title="查看详情"
+                                    title={t('tenantOAuthClients.actions.viewDetail')}
                                   >
                                     <EyeIcon className="h-4 w-4" />
                                   </button>
                                   <button
                                     onClick={() => handleDelete(client)}
                                     className="rounded-lg p-2 text-red-600 transition-colors hover:bg-red-50 hover:text-red-700"
-                                    title="删除"
+                                    title={t('tenantOAuthClients.actions.delete')}
                                   >
                                     <TrashIcon className="h-4 w-4" />
                                   </button>
@@ -212,7 +214,7 @@ export default function TenantOAuthClients() {
                 </div>
               ))}
 
-              {/* 分页 */}
+              {/*  */}
               {totalPages > 1 && (
                 <div className="px-6 py-3 bg-gray-50 border-t border-gray-200">
                   <PPagination
@@ -229,7 +231,7 @@ export default function TenantOAuthClients() {
           )}
         </div>
 
-        {/* 创建客户端模态框 */}
+        {/*  */}
         <CreateOAuthClientModal
           isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
@@ -241,7 +243,7 @@ export default function TenantOAuthClients() {
           }))}
         />
 
-        {/* 客户端详情模态框 */}
+        {/*  */}
         <OAuthClientDetailModal
           client={selectedClient}
           isOpen={showDetailModal}

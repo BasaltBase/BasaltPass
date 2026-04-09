@@ -32,7 +32,7 @@ export default function PublicRoute({ children }: PublicRouteProps) {
   const allowPublicAccess = allowTenantScopedAuth || allowOAuthReauth
 
   useEffect(() => {
-    // 只有在加载完成且已认证时才跳转
+    // translatedhastranslatedalreadytranslated
     if (!isLoading && isAuthenticated && !allowPublicAccess) {
       debugAuth.logRedirect(window.location.pathname, '/dashboard', 'already authenticated')
       navigate('/dashboard', { replace: true })
@@ -41,19 +41,19 @@ export default function PublicRoute({ children }: PublicRouteProps) {
     }
   }, [allowPublicAccess, isAuthenticated, isLoading, navigate])
 
-  // 如果正在加载，显示加载状态
+  // translated，translatedstatus
   if (isLoading) {
     debugAuth.log('PublicRoute: showing loading state')
-    return <PSkeleton.PageLoader message="正在验证身份..." />
+    return <PSkeleton.PageLoader message="translated..." />
   }
 
-  // 如果未认证，显示子组件
+  // translatednottranslated，translatedcomponent
   if (!isAuthenticated || allowPublicAccess) {
     debugAuth.log('PublicRoute: showing public content')
     return <>{children}</>
   }
 
-  // 如果已认证且不在加载状态，返回null（会触发跳转）
+  // translatedalreadytranslatedstatus，backnull（translated）
   debugAuth.log('PublicRoute: returning null, will redirect')
   return null
 } 

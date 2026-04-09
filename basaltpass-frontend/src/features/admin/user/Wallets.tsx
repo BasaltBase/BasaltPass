@@ -8,8 +8,10 @@ import PInput from '@ui/PInput'
 import PButton from '@ui/PButton'
 import UserTooltip from '@ui/UserTooltip'
 import { ROUTES } from '@constants'
+import { useI18n } from '@shared/i18n'
 
 export default function Wallets() {
+  const { t } = useI18n()
   const [wallets, setWallets] = useState<Wallet[]>([])
   const [loading, setLoading] = useState(false)
   const [keyword, setKeyword] = useState('')
@@ -18,15 +20,14 @@ export default function Wallets() {
     setLoading(true)
     try {
       const response = await adminWalletApi.getWallets()
-      // 确保响应数据是正确的格式
       if (response && response.data && Array.isArray(response.data)) {
         setWallets(response.data)
       } else {
-        console.warn('API响应格式不正确:', response)
+        console.warn(t('adminUserWallets.logs.invalidApiFormat'), response)
         setWallets([])
       }
     } catch (error) {
-      console.error('加载钱包数据失败:', error)
+      console.error(t('adminUserWallets.logs.loadFailed'), error)
       setWallets([])
     } finally {
       setLoading(false)
@@ -35,7 +36,6 @@ export default function Wallets() {
   useEffect(() => { load() }, [])
 
   const filtered = useMemo(() => {
-    // 确保 wallets 是数组
     if (!Array.isArray(wallets)) return []
     if (!keyword) return wallets
     const kw = keyword.toLowerCase().trim()
@@ -50,7 +50,7 @@ export default function Wallets() {
     { key: 'id', title: 'ID', dataIndex: 'id', sortable: true, align: 'center' },
     {
       key: 'user',
-      title: '用户ID',
+      title: t('adminUserWallets.columns.userId'),
       sortable: true,
       align: 'center',
       sorter: (a, b) => (a.user_id || 0) - (b.user_id || 0),
@@ -64,7 +64,7 @@ export default function Wallets() {
     },
     {
       key: 'balance',
-      title: '余额',
+      title: t('adminUserWallets.columns.balance'),
       sortable: true,
       align: 'right',
       sorter: (a, b) => a.balance - b.balance,
@@ -72,39 +72,39 @@ export default function Wallets() {
     },
     {
       key: 'currency',
-      title: '货币',
+      title: t('adminUserWallets.columns.currency'),
       sortable: true,
       align: 'center',
       render: (row) => row.currency?.code || '-'
     },
     {
       key: 'status',
-      title: '状态',
+      title: t('adminUserWallets.columns.status'),
       sortable: true,
       align: 'center',
-      render: (row) => row.status === 'active' ? '正常' : '冻结'
+      render: (row) => row.status === 'active' ? t('adminUserWallets.status.active') : t('adminUserWallets.status.frozen')
     }
   ]
 
   return (
-    <AdminLayout title="钱包管理" actions={
+    <AdminLayout title={t('adminUserWallets.layoutTitle')} actions={
       <PButton variant="ghost" size="sm" leftIcon={<ArrowPathIcon className="h-4 w-4" />} onClick={load} disabled={loading}>
-        刷新
+        {t('adminUserWallets.actions.refresh')}
       </PButton>
     }>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">钱包管理</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('adminUserWallets.title')}</h1>
           <p className="mt-1 text-sm text-gray-500">
-            查看和管理用户钱包信息
+            {t('adminUserWallets.description')}
           </p>
         </div>
 
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-medium text-gray-900">钱包列表</h3>
+          <h3 className="text-lg font-medium text-gray-900">{t('adminUserWallets.listTitle')}</h3>
           <div className="relative w-64">
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <PInput placeholder="搜索 ID / 用户ID / 货币" value={keyword} onChange={(e)=>setKeyword(e.target.value)} className="pl-9" />
+            <PInput placeholder={t('adminUserWallets.searchPlaceholder')} value={keyword} onChange={(e)=>setKeyword(e.target.value)} className="pl-9" />
           </div>
         </div>
 
@@ -113,7 +113,7 @@ export default function Wallets() {
           data={filtered}
           rowKey={(row) => row.id}
           loading={loading}
-          emptyText={keyword ? '无匹配数据' : '暂无数据'}
+          emptyText={keyword ? t('adminUserWallets.empty.filtered') : t('adminUserWallets.empty.default')}
           defaultSort={{ key: 'id', order: 'desc' }}
         />
       </div>

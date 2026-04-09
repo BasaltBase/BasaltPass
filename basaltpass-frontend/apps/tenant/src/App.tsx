@@ -7,8 +7,10 @@ import { DialogProvider } from '../../../src/shared/contexts/DialogContext'
 import AppRouter from './router'
 import { exchangeConsole } from '../../../src/shared/api/console'
 import { setAccessToken } from '../../../src/shared/utils/auth'
+import { useI18n } from '../../../src/shared/i18n'
 
 function ConsoleCodeGate({ children }: { children: React.ReactNode }) {
+  const { t } = useI18n()
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
@@ -31,7 +33,7 @@ function ConsoleCodeGate({ children }: { children: React.ReactNode }) {
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">正在进入租户控制台...</p>
+          <p className="mt-4 text-gray-600">{t('entry.tenantConsole')}...</p>
         </div>
       </div>
     )

@@ -2,15 +2,15 @@
 sidebar_position: 7
 ---
 
-# 备份与恢复 (Backup & Restore)
+# 备份与恢复
 
 定期备份对于灾难恢复至关重要。
 
-## 需要备份的内容
+## 备份内容
 
 1.  **数据库**: 最关键的组件。
-2.  **配置文件**: `config.yaml`, `settings.yaml`, `.env`。
-3.  **密钥**: `JWT_SECRET` (如果不在环境变量中), TLS 证书。
+2.  **配置文件**: `config.yaml`、`settings.yaml`、`.env`。
+3.  **密钥**: `JWT_SECRET` (如果不在环境变量中)、TLS 证书。
 
 ## 备份策略
 
@@ -19,7 +19,7 @@ sidebar_position: 7
 ```bash
 cp basaltpass.db basaltpass.bak
 ```
-> **注意**: 确保应用程序已通过或数据库处于安全状态以避免损坏。
+> **注意**: 确保应用程序已停止或数据库处于安全状态以避免数据损坏。
 
 ### PostgreSQL / MySQL
 使用标准工具如 `pg_dump` 或 `mysqldump`。

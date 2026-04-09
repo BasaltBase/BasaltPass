@@ -1,8 +1,8 @@
 {
-    "label": "Integration Guide",
+    "label": "集成指南",
     "position": 2,
     "link": {
         "type": "generated-index",
-        "description": "Guides for integrating third-party applications with BasaltPass."
+        "description": "将第三方应用程序与 BasaltPass 集成的指南。"
     }
 }

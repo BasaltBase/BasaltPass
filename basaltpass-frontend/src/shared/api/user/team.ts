@@ -56,45 +56,45 @@ export interface UserTeamResponse {
   joined_at: string;
 }
 
-// 团队API
+// teamAPI
 export const teamApi = {
-  // 创建团队
+  // createteam
   createTeam: (data: CreateTeamRequest) =>
     client.post<{ data: { team: TeamResponse }; message: string }>('/api/v1/teams', data),
 
-  // 获取用户的所有团队
+  // getusertranslatedhasteam
   getUserTeams: () =>
     client.get<{ data: UserTeamResponse[] }>('/api/v1/teams'),
 
-  // 获取团队信息
+  // getteaminfo
   getTeam: (id: number) =>
     client.get<{ data: TeamResponse }>(`/api/v1/teams/${id}`),
 
-  // 更新团队信息
+  // updateteaminfo
   updateTeam: (id: number, data: UpdateTeamRequest) =>
     client.put<{ message: string }>(`/api/v1/teams/${id}`, data),
 
-  // 删除团队
+  // deleteteam
   deleteTeam: (id: number) =>
     client.delete<{ message: string }>(`/api/v1/teams/${id}`),
 
-  // 获取团队成员列表
+  // getteamtranslatedlist
   getTeamMembers: (id: number) =>
     client.get<{ data: TeamMemberResponse[] }>(`/api/v1/teams/${id}/members`),
 
-  // 添加团队成员
+  // translatedteamtranslated
   addMember: (id: number, data: AddMemberRequest) =>
     client.post<{ message: string }>(`/api/v1/teams/${id}/members`, data),
 
-  // 更新成员角色
+  // updatetranslatedrole
   updateMemberRole: (teamId: number, memberId: number, data: UpdateMemberRoleRequest) =>
     client.put<{ message: string }>(`/api/v1/teams/${teamId}/members/${memberId}`, data),
 
-  // 移除团队成员
+  // translatedteamtranslated
   removeMember: (teamId: number, memberId: number) =>
     client.delete<{ message: string }>(`/api/v1/teams/${teamId}/members/${memberId}`),
 
-  // 离开团队
+  // translatedteam
   leaveTeam: (id: number) =>
     client.post<{ message: string }>(`/api/v1/teams/${id}/leave`),
 }; 

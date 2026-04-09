@@ -23,23 +23,12 @@ import { PButton } from '@ui'
 import { useAuth } from '@contexts/AuthContext'
 import { useConfig } from '@contexts/ConfigContext'
 import EnhancedNotificationIcon from '@components/EnhancedNotificationIcon'
+import LanguageSwitcher from '@components/LanguageSwitcher'
 import { authorizeConsole } from '@api/console'
 import { uiAlert } from '@contexts/DialogContext'
 import { ROUTES } from '@constants'
 import ConsoleAccountSwitcherModal from '@components/ConsoleAccountSwitcherModal'
-
-const navigation = [
-  { name: '仪表板', href: ROUTES.user.dashboard, icon: HomeIcon },
-  { name: '个人资料', href: ROUTES.user.profile, icon: UserIcon },
-  { name: '团队', href: ROUTES.user.teams, icon: UserGroupIcon },
-  { name: '钱包', href: ROUTES.user.wallet, icon: WalletIcon, requiresMarket: true },
-  { name: '我的订阅', href: ROUTES.user.subscriptions, icon: CreditCardIcon, requiresMarket: true },
-  { name: '产品与套餐', href: ROUTES.user.products, icon: CubeIcon, requiresMarket: true },
-  { name: '我的应用', href: ROUTES.user.myApps, icon: Squares2X2Icon },
-  { name: '安全', href: ROUTES.user.security, icon: ShieldCheckIcon },
-  { name: '设置', href: ROUTES.user.settings, icon: CogIcon },
-  { name: '帮助', href: ROUTES.user.help, icon: QuestionMarkCircleIcon },
-]
+import { useI18n } from '@shared/i18n'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -52,6 +41,7 @@ export default function Layout({ children }: LayoutProps) {
   const desktopUserMenuRef = useRef<HTMLDivElement | null>(null)
   const mobileUserMenuRef = useRef<HTMLDivElement | null>(null)
   const location = useLocation()
+  const { t } = useI18n()
   const { user, tenants, logout, canAccessTenant, canAccessAdmin } = useAuth()
   const { marketEnabled, siteName, siteInitial, setPageTitle } = useConfig()
   const currentSessionKey = `${user?.id || 0}:${Number(user?.tenant_id || 0)}`
@@ -65,9 +55,22 @@ export default function Layout({ children }: LayoutProps) {
     return siteName
   })()
 
+  const navigation = [
+    { name: t('userLayout.nav.dashboard'), href: ROUTES.user.dashboard, icon: HomeIcon },
+    { name: t('userLayout.nav.profile'), href: ROUTES.user.profile, icon: UserIcon },
+    { name: t('userLayout.nav.teams'), href: ROUTES.user.teams, icon: UserGroupIcon },
+    { name: t('userLayout.nav.wallet'), href: ROUTES.user.wallet, icon: WalletIcon, requiresMarket: true },
+    { name: t('userLayout.nav.subscriptions'), href: ROUTES.user.subscriptions, icon: CreditCardIcon, requiresMarket: true },
+    { name: t('userLayout.nav.products'), href: ROUTES.user.products, icon: CubeIcon, requiresMarket: true },
+    { name: t('userLayout.nav.myApps'), href: ROUTES.user.myApps, icon: Squares2X2Icon },
+    { name: t('userLayout.nav.security'), href: ROUTES.user.security, icon: ShieldCheckIcon },
+    { name: t('userLayout.nav.settings'), href: ROUTES.user.settings, icon: CogIcon },
+    { name: t('userLayout.nav.help'), href: ROUTES.user.help, icon: QuestionMarkCircleIcon },
+  ]
+
   useEffect(() => {
-    setPageTitle('用户中心')
-  }, [setPageTitle])
+    setPageTitle(t('userLayout.pageTitle'))
+  }, [setPageTitle, t])
 
   useEffect(() => {
     setSidebarOpen(false)
@@ -116,7 +119,7 @@ export default function Layout({ children }: LayoutProps) {
   const isActive = (href: string) =>
     location.pathname === href || location.pathname.startsWith(`${href}/`)
 
-  // 根据市场功能配置过滤导航项
+  // 
   const filteredNavigation = navigation.filter(item => {
     if (item.requiresMarket && !marketEnabled) {
       return false
@@ -141,8 +144,8 @@ export default function Layout({ children }: LayoutProps) {
       const url = joinUrl(consoleTenantUrl, `tenant/dashboard?code=${encodeURIComponent(code)}`)
       window.location.href = url
     } catch (error: any) {
-      const message = error?.response?.data?.error || '当前账号没有租户管理权限，或租户控制台授权失败。'
-      await uiAlert(message, '无法进入租户管理')
+      const message = error?.response?.data?.error || t('userLayout.tenantSwitchFailed')
+      await uiAlert(message, t('userLayout.tenantSwitchFailedTitle'))
     }
   }
 
@@ -154,7 +157,7 @@ export default function Layout({ children }: LayoutProps) {
 
   return (
     <div className="h-screen flex overflow-hidden bg-gray-100">
-      {/* 移动端侧边栏 */}
+      {/*  */}
       {sidebarOpen && (
         <div className="fixed inset-0 !m-0 flex z-40 md:hidden">
           <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
@@ -165,7 +168,7 @@ export default function Layout({ children }: LayoutProps) {
                 size="sm"
                 className="flex items-center justify-center h-10 w-10 rounded-full text-gray-700 hover:text-gray-900 hover:bg-gray-100"
                 onClick={() => setSidebarOpen(false)}
-                aria-label="关闭侧边栏"
+                aria-label={t('common.closeSidebar')}
               >
                 <XMarkIcon className="h-6 w-6" />
               </PButton>
@@ -198,7 +201,7 @@ export default function Layout({ children }: LayoutProps) {
         </div>
       )}
 
-      {/* 桌面端侧边栏 */}
+      {/*  */}
       <div className="hidden md:flex md:flex-shrink-0">
         <div className="flex flex-col w-64">
           <div className="flex flex-col h-0 flex-1 border-r border-gray-200 bg-white">
@@ -230,9 +233,9 @@ export default function Layout({ children }: LayoutProps) {
         </div>
       </div>
 
-      {/* 主内容区域 */}
+      {/*  */}
       <div className="flex flex-col w-0 flex-1 overflow-hidden">
-        {/* 顶部导航栏 */}
+        {/*  */}
         <div className="md:hidden border-b border-gray-200 bg-white px-3 py-2">
           <div className="flex items-center justify-between">
             <PButton
@@ -240,7 +243,7 @@ export default function Layout({ children }: LayoutProps) {
               size="md"
               className="h-11 w-11 inline-flex items-center justify-center rounded-lg text-gray-500 hover:text-gray-900 focus:ring-inset focus:ring-indigo-500"
               onClick={() => setSidebarOpen(true)}
-              aria-label="打开侧边栏"
+              aria-label={t('common.openSidebar')}
             >
               <Bars3Icon className="h-6 w-6" />
             </PButton>
@@ -251,7 +254,7 @@ export default function Layout({ children }: LayoutProps) {
                 size="sm"
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                 className="flex items-center rounded-full bg-white p-1 text-sm hover:bg-gray-50"
-                aria-label="打开用户菜单"
+                aria-label={t('common.openUserMenu')}
               >
                 {user?.avatar_url ? (
                   <img
@@ -272,7 +275,7 @@ export default function Layout({ children }: LayoutProps) {
         {isUserMenuOpen && (
           <div ref={mobileUserMenuRef} className="md:hidden relative z-50 bg-white border-b border-gray-200 shadow-sm">
             <div className="px-4 py-3 border-b border-gray-200">
-              <p className="text-sm text-gray-900 font-medium">{user?.nickname || '用户'}</p>
+              <p className="text-sm text-gray-900 font-medium">{user?.nickname || t('common.user')}</p>
               <p className="text-sm text-gray-500 truncate">{user?.email}</p>
             </div>
             <Link
@@ -281,7 +284,7 @@ export default function Layout({ children }: LayoutProps) {
               onClick={() => setIsUserMenuOpen(false)}
             >
               <UserIcon className="mr-3 h-4 w-4" />
-              个人资料
+              {t('common.profile')}
             </Link>
             <Link
               to={ROUTES.user.settings}
@@ -289,7 +292,7 @@ export default function Layout({ children }: LayoutProps) {
               onClick={() => setIsUserMenuOpen(false)}
             >
               <CogIcon className="mr-3 h-4 w-4" />
-              设置
+              {t('common.settings')}
             </Link>
             <PButton
               variant="ghost"
@@ -300,7 +303,7 @@ export default function Layout({ children }: LayoutProps) {
               className="flex w-full items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 justify-start"
             >
               <ArrowsRightLeftIcon className="mr-3 h-4 w-4" />
-              切换账户
+              {t('common.switchAccount')}
             </PButton>
             <PButton
               variant="ghost"
@@ -311,25 +314,26 @@ export default function Layout({ children }: LayoutProps) {
               className="flex w-full items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 justify-start"
             >
               <ArrowRightOnRectangleIcon className="mr-3 h-4 w-4" />
-              登出
+              {t('common.logout')}
             </PButton>
           </div>
         )}
         
-        {/* 桌面端顶部栏 */}
+        {/*  */}
         <div className="hidden md:flex md:items-center md:justify-end md:px-6 md:py-4 bg-white border-b border-gray-200">
           <div className="flex items-center space-x-4">
-            {/* 管理系统切换按钮 - 只在admin页面显示 */}
+            <LanguageSwitcher />
+            {/*  - admin */}
 
             {canAccessTenant && (
                 <button
                   onClick={switchToTenant}
                   className="relative rounded-lg bg-blue-50 px-3 py-2 text-blue-600 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
-                  title="切换到租户控制台（按需授权）"
+                  title={t('userLayout.switchToTenantTitle')}
                 >
                 <div className="flex items-center space-x-2">
                   <ArrowsRightLeftIcon className="h-4 w-4" />
-                  <span className="text-sm font-medium">租户管理</span>
+                  <span className="text-sm font-medium">{t('userLayout.tenantManagement')}</span>
                 </div>
               </button>
             )}
@@ -338,26 +342,26 @@ export default function Layout({ children }: LayoutProps) {
                 <button
                   onClick={switchToAdmin}
                   className="relative rounded-lg bg-indigo-50 px-3 py-2 text-indigo-600 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200"
-                  title="切换到全局管理员控制台（按需授权）"
+                  title={t('userLayout.switchToAdminTitle')}
                 >
                 <div className="flex items-center space-x-2">
                   <ArrowsRightLeftIcon className="h-4 w-4" />
-                  <span className="text-sm font-medium">管理员面板</span>
+                  <span className="text-sm font-medium">{t('userLayout.adminPanel')}</span>
                 </div>
               </button>
             )}
               
             <EnhancedNotificationIcon viewAllPath={ROUTES.user.notifications} />
-            {/* 用户菜单 */}
+            {/*  */}
             <div ref={desktopUserMenuRef} className="relative">
               <PButton
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                 className="flex items-center rounded-full bg-white p-1 text-sm focus:ring-blue-500 focus:ring-offset-2 hover:bg-gray-50"
-                title="打开用户菜单"
+                title={t('common.openUserMenu')}
               >
-                <span className="sr-only">打开用户菜单</span>
+                <span className="sr-only">{t('common.openUserMenu')}</span>
                 {user?.avatar_url ? (
                   <img
                     className="h-8 w-8 rounded-full object-cover"
@@ -375,7 +379,7 @@ export default function Layout({ children }: LayoutProps) {
               {isUserMenuOpen && (
                 <div className="absolute right-0 z-50 mt-2 w-56 origin-top-right rounded-xl bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                   <div className="px-4 py-3 border-b border-gray-200">
-                    <p className="text-sm text-gray-900 font-medium">{user?.nickname || '用户'}</p>
+                    <p className="text-sm text-gray-900 font-medium">{user?.nickname || t('common.user')}</p>
                     <p className="text-sm text-gray-500 truncate">{user?.email}</p>
                   </div>
                   <Link
@@ -384,7 +388,7 @@ export default function Layout({ children }: LayoutProps) {
                     onClick={() => setIsUserMenuOpen(false)}
                   >
                     <UserIcon className="mr-3 h-4 w-4" />
-                    个人资料
+                    {t('common.profile')}
                   </Link>
                   <Link
                     to={ROUTES.user.settings}
@@ -392,7 +396,7 @@ export default function Layout({ children }: LayoutProps) {
                     onClick={() => setIsUserMenuOpen(false)}
                   >
                     <CogIcon className="mr-3 h-4 w-4" />
-                    设置
+                    {t('common.settings')}
                   </Link>
                   <PButton
                     variant="ghost"
@@ -403,7 +407,7 @@ export default function Layout({ children }: LayoutProps) {
                     className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 justify-start"
                   >
                     <ArrowsRightLeftIcon className="mr-3 h-4 w-4" />
-                    切换账户
+                    {t('common.switchAccount')}
                   </PButton>
                   <div className="border-t border-gray-200"></div>
                   <PButton
@@ -412,7 +416,7 @@ export default function Layout({ children }: LayoutProps) {
                     className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 justify-start"
                   >
                     <ArrowRightOnRectangleIcon className="mr-3 h-4 w-4" />
-                    登出
+                    {t('common.logout')}
                   </PButton>
                 </div>
               )}
@@ -420,7 +424,7 @@ export default function Layout({ children }: LayoutProps) {
           </div>
         </div>
 
-        {/* 页面内容 */}
+        {/*  */}
         <main className="flex-1 relative overflow-y-auto focus:outline-none">
           <div className="py-6">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -441,7 +445,7 @@ export default function Layout({ children }: LayoutProps) {
         consoleAdminUrl={consoleAdminUrl}
       />
 
-  {/* 移除旧的确认退出对话框，登出入口移至用户菜单 */}
+  {/* ， */}
     </div>
   )
 } 

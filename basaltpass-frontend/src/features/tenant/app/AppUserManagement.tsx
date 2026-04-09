@@ -24,8 +24,10 @@ import { appUserApi, type AppUser, type AppUsersResponse } from '@api/tenant/app
 import { userPermissionsApi, type Permission, type Role, type UserPermission, type UserRole } from '@api/tenant/appPermissions'
 import useDebounce from '@hooks/useDebounce'
 import { PSkeleton, PBadge, PPagination, PPageHeader, PEmptyState, PButton, PCard } from '@ui'
+import { useI18n } from '@shared/i18n'
 
 export default function AppUserManagement() {
+  const { t, locale } = useI18n()
   const { id: appId } = useParams<{ id: string }>()
   const navigate = useNavigate()
   
@@ -45,7 +47,7 @@ export default function AppUserManagement() {
   const [banUntil, setBanUntil] = useState('')
   const [processingAction, setProcessingAction] = useState(false)
 
-  // 权限管理相关状态
+  // 
   const [showPermissionModal, setShowPermissionModal] = useState(false)
   const [permissions, setPermissions] = useState<Permission[]>([])
   const [roles, setRoles] = useState<Role[]>([])
@@ -72,8 +74,8 @@ export default function AppUserManagement() {
       const response = await tenantAppApi.getTenantApp(appId)
       setApp(response.data)
     } catch (err: any) {
-      console.error('获取应用信息失败:', err)
-      setError(err.response?.data?.error || '获取应用信息失败')
+      console.error(t('tenantAppUserManagement.logs.fetchAppFailed'), err)
+      setError(err.response?.data?.error || t('tenantAppUserManagement.errors.fetchAppFailed'))
     }
   }
 
@@ -91,14 +93,14 @@ export default function AppUserManagement() {
       setUsers(response.users || [])
       setTotalUsers(response.pagination?.total || 0)
     } catch (err: any) {
-      console.error('获取用户列表失败:', err)
-      setError(err.response?.data?.error || '获取用户列表失败')
+      console.error(t('tenantAppUserManagement.logs.fetchUsersFailed'), err)
+      setError(err.response?.data?.error || t('tenantAppUserManagement.errors.fetchUsersFailed'))
     } finally {
       setLoading(false)
     }
   }
 
-  // 获取应用权限和角色
+  // 
   const fetchPermissionsAndRoles = async () => {
     if (!appId) return
     
@@ -110,11 +112,11 @@ export default function AppUserManagement() {
       setPermissions(permissionsRes.permissions || [])
       setRoles(rolesRes.roles || [])
     } catch (err: any) {
-      console.error('获取权限和角色失败:', err)
+      console.error(t('tenantAppUserManagement.logs.fetchPermissionsAndRolesFailed'), err)
     }
   }
 
-  // 获取用户权限和角色
+  // 
   const fetchUserPermissions = async (userId: string) => {
     if (!appId) return
     
@@ -127,13 +129,13 @@ export default function AppUserManagement() {
       setUserPermissions(permissionsRes.permissions || [])
       setUserRoles(rolesRes.roles || [])
     } catch (err: any) {
-      console.error('获取用户权限失败:', err)
+      console.error(t('tenantAppUserManagement.logs.fetchUserPermissionsFailed'), err)
     } finally {
       setLoadingPermissions(false)
     }
   }
 
-  // 打开权限管理模态框
+  // 
   const handleManagePermissions = async (user: AppUser) => {
     setSelectedUser(user)
     setShowPermissionModal(true)
@@ -141,7 +143,7 @@ export default function AppUserManagement() {
     await fetchUserPermissions(user.user_id.toString())
   }
 
-  // 授予用户权限
+  // 
   const handleGrantPermissions = async () => {
     if (!selectedUser || !appId || selectedPermissions.length === 0) return
 
@@ -151,18 +153,18 @@ export default function AppUserManagement() {
         expires_at: permissionExpiry || undefined
       })
       
-      // 重新获取用户权限
+      // 
       await fetchUserPermissions(selectedUser.user_id.toString())
       setSelectedPermissions([])
       setPermissionExpiry('')
-      uiAlert('权限授予成功')
+      uiAlert(t('tenantAppUserManagement.success.permissionGranted'))
     } catch (err: any) {
-      console.error('授予权限失败:', err)
-      uiAlert(err.response?.data?.error || '授予权限失败')
+      console.error(t('tenantAppUserManagement.logs.grantPermissionFailed'), err)
+      uiAlert(err.response?.data?.error || t('tenantAppUserManagement.errors.grantPermissionFailed'))
     }
   }
 
-  // 分配用户角色
+  // 
   const handleAssignRoles = async () => {
     if (!selectedUser || !appId || selectedRoles.length === 0) return
 
@@ -172,46 +174,46 @@ export default function AppUserManagement() {
         expires_at: permissionExpiry || undefined
       })
       
-      // 重新获取用户角色
+      // 
       await fetchUserPermissions(selectedUser.user_id.toString())
       setSelectedRoles([])
       setPermissionExpiry('')
-      uiAlert('角色分配成功')
+      uiAlert(t('tenantAppUserManagement.success.roleAssigned'))
     } catch (err: any) {
-      console.error('分配角色失败:', err)
-      uiAlert(err.response?.data?.error || '分配角色失败')
+      console.error(t('tenantAppUserManagement.logs.assignRoleFailed'), err)
+      uiAlert(err.response?.data?.error || t('tenantAppUserManagement.errors.assignRoleFailed'))
     }
   }
 
-  // 撤销用户权限
+  // 
   const handleRevokePermission = async (permissionId: number) => {
     if (!selectedUser || !appId) return
 
-    if (!await uiConfirm('确定要撤销此权限吗？')) return
+    if (!await uiConfirm(t('tenantAppUserManagement.confirm.revokePermission'))) return
 
     try {
       await userPermissionsApi.revokeUserPermission(appId, selectedUser.user_id.toString(), permissionId)
       await fetchUserPermissions(selectedUser.user_id.toString())
-      uiAlert('权限撤销成功')
+      uiAlert(t('tenantAppUserManagement.success.permissionRevoked'))
     } catch (err: any) {
-      console.error('撤销权限失败:', err)
-      uiAlert(err.response?.data?.error || '撤销权限失败')
+      console.error(t('tenantAppUserManagement.logs.revokePermissionFailed'), err)
+      uiAlert(err.response?.data?.error || t('tenantAppUserManagement.errors.revokePermissionFailed'))
     }
   }
 
-  // 撤销用户角色
+  // 
   const handleRevokeRole = async (roleId: number) => {
     if (!selectedUser || !appId) return
 
-    if (!await uiConfirm('确定要撤销此角色吗？')) return
+    if (!await uiConfirm(t('tenantAppUserManagement.confirm.revokeRole'))) return
 
     try {
       await userPermissionsApi.revokeUserRole(appId, selectedUser.user_id.toString(), roleId)
       await fetchUserPermissions(selectedUser.user_id.toString())
-      uiAlert('角色撤销成功')
+      uiAlert(t('tenantAppUserManagement.success.roleRevoked'))
     } catch (err: any) {
-      console.error('撤销角色失败:', err)
-      uiAlert(err.response?.data?.error || '撤销角色失败')
+      console.error(t('tenantAppUserManagement.logs.revokeRoleFailed'), err)
+      uiAlert(err.response?.data?.error || t('tenantAppUserManagement.errors.revokeRoleFailed'))
     }
   }
 
@@ -241,13 +243,13 @@ export default function AppUserManagement() {
       await appUserApi.updateUserStatus(appId, selectedUser.user_id.toString(), data)
       
       setShowActionModal(false)
-      fetchUsers() // 重新加载用户列表
+      fetchUsers() // 
       
-      // 显示成功消息
-      uiAlert(`用户${getActionText(actionType)}成功`)
+      // 
+      uiAlert(t('tenantAppUserManagement.success.userActionSuccess', { action: getActionText(actionType) }))
     } catch (err: any) {
-      console.error('操作失败:', err)
-      uiAlert(err.response?.data?.error || '操作失败，请重试')
+      console.error(t('tenantAppUserManagement.logs.userActionFailed'), err)
+      uiAlert(err.response?.data?.error || t('tenantAppUserManagement.errors.userActionFailed'))
     } finally {
       setProcessingAction(false)
     }
@@ -256,17 +258,17 @@ export default function AppUserManagement() {
   const handleRevokeAuthorization = async (user: AppUser) => {
     if (!appId) return
     
-    if (!await uiConfirm(`确定要撤销用户 ${user.user_nickname || user.user_email} 的应用授权吗？`)) {
+    if (!await uiConfirm(t('tenantAppUserManagement.confirm.revokeAuthorization', { user: user.user_nickname || user.user_email }))) {
       return
     }
 
     try {
       await appUserApi.revokeUserAuthorization(appId, user.user_id.toString())
-      fetchUsers() // 重新加载用户列表
-      uiAlert('授权撤销成功')
+      fetchUsers() // 
+      uiAlert(t('tenantAppUserManagement.success.authorizationRevoked'))
     } catch (err: any) {
-      console.error('撤销授权失败:', err)
-      uiAlert(err.response?.data?.error || '撤销授权失败，请重试')
+      console.error(t('tenantAppUserManagement.logs.revokeAuthorizationFailed'), err)
+      uiAlert(err.response?.data?.error || t('tenantAppUserManagement.errors.revokeAuthorizationFailed'))
     }
   }
 
@@ -283,15 +285,15 @@ export default function AppUserManagement() {
   const getStatusText = (status: string) => {
     switch (status) {
       case 'active':
-        return '正常'
+        return t('tenantAppUserManagement.status.active')
       case 'banned':
-        return '已封禁'
+        return t('tenantAppUserManagement.status.banned')
       case 'suspended':
-        return '暂停使用'
+        return t('tenantAppUserManagement.status.suspended')
       case 'restricted':
-        return '受限制'
+        return t('tenantAppUserManagement.status.restricted')
       default:
-        return '未知'
+        return t('tenantAppUserManagement.status.unknown')
     }
   }
 
@@ -313,13 +315,13 @@ export default function AppUserManagement() {
   const getActionText = (action: string) => {
     switch (action) {
       case 'ban':
-        return '封禁'
+        return t('tenantAppUserManagement.actions.ban')
       case 'suspend':
-        return '暂停'
+        return t('tenantAppUserManagement.actions.suspend')
       case 'restrict':
-        return '限制'
+        return t('tenantAppUserManagement.actions.restrict')
       case 'unban':
-        return '解封'
+        return t('tenantAppUserManagement.actions.unban')
       default:
         return action
     }
@@ -335,7 +337,7 @@ export default function AppUserManagement() {
 
   if (loading && users.length === 0) {
     return (
-      <TenantLayout title="用户管理">
+      <TenantLayout title={t('tenantAppUserManagement.layoutTitle')}>
         <div className="py-6">
           <PSkeleton.Management />
         </div>
@@ -345,13 +347,13 @@ export default function AppUserManagement() {
 
   if (error) {
     return (
-      <TenantLayout title="用户管理">
+      <TenantLayout title={t('tenantAppUserManagement.layoutTitle')}>
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-red-500" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">{error}</h3>
             <div className="mt-6">
-              <PButton onClick={() => { setError(''); fetchUsers() }}>重试</PButton>
+              <PButton onClick={() => { setError(''); fetchUsers() }}>{t('tenantAppUserManagement.actions.retry')}</PButton>
             </div>
           </div>
         </div>
@@ -360,23 +362,23 @@ export default function AppUserManagement() {
   }
 
   return (
-    <TenantLayout title="用户管理">
+    <TenantLayout title={t('tenantAppUserManagement.layoutTitle')}>
       <div className="space-y-6">
-        {/* 页面头部 */}
+        {/*  */}
         <PPageHeader
-          title="用户管理"
-          description={`管理应用 "${app?.name}" 的用户访问权限`}
+          title={t('tenantAppUserManagement.title')}
+          description={t('tenantAppUserManagement.description', { name: app?.name || '-' })}
           icon={<UsersIcon className="h-8 w-8 text-blue-600" />}
           actions={
             <div className="flex space-x-3">
-              <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/permissions`)} leftIcon={<KeyIcon className="h-4 w-4" />}>权限管理</PButton>
-              <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/roles`)} leftIcon={<ShieldCheckIcon className="h-4 w-4" />}>角色管理</PButton>
-              <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}`)}>返回应用详情</PButton>
+              <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/permissions`)} leftIcon={<KeyIcon className="h-4 w-4" />}>{t('tenantAppUserManagement.actions.permissionManagement')}</PButton>
+              <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/roles`)} leftIcon={<ShieldCheckIcon className="h-4 w-4" />}>{t('tenantAppUserManagement.actions.roleManagement')}</PButton>
+              <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}`)}>{t('tenantAppUserManagement.actions.backToAppDetail')}</PButton>
             </div>
           }
         />
 
-        {/* 搜索和过滤 */}
+        {/*  */}
         <PCard className="rounded-xl p-6 shadow-sm">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
@@ -384,7 +386,7 @@ export default function AppUserManagement() {
                 <MagnifyingGlassIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="搜索用户邮箱或昵称..."
+                  placeholder={t('tenantAppUserManagement.searchPlaceholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="block w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-3 leading-5 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500"
@@ -402,31 +404,31 @@ export default function AppUserManagement() {
                   }}
                   className="block w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-3 leading-5 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 >
-                  <option value="">所有状态</option>
-                  <option value="active">正常</option>
-                  <option value="banned">已封禁</option>
-                  <option value="suspended">暂停使用</option>
-                  <option value="restricted">受限制</option>
+                  <option value="">{t('tenantAppUserManagement.filters.allStatus')}</option>
+                  <option value="active">{t('tenantAppUserManagement.status.active')}</option>
+                  <option value="banned">{t('tenantAppUserManagement.status.banned')}</option>
+                  <option value="suspended">{t('tenantAppUserManagement.status.suspended')}</option>
+                  <option value="restricted">{t('tenantAppUserManagement.status.restricted')}</option>
                 </select>
               </div>
             </div>
           </div>
         </PCard>
 
-        {/* 用户列表 */}
+        {/*  */}
         <PCard className="overflow-hidden rounded-xl p-0 shadow-sm">
           <div className="px-4 py-5 sm:p-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg leading-6 font-medium text-gray-900">
-                用户列表 ({totalUsers} 个用户)
+                {t('tenantAppUserManagement.listTitle', { total: totalUsers })}
               </h3>
             </div>
 
             {filteredUsers.length === 0 ? (
               <PEmptyState
                 icon={UsersIcon}
-                title="暂无用户"
-                description={searchTerm ? '未找到匹配的用户' : '该应用还没有用户授权'}
+                title={t('tenantAppUserManagement.empty.title')}
+                description={searchTerm ? t('tenantAppUserManagement.empty.searchNoResult') : t('tenantAppUserManagement.empty.noAuthorizedUser')}
               />
             ) : (
               <div className="overflow-x-auto">
@@ -434,22 +436,22 @@ export default function AppUserManagement() {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        用户
+                        {t('tenantAppUserManagement.table.user')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        状态
+                        {t('tenantAppUserManagement.table.status')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        最后活跃
+                        {t('tenantAppUserManagement.table.lastActive')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        授权时间
+                        {t('tenantAppUserManagement.table.authorizedAt')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        权限范围
+                        {t('tenantAppUserManagement.table.scopes')}
                       </th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        操作
+                        {t('tenantAppUserManagement.table.actions')}
                       </th>
                     </tr>
                   </thead>
@@ -469,7 +471,7 @@ export default function AppUserManagement() {
                             )}
                             <div className="ml-4">
                               <div className="text-sm font-medium text-gray-900">
-                                {user.user_nickname || '未设置昵称'}
+                                {user.user_nickname || t('tenantAppUserManagement.fields.nicknameNotSet')}
                               </div>
                               <div className="text-sm text-gray-500 flex items-center">
                                 <EnvelopeIcon className="h-4 w-4 mr-1" />
@@ -487,23 +489,23 @@ export default function AppUserManagement() {
                           </div>
                           {user.ban_reason && (
                             <div className="text-xs text-gray-500 mt-1">
-                              原因: {user.ban_reason}
+                              {t('tenantAppUserManagement.fields.reason')}: {user.ban_reason}
                             </div>
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {user.last_active_at ? (
-                            new Date(user.last_active_at).toLocaleString()
+                            new Date(user.last_active_at).toLocaleString(locale)
                           ) : (
-                            '从未活跃'
+                            t('tenantAppUserManagement.fields.neverActive')
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(user.first_authorized_at).toLocaleString()}
+                          {new Date(user.first_authorized_at).toLocaleString(locale)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           <div className="max-w-xs truncate">
-                            {user.scopes || '基础权限'}
+                            {user.scopes || t('tenantAppUserManagement.fields.defaultScopes')}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -513,7 +515,7 @@ export default function AppUserManagement() {
                               className="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200"
                             >
                               <ShieldCheckIcon className="h-3 w-3 mr-1" />
-                              权限
+                              {t('tenantAppUserManagement.actions.permissions')}
                             </button>
                             {user.status === 'active' ? (
                               <>
@@ -521,19 +523,19 @@ export default function AppUserManagement() {
                                   onClick={() => handleUserAction(user, 'restrict')}
                                   className="text-orange-600 hover:text-orange-900"
                                 >
-                                  限制
+                                  {t('tenantAppUserManagement.actions.restrict')}
                                 </button>
                                 <button
                                   onClick={() => handleUserAction(user, 'suspend')}
                                   className="text-yellow-600 hover:text-yellow-900"
                                 >
-                                  暂停
+                                  {t('tenantAppUserManagement.actions.suspend')}
                                 </button>
                                 <button
                                   onClick={() => handleUserAction(user, 'ban')}
                                   className="text-red-600 hover:text-red-900"
                                 >
-                                  封禁
+                                  {t('tenantAppUserManagement.actions.ban')}
                                 </button>
                               </>
                             ) : (
@@ -541,14 +543,14 @@ export default function AppUserManagement() {
                                 onClick={() => handleUserAction(user, 'unban')}
                                 className="text-green-600 hover:text-green-900"
                               >
-                                解封
+                                {t('tenantAppUserManagement.actions.unban')}
                               </button>
                             )}
                             <button
                               onClick={() => handleRevokeAuthorization(user)}
                               className="text-gray-600 hover:text-gray-900"
                             >
-                              撤销授权
+                              {t('tenantAppUserManagement.actions.revokeAuthorization')}
                             </button>
                           </div>
                         </td>
@@ -559,7 +561,7 @@ export default function AppUserManagement() {
               </div>
             )}
 
-            {/* 分页 */}
+            {/*  */}
             {totalPages > 1 && (
               <div className="mt-6">
                 <PPagination
@@ -576,26 +578,26 @@ export default function AppUserManagement() {
         </PCard>
       </div>
 
-      {/* 用户操作模态框 */}
+      {/*  */}
       {showActionModal && selectedUser && (
         <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center">
           <div className="mx-4 w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
             <h3 className="text-lg font-medium text-gray-900 mb-4">
-              {getActionText(actionType)}用户
+              {t('tenantAppUserManagement.modal.userActionTitle', { action: getActionText(actionType) })}
             </h3>
             <p className="text-sm text-gray-500 mb-4">
-              用户: {selectedUser.user_nickname || selectedUser.user_email}
+              {t('tenantAppUserManagement.table.user')}: {selectedUser.user_nickname || selectedUser.user_email}
             </p>
             
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {actionType === 'unban' ? '解封原因' : '原因说明'}
+                  {actionType === 'unban' ? t('tenantAppUserManagement.modal.unbanReason') : t('tenantAppUserManagement.modal.reasonLabel')}
                 </label>
                 <textarea
                   value={actionReason}
                   onChange={(e) => setActionReason(e.target.value)}
-                  placeholder={actionType === 'unban' ? '请输入解封原因...' : '请输入操作原因...'}
+                  placeholder={actionType === 'unban' ? t('tenantAppUserManagement.modal.unbanReasonPlaceholder') : t('tenantAppUserManagement.modal.reasonPlaceholder')}
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   rows={3}
                 />
@@ -604,7 +606,7 @@ export default function AppUserManagement() {
               {actionType === 'suspend' && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    暂停截止时间（可选）
+                    {t('tenantAppUserManagement.modal.suspendUntilOptional')}
                   </label>
                   <input
                     type="datetime-local"
@@ -613,7 +615,7 @@ export default function AppUserManagement() {
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    留空表示无限期暂停
+                    {t('tenantAppUserManagement.modal.suspendUntilHint')}
                   </p>
                 </div>
               )}
@@ -625,7 +627,7 @@ export default function AppUserManagement() {
                 disabled={processingAction}
                 className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
               >
-                取消
+                {t('tenantAppUserManagement.actions.cancel')}
               </button>
               <button
                 onClick={executeUserAction}
@@ -636,21 +638,21 @@ export default function AppUserManagement() {
                     : 'bg-red-600 hover:bg-red-700'
                 }`}
               >
-                {processingAction ? '处理中...' : `确认${getActionText(actionType)}`}
+                {processingAction ? t('tenantAppUserManagement.actions.processing') : t('tenantAppUserManagement.actions.confirmAction', { action: getActionText(actionType) })}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* 权限管理模态框 */}
+      {/*  */}
       {showPermissionModal && selectedUser && (
         <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-10 mx-auto w-full max-w-6xl rounded-2xl border bg-white p-5 shadow-xl">
             <div className="mt-3">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-medium text-gray-900">
-                  用户权限管理 - {selectedUser.user_nickname || selectedUser.user_email}
+                  {t('tenantAppUserManagement.permissionModal.title', { user: selectedUser.user_nickname || selectedUser.user_email })}
                 </h3>
                 <button
                   onClick={() => setShowPermissionModal(false)}
@@ -666,13 +668,13 @@ export default function AppUserManagement() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* 左侧：当前权限和角色 */}
+                  {/* ： */}
                   <div className="space-y-6">
-                    {/* 当前权限 */}
+                    {/*  */}
                     <div>
                       <h4 className="text-md font-medium text-gray-900 mb-3 flex items-center">
                         <KeyIcon className="h-5 w-5 mr-2 text-blue-600" />
-                        当前权限 ({userPermissions.length})
+                        {t('tenantAppUserManagement.permissionModal.currentPermissions', { count: userPermissions.length })}
                       </h4>
                       <div className="bg-gray-50 rounded-lg p-4 max-h-60 overflow-y-auto">
                         {userPermissions.length > 0 ? (
@@ -681,14 +683,14 @@ export default function AppUserManagement() {
                               <div key={userPerm.id} className="flex items-center justify-between rounded-lg border bg-white p-3">
                                 <div className="flex-1">
                                   <div className="text-sm font-medium text-gray-900">
-                                    {userPerm.permission?.name || `权限 #${userPerm.permission_id}`}
+                                    {userPerm.permission?.name || t('tenantAppUserManagement.permissionModal.permissionWithId', { id: userPerm.permission_id })}
                                   </div>
                                   <div className="text-xs text-gray-500">
-                                    {userPerm.permission?.description || '权限详情不可用'}
+                                    {userPerm.permission?.description || t('tenantAppUserManagement.permissionModal.permissionDetailUnavailable')}
                                   </div>
                                   {userPerm.expires_at && (
                                     <div className="text-xs text-orange-600 mt-1">
-                                      过期时间: {new Date(userPerm.expires_at).toLocaleString()}
+                                      {t('tenantAppUserManagement.permissionModal.expiresAt')}: {new Date(userPerm.expires_at).toLocaleString(locale)}
                                     </div>
                                   )}
                                 </div>
@@ -703,17 +705,17 @@ export default function AppUserManagement() {
                           </div>
                         ) : (
                           <div className="text-center text-gray-500 py-4">
-                            暂无权限
+                            {t('tenantAppUserManagement.permissionModal.noPermissions')}
                           </div>
                         )}
                       </div>
                     </div>
 
-                    {/* 当前角色 */}
+                    {/*  */}
                     <div>
                       <h4 className="text-md font-medium text-gray-900 mb-3 flex items-center">
                         <ShieldCheckIcon className="h-5 w-5 mr-2 text-green-600" />
-                        当前角色 ({userRoles.length})
+                        {t('tenantAppUserManagement.permissionModal.currentRoles', { count: userRoles.length })}
                       </h4>
                       <div className="bg-gray-50 rounded-lg p-4 max-h-60 overflow-y-auto">
                         {userRoles.length > 0 ? (
@@ -722,17 +724,17 @@ export default function AppUserManagement() {
                               <div key={userRole.id} className="flex items-center justify-between rounded-lg border bg-white p-3">
                                 <div className="flex-1">
                                   <div className="text-sm font-medium text-gray-900">
-                                    {userRole.role?.name || `角色 #${userRole.role_id}`}
+                                    {userRole.role?.name || t('tenantAppUserManagement.permissionModal.roleWithId', { id: userRole.role_id })}
                                   </div>
                                   <div className="text-xs text-gray-500">
-                                    {userRole.role?.description || '角色详情不可用'}
+                                    {userRole.role?.description || t('tenantAppUserManagement.permissionModal.roleDetailUnavailable')}
                                   </div>
                                   <div className="text-xs text-blue-600 mt-1">
-                                    包含 {userRole.role?.permissions?.length || 0} 个权限
+                                    {t('tenantAppUserManagement.permissionModal.includesPermissions', { count: userRole.role?.permissions?.length || 0 })}
                                   </div>
                                   {userRole.expires_at && (
                                     <div className="text-xs text-orange-600 mt-1">
-                                      过期时间: {new Date(userRole.expires_at).toLocaleString()}
+                                      {t('tenantAppUserManagement.permissionModal.expiresAt')}: {new Date(userRole.expires_at).toLocaleString(locale)}
                                     </div>
                                   )}
                                 </div>
@@ -747,20 +749,20 @@ export default function AppUserManagement() {
                           </div>
                         ) : (
                           <div className="text-center text-gray-500 py-4">
-                            暂无角色
+                            {t('tenantAppUserManagement.permissionModal.noRoles')}
                           </div>
                         )}
                       </div>
                     </div>
                   </div>
 
-                  {/* 右侧：分配权限和角色 */}
+                  {/* ： */}
                   <div className="space-y-6">
-                    {/* 分配权限 */}
+                    {/*  */}
                     <div>
                       <h4 className="text-md font-medium text-gray-900 mb-3 flex items-center">
                         <PlusIcon className="h-5 w-5 mr-2 text-blue-600" />
-                        分配权限
+                        {t('tenantAppUserManagement.permissionModal.assignPermissions')}
                       </h4>
                       <div className="bg-gray-50 rounded-lg p-4">
                         <div className="space-y-3">
@@ -793,7 +795,7 @@ export default function AppUserManagement() {
                                     </div>
                                     {hasPermission && (
                                       <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
-                                        已拥有
+                                        {t('tenantAppUserManagement.permissionModal.alreadyHas')}
                                       </span>
                                     )}
                                   </label>
@@ -803,7 +805,7 @@ export default function AppUserManagement() {
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                              过期时间（可选）
+                              {t('tenantAppUserManagement.permissionModal.expiresAtOptional')}
                             </label>
                             <input
                               type="datetime-local"
@@ -817,17 +819,17 @@ export default function AppUserManagement() {
                             disabled={selectedPermissions.length === 0}
                             className="w-full rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                           >
-                            授予选中权限 ({selectedPermissions.length})
+                            {t('tenantAppUserManagement.permissionModal.grantSelectedPermissions', { count: selectedPermissions.length })}
                           </button>
                         </div>
                       </div>
                     </div>
 
-                    {/* 分配角色 */}
+                    {/*  */}
                     <div>
                       <h4 className="text-md font-medium text-gray-900 mb-3 flex items-center">
                         <PlusIcon className="h-5 w-5 mr-2 text-green-600" />
-                        分配角色
+                        {t('tenantAppUserManagement.permissionModal.assignRoles')}
                       </h4>
                       <div className="bg-gray-50 rounded-lg p-4">
                         <div className="space-y-3">
@@ -858,12 +860,12 @@ export default function AppUserManagement() {
                                         {role.description}
                                       </div>
                                       <div className="text-xs text-blue-500 mt-1">
-                                        包含 {role.permissions?.length || 0} 个权限
+                                        {t('tenantAppUserManagement.permissionModal.includesPermissions', { count: role.permissions?.length || 0 })}
                                       </div>
                                     </div>
                                     {hasRole && (
                                       <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
-                                        已拥有
+                                        {t('tenantAppUserManagement.permissionModal.alreadyHas')}
                                       </span>
                                     )}
                                   </label>
@@ -876,7 +878,7 @@ export default function AppUserManagement() {
                             disabled={selectedRoles.length === 0}
                             className="w-full rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
                           >
-                            分配选中角色 ({selectedRoles.length})
+                            {t('tenantAppUserManagement.permissionModal.assignSelectedRoles', { count: selectedRoles.length })}
                           </button>
                         </div>
                       </div>
@@ -890,7 +892,7 @@ export default function AppUserManagement() {
                   onClick={() => setShowPermissionModal(false)}
                   className="rounded-lg bg-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-400"
                 >
-                  关闭
+                  {t('tenantAppUserManagement.actions.close')}
                 </button>
               </div>
             </div>

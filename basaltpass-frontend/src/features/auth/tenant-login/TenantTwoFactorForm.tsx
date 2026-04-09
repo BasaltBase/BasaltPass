@@ -2,6 +2,7 @@ import { PAlert, PButton, PInput } from '@ui'
 import type { FormEventHandler } from 'react'
 import { getTwoFactorPresentation } from './twoFactor'
 import type { TwoFactorMethod } from './types'
+import { useI18n } from '@shared/i18n'
 
 interface TenantTwoFactorFormProps {
   available2FAMethods: TwoFactorMethod[]
@@ -30,19 +31,21 @@ export function TenantTwoFactorForm({
   twoFACode,
   twoFAType,
 }: TenantTwoFactorFormProps) {
+  const { t } = useI18n()
+
   return (
     <form className="mt-6 space-y-6" onSubmit={submit2FAVerify}>
-      {error && <PAlert variant="error" message={error} />}
+      {error && <PAlert variant="error" title={t('auth.login.errorTitle')} message={error} />}
 
       <div className="text-center">
-        <h3 className="text-lg font-medium text-gray-900">二次验证</h3>
-        <p className="mt-2 text-sm text-gray-600">请完成以下验证以继续登录</p>
+        <h3 className="text-lg font-medium text-gray-900">{t('auth.twoFactor.title')}</h3>
+        <p className="mt-2 text-sm text-gray-600">{t('auth.tenantTwoFactor.subtitle')}</p>
       </div>
 
       {available2FAMethods.length > 1 && (
         <div className="flex justify-center space-x-2">
           {available2FAMethods.map((method) => {
-            const { icon: Icon, label } = getTwoFactorPresentation(method)
+            const { icon: Icon, labelKey } = getTwoFactorPresentation(method)
             return (
               <PButton
                 key={method}
@@ -51,7 +54,7 @@ export function TenantTwoFactorForm({
                 onClick={() => switch2FAMethod(method)}
                 leftIcon={<Icon className="h-5 w-5" />}
               >
-                {label}
+                {t(labelKey)}
               </PButton>
             )
           })}
@@ -61,7 +64,7 @@ export function TenantTwoFactorForm({
       {twoFAType === 'totp' && (
         <div>
           <label htmlFor="totp-code" className="block text-sm font-medium text-gray-700">
-            验证码
+            {t('auth.tenantTwoFactor.codeLabel')}
           </label>
           <PInput
             id="totp-code"
@@ -70,7 +73,7 @@ export function TenantTwoFactorForm({
             required
             value={twoFACode}
             onChange={(event) => setTwoFACode(event.target.value)}
-            placeholder="请输入6位验证码"
+            placeholder={t('auth.twoFactor.codePlaceholder')}
             className="mt-1"
           />
         </div>
@@ -79,7 +82,7 @@ export function TenantTwoFactorForm({
       {twoFAType === 'email' && (
         <div>
           <label htmlFor="email-code" className="block text-sm font-medium text-gray-700">
-            邮箱验证码
+            {t('auth.twoFactor.emailCodeLabel')}
           </label>
           <PInput
             id="email-code"
@@ -88,7 +91,7 @@ export function TenantTwoFactorForm({
             required
             value={emailCode}
             onChange={(event) => setEmailCode(event.target.value)}
-            placeholder="请输入邮箱验证码"
+            placeholder={t('auth.tenantTwoFactor.emailCodePlaceholder')}
             className="mt-1"
           />
         </div>
@@ -100,19 +103,19 @@ export function TenantTwoFactorForm({
             const { icon: Icon } = getTwoFactorPresentation('passkey')
             return <Icon className="mx-auto mb-2 h-12 w-12 text-blue-600" />
           })()}
-          <p className="text-sm text-gray-700">点击下方按钮使用Passkey验证</p>
+          <p className="text-sm text-gray-700">{t('auth.tenantTwoFactor.passkeyTip')}</p>
         </div>
       )}
 
       <div>
         <PButton type="submit" loading={isLoading} fullWidth>
-          {twoFAType === 'passkey' ? '使用Passkey验证' : '验证'}
+          {twoFAType === 'passkey' ? t('auth.twoFactor.passkeyButton') : t('auth.tenantTwoFactor.verifyButton')}
         </PButton>
       </div>
 
       <div className="text-center">
         <PButton type="button" variant="ghost" onClick={() => setStep(1)}>
-          返回登录
+          {t('auth.tenantTwoFactor.backToLogin')}
         </PButton>
       </div>
     </form>

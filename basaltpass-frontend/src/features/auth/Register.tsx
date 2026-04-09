@@ -4,9 +4,10 @@ import { ROUTES } from '@constants'
 import client from '@api/client'
 import { useConfig } from '@contexts/ConfigContext'
 import { PInput, PButton, PCheckbox, PAlert } from '@ui'
+import { useI18n } from '@shared/i18n'
 
-const getPasswordStrength = (value: string) => {
-  if (!value) return { label: '未设置', color: 'bg-gray-200', percent: 0 }
+const getPasswordStrength = (value: string, t: (key: string) => string) => {
+  if (!value) return { label: t('auth.register.passwordStrength.notSet'), color: 'bg-gray-200', percent: 0 }
 
   let score = 0
   if (value.length >= 8) score += 1
@@ -14,15 +15,16 @@ const getPasswordStrength = (value: string) => {
   if (/\d/.test(value)) score += 1
   if (/[^A-Za-z0-9]/.test(value)) score += 1
 
-  if (score <= 1) return { label: '弱', color: 'bg-red-500', percent: 25 }
-  if (score === 2) return { label: '中', color: 'bg-yellow-500', percent: 50 }
-  if (score === 3) return { label: '良好', color: 'bg-blue-500', percent: 75 }
-  return { label: '强', color: 'bg-green-500', percent: 100 }
+  if (score <= 1) return { label: t('auth.register.passwordStrength.weak'), color: 'bg-red-500', percent: 25 }
+  if (score === 2) return { label: t('auth.register.passwordStrength.medium'), color: 'bg-yellow-500', percent: 50 }
+  if (score === 3) return { label: t('auth.register.passwordStrength.good'), color: 'bg-blue-500', percent: 75 }
+  return { label: t('auth.register.passwordStrength.strong'), color: 'bg-green-500', percent: 100 }
 }
 
 function Register() {
   const navigate = useNavigate()
   const { siteName, siteInitial, setPageTitle } = useConfig()
+  const { t } = useI18n()
   const [step, setStep] = useState<'form' | 'verification' | 'complete'>('form')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -41,28 +43,28 @@ function Register() {
   const [resendCooldown, setResendCooldown] = useState(0)
 
   const usernamePreview = email.includes('@') ? email.split('@')[0] : email
-  const passwordStrength = getPasswordStrength(password)
+  const passwordStrength = getPasswordStrength(password, t)
   const isPasswordTooShort = password.length < 8
 
   useEffect(() => {
-    setPageTitle('注册')
-  }, [setPageTitle])
+    setPageTitle(t('auth.register.pageTitle'))
+  }, [setPageTitle, t])
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (isPasswordTooShort) {
-      setError('密码至少需要 8 位')
+      setError(t('auth.register.errors.passwordMinLength'))
       return
     }
 
     if (password !== confirmPassword) {
-      setError('密码确认不匹配')
+      setError(t('auth.register.errors.passwordMismatch'))
       return
     }
 
     if (!agreeTerms) {
-      setError('请同意服务条款和隐私政策')
+      setError(t('auth.register.errors.agreeTermsRequired'))
       return
     }
 
@@ -86,7 +88,7 @@ function Register() {
       setStep('verification')
       startResendCooldown()
     } catch (err: any) {
-      setError(err.response?.data?.error || '注册失败，请检查您的信息')
+      setError(err.response?.data?.error || t('auth.register.errors.registerFailed'))
     } finally {
       setIsLoading(false)
     }
@@ -96,7 +98,7 @@ function Register() {
     e.preventDefault()
 
     if (!verificationCode) {
-      setError('请输入验证码')
+      setError(t('auth.register.errors.verificationCodeRequired'))
       return
     }
 
@@ -115,7 +117,7 @@ function Register() {
 
       setStep('complete')
     } catch (err: any) {
-      setError(err.response?.data?.error || '验证码错误，请重试')
+      setError(err.response?.data?.error || t('auth.register.errors.verifyCodeFailed'))
     } finally {
       setIsVerifying(false)
     }
@@ -133,7 +135,7 @@ function Register() {
       })
       startResendCooldown()
     } catch (err: any) {
-      setError(err.response?.data?.error || '重发验证码失败')
+      setError(err.response?.data?.error || t('auth.register.errors.resendCodeFailed'))
     } finally {
       setIsSendingCode(false)
     }
@@ -181,12 +183,12 @@ function Register() {
 
   if (step === 'complete') {
     return renderShell(
-      '账户注册',
-      '注册成功',
-      <>您的账户已创建成功，现在可以登录了。</>,
+      t('auth.register.complete.subtitle'),
+      t('auth.register.complete.title'),
+      <>{t('auth.register.complete.description')}</>,
       <div className="mt-6">
         <PButton onClick={() => navigate(ROUTES.user.login)} variant="primary" fullWidth>
-          前往登录
+          {t('auth.register.complete.goToLogin')}
         </PButton>
       </div>,
     )
@@ -194,14 +196,14 @@ function Register() {
 
   if (step === 'verification') {
     return renderShell(
-      '账户注册',
-      '验证您的邮箱',
+      t('auth.register.verification.subtitle'),
+      t('auth.register.verification.title'),
       <>
-        我们已向 <span className="font-medium text-gray-900">{email}</span> 发送了验证码。
-        <p className="mt-2 text-xs text-gray-500">验证码有效期为 10 分钟</p>
+        {t('auth.register.verification.sentCodeToPrefix')} <span className="font-medium text-gray-900">{email}</span> {t('auth.register.verification.sentCodeToSuffix')}
+        <p className="mt-2 text-xs text-gray-500">{t('auth.register.verification.codeValidFor')}</p>
       </>,
       <form className="mt-6 space-y-6" onSubmit={verifyCode}>
-        {error && <PAlert variant="error" title="验证失败" message={error} />}
+        {error && <PAlert variant="error" title={t('auth.register.verification.errorTitle')} message={error} />}
 
         <div>
           <PInput
@@ -209,8 +211,8 @@ function Register() {
             name="verificationCode"
             type="text"
             required
-            label="验证码"
-            placeholder="请输入6位验证码"
+            label={t('auth.register.verification.codeLabel')}
+            placeholder={t('auth.register.verification.codePlaceholder')}
             value={verificationCode}
             onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
             maxLength={6}
@@ -221,7 +223,7 @@ function Register() {
 
         <div>
           <PButton type="submit" disabled={isVerifying} variant="primary" fullWidth loading={isVerifying}>
-            验证并完成注册
+            {t('auth.register.verification.verifyAndComplete')}
           </PButton>
         </div>
 
@@ -233,10 +235,10 @@ function Register() {
             disabled={resendCooldown > 0 || isSendingCode}
           >
             {resendCooldown > 0
-              ? `${resendCooldown}秒后可重新发送`
+              ? t('auth.register.verification.resendCooldown', { seconds: resendCooldown })
               : isSendingCode
-                ? '正在发送...'
-                : '重新发送验证码'}
+                ? t('auth.register.verification.sending')
+                : t('auth.register.verification.resend')}
           </PButton>
         </div>
 
@@ -250,7 +252,7 @@ function Register() {
               setError('')
             }}
           >
-            返回修改邮箱
+            {t('auth.register.verification.backToEditEmail')}
           </PButton>
         </div>
       </form>,
@@ -258,19 +260,19 @@ function Register() {
   }
 
   return renderShell(
-    '账户注册',
-    '创建您的账户',
+    t('auth.register.form.subtitle'),
+    t('auth.register.form.title'),
     <>
-      <p>使用邮箱完成注册，创建后即可登录并继续访问您的账户。</p>
+      <p>{t('auth.register.form.description')}</p>
       <p className="mt-2">
-        已有账户？{' '}
+        {t('auth.register.form.hasAccount')}{' '}
         <Link to={ROUTES.user.login} className="font-medium text-blue-600 hover:text-blue-500">
-          登录现有账户
+          {t('auth.register.form.loginExisting')}
         </Link>
       </p>
     </>,
     <form className="mt-6 space-y-6" onSubmit={submit}>
-      {error && <PAlert variant="error" title="注册失败" message={error} />}
+      {error && <PAlert variant="error" title={t('auth.register.form.errorTitle')} message={error} />}
 
       <div className="space-y-4">
         <PInput
@@ -278,21 +280,21 @@ function Register() {
           name="email"
           type="email"
           required
-          label="邮箱地址"
-          placeholder="请输入邮箱地址"
+          label={t('auth.register.form.emailLabel')}
+          placeholder={t('auth.register.form.emailPlaceholder')}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
         <p className="text-xs text-gray-500">
-          注册后默认用户名将为: <span className="font-medium text-gray-700">{usernamePreview || '（等待输入邮箱）'}</span>
+          {t('auth.register.form.usernamePreviewPrefix')} <span className="font-medium text-gray-700">{usernamePreview || t('auth.register.form.usernamePreviewEmpty')}</span>
         </p>
 
         <PInput
           id="phone"
           name="phone"
           type="tel"
-          label="手机号码（可选）"
-          placeholder="请输入手机号码"
+          label={t('auth.register.form.phoneLabel')}
+          placeholder={t('auth.register.form.phonePlaceholder')}
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
         />
@@ -302,8 +304,8 @@ function Register() {
           name="password"
           type="password"
           required
-          label="密码"
-          placeholder="请输入密码（至少8位）"
+          label={t('auth.register.form.passwordLabel')}
+          placeholder={t('auth.register.form.passwordPlaceholder')}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           showPassword={showPassword}
@@ -317,7 +319,7 @@ function Register() {
             />
           </div>
           <p className="text-xs text-gray-500">
-            密码强度: {passwordStrength.label}（建议包含大小写字母、数字和特殊字符，至少 8 位）
+            {t('auth.register.form.passwordStrengthPrefix')} {passwordStrength.label}{t('auth.register.form.passwordStrengthHint')}
           </p>
         </div>
 
@@ -326,8 +328,8 @@ function Register() {
           name="confirmPassword"
           type="password"
           required
-          label="确认密码"
-          placeholder="请再次输入密码"
+          label={t('auth.register.form.confirmPasswordLabel')}
+          placeholder={t('auth.register.form.confirmPasswordPlaceholder')}
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           showPassword={showConfirmPassword}
@@ -343,13 +345,13 @@ function Register() {
         onChange={(e) => setAgreeTerms(e.target.checked)}
         label={
           <>
-            我同意{' '}
+            {t('auth.register.form.agreePrefix')}{' '}
             <Link to="/terms" className="text-blue-600 hover:text-blue-500">
-              服务条款
+              {t('auth.register.form.terms')}
             </Link>
-            {' '}和{' '}
+            {' '}{t('auth.register.form.and')}{' '}
             <Link to="/privacy" className="text-blue-600 hover:text-blue-500">
-              隐私政策
+              {t('auth.register.form.privacy')}
             </Link>
           </>
         }
@@ -363,7 +365,7 @@ function Register() {
           fullWidth
           loading={isLoading}
         >
-          发送验证码
+          {t('auth.register.form.sendCode')}
         </PButton>
       </div>
     </form>,

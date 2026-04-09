@@ -1,5 +1,6 @@
 import { PButton, PCheckbox, PInput } from '@ui'
 import type { FormEventHandler } from 'react'
+import { useI18n } from '@shared/i18n'
 
 interface TenantPasswordLoginFormProps {
   identifier: string
@@ -26,6 +27,8 @@ export function TenantPasswordLoginForm({
   showPassword,
   submitPasswordLogin,
 }: TenantPasswordLoginFormProps) {
+  const { t } = useI18n()
+
   return (
     <form className="mt-6 space-y-6" onSubmit={submitPasswordLogin}>
       <div className="space-y-4">
@@ -35,10 +38,10 @@ export function TenantPasswordLoginForm({
           type="text"
           autoComplete="username"
           required
-          label="邮箱或手机号"
+          label={t('auth.passwordForm.identifierLabel')}
           value={identifier}
           onChange={(event) => setIdentifier(event.target.value)}
-          placeholder="请输入邮箱或手机号"
+          placeholder={t('auth.passwordForm.identifierPlaceholder')}
         />
         <PInput
           id="password"
@@ -46,10 +49,10 @@ export function TenantPasswordLoginForm({
           type="password"
           autoComplete="current-password"
           required
-          label="密码"
+          label={t('auth.passwordForm.passwordLabel')}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
-          placeholder="请输入密码"
+          placeholder={t('auth.passwordForm.passwordPlaceholder')}
           showPassword={showPassword}
           onTogglePassword={() => setShowPassword(!showPassword)}
         />
@@ -59,19 +62,19 @@ export function TenantPasswordLoginForm({
         <PCheckbox
           checked={rememberMe}
           onChange={(event) => setRememberMe(event.target.checked)}
-          label="记住我"
+          label={t('auth.passwordForm.rememberMe')}
         />
 
         <div className="text-sm">
           <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
-            忘记密码？
+            {t('auth.passwordForm.forgotPassword')}
           </a>
         </div>
       </div>
 
       <div>
         <PButton type="submit" loading={isLoading} variant="primary" fullWidth>
-          登录
+          {t('auth.passwordForm.loginButton')}
         </PButton>
       </div>
     </form>

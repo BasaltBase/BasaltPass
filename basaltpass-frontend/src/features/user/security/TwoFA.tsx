@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import Layout from '@features/user/components/Layout'
 import { PInput, PButton, PSkeleton, PAlert } from '@ui'
 import { ROUTES } from '@constants'
+import { useI18n } from '@shared/i18n'
 import { 
   ShieldCheckIcon,
   QrCodeIcon,
@@ -14,6 +15,7 @@ import {
 } from '@heroicons/react/24/outline'
 
 export default function TwoFA() {
+  const { t } = useI18n()
   const [secret, setSecret] = useState('')
   const [qr, setQr] = useState('')
   const [code, setCode] = useState('')
@@ -34,7 +36,7 @@ export default function TwoFA() {
 
   const verify = async () => {
     if (!code.trim()) {
-      setMsg('请输入验证码')
+      setMsg(t('pages.userTwoFA.errors.codeRequired'))
       setMsgType('error')
       return
     }
@@ -44,11 +46,11 @@ export default function TwoFA() {
     
     try {
       await verify2FA(code)
-      setMsg('两步验证已成功启用！')
+      setMsg(t('pages.userTwoFA.success.enabled'))
       setMsgType('success')
       setCode('')
     } catch {
-      setMsg('验证码无效，请重试')
+      setMsg(t('pages.userTwoFA.errors.invalidCode'))
       setMsgType('error')
     } finally {
       setIsVerifying(false)
@@ -57,7 +59,7 @@ export default function TwoFA() {
 
   const copySecret = () => {
     navigator.clipboard.writeText(secret)
-    setMsg('密钥已复制到剪贴板')
+    setMsg(t('pages.userTwoFA.success.secretCopied'))
     setMsgType('success')
   }
 
@@ -75,7 +77,7 @@ export default function TwoFA() {
     <Layout>
       <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="space-y-6">
-          {/* 页面标题 */}
+          {/*  */}
           <div className="flex items-center">
             <Link 
               to={ROUTES.user.security} 
@@ -84,14 +86,14 @@ export default function TwoFA() {
               <ArrowLeftIcon className="h-5 w-5" />
             </Link>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">设置两步验证</h1>
+              <h1 className="text-2xl font-bold text-gray-900">{t('pages.userTwoFA.header.title')}</h1>
               <p className="mt-1 text-sm text-gray-500">
-                使用验证器应用增强您的账户安全性
+                {t('pages.userTwoFA.header.description')}
               </p>
             </div>
           </div>
 
-          {/* 消息提示 */}
+          {/*  */}
           {msg && (
             <PAlert
               variant={msgType === 'success' ? 'success' : 'error'}
@@ -99,70 +101,70 @@ export default function TwoFA() {
             />
           )}
 
-          {msgType === 'success' && msg.includes('成功启用') ? (
-            /* 成功页面 */
+          {msgType === 'success' && msg === t('pages.userTwoFA.success.enabled') ? (
+            /*  */
             <div className="rounded-xl bg-white shadow-sm">
               <div className="px-4 py-5 sm:p-6 text-center">
                 <CheckCircleIcon className="mx-auto h-12 w-12 text-green-500 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  两步验证已启用
+                  {t('pages.userTwoFA.success.title')}
                 </h3>
                 <p className="text-sm text-gray-500 mb-6">
-                  您的账户现在更加安全了。下次登录时，除了密码外，还需要输入验证器应用生成的验证码。
+                  {t('pages.userTwoFA.success.description')}
                 </p>
                 <div className="space-y-3">
                   <Link to={ROUTES.user.security}>
-                    <PButton variant="primary">返回安全设置</PButton>
+                    <PButton variant="primary">{t('pages.userTwoFA.success.back')}</PButton>
                   </Link>
                 </div>
               </div>
             </div>
           ) : (
-            /* 设置页面 */
+            /*  */
             <>
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                {/* 设置说明 */}
+                {/*  */}
                 <div className="rounded-xl bg-white shadow-sm">
                   <div className="px-4 py-5 sm:p-6">
                     <div className="flex items-center mb-4">
                       <ShieldCheckIcon className="h-6 w-6 text-blue-600 mr-2" />
-                      <h3 className="text-lg font-medium text-gray-900">设置说明</h3>
+                      <h3 className="text-lg font-medium text-gray-900">{t('pages.userTwoFA.setup.title')}</h3>
                     </div>
                     <div className="space-y-4 text-sm text-gray-600">
                       <div className="flex items-start">
                         <div className="h-6 w-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-0.5">
                           <span className="text-xs font-bold text-blue-600">1</span>
                         </div>
-                        <p>下载并安装 Google Authenticator 或类似的验证器应用</p>
+                        <p>{t('pages.userTwoFA.setup.step1')}</p>
                       </div>
                       <div className="flex items-start">
                         <div className="h-6 w-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-0.5">
                           <span className="text-xs font-bold text-blue-600">2</span>
                         </div>
-                        <p>扫描下方的二维码或手动输入密钥</p>
+                        <p>{t('pages.userTwoFA.setup.step2')}</p>
                       </div>
                       <div className="flex items-start">
                         <div className="h-6 w-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-0.5">
                           <span className="text-xs font-bold text-blue-600">3</span>
                         </div>
-                        <p>输入验证器应用生成的6位验证码</p>
+                        <p>{t('pages.userTwoFA.setup.step3')}</p>
                       </div>
                       <div className="flex items-start">
                         <div className="h-6 w-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-0.5">
                           <span className="text-xs font-bold text-blue-600">4</span>
                         </div>
-                        <p>点击验证按钮完成设置</p>
+                        <p>{t('pages.userTwoFA.setup.step4')}</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* 验证码输入 */}
+                {/*  */}
                 <div className="rounded-xl bg-white shadow-sm">
                   <div className="px-4 py-5 sm:p-6">
                     <div className="flex items-center mb-4">
                       <KeyIcon className="h-6 w-6 text-green-600 mr-2" />
-                      <h3 className="text-lg font-medium text-gray-900">验证设置</h3>
+                      <h3 className="text-lg font-medium text-gray-900">{t('pages.userTwoFA.verify.title')}</h3>
                     </div>
                     <div className="space-y-4">
                       <div>
@@ -171,9 +173,9 @@ export default function TwoFA() {
                           type="text"
                           value={code}
                           onChange={(e) => setCode(e.target.value)}
-                          placeholder="请输入6位验证码"
+                          placeholder={t('pages.userTwoFA.verify.codePlaceholder')}
                           maxLength={6}
-                          label="验证码"
+                          label={t('pages.userTwoFA.verify.codeLabel')}
                         />
                       </div>
                       <PButton
@@ -182,20 +184,20 @@ export default function TwoFA() {
                         disabled={!code.trim()}
                         fullWidth
                       >
-                        验证并启用
+                        {t('pages.userTwoFA.verify.submit')}
                       </PButton>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* 二维码和密钥 */}
+              {/*  */}
               {qr && (
                 <div className="rounded-xl bg-white shadow-sm">
                   <div className="px-4 py-5 sm:p-6">
                     <div className="flex items-center mb-4">
                       <QrCodeIcon className="h-6 w-6 text-indigo-600 mr-2" />
-                      <h3 className="text-lg font-medium text-gray-900">扫描二维码</h3>
+                      <h3 className="text-lg font-medium text-gray-900">{t('pages.userTwoFA.qr.title')}</h3>
                     </div>
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                       <div className="flex flex-col items-center">
@@ -207,13 +209,13 @@ export default function TwoFA() {
                           />
                         </div>
                         <p className="mt-2 text-sm text-gray-500 text-center">
-                          使用验证器应用扫描此二维码
+                          {t('pages.userTwoFA.qr.scanHint')}
                         </p>
                       </div>
                       <div className="flex flex-col justify-center">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            手动输入密钥
+                            {t('pages.userTwoFA.qr.manualKey')}
                           </label>
                           <div className="flex gap-3">
                             <div className="flex-1">
@@ -225,11 +227,11 @@ export default function TwoFA() {
                               />
                             </div>
                             <PButton variant="secondary" onClick={copySecret}>
-                              复制
+                              {t('pages.userTwoFA.qr.copy')}
                             </PButton>
                           </div>
                           <p className="mt-2 text-sm text-gray-500">
-                            如果无法扫描二维码，请手动输入此密钥到验证器应用
+                            {t('pages.userTwoFA.qr.manualHint')}
                           </p>
                         </div>
                       </div>
@@ -238,13 +240,13 @@ export default function TwoFA() {
                 </div>
               )}
 
-              {/* 安全提示 */}
-              <PAlert variant="info" title="安全提示">
+              {/*  */}
+              <PAlert variant="info" title={t('pages.userTwoFA.securityTips.title')}>
                 <ul className="list-disc list-inside space-y-1 text-sm">
-                  <li>请妥善保管您的验证器应用和设备</li>
-                  <li>不要将验证码分享给任何人</li>
-                  <li>建议在多个设备上设置验证器作为备份</li>
-                  <li>如果丢失验证器，请联系客服恢复账户</li>
+                  <li>{t('pages.userTwoFA.securityTips.item1')}</li>
+                  <li>{t('pages.userTwoFA.securityTips.item2')}</li>
+                  <li>{t('pages.userTwoFA.securityTips.item3')}</li>
+                  <li>{t('pages.userTwoFA.securityTips.item4')}</li>
                 </ul>
               </PAlert>
             </>

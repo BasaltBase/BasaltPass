@@ -7,11 +7,13 @@ import {
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import { adminWalletApi, WalletStats } from '@api/admin/wallet';
+import { useI18n } from '@shared/i18n/useI18n';
 import { PButton } from '@ui';
 
 interface WalletStatsCardProps {}
 
 const WalletStatsCard: React.FC<WalletStatsCardProps> = () => {
+  const { t, locale } = useI18n();
   const [stats, setStats] = useState<WalletStats | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -21,7 +23,7 @@ const WalletStatsCard: React.FC<WalletStatsCardProps> = () => {
       const response = await adminWalletApi.getWalletStats();
       setStats(response.data);
     } catch (error) {
-      console.error('加载钱包统计失败:', error);
+      console.error(t('adminWalletStatsCard.logs.loadStatsFailed'), error);
     } finally {
       setLoading(false);
     }
@@ -35,7 +37,7 @@ const WalletStatsCard: React.FC<WalletStatsCardProps> = () => {
     return (
       <div className="rounded-xl bg-white p-6 shadow-sm">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-medium text-gray-900">钱包统计</h3>
+          <h3 className="text-lg font-medium text-gray-900">{t('adminWalletStatsCard.title')}</h3>
           <PButton
             variant="ghost"
             size="sm"
@@ -61,28 +63,28 @@ const WalletStatsCard: React.FC<WalletStatsCardProps> = () => {
 
   const statCards = [
     {
-      name: '总钱包数',
+      name: t('adminWalletStatsCard.cards.totalWallets'),
       value: stats?.total_wallets || 0,
       icon: WalletIcon,
       color: 'text-blue-600',
       bgColor: 'bg-blue-100',
     },
     {
-      name: '活跃钱包',
+      name: t('adminWalletStatsCard.cards.activeWallets'),
       value: stats?.active_wallets || 0,
       icon: ArrowTrendingUpIcon,
       color: 'text-green-600',
       bgColor: 'bg-green-100',
     },
     {
-      name: '冻结钱包',
+      name: t('adminWalletStatsCard.cards.frozenWallets'),
       value: stats?.frozen_wallets || 0,
       icon: LockClosedIcon,
       color: 'text-red-600',
       bgColor: 'bg-red-100',
     },
     {
-      name: '24小时交易',
+      name: t('adminWalletStatsCard.cards.transactions24h'),
       value: stats?.recent_transactions_24h || 0,
       icon: CurrencyDollarIcon,
       color: 'text-indigo-600',
@@ -93,7 +95,7 @@ const WalletStatsCard: React.FC<WalletStatsCardProps> = () => {
   return (
     <div className="rounded-xl bg-white p-6 shadow-sm">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-medium text-gray-900">钱包统计</h3>
+        <h3 className="text-lg font-medium text-gray-900">{t('adminWalletStatsCard.title')}</h3>
         <PButton
           variant="ghost"
           size="sm"
@@ -105,7 +107,6 @@ const WalletStatsCard: React.FC<WalletStatsCardProps> = () => {
         </PButton>
       </div>
 
-      {/* 基础统计卡片 */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-6">
         {statCards.map((stat) => (
           <div key={stat.name} className="relative rounded-xl border border-gray-200 bg-white p-5">
@@ -116,7 +117,7 @@ const WalletStatsCard: React.FC<WalletStatsCardProps> = () => {
               <div className="ml-5 w-0 flex-1">
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">{stat.name}</dt>
-                  <dd className="text-lg font-semibold text-gray-900">{stat.value.toLocaleString()}</dd>
+                  <dd className="text-lg font-semibold text-gray-900">{stat.value.toLocaleString(locale)}</dd>
                 </dl>
               </div>
             </div>
@@ -124,16 +125,15 @@ const WalletStatsCard: React.FC<WalletStatsCardProps> = () => {
         ))}
       </div>
 
-      {/* 货币余额统计 */}
       {stats?.currency_balances && stats.currency_balances.length > 0 && (
         <div>
-          <h4 className="text-md font-medium text-gray-900 mb-3">各货币总余额</h4>
+          <h4 className="text-md font-medium text-gray-900 mb-3">{t('adminWalletStatsCard.currencyBalancesTitle')}</h4>
           <div className="space-y-3">
             {stats.currency_balances.map((balance: any) => (
               <div key={balance.currency_code} className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
                 <span className="text-sm font-medium text-gray-900">{balance.currency_code}</span>
                 <span className="text-sm text-gray-600">
-                  {(balance.total_balance || 0).toLocaleString(undefined, {
+                  {(balance.total_balance || 0).toLocaleString(locale, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 6,
                   })}

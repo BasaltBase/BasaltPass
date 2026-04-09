@@ -10,8 +10,9 @@ import { getApiBase, getAuthRequestTimeoutMs } from '../../shared/config/env'
 import { resolveSafeRedirectTarget } from '@utils/redirect'
 import { decodeJWT } from '@utils/jwt'
 import { getAccessToken } from '@utils/auth'
-import { consumeSessionNotice, getSessionNoticeMessage } from '@utils/sessionNotice'
+import { consumeSessionNotice } from '@utils/sessionNotice'
 import { PAlert } from '@ui'
+import { useI18n } from '@shared/i18n'
 import { TenantLoginShell } from './tenant-login/TenantLoginShell'
 import { TenantPasswordLoginForm } from './tenant-login/TenantPasswordLoginForm'
 import { TenantTwoFactorForm } from './tenant-login/TenantTwoFactorForm'
@@ -20,15 +21,16 @@ import { useTenantLoginFlow } from './tenant-login/useTenantLoginFlow'
 import { useTenantSessionBootstrap } from './tenant-login/useTenantSessionBootstrap'
 
 /**
- * 租户专属登录页面
- * 用户通过 /auth/tenant/:tenantCode/login 访问此页面
- * 该页面会自动带上租户信息进行登录
+ * Tenant-specific sign-in page
+ * Users access this page via /auth/tenant/:tenantCode/login
+ * Tenant context is automatically attached during sign-in
  */
 function TenantLogin() {
   const { tenantCode } = useParams<{ tenantCode: string }>()
   const navigate = useNavigate()
   const { login, isAuthenticated, isLoading: isAuthLoading } = useAuth()
   const { siteName, setPageTitle } = useConfig()
+  const { t } = useI18n()
   const [searchParams] = useSearchParams()
   const [tenantLoadError, setTenantLoadError] = useState('')
 
@@ -96,11 +98,15 @@ function TenantLogin() {
   })
 
   useEffect(() => {
-    const message = getSessionNoticeMessage(consumeSessionNotice())
-    if (message) {
-      setError(message === '当前登录会话已过期，请重新登录。' ? '当前登录会话已过期，请重新登录后再进入租户控制台。' : message)
+    const code = consumeSessionNotice()
+    if (code === 'session_expired') {
+      setError(t('entry.tenantSessionExpired'))
+      return
     }
-  }, [setError])
+    if (code) {
+      setError(t(`sessionNotice.${code}`))
+    }
+  }, [setError, t])
 
   const displayError = tenantLoadError || error
   const hasTenantMismatch = useMemo(() => {
@@ -118,22 +124,22 @@ function TenantLogin() {
 
   if (loadingTenant || isResolvingTenantSession) {
     return (
-      <PSkeleton.PageLoader message={loadingTenant ? "正在加载租户信息..." : "正在检查租户登录状态..."} />
+      <PSkeleton.PageLoader message={loadingTenant ? t('auth.tenant.loadingTenantInfo') : t('auth.tenant.loadingTenantSession')} />
     )
   }
 
   if (!tenantInfo && !loadingTenant) {
     return (
       <TenantLoginShell
-        subtitle="租户登录"
-        title="租户不存在"
-        description={<>该租户不存在或已被禁用，请检查您的访问链接。</>}
+        subtitle={t('auth.tenant.subtitle')}
+        title={t('auth.tenant.notFoundTitle')}
+        description={<>{t('auth.tenant.notFoundDescription')}</>}
         tenantCode={tenantCode}
         tenantInfo={tenantInfo}
       >
         <div className="mt-6">
         <Link to={ROUTES.user.login} className="font-medium text-blue-600 hover:text-blue-500">
-          返回平台登录
+          {t('auth.tenant.backToPlatformLogin')}
         </Link>
         </div>
       </TenantLoginShell>
@@ -142,23 +148,23 @@ function TenantLogin() {
 
   return (
     <TenantLoginShell
-      subtitle="租户登录"
-      title="欢迎回来"
+      subtitle={t('auth.tenant.subtitle')}
+      title={t('auth.shell.welcomeBack')}
       description={
         <>
-          使用邮箱或手机号登录，继续访问 <span className="font-medium text-gray-900">{tenantInfo?.name}</span>。
+          {t('auth.tenant.welcomeDescriptionPrefix')} <span className="font-medium text-gray-900">{tenantInfo?.name}</span>{t('auth.tenant.welcomeDescriptionSuffix')}
         </>
       }
       tenantCode={tenantCode}
       tenantInfo={tenantInfo}
     >
-        {displayError && <div className="mt-6"><PAlert variant="error" title="登录失败" message={displayError} /></div>}
+        {displayError && <div className="mt-6"><PAlert variant="error" title={t('auth.login.errorTitle')} message={displayError} /></div>}
         {hasTenantMismatch && (
             <div className="mt-6">
               <PAlert
                 variant="info"
-                title="检测到其他租户会话"
-                message="当前浏览器已登录其他租户账户。只有当前会话属于本租户时才会视为已登录；你仍然可以继续登录这个租户。"
+                title={t('auth.tenant.mismatchTitle')}
+                message={t('auth.tenant.mismatchMessage')}
               />
             </div>
         )}
@@ -199,10 +205,10 @@ function TenantLogin() {
             to={`/auth/tenant/${tenantCode}/register`}
             className="font-medium text-blue-600 hover:text-blue-500"
           >
-            注册新账户
+            {t('auth.tenant.registerNewAccount')}
           </Link>
           <Link to={ROUTES.user.login} className="text-blue-600 hover:text-blue-500">
-            使用平台账号登录
+            {t('auth.tenant.usePlatformLogin')}
           </Link>
         </div>
     </TenantLoginShell>

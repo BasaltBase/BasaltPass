@@ -31,13 +31,13 @@ import { adminWalletApi, Currency } from '@api/admin/wallet'
 import TenantUserDetailDrawer from '@features/admin/components/TenantUserDetailDrawer'
 import Modal from '@ui/common/Modal'
 import { PSkeleton, PBadge, PAlert, PPagination, PButton, PInput, PSelect, PPageHeader } from '@ui'
+import { useI18n } from '@i18n/useI18n'
 
-// 类型定义
 interface TenantUser extends AdminTenantUser {
-  // 继承所有AdminTenantUser的属性
 }
 
 const TenantUsers: React.FC = () => {
+  const { t, locale } = useI18n()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [tenant, setTenant] = useState<AdminTenantDetailResponse | null>(null)
@@ -92,7 +92,7 @@ const TenantUsers: React.FC = () => {
         const response = await adminWalletApi.getCurrencies()
         setCurrencies(response.data || [])
       } catch (error) {
-        console.error('加载货币列表失败:', error)
+        console.error(t('adminTenantUsers.logs.loadCurrenciesFailed'), error)
       }
     }
     loadCurrencies()
@@ -105,8 +105,8 @@ const TenantUsers: React.FC = () => {
       const response = await adminTenantApi.getTenantDetail(parseInt(id))
       setTenant(response)
     } catch (err: any) {
-      console.error('获取租户详情失败:', err)
-      setError(err.response?.data?.message || '获取租户详情失败')
+      console.error(t('adminTenantUsers.logs.fetchTenantDetailFailed'), err)
+      setError(err.response?.data?.message || t('adminTenantUsers.errors.fetchTenantDetailFailed'))
     }
   }
 
@@ -130,7 +130,7 @@ const TenantUsers: React.FC = () => {
       setTotalPages(response.pagination.total_pages)
     } catch (error) {
       console.error('Failed to load users:', error)
-      setError('加载用户列表失败')
+      setError(t('adminTenantUsers.errors.loadUsersFailed'))
     } finally {
       setLoading(false)
     }
@@ -147,12 +147,12 @@ const TenantUsers: React.FC = () => {
     try {
       setInviteSubmitting(true)
       await adminTenantApi.inviteTenantUser(parseInt(id), inviteForm)
-      setAlert({ type: 'success', message: '邀请发送成功' })
+      setAlert({ type: 'success', message: t('adminTenantUsers.messages.inviteSent') })
       setInviteOpen(false)
       setInviteForm({ email: '', role: 'member', message: '' })
       await loadUsers()
     } catch (error: any) {
-      const message = error.response?.data?.error || error.response?.data?.message || '邀请用户失败'
+      const message = error.response?.data?.error || error.response?.data?.message || t('adminTenantUsers.errors.inviteFailed')
       setAlert({ type: 'error', message })
     } finally {
       setInviteSubmitting(false)
@@ -172,7 +172,7 @@ const TenantUsers: React.FC = () => {
       setDetailUser(response)
     } catch (error: any) {
       console.error('Failed to fetch user detail:', error)
-      const message = error.response?.data?.error || error.response?.data?.message || '获取用户详情失败'
+      const message = error.response?.data?.error || error.response?.data?.message || t('adminTenantUsers.errors.fetchUserDetailFailed')
       setDetailError(message)
     } finally {
       setDetailLoading(false)
@@ -195,13 +195,13 @@ const TenantUsers: React.FC = () => {
     try {
       setEditSubmitting(true)
       await adminTenantApi.updateTenantUser(parseInt(id), editingUser.id, editForm)
-      setAlert({ type: 'success', message: '用户权限已更新' })
+      setAlert({ type: 'success', message: t('adminTenantUsers.messages.userPermissionUpdated') })
       setEditOpen(false)
       setEditingUser(null)
       await loadUsers()
     } catch (error: any) {
       console.error('Failed to update user:', error)
-      const message = error.response?.data?.error || error.response?.data?.message || '更新用户权限失败'
+      const message = error.response?.data?.error || error.response?.data?.message || t('adminTenantUsers.errors.updateUserPermissionFailed')
       setAlert({ type: 'error', message })
     } finally {
       setEditSubmitting(false)
@@ -209,7 +209,7 @@ const TenantUsers: React.FC = () => {
   }
 
   const handleRemoveUser = async (userId: number) => {
-    if (!await uiConfirm('确定要移除这个用户吗？')) {
+    if (!await uiConfirm(t('adminTenantUsers.confirm.removeUser'))) {
       return
     }
 
@@ -217,10 +217,10 @@ const TenantUsers: React.FC = () => {
 
     try {
       await adminTenantApi.removeTenantUser(parseInt(id), userId)
-      await loadUsers() // 重新加载用户列表
+      await loadUsers()
     } catch (error: any) {
       console.error('Failed to remove user:', error)
-      const errorMessage = error.response?.data?.error || '移除用户失败'
+      const errorMessage = error.response?.data?.error || t('adminTenantUsers.errors.removeUserFailed')
       uiAlert(errorMessage)
     }
   }
@@ -239,26 +239,26 @@ const TenantUsers: React.FC = () => {
   const handleAdjustWalletSubmit = async () => {
     if (!id || !adjustingUser) return
     if (!adjustWalletForm.currency_code) {
-      uiAlert('请选择货币类型')
+      uiAlert(t('adminTenantUsers.errors.selectCurrency'))
       return
     }
     if (!adjustWalletForm.reason.trim()) {
-      uiAlert('请输入调整原因')
+      uiAlert(t('adminTenantUsers.errors.inputReason'))
       return
     }
     if (!adjustWalletForm.amount) {
-      uiAlert('调整金额不能为 0')
+      uiAlert(t('adminTenantUsers.errors.amountNotZero'))
       return
     }
 
     try {
       setAdjustWalletSubmitting(true)
       await adminTenantApi.adjustTenantUserWallet(parseInt(id), adjustingUser.id, adjustWalletForm)
-      setAlert({ type: 'success', message: '用户钱包调整成功' })
+      setAlert({ type: 'success', message: t('adminTenantUsers.messages.walletAdjusted') })
       setAdjustWalletOpen(false)
     } catch (error: any) {
       console.error('Failed to adjust tenant user wallet:', error)
-      const message = error.response?.data?.error || error.response?.data?.message || '调整用户钱包失败'
+      const message = error.response?.data?.error || error.response?.data?.message || t('adminTenantUsers.errors.adjustWalletFailed')
       setAlert({ type: 'error', message })
     } finally {
       setAdjustWalletSubmitting(false)
@@ -269,30 +269,30 @@ const TenantUsers: React.FC = () => {
     if (userType === 'tenant_user') {
       switch (role) {
         case 'owner':
-          return <PBadge variant="warning"><StarIcon className="h-3 w-3 mr-1" />所有者</PBadge>
+          return <PBadge variant="warning"><StarIcon className="h-3 w-3 mr-1" />{t('adminTenantUsers.role.owner')}</PBadge>
         case 'admin':
-          return <PBadge variant="purple"><ShieldCheckIcon className="h-3 w-3 mr-1" />管理员</PBadge>
+          return <PBadge variant="purple"><ShieldCheckIcon className="h-3 w-3 mr-1" />{t('adminTenantUsers.role.admin')}</PBadge>
         case 'member':
-          return <PBadge variant="info"><UserIcon className="h-3 w-3 mr-1" />成员</PBadge>
+          return <PBadge variant="info"><UserIcon className="h-3 w-3 mr-1" />{t('adminTenantUsers.role.member')}</PBadge>
         default:
           return <PBadge variant="default">{role}</PBadge>
       }
     } else {
-      return <PBadge variant="success">应用用户</PBadge>
+      return <PBadge variant="success">{t('adminTenantUsers.role.appUser')}</PBadge>
     }
   }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'active': return <PBadge variant="success">活跃</PBadge>
-      case 'suspended': return <PBadge variant="error">暂停</PBadge>
-      case 'banned': return <PBadge variant="error">封禁</PBadge>
+      case 'active': return <PBadge variant="success">{t('adminTenantUsers.status.active')}</PBadge>
+      case 'suspended': return <PBadge variant="error">{t('adminTenantUsers.status.suspended')}</PBadge>
+      case 'banned': return <PBadge variant="error">{t('adminTenantUsers.status.banned')}</PBadge>
       default: return <PBadge variant="default">{status}</PBadge>
     }
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('zh-CN', {
+    return new Date(dateString).toLocaleDateString(locale, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -303,7 +303,7 @@ const TenantUsers: React.FC = () => {
 
   if (loading && !tenant) {
     return (
-      <AdminLayout title="租户用户管理">
+      <AdminLayout title={t('adminTenantUsers.layoutTitle')}>
         <div className="py-6">
           <PSkeleton.Management />
         </div>
@@ -313,12 +313,12 @@ const TenantUsers: React.FC = () => {
 
   const actions = (
     <PButton onClick={handleOpenInvite} leftIcon={<PlusIcon className="h-4 w-4" />}>
-      添加用户
+      {t('adminTenantUsers.actions.addUser')}
     </PButton>
   )
 
   return (
-    <AdminLayout title={`用户管理 - ${tenant?.name || '租户'}`} actions={actions}>
+    <AdminLayout title={t('adminTenantUsers.layoutTitleWithTenant', { tenant: tenant?.name || t('adminTenantUsers.common.tenant') })} actions={actions}>
       <div className="space-y-6">
         {alert && (
           <PAlert
@@ -327,10 +327,8 @@ const TenantUsers: React.FC = () => {
           />
         )}
 
-        {/* 错误提示 */}
         {error && <PAlert variant="error" message={error} />}
 
-        {/* 页面头部 */}
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate(`/admin/tenants/${id}`)}
@@ -339,19 +337,18 @@ const TenantUsers: React.FC = () => {
             <ArrowLeftIcon className="h-5 w-5" />
           </button>
           <PPageHeader
-            title="用户管理"
-            description={`管理租户 "${tenant?.name}" 的用户`}
+            title={t('adminTenantUsers.header.title')}
+            description={t('adminTenantUsers.header.description', { tenant: tenant?.name || '' })}
             icon={<UsersIcon className="h-8 w-8 text-indigo-600" />}
           />
         </div>
 
-        {/* 搜索和过滤 */}
         <div className="rounded-xl bg-white p-4 shadow-sm">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <PInput
                 type="text"
-                placeholder="搜索用户邮箱或昵称..."
+                placeholder={t('adminTenantUsers.filters.searchPlaceholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 icon={<MagnifyingGlassIcon className="h-5 w-5" />}
@@ -364,9 +361,9 @@ const TenantUsers: React.FC = () => {
                 value={userType}
                 onChange={(e) => setUserType(e.target.value as any)}
               >
-                <option value="all">所有用户</option>
-                <option value="tenant_user">租户管理员</option>
-                <option value="app_user">应用用户</option>
+                <option value="all">{t('adminTenantUsers.filters.allUsers')}</option>
+                <option value="tenant_user">{t('adminTenantUsers.filters.tenantAdmins')}</option>
+                <option value="app_user">{t('adminTenantUsers.filters.appUsers')}</option>
               </PSelect>
             </div>
             <div className="sm:w-32">
@@ -374,16 +371,15 @@ const TenantUsers: React.FC = () => {
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
               >
-                <option value="">所有角色</option>
-                <option value="owner">所有者</option>
-                <option value="admin">管理员</option>
-                <option value="member">成员</option>
+                <option value="">{t('adminTenantUsers.filters.allRoles')}</option>
+                <option value="owner">{t('adminTenantUsers.role.owner')}</option>
+                <option value="admin">{t('adminTenantUsers.role.admin')}</option>
+                <option value="member">{t('adminTenantUsers.role.member')}</option>
               </PSelect>
             </div>
           </div>
         </div>
 
-        {/* 用户列表 */}
         <div className="overflow-hidden rounded-xl bg-white shadow-sm">
           {loading ? (
             <div className="py-4">
@@ -414,19 +410,19 @@ const TenantUsers: React.FC = () => {
                             </div>
                           </div>
                           <div className="mt-1 flex items-center text-sm text-gray-500">
-                            <span>邮箱: {user.email}</span>
+                            <span>{t('adminTenantUsers.meta.email', { email: user.email })}</span>
                             {user.app_name && (
                               <>
                                 <span className="mx-2">•</span>
-                                <span>应用: {user.app_name}</span>
+                                <span>{t('adminTenantUsers.meta.app', { app: user.app_name })}</span>
                               </>
                             )}
                             <span className="mx-2">•</span>
-                            <span>加入时间: {formatDate(user.created_at)}</span>
+                            <span>{t('adminTenantUsers.meta.joinedAt', { date: formatDate(user.created_at) })}</span>
                             {user.last_active_at && (
                               <>
                                 <span className="mx-2">•</span>
-                                <span>最后活跃: {formatDate(user.last_active_at)}</span>
+                                <span>{t('adminTenantUsers.meta.lastActive', { date: formatDate(user.last_active_at) })}</span>
                               </>
                             )}
                           </div>
@@ -437,14 +433,14 @@ const TenantUsers: React.FC = () => {
                       <button
                         onClick={() => handleViewDetail(user.id)}
                         className="inline-flex items-center rounded-lg border border-gray-300 bg-white p-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                        title="查看详情"
+                        title={t('adminTenantUsers.actions.viewDetail')}
                       >
                         <EyeIcon className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => handleOpenAdjustWallet(user)}
                         className="inline-flex items-center rounded-lg border border-amber-300 bg-white p-2 text-sm font-medium text-amber-700 transition-colors hover:bg-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
-                        title="调整钱包余额"
+                        title={t('adminTenantUsers.actions.adjustWallet')}
                       >
                         <CurrencyDollarIcon className="h-4 w-4" />
                       </button>
@@ -453,14 +449,14 @@ const TenantUsers: React.FC = () => {
                           <button
                             onClick={() => handleOpenEdit(user)}
                             className="inline-flex items-center rounded-lg border border-gray-300 bg-white p-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                            title="编辑权限"
+                            title={t('adminTenantUsers.actions.editPermission')}
                           >
                             <PencilIcon className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => handleRemoveUser(user.id)}
                             className="inline-flex items-center rounded-lg border border-red-300 bg-white p-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                            title="移除用户"
+                            title={t('adminTenantUsers.actions.removeUser')}
                           >
                             <TrashIcon className="h-4 w-4" />
                           </button>
@@ -473,19 +469,17 @@ const TenantUsers: React.FC = () => {
             </ul>
           )}
 
-          {/* 空状态 */}
           {users.length === 0 && !loading && (
             <div className="text-center py-12">
               <UsersIcon className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">暂无用户</h3>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">{t('adminTenantUsers.empty.noUsers')}</h3>
               <p className="mt-1 text-sm text-gray-500">
-                {search || userType !== 'all' || role ? '没有找到匹配的用户' : '该租户暂无用户'}
+                {search || userType !== 'all' || role ? t('adminTenantUsers.empty.noMatchedUsers') : t('adminTenantUsers.empty.noUsersInTenant')}
               </p>
             </div>
           )}
         </div>
 
-        {/* 分页 */}
         {totalPages > 1 && (
           <PPagination
             currentPage={page}
@@ -558,12 +552,14 @@ const InviteTenantUserModal: React.FC<InviteTenantUserModalProps> = ({
   onSubmit,
   onClose,
   onChange
-}) => (
+}) => {
+  const { t } = useI18n()
+  return (
   <Modal
     open={open}
-    title="邀请租户用户"
+    title={t('adminTenantUsers.inviteModal.title')}
     onClose={onClose}
-    description="向租户添加新的管理员或成员，系统会发送邀请邮件"
+    description={t('adminTenantUsers.inviteModal.description')}
   >
     <form
       onSubmit={(event) => {
@@ -573,7 +569,7 @@ const InviteTenantUserModal: React.FC<InviteTenantUserModalProps> = ({
       className="space-y-4"
     >
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">邮箱地址 *</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminTenantUsers.inviteModal.email')} *</label>
         <input
           type="email"
           required
@@ -585,35 +581,36 @@ const InviteTenantUserModal: React.FC<InviteTenantUserModalProps> = ({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">角色 *</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminTenantUsers.inviteModal.role')} *</label>
         <select
           value={formData.role}
           onChange={(event) => onChange({ ...formData, role: event.target.value as 'admin' | 'member' })}
           className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
         >
-          <option value="member">成员</option>
-          <option value="admin">管理员</option>
+          <option value="member">{t('adminTenantUsers.role.member')}</option>
+          <option value="admin">{t('adminTenantUsers.role.admin')}</option>
         </select>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">邀请信息（可选）</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminTenantUsers.inviteModal.messageOptional')}</label>
         <textarea
           value={formData.message || ''}
           onChange={(event) => onChange({ ...formData, message: event.target.value })}
           rows={3}
           className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
-          placeholder="欢迎加入我们的租户团队..."
+          placeholder={t('adminTenantUsers.inviteModal.messagePlaceholder')}
         />
       </div>
 
       <div className="flex justify-end space-x-3 pt-4">
-        <PButton type="button" variant="secondary" onClick={onClose} disabled={submitting}>取消</PButton>
-        <PButton type="submit" disabled={submitting} loading={submitting}>发送邀请</PButton>
+        <PButton type="button" variant="secondary" onClick={onClose} disabled={submitting}>{t('adminTenantUsers.actions.cancel')}</PButton>
+        <PButton type="submit" disabled={submitting} loading={submitting}>{t('adminTenantUsers.inviteModal.sendInvite')}</PButton>
       </div>
     </form>
   </Modal>
 )
+}
 
 interface EditTenantUserModalProps {
   open: boolean
@@ -634,15 +631,16 @@ const EditTenantUserModal: React.FC<EditTenantUserModalProps> = ({
   onClose,
   onChange
 }) => {
+  const { t } = useI18n()
   const statusOptions = ['active', 'suspended', 'banned']
   const uniqueStatusOptions = user && !statusOptions.includes(user.status) ? [...statusOptions, user.status] : statusOptions
 
   return (
     <Modal
       open={open}
-      title={user ? `编辑用户权限 - ${user.nickname || user.email}` : '编辑用户权限'}
+      title={user ? t('adminTenantUsers.editModal.titleWithUser', { user: user.nickname || user.email }) : t('adminTenantUsers.editModal.title')}
       onClose={onClose}
-      description="调整租户用户的角色和账号状态"
+      description={t('adminTenantUsers.editModal.description')}
     >
       {user && (
         <form
@@ -653,7 +651,7 @@ const EditTenantUserModal: React.FC<EditTenantUserModalProps> = ({
           className="space-y-4"
         >
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">邮箱</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminTenantUsers.fields.email')}</label>
             <input
               type="email"
               value={user.email}
@@ -663,19 +661,19 @@ const EditTenantUserModal: React.FC<EditTenantUserModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">角色</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminTenantUsers.fields.role')}</label>
             <select
               value={formData.role || 'member'}
               onChange={(event) => onChange({ ...formData, role: event.target.value as 'admin' | 'member' })}
               className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
             >
-              <option value="member">成员</option>
-              <option value="admin">管理员</option>
+              <option value="member">{t('adminTenantUsers.role.member')}</option>
+              <option value="admin">{t('adminTenantUsers.role.admin')}</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">状态</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminTenantUsers.fields.status')}</label>
             <select
               value={formData.status || ''}
               onChange={(event) => onChange({ ...formData, status: event.target.value })}
@@ -683,15 +681,15 @@ const EditTenantUserModal: React.FC<EditTenantUserModalProps> = ({
             >
               {uniqueStatusOptions.map((option) => (
                 <option key={option} value={option}>
-                  {translateStatusOption(option)}
+                  {translateStatusOption(option, t)}
                 </option>
               ))}
             </select>
           </div>
 
           <div className="flex justify-end space-x-3 pt-4">
-            <PButton type="button" variant="secondary" onClick={onClose} disabled={submitting}>取消</PButton>
-            <PButton type="submit" disabled={submitting} loading={submitting}>保存更改</PButton>
+            <PButton type="button" variant="secondary" onClick={onClose} disabled={submitting}>{t('adminTenantUsers.actions.cancel')}</PButton>
+            <PButton type="submit" disabled={submitting} loading={submitting}>{t('adminTenantUsers.actions.saveChanges')}</PButton>
           </div>
         </form>
       )}
@@ -719,12 +717,14 @@ const AdjustTenantUserWalletModal: React.FC<AdjustTenantUserWalletModalProps> = 
   onSubmit,
   onClose,
   onChange
-}) => (
+}) => {
+  const { t } = useI18n()
+  return (
   <Modal
     open={open}
-    title={user ? `调整钱包余额 - ${user.nickname || user.email}` : '调整钱包余额'}
+    title={user ? t('adminTenantUsers.walletModal.titleWithUser', { user: user.nickname || user.email }) : t('adminTenantUsers.walletModal.title')}
     onClose={onClose}
-    description="管理员可直接调整该租户用户任意币种的钱包余额。正数表示增加，负数表示减少。"
+    description={t('adminTenantUsers.walletModal.description')}
   >
     {user && (
       <form
@@ -735,7 +735,7 @@ const AdjustTenantUserWalletModal: React.FC<AdjustTenantUserWalletModalProps> = 
         className="space-y-4"
       >
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">用户邮箱</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminTenantUsers.walletModal.userEmail')}</label>
           <input
             type="email"
             value={user.email}
@@ -745,13 +745,13 @@ const AdjustTenantUserWalletModal: React.FC<AdjustTenantUserWalletModalProps> = 
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">货币类型 *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminTenantUsers.walletModal.currency')} *</label>
           <select
             value={formData.currency_code}
             onChange={(event) => onChange({ ...formData, currency_code: event.target.value })}
             className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500"
           >
-            <option value="">选择货币</option>
+            <option value="">{t('adminTenantUsers.walletModal.selectCurrency')}</option>
             {currencies.map(currency => (
               <option key={currency.code} value={currency.code}>
                 {currency.code} - {currency.name}
@@ -761,25 +761,25 @@ const AdjustTenantUserWalletModal: React.FC<AdjustTenantUserWalletModalProps> = 
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">调整金额 *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminTenantUsers.walletModal.amount')} *</label>
           <input
             type="number"
             step="0.01"
             value={formData.amount}
             onChange={(event) => onChange({ ...formData, amount: Number(event.target.value) || 0 })}
             className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500"
-            placeholder="正数增加，负数减少"
+            placeholder={t('adminTenantUsers.walletModal.amountPlaceholder')}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">调整原因 *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminTenantUsers.walletModal.reason')} *</label>
           <textarea
             value={formData.reason}
             onChange={(event) => onChange({ ...formData, reason: event.target.value })}
             rows={3}
             className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500"
-            placeholder="例如：手工补偿、人工扣费、账务修正"
+            placeholder={t('adminTenantUsers.walletModal.reasonPlaceholder')}
           />
         </div>
 
@@ -790,26 +790,27 @@ const AdjustTenantUserWalletModal: React.FC<AdjustTenantUserWalletModalProps> = 
             onChange={(event) => onChange({ ...formData, create_if_missing: event.target.checked })}
             className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
           />
-          该币种钱包不存在时自动创建
+          {t('adminTenantUsers.walletModal.createIfMissing')}
         </label>
 
         <div className="flex justify-end space-x-3 pt-4">
-          <PButton type="button" variant="secondary" onClick={onClose} disabled={submitting}>取消</PButton>
-          <PButton type="submit" disabled={submitting} loading={submitting}>确认调整</PButton>
+          <PButton type="button" variant="secondary" onClick={onClose} disabled={submitting}>{t('adminTenantUsers.actions.cancel')}</PButton>
+          <PButton type="submit" disabled={submitting} loading={submitting}>{t('adminTenantUsers.actions.confirmAdjust')}</PButton>
         </div>
       </form>
     )}
   </Modal>
 )
+}
 
-const translateStatusOption = (status: string) => {
+const translateStatusOption = (status: string, t: (key: string, params?: Record<string, any>) => string) => {
   switch (status) {
     case 'active':
-      return '活跃'
+      return t('adminTenantUsers.status.active')
     case 'suspended':
-      return '暂停'
+      return t('adminTenantUsers.status.suspended')
     case 'banned':
-      return '封禁'
+      return t('adminTenantUsers.status.banned')
     default:
       return status
   }

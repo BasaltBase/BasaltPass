@@ -3,6 +3,7 @@ import { uiAlert } from '@contexts/DialogContext'
 import Layout from '@features/user/components/Layout'
 import { PCard, PButton, PInput, PSelect, PSkeleton, PTextarea, PPageHeader } from '@ui'
 import { UserIcon, BellIcon, GlobeAltIcon } from '@heroicons/react/24/outline'
+import { useI18n } from '@shared/i18n'
 import {
   getUserProfile,
   updateUserProfile,
@@ -102,10 +103,11 @@ const normalizeCurrency = (item: any): Currency => ({
 })
 
 function SectionLabel({ title, value }: { title: string; value: string }) {
+  const { t } = useI18n()
   return (
     <div className="flex items-center justify-between gap-4">
       <div className="text-sm font-medium text-gray-700">{title}</div>
-      <div className="text-xs text-gray-500">当前：{value || '未选择'}</div>
+      <div className="text-xs text-gray-500">{t('pages.settings.currentValue', { value: value || t('pages.settings.notSelected') })}</div>
     </div>
   )
 }
@@ -138,6 +140,7 @@ function ToggleCheckbox({
 }
 
 export default function Settings() {
+  const { t } = useI18n()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -190,7 +193,7 @@ export default function Settings() {
         setNotifications(notificationSettingsRes.data.data)
       } catch (err) {
         console.error('Failed to load settings:', err)
-        uiAlert('设置加载失败，请刷新重试')
+        uiAlert(t('pages.settings.alerts.loadFailed'))
       } finally {
         setLoading(false)
       }
@@ -204,10 +207,10 @@ export default function Settings() {
       setSaving(true)
       const response = await updateUserProfile(changes)
       setProfile(toSettingsProfile(response.data.profile))
-      if (!silent) uiAlert('设置已保存')
+      if (!silent) uiAlert(t('pages.settings.alerts.saved'))
     } catch (err) {
       console.error('Failed to save settings:', err)
-      uiAlert('保存失败，请重试')
+      uiAlert(t('pages.settings.alerts.saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -243,10 +246,10 @@ export default function Settings() {
 
       setProfile(toSettingsProfile(profileResponse.data.profile))
       setNotifications(notificationResponse.data.data)
-      uiAlert('设置已保存')
+      uiAlert(t('pages.settings.alerts.saved'))
     } catch (err) {
       console.error('Failed to save settings:', err)
-      uiAlert('保存失败，请重试')
+      uiAlert(t('pages.settings.alerts.saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -280,10 +283,10 @@ export default function Settings() {
   }, [profile.timezone, timezones])
 
   const currentSelectionSummary = [
-    genderLabel ? `性别: ${genderLabel}` : '性别: 未选择',
-    languageLabel ? `语言: ${languageLabel}` : '语言: 未选择',
-    currencyLabel ? `货币: ${currencyLabel}` : '货币: 未选择',
-    timezoneLabel ? `时区: ${timezoneLabel}` : '时区: 未选择',
+    t('pages.settings.summary.gender', { value: genderLabel || t('pages.settings.notSelected') }),
+    t('pages.settings.summary.language', { value: languageLabel || t('pages.settings.notSelected') }),
+    t('pages.settings.summary.currency', { value: currencyLabel || t('pages.settings.notSelected') }),
+    t('pages.settings.summary.timezone', { value: timezoneLabel || t('pages.settings.notSelected') }),
   ].join(' | ')
 
   if (loading) {
@@ -299,21 +302,21 @@ export default function Settings() {
   return (
     <Layout>
       <div className="space-y-6">
-        <PPageHeader title="系统设置" description="管理您的账户设置和偏好" />
+        <PPageHeader title={t('pages.settings.title')} description={t('pages.settings.description')} />
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          当前选择：{currentSelectionSummary}
+          {t('pages.settings.currentSelection', { summary: currentSelectionSummary })}
         </div>
 
         <div className="grid grid-cols-1 gap-6">
           <PCard className="rounded-2xl border border-gray-200 p-5 shadow-sm">
             <div className="mb-5 flex items-center">
               <UserIcon className="mr-2 h-5 w-5 text-gray-400" />
-              <h3 className="text-lg font-semibold text-gray-900">个人信息</h3>
+              <h3 className="text-lg font-semibold text-gray-900">{t('pages.settings.sections.personalInfo')}</h3>
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-3">
-                <SectionLabel title="性别" value={genderLabel} />
+                <SectionLabel title={t('pages.settings.fields.gender')} value={genderLabel} />
                 <PSelect
                   value={profile.gender_id !== undefined ? String(profile.gender_id) : ''}
                   onChange={(event) =>
@@ -323,7 +326,7 @@ export default function Settings() {
                   }
                   variant="rounded"
                 >
-                  <option value="">请选择</option>
+                  <option value="">{t('pages.settings.selectPlaceholder')}</option>
                   {genders.map((item) => (
                     <option key={item.id} value={item.id}>
                       {item.name_cn || item.name}
@@ -336,44 +339,44 @@ export default function Settings() {
                 type="date"
                 value={profile.birth_date}
                 onChange={(event) => setProfile((prev) => ({ ...prev, birth_date: event.target.value }))}
-                label="出生日期"
+                label={t('pages.settings.fields.birthDate')}
               />
 
               <PInput
                 value={profile.location}
                 onChange={(event) => setProfile((prev) => ({ ...prev, location: event.target.value }))}
-                label="所在地"
-                placeholder="例如：北京，中国"
+                label={t('pages.settings.fields.location')}
+                placeholder={t('pages.settings.placeholders.location')}
               />
 
               <PInput
                 value={profile.company}
                 onChange={(event) => setProfile((prev) => ({ ...prev, company: event.target.value }))}
-                label="公司"
-                placeholder="您的公司名称"
+                label={t('pages.settings.fields.company')}
+                placeholder={t('pages.settings.placeholders.company')}
               />
 
               <PInput
                 value={profile.job_title}
                 onChange={(event) => setProfile((prev) => ({ ...prev, job_title: event.target.value }))}
-                label="职位"
-                placeholder="您的职位"
+                label={t('pages.settings.fields.jobTitle')}
+                placeholder={t('pages.settings.placeholders.jobTitle')}
               />
 
               <PInput
                 value={profile.website}
                 onChange={(event) => setProfile((prev) => ({ ...prev, website: event.target.value }))}
-                label="个人网站"
+                label={t('pages.settings.fields.website')}
                 placeholder="https://example.com"
               />
 
               <div className="md:col-span-2">
                 <PTextarea
-                  label="个人简介"
+                  label={t('pages.settings.fields.bio')}
                   value={profile.bio}
                   onChange={(event) => setProfile((prev) => ({ ...prev, bio: event.target.value }))}
                   rows={4}
-                  placeholder="介绍一下自己..."
+                  placeholder={t('pages.settings.placeholders.bio')}
                 />
               </div>
             </div>
@@ -382,12 +385,12 @@ export default function Settings() {
           <PCard className="rounded-2xl border border-gray-200 p-5 shadow-sm">
             <div className="mb-5 flex items-center">
               <GlobeAltIcon className="mr-2 h-5 w-5 text-gray-400" />
-              <h3 className="text-lg font-semibold text-gray-900">区域设置</h3>
+              <h3 className="text-lg font-semibold text-gray-900">{t('pages.settings.sections.regionalSettings')}</h3>
             </div>
 
             <div className="space-y-6">
               <div className="space-y-3">
-                <SectionLabel title="语言" value={languageLabel} />
+                <SectionLabel title={t('pages.settings.fields.language')} value={languageLabel} />
                 <PSelect
                   value={profile.language_id !== undefined ? String(profile.language_id) : ''}
                   onChange={(event) =>
@@ -397,7 +400,7 @@ export default function Settings() {
                   }
                   variant="rounded"
                 >
-                  <option value="">请选择</option>
+                  <option value="">{t('pages.settings.selectPlaceholder')}</option>
                   {languages.map((item) => (
                     <option key={item.id} value={item.id}>
                       {item.name_local || item.name}
@@ -407,7 +410,7 @@ export default function Settings() {
               </div>
 
               <div className="space-y-3">
-                <SectionLabel title="主要货币" value={currencyLabel} />
+                <SectionLabel title={t('pages.settings.fields.primaryCurrency')} value={currencyLabel} />
                 <PSelect
                   value={profile.currency_id !== undefined ? String(profile.currency_id) : ''}
                   onChange={(event) =>
@@ -417,7 +420,7 @@ export default function Settings() {
                   }
                   variant="rounded"
                 >
-                  <option value="">请选择</option>
+                  <option value="">{t('pages.settings.selectPlaceholder')}</option>
                   {currencies.map((item) => (
                     <option key={item.id} value={item.id}>
                       {`${item.name_cn || item.name} (${item.code})`}
@@ -427,7 +430,7 @@ export default function Settings() {
               </div>
 
               <div className="space-y-3">
-                <SectionLabel title="时区" value={timezoneLabel} />
+                <SectionLabel title={t('pages.settings.fields.timezone')} value={timezoneLabel} />
                 <PSelect
                   value={profile.timezone}
                   onChange={(event) => updateProfileField({ timezone: event.target.value })}
@@ -446,34 +449,34 @@ export default function Settings() {
           <PCard className="rounded-2xl border border-gray-200 p-5 shadow-sm">
             <div className="mb-5 flex items-center">
               <BellIcon className="mr-2 h-5 w-5 text-gray-400" />
-              <h3 className="text-lg font-semibold text-gray-900">通知设置</h3>
+              <h3 className="text-lg font-semibold text-gray-900">{t('pages.settings.sections.notificationSettings')}</h3>
             </div>
 
             <div className="space-y-4">
               <ToggleCheckbox
-                title="邮件通知"
-                description="接收重要更新和交易通知"
+                title={t('pages.settings.notifications.email.title')}
+                description={t('pages.settings.notifications.email.description')}
                 checked={notifications.email_enabled}
                 onChange={() => handleNotificationChange('email_enabled')}
               />
 
               <ToggleCheckbox
-                title="短信通知"
-                description="接收安全验证和紧急通知"
+                title={t('pages.settings.notifications.sms.title')}
+                description={t('pages.settings.notifications.sms.description')}
                 checked={notifications.sms_enabled}
                 onChange={() => handleNotificationChange('sms_enabled')}
               />
 
               <ToggleCheckbox
-                title="推送通知"
-                description="接收实时交易和系统通知"
+                title={t('pages.settings.notifications.push.title')}
+                description={t('pages.settings.notifications.push.description')}
                 checked={notifications.push_enabled}
                 onChange={() => handleNotificationChange('push_enabled')}
               />
 
               <ToggleCheckbox
-                title="安全通知"
-                description="接收登录和安全事件通知"
+                title={t('pages.settings.notifications.security.title')}
+                description={t('pages.settings.notifications.security.description')}
                 checked={notifications.security_enabled}
                 onChange={() => handleNotificationChange('security_enabled')}
               />
@@ -483,10 +486,10 @@ export default function Settings() {
 
         <div className="flex items-center justify-between">
           <div className="text-sm text-gray-500">
-            先选择页面上的选项，确认顶部“当前选择”变化后，再点右侧“保存设置”提交。
+            {t('pages.settings.footerHint')}
           </div>
           <PButton type="button" variant="primary" onClick={handleSave} disabled={saving}>
-            {saving ? '保存中...' : '保存设置'}
+            {saving ? t('pages.settings.saveSaving') : t('pages.settings.save')}
           </PButton>
         </div>
       </div>

@@ -21,7 +21,7 @@ const PToggle = forwardRef<HTMLInputElement, PToggleProps>(
     ...props 
   }, ref) => {
 
-    // 尺寸样式映射
+    // translatedstyletranslated
     const sizeStyles = {
       sm: {
         container: 'h-5 w-9',
@@ -42,7 +42,7 @@ const PToggle = forwardRef<HTMLInputElement, PToggleProps>(
 
     const currentSize = sizeStyles[size];
 
-    // 容器样式
+    // translatedstyle
     const containerStyles = `
       relative inline-flex items-center justify-start p-0.5
       ${currentSize.container}
@@ -54,7 +54,7 @@ const PToggle = forwardRef<HTMLInputElement, PToggleProps>(
       ${error ? 'ring-2 ring-red-300' : ''}
     `;
 
-    // 拇指样式
+    // translatedstyle
     const thumbStyles = `
       ${currentSize.thumb}
       bg-white rounded-full shadow-sm transform transition-transform duration-200 ease-in-out
@@ -62,20 +62,20 @@ const PToggle = forwardRef<HTMLInputElement, PToggleProps>(
       pointer-events-none
     `;
 
-    // 标签样式
+    // translatedstyle
     const labelStyles = `
       ${size === 'sm' ? 'text-sm' : size === 'lg' ? 'text-base' : 'text-sm'}
       ${disabled ? 'text-gray-400' : 'text-gray-700'}
       font-medium select-none cursor-pointer
     `;
 
-    // 描述样式
+    // descriptionstyle
     const descriptionStyles = `
       ${size === 'sm' ? 'text-xs' : 'text-sm'}
       text-gray-500 mt-1
     `;
 
-    // Toggle视觉组件
+    // Toggletranslatedcomponent
     const ToggleVisual = () => (
       <div className={containerStyles}>
         <input
@@ -90,7 +90,7 @@ const PToggle = forwardRef<HTMLInputElement, PToggleProps>(
       </div>
     );
 
-    // 标签内容组件
+    // translatedcomponent
     const LabelContent = () => (
       <>
         {label && (
@@ -106,7 +106,7 @@ const PToggle = forwardRef<HTMLInputElement, PToggleProps>(
       </>
     );
 
-    // 渲染逻辑
+    // translated
     const renderToggle = () => {
       if (!label) {
         return <ToggleVisual />;

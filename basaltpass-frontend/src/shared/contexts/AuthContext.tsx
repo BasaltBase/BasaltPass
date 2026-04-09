@@ -183,7 +183,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const switchAccount = useCallback(async (sessionKey: string) => {
     const session = getUserConsoleSession(sessionKey)
     if (!session) {
-      throw new Error('目标账户会话不存在或已失效')
+      throw new Error('translatedsessiontranslatedoralreadytranslated')
     }
 
     const previousToken = getAccessToken()

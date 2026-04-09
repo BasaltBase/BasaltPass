@@ -10,8 +10,10 @@ import PInput from '@ui/PInput'
 import PTextarea from '@ui/PTextarea'
 import PCheckbox from '@ui/PCheckbox'
 import PTable, { PTableColumn, PTableAction } from '@ui/PTable'
+import { useI18n } from '@shared/i18n'
 
 export default function AdminPlans() {
+  const { t } = useI18n()
   const [plans, setPlans] = useState<Plan[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
@@ -20,10 +22,8 @@ export default function AdminPlans() {
   const [deleteTarget, setDeleteTarget] = useState<Plan | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null)
-  // 新增：租户筛选
   const [tenants, setTenants] = useState<AdminTenantResponse[]>([])
   const [selectedTenantId, setSelectedTenantId] = useState<string>('')
-  // 分页状态
   const [page, setPage] = useState<number>(1)
   const [pageSize, setPageSize] = useState<number>(20)
   const [total, setTotal] = useState<number>(0)
@@ -43,7 +43,6 @@ export default function AdminPlans() {
   }, [])
 
   useEffect(() => {
-    // 切换租户时重置到第1页
     setPage(1)
   }, [selectedTenantId])
 
@@ -56,7 +55,7 @@ export default function AdminPlans() {
       const res = await adminTenantApi.getTenantList({ page: 1, limit: 1000 })
       setTenants(res.tenants || [])
     } catch (e) {
-      console.error('获取租户列表失败:', e)
+      console.error(t('adminSubscriptionPlans.logs.fetchTenantsFailed'), e)
     }
   }
 
@@ -71,7 +70,6 @@ export default function AdminPlans() {
         adminListPlans(params),
         adminListProducts(params)
       ])
-      // 提取分页数据（兼容多种结构）
       const extractPager = (body: any) => {
         const p = body?.data ?? body?.Data ?? body
         const list = Array.isArray(p?.data)
@@ -90,17 +88,15 @@ export default function AdminPlans() {
         return { list, total, page: pageVal, pageSize: pageSizeVal, totalPages: totalPagesVal }
       }
 
-      // 处理套餐数据
       const plansPager = extractPager(plansRes)
       setPlans(plansPager.list)
       setTotal(plansPager.total)
       setTotalPages(plansPager.totalPages)
 
-      // 处理产品数据（仅列表用于名称映射）
       const productsPager = extractPager(productsRes)
       setProducts(productsPager.list)
     } catch (error) {
-      console.error('获取数据失败:', error)
+      console.error(t('adminSubscriptionPlans.logs.fetchDataFailed'), error)
     } finally {
       setLoading(false)
     }
@@ -131,7 +127,7 @@ export default function AdminPlans() {
       })
       fetchData()
     } catch (error) {
-      console.error('操作失败:', error)
+      console.error(t('adminSubscriptionPlans.logs.operationFailed'), error)
     }
   }
 
@@ -163,7 +159,7 @@ export default function AdminPlans() {
       setShowDeleteModal(false)
       setDeleteTarget(null)
     } catch (error) {
-      console.error('删除失败:', error)
+      console.error(t('adminSubscriptionPlans.logs.deleteFailed'), error)
     } finally {
       setDeleting(false)
     }
@@ -176,68 +172,66 @@ export default function AdminPlans() {
 
   const getProductName = (productId: number) => {
     const product = products.find(p => p.ID === productId)
-    return product ? product.Name : '未知产品'
+    return product ? product.Name : t('adminSubscriptionPlans.common.unknownProduct')
   }
 
   const tenantMap = useMemo(() => {
     const m = new Map<number, AdminTenantResponse>()
-    tenants.forEach(t => m.set(t.id, t))
+    tenants.forEach(tenantItem => m.set(tenantItem.id, tenantItem))
     return m
   }, [tenants])
 
   const renderTenantInfo = (tenantId?: number) => {
-    if (!tenantId) return <span className="text-gray-400">系统级</span>
-    const t = tenantMap.get(tenantId)
-    if (!t) return <span className="text-gray-400">租户 #{tenantId}</span>
+    if (!tenantId) return <span className="text-gray-400">{t('adminSubscriptionPlans.tenant.systemLevel')}</span>
+    const tenant = tenantMap.get(tenantId)
+    if (!tenant) return <span className="text-gray-400">{t('adminSubscriptionPlans.tenant.tenantId', { id: tenantId })}</span>
     return (
       <span>
-        租户: {t.name} ({t.code}) · 计划: {t.plan} · 状态: {t.status}
+        {t('adminSubscriptionPlans.tenant.summary', { name: tenant.name, code: tenant.code, plan: tenant.plan, status: tenant.status })}
       </span>
     )
   }
 
   if (loading) {
     return (
-      <AdminLayout title="计划管理">
+      <AdminLayout title={t('adminSubscriptionPlans.layoutTitle')}>
         <div className="flex justify-center items-center h-64">
-          <div className="text-lg">加载中...</div>
+          <div className="text-lg">{t('adminSubscriptionPlans.common.loading')}</div>
         </div>
       </AdminLayout>
     )
   }
 
   return (
-    <AdminLayout title="计划管理">
+    <AdminLayout title={t('adminSubscriptionPlans.layoutTitle')}>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-semibold text-gray-900">套餐管理</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">{t('adminSubscriptionPlans.title')}</h1>
           <div className="flex items-center space-x-3">
-            {/* 新增：租户筛选 */}
             <PSelect
               value={selectedTenantId}
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedTenantId(e.target.value)}
             >
-              <option value="">全部租户</option>
-              {tenants.map(t => (
-                <option key={t.id} value={t.id}>{t.name} ({t.code})</option>
+              <option value="">{t('adminSubscriptionPlans.filters.allTenants')}</option>
+              {tenants.map(tenantItem => (
+                <option key={tenantItem.id} value={tenantItem.id}>{tenantItem.name} ({tenantItem.code})</option>
               ))}
             </PSelect>
-            <PButton type="button" onClick={() => setShowModal(true)} leftIcon={<PlusIcon className="h-5 w-5" />}>新建套餐</PButton>
+            <PButton type="button" onClick={() => setShowModal(true)} leftIcon={<PlusIcon className="h-5 w-5" />}>{t('adminSubscriptionPlans.actions.createPlan')}</PButton>
           </div>
         </div>
-        {/* 套餐列表（统一表格组件） */}
         {(() => {
           const columns: PTableColumn<Plan>[] = [
-            { key: 'name', title: '名称', dataIndex: 'DisplayName' as any },
-            { key: 'product', title: '产品', render: (row) => getProductName(row.ProductID || 0) },
-            { key: 'version', title: '版本', render: (row) => `v${row.PlanVersion}` },
-            { key: 'desc', title: '描述', render: (row) => row.Description || '-' },
-            { key: 'tenant', title: '租户', render: (row) => renderTenantInfo(row.TenantID as unknown as number) },
+            { key: 'name', title: t('adminSubscriptionPlans.table.name'), dataIndex: 'DisplayName' as any },
+            { key: 'product', title: t('adminSubscriptionPlans.table.product'), render: (row) => getProductName(row.ProductID || 0) },
+            { key: 'version', title: t('adminSubscriptionPlans.table.version'), render: (row) => `v${row.PlanVersion}` },
+            { key: 'desc', title: t('adminSubscriptionPlans.table.description'), render: (row) => row.Description || '-' },
+            { key: 'tenant', title: t('adminSubscriptionPlans.table.tenant'), render: (row) => renderTenantInfo(row.TenantID as unknown as number) },
           ]
 
           const actions: PTableAction<Plan>[] = [
-            { key: 'edit', label: '编辑', icon: <PencilIcon className="h-4 w-4" />, variant: 'secondary', size: 'sm', onClick: (row) => handleEdit(row) },
-            { key: 'delete', label: '删除', icon: <TrashIcon className="h-4 w-4" />, variant: 'danger', size: 'sm', confirm: '确定要删除该套餐吗？此操作无法撤销。', onClick: (row) => handleDeleteClick(row) },
+            { key: 'edit', label: t('adminSubscriptionPlans.actions.edit'), icon: <PencilIcon className="h-4 w-4" />, variant: 'secondary', size: 'sm', onClick: (row) => handleEdit(row) },
+            { key: 'delete', label: t('adminSubscriptionPlans.actions.delete'), icon: <TrashIcon className="h-4 w-4" />, variant: 'danger', size: 'sm', confirm: t('adminSubscriptionPlans.confirm.deletePlan'), onClick: (row) => handleDeleteClick(row) },
           ]
 
           return (
@@ -246,22 +240,21 @@ export default function AdminPlans() {
               data={plans}
               rowKey={(row) => row.ID}
               actions={actions}
-              emptyText="暂无套餐数据"
+              emptyText={t('adminSubscriptionPlans.empty.noPlans')}
               striped
             />
           )
         })()}
 
-        {/* 分页控件 */}
         <div className="flex items-center justify-between py-3">
-          <div className="text-sm text-gray-600">共 {total} 条 · 第 {page} / {totalPages} 页</div>
+          <div className="text-sm text-gray-600">{t('adminSubscriptionPlans.pagination.summary', { total, page, totalPages })}</div>
           <div className="flex items-center space-x-2">
-            <PButton type="button" variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>上一页</PButton>
-            <PButton type="button" variant="secondary" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))}>下一页</PButton>
+            <PButton type="button" variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>{t('adminSubscriptionPlans.pagination.prev')}</PButton>
+            <PButton type="button" variant="secondary" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))}>{t('adminSubscriptionPlans.pagination.next')}</PButton>
             <PSelect value={pageSize} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => { setPageSize(parseInt(e.target.value)); setPage(1) }}>
-              <option value={10}>每页 10</option>
-              <option value={20}>每页 20</option>
-              <option value={50}>每页 50</option>
+              <option value={10}>{t('adminSubscriptionPlans.pagination.pageSize', { size: 10 })}</option>
+              <option value={20}>{t('adminSubscriptionPlans.pagination.pageSize', { size: 20 })}</option>
+              <option value={50}>{t('adminSubscriptionPlans.pagination.pageSize', { size: 50 })}</option>
             </PSelect>
           </div>
         </div>
@@ -271,19 +264,18 @@ export default function AdminPlans() {
           <div className="w-3/4 max-w-4xl rounded-2xl border bg-white p-6 shadow-xl">
             <div className="mt-3">
               <h3 className="text-lg font-medium text-gray-900 mb-6">
-                {editingPlan ? '编辑套餐' : '新建套餐'}
+                {editingPlan ? t('adminSubscriptionPlans.modal.editTitle') : t('adminSubscriptionPlans.modal.createTitle')}
               </h3>
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* 第一行：产品选择和套餐代码 */}
                 <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">所属产品</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminSubscriptionPlans.form.product')}</label>
                     <PSelect
                       required
                       value={formData.product_id}
                       onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, product_id: e.target.value })}
                     >
-                      <option value="">请选择产品</option>
+                      <option value="">{t('adminSubscriptionPlans.form.selectProduct')}</option>
                       {products.map((product) => (
                         <option key={product.ID} value={product.ID}>
                           {product.Name}
@@ -292,64 +284,60 @@ export default function AdminPlans() {
                     </PSelect>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">套餐代码</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminSubscriptionPlans.form.code')}</label>
                     <PInput
                       type="text"
                       required
                       value={formData.code}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, code: e.target.value })}
-                      placeholder="请输入套餐代码"
+                      placeholder={t('adminSubscriptionPlans.form.codePlaceholder')}
                     />
                   </div>
                 </div>
 
-                {/* 第二行：套餐名称和版本号 */}
                 <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">套餐名称</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminSubscriptionPlans.form.name')}</label>
                     <PInput
                       type="text"
                       required
                       value={formData.display_name}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, display_name: e.target.value })}
-                      placeholder="请输入套餐名称"
+                      placeholder={t('adminSubscriptionPlans.form.namePlaceholder')}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">版本号</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminSubscriptionPlans.form.version')}</label>
                     <PInput
                       type="number"
                       min={1}
                       required
                       value={formData.plan_version}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, plan_version: parseInt(e.target.value) })}
-                      placeholder="请输入版本号"
+                      placeholder={t('adminSubscriptionPlans.form.versionPlaceholder')}
                     />
                   </div>
                 </div>
 
-                {/* 第三行：套餐描述（全宽） */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">套餐描述</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminSubscriptionPlans.form.description')}</label>
                   <PTextarea
                     value={formData.description}
                     onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, description: e.target.value })}
                     rows={4}
-                    placeholder="请输入套餐描述"
+                    placeholder={t('adminSubscriptionPlans.form.descriptionPlaceholder')}
                   />
                 </div>
 
-                {/* 第四行：激活状态 */}
                 <div className="flex items-center">
                   <PCheckbox
                     checked={formData.is_active}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, is_active: e.target.checked })}
                   >
-                    激活状态
+                    {t('adminSubscriptionPlans.form.activeStatus')}
                   </PCheckbox>
                 </div>
 
-                {/* 按钮区域 */}
                 <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
                   <PButton
                     type="button"
@@ -367,10 +355,10 @@ export default function AdminPlans() {
                       })
                     }}
                   >
-                    取消
+                    {t('adminSubscriptionPlans.actions.cancel')}
                   </PButton>
                   <PButton type="submit">
-                    {editingPlan ? '更新' : '创建'}
+                    {editingPlan ? t('adminSubscriptionPlans.actions.update') : t('adminSubscriptionPlans.actions.create')}
                   </PButton>
                 </div>
               </form>
@@ -379,7 +367,6 @@ export default function AdminPlans() {
         </div>
       )}
 
-      {/* 删除套餐确认模态框 */}
       {showDeleteModal && deleteTarget && (
         <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto w-96 rounded-2xl border bg-white p-5 shadow-xl">
@@ -388,21 +375,21 @@ export default function AdminPlans() {
                 <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
               </div>
               <h3 className="text-lg font-medium text-gray-900 mt-4">
-                确认删除套餐
+                {t('adminSubscriptionPlans.deleteModal.title')}
               </h3>
               <div className="mt-2 px-7 py-3">
                 <p className="text-sm text-gray-500">
-                  您确定要删除以下套餐吗？
+                  {t('adminSubscriptionPlans.deleteModal.confirmText')}
                 </p>
                 <div className="mt-3 rounded-lg bg-gray-50 p-3">
                   <p className="text-sm font-medium text-gray-900">
                     {deleteTarget.DisplayName}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
-                    产品: {getProductName(deleteTarget.ProductID || 0)}
+                    {t('adminSubscriptionPlans.deleteModal.product', { name: getProductName(deleteTarget.ProductID || 0) })}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
-                    版本: v{deleteTarget.PlanVersion}
+                    {t('adminSubscriptionPlans.deleteModal.version', { version: deleteTarget.PlanVersion })}
                   </p>
                   {deleteTarget.Description && (
                     <p className="text-sm text-gray-500 mt-1">
@@ -411,12 +398,12 @@ export default function AdminPlans() {
                   )}
                 </div>
                 <p className="text-sm text-gray-500 mt-3">
-                  删除后，该套餐及其相关的价格将无法恢复。
+                  {t('adminSubscriptionPlans.deleteModal.warning')}
                 </p>
               </div>
               <div className="flex justify-center space-x-3 mt-4">
-                <PButton type="button" variant="secondary" onClick={handleDeleteCancel} disabled={deleting}>取消</PButton>
-                <PButton type="button" variant="danger" onClick={handleDeleteConfirm} disabled={deleting}>{deleting ? '删除中...' : '确认删除'}</PButton>
+                <PButton type="button" variant="secondary" onClick={handleDeleteCancel} disabled={deleting}>{t('adminSubscriptionPlans.actions.cancel')}</PButton>
+                <PButton type="button" variant="danger" onClick={handleDeleteConfirm} disabled={deleting}>{deleting ? t('adminSubscriptionPlans.deleteModal.deleting') : t('adminSubscriptionPlans.deleteModal.confirmDelete')}</PButton>
               </div>
             </div>
           </div>

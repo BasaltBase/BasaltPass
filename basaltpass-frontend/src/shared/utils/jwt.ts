@@ -1,6 +1,6 @@
 import { getAccessToken } from './auth'
 
-// JWT 解码工具函数
+// JWT translated
 export function decodeJWT(token: string): any {
   try {
     const base64Url = token.split('.')[1];
@@ -22,7 +22,7 @@ export function getScopeFromToken(): string | null {
   return decoded?.scp || null
 }
 
-// 从 JWT token 中获取租户 ID
+// translated JWT token translatedgettenant ID
 export function getTenantIdFromToken(): string | null {
   const token = getAccessToken()
   if (!token) return null;

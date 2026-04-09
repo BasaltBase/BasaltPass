@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import Layout from '@features/user/components/Layout'
-import { PCard, PButton, PSelect, PSkeleton, PBadge, PPageHeader, PPagination } from '@ui'
+import { PCard, PButton, PSkeleton, PBadge, PPageHeader, PPagination } from '@ui'
 import { useNotifications } from '@contexts/NotificationContext'
 import { notificationApi, TenantNotification } from '@api/tenant/tenantNotification'
+import { useI18n } from '@shared/i18n'
 import { 
   BellIcon, 
   CheckIcon, 
@@ -14,6 +15,7 @@ import {
 } from '@heroicons/react/24/outline'
 
 const Notifications: React.FC = () => {
+  const { t, locale } = useI18n()
   const { markAsRead, markAllAsRead, deleteNotification } = useNotifications()
   const [notifications, setNotifications] = useState<TenantNotification[]>([])
   const [loading, setLoading] = useState(true)
@@ -33,7 +35,7 @@ const Notifications: React.FC = () => {
       setNotifications(response.data.data)
       setTotal(response.data.total)
     } catch (error) {
-      console.error('Failed to load notifications:', error)
+      console.error(t('userNotifications.logs.loadFailed'), error)
     } finally {
       setLoading(false)
     }
@@ -83,10 +85,10 @@ const Notifications: React.FC = () => {
       info: 'info' as const,
     }
     const names = {
-      success: '成功',
-      warning: '警告',
-      error: '错误',
-      info: '信息',
+      success: t('userNotifications.types.success'),
+      warning: t('userNotifications.types.warning'),
+      error: t('userNotifications.types.error'),
+      info: t('userNotifications.types.info'),
     }
     return (
       <PBadge variant={variants[type as keyof typeof variants] || 'default'}>
@@ -97,7 +99,7 @@ const Notifications: React.FC = () => {
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString)
-    return date.toLocaleString('zh-CN')
+    return date.toLocaleString(locale)
   }
 
   const filteredNotifications = notifications.filter(notification => {
@@ -112,7 +114,7 @@ const Notifications: React.FC = () => {
     <Layout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <PPageHeader title="通知中心" description="管理您的所有通知" />
+          <PPageHeader title={t('userNotifications.title')} description={t('userNotifications.description')} />
           <div className="flex items-center space-x-3">
             {unreadCount > 0 && (
               <PButton
@@ -120,13 +122,13 @@ const Notifications: React.FC = () => {
                 variant="primary"
               >
                 <CheckIcon className="h-4 w-4 mr-2" />
-                全部已读
+                {t('userNotifications.actions.markAllRead')}
               </PButton>
             )}
           </div>
         </div>
 
-        {/* 过滤器 */}
+        {/*  */}
         <PCard>
           <div className="border-b border-gray-200 pb-4 mb-4">
             <div className="flex items-center space-x-4">
@@ -138,7 +140,7 @@ const Notifications: React.FC = () => {
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                全部 ({notifications.length})
+                {t('userNotifications.filters.all', { count: notifications.length })}
               </button>
               <button
                 onClick={() => setFilter('unread')}
@@ -148,7 +150,7 @@ const Notifications: React.FC = () => {
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                未读 ({unreadCount})
+                {t('userNotifications.filters.unread', { count: unreadCount })}
               </button>
               <button
                 onClick={() => setFilter('read')}
@@ -158,23 +160,23 @@ const Notifications: React.FC = () => {
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                已读 ({notifications.length - unreadCount})
+                {t('userNotifications.filters.read', { count: notifications.length - unreadCount })}
               </button>
             </div>
           </div>
         </PCard>
 
-        {/* 通知列表 */}
+        {/*  */}
         <PCard>
           {loading ? (
             <PSkeleton.List items={5} />
           ) : filteredNotifications.length === 0 ? (
             <div className="text-center py-12">
               <BellIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">暂无通知</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">{t('userNotifications.empty.title')}</h3>
               <p className="text-gray-500">
-                {filter === 'all' ? '您还没有收到任何通知' : 
-                 filter === 'unread' ? '没有未读通知' : '没有已读通知'}
+                {filter === 'all' ? t('userNotifications.empty.all') : 
+                 filter === 'unread' ? t('userNotifications.empty.unread') : t('userNotifications.empty.read')}
               </p>
             </div>
           ) : (
@@ -205,7 +207,7 @@ const Notifications: React.FC = () => {
                             <button
                               onClick={() => handleMarkAsRead(notification.id)}
                               className="text-gray-400 hover:text-green-600"
-                              title="标记为已读"
+                              title={t('userNotifications.actions.markRead')}
                             >
                               <CheckIcon className="h-5 w-5" />
                             </button>
@@ -213,7 +215,7 @@ const Notifications: React.FC = () => {
                           <button
                             onClick={() => handleDelete(notification.id)}
                             className="text-gray-400 hover:text-red-600"
-                            title="删除通知"
+                            title={t('userNotifications.actions.delete')}
                           >
                             <TrashIcon className="h-5 w-5" />
                           </button>
@@ -227,7 +229,7 @@ const Notifications: React.FC = () => {
                           {formatTime(notification.created_at)}
                         </p>
                         {!notification.is_read && (
-                          <PBadge variant="info">未读</PBadge>
+                          <PBadge variant="info">{t('userNotifications.badges.unread')}</PBadge>
                         )}
                       </div>
                     </div>
@@ -238,7 +240,7 @@ const Notifications: React.FC = () => {
           )}
         </PCard>
 
-        {/* 分页 */}
+        {/*  */}
         {total > pageSize && (
           <PPagination
             currentPage={page}

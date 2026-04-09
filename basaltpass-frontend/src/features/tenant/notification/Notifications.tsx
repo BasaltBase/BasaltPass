@@ -16,8 +16,10 @@ import {
   tenantNotificationApi
 } from '@api/tenant/notification';
 import TenantLayout from '@features/tenant/components/TenantLayout';
+import { useI18n } from '@shared/i18n';
 
 const TenantNotifications: React.FC = () => {
+  const { t, locale } = useI18n();
   const [notifications, setNotifications] = useState<TenantNotification[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -28,9 +30,9 @@ const TenantNotifications: React.FC = () => {
     total: 0,
   });
 
-  const [selectedUsers, setSelectedUsers] = useState<TenantUser[]>([]); // 保存选中的用户完整信息
+  const [selectedUsers, setSelectedUsers] = useState<TenantUser[]>([]); // 
 
-  // 表单数据
+  // 
   const [formData, setFormData] = useState<TenantCreateNotificationRequest>({
     app_name: '',
     title: '',
@@ -39,7 +41,7 @@ const TenantNotifications: React.FC = () => {
     receiver_ids: [],
   });
 
-  // 消息提示
+  // 
   const [message, setMessage] = useState<{
     type: 'success' | 'error' | 'info';
     text: string;
@@ -57,7 +59,7 @@ const TenantNotifications: React.FC = () => {
     }, 3000);
   };
 
-  // 获取通知列表
+  // 
   const fetchNotifications = async (page = 1, pageSize = 20) => {
     setLoading(true);
     try {
@@ -69,8 +71,8 @@ const TenantNotifications: React.FC = () => {
         total: response.data.total || 0,
       });
     } catch (error: any) {
-      setNotifications([]); // 确保在错误时设置为空数组而不是 null
-      showMessage('error', error.response?.data?.error || '获取通知列表失败');
+      setNotifications([]); //  null
+      showMessage('error', error.response?.data?.error || t('tenantNotifications.messages.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -80,12 +82,12 @@ const TenantNotifications: React.FC = () => {
     fetchNotifications();
   }, []);
 
-  // 创建通知
+  // 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await tenantNotificationApi.createNotification(formData);
-      showMessage('success', '通知发送成功');
+      showMessage('success', t('tenantNotifications.messages.sendSuccess'));
       setModalVisible(false);
       setFormData({
         app_name: '',
@@ -94,26 +96,26 @@ const TenantNotifications: React.FC = () => {
         type: 'info',
         receiver_ids: [],
       });
-      setSelectedUsers([]); // 清空已选用户
+      setSelectedUsers([]); // 
       fetchNotifications();
     } catch (error: any) {
-      showMessage('error', error.response?.data?.error || '发送通知失败');
+      showMessage('error', error.response?.data?.error || t('tenantNotifications.messages.sendFailed'));
     }
   };
 
-  // 删除通知
+  // 
   const handleDelete = async (id: number) => {
     try {
       await tenantNotificationApi.deleteNotification(id);
-      showMessage('success', '删除成功');
+      showMessage('success', t('tenantNotifications.messages.deleteSuccess'));
       setDeleteConfirm(null);
       fetchNotifications();
     } catch (error: any) {
-      showMessage('error', error.response?.data?.error || '删除失败');
+      showMessage('error', error.response?.data?.error || t('tenantNotifications.messages.deleteFailed'));
     }
   };
 
-  // 分页变化
+  // 
   const handlePageChange = (page: number) => {
     fetchNotifications(page, pagination.pageSize);
   };
@@ -128,18 +130,18 @@ const TenantNotifications: React.FC = () => {
     return variants[type] || 'default';
   };
 
-  // 通知类型中文映射
+  // 
   const getTypeText = (type: string) => {
     const texts = {
-      info: '信息',
-      success: '成功',
-      warning: '警告',
-      error: '错误',
+      info: t('tenantNotifications.types.info'),
+      success: t('tenantNotifications.types.success'),
+      warning: t('tenantNotifications.types.warning'),
+      error: t('tenantNotifications.types.error'),
     };
     return texts[type as keyof typeof texts] || type;
   };
 
-  // 处理表单字段变化
+  // 
   const handleInputChange = (field: keyof TenantCreateNotificationRequest, value: any) => {
     setFormData(prev => ({
       ...prev,
@@ -148,9 +150,9 @@ const TenantNotifications: React.FC = () => {
   };
 
   return (
-    <TenantLayout title="租户通知管理">
+    <TenantLayout title={t('tenantNotifications.layoutTitle')}>
     <div className="p-6">
-      {/* 消息提示 */}
+      {/*  */}
       {message.visible && (
         <div className={`fixed top-4 right-4 z-50 flex items-center space-x-2 rounded-xl px-4 py-3 shadow-lg ${
           message.type === 'success' ? 'bg-green-500 text-white' :
@@ -169,19 +171,19 @@ const TenantNotifications: React.FC = () => {
         </div>
       )}
 
-      {/* 页面标题 */}
+      {/*  */}
       <PPageHeader
-        title="通知管理"
+        title={t('tenantNotifications.title')}
         icon={<BellIcon className="w-8 h-8 text-blue-600" />}
         actions={
-          <PButton onClick={() => setModalVisible(true)} leftIcon={<PlusIcon className="w-5 h-5" />}>发送通知</PButton>
+          <PButton onClick={() => setModalVisible(true)} leftIcon={<PlusIcon className="w-5 h-5" />}>{t('tenantNotifications.actions.send')}</PButton>
         }
       />
 
-      {/* 通知列表 */}
+      {/*  */}
       <div className="rounded-xl bg-white shadow-sm">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">通知列表</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t('tenantNotifications.listTitle')}</h2>
         </div>
         
         {loading ? (
@@ -189,21 +191,21 @@ const TenantNotifications: React.FC = () => {
         ) : !notifications || notifications.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
             <BellIcon className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-            <p>暂无通知记录</p>
+            <p>{t('tenantNotifications.empty')}</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">应用</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">标题</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">内容</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">类型</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">发送者</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">接收者</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">创建时间</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('tenantNotifications.columns.app')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('tenantNotifications.columns.title')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('tenantNotifications.columns.content')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('tenantNotifications.columns.type')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('tenantNotifications.columns.sender')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('tenantNotifications.columns.receiver')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('tenantNotifications.columns.createdAt')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('tenantNotifications.columns.actions')}</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -231,17 +233,17 @@ const TenantNotifications: React.FC = () => {
                           <span>{notification.user.nickname || notification.user.email}</span>
                         </div>
                       ) : (
-                        <PBadge variant="purple">全员广播</PBadge>
+                        <PBadge variant="purple">{t('tenantNotifications.broadcastAll')}</PBadge>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(notification.created_at).toLocaleString()}
+                      {new Date(notification.created_at).toLocaleString(locale)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {deleteConfirm === notification.id ? (
                         <div className="flex items-center space-x-2">
-                          <PButton size="sm" variant="danger" onClick={() => handleDelete(notification.id)}>确认删除</PButton>
-                          <PButton size="sm" variant="secondary" onClick={() => setDeleteConfirm(null)}>取消</PButton>
+                          <PButton size="sm" variant="danger" onClick={() => handleDelete(notification.id)}>{t('tenantNotifications.actions.confirmDelete')}</PButton>
+                          <PButton size="sm" variant="secondary" onClick={() => setDeleteConfirm(null)}>{t('tenantNotifications.actions.cancel')}</PButton>
                         </div>
                       ) : (
                         <PButton size="sm" variant="ghost" onClick={() => setDeleteConfirm(notification.id)}>
@@ -256,7 +258,7 @@ const TenantNotifications: React.FC = () => {
           </div>
         )}
 
-        {/* 分页 */}
+        {/*  */}
         {notifications && notifications.length > 0 && pagination.total > pagination.pageSize && (
           <div className="px-6 py-4 border-t border-gray-200">
             <PPagination
@@ -271,7 +273,7 @@ const TenantNotifications: React.FC = () => {
         )}
       </div>
 
-      {/* 创建通知模态框 */}
+      {/*  */}
       {modalVisible && (
         <Modal
           open={modalVisible}
@@ -280,22 +282,22 @@ const TenantNotifications: React.FC = () => {
             setFormData({ app_name: '', title: '', content: '', type: 'info', receiver_ids: [] });
             setSelectedUsers([]);
           }}
-          title="发送通知"
+          title={t('tenantNotifications.modal.title')}
           widthClass="max-w-3xl"
         >
           <form onSubmit={handleCreate} className="space-y-6">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <PInput
-                label={<>应用名称 <span className="text-red-500">*</span></>}
+                label={<>{t('tenantNotifications.modal.appName')} <span className="text-red-500">*</span></>}
                 type="text"
                 value={formData.app_name}
                 onChange={(e) => handleInputChange('app_name', e.target.value)}
-                placeholder="如：安全中心、用户中心等"
+                placeholder={t('tenantNotifications.modal.appNamePlaceholder')}
                 required
               />
               <div>
                 <label htmlFor="tenant-notification-type" className="mb-2 block text-sm font-medium text-gray-700">
-                  通知类型 <span className="text-red-500">*</span>
+                  {t('tenantNotifications.modal.type')} <span className="text-red-500">*</span>
                 </label>
                 <PSelect
                   id="tenant-notification-type"
@@ -303,36 +305,36 @@ const TenantNotifications: React.FC = () => {
                   onChange={(e) => handleInputChange('type', e.target.value as 'info' | 'success' | 'warning' | 'error')}
                   required
                 >
-                  <option value="info">信息</option>
-                  <option value="success">成功</option>
-                  <option value="warning">警告</option>
-                  <option value="error">错误</option>
+                  <option value="info">{t('tenantNotifications.types.info')}</option>
+                  <option value="success">{t('tenantNotifications.types.success')}</option>
+                  <option value="warning">{t('tenantNotifications.types.warning')}</option>
+                  <option value="error">{t('tenantNotifications.types.error')}</option>
                 </PSelect>
               </div>
             </div>
 
             <PInput
-              label={<>通知标题 <span className="text-red-500">*</span></>}
+              label={<>{t('tenantNotifications.modal.notificationTitle')} <span className="text-red-500">*</span></>}
               type="text"
               value={formData.title}
               onChange={(e) => handleInputChange('title', e.target.value)}
-              placeholder="请输入通知标题"
+              placeholder={t('tenantNotifications.modal.notificationTitlePlaceholder')}
               required
             />
 
             <PTextarea
-              label={<>通知内容 <span className="text-red-500">*</span></>}
+              label={<>{t('tenantNotifications.modal.notificationContent')} <span className="text-red-500">*</span></>}
               rows={4}
               value={formData.content}
               onChange={(e) => handleInputChange('content', e.target.value)}
-              placeholder="请输入通知内容"
+              placeholder={t('tenantNotifications.modal.notificationContentPlaceholder')}
               required
             />
 
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700">
-                接收用户
-                <span className="ml-2 text-xs text-gray-500">(不选择用户则向租户下所有用户广播)</span>
+                {t('tenantNotifications.modal.receivers')}
+                <span className="ml-2 text-xs text-gray-500">({t('tenantNotifications.modal.receiversHint')})</span>
               </label>
               <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
                 <EntitySearchSelect
@@ -353,7 +355,7 @@ const TenantNotifications: React.FC = () => {
                       receiver_ids: newSelectedUsers.map((u: any) => u.id)
                     }));
                   }}
-                  placeholder="搜索用户（邮箱、昵称等）..."
+                  placeholder={t('tenantNotifications.modal.searchUsersPlaceholder')}
                   variant="chips"
                 />
               </div>
@@ -369,9 +371,9 @@ const TenantNotifications: React.FC = () => {
                   setSelectedUsers([]);
                 }}
               >
-                取消
+                {t('tenantNotifications.actions.cancel')}
               </PButton>
-              <PButton type="submit">发送通知</PButton>
+              <PButton type="submit">{t('tenantNotifications.actions.send')}</PButton>
             </div>
           </form>
         </Modal>

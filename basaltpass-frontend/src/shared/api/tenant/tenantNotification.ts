@@ -16,7 +16,7 @@ export interface CreateNotificationRequest {
   title: string
   content: string
   type: 'info' | 'success' | 'warning' | 'error'
-  receiver_ids?: number[] // 为空或缺省表示广播
+  receiver_ids?: number[] // translatedortranslated
 }
 
 export interface NotificationResponse {
@@ -39,88 +39,88 @@ export interface TenantNotificationStats {
 }
 
 export const notificationApi = {
-  // 获取用户的通知列表
+  // getusertranslatednotificationlist
   getUserNotifications: (page: number = 1, pageSize: number = 20) => {
     return client.get<NotificationResponse>(`/api/v1/notifications?page=${page}&page_size=${pageSize}`)
   },
 
-  // 获取未读通知数量
+  // getnottranslatednotificationtranslated
   getUnreadCount: () => {
     return client.get<{ count: number }>('/api/v1/notifications/unread-count')
   },
 
-  // 标记通知为已读
+  // translatednotificationtranslatedalreadytranslated
   markAsRead: (notificationId: number) => {
     return client.put(`/api/v1/notifications/${notificationId}/read`)
   },
 
-  // 标记所有通知为已读
+  // translatedhasnotificationtranslatedalreadytranslated
   markAllAsRead: () => {
     return client.put('/api/v1/notifications/mark-all-read')
   },
 
-  // 删除通知
+  // deletenotification
   deleteNotification: (notificationId: number) => {
     return client.delete(`/api/v1/notifications/${notificationId}`)
   },
 
-  // 管理员：创建通知
+  // managementtranslated：createnotification
   createNotification: (data: CreateNotificationRequest) => {
     return client.post('/api/v1/tenant/notifications', data)
   },
 
-  // 管理员：获取所有通知
+  // managementtranslated：gettranslatedhasnotification
   getAllNotifications: (page: number = 1, pageSize: number = 20) => {
     return client.get<NotificationResponse>(`/api/v1/tenant/notifications?page=${page}&page_size=${pageSize}`)
   },
 
-  // 管理员：删除通知
+  // managementtranslated：deletenotification
   deleteNotificationAdmin: (notificationId: number) => {
     return client.delete(`/api/v1/tenant/notifications/${notificationId}`)
   }
 }
 
-// 租户通知管理API
+// tenantnotificationmanagementAPI
 export const tenantNotificationApi = {
-  // 租户：创建通知（发送给租户下的用户）
+  // tenant：createnotification（translatedtenanttranslateduser）
   createNotification: (data: CreateNotificationRequest) => {
     return client.post('/api/v1/tenant/notifications', data)
   },
 
-  // 租户：获取已发送的通知列表
+  // tenant：getalreadytranslatednotificationlist
   getNotifications: (page: number = 1, pageSize: number = 20) => {
     return client.get<NotificationResponse>(`/api/v1/tenant/notifications?page=${page}&page_size=${pageSize}`)
   },
 
-  // 租户：获取通知详情
+  // tenant：getnotificationdetails
   getNotification: (notificationId: number) => {
     return client.get(`/api/v1/tenant/notifications/${notificationId}`)
   },
 
-  // 租户：更新通知
+  // tenant：updatenotification
   updateNotification: (notificationId: number, data: { title: string; content: string; type: string }) => {
     return client.put(`/api/v1/tenant/notifications/${notificationId}`, data)
   },
 
-  // 租户：删除通知
+  // tenant：deletenotification
   deleteNotification: (notificationId: number) => {
     return client.delete(`/api/v1/tenant/notifications/${notificationId}`)
   },
 
-  // 租户：获取租户下的用户列表（用于选择通知接收者）
+  // tenant：gettenanttranslateduserlist（translatednotificationtranslated）
   getTenantUsers: (search?: string) => {
     const params = search ? { search } : {}
     return client.get('/api/v1/tenant/notifications/users', { params })
   },
 
-  // 租户：搜索用户（根据邮箱、昵称等）
+  // tenant：searchuser（translatedemail、translated）
   searchTenantUsers: (search: string) => {
     return client.get('/api/v1/tenant/notifications/users/search', { 
       params: { search } 
     })
   },
 
-  // 租户：获取通知统计信息
+  // tenant：getnotificationtranslatedinfo
   getNotificationStats: () => {
     return client.get<{ data: TenantNotificationStats }>('/api/v1/tenant/notifications/stats')
   }

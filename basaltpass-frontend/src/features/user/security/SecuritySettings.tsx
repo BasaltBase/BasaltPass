@@ -30,8 +30,10 @@ import {
 } from '@heroicons/react/24/outline'
 import { PInput, PButton, PCard, PSkeleton, PAlert, PPageHeader } from '@ui'
 import { ROUTES } from '@constants'
+import { useI18n } from '@shared/i18n'
 
 export default function SecuritySettings() {
+  const { t } = useI18n()
   const navigate = useNavigate()
   const [securityStatus, setSecurityStatus] = useState<SecurityStatus | null>(null)
   const [passkeys, setPasskeys] = useState<PasskeyInfo[]>([])
@@ -39,7 +41,7 @@ export default function SecuritySettings() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   
-  // 密码修改相关
+  // 
   const [showPasswordForm, setShowPasswordForm] = useState(false)
   const [passwordForm, setPasswordForm] = useState({
     current_password: '',
@@ -52,7 +54,7 @@ export default function SecuritySettings() {
     confirm: false
   })
   
-  // 联系方式修改相关 -> 改为邮箱变更相关
+  //  -> 
   const [showEmailChangeForm, setShowEmailChangeForm] = useState(false)
   const [emailChangeForm, setEmailChangeForm] = useState({
     new_email: '',
@@ -79,8 +81,8 @@ export default function SecuritySettings() {
       })
       setError('')
     } catch (err: any) {
-      setError('加载安全设置失败')
-      setPasskeys([]) // 确保即使出错也设置为空数组
+      setError(t('pages.userSecuritySettings.errors.loadFailed'))
+      setPasskeys([]) // 
     } finally {
       setIsLoading(false)
     }
@@ -100,22 +102,22 @@ export default function SecuritySettings() {
   }
 
   const getSecurityLevel = (score: number) => {
-    if (score >= 90) return { text: '极强', color: 'text-green-600', bg: 'bg-green-100' }
-    if (score >= 70) return { text: '强', color: 'text-blue-600', bg: 'bg-blue-100' }
-    if (score >= 50) return { text: '中等', color: 'text-yellow-600', bg: 'bg-yellow-100' }
-    return { text: '弱', color: 'text-red-600', bg: 'bg-red-100' }
+    if (score >= 90) return { text: t('pages.userSecuritySettings.securityLevel.veryStrong'), color: 'text-green-600', bg: 'bg-green-100' }
+    if (score >= 70) return { text: t('pages.userSecuritySettings.securityLevel.strong'), color: 'text-blue-600', bg: 'bg-blue-100' }
+    if (score >= 50) return { text: t('pages.userSecuritySettings.securityLevel.medium'), color: 'text-yellow-600', bg: 'bg-yellow-100' }
+    return { text: t('pages.userSecuritySettings.securityLevel.weak'), color: 'text-red-600', bg: 'bg-red-100' }
   }
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (passwordForm.new_password !== passwordForm.confirm_password) {
-      setError('新密码与确认密码不匹配')
+      setError(t('pages.userSecuritySettings.errors.passwordMismatch'))
       return
     }
     
     if (passwordForm.new_password.length < 8) {
-      setError('新密码长度至少8位')
+      setError(t('pages.userSecuritySettings.errors.passwordTooShort'))
       return
     }
 
@@ -125,12 +127,12 @@ export default function SecuritySettings() {
         ...passwordForm,
         device_fingerprint: deviceFingerprint
       })
-      setSuccess('密码修改成功，系统已发送安全通知到您的邮箱')
+      setSuccess(t('pages.userSecuritySettings.success.passwordChanged'))
       setPasswordForm({ current_password: '', new_password: '', confirm_password: '' })
       setShowPasswordForm(false)
       await loadSecurityData()
     } catch (err: any) {
-      setError(err.response?.data?.error || '密码修改失败')
+      setError(err.response?.data?.error || t('pages.userSecuritySettings.errors.passwordChangeFailed'))
     }
   }
 
@@ -138,35 +140,35 @@ export default function SecuritySettings() {
     e.preventDefault()
     
     if (!emailChangeForm.new_email || !emailChangeForm.current_password) {
-      setError('请填写完整信息')
+      setError(t('pages.userSecuritySettings.errors.formIncomplete'))
       return
     }
     
     if (emailChangeForm.new_email === securityStatus?.email) {
-      setError('新邮箱与当前邮箱相同')
+      setError(t('pages.userSecuritySettings.errors.emailSameAsCurrent'))
       return
     }
 
     try {
       await startEmailChange(emailChangeForm.new_email, emailChangeForm.current_password)
-      setSuccess('邮箱变更请求已发送，请检查您的新邮箱和旧邮箱获取验证邮件')
+      setSuccess(t('pages.userSecuritySettings.success.emailChangeStarted'))
       setEmailChangeForm({ new_email: '', current_password: '' })
       setShowEmailChangeForm(false)
     } catch (err: any) {
-      setError(err.response?.data?.error || '邮箱变更请求失败')
+      setError(err.response?.data?.error || t('pages.userSecuritySettings.errors.emailChangeFailed'))
     }
   }
 
   const handleDisable2FA = async () => {
-    const code = await uiPrompt('请输入验证器应用中的6位验证码以确认禁用两步验证：')
+    const code = await uiPrompt(t('pages.userSecuritySettings.twofa.disablePrompt'))
     if (!code) return
 
     try {
       await disable2FA(code)
-      setSuccess('两步验证已禁用')
+      setSuccess(t('pages.userSecuritySettings.success.twofaDisabled'))
       await loadSecurityData()
     } catch (err: any) {
-      setError('验证码无效或禁用失败')
+      setError(t('pages.userSecuritySettings.errors.twofaDisableFailed'))
     }
   }
 
@@ -174,13 +176,13 @@ export default function SecuritySettings() {
     try {
       if (type === 'email') {
         await resendEmailVerification()
-        setSuccess('验证邮件已发送')
+        setSuccess(t('pages.userSecuritySettings.success.emailVerificationSent'))
       } else {
         await resendPhoneVerification()
-        setSuccess('验证短信已发送')
+        setSuccess(t('pages.userSecuritySettings.success.phoneVerificationSent'))
       }
     } catch (err: any) {
-      setError(`发送${type === 'email' ? '邮件' : '短信'}失败`)
+      setError(type === 'email' ? t('pages.userSecuritySettings.errors.sendEmailFailed') : t('pages.userSecuritySettings.errors.sendSmsFailed'))
     }
   }
 
@@ -195,7 +197,7 @@ export default function SecuritySettings() {
   if (!securityStatus) {
     return (
       <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="text-center text-red-600">加载安全设置失败</div>
+        <div className="text-center text-red-600">{t('pages.userSecuritySettings.errors.loadFailed')}</div>
       </div>
     )
   }
@@ -207,23 +209,23 @@ export default function SecuritySettings() {
     <Layout>
       <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="space-y-6">
-          {/* 页面标题 */}
-          <PPageHeader title="安全设置" description="管理您的账户安全设置和验证方式" />
+          {/*  */}
+          <PPageHeader title={t('pages.userSecuritySettings.header.title')} description={t('pages.userSecuritySettings.header.description')} />
 
-          {/* 消息提示 */}
+          {/*  */}
           {error && <PAlert variant="error" message={error} dismissible onDismiss={() => setError('')} />}
           {success && <PAlert variant="success" message={success} dismissible onDismiss={() => setSuccess('')} />}
 
-          {/* 安全状态概览 */}
+          {/*  */}
           <div className="rounded-xl bg-white shadow-sm">
             <div className="px-4 py-5 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-lg leading-6 font-medium text-gray-900">
-                    账户安全评分
+                    {t('pages.userSecuritySettings.score.title')}
                   </h3>
                   <p className="mt-1 text-sm text-gray-500">
-                    当前安全级别评估
+                    {t('pages.userSecuritySettings.score.subtitle')}
                   </p>
                 </div>
                 <div className="text-right">
@@ -244,24 +246,24 @@ export default function SecuritySettings() {
             </div>
           </div>
 
-          {/* 验证方式管理 */}
+          {/*  */}
           <div className="rounded-xl bg-white shadow-sm">
             <div className="px-4 py-5 sm:p-6">
               <h3 className="text-lg leading-6 font-medium text-gray-900 mb-6">
-                验证方式管理
+                {t('pages.userSecuritySettings.authMethods.title')}
               </h3>
               
               <div className="space-y-6">
-                {/* 密码设置 */}
+                {/*  */}
                 <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                   <div className="flex items-center">
                     <div className="flex-shrink-0">
                       <LockClosedIcon className="h-6 w-6 text-gray-400" />
                     </div>
                     <div className="ml-4">
-                      <h4 className="text-sm font-medium text-gray-900">登录密码</h4>
+                      <h4 className="text-sm font-medium text-gray-900">{t('pages.userSecuritySettings.password.title')}</h4>
                       <p className="text-sm text-gray-500">
-                        {securityStatus.password_set ? '已设置密码' : '未设置密码'}
+                        {securityStatus.password_set ? t('pages.userSecuritySettings.password.set') : t('pages.userSecuritySettings.password.notSet')}
                       </p>
                     </div>
                   </div>
@@ -275,17 +277,17 @@ export default function SecuritySettings() {
                       onClick={() => setShowPasswordForm(!showPasswordForm)}
                       leftIcon={<CogIcon className="h-4 w-4" />}
                     >
-                      {securityStatus.password_set ? '修改密码' : '设置密码'}
+                      {securityStatus.password_set ? t('pages.userSecuritySettings.password.change') : t('pages.userSecuritySettings.password.setup')}
                     </PButton>
                   </div>
                 </div>
 
-                {/* 密码修改表单 */}
+                {/*  */}
                 {showPasswordForm && (
                   <form onSubmit={handlePasswordChange} className="bg-gray-50 p-4 rounded-lg space-y-4">
                     <PInput
                       type="password"
-                      label="当前密码"
+                      label={t('pages.userSecuritySettings.password.current')}
                       value={passwordForm.current_password}
                       onChange={(e) => setPasswordForm({...passwordForm, current_password: e.target.value})}
                       required
@@ -294,7 +296,7 @@ export default function SecuritySettings() {
                     />
                     <PInput
                       type="password"
-                      label="新密码"
+                      label={t('pages.userSecuritySettings.password.new')}
                       value={passwordForm.new_password}
                       onChange={(e) => setPasswordForm({...passwordForm, new_password: e.target.value})}
                       required
@@ -304,7 +306,7 @@ export default function SecuritySettings() {
                     />
                     <PInput
                       type="password"
-                      label="确认新密码"
+                      label={t('pages.userSecuritySettings.password.confirm')}
                       value={passwordForm.confirm_password}
                       onChange={(e) => setPasswordForm({...passwordForm, confirm_password: e.target.value})}
                       required
@@ -316,7 +318,7 @@ export default function SecuritySettings() {
                         type="submit"
                         variant="primary"
                       >
-                        确认修改
+                        {t('pages.userSecuritySettings.password.submit')}
                       </PButton>
                       <PButton
                         type="button"
@@ -326,13 +328,13 @@ export default function SecuritySettings() {
                           setPasswordForm({ current_password: '', new_password: '', confirm_password: '' })
                         }}
                       >
-                        取消
+                        {t('pages.userSecuritySettings.common.cancel')}
                       </PButton>
                     </div>
                   </form>
                 )}
 
-                {/* Passkey设置 */}
+                {/* Passkey */}
                 <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                   <div className="flex items-center">
                     <div className="flex-shrink-0">
@@ -342,8 +344,8 @@ export default function SecuritySettings() {
                       <h4 className="text-sm font-medium text-gray-900">Passkey</h4>
                       <p className="text-sm text-gray-500">
                         {isPasskeySupported() 
-                          ? `已注册 ${passkeys?.length || 0} 个 Passkey` 
-                          : '浏览器不支持Passkey'
+                          ? t('pages.userSecuritySettings.passkey.registeredCount', { count: passkeys?.length || 0 })
+                          : t('pages.userSecuritySettings.passkey.notSupported')
                         }
                       </p>
                     </div>
@@ -358,22 +360,22 @@ export default function SecuritySettings() {
                         className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                       >
                         <CogIcon className="h-4 w-4 mr-1" />
-                        管理Passkey
+                        {t('pages.userSecuritySettings.passkey.manage')}
                       </Link>
                     )}
                   </div>
                 </div>
 
-                {/* 两步验证设置 */}
+                {/*  */}
                 <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                   <div className="flex items-center">
                     <div className="flex-shrink-0">
                       <ShieldCheckIcon className="h-6 w-6 text-gray-400" />
                     </div>
                     <div className="ml-4">
-                      <h4 className="text-sm font-medium text-gray-900">两步验证 (TOTP)</h4>
+                      <h4 className="text-sm font-medium text-gray-900">{t('pages.userSecuritySettings.twofa.title')}</h4>
                       <p className="text-sm text-gray-500">
-                        {securityStatus.two_fa_enabled ? '已启用两步验证' : '未启用两步验证'}
+                        {securityStatus.two_fa_enabled ? t('pages.userSecuritySettings.twofa.enabled') : t('pages.userSecuritySettings.twofa.disabled')}
                       </p>
                     </div>
                   </div>
@@ -388,12 +390,12 @@ export default function SecuritySettings() {
                         onClick={handleDisable2FA}
                         leftIcon={<TrashIcon className="h-4 w-4" />}
                       >
-                        禁用
+                        {t('pages.userSecuritySettings.twofa.disable')}
                       </PButton>
                     ) : (
                       <Link to={ROUTES.user.securityTwoFA}>
                         <PButton variant="secondary" size="sm" leftIcon={<PlusIcon className="h-4 w-4" />}>
-                          启用
+                          {t('pages.userSecuritySettings.twofa.enable')}
                         </PButton>
                       </Link>
                     )}
@@ -403,12 +405,12 @@ export default function SecuritySettings() {
             </div>
           </div>
 
-          {/* 联系方式管理 */}
+          {/*  */}
           <div className="rounded-xl bg-white shadow-sm">
             <div className="px-4 py-5 sm:p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg leading-6 font-medium text-gray-900">
-                  邮箱管理
+                  {t('pages.userSecuritySettings.emailSection.title')}
                 </h3>
                 <PButton
                   variant="secondary"
@@ -416,19 +418,19 @@ export default function SecuritySettings() {
                   onClick={() => setShowEmailChangeForm(!showEmailChangeForm)}
                   leftIcon={<CogIcon className="h-4 w-4" />}
                 >
-                  更换邮箱
+                  {t('pages.userSecuritySettings.emailSection.changeEmail')}
                 </PButton>
               </div>
               
               <div className="space-y-4">
-                {/* 邮箱 */}
+                {/*  */}
                 <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                   <div className="flex items-center">
                     <EnvelopeIcon className="h-5 w-5 text-gray-400 mr-3" />
                     <div>
                       <p className="text-sm font-medium text-gray-900">{securityStatus.email}</p>
                       <p className="text-sm text-gray-500">
-                        {securityStatus.email_verified ? '已验证' : '未验证'}
+                        {securityStatus.email_verified ? t('pages.userSecuritySettings.contact.verified') : t('pages.userSecuritySettings.contact.unverified')}
                       </p>
                     </div>
                   </div>
@@ -439,14 +441,14 @@ export default function SecuritySettings() {
                       <>
                         <ExclamationTriangleIcon className="h-5 w-5 text-yellow-500" />
                         <PButton variant="ghost" size="sm" onClick={() => handleResendVerification('email')}>
-                          发送验证邮件
+                          {t('pages.userSecuritySettings.contact.sendEmailVerification')}
                         </PButton>
                       </>
                     )}
                   </div>
                 </div>
 
-                {/* 手机号 */}
+                {/*  */}
                 {securityStatus.phone && (
                   <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                     <div className="flex items-center">
@@ -454,7 +456,7 @@ export default function SecuritySettings() {
                       <div>
                         <p className="text-sm font-medium text-gray-900">{formatPhoneForDisplay(securityStatus.phone)}</p>
                         <p className="text-sm text-gray-500">
-                          {securityStatus.phone_verified ? '已验证' : '未验证'}
+                          {securityStatus.phone_verified ? t('pages.userSecuritySettings.contact.verified') : t('pages.userSecuritySettings.contact.unverified')}
                         </p>
                       </div>
                     </div>
@@ -465,7 +467,7 @@ export default function SecuritySettings() {
                         <>
                           <ExclamationTriangleIcon className="h-5 w-5 text-yellow-500" />
                           <PButton variant="ghost" size="sm" onClick={() => handleResendVerification('phone')}>
-                            发送验证短信
+                            {t('pages.userSecuritySettings.contact.sendSmsVerification')}
                           </PButton>
                         </>
                       )}
@@ -474,7 +476,7 @@ export default function SecuritySettings() {
                 )}
               </div>
 
-              {/* 邮箱变更表单 */}
+              {/*  */}
               {showEmailChangeForm && (
                 <form onSubmit={handleEmailChange} className="mt-6 bg-gray-50 p-4 rounded-lg space-y-4">
                   <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
@@ -483,38 +485,38 @@ export default function SecuritySettings() {
                         <ShieldCheckIcon className="h-5 w-5 text-blue-400" />
                       </div>
                       <div className="ml-3">
-                        <h3 className="text-sm font-medium text-blue-800">邮箱变更流程</h3>
+                        <h3 className="text-sm font-medium text-blue-800">{t('pages.userSecuritySettings.emailChange.flowTitle')}</h3>
                         <div className="mt-2 text-sm text-blue-700">
-                          <p>1. 我们将发送验证邮件到您的新邮箱</p>
-                          <p>2. 同时向您的当前邮箱发送通知</p>
-                          <p>3. 点击新邮箱中的确认链接完成变更</p>
-                          <p>4. 如有异常，可通过当前邮箱中的取消链接撤销操作</p>
+                          <p>{t('pages.userSecuritySettings.emailChange.step1')}</p>
+                          <p>{t('pages.userSecuritySettings.emailChange.step2')}</p>
+                          <p>{t('pages.userSecuritySettings.emailChange.step3')}</p>
+                          <p>{t('pages.userSecuritySettings.emailChange.step4')}</p>
                         </div>
                       </div>
                     </div>
                   </div>
                   <PInput
                     type="email"
-                    label="新邮箱地址"
+                    label={t('pages.userSecuritySettings.emailChange.newEmailLabel')}
                     value={emailChangeForm.new_email}
                     onChange={(e) => setEmailChangeForm({...emailChangeForm, new_email: e.target.value})}
                     required
-                    placeholder="请输入新的邮箱地址"
+                    placeholder={t('pages.userSecuritySettings.emailChange.newEmailPlaceholder')}
                   />
                   <PInput
                     type="password"
-                    label="当前密码"
+                    label={t('pages.userSecuritySettings.emailChange.currentPasswordLabel')}
                     value={emailChangeForm.current_password}
                     onChange={(e) => setEmailChangeForm({...emailChangeForm, current_password: e.target.value})}
                     required
-                    placeholder="请输入当前密码以确认身份"
+                    placeholder={t('pages.userSecuritySettings.emailChange.currentPasswordPlaceholder')}
                   />
                   <div className="flex space-x-3">
                     <PButton
                       type="submit"
                       variant="primary"
                     >
-                      开始邮箱变更
+                      {t('pages.userSecuritySettings.emailChange.submit')}
                     </PButton>
                     <PButton
                       type="button"
@@ -524,7 +526,7 @@ export default function SecuritySettings() {
                         setEmailChangeForm({ new_email: '', current_password: '' })
                       }}
                     >
-                      取消
+                      {t('pages.userSecuritySettings.common.cancel')}
                     </PButton>
                   </div>
                 </form>
@@ -532,30 +534,30 @@ export default function SecuritySettings() {
             </div>
           </div>
 
-          {/* 安全建议 */}
+          {/*  */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex">
               <div className="flex-shrink-0">
                 <ShieldCheckIcon className="h-5 w-5 text-blue-400" />
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-blue-800">安全建议</h3>
+                <h3 className="text-sm font-medium text-blue-800">{t('pages.userSecuritySettings.tips.title')}</h3>
                 <div className="mt-2 text-sm text-blue-700">
                   <ul className="list-disc list-inside space-y-1">
                     {!securityStatus.two_fa_enabled && (
-                      <li>启用两步验证以增强账户安全性</li>
+                      <li>{t('pages.userSecuritySettings.tips.enable2fa')}</li>
                     )}
                     {(passkeys?.length || 0) === 0 && isPasskeySupported() && (
-                      <li>设置Passkey实现无密码安全登录</li>
+                      <li>{t('pages.userSecuritySettings.tips.setupPasskey')}</li>
                     )}
                     {!securityStatus.email_verified && (
-                      <li>验证您的邮箱地址以确保账户安全</li>
+                      <li>{t('pages.userSecuritySettings.tips.verifyEmail')}</li>
                     )}
                     {!securityStatus.phone && (
-                      <li>添加手机号码作为额外的安全验证方式</li>
+                      <li>{t('pages.userSecuritySettings.tips.addPhone')}</li>
                     )}
-                    <li>定期检查和更新您的安全设置</li>
-                    <li>使用强密码并定期更换</li>
+                    <li>{t('pages.userSecuritySettings.tips.reviewSettings')}</li>
+                    <li>{t('pages.userSecuritySettings.tips.strongPassword')}</li>
                   </ul>
                 </div>
               </div>
@@ -567,14 +569,14 @@ export default function SecuritySettings() {
               <PCard variant="bordered" hoverable className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <div className="p-3 rounded-lg bg-indigo-50 text-indigo-600">
-                    {/* 使用图标增强可视性 */}
+                    {/*  */}
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6">
                       <path fillRule="evenodd" d="M12 2.25a9.75 9.75 0 1 0 9.75 9.75A9.761 9.761 0 0 0 12 2.25Zm.75 5.25a.75.75 0 0 0-1.5 0v4.5c0 .199.079.39.22.53l3 3a.75.75 0 1 0 1.06-1.06l-2.78-2.78V7.5Z" clipRule="evenodd" />
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-base font-medium text-gray-900">登录历史</h3>
-                    <p className="mt-1 text-sm text-gray-500">查看最近的登录活动，保障账户安全</p>
+                    <h3 className="text-base font-medium text-gray-900">{t('pages.userSecuritySettings.loginHistory.title')}</h3>
+                    <p className="mt-1 text-sm text-gray-500">{t('pages.userSecuritySettings.loginHistory.description')}</p>
                   </div>
                 </div>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5 text-gray-400">

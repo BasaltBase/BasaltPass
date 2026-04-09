@@ -29,28 +29,28 @@ const PInput = forwardRef<HTMLInputElement, PInputProps>(
     const isPassword = type === 'password';
     const inputType = isPassword && showPassword ? 'text' : type;
 
-    // 基础样式
+    // translatedstyle
     const baseStyles = `
       block w-full border transition-all duration-200 
       focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500
       disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed
     `;
 
-    // 变体样式
+    // translatedstyle
     const variantStyles = {
       default: 'border-gray-300 rounded-lg shadow-sm bg-white',
       rounded: 'border-gray-200 rounded-xl shadow-sm bg-white',
       minimal: 'border-gray-200 rounded-lg bg-gray-50'
     };
 
-    // 尺寸样式
+    // translatedstyle
     const sizeStyles = {
       sm: 'px-2 py-1 text-sm',
       md: 'px-3 py-2 text-sm',
       lg: 'px-4 py-3 text-base'
     };
 
-    // 图标和密码切换按钮的padding调整
+    // translatedandpasswordtranslatedpaddingtranslated
     const paddingStyles = icon && (isPassword && onTogglePassword) 
       ? 'pl-10 pr-10' 
       : icon 
@@ -94,7 +94,7 @@ const PInput = forwardRef<HTMLInputElement, PInputProps>(
               type="button"
               className="absolute inset-y-0 right-0 pr-3 flex items-center"
               onClick={onTogglePassword}
-              aria-label={showPassword ? '隐藏密码' : '显示密码'}
+              aria-label={showPassword ? 'translatedpassword' : 'translatedpassword'}
             >
               {showPassword ? (
                 <EyeSlashIcon className="h-4 w-4 text-gray-400 hover:text-gray-600" />

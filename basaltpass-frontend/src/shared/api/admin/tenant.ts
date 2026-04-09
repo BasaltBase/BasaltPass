@@ -1,7 +1,7 @@
-// 管理员租户管理API
+// managementtranslatedtenantmanagementAPI
 import client from "@api/client";
 
-// 类型定义
+// typetranslated
 export interface AdminTenantListRequest {
   page?: number;
   limit?: number;
@@ -106,7 +106,7 @@ export interface TenantStatsResponse {
   new_tenants_this_month: number;
 }
 
-// 租户用户管理相关类型
+// tenantusermanagementtranslatedtype
 export interface AdminTenantUser {
   id: number;
   email: string;
@@ -173,63 +173,63 @@ export interface AdminAdjustTenantUserWalletRequest {
 }
 
 export const adminTenantApi = {
-  // 获取租户列表
+  // gettenantlist
   async getTenantList(params: AdminTenantListRequest = {}): Promise<TenantListResponse> {
     const response = await client.get('/api/v1/admin/tenants', { params });
     return response.data;
   },
 
-  // 获取租户详情
+  // gettenantdetails
   async getTenantDetail(id: number): Promise<AdminTenantDetailResponse> {
     const response = await client.get(`/api/v1/admin/tenants/${id}`);
     return response.data;
   },
 
-  // 创建租户
+  // createtenant
   async createTenant(data: AdminCreateTenantRequest): Promise<AdminTenantResponse> {
     const response = await client.post('/api/v1/admin/tenants', data);
     return response.data.data;
   },
 
-  // 更新租户
+  // updatetenant
   async updateTenant(id: number, data: AdminUpdateTenantRequest): Promise<void> {
     await client.put(`/api/v1/admin/tenants/${id}`, data);
   },
 
-  // 删除租户
+  // deletetenant
   async deleteTenant(id: number): Promise<void> {
     await client.delete(`/api/v1/admin/tenants/${id}`);
   },
 
-  // 获取租户统计
+  // gettenanttranslated
   async getTenantStats(): Promise<TenantStatsResponse> {
     const response = await client.get('/api/v1/admin/tenants/stats');
     return response.data;
   },
 
-  // 获取租户用户列表
+  // gettenantuserlist
   async getTenantUsers(tenantId: number, params: AdminTenantUserListRequest = {}): Promise<AdminTenantUserListResponse> {
     const response = await client.get(`/api/v1/admin/tenants/${tenantId}/users`, { params });
     return response.data;
   },
 
-  // 邀请租户用户
+  // invitationtenantuser
   async inviteTenantUser(tenantId: number, data: AdminTenantInviteUserRequest): Promise<void> {
     await client.post(`/api/v1/admin/tenants/${tenantId}/users/invite`, data);
   },
 
-  // 获取租户用户详情
+  // gettenantuserdetails
   async getTenantUserDetail(tenantId: number, userId: number): Promise<AdminTenantUserDetail> {
     const response = await client.get(`/api/v1/admin/tenants/${tenantId}/users/${userId}`);
     return response.data;
   },
 
-  // 更新租户用户权限或状态
+  // updatetenantuserpermissionorstatus
   async updateTenantUser(tenantId: number, userId: number, data: AdminTenantUpdateUserRequest): Promise<void> {
     await client.put(`/api/v1/admin/tenants/${tenantId}/users/${userId}`, data);
   },
 
-  // 移除租户用户
+  // translatedtenantuser
   async removeTenantUser(tenantId: number, userId: number): Promise<void> {
     await client.delete(`/api/v1/admin/tenants/${tenantId}/users/${userId}`);
   },

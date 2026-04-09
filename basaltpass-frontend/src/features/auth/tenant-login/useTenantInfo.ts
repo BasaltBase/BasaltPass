@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { fetchPublicTenantByCode } from '@api/public/tenant'
+import { useI18n } from '@shared/i18n'
 import type { TenantInfo } from './types'
 
 interface UseTenantInfoOptions {
@@ -9,20 +10,21 @@ interface UseTenantInfoOptions {
 }
 
 export function useTenantInfo({ tenantCode, setPageTitle, onError }: UseTenantInfoOptions) {
+  const { t } = useI18n()
   const [tenantInfo, setTenantInfo] = useState<TenantInfo | null>(null)
   const [loadingTenant, setLoadingTenant] = useState(true)
 
   useEffect(() => {
     if (tenantInfo?.name) {
-      document.title = `${tenantInfo.name} - 登录`
+      document.title = t('auth.tenant.documentTitle', { tenantName: tenantInfo.name })
     } else {
-      setPageTitle('租户登录')
+      setPageTitle(t('auth.tenant.subtitle'))
     }
 
     return () => {
-      setPageTitle('用户中心')
+      setPageTitle(t('userLayout.pageTitle'))
     }
-  }, [setPageTitle, tenantInfo?.name])
+  }, [setPageTitle, t, tenantInfo?.name])
 
   useEffect(() => {
     let cancelled = false
@@ -31,7 +33,7 @@ export function useTenantInfo({ tenantCode, setPageTitle, onError }: UseTenantIn
       if (!tenantCode) {
         setTenantInfo(null)
         setLoadingTenant(false)
-        onError('租户代码缺失，请检查访问链接')
+        onError(t('auth.tenant.flow.missingTenantCode'))
         return
       }
 
@@ -49,9 +51,9 @@ export function useTenantInfo({ tenantCode, setPageTitle, onError }: UseTenantIn
 
         const code = typeof error === 'object' && error && 'code' in error ? error.code : ''
         if (code === 'ECONNABORTED') {
-          onError('加载租户信息超时，请检查后端服务是否可用')
+          onError(t('auth.tenant.flow.loadTenantTimeout'))
         } else {
-          onError('租户不存在或已被禁用')
+          onError(t('auth.tenant.notFoundDescription'))
         }
         setTenantInfo(null)
       } finally {
@@ -66,7 +68,7 @@ export function useTenantInfo({ tenantCode, setPageTitle, onError }: UseTenantIn
     return () => {
       cancelled = true
     }
-  }, [onError, tenantCode])
+  }, [onError, t, tenantCode])
 
   return {
     tenantInfo,

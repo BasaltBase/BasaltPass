@@ -16,8 +16,10 @@ import {
   UpdateTenantProductRequest,
 } from '@api/tenant/subscription'
 import { ROUTES } from '@constants'
+import { useI18n } from '@shared/i18n'
 
 export default function TenantProducts() {
+  const { t, locale } = useI18n()
   const [searchParams] = useSearchParams()
   const [products, setProducts] = useState<TenantProduct[]>([])
   const [loading, setLoading] = useState(true)
@@ -36,7 +38,7 @@ export default function TenantProducts() {
   useEffect(() => {
     fetchData()
     
-    // 检查是否需要自动打开创建模态框
+    // 
     if (searchParams.get('action') === 'create') {
       setShowModal(true)
     }
@@ -48,7 +50,7 @@ export default function TenantProducts() {
       const data = await tenantSubscriptionAPI.adminListProducts()
       setProducts(data.data || [])
     } catch (error) {
-      console.error('获取产品列表失败:', error)
+      console.error(t('tenantSubscriptionProducts.logs.loadFailed'), error)
     } finally {
       setLoading(false)
     }
@@ -67,7 +69,7 @@ export default function TenantProducts() {
       resetForm()
       fetchData()
     } catch (error) {
-      console.error('操作失败:', error)
+      console.error(t('tenantSubscriptionProducts.logs.operationFailed'), error)
     }
   }
 
@@ -97,7 +99,7 @@ export default function TenantProducts() {
       setShowDeleteModal(false)
       setDeleteTarget(null)
     } catch (error) {
-      console.error('删除失败:', error)
+      console.error(t('tenantSubscriptionProducts.logs.deleteFailed'), error)
     } finally {
       setDeleting(false)
     }
@@ -114,7 +116,7 @@ export default function TenantProducts() {
 
   if (loading) {
     return (
-      <TenantLayout title="产品管理">
+      <TenantLayout title={t('tenantSubscriptionProducts.layoutTitle')}>
         <div className="animate-pulse">
           <div className="overflow-hidden rounded-xl bg-white shadow-sm">
             <ul className="divide-y divide-gray-200">
@@ -137,19 +139,19 @@ export default function TenantProducts() {
   }
 
   return (
-    <TenantLayout title="产品管理">
+    <TenantLayout title={t('tenantSubscriptionProducts.layoutTitle')}>
       <div>
         <PPageHeader
-          title="产品管理"
-          description="维护订阅产品目录与基础信息"
+          title={t('tenantSubscriptionProducts.title')}
+          description={t('tenantSubscriptionProducts.description')}
           actions={
             <PButton onClick={() => setShowModal(true)} leftIcon={<PlusIcon className="h-5 w-5" />}>
-              创建产品
+              {t('tenantSubscriptionProducts.actions.createProduct')}
             </PButton>
           }
         />
 
-        {/* 产品列表 */}
+        {/*  */}
         <div className="mb-6 overflow-hidden rounded-xl bg-white shadow-sm">
           <ul className="divide-y divide-gray-200">
             {products.length > 0 ? (
@@ -163,8 +165,8 @@ export default function TenantProducts() {
                             {product.Name}
                           </p>
                           <p className="mt-1 text-sm text-gray-500">
-                            代码: {product.Code} | 
-                            套餐数: {product.Plans?.length || 0}
+                            {t('tenantSubscriptionProducts.fields.code')}: {product.Code} | 
+                            {t('tenantSubscriptionProducts.fields.planCount')}: {product.Plans?.length || 0}
                           </p>
                           {product.Description && (
                             <p className="mt-1 text-sm text-gray-500 line-clamp-2">
@@ -180,7 +182,7 @@ export default function TenantProducts() {
                         size="sm"
                         onClick={() => handleEdit(product)}
                         className="text-blue-600 hover:text-blue-800"
-                        title="编辑产品"
+                        title={t('tenantSubscriptionProducts.actions.editProduct')}
                       >
                         <PencilIcon className="h-5 w-5" />
                       </PButton>
@@ -189,7 +191,7 @@ export default function TenantProducts() {
                         size="sm"
                         onClick={() => handleDeleteClick(product)}
                         className="text-red-600 hover:text-red-700"
-                        title="删除产品"
+                        title={t('tenantSubscriptionProducts.actions.deleteProduct')}
                       >
                         <TrashIcon className="h-5 w-5" />
                       </PButton>
@@ -213,12 +215,12 @@ export default function TenantProducts() {
                       d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
                     />
                   </svg>
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">暂无产品</h3>
-                  <p className="mt-1 text-sm text-gray-500">开始创建您的第一个产品吧</p>
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">{t('tenantSubscriptionProducts.empty.title')}</h3>
+                  <p className="mt-1 text-sm text-gray-500">{t('tenantSubscriptionProducts.empty.description')}</p>
                   <div className="mt-6">
                     <PButton onClick={() => setShowModal(true)}>
                       <span className="inline-flex items-center gap-2">
-                        <PlusIcon className="h-5 w-5" /> 创建产品
+                        <PlusIcon className="h-5 w-5" /> {t('tenantSubscriptionProducts.actions.createProduct')}
                       </span>
                     </PButton>
                   </div>
@@ -228,7 +230,7 @@ export default function TenantProducts() {
           </ul>
         </div>
 
-      {/* 创建/编辑产品模态框 */}
+      {/* / */}
       {showModal && (
         <Modal
           open={showModal}
@@ -237,54 +239,54 @@ export default function TenantProducts() {
             setEditingProduct(null)
             resetForm()
           }}
-          title={editingProduct ? '编辑产品' : '创建产品'}
+          title={editingProduct ? t('tenantSubscriptionProducts.actions.editProduct') : t('tenantSubscriptionProducts.actions.createProduct')}
           widthClass="max-w-md"
         >
-              {/* 模态框头部 */}
-              {/* 模态框内容 */}
+              {/*  */}
+              {/*  */}
                 <form onSubmit={handleSubmit}>
-                  {/* 产品代码字段 */}
+                  {/*  */}
                   <div className="mb-6">
                     <PInput
-                      label={<span>产品代码 <span className="text-red-500">*</span></span>}
+                      label={<span>{t('tenantSubscriptionProducts.fields.productCode')} <span className="text-red-500">*</span></span>}
                       type="text"
                       required
                       value={formData.code}
                       onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                      placeholder="例如: basic-plan"
+                      placeholder={t('tenantSubscriptionProducts.placeholders.productCode')}
                       disabled={!!editingProduct}
                     />
                     {editingProduct && (
                       <p className="mt-2 rounded-lg bg-yellow-50 px-3 py-2 text-xs text-yellow-700">
-                        产品代码创建后不可修改
+                        {t('tenantSubscriptionProducts.hints.codeImmutable')}
                       </p>
                     )}
                   </div>
 
-                  {/* 产品名称字段 */}
+                  {/*  */}
                   <div className="mb-6">
                     <PInput
-                      label={<span>产品名称 <span className="text-red-500">*</span></span>}
+                      label={<span>{t('tenantSubscriptionProducts.fields.productName')} <span className="text-red-500">*</span></span>}
                       type="text"
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="例如: 基础版"
+                      placeholder={t('tenantSubscriptionProducts.placeholders.productName')}
                     />
                   </div>
 
-                  {/* 产品描述字段 */}
+                  {/*  */}
                   <div className="mb-8">
                     <PTextarea
-                      label="产品描述"
+                      label={t('tenantSubscriptionProducts.fields.productDescription')}
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       rows={4}
-                      placeholder="描述产品的功能和特点..."
+                      placeholder={t('tenantSubscriptionProducts.placeholders.productDescription')}
                     />
                   </div>
 
-                  {/* 按钮组 */}
+                  {/*  */}
                   <div className="flex justify-end gap-3">
                     <PButton
                       type="button"
@@ -295,17 +297,17 @@ export default function TenantProducts() {
                         resetForm()
                       }}
                     >
-                      取消
+                      {t('tenantSubscriptionProducts.actions.cancel')}
                     </PButton>
                     <PButton type="submit">
-                      {editingProduct ? '保存更改' : '创建产品'}
+                      {editingProduct ? t('tenantSubscriptionProducts.actions.saveChanges') : t('tenantSubscriptionProducts.actions.createProduct')}
                     </PButton>
                   </div>
                 </form>
         </Modal>
         )}
 
-      {/* 删除确认模态框 */}
+      {/*  */}
       {showDeleteModal && deleteTarget && (
         <Modal
           open={showDeleteModal}
@@ -313,7 +315,7 @@ export default function TenantProducts() {
             setShowDeleteModal(false)
             setDeleteTarget(null)
           }}
-          title="删除产品"
+          title={t('tenantSubscriptionProducts.deleteModal.title')}
           widthClass="max-w-md"
         >
               <div className="mt-3 text-center">
@@ -322,10 +324,10 @@ export default function TenantProducts() {
                 </div>
                 <div className="mt-2">
                   <p className="text-sm text-gray-500">
-                    确定要删除产品 "{deleteTarget.Name}" 吗？
+                    {t('tenantSubscriptionProducts.deleteModal.confirmMessage', { name: deleteTarget.Name })}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
-                    此操作将同时删除相关的套餐和定价，且无法恢复。
+                    {t('tenantSubscriptionProducts.deleteModal.warning')}
                   </p>
                 </div>
                 <div className="flex justify-center gap-3 mt-4">
@@ -337,14 +339,14 @@ export default function TenantProducts() {
                     disabled={deleting}
                     variant="secondary"
                   >
-                    取消
+                    {t('tenantSubscriptionProducts.actions.cancel')}
                   </PButton>
                   <PButton
                     onClick={handleDeleteConfirm}
                     loading={deleting}
                     variant="danger"
                   >
-                    确认删除
+                    {t('tenantSubscriptionProducts.actions.confirmDelete')}
                   </PButton>
                 </div>
               </div>

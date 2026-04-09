@@ -17,13 +17,13 @@ export interface UserAppsResponse {
 }
 
 export const userAppsApi = {
-  // 获取当前用户已授权的应用
+  // gettranslateduseralreadytranslatedapp
   async list() {
     const res = await client.get<UserAppsResponse>('/api/v1/user/apps')
     return res.data
   },
 
-  // 撤销对某个应用的授权
+  // translatedapptranslated
   async revoke(appId: number) {
     const res = await client.delete(`/api/v1/user/apps/${appId}`)
     return res.data

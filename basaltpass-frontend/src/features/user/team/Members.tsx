@@ -4,6 +4,7 @@ import Layout from '@features/user/components/Layout';
 import { PCard, PButton, PSkeleton, PAlert, PBadge, PPageHeader } from '@ui';
 import PTable, { PTableColumn, PTableAction } from '@ui/PTable';
 import { teamApi } from '@api/user/team';
+import { useI18n } from '@shared/i18n';
 
 interface TeamMember {
   id: number;
@@ -19,6 +20,7 @@ interface TeamMember {
 }
 
 const TeamMembers: React.FC = () => {
+  const { t, locale } = useI18n();
   const { id } = useParams<{ id: string }>();
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,14 +36,14 @@ const TeamMembers: React.FC = () => {
   const loadMembers = async () => {
     try {
       setLoading(true);
-      // 这里需要根据实际的API调整
+      // API
       const response = await teamApi.getTeam(parseInt(id!));
-      // 假设API返回的数据包含成员信息
-      // 实际实现需要根据后端API调整
-      setMembers([]); // 暂时设为空数组，需要根据实际API调整
+      // API
+      // API
+      setMembers([]); // ，API
       setCurrentUserRole(response.data.data?.user_role || '');
     } catch (err: any) {
-      setError(err.response?.data?.message || '加载成员失败');
+      setError(err.response?.data?.message || t('pages.teamMembers.errors.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -54,9 +56,9 @@ const TeamMembers: React.FC = () => {
       member: 'default' as const,
     };
     const roleNames = {
-      owner: '所有者',
-      admin: '管理员',
-      member: '成员',
+      owner: t('pages.teamDetail.roles.owner'),
+      admin: t('pages.teamDetail.roles.admin'),
+      member: t('pages.teamDetail.roles.member'),
     } as const;
     return (
       <PBadge variant={roleVariants[role as keyof typeof roleVariants] || 'default'}>
@@ -80,7 +82,7 @@ const TeamMembers: React.FC = () => {
   if (error) {
     return (
       <Layout>
-        <PAlert variant="error" title="加载失败" message={error} />
+        <PAlert variant="error" title={t('pages.teamMembers.errors.title')} message={error} />
       </Layout>
     );
   }
@@ -88,25 +90,25 @@ const TeamMembers: React.FC = () => {
   return (
     <Layout>
       <div className="space-y-6">
-        {/* 头部 */}
+        {/*  */}
         <div className="flex items-center justify-between">
-          <PPageHeader title="团队成员管理" description="管理团队成员和权限" />
+          <PPageHeader title={t('pages.teamMembers.title')} description={t('pages.teamMembers.description')} />
           <Link
             to={`/teams/${id}`}
             className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
           >
-            返回团队
+            {t('pages.teamMembers.actions.backToTeam')}
           </Link>
         </div>
 
-        {/* 成员列表 */}
+        {/*  */}
         <div className="rounded-xl bg-white shadow-sm">
           <div className="px-6 py-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium text-gray-900">成员列表</h3>
+              <h3 className="text-lg font-medium text-gray-900">{t('pages.teamMembers.memberListTitle')}</h3>
               {canManageMembers && (
                 <Link to={`/teams/invite/${id}`}>
-                  <PButton variant="primary">邀请成员</PButton>
+                  <PButton variant="primary">{t('pages.teamMembers.actions.inviteMembers')}</PButton>
                 </Link>
               )}
             </div>
@@ -116,7 +118,7 @@ const TeamMembers: React.FC = () => {
               const columns: PTableColumn<TeamMember>[] = [
                 {
                   key: 'user',
-                  title: '用户',
+                  title: t('pages.teamMembers.columns.user'),
                   render: (member) => (
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10">
@@ -128,7 +130,7 @@ const TeamMembers: React.FC = () => {
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">
-                          {member.user.nickname || '未设置昵称'}
+                          {member.user.nickname || t('pages.teamMembers.noNickname')}
                         </div>
                         <div className="text-sm text-gray-500">
                           {member.user.email}
@@ -137,14 +139,20 @@ const TeamMembers: React.FC = () => {
                     </div>
                   )
                 },
-                { key: 'role', title: '角色', render: (m) => getRoleBadge(m.role) },
-                { key: 'joined_at', title: '加入时间', dataIndex: 'joined_at', sortable: true, sorter: (a, b) => new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime() },
+                { key: 'role', title: t('pages.teamMembers.columns.role'), render: (m) => getRoleBadge(m.role) },
+                {
+                  key: 'joined_at',
+                  title: t('pages.teamMembers.columns.joinedAt'),
+                  sortable: true,
+                  sorter: (a, b) => new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime(),
+                  render: (member) => new Date(member.joined_at).toLocaleDateString(locale),
+                },
               ];
 
               const actions: PTableAction<TeamMember>[] = canManageMembers
                 ? [
-                    { key: 'edit', label: '编辑角色', variant: 'secondary', size: 'sm', onClick: () => {/* TODO: open role modal */} },
-                    { key: 'remove', label: '移除', variant: 'danger', size: 'sm', onClick: () => {/* TODO: remove member */} },
+                    { key: 'edit', label: t('pages.teamMembers.actions.editRole'), variant: 'secondary', size: 'sm', onClick: () => {/* TODO: open role modal */} },
+                    { key: 'remove', label: t('pages.teamMembers.actions.remove'), variant: 'danger', size: 'sm', onClick: () => {/* TODO: remove member */} },
                   ]
                 : [];
 
@@ -154,7 +162,7 @@ const TeamMembers: React.FC = () => {
                   data={members}
                   rowKey={(row) => row.id}
                   actions={actions}
-                  emptyText="暂无成员"
+                  emptyText={t('pages.teamMembers.empty')}
                   striped
                 />
               );

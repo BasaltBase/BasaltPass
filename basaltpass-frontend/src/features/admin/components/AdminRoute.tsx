@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@contexts/AuthContext'
+import { useI18n } from '@shared/i18n/useI18n'
 import PSkeleton from '@ui/PSkeleton'
 import { setSessionNotice } from '@utils/sessionNotice'
 
@@ -11,6 +12,7 @@ interface AdminRouteProps {
 export default function AdminRoute({ children }: AdminRouteProps) {
   const { isAuthenticated, isLoading, canAccessAdmin } = useAuth()
   const navigate = useNavigate()
+  const { t } = useI18n()
 
   useEffect(() => {
     if (isLoading) return
@@ -28,7 +30,7 @@ export default function AdminRoute({ children }: AdminRouteProps) {
   }, [isAuthenticated, isLoading, canAccessAdmin, navigate])
 
   if (isLoading) {
-    return <PSkeleton.PageLoader message="正在验证管理员权限..." />
+    return <PSkeleton.PageLoader message={t('adminRoute.verifyingAdminAccess')} />
   }
 
   if (!isAuthenticated || !canAccessAdmin) {

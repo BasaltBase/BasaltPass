@@ -1,7 +1,8 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useMemo } from 'react'
 import AdminRoute from '../../../src/features/admin/components/AdminRoute'
-import { consumeSessionNotice, getSessionNoticeMessage, peekSessionNotice } from '../../../src/shared/utils/sessionNotice'
+import { consumeSessionNotice, peekSessionNotice } from '../../../src/shared/utils/sessionNotice'
+import { useI18n } from '../../../src/shared/i18n'
 
 import AdminDashboard from '../../../src/features/admin/Dashboard'
 import Users from '../../../src/features/admin/user/Users'
@@ -41,12 +42,13 @@ import EmailTest from '../../../src/features/admin/email/EmailTest'
 import NotFound from '../../../src/features/NotFound'
 
 function Entry() {
-  const notice = useMemo(() => {
+  const { t } = useI18n()
+  const noticeCode = useMemo(() => {
     const current = peekSessionNotice()
     if (!current) {
       return ''
     }
-    return getSessionNoticeMessage(consumeSessionNotice())
+    return consumeSessionNotice() || ''
   }, [])
   const userUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || ''
   const joinUrl = (base: string, path: string) => {
@@ -58,20 +60,20 @@ function Entry() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="max-w-md w-full bg-white rounded-lg shadow p-6">
-        <h1 className="text-lg font-semibold text-gray-900">管理员控制台</h1>
-        {notice ? (
+        <h1 className="text-lg font-semibold text-gray-900">{t('entry.adminConsole')}</h1>
+        {noticeCode ? (
           <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-            {notice === '当前登录会话已过期，请重新登录。' ? '当前管理员会话已过期，请重新登录后再进入管理员控制台。' : notice}
+            {noticeCode === 'session_expired' ? t('entry.adminSessionExpired') : t(`sessionNotice.${noticeCode}`)}
           </div>
         ) : null}
         <p className="mt-2 text-sm text-gray-600">
-          请从用户/租户控制台点击“管理员面板”进入（按需授权）。
+          {t('entry.adminEntryHelp')}
         </p>
         <a
           className="mt-4 inline-block text-indigo-600 hover:underline"
-          href={joinUrl(userUrl, notice ? 'login' : 'dashboard')}
+          href={joinUrl(userUrl, noticeCode ? 'login' : 'dashboard')}
         >
-          {notice ? '前往重新登录' : '返回用户控制台'}
+          {noticeCode ? t('common.relogin') : t('common.backToUserConsole')}
         </a>
       </div>
     </div>

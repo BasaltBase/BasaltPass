@@ -29,8 +29,10 @@ import { listRoles, type AdminRole } from '@api/admin/roles'
 import { ROUTES } from '@constants'
 import { PBadge, PButton } from '@ui'
 import Modal from '@ui/common/Modal'
+import { useI18n } from '@i18n/useI18n'
 
 export default function UserDetail() {
+  const { t, locale } = useI18n()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [user, setUser] = useState<AdminUserDetail | null>(null)
@@ -63,7 +65,7 @@ export default function UserDetail() {
         const response = await adminWalletApi.getCurrencies()
         setCurrencies(response.data || [])
       } catch (error) {
-        console.error('加载货币列表失败:', error)
+        console.error(t('adminUserDetail.logs.loadCurrenciesFailed'), error)
       }
     }
     loadCurrencies()
@@ -75,7 +77,7 @@ export default function UserDetail() {
       const userDetail = await adminUserApi.getUser(userId)
       setUser(userDetail)
     } catch (error) {
-      console.error('加载用户详情失败:', error)
+      console.error(t('adminUserDetail.logs.loadUserFailed'), error)
     } finally {
       setLoading(false)
     }
@@ -87,20 +89,20 @@ export default function UserDetail() {
     try {
       await adminUserApi.banUser(user.id, {
         banned: !user.banned,
-        reason: banReason || (user.banned ? '解封用户' : '管理员操作')
+        reason: banReason || (user.banned ? t('adminUserDetail.actions.unbanUser') : t('adminUserDetail.actions.adminActionReason'))
       })
       setShowBanModal(false)
       setBanReason('')
       loadUser(user.id)
     } catch (error) {
-      console.error('操作失败:', error)
+      console.error(t('adminUserDetail.logs.operationFailed'), error)
     }
   }
 
   const openAssignRole = async () => {
     try {
       const r = await listRoles()
-  // 兼容“全局角色”识别：is_system 为 true 或 tenant_id 为 0/空
+  // Compatible global role detection: is_system true, or tenant_id is 0/empty
   const all = r.data || []
   const globals = all.filter(x => x.is_system || !x.tenant_id || x.tenant_id === 0)
   const toShow = globals.length > 0 ? globals : all
@@ -108,7 +110,7 @@ export default function UserDetail() {
   setSelectedRoleId(toShow[0]?.ID ?? null)
       setShowAssignRole(true)
     } catch (e) {
-      console.error('加载角色失败', e)
+      console.error(t('adminUserDetail.logs.loadRolesFailed'), e)
     }
   }
 
@@ -119,15 +121,15 @@ export default function UserDetail() {
       setShowAssignRole(false)
       await loadUser(user.id)
     } catch (e) {
-      console.error('分配角色失败', e)
-      uiAlert('分配角色失败')
+      console.error(t('adminUserDetail.logs.assignRoleFailed'), e)
+      uiAlert(t('adminUserDetail.errors.assignRoleFailed'))
     }
   }
 
   const handleDeleteUser = async () => {
     if (!user) return
     
-    if (!await uiConfirm(`确定要删除用户 ${user.nickname || user.email} 吗？此操作不可恢复。`)) {
+    if (!await uiConfirm(t('adminUserDetail.confirm.deleteUser', { user: user.nickname || user.email }))) {
       return
     }
     
@@ -135,7 +137,7 @@ export default function UserDetail() {
       await adminUserApi.deleteUser(user.id)
       navigate(ROUTES.admin.users)
     } catch (error) {
-      console.error('删除用户失败:', error)
+      console.error(t('adminUserDetail.logs.deleteUserFailed'), error)
     }
   }
 
@@ -153,15 +155,15 @@ export default function UserDetail() {
   const handleAdjustWalletSubmit = async () => {
     if (!user || !selectedMembership) return
     if (!adjustWalletForm.currency_code) {
-      uiAlert('请选择货币类型')
+      uiAlert(t('adminUserDetail.errors.selectCurrency'))
       return
     }
     if (!adjustWalletForm.reason.trim()) {
-      uiAlert('请输入调整原因')
+      uiAlert(t('adminUserDetail.errors.inputReason'))
       return
     }
     if (!adjustWalletForm.amount) {
-      uiAlert('调整金额不能为 0')
+      uiAlert(t('adminUserDetail.errors.amountNotZero'))
       return
     }
 
@@ -171,15 +173,15 @@ export default function UserDetail() {
       setShowAdjustWallet(false)
       await loadUser(user.id)
     } catch (error: any) {
-      console.error('调整用户钱包失败:', error)
-      uiAlert(error.response?.data?.error || error.response?.data?.message || '调整用户钱包失败')
+      console.error(t('adminUserDetail.logs.adjustWalletFailed'), error)
+      uiAlert(error.response?.data?.error || error.response?.data?.message || t('adminUserDetail.errors.adjustWalletFailed'))
     } finally {
       setAdjustWalletSubmitting(false)
     }
   }
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleString('zh-CN')
+    return new Date(dateStr).toLocaleString(locale)
   }
 
   const getStatusColor = (status: string) => {
@@ -194,9 +196,9 @@ export default function UserDetail() {
 
   if (loading) {
     return (
-      <AdminLayout title="用户详情">
+      <AdminLayout title={t('adminUserDetail.layoutTitle')}>
         <div className="flex justify-center items-center h-64">
-          <div className="text-lg text-gray-500">加载中...</div>
+          <div className="text-lg text-gray-500">{t('adminUserDetail.common.loading')}</div>
         </div>
       </AdminLayout>
     )
@@ -204,19 +206,18 @@ export default function UserDetail() {
 
   if (!user) {
     return (
-      <AdminLayout title="用户详情">
+      <AdminLayout title={t('adminUserDetail.layoutTitle')}>
         <div className="flex justify-center items-center h-64">
-          <div className="text-lg text-gray-500">用户不存在</div>
+          <div className="text-lg text-gray-500">{t('adminUserDetail.common.userNotFound')}</div>
         </div>
       </AdminLayout>
     )
   }
 
   return (
-    <AdminLayout title="用户详情">
+    <AdminLayout title={t('adminUserDetail.layoutTitle')}>
       <div className="space-y-6">
 
-        {/* 用户基本信息 */}
         <div className="bg-white shadow rounded-lg">
           <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
             <div className="flex items-center">
@@ -233,18 +234,18 @@ export default function UserDetail() {
               )}
               <div className="ml-6">
                 <h1 className="text-2xl font-bold text-gray-900">
-                  {user.nickname || '未设置昵称'}
+                  {user.nickname || t('adminUserDetail.common.noNickname')}
                 </h1>
-                <p className="text-sm text-gray-500">ID: {user.id}</p>
+                <p className="text-sm text-gray-500">{t('adminUserDetail.meta.id', { id: user.id })}</p>
                 <div className="mt-2 flex items-center gap-2">
                   <PBadge variant={user.banned ? 'error' : 'success'}>
-                    {user.banned ? '已封禁' : '正常'}
+                    {user.banned ? t('adminUserDetail.status.banned') : t('adminUserDetail.status.normal')}
                   </PBadge>
                   {user.email_verified && (
-                    <PBadge variant="info">邮箱已验证</PBadge>
+                    <PBadge variant="info">{t('adminUserDetail.meta.emailVerified')}</PBadge>
                   )}
                   {user.two_fa_enabled && (
-                    <PBadge variant="success">启用2FA</PBadge>
+                    <PBadge variant="success">{t('adminUserDetail.meta.twoFaEnabled')}</PBadge>
                   )}
                 </div>
               </div>
@@ -255,21 +256,21 @@ export default function UserDetail() {
                 variant={user.banned ? 'primary' : 'danger'}
                 leftIcon={user.banned ? <ShieldCheckIcon className="h-4 w-4" /> : <ShieldExclamationIcon className="h-4 w-4" />}
               >
-                {user.banned ? '解封用户' : '封禁用户'}
+                {user.banned ? t('adminUserDetail.actions.unbanUser') : t('adminUserDetail.actions.banUser')}
               </PButton>
               <PButton
                 onClick={openAssignRole}
                 variant="primary"
                 leftIcon={<KeyIcon className="h-4 w-4" />}
               >
-                分配全局角色
+                {t('adminUserDetail.actions.assignGlobalRole')}
               </PButton>
               <PButton
                 onClick={handleDeleteUser}
                 variant="danger"
                 leftIcon={<TrashIcon className="h-4 w-4" />}
               >
-                删除用户
+                {t('adminUserDetail.actions.deleteUser')}
               </PButton>
             </div>
           </div>
@@ -277,12 +278,12 @@ export default function UserDetail() {
           <div className="px-6 py-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">基本信息</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">{t('adminUserDetail.sections.basicInfo')}</h3>
                 <dl className="space-y-3">
                   <div className="flex items-center">
                     <dt className="flex items-center text-sm font-medium text-gray-500 w-20">
                       <EnvelopeIcon className="h-4 w-4 mr-2" />
-                      邮箱
+                      {t('adminUserDetail.fields.email')}
                     </dt>
                     <dd className="text-sm text-gray-900 ml-4">{user.email}</dd>
                     {user.email_verified ? (
@@ -295,7 +296,7 @@ export default function UserDetail() {
                     <div className="flex items-center">
                       <dt className="flex items-center text-sm font-medium text-gray-500 w-20">
                         <PhoneIcon className="h-4 w-4 mr-2" />
-                        手机
+                        {t('adminUserDetail.fields.phone')}
                       </dt>
                       <dd className="text-sm text-gray-900 ml-4">{user.phone}</dd>
                       {user.phone_verified ? (
@@ -308,44 +309,44 @@ export default function UserDetail() {
                   <div className="flex items-center">
                     <dt className="flex items-center text-sm font-medium text-gray-500 w-20">
                       <CalendarIcon className="h-4 w-4 mr-2" />
-                      注册
+                      {t('adminUserDetail.fields.registered')}
                     </dt>
                     <dd className="text-sm text-gray-900 ml-4">{formatDate(user.created_at)}</dd>
                   </div>
                   <div className="flex items-center">
                     <dt className="flex items-center text-sm font-medium text-gray-500 w-20">
                       <KeyIcon className="h-4 w-4 mr-2" />
-                      安全
+                      {t('adminUserDetail.fields.security')}
                     </dt>
                     <dd className="text-sm text-gray-900 ml-4">
-                      {user.two_fa_enabled ? '已启用两步验证' : '未启用两步验证'}
+                      {user.two_fa_enabled ? t('adminUserDetail.fields.twoFaOn') : t('adminUserDetail.fields.twoFaOff')}
                     </dd>
                   </div>
                 </dl>
               </div>
 
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">活动统计</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">{t('adminUserDetail.sections.activityStats')}</h3>
                 <dl className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <dt className="text-sm font-medium text-gray-500">总登录次数</dt>
+                    <dt className="text-sm font-medium text-gray-500">{t('adminUserDetail.stats.totalLogins')}</dt>
                     <dd className="text-sm text-gray-900">{user.activity_stats.total_logins}</dd>
                   </div>
                   <div className="flex items-center justify-between">
-                    <dt className="text-sm font-medium text-gray-500">使用的应用数</dt>
+                    <dt className="text-sm font-medium text-gray-500">{t('adminUserDetail.stats.totalAppsUsed')}</dt>
                     <dd className="text-sm text-gray-900">{user.activity_stats.total_apps_used}</dd>
                   </div>
                   <div className="flex items-center justify-between">
-                    <dt className="text-sm font-medium text-gray-500">活跃应用数</dt>
+                    <dt className="text-sm font-medium text-gray-500">{t('adminUserDetail.stats.activeApps')}</dt>
                     <dd className="text-sm text-gray-900">{user.activity_stats.active_apps_count}</dd>
                   </div>
                   <div className="flex items-center justify-between">
-                    <dt className="text-sm font-medium text-gray-500">加入团队数</dt>
+                    <dt className="text-sm font-medium text-gray-500">{t('adminUserDetail.stats.teamsCount')}</dt>
                     <dd className="text-sm text-gray-900">{user.activity_stats.teams_count}</dd>
                   </div>
                   {user.activity_stats.last_login_at && (
                     <div className="flex items-center justify-between">
-                      <dt className="text-sm font-medium text-gray-500">最后登录</dt>
+                      <dt className="text-sm font-medium text-gray-500">{t('adminUserDetail.stats.lastLogin')}</dt>
                       <dd className="text-sm text-gray-900">{formatDate(user.activity_stats.last_login_at)}</dd>
                     </div>
                   )}
@@ -355,13 +356,12 @@ export default function UserDetail() {
           </div>
         </div>
 
-        {/* 租户成员身份 */}
         {user.tenant_memberships.length > 0 && (
           <div className="bg-white shadow rounded-lg">
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-medium text-gray-900 flex items-center">
                 <BuildingOfficeIcon className="h-5 w-5 mr-2" />
-                租户成员身份
+                {t('adminUserDetail.sections.tenantMemberships')}
               </h3>
             </div>
             <div className="px-6 py-4">
@@ -370,8 +370,8 @@ export default function UserDetail() {
                   <div key={membership.tenant_id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div>
                       <h4 className="font-medium text-gray-900">{membership.tenant_name}</h4>
-                      <p className="text-sm text-gray-500">代码: {membership.tenant_code}</p>
-                      <p className="text-sm text-gray-500">加入时间: {formatDate(membership.joined_at)}</p>
+                      <p className="text-sm text-gray-500">{t('adminUserDetail.meta.code', { code: membership.tenant_code })}</p>
+                      <p className="text-sm text-gray-500">{t('adminUserDetail.meta.joinedAt', { date: formatDate(membership.joined_at) })}</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <PBadge variant="info">{membership.role}</PBadge>
@@ -381,7 +381,7 @@ export default function UserDetail() {
                         leftIcon={<CurrencyDollarIcon className="h-4 w-4" />}
                         onClick={() => handleOpenAdjustWallet(membership)}
                       >
-                        调整钱包
+                        {t('adminUserDetail.actions.adjustWallet')}
                       </PButton>
                     </div>
                   </div>
@@ -391,38 +391,36 @@ export default function UserDetail() {
           </div>
         )}
 
-        {/* 分配全局角色 */}
         {showAssignRole && (
           <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
             <div className="relative top-20 mx-auto p-5 border w-[480px] shadow-lg rounded-md bg-white">
               <div className="mb-4">
-                <h3 className="text-lg font-medium text-gray-900">分配全局角色</h3>
-                <p className="text-sm text-gray-500 mt-1">仅可分配“全局角色”（tenant_id 为空或 0）。</p>
+                <h3 className="text-lg font-medium text-gray-900">{t('adminUserDetail.roleModal.title')}</h3>
+                <p className="text-sm text-gray-500 mt-1">{t('adminUserDetail.roleModal.description')}</p>
               </div>
               <div className="space-y-3">
-                <label className="text-sm text-gray-700">选择角色</label>
+                <label className="text-sm text-gray-700">{t('adminUserDetail.roleModal.selectRole')}</label>
                 <select className="w-full border rounded px-3 py-2" value={selectedRoleId ?? ''} onChange={(e)=>setSelectedRoleId(Number(e.target.value))}>
-                  <option value="" disabled>请选择角色</option>
+                  <option value="" disabled>{t('adminUserDetail.roleModal.selectRolePlaceholder')}</option>
                   {roles.map(r => (
                     <option key={r.ID} value={r.ID}>{r.name} ({r.code})</option>
                   ))}
                 </select>
               </div>
               <div className="flex justify-end gap-3 mt-6">
-                <PButton variant="secondary" onClick={() => setShowAssignRole(false)}>取消</PButton>
-                <PButton disabled={!selectedRoleId} onClick={submitAssignRole}>确认分配</PButton>
+                <PButton variant="secondary" onClick={() => setShowAssignRole(false)}>{t('adminUserDetail.actions.cancel')}</PButton>
+                <PButton disabled={!selectedRoleId} onClick={submitAssignRole}>{t('adminUserDetail.actions.confirmAssign')}</PButton>
               </div>
             </div>
           </div>
         )}
 
-        {/* 全局角色 */}
         {user.global_roles.length > 0 && (
           <div className="bg-white shadow rounded-lg">
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-medium text-gray-900 flex items-center">
                 <GlobeAltIcon className="h-5 w-5 mr-2" />
-                全局角色
+                {t('adminUserDetail.sections.globalRoles')}
               </h3>
             </div>
             <div className="px-6 py-4">
@@ -431,13 +429,13 @@ export default function UserDetail() {
                   <div key={role.id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div>
                       <h4 className="font-medium text-gray-900">{role.name}</h4>
-                      <p className="text-sm text-gray-500">代码: {role.code}</p>
+                      <p className="text-sm text-gray-500">{t('adminUserDetail.meta.code', { code: role.code })}</p>
                       <p className="text-sm text-gray-500">{role.description}</p>
                     </div>
                     <button
                       onClick={() => adminUserApi.removeGlobalRole(user.id, role.id).then(() => loadUser(user.id))}
                       className="text-red-600 hover:text-red-800"
-                      title="移除角色"
+                      title={t('adminUserDetail.actions.removeRole')}
                     >
                       <TrashIcon className="h-4 w-4" />
                     </button>
@@ -448,13 +446,12 @@ export default function UserDetail() {
           </div>
         )}
 
-        {/* 应用授权 */}
         {user.app_authorizations.length > 0 && (
           <div className="bg-white shadow rounded-lg">
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-medium text-gray-900 flex items-center">
                 <CubeIcon className="h-5 w-5 mr-2" />
-                应用授权
+                {t('adminUserDetail.sections.appAuthorizations')}
               </h3>
             </div>
             <div className="overflow-x-auto">
@@ -462,19 +459,19 @@ export default function UserDetail() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      应用
+                      {t('adminUserDetail.table.app')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      租户
+                      {t('adminUserDetail.table.tenant')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      状态
+                      {t('adminUserDetail.table.status')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      首次授权
+                      {t('adminUserDetail.table.firstAuthorized')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      最后活跃
+                      {t('adminUserDetail.table.lastActive')}
                     </th>
                   </tr>
                 </thead>
@@ -483,7 +480,7 @@ export default function UserDetail() {
                     <tr key={auth.app_id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{auth.app_name}</div>
-                        <div className="text-sm text-gray-500">ID: {auth.app_id}</div>
+                        <div className="text-sm text-gray-500">{t('adminUserDetail.meta.id', { id: auth.app_id })}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{auth.tenant_name}</div>
@@ -497,7 +494,7 @@ export default function UserDetail() {
                         {formatDate(auth.first_authorized_at)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {auth.last_active_at ? formatDate(auth.last_active_at) : '从未活跃'}
+                        {auth.last_active_at ? formatDate(auth.last_active_at) : t('adminUserDetail.table.neverActive')}
                       </td>
                     </tr>
                   ))}
@@ -507,7 +504,6 @@ export default function UserDetail() {
           </div>
         )}
 
-        {/* 封禁模态框 */}
         {showBanModal && (
           <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
             <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
@@ -515,20 +511,20 @@ export default function UserDetail() {
                 <div className="flex items-center mb-4">
                   <ExclamationTriangleIcon className="h-6 w-6 text-yellow-600 mr-2" />
                   <h3 className="text-lg font-medium text-gray-900">
-                    {user.banned ? '解封用户' : '封禁用户'}
+                    {user.banned ? t('adminUserDetail.actions.unbanUser') : t('adminUserDetail.actions.banUser')}
                   </h3>
                 </div>
                 <div className="mt-2 px-7 py-3">
                   <p className="text-sm text-gray-500 mb-4">
                     {user.banned 
-                      ? `确定要解封用户 ${user.nickname || user.email} 吗？`
-                      : `确定要封禁用户 ${user.nickname || user.email} 吗？`
+                      ? t('adminUserDetail.confirm.unbanUser', { user: user.nickname || user.email })
+                      : t('adminUserDetail.confirm.banUser', { user: user.nickname || user.email })
                     }
                   </p>
                   <textarea
                     className="w-full p-2 border border-gray-300 rounded-md resize-none"
                     rows={3}
-                    placeholder="请输入操作原因（可选）"
+                    placeholder={t('adminUserDetail.fields.reasonPlaceholder')}
                     value={banReason}
                     onChange={(e) => setBanReason(e.target.value)}
                   />
@@ -541,13 +537,13 @@ export default function UserDetail() {
                       setBanReason('')
                     }}
                   >
-                    取消
+                    {t('adminUserDetail.actions.cancel')}
                   </PButton>
                   <PButton
                     variant={user.banned ? 'primary' : 'danger'}
                     onClick={handleBanUser}
                   >
-                    确认{user.banned ? '解封' : '封禁'}
+                    {t('adminUserDetail.actions.confirm')} {user.banned ? t('adminUserDetail.actions.unbanShort') : t('adminUserDetail.actions.banShort')}
                   </PButton>
                 </div>
               </div>
@@ -596,12 +592,14 @@ const AdjustUserTenantWalletModal: React.FC<AdjustUserTenantWalletModalProps> = 
   onClose,
   onChange,
   onSubmit,
-}) => (
+}) => {
+  const { t } = useI18n()
+  return (
   <Modal
     open={open}
-    title={membership ? `调整钱包余额 - ${membership.tenant_name}` : '调整钱包余额'}
+    title={membership ? t('adminUserDetail.walletModal.titleWithTenant', { tenant: membership.tenant_name }) : t('adminUserDetail.walletModal.title')}
     onClose={onClose}
-    description="为该用户在指定租户下直接调整任意币种的钱包余额。正数表示增加，负数表示减少。"
+    description={t('adminUserDetail.walletModal.description')}
   >
     {user && membership ? (
       <form
@@ -612,17 +610,17 @@ const AdjustUserTenantWalletModal: React.FC<AdjustUserTenantWalletModalProps> = 
         className="space-y-4"
       >
         <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700">用户</label>
+          <label className="mb-2 block text-sm font-medium text-gray-700">{t('adminUserDetail.walletModal.user')}</label>
           <input
             type="text"
-            value={`${user.nickname || '未设置昵称'} (${user.email})`}
+            value={`${user.nickname || t('adminUserDetail.common.noNickname')} (${user.email})`}
             disabled
             className="block w-full rounded-md border border-gray-200 bg-gray-100 px-3 py-2 text-gray-500"
           />
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700">租户</label>
+          <label className="mb-2 block text-sm font-medium text-gray-700">{t('adminUserDetail.walletModal.tenant')}</label>
           <input
             type="text"
             value={`${membership.tenant_name} (${membership.tenant_code})`}
@@ -632,13 +630,13 @@ const AdjustUserTenantWalletModal: React.FC<AdjustUserTenantWalletModalProps> = 
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700">货币类型 *</label>
+          <label className="mb-2 block text-sm font-medium text-gray-700">{t('adminUserDetail.walletModal.currency')} *</label>
           <select
             value={formData.currency_code}
             onChange={(event) => onChange({ ...formData, currency_code: event.target.value })}
             className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500"
           >
-            <option value="">选择货币</option>
+            <option value="">{t('adminUserDetail.walletModal.selectCurrency')}</option>
             {currencies.map(currency => (
               <option key={currency.code} value={currency.code}>
                 {currency.code} - {currency.name}
@@ -648,25 +646,25 @@ const AdjustUserTenantWalletModal: React.FC<AdjustUserTenantWalletModalProps> = 
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700">调整金额 *</label>
+          <label className="mb-2 block text-sm font-medium text-gray-700">{t('adminUserDetail.walletModal.amount')} *</label>
           <input
             type="number"
             step="0.01"
             value={formData.amount}
             onChange={(event) => onChange({ ...formData, amount: Number(event.target.value) || 0 })}
             className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500"
-            placeholder="正数增加，负数减少"
+            placeholder={t('adminUserDetail.walletModal.amountPlaceholder')}
           />
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700">调整原因 *</label>
+          <label className="mb-2 block text-sm font-medium text-gray-700">{t('adminUserDetail.walletModal.reason')} *</label>
           <textarea
             value={formData.reason}
             onChange={(event) => onChange({ ...formData, reason: event.target.value })}
             rows={3}
             className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500"
-            placeholder="例如：手工补偿、人工扣费、账务修正"
+            placeholder={t('adminUserDetail.walletModal.reasonPlaceholder')}
           />
         </div>
 
@@ -677,18 +675,19 @@ const AdjustUserTenantWalletModal: React.FC<AdjustUserTenantWalletModalProps> = 
             onChange={(event) => onChange({ ...formData, create_if_missing: event.target.checked })}
             className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
           />
-          该币种钱包不存在时自动创建
+          {t('adminUserDetail.walletModal.createIfMissing')}
         </label>
 
         <div className="flex justify-end gap-3 pt-4">
           <PButton type="button" variant="secondary" onClick={onClose} disabled={submitting}>
-            取消
+            {t('adminUserDetail.actions.cancel')}
           </PButton>
           <PButton type="submit" disabled={submitting} loading={submitting}>
-            确认调整
+            {t('adminUserDetail.actions.confirmAdjust')}
           </PButton>
         </div>
       </form>
     ) : null}
   </Modal>
 )
+}

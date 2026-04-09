@@ -3,8 +3,10 @@ import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { listPermissions, createPermission, updatePermission, deletePermission, type Permission } from '@api/admin/permissions'
 import { PButton, PInput, PAlert } from '@ui'
+import { useI18n } from '@shared/i18n'
 
 export default function PermissionsPage() {
+  const { t } = useI18n()
   const [perms, setPerms] = useState<Permission[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -22,7 +24,7 @@ export default function PermissionsPage() {
       const r = await listPermissions()
       setPerms(r.data)
     } catch (e: any) {
-      setError(e.response?.data?.error || '加载失败')
+      setError(e.response?.data?.error || t('adminPermissions.errors.loadFailed'))
     } finally {
       setLoading(false)
     }
@@ -40,7 +42,7 @@ export default function PermissionsPage() {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!code.trim()) { setError('请输入权限代码'); return }
+    if (!code.trim()) { setError(t('adminPermissions.errors.codeRequired')); return }
     try {
       setError('')
       if (editing) {
@@ -51,36 +53,36 @@ export default function PermissionsPage() {
       resetForm()
       await load()
     } catch (e: any) {
-      setError(e.response?.data?.error || '保存失败')
+      setError(e.response?.data?.error || t('adminPermissions.errors.saveFailed'))
     }
   }
 
   const onEdit = (p: Permission) => { setEditing(p); setCode(p.Code); setDesc(p.Desc || '') }
 
   const onDelete = async (id: number) => {
-    if (!await uiConfirm('确定删除该权限吗？')) return
+    if (!await uiConfirm(t('adminPermissions.confirmDelete'))) return
     try {
       await deletePermission(id)
       await load()
     } catch (e: any) {
-      uiAlert(e.response?.data?.error || '删除失败')
+      uiAlert(e.response?.data?.error || t('adminPermissions.errors.deleteFailed'))
     }
   }
 
   return (
-    <AdminLayout title="权限管理">
+    <AdminLayout title={t('adminPermissions.layoutTitle')}>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">权限管理</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('adminPermissions.title')}</h1>
         </div>
 
         <div className="bg-white shadow rounded-lg p-4">
           <form onSubmit={onSubmit} className="grid grid-cols-3 gap-4">
-            <PInput value={code} onChange={e=>setCode(e.target.value)} placeholder="权限代码（唯一）" />
-            <PInput value={desc} onChange={e=>setDesc(e.target.value)} placeholder="描述（可选）" />
+            <PInput value={code} onChange={e=>setCode(e.target.value)} placeholder={t('adminPermissions.placeholders.code')} />
+            <PInput value={desc} onChange={e=>setDesc(e.target.value)} placeholder={t('adminPermissions.placeholders.description')} />
             <div className="flex items-center gap-2">
-              <PButton type="submit">{editing ? '更新' : '创建'}</PButton>
-              {editing && <PButton type="button" variant="secondary" onClick={resetForm}>取消编辑</PButton>}
+              <PButton type="submit">{editing ? t('adminPermissions.actions.update') : t('adminPermissions.actions.create')}</PButton>
+              {editing && <PButton type="button" variant="secondary" onClick={resetForm}>{t('adminPermissions.actions.cancelEdit')}</PButton>}
             </div>
           </form>
           {error && <PAlert variant="error" message={error} className="mt-2" />}
@@ -88,16 +90,16 @@ export default function PermissionsPage() {
 
         <div className="bg-white shadow rounded-lg">
           <div className="p-4 flex items-center justify-between border-b">
-            <PInput value={keyword} onChange={e=>setKeyword(e.target.value)} placeholder="搜索代码或描述" className="w-80" />
-            {loading && <span className="text-sm text-gray-500">加载中...</span>}
+            <PInput value={keyword} onChange={e=>setKeyword(e.target.value)} placeholder={t('adminPermissions.searchPlaceholder')} className="w-80" />
+            {loading && <span className="text-sm text-gray-500">{t('adminPermissions.loading')}</span>}
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">代码</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">描述</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Code</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
                   <th className="px-6 py-3"></th>
                 </tr>
               </thead>
@@ -108,8 +110,8 @@ export default function PermissionsPage() {
                     <td className="px-6 py-4 text-sm font-medium">{p.Code}</td>
                     <td className="px-6 py-4 text-sm">{p.Desc}</td>
                     <td className="px-6 py-4 text-sm text-right space-x-2">
-                      <PButton size="sm" variant="secondary" onClick={()=>onEdit(p)}>编辑</PButton>
-                      <PButton size="sm" variant="danger" onClick={()=>onDelete(p.ID)}>删除</PButton>
+                      <PButton size="sm" variant="secondary" onClick={()=>onEdit(p)}>{t('adminPermissions.actions.edit')}</PButton>
+                      <PButton size="sm" variant="danger" onClick={()=>onDelete(p.ID)}>{t('adminPermissions.actions.delete')}</PButton>
                     </td>
                   </tr>
                 ))}

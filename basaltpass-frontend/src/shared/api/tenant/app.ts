@@ -1,8 +1,8 @@
-// 租户级别应用管理API
+// tenanttranslatedappmanagementAPI
 import client from "@api/client";
 
 export const tenantAppApi = {
-    // 租户应用CRUD
+    // tenantappCRUD
     async listApps(page = 1, limit = 20, search?: string) {
         const params: any = {page, limit}
         if (search) {
@@ -17,7 +17,7 @@ export const tenantAppApi = {
         return response.data
     },
 
-    // 租户应用统计
+    // tenantapptranslated
     async getAppStats(appId: string, period = '7d') {
         const response = await client.get(`/api/v1/tenant/apps/${appId}/stats`, {
             params: {period}
@@ -25,7 +25,7 @@ export const tenantAppApi = {
         return response.data
     },
 
-    // 应用权限管理
+    // apppermissionmanagement
     async listAppPermissions(appId: string) {
         const response = await client.get(`/api/v1/tenant/apps/${appId}/permissions`)
         return response.data
@@ -46,7 +46,7 @@ export const tenantAppApi = {
         return response.data
     },
 
-    // 应用角色管理
+    // approlemanagement
     async listAppRoles(appId: string) {
         const response = await client.get(`/api/v1/tenant/apps/${appId}/roles`)
         return response.data
@@ -67,7 +67,7 @@ export const tenantAppApi = {
         return response.data
     },
 
-    // 应用用户管理
+    // appusermanagement
     async listAppUsers(appId: string, page = 1, limit = 20) {
         const response = await client.get(`/api/v1/tenant/apps/${appId}/users`, {
             params: {page, limit}
@@ -92,7 +92,7 @@ export const tenantAppApi = {
         return response.data
     },
 
-    // 应用用户权限管理
+    // appuserpermissionmanagement
     async getUserPermissions(appId: string, userId: string) {
         const response = await client.get(`/api/v1/tenant/apps/${appId}/users/${userId}/permissions`)
         return response.data

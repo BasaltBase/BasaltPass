@@ -4,29 +4,27 @@ sidebar_position: 1
 
 # API 约定
 
-BasaltPass API 遵循 REST 风格和标准 HTTP 状态码。
+BasaltPass API 遵循 RESTful 原则和标准 HTTP 状态码。
 
-## 基础地址
+## 基础 URL
 
 -   **开发环境**: `http://localhost:8101/api/v1`
 -   **生产环境**: `https://your-domain.com/api/v1`
 
-## 认证方式
+## 认证
 
-大多数接口都需要认证。
+大多数端点需要通过 `Authorization` 头部进行认证。
 
--   **User / Tenant / Admin API**: `Authorization: Bearer <jwt_token>`
--   **S2S API**: 每次请求直接携带 `client_id` 与 `client_secret`，推荐放在请求头中
+-   **用户/租户/管理 API**: `Bearer <jwt_token>`
+-   **S2S API**: 在每个请求上直接使用 `client_id` / `client_secret` 凭据。推荐通过请求头传输。
 
 ## 响应格式
 
-### 成功响应
-
-成功时通常返回 JSON 对象，常见格式为 `data` 包裹。
+### 标准响应
+成功的请求通常返回一个 JSON 对象，通常包装在 `data` 中。
 
 ### 错误响应
-
-错误时返回非 2xx 状态码以及 JSON 响应体。
+错误返回非 2xx 状态码和 JSON 正文。
 
 ```json
 {
@@ -38,8 +36,7 @@ BasaltPass API 遵循 REST 风格和标准 HTTP 状态码。
 }
 ```
 
-> **注意**: 请优先检查 HTTP 状态码。
+> **注意**: 请始终首先检查 HTTP 状态码。
 
-## Request ID
-
-每个请求都会分配唯一的 `request_id`。它会出现在响应头 `X-Request-Id` 中，也经常出现在错误响应体里。排查问题时请一并提供。
+## 请求 ID
+每个请求都会分配一个唯一的 `request_id`。此 ID 在响应头 (`X-Request-Id`) 和错误正文中返回。报告问题时请提供此 ID。

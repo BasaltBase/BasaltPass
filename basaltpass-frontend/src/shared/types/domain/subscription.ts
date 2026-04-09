@@ -10,12 +10,12 @@ export interface SubscriptionResponse {
       }
     }
   }
-  TenantID?: number // 新增：租户ID
+  TenantID?: number // translated：tenantID
 }
 
 export interface Plan {
   ID: number
-  TenantID?: number // 新增：租户ID
+  TenantID?: number // translated：tenantID
   ProductID?: number
   Code?: string
   DisplayName: string
@@ -42,7 +42,7 @@ export interface PlanFeature {
 
 export interface Product {
   ID: number
-  TenantID?: number // 新增：租户ID
+  TenantID?: number // translated：tenantID
   Code: string
   Name: string
   Description?: string
@@ -55,7 +55,7 @@ export interface Product {
 
 export interface Price {
   ID: number
-  TenantID?: number // 新增：租户ID
+  TenantID?: number // translated：tenantID
   PlanID?: number
   AmountCents: number
   Currency: string

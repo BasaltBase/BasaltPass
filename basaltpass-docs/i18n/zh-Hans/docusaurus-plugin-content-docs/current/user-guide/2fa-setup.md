@@ -2,18 +2,18 @@
 sidebar_position: 5
 ---
 
-# Two-Factor Authentication (2FA)
+# 双重身份验证 (2FA)
 
-BasaltPass supports TOTP (Time-based One-Time Password) for 2FA.
+BasaltPass 支持 TOTP (基于时间的一次性密码) 用于双重身份验证。
 
-## User Setup
+## 用户设置
 
-1.  Log in to the **User Console**.
-2.  Go to **Profile** > **Security**.
-3.  Click **Enable 2FA**.
-4.  Scan the QR code with an authenticator app (Google Authenticator, Authy).
-5.  Enter the verification code to confirm.
+1.  登录 **用户控制台**。
+2.  进入 **个人资料** > **安全**。
+3.  点击 **启用 2FA**。
+4.  使用身份验证器应用 (Google Authenticator、Authy) 扫描二维码。
+5.  输入验证码以确认。
 
-## Admin Controls
+## 管理员控制
 
-Tenant Admins can view which users have 2FA enabled but cannot view the secret keys. Admins can reset 2FA for users who have lost their device.
+租户管理员可以查看哪些用户启用了 2FA，但无法查看密钥。管理员可以为丢失设备的用户重置 2FA。

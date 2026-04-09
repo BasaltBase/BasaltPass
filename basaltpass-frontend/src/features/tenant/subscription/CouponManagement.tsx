@@ -23,11 +23,13 @@ import {
   deleteTenantCoupon 
 } from '@api/tenant/subscription';
 import useDebounce from '@hooks/useDebounce';
+import { useI18n } from '@shared/i18n'
 import { PSkeleton, PBadge, PButton, PEmptyState, PInput, PSelect, PTextarea, Modal, PPageHeader } from '@ui'
 
 interface CouponManagementProps {}
 
 const CouponManagement: React.FC<CouponManagementProps> = () => {
+  const { t, locale } = useI18n()
   const [coupons, setCoupons] = useState<tenantSubscriptionAPI.TenantCoupon[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -51,7 +53,7 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
       setCoupons(response.data || []);
     } catch (error) {
       console.error('Failed to fetch coupons:', error);
-      uiAlert('获取优惠券列表失败，请检查网络连接或联系管理员');
+      uiAlert(t('tenantCouponManagement.alerts.fetchFailed'));
       setCoupons([]);
     } finally {
       setLoading(false);
@@ -81,17 +83,17 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
   };
 
   const handleDeleteCoupon = async (couponCode: string) => {
-    if (!await uiConfirm(`确定要删除优惠券"${couponCode}"吗？`)) {
+    if (!await uiConfirm(t('tenantCouponManagement.confirm.deleteCoupon', { code: couponCode }))) {
       return;
     }
 
     try {
       await deleteTenantCoupon(couponCode);
       setCoupons(prev => prev.filter(c => c.Code !== couponCode));
-      uiAlert('优惠券删除成功');
+      uiAlert(t('tenantCouponManagement.alerts.deleteSuccess'));
     } catch (error: any) {
       console.error('Failed to delete coupon:', error);
-      uiAlert(`删除优惠券失败: ${error.response?.data?.error || error.message || '服务器错误'}`);
+      uiAlert(`${t('tenantCouponManagement.alerts.deleteFailed')}: ${error.response?.data?.error || error.message || t('tenantCouponManagement.errors.serverError')}`);
     }
   };
 
@@ -101,10 +103,10 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
       setCoupons(prev => prev.map(c => 
         c.Code === couponCode ? { ...c, IsActive: !currentStatus } : c
       ));
-      uiAlert(`优惠券已${!currentStatus ? '启用' : '停用'}`);
+      uiAlert(t(!currentStatus ? 'tenantCouponManagement.alerts.enabled' : 'tenantCouponManagement.alerts.disabled'));
     } catch (error: any) {
       console.error('Failed to toggle coupon status:', error);
-      uiAlert(`操作失败: ${error.response?.data?.error || error.message || '服务器错误'}`);
+      uiAlert(`${t('tenantCouponManagement.alerts.operationFailed')}: ${error.response?.data?.error || error.message || t('tenantCouponManagement.errors.serverError')}`);
     }
   };
 
@@ -119,11 +121,11 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
   const formatDuration = (coupon: tenantSubscriptionAPI.TenantCoupon) => {
     switch (coupon.Duration) {
       case 'once':
-        return '一次性';
+        return t('tenantCouponManagement.duration.once');
       case 'repeating':
-        return coupon.DurationInCycles ? `${coupon.DurationInCycles}个周期` : '重复使用';
+        return coupon.DurationInCycles ? t('tenantCouponManagement.duration.repeatingWithCycles', { cycles: coupon.DurationInCycles }) : t('tenantCouponManagement.duration.repeating');
       case 'forever':
-        return '永久';
+        return t('tenantCouponManagement.duration.forever');
       default:
         return coupon.Duration;
     }
@@ -138,15 +140,15 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
   };
 
   const getCouponStatus = (coupon: tenantSubscriptionAPI.TenantCoupon) => {
-    if (!coupon.IsActive) return { text: '已停用', color: 'gray', icon: XCircleIcon };
-    if (isExpired(coupon)) return { text: '已过期', color: 'red', icon: ClockIcon };
-    if (isMaxRedemptionsReached(coupon)) return { text: '已用完', color: 'orange', icon: ExclamationTriangleIcon };
-    return { text: '活跃', color: 'green', icon: CheckCircleIcon };
+    if (!coupon.IsActive) return { text: t('tenantCouponManagement.status.inactive'), color: 'gray', icon: XCircleIcon };
+    if (isExpired(coupon)) return { text: t('tenantCouponManagement.status.expired'), color: 'red', icon: ClockIcon };
+    if (isMaxRedemptionsReached(coupon)) return { text: t('tenantCouponManagement.status.exhausted'), color: 'orange', icon: ExclamationTriangleIcon };
+    return { text: t('tenantCouponManagement.status.active'), color: 'green', icon: CheckCircleIcon };
   };
 
   if (loading) {
     return (
-      <TenantLayout title="优惠券管理">
+      <TenantLayout title={t('tenantCouponManagement.layoutTitle')}>
         <div className="py-6">
           <PSkeleton.Management />
         </div>
@@ -155,20 +157,20 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
   }
 
   return (
-    <TenantLayout title="优惠券管理">
+    <TenantLayout title={t('tenantCouponManagement.layoutTitle')}>
       <div className="space-y-6">
         <PPageHeader
-          title="优惠券管理"
-          description="创建和管理订阅优惠券，提升用户转化率"
+          title={t('tenantCouponManagement.title')}
+          description={t('tenantCouponManagement.description')}
           icon={<GiftIcon className="h-8 w-8 text-indigo-600" />}
           actions={
             <PButton type="button" onClick={handleCreateCoupon} leftIcon={<PlusIcon className="h-5 w-5" />}>
-              创建优惠券
+              {t('tenantCouponManagement.actions.createCoupon')}
             </PButton>
           }
         />
 
-        {/* 统计卡片 */}
+        {/*  */}
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-4">
           <div className="overflow-hidden rounded-xl bg-white shadow-sm">
             <div className="p-5">
@@ -178,7 +180,7 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">总优惠券</dt>
+                    <dt className="text-sm font-medium text-gray-500 truncate">{t('tenantCouponManagement.stats.totalCoupons')}</dt>
                     <dd className="text-lg font-medium text-gray-900">{coupons.length}</dd>
                   </dl>
                 </div>
@@ -194,7 +196,7 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">活跃券</dt>
+                    <dt className="text-sm font-medium text-gray-500 truncate">{t('tenantCouponManagement.stats.activeCoupons')}</dt>
                     <dd className="text-lg font-medium text-gray-900">
                       {coupons.filter(c => c.IsActive && !isExpired(c)).length}
                     </dd>
@@ -212,7 +214,7 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">已过期</dt>
+                    <dt className="text-sm font-medium text-gray-500 truncate">{t('tenantCouponManagement.stats.expiredCoupons')}</dt>
                     <dd className="text-lg font-medium text-gray-900">
                       {coupons.filter(c => isExpired(c)).length}
                     </dd>
@@ -230,7 +232,7 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">总使用次数</dt>
+                    <dt className="text-sm font-medium text-gray-500 truncate">{t('tenantCouponManagement.stats.totalRedemptions')}</dt>
                     <dd className="text-lg font-medium text-gray-900">
                       {coupons.reduce((sum, c) => sum + (c.RedeemedCount || 0), 0)}
                     </dd>
@@ -241,7 +243,7 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
           </div>
         </div>
 
-        {/* 筛选和搜索栏 */}
+        {/*  */}
         <div className="rounded-xl bg-white p-6 shadow-sm">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="relative">
@@ -253,7 +255,7 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
-                placeholder="搜索优惠券代码或名称..."
+                placeholder={t('tenantCouponManagement.filters.searchPlaceholder')}
               />
             </div>
             <div>
@@ -261,24 +263,24 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
               >
-                <option value="all">所有状态</option>
-                <option value="active">活跃</option>
-                <option value="inactive">已停用</option>
-                <option value="expired">已过期</option>
+                <option value="all">{t('tenantCouponManagement.filters.allStatus')}</option>
+                <option value="active">{t('tenantCouponManagement.filters.active')}</option>
+                <option value="inactive">{t('tenantCouponManagement.filters.inactive')}</option>
+                <option value="expired">{t('tenantCouponManagement.filters.expired')}</option>
               </PSelect>
             </div>
           </div>
         </div>
 
-        {/* 优惠券列表 */}
+        {/*  */}
         {filteredCoupons.length === 0 ? (
           <PEmptyState
             icon={GiftIcon}
-            title={searchTerm || filterStatus !== 'all' ? '没有找到匹配的优惠券' : '暂无优惠券'}
-            description={searchTerm || filterStatus !== 'all' ? '请尝试调整搜索条件或筛选器' : '开始创建第一个优惠券来提升销售'}
+            title={searchTerm || filterStatus !== 'all' ? t('tenantCouponManagement.empty.noMatchTitle') : t('tenantCouponManagement.empty.noCouponsTitle')}
+            description={searchTerm || filterStatus !== 'all' ? t('tenantCouponManagement.empty.noMatchDescription') : t('tenantCouponManagement.empty.noCouponsDescription')}
           >
             {!searchTerm && filterStatus === 'all' && (
-              <PButton onClick={handleCreateCoupon} leftIcon={<PlusIcon className="h-5 w-5" />}>创建优惠券</PButton>
+              <PButton onClick={handleCreateCoupon} leftIcon={<PlusIcon className="h-5 w-5" />}>{t('tenantCouponManagement.actions.createCoupon')}</PButton>
             )}
           </PEmptyState>
         ) : (
@@ -328,20 +330,20 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
 
                     <div className="mt-4 space-y-3">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">折扣：</span>
+                        <span className="text-gray-500">{t('tenantCouponManagement.fields.discount')}</span>
                         <span className="font-medium text-lg text-blue-600">
                           {formatDiscountValue(coupon)}
                         </span>
                       </div>
 
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">类型：</span>
+                        <span className="text-gray-500">{t('tenantCouponManagement.fields.type')}</span>
                         <span className="font-medium">{formatDuration(coupon)}</span>
                       </div>
 
                       {coupon.MaxRedemptions && (
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-500">使用情况：</span>
+                          <span className="text-gray-500">{t('tenantCouponManagement.fields.usage')}</span>
                           <div className="text-right">
                             <span className="font-medium">
                               {coupon.RedeemedCount}/{coupon.MaxRedemptions}
@@ -360,9 +362,9 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
 
                       {coupon.ExpiresAt && (
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-500">过期时间：</span>
+                          <span className="text-gray-500">{t('tenantCouponManagement.fields.expiresAt')}</span>
                           <span className={`font-medium ${isExpired(coupon) ? 'text-red-600' : 'text-gray-900'}`}>
-                            {new Date(coupon.ExpiresAt).toLocaleDateString()}
+                            {new Date(coupon.ExpiresAt).toLocaleDateString(locale)}
                           </span>
                         </div>
                       )}
@@ -382,15 +384,15 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
                             variant={coupon.IsActive ? 'danger' : 'secondary'}
                             onClick={() => handleToggleStatus(coupon.Code, coupon.IsActive)}
                           >
-                            {coupon.IsActive ? '停用' : '启用'}
+                            {coupon.IsActive ? t('tenantCouponManagement.actions.disable') : t('tenantCouponManagement.actions.enable')}
                           </PButton>
                         </div>
                       </div>
                     </div>
 
                     <div className="mt-4 flex space-x-2">
-                      <PButton variant="secondary" className="flex-1" onClick={() => handleEditCoupon(coupon)} leftIcon={<PencilIcon className="h-4 w-4" />}>编辑</PButton>
-                      <PButton variant="danger" className="flex-1" onClick={() => handleDeleteCoupon(coupon.Code)} leftIcon={<TrashIcon className="h-4 w-4" />}>删除</PButton>
+                      <PButton variant="secondary" className="flex-1" onClick={() => handleEditCoupon(coupon)} leftIcon={<PencilIcon className="h-4 w-4" />}>{t('tenantCouponManagement.actions.edit')}</PButton>
+                      <PButton variant="danger" className="flex-1" onClick={() => handleDeleteCoupon(coupon.Code)} leftIcon={<TrashIcon className="h-4 w-4" />}>{t('tenantCouponManagement.actions.delete')}</PButton>
                     </div>
                   </div>
                 </div>
@@ -400,7 +402,7 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
         )}
       </div>
 
-      {/* 创建/编辑优惠券模态框 */}
+      {/* / */}
       {showCreateModal && (
         <CreateCouponModal
           coupon={editingCoupon}
@@ -415,12 +417,13 @@ const CouponManagement: React.FC<CouponManagementProps> = () => {
   );
 };
 
-// 创建优惠券模态框组件
+// 
 const CreateCouponModal: React.FC<{
   coupon?: tenantSubscriptionAPI.TenantCoupon | null;
   onClose: () => void;
   onSuccess: () => void;
 }> = ({ coupon, onClose, onSuccess }) => {
+  const { t } = useI18n()
   const [formData, setFormData] = useState({
     code: coupon?.Code || '',
     name: coupon?.Name || '',
@@ -447,13 +450,13 @@ const CreateCouponModal: React.FC<{
         name: formData.name,
         discount_type: formData.discount_type as 'percent' | 'fixed',
         discount_value: formData.discount_type === 'percent' 
-          ? Math.round(parseFloat(formData.discount_value) * 100) // 转换为基点
-          : Math.round(parseFloat(formData.discount_value) * 100), // 转换为分
+          ? Math.round(parseFloat(formData.discount_value) * 100) // 
+          : Math.round(parseFloat(formData.discount_value) * 100), // 
         duration: formData.duration as 'once' | 'repeating' | 'forever',
         duration_in_cycles: formData.duration_in_cycles ? parseInt(formData.duration_in_cycles) : undefined,
         max_redemptions: formData.max_redemptions ? parseInt(formData.max_redemptions) : undefined,
-        // 后端期望 ISO 8601（RFC3339）时间字符串，表单为日期，需转换
-        // 约定使用该日 23:59:59Z 作为过期时间，避免时区造成的日期偏移
+        //  ISO 8601（RFC3339），，
+        //  23:59:59Z ，
         expires_at: formData.expires_at
           ? new Date(`${formData.expires_at}T23:59:59Z`).toISOString()
           : undefined,
@@ -463,19 +466,19 @@ const CreateCouponModal: React.FC<{
       };
 
       if (coupon) {
-        // 更新优惠券
+        // 
         await updateTenantCoupon(coupon.Code, submitData as tenantSubscriptionAPI.UpdateTenantCouponRequest);
-        uiAlert('优惠券更新成功');
+        uiAlert(t('tenantCouponManagement.alerts.updatedSuccess'));
       } else {
-        // 创建优惠券
+        // 
         await createTenantCoupon(submitData);
-        uiAlert('优惠券创建成功');
+        uiAlert(t('tenantCouponManagement.alerts.createdSuccess'));
       }
       
       onSuccess();
     } catch (error: any) {
       console.error('Failed to save coupon:', error);
-      uiAlert(`保存优惠券失败: ${error.response?.data?.error || error.message}`);
+      uiAlert(`${t('tenantCouponManagement.alerts.saveFailed')}: ${error.response?.data?.error || error.message}`);
     } finally {
       setSubmitting(false);
     }
@@ -485,46 +488,46 @@ const CreateCouponModal: React.FC<{
     <Modal
       open
       onClose={onClose}
-      title={coupon ? '编辑优惠券' : '创建优惠券'}
+      title={coupon ? t('tenantCouponManagement.modal.editTitle') : t('tenantCouponManagement.modal.createTitle')}
       widthClass="max-w-2xl"
     >
       <div className="space-y-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <PInput
-                label="优惠券代码 *"
+                label={t('tenantCouponManagement.modal.codeLabel')}
                 type="text"
                 required
                 value={formData.code}
                 onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                placeholder="输入优惠券代码"
+                placeholder={t('tenantCouponManagement.modal.codePlaceholder')}
               />
               <PInput
-                label="优惠券名称 *"
+                label={t('tenantCouponManagement.modal.nameLabel')}
                 type="text"
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="输入优惠券名称"
+                placeholder={t('tenantCouponManagement.modal.namePlaceholder')}
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">折扣类型 *</label>
+                <label className="mb-2 block text-sm font-medium text-gray-700">{t('tenantCouponManagement.modal.discountTypeLabel')}</label>
                 <PSelect
                   required
                   value={formData.discount_type}
                   onChange={(e) => setFormData({ ...formData, discount_type: e.target.value as 'percent' | 'fixed' })}
                 >
-                  <option value="percent">百分比折扣</option>
-                  <option value="fixed">固定金额折扣</option>
+                  <option value="percent">{t('tenantCouponManagement.modal.discountTypePercent')}</option>
+                  <option value="fixed">{t('tenantCouponManagement.modal.discountTypeFixed')}</option>
                 </PSelect>
               </div>
               
               <div>
                 <PInput
-                  label="折扣值 *"
+                  label={t('tenantCouponManagement.modal.discountValueLabel')}
                   type="number"
                   step="0.01"
                   min="0"
@@ -532,51 +535,51 @@ const CreateCouponModal: React.FC<{
                   required
                   value={formData.discount_value}
                   onChange={(e) => setFormData({ ...formData, discount_value: e.target.value })}
-                  placeholder={formData.discount_type === 'percent' ? '输入百分比 (如: 10)' : '输入金额 (如: 50)'}
+                  placeholder={formData.discount_type === 'percent' ? t('tenantCouponManagement.modal.discountValuePercentPlaceholder') : t('tenantCouponManagement.modal.discountValueFixedPlaceholder')}
                 />
                 <p className="mt-1 text-sm text-gray-500">
-                  {formData.discount_type === 'percent' ? '输入1-100之间的数字' : '输入金额（元）'}
+                  {formData.discount_type === 'percent' ? t('tenantCouponManagement.modal.discountValuePercentHint') : t('tenantCouponManagement.modal.discountValueFixedHint')}
                 </p>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">使用期限 *</label>
+                <label className="mb-2 block text-sm font-medium text-gray-700">{t('tenantCouponManagement.modal.durationLabel')}</label>
                 <PSelect
                   required
                   value={formData.duration}
                   onChange={(e) => setFormData({ ...formData, duration: e.target.value as 'once' | 'repeating' | 'forever' })}
                 >
-                  <option value="once">一次性</option>
-                  <option value="repeating">重复使用</option>
-                  <option value="forever">永久</option>
+                  <option value="once">{t('tenantCouponManagement.duration.once')}</option>
+                  <option value="repeating">{t('tenantCouponManagement.duration.repeating')}</option>
+                  <option value="forever">{t('tenantCouponManagement.duration.forever')}</option>
                 </PSelect>
               </div>
               
               {formData.duration === 'repeating' && (
                 <PInput
-                  label="重复周期数"
+                  label={t('tenantCouponManagement.modal.durationCyclesLabel')}
                   type="number"
                   min="1"
                   value={formData.duration_in_cycles}
                   onChange={(e) => setFormData({ ...formData, duration_in_cycles: e.target.value })}
-                  placeholder="输入周期数"
+                  placeholder={t('tenantCouponManagement.modal.durationCyclesPlaceholder')}
                 />
               )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <PInput
-                label="最大使用次数"
+                label={t('tenantCouponManagement.modal.maxRedemptionsLabel')}
                 type="number"
                 min="1"
                 value={formData.max_redemptions}
                 onChange={(e) => setFormData({ ...formData, max_redemptions: e.target.value })}
-                placeholder="留空表示无限制"
+                placeholder={t('tenantCouponManagement.modal.maxRedemptionsPlaceholder')}
               />
               <PInput
-                label="过期日期"
+                label={t('tenantCouponManagement.modal.expiresAtLabel')}
                 type="date"
                 value={formData.expires_at}
                 onChange={(e) => setFormData({ ...formData, expires_at: e.target.value })}
@@ -584,11 +587,11 @@ const CreateCouponModal: React.FC<{
             </div>
 
             <PTextarea
-              label="描述"
+              label={t('tenantCouponManagement.modal.descriptionLabel')}
               rows={3}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="输入优惠券描述"
+              placeholder={t('tenantCouponManagement.modal.descriptionPlaceholder')}
             />
 
             <div className="flex items-center">
@@ -599,7 +602,7 @@ const CreateCouponModal: React.FC<{
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
               <label className="ml-2 block text-sm text-gray-900">
-                立即激活优惠券
+                {t('tenantCouponManagement.modal.activateImmediately')}
               </label>
             </div>
 
@@ -610,13 +613,13 @@ const CreateCouponModal: React.FC<{
                 onClick={onClose}
                 disabled={submitting}
               >
-                取消
+                {t('tenantCouponManagement.actions.cancel')}
               </PButton>
               <PButton
                 type="submit"
                 disabled={submitting}
               >
-                {submitting ? '保存中...' : (coupon ? '更新' : '创建')}
+                {submitting ? t('tenantCouponManagement.actions.saving') : (coupon ? t('tenantCouponManagement.actions.update') : t('tenantCouponManagement.actions.create'))}
               </PButton>
             </div>
           </form>

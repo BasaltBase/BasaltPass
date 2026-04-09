@@ -5,10 +5,12 @@ import { uiAlert } from '@contexts/DialogContext'
 import { PBadge, PButton, PCard, PInput, PSelect, PSkeleton, PTextarea } from '@ui'
 import { tenantWalletApi, type TenantAdjustOwnerWalletRequest, type TenantCurrency, type TenantWallet, type TenantWalletTransaction } from '@api/tenant/wallet'
 import { tenantGiftCardApi, type GiftCardItem } from '@api/tenant/giftCard'
+import { useI18n } from '@shared/i18n'
 
 type OwnerType = 'user' | 'team'
 
 export default function TenantWalletManagement() {
+  const { t, locale } = useI18n()
   const [wallets, setWallets] = useState<TenantWallet[]>([])
   const [currencies, setCurrencies] = useState<TenantCurrency[]>([])
   const [loading, setLoading] = useState(false)
@@ -52,7 +54,7 @@ export default function TenantWalletManagement() {
       setCurrencies(currencyResponse.data || [])
       await loadGiftCards()
     } catch (error) {
-      console.error('加载租户钱包数据失败:', error)
+      console.error(t('tenantWalletManagement.logs.loadDataFailed'), error)
       setWallets([])
       setCurrencies([])
     } finally {
@@ -117,7 +119,7 @@ export default function TenantWalletManagement() {
       const response = await tenantGiftCardApi.list({ page: 1, page_size: 50 })
       setGiftCards(response.data || [])
     } catch (error) {
-      console.error('加载礼品卡失败:', error)
+      console.error(t('tenantWalletManagement.logs.loadGiftCardsFailed'), error)
       setGiftCards([])
     } finally {
       setGiftCardLoading(false)
@@ -127,15 +129,15 @@ export default function TenantWalletManagement() {
   const handleCreateGiftCards = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!giftCardForm.currency_code) {
-      uiAlert('请选择礼品卡币种')
+      uiAlert(t('tenantWalletManagement.alerts.selectGiftCardCurrency'))
       return
     }
     if (giftCardForm.amount <= 0) {
-      uiAlert('请输入有效金额')
+      uiAlert(t('tenantWalletManagement.alerts.invalidAmount'))
       return
     }
     if (giftCardForm.quantity <= 0) {
-      uiAlert('请输入有效数量')
+      uiAlert(t('tenantWalletManagement.alerts.invalidQuantity'))
       return
     }
 
@@ -148,11 +150,11 @@ export default function TenantWalletManagement() {
         expires_at: giftCardForm.expires_at ? new Date(giftCardForm.expires_at).toISOString() : undefined,
         note: giftCardForm.note || undefined,
       })
-      uiAlert('礼品卡批次创建成功')
+      uiAlert(t('tenantWalletManagement.alerts.giftCardCreateSuccess'))
       setGiftCardForm({ currency_code: '', amount: 0, quantity: 10, expires_at: '', note: '' })
       await loadGiftCards()
     } catch (error: any) {
-      uiAlert(error.response?.data?.error || '创建礼品卡失败')
+      uiAlert(error.response?.data?.error || t('tenantWalletManagement.alerts.giftCardCreateFailed'))
     } finally {
       setGiftCardSubmitting(false)
     }
@@ -161,10 +163,10 @@ export default function TenantWalletManagement() {
   const handleInvalidateGiftCard = async (id: number) => {
     try {
       await tenantGiftCardApi.invalidate(id)
-      uiAlert('礼品卡已失效')
+      uiAlert(t('tenantWalletManagement.alerts.giftCardInvalidated'))
       await loadGiftCards()
     } catch (error: any) {
-      uiAlert(error.response?.data?.error || '礼品卡失效失败')
+      uiAlert(error.response?.data?.error || t('tenantWalletManagement.alerts.giftCardInvalidateFailed'))
     }
   }
 
@@ -172,19 +174,19 @@ export default function TenantWalletManagement() {
     e.preventDefault()
 
     if (!quickAdjustForm.owner_id) {
-      uiAlert('请输入用户或团队 ID')
+      uiAlert(t('tenantWalletManagement.alerts.enterOwnerId'))
       return
     }
     if (!quickAdjustForm.currency_code) {
-      uiAlert('请选择货币类型')
+      uiAlert(t('tenantWalletManagement.alerts.selectCurrency'))
       return
     }
     if (!quickAdjustForm.reason.trim()) {
-      uiAlert('请输入调整原因')
+      uiAlert(t('tenantWalletManagement.alerts.enterReason'))
       return
     }
     if (!quickAdjustForm.amount) {
-      uiAlert('调整金额不能为 0')
+      uiAlert(t('tenantWalletManagement.alerts.amountCannotBeZero'))
       return
     }
 
@@ -198,7 +200,7 @@ export default function TenantWalletManagement() {
         const existingWallet = (walletResponse.data || []).find(wallet => wallet.currency?.code === quickAdjustForm.currency_code) || null
         const currencyMeta = existingWallet?.currency || currencies.find(currency => currency.code === quickAdjustForm.currency_code)
         if (!currencyMeta) {
-          uiAlert('未找到对应货币配置')
+          uiAlert(t('tenantWalletManagement.alerts.currencyConfigMissing'))
           return
         }
         const targetSmallest = convertToSmallestUnit(quickAdjustForm.amount, currencyMeta.decimal_places)
@@ -206,7 +208,7 @@ export default function TenantWalletManagement() {
         const deltaSmallest = targetSmallest - currentSmallest
         requestAmount = convertFromSmallestUnit(deltaSmallest, currencyMeta.decimal_places)
         if (!requestAmount) {
-          uiAlert('目标余额与当前余额相同，无需调整')
+          uiAlert(t('tenantWalletManagement.alerts.noAdjustmentNeeded'))
           return
         }
       }
@@ -216,12 +218,12 @@ export default function TenantWalletManagement() {
       } else {
         await tenantWalletApi.adjustTeamWallet(quickAdjustForm.owner_id, { ...quickAdjustForm, amount: requestAmount })
       }
-      uiAlert('余额调整成功')
+      uiAlert(t('tenantWalletManagement.alerts.adjustSuccess'))
       setQuickAdjustMode('delta')
       resetQuickAdjustForm()
       loadData()
     } catch (error: any) {
-      uiAlert(error.response?.data?.error || '调整余额失败')
+      uiAlert(error.response?.data?.error || t('tenantWalletManagement.alerts.adjustFailed'))
     } finally {
       setSubmitting(false)
     }
@@ -235,7 +237,7 @@ export default function TenantWalletManagement() {
       const response = await tenantWalletApi.getWalletTransactions(wallet.id, { page: 1, page_size: 50 })
       setTransactions(response.data || [])
     } catch (error: any) {
-      uiAlert(error.response?.data?.error || '加载交易记录失败')
+      uiAlert(error.response?.data?.error || t('tenantWalletManagement.alerts.loadTransactionsFailed'))
       setTransactions([])
     } finally {
       setTransactionLoading(false)
@@ -243,7 +245,7 @@ export default function TenantWalletManagement() {
   }
 
   return (
-    <TenantLayout title="钱包管理">
+    <TenantLayout title={t('tenantWalletManagement.layoutTitle')}>
       <div className="space-y-6">
         <PCard variant="bordered">
           <div className="flex items-start justify-between gap-6 p-6">
@@ -252,11 +254,11 @@ export default function TenantWalletManagement() {
                 <WalletIcon className="h-6 w-6" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">租户钱包管理</h1>
-                <p className="mt-1 text-sm text-gray-500">按用户或团队快速调整余额，并查看当前钱包状态。</p>
+                <h1 className="text-2xl font-bold text-gray-900">{t('tenantWalletManagement.header.title')}</h1>
+                <p className="mt-1 text-sm text-gray-500">{t('tenantWalletManagement.header.description')}</p>
               </div>
             </div>
-            <PButton variant="secondary" onClick={loadData} disabled={loading}>刷新</PButton>
+            <PButton variant="secondary" onClick={loadData} disabled={loading}>{t('tenantWalletManagement.actions.refresh')}</PButton>
           </div>
         </PCard>
 
@@ -269,35 +271,37 @@ export default function TenantWalletManagement() {
                   <PencilIcon className="h-5 w-5" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">直接调余额</h2>
-                  <p className="text-sm text-gray-500">无需先知道 wallet ID</p>
+                  <h2 className="text-lg font-semibold text-gray-900">{t('tenantWalletManagement.adjust.title')}</h2>
+                  <p className="text-sm text-gray-500">{t('tenantWalletManagement.adjust.description')}</p>
                 </div>
               </div>
 
               <form onSubmit={handleQuickAdjust} className="space-y-4">
                 <PSelect
-                  label="调整方式"
+                  label={t('tenantWalletManagement.adjust.modeLabel')}
                   value={quickAdjustMode}
                   onChange={(e) => setQuickAdjustMode((e.target as HTMLSelectElement).value as 'delta' | 'target')}
                   variant="rounded"
                 >
-                  <option value="delta">按增减额调整</option>
-                  <option value="target">设置目标余额</option>
+                  <option value="delta">{t('tenantWalletManagement.adjust.modeDelta')}</option>
+                  <option value="target">{t('tenantWalletManagement.adjust.modeTarget')}</option>
                 </PSelect>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <PSelect
-                    label="对象类型"
+                    label={t('tenantWalletManagement.adjust.ownerTypeLabel')}
                     value={quickAdjustForm.owner_type}
                     onChange={(e) => setQuickAdjustForm({ ...quickAdjustForm, owner_type: (e.target as HTMLSelectElement).value as OwnerType })}
                     variant="rounded"
                   >
-                    <option value="user">用户</option>
-                    <option value="team">团队</option>
+                    <option value="user">{t('tenantWalletManagement.common.user')}</option>
+                    <option value="team">{t('tenantWalletManagement.common.team')}</option>
                   </PSelect>
                   <PInput
                     type="number"
-                    label={`${quickAdjustForm.owner_type === 'user' ? '用户' : '团队'} ID`}
+                    label={t('tenantWalletManagement.adjust.ownerIdLabel', {
+                      owner: quickAdjustForm.owner_type === 'user' ? t('tenantWalletManagement.common.user') : t('tenantWalletManagement.common.team'),
+                    })}
                     value={quickAdjustForm.owner_id || ''}
                     onChange={(e) => setQuickAdjustForm({ ...quickAdjustForm, owner_id: e.target.value ? parseInt(e.target.value, 10) : undefined })}
                     variant="rounded"
@@ -306,12 +310,12 @@ export default function TenantWalletManagement() {
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <PSelect
-                    label="货币类型"
+                    label={t('tenantWalletManagement.adjust.currencyLabel')}
                     value={quickAdjustForm.currency_code}
                     onChange={(e) => setQuickAdjustForm({ ...quickAdjustForm, currency_code: (e.target as HTMLSelectElement).value })}
                     variant="rounded"
                   >
-                    <option value="">选择货币</option>
+                    <option value="">{t('tenantWalletManagement.adjust.selectCurrency')}</option>
                     {currencies.map(currency => (
                       <option key={currency.code} value={currency.code}>
                         {currency.code} - {currency.name}
@@ -321,16 +325,16 @@ export default function TenantWalletManagement() {
                   <PInput
                     type="number"
                     step="0.01"
-                    label={quickAdjustMode === 'delta' ? '调整金额' : '目标余额'}
+                    label={quickAdjustMode === 'delta' ? t('tenantWalletManagement.adjust.amountLabel') : t('tenantWalletManagement.adjust.targetBalanceLabel')}
                     value={quickAdjustForm.amount}
                     onChange={(e) => setQuickAdjustForm({ ...quickAdjustForm, amount: parseFloat(e.target.value) || 0 })}
-                    placeholder={quickAdjustMode === 'delta' ? '正数增加，负数减少' : '设置为该余额'}
+                    placeholder={quickAdjustMode === 'delta' ? t('tenantWalletManagement.adjust.amountPlaceholder') : t('tenantWalletManagement.adjust.targetPlaceholder')}
                     variant="rounded"
                   />
                 </div>
 
                 <PTextarea
-                  label="调整原因"
+                  label={t('tenantWalletManagement.adjust.reasonLabel')}
                   value={quickAdjustForm.reason}
                   onChange={(e) => setQuickAdjustForm({ ...quickAdjustForm, reason: e.target.value })}
                   rows={3}
@@ -344,18 +348,18 @@ export default function TenantWalletManagement() {
                     onChange={(e) => setQuickAdjustForm({ ...quickAdjustForm, create_if_missing: e.target.checked })}
                     className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
-                  钱包不存在时自动创建
+                  {t('tenantWalletManagement.adjust.createIfMissing')}
                 </label>
 
                 <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
                   {quickAdjustMode === 'delta'
-                    ? '当前模式下，正数表示增加余额，负数表示减少余额。'
-                    : '当前模式下，系统会自动计算从当前余额到目标余额所需的调整额。'}
+                    ? t('tenantWalletManagement.adjust.deltaHint')
+                    : t('tenantWalletManagement.adjust.targetHint')}
                 </div>
 
                 <div className="flex justify-end gap-3">
-                  <PButton type="button" variant="secondary" onClick={resetQuickAdjustForm}>重置</PButton>
-                  <PButton type="submit" variant="primary" disabled={submitting} loading={submitting}>确认调整</PButton>
+                  <PButton type="button" variant="secondary" onClick={resetQuickAdjustForm}>{t('tenantWalletManagement.actions.reset')}</PButton>
+                  <PButton type="submit" variant="primary" disabled={submitting} loading={submitting}>{t('tenantWalletManagement.actions.confirmAdjust')}</PButton>
                 </div>
               </form>
               </div>
@@ -368,20 +372,20 @@ export default function TenantWalletManagement() {
                     <CurrencyDollarIcon className="h-5 w-5" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-semibold text-gray-900">Gift Card 批量生卡</h2>
-                    <p className="text-sm text-gray-500">生成后可由用户兑换，兑换成功自动失效</p>
+                    <h2 className="text-lg font-semibold text-gray-900">{t('tenantWalletManagement.giftCard.title')}</h2>
+                    <p className="text-sm text-gray-500">{t('tenantWalletManagement.giftCard.description')}</p>
                   </div>
                 </div>
 
                 <form onSubmit={handleCreateGiftCards} className="space-y-4">
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <PSelect
-                      label="货币类型"
+                      label={t('tenantWalletManagement.giftCard.currencyLabel')}
                       value={giftCardForm.currency_code}
                       onChange={(e) => setGiftCardForm({ ...giftCardForm, currency_code: (e.target as HTMLSelectElement).value })}
                       variant="rounded"
                     >
-                      <option value="">选择货币</option>
+                      <option value="">{t('tenantWalletManagement.giftCard.selectCurrency')}</option>
                       {currencies.map(currency => (
                         <option key={currency.code} value={currency.code}>{currency.code} - {currency.name}</option>
                       ))}
@@ -389,7 +393,7 @@ export default function TenantWalletManagement() {
                     <PInput
                       type="number"
                       step="0.01"
-                      label="单卡金额"
+                      label={t('tenantWalletManagement.giftCard.amountLabel')}
                       value={giftCardForm.amount}
                       onChange={(e) => setGiftCardForm({ ...giftCardForm, amount: parseFloat(e.target.value) || 0 })}
                       variant="rounded"
@@ -399,14 +403,14 @@ export default function TenantWalletManagement() {
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <PInput
                       type="number"
-                      label="生成数量"
+                      label={t('tenantWalletManagement.giftCard.quantityLabel')}
                       value={giftCardForm.quantity}
                       onChange={(e) => setGiftCardForm({ ...giftCardForm, quantity: parseInt(e.target.value || '0', 10) || 0 })}
                       variant="rounded"
                     />
                     <PInput
                       type="datetime-local"
-                      label="过期时间（可选）"
+                      label={t('tenantWalletManagement.giftCard.expiresAtLabel')}
                       value={giftCardForm.expires_at}
                       onChange={(e) => setGiftCardForm({ ...giftCardForm, expires_at: e.target.value })}
                       variant="rounded"
@@ -414,14 +418,14 @@ export default function TenantWalletManagement() {
                   </div>
 
                   <PTextarea
-                    label="备注（可选）"
+                    label={t('tenantWalletManagement.giftCard.noteLabel')}
                     value={giftCardForm.note}
                     onChange={(e) => setGiftCardForm({ ...giftCardForm, note: e.target.value })}
                     rows={2}
                   />
 
                   <div className="flex justify-end">
-                    <PButton type="submit" variant="primary" loading={giftCardSubmitting} disabled={giftCardSubmitting}>批量生成</PButton>
+                    <PButton type="submit" variant="primary" loading={giftCardSubmitting} disabled={giftCardSubmitting}>{t('tenantWalletManagement.actions.createBatch')}</PButton>
                   </div>
                 </form>
               </div>
@@ -432,14 +436,14 @@ export default function TenantWalletManagement() {
             <div className="border-b border-gray-200 p-6">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">钱包列表</h2>
-                  <p className="text-sm text-gray-500">展示最近加载到的用户和团队钱包</p>
+                  <h2 className="text-lg font-semibold text-gray-900">{t('tenantWalletManagement.walletList.title')}</h2>
+                  <p className="text-sm text-gray-500">{t('tenantWalletManagement.walletList.description')}</p>
                 </div>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <PInput
                     value={filters.keyword}
                     onChange={(e) => setFilters({ ...filters, keyword: e.target.value })}
-                    placeholder="搜索 ID / 用户 / 团队 / 货币"
+                    placeholder={t('tenantWalletManagement.walletList.searchPlaceholder')}
                     variant="rounded"
                   />
                   <PSelect
@@ -447,7 +451,7 @@ export default function TenantWalletManagement() {
                     onChange={(e) => setFilters({ ...filters, currency_code: (e.target as HTMLSelectElement).value })}
                     variant="rounded"
                   >
-                    <option value="">全部货币</option>
+                    <option value="">{t('tenantWalletManagement.walletList.allCurrencies')}</option>
                     {currencies.map(currency => (
                       <option key={currency.code} value={currency.code}>
                         {currency.code}
@@ -465,7 +469,7 @@ export default function TenantWalletManagement() {
             ) : (
               <div className="divide-y divide-gray-100">
                 {filteredWallets.length === 0 ? (
-                  <div className="p-8 text-center text-sm text-gray-500">暂无钱包数据</div>
+                  <div className="p-8 text-center text-sm text-gray-500">{t('tenantWalletManagement.walletList.empty')}</div>
                 ) : (
                   filteredWallets.map(wallet => (
                     <div key={wallet.id} className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
@@ -475,16 +479,16 @@ export default function TenantWalletManagement() {
                             <WalletIcon className="h-5 w-5" />
                           </div>
                           <div>
-                            <div className="font-medium text-gray-900">钱包 #{wallet.id}</div>
+                            <div className="font-medium text-gray-900">{t('tenantWalletManagement.walletList.walletId', { id: wallet.id })}</div>
                             <div className="mt-1 flex flex-wrap items-center gap-2">
                               {wallet.user_id ? (
-                                <PBadge variant="info"><UsersIcon className="mr-1 h-3 w-3" />用户 #{wallet.user_id}</PBadge>
+                                <PBadge variant="info"><UsersIcon className="mr-1 h-3 w-3" />{t('tenantWalletManagement.walletList.userTag', { id: wallet.user_id })}</PBadge>
                               ) : null}
                               {wallet.team_id ? (
-                                <PBadge variant="success"><UserGroupIcon className="mr-1 h-3 w-3" />团队 #{wallet.team_id}</PBadge>
+                                <PBadge variant="success"><UserGroupIcon className="mr-1 h-3 w-3" />{t('tenantWalletManagement.walletList.teamTag', { id: wallet.team_id })}</PBadge>
                               ) : null}
                               <PBadge variant={wallet.status === 'active' ? 'success' : 'error'}>
-                                {wallet.status === 'active' ? '活跃' : '冻结'}
+                                {wallet.status === 'active' ? t('tenantWalletManagement.status.active') : t('tenantWalletManagement.status.frozen')}
                               </PBadge>
                             </div>
                           </div>
@@ -499,7 +503,7 @@ export default function TenantWalletManagement() {
                       <div className="text-lg font-semibold text-gray-900">{formatBalance(wallet.balance, wallet.currency)}</div>
                       <PButton variant="secondary" size="sm" onClick={() => openTransactionsModal(wallet)}>
                         <EyeIcon className="mr-1 h-4 w-4" />
-                        交易记录
+                        {t('tenantWalletManagement.actions.viewTransactions')}
                       </PButton>
                     </div>
                   </div>
@@ -510,23 +514,23 @@ export default function TenantWalletManagement() {
 
             <div className="border-t border-gray-200 p-6">
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-base font-semibold text-gray-900">Gift Card 列表</h3>
-                <PButton variant="secondary" size="sm" onClick={loadGiftCards} disabled={giftCardLoading}>刷新</PButton>
+                <h3 className="text-base font-semibold text-gray-900">{t('tenantWalletManagement.giftCard.listTitle')}</h3>
+                <PButton variant="secondary" size="sm" onClick={loadGiftCards} disabled={giftCardLoading}>{t('tenantWalletManagement.actions.refresh')}</PButton>
               </div>
               {giftCardLoading ? (
                 <PSkeleton.List items={3} />
               ) : giftCards.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-gray-300 px-6 py-8 text-center text-sm text-gray-500">暂无礼品卡</div>
+                <div className="rounded-xl border border-dashed border-gray-300 px-6 py-8 text-center text-sm text-gray-500">{t('tenantWalletManagement.giftCard.empty')}</div>
               ) : (
                 <div className="overflow-x-auto rounded-xl border border-gray-200">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">卡密</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">金额</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">状态</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">创建时间</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">操作</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tenantWalletManagement.table.code')}</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tenantWalletManagement.table.amount')}</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tenantWalletManagement.table.status')}</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tenantWalletManagement.table.createdAt')}</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tenantWalletManagement.table.actions')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 bg-white">
@@ -535,10 +539,10 @@ export default function TenantWalletManagement() {
                           <td className="px-4 py-3 text-sm font-mono text-gray-700">{item.code}</td>
                           <td className="px-4 py-3 text-sm text-gray-700">{formatGiftCardAmount(item.amount, item.currency?.code)}</td>
                           <td className="px-4 py-3 text-sm text-gray-700">{item.status}</td>
-                          <td className="px-4 py-3 text-sm text-gray-500">{new Date(item.created_at).toLocaleString('zh-CN')}</td>
+                          <td className="px-4 py-3 text-sm text-gray-500">{new Date(item.created_at).toLocaleString(locale)}</td>
                           <td className="px-4 py-3 text-sm">
                             {item.status === 'active' ? (
-                              <PButton variant="danger" size="sm" onClick={() => handleInvalidateGiftCard(item.id)}>设为失效</PButton>
+                              <PButton variant="danger" size="sm" onClick={() => handleInvalidateGiftCard(item.id)}>{t('tenantWalletManagement.actions.invalidate')}</PButton>
                             ) : (
                               <span className="text-gray-400">-</span>
                             )}
@@ -560,9 +564,12 @@ export default function TenantWalletManagement() {
             <div className="p-6">
               <div className="mb-6 flex items-center justify-between">
                 <div>
-                  <h3 className="text-xl font-semibold text-gray-900">钱包 #{transactionWallet.id} 交易记录</h3>
+                  <h3 className="text-xl font-semibold text-gray-900">{t('tenantWalletManagement.transactions.title', { id: transactionWallet.id })}</h3>
                   <p className="mt-1 text-sm text-gray-500">
-                    {transactionWallet.currency.code} · 当前余额 {formatBalance(transactionWallet.balance, transactionWallet.currency)}
+                    {t('tenantWalletManagement.transactions.subtitle', {
+                      currency: transactionWallet.currency.code,
+                      balance: formatBalance(transactionWallet.balance, transactionWallet.currency),
+                    })}
                   </p>
                 </div>
                 <PButton
@@ -573,7 +580,7 @@ export default function TenantWalletManagement() {
                     setTransactions([])
                   }}
                 >
-                  关闭
+                  {t('tenantWalletManagement.actions.close')}
                 </PButton>
               </div>
 
@@ -581,18 +588,18 @@ export default function TenantWalletManagement() {
                 <PSkeleton.List items={3} />
               ) : transactions.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-gray-300 px-6 py-10 text-center text-sm text-gray-500">
-                  暂无交易记录
+                  {t('tenantWalletManagement.transactions.empty')}
                 </div>
               ) : (
                 <div className="overflow-x-auto rounded-xl border border-gray-200">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">类型</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">金额</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">状态</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">备注</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">时间</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tenantWalletManagement.transactions.type')}</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tenantWalletManagement.transactions.amount')}</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tenantWalletManagement.transactions.status')}</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tenantWalletManagement.transactions.reference')}</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tenantWalletManagement.transactions.time')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 bg-white">
@@ -604,7 +611,7 @@ export default function TenantWalletManagement() {
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700">{tx.status}</td>
                           <td className="px-4 py-3 text-sm text-gray-500">{tx.reference || '-'}</td>
-                          <td className="px-4 py-3 text-sm text-gray-500">{new Date(tx.created_at).toLocaleString('zh-CN')}</td>
+                          <td className="px-4 py-3 text-sm text-gray-500">{new Date(tx.created_at).toLocaleString(locale)}</td>
                         </tr>
                       ))}
                     </tbody>

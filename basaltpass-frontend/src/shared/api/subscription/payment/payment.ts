@@ -94,31 +94,31 @@ export interface ListPaymentIntentsResponse {
 }
 
 class PaymentAPI {
-  // 创建支付意图
+  // createpaymenttranslated
   async createPaymentIntent(data: CreatePaymentIntentRequest): Promise<CreatePaymentIntentResponse> {
     const response = await client.post('/api/v1/payment/intents', data);
     return response.data;
   }
 
-  // 创建支付会话
+  // createpaymentsession
   async createPaymentSession(data: CreatePaymentSessionRequest): Promise<CreatePaymentSessionResponse> {
     const response = await client.post('/api/v1/payment/sessions', data);
     return response.data;
   }
 
-  // 获取支付意图
+  // getpaymenttranslated
   async getPaymentIntent(id: number): Promise<PaymentIntent> {
     const response = await client.get(`/api/v1/payment/intents/${id}`);
     return response.data;
   }
 
-  // 获取支付会话
+  // getpaymentsession
   async getPaymentSession(sessionId: string): Promise<PaymentSession> {
     const response = await client.get(`/api/v1/payment/sessions/${sessionId}`);
     return response.data;
   }
 
-  // 获取支付意图列表
+  // getpaymenttranslatedlist
   async listPaymentIntents(limit?: number): Promise<ListPaymentIntentsResponse> {
     const params: any = {};
     if (limit) {
@@ -129,13 +129,13 @@ class PaymentAPI {
     return response.data;
   }
 
-  // 模拟支付
+  // translatedpayment
   async simulatePayment(sessionId: string, success: boolean = true): Promise<SimulatePaymentResponse> {
     const response = await client.post(`/api/v1/payment/simulate/${sessionId}`, { success });
     return response.data;
   }
 
-  // 获取支付页面URL
+  // getpaymenttranslatedURL
   getPaymentCheckoutUrl(sessionId: string): string {
   return `/api/v1/payment/checkout/${sessionId}`;
   }

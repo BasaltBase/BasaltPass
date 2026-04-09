@@ -4,43 +4,51 @@
     "description": "The label for version current"
   },
   "sidebar.tutorialSidebar.category.Introduction": {
-    "message": "Introduction",
+    "message": "介绍",
     "description": "The label for category 'Introduction' in sidebar 'tutorialSidebar'"
   },
   "sidebar.tutorialSidebar.category.Introduction.link.generated-index.description": {
-    "message": "Learn about the core concepts of BasaltPass.",
+    "message": "了解 BasaltPass 的核心概念。",
     "description": "The generated-index page description for category 'Introduction' in sidebar 'tutorialSidebar'"
   },
   "sidebar.tutorialSidebar.category.Integration Guide": {
-    "message": "Integration Guide",
+    "message": "集成指南",
     "description": "The label for category 'Integration Guide' in sidebar 'tutorialSidebar'"
   },
   "sidebar.tutorialSidebar.category.Integration Guide.link.generated-index.description": {
-    "message": "Guides for integrating third-party applications with BasaltPass.",
+    "message": "将第三方应用程序与 BasaltPass 集成的指南。",
     "description": "The generated-index page description for category 'Integration Guide' in sidebar 'tutorialSidebar'"
   },
   "sidebar.tutorialSidebar.category.User & Admin Guide": {
-    "message": "User & Admin Guide",
+    "message": "用户与管理指南",
     "description": "The label for category 'User & Admin Guide' in sidebar 'tutorialSidebar'"
   },
   "sidebar.tutorialSidebar.category.User & Admin Guide.link.generated-index.description": {
-    "message": "Manuals for End Users, Tenant Admins, and Platform Admins.",
+    "message": "面向终端用户、租户管理员和平台管理员的使用手册。",
     "description": "The generated-index page description for category 'User & Admin Guide' in sidebar 'tutorialSidebar'"
   },
   "sidebar.tutorialSidebar.category.Configuration": {
-    "message": "Configuration",
+    "message": "配置",
     "description": "The label for category 'Configuration' in sidebar 'tutorialSidebar'"
   },
   "sidebar.tutorialSidebar.category.Configuration.link.generated-index.description": {
-    "message": "Advanced configuration for BasaltPass deployments.",
+    "message": "BasaltPass 部署的高级配置。",
     "description": "The generated-index page description for category 'Configuration' in sidebar 'tutorialSidebar'"
   },
   "sidebar.tutorialSidebar.category.Reference": {
-    "message": "Reference",
+    "message": "参考资料",
     "description": "The label for category 'Reference' in sidebar 'tutorialSidebar'"
   },
   "sidebar.tutorialSidebar.category.Reference.link.generated-index.description": {
-    "message": "API references and architectural details.",
+    "message": "API 参考和架构详情。",
     "description": "The generated-index page description for category 'Reference' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.Project": {
+    "message": "项目文档",
+    "description": "The label for category 'Project' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.Project.link.generated-index.description": {
+    "message": "内部项目文档和开发参考。",
+    "description": "The generated-index page description for category 'Project' in sidebar 'tutorialSidebar'"
   }
 }

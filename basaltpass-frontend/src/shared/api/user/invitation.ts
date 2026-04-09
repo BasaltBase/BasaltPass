@@ -14,23 +14,23 @@ export interface Invitation {
 }
 
 export const invitationApi = {
-  // 发起邀请
+  // translatedinvitation
   create: (teamId: number, inviteeIds: number[], remark = '') =>
     client.post(`/api/v1/teams/${teamId}/invitations`, { invitee_ids: inviteeIds, remark }),
 
-  // 撤回邀请
+  // translatedinvitation
   revoke: (teamId: number, invId: number) =>
     client.delete(`/api/v1/teams/${teamId}/invitations/${invId}`),
 
-  // 接受邀请
+  // translatedinvitation
   accept: (invId: number) => client.put(`/api/v1/invitations/${invId}/accept`),
 
-  // 拒绝邀请
+  // translatedinvitation
   reject: (invId: number) => client.put(`/api/v1/invitations/${invId}/reject`),
 
-  // 我的收到邀请
+  // translatedtoinvitation
   listIncoming: () => client.get<Invitation[]>('/api/v1/invitations'),
 
-  // 团队已发邀请
+  // teamalreadytranslatedinvitation
   listOutgoing: (teamId: number) => client.get<Invitation[]>(`/api/v1/teams/${teamId}/invitations`),
 } 

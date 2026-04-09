@@ -8,7 +8,7 @@ export interface UserSearchResult {
 }
 
 export const userApi = {
-  // 搜索用户
+  // searchuser
   search: (query: string, limit = 10) =>
     client.get<UserSearchResult[]>(`/api/v1/users/search?q=${encodeURIComponent(query)}&limit=${limit}`),
 } 

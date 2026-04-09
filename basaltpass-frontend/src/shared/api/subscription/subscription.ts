@@ -1,6 +1,6 @@
 import client from '../client';
 
-// 产品相关接口
+// translated
 export interface Product {
   id: number;
   code: string;
@@ -72,7 +72,7 @@ export interface Coupon {
   updated_at: string;
 }
 
-// 订阅相关接口
+// subscriptiontranslated
 export interface Subscription {
   id: number;
   user_id: number;
@@ -94,7 +94,7 @@ export interface Subscription {
   coupon?: Coupon;
 }
 
-// Checkout相关接口
+// Checkouttranslated
 export interface CheckoutRequest {
   user_id: number;
   price_id: number;
@@ -118,57 +118,57 @@ export interface CheckoutResponse {
   stripe_response: any;
 }
 
-// API类
+// APItranslated
 class SubscriptionAPI {
-  // 获取产品列表
+  // gettranslatedlist
   async getProducts() {
     const response = await client.get('/api/v1/products');
     return response.data;
   }
 
-  // 获取产品详情
+  // gettranslateddetails
   async getProduct(id: number) {
     const response = await client.get(`/api/v1/products/${id}`);
     return response.data;
   }
 
-  // 获取套餐列表
+  // gettranslatedlist
   async getPlans() {
     const response = await client.get('/api/v1/plans');
     return response.data;
   }
 
-  // 获取套餐详情
+  // gettranslateddetails
   async getPlan(id: number) {
     const response = await client.get(`/api/v1/plans/${id}`);
     return response.data;
   }
 
-  // 获取价格详情
+  // gettranslateddetails
   async getPrice(id: number) {
     const response = await client.get(`/api/v1/prices/${id}`);
     return response.data;
   }
 
-  // 验证优惠券
+  // translated
   async validateCoupon(code: string) {
     const response = await client.get(`/api/v1/coupons/${code}/validate`);
     return response.data;
   }
 
-  // 获取用户订阅列表
+  // getusersubscriptionlist
   async getSubscriptions() {
     const response = await client.get('/api/v1/subscriptions');
     return response.data;
   }
 
-  // 获取订阅详情
+  // getsubscriptiondetails
   async getSubscription(id: number) {
     const response = await client.get(`/api/v1/subscriptions/${id}`);
     return response.data;
   }
 
-  // 取消订阅
+  // cancelsubscription
   async cancelSubscription(id: number, reason?: string) {
     const response = await client.put(`/api/v1/subscriptions/${id}/cancel`, {
       reason
@@ -176,196 +176,196 @@ class SubscriptionAPI {
     return response.data;
   }
 
-  // 创建订阅结账
+  // createsubscriptiontranslated
   async createCheckout(data: CheckoutRequest): Promise<CheckoutResponse> {
     const response = await client.post('/api/v1/subscriptions/checkout', data);
     return response.data.data;
   }
 
-  // 快速结账
+  // translated
   async quickCheckout(data: QuickCheckoutRequest): Promise<CheckoutResponse> {
     const response = await client.post('/api/v1/subscriptions/quick-checkout', data);
     return response.data.data;
   }
 
-  // 格式化金额（分转元）
+  // translated（translated）
   formatAmount(amountCents: number): string {
     return (amountCents / 100).toFixed(2);
   }
 
-  // 格式化计费周期
+  // translated
   formatBillingPeriod(period: string, interval: number): string {
     const periodMap: Record<string, string> = {
-      day: '天',
-      week: '周',
-      month: '月',
-      year: '年'
+      day: 'translated',
+      week: 'translated',
+      month: 'translated',
+      year: 'translated'
     };
 
     const periodText = periodMap[period] || period;
-    return interval === 1 ? `每${periodText}` : `每${interval}${periodText}`;
+    return interval === 1 ? `translated${periodText}` : `translated${interval}${periodText}`;
   }
 
-  // 格式化订阅状态
+  // translatedsubscriptionstatus
   formatSubscriptionStatus(status: string): { text: string; color: string } {
     const statusMap: Record<string, { text: string; color: string }> = {
-      pending: { text: '待支付', color: 'orange' },
-      trialing: { text: '试用中', color: 'blue' },
-      active: { text: '已激活', color: 'green' },
-      paused: { text: '已暂停', color: 'gray' },
-      canceled: { text: '已取消', color: 'red' },
-      overdue: { text: '逾期', color: 'red' }
+      pending: { text: 'translatedpayment', color: 'orange' },
+      trialing: { text: 'translated', color: 'blue' },
+      active: { text: 'alreadytranslated', color: 'green' },
+      paused: { text: 'alreadytranslated', color: 'gray' },
+      canceled: { text: 'alreadycancel', color: 'red' },
+      overdue: { text: 'translated', color: 'red' }
     };
 
     return statusMap[status] || { text: status, color: 'gray' };
   }
 
-  // 获取支付页面URL
+  // getpaymenttranslatedURL
   getPaymentCheckoutUrl(sessionId: string): string {
   return `/api/v1/payment/checkout/${sessionId}`;
   }
 
-  // 管理员API
+  // managementtranslatedAPI
   
-  // 管理员 - 获取产品列表
+  // managementtranslated - gettranslatedlist
   async adminListProducts(params?: { tenant_id?: number; page?: number; page_size?: number; code?: string; is_active?: boolean; }) {
     const response = await client.get('/api/v1/admin/products', { params });
     return response.data;
   }
 
-  // 管理员 - 创建产品
+  // managementtranslated - createtranslated
   async adminCreateProduct(data: any) {
     const response = await client.post('/api/v1/admin/products', data);
     return response.data;
   }
 
-  // 管理员 - 更新产品
+  // managementtranslated - updatetranslated
   async adminUpdateProduct(id: number, data: any) {
     const response = await client.put(`/api/v1/admin/products/${id}`, data);
     return response.data;
   }
 
-  // 管理员 - 删除产品
+  // managementtranslated - deletetranslated
   async adminDeleteProduct(id: number) {
     const response = await client.delete(`/api/v1/admin/products/${id}`);
     return response.data;
   }
 
-  // 管理员 - 获取套餐列表  
+  // managementtranslated - gettranslatedlist  
   async adminListPlans(params?: { tenant_id?: number; page?: number; page_size?: number; product_id?: number; code?: string; is_active?: boolean; }) {
     const response = await client.get('/api/v1/admin/plans', { params });
     return response.data;
   }
 
-  // 管理员 - 创建套餐
+  // managementtranslated - createtranslated
   async adminCreatePlan(data: any) {
     const response = await client.post('/api/v1/admin/plans', data);
     return response.data;
   }
 
-  // 管理员 - 更新套餐
+  // managementtranslated - updatetranslated
   async adminUpdatePlan(id: number, data: any) {
     const response = await client.put(`/api/v1/admin/plans/${id}`, data);
     return response.data;
   }
 
-  // 管理员 - 删除套餐
+  // managementtranslated - deletetranslated
   async adminDeletePlan(id: number) {
     const response = await client.delete(`/api/v1/admin/plans/${id}`);
     return response.data;
   }
 
-  // 管理员 - 获取价格列表
+  // managementtranslated - gettranslatedlist
   async adminListPrices(params?: { tenant_id?: number; page?: number; page_size?: number; plan_id?: number; currency?: string; usage_type?: string; is_active?: boolean; }) {
     const response = await client.get('/api/v1/admin/prices', { params });
     return response.data;
   }
 
-  // 管理员 - 创建价格
+  // managementtranslated - createtranslated
   async adminCreatePrice(data: any) {
     const response = await client.post('/api/v1/admin/prices', data);
     return response.data;
   }
 
-  // 管理员 - 更新价格
+  // managementtranslated - updatetranslated
   async adminUpdatePrice(id: number, data: any) {
     const response = await client.put(`/api/v1/admin/prices/${id}`, data);
     return response.data;
   }
 
-  // 管理员 - 删除价格
+  // managementtranslated - deletetranslated
   async adminDeletePrice(id: number) {
     const response = await client.delete(`/api/v1/admin/prices/${id}`);
     return response.data;
   }
 
-  // 管理员 - 获取优惠券列表
+  // managementtranslated - gettranslatedlist
   async adminListCoupons() {
     const response = await client.get('/api/v1/admin/coupons');
     return response.data;
   }
 
-  // 租户 - 获取优惠券列表
+  // tenant - gettranslatedlist
   async tenantListCoupons() {
     const response = await client.get('/api/v1/tenant/subscription/coupons');
     return response.data;
   }
 
-  // 管理员 - 创建优惠券
+  // managementtranslated - createtranslated
   async adminCreateCoupon(data: any) {
     const response = await client.post('/api/v1/admin/coupons', data);
     return response.data;
   }
 
-  // 租户 - 创建优惠券
+  // tenant - createtranslated
   async tenantCreateCoupon(data: any) {
     const response = await client.post('/api/v1/tenant/subscription/coupons', data);
     return response.data;
   }
 
-  // 管理员 - 更新优惠券
+  // managementtranslated - updatetranslated
   async adminUpdateCoupon(code: string, data: any) {
     const response = await client.put(`/api/v1/admin/coupons/${code}`, data);
     return response.data;
   }
 
-  // 租户 - 更新优惠券
+  // tenant - updatetranslated
   async tenantUpdateCoupon(code: string, data: any) {
     const response = await client.put(`/api/v1/tenant/subscription/coupons/${code}`, data);
     return response.data;
   }
 
-  // 管理员 - 删除优惠券
+  // managementtranslated - deletetranslated
   async adminDeleteCoupon(code: string) {
     const response = await client.delete(`/api/v1/admin/coupons/${code}`);
     return response.data;
   }
 
-  // 租户 - 删除优惠券
+  // tenant - deletetranslated
   async tenantDeleteCoupon(code: string) {
     const response = await client.delete(`/api/v1/tenant/subscription/coupons/${code}`);
     return response.data;
   }
 
-  // 管理员 - 获取订阅列表
+  // managementtranslated - getsubscriptionlist
   async adminListSubscriptions(params?: { tenant_id?: number; page?: number; page_size?: number; user_id?: number; status?: string; price_id?: number; }) {
     const response = await client.get('/api/v1/admin/subscriptions', { params });
     return response.data;
   }
 
-  // 管理员 - 获取订阅详情
+  // managementtranslated - getsubscriptiondetails
   async adminGetSubscription(id: number) {
     const response = await client.get(`/api/v1/admin/subscriptions/${id}`);
     return response.data;
   }
 
-  // 租户 - 获取订阅详情
+  // tenant - getsubscriptiondetails
   async tenantGetSubscription(id: number) {
     const response = await client.get(`/api/v1/tenant/subscription/${id}`);
     return response.data;
   }
   
-  // 管理员 - 取消订阅
+  // managementtranslated - cancelsubscription
   async adminCancelSubscription(id: number, reason?: string) {
     const response = await client.put(`/api/v1/admin/subscriptions/${id}/cancel`, {
       reason
@@ -376,7 +376,7 @@ class SubscriptionAPI {
 
 export const subscriptionAPI = new SubscriptionAPI();
 
-// 导出管理员API函数以便直接使用
+// translatedmanagementtranslatedAPItranslated
 export const adminListProducts = (params?: { tenant_id?: number; page?: number; page_size?: number; code?: string; is_active?: boolean; }) => subscriptionAPI.adminListProducts(params);
 export const adminCreateProduct = (data: any) => subscriptionAPI.adminCreateProduct(data);
 export const adminUpdateProduct = (id: number, data: any) => subscriptionAPI.adminUpdateProduct(id, data);
@@ -394,13 +394,13 @@ export const adminCreateCoupon = (data: any) => subscriptionAPI.adminCreateCoupo
 export const adminUpdateCoupon = (code: string, data: any) => subscriptionAPI.adminUpdateCoupon(code, data);
 export const adminDeleteCoupon = (code: string) => subscriptionAPI.adminDeleteCoupon(code);
 
-// 导出用户订阅相关函数
+// translatedusersubscriptiontranslated
 export const listProducts = () => subscriptionAPI.getProducts();
 export const listSubscriptions = () => subscriptionAPI.getSubscriptions();
 export const getSubscription = (id: number) => subscriptionAPI.getSubscription(id);
 export const cancelSubscription = (id: number, reason?: string) => subscriptionAPI.cancelSubscription(id, reason);
 
-// 导出管理员订阅相关函数
+// translatedmanagementtranslatedsubscriptiontranslated
 export const adminListSubscriptions = (params?: { tenant_id?: number; page?: number; page_size?: number; user_id?: number; status?: string; price_id?: number; }) => subscriptionAPI.adminListSubscriptions(params);
 export const adminGetSubscription = (id: number) => subscriptionAPI.adminGetSubscription(id);
 export const adminCancelSubscription = (id: number, reason?: string) => subscriptionAPI.adminCancelSubscription(id, reason);

@@ -14,7 +14,7 @@ interface UserTooltipProps {
 
 const UserTooltip: React.FC<UserTooltipProps> = ({
   userId,
-  fallbackLabel = '未分配',
+  fallbackLabel = 'nottranslated',
   triggerLabel,
   className = 'cursor-default border-b border-dotted border-gray-300 text-gray-700'
 }) => {
@@ -64,8 +64,8 @@ const UserTooltip: React.FC<UserTooltipProps> = ({
     return <span>{fallbackLabel}</span>
   }
 
-  const label = triggerLabel || user?.nickname || user?.email || (loading ? `用户 #${userId}` : fallbackLabel)
-  const email = user?.email || '未加载邮箱'
+  const label = triggerLabel || user?.nickname || user?.email || (loading ? `user #${userId}` : fallbackLabel)
+  const email = user?.email || 'nottranslatedemail'
 
   useLayoutEffect(() => {
     if (!open || !triggerRef.current) {
@@ -140,7 +140,7 @@ const UserTooltip: React.FC<UserTooltipProps> = ({
                   <EnvelopeIcon className="h-4 w-4 text-gray-400" />
                   <span className="truncate">{email}</span>
                 </div>
-                {user?.phone && <div>手机: {user.phone}</div>}
+                {user?.phone && <div>translated: {user.phone}</div>}
                 <div>Tenant ID: {user?.tenant_id ?? 0}</div>
               </div>
             </div>

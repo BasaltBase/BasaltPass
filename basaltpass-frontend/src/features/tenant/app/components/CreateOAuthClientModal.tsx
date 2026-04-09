@@ -64,7 +64,7 @@ export default function CreateOAuthClientModal({
         setScopeDefaults(resp?.data?.defaults || ['openid', 'profile', 'email'])
       } catch (e: any) {
         if (cancelled) return
-        setScopeError(e?.response?.data?.error || '加载 scopes 失败')
+        setScopeError(e?.response?.data?.error || 'Failed to load scopes')
       } finally {
         if (cancelled) return
         setScopeLoading(false)
@@ -90,7 +90,7 @@ export default function CreateOAuthClientModal({
 
   const copyToClipboard = async (text: string) => {
     await navigator.clipboard.writeText(text)
-    uiAlert('已复制到剪贴板')
+    uiAlert('Copied to clipboard')
   }
 
   const resetForm = () => {
@@ -125,13 +125,13 @@ export default function CreateOAuthClientModal({
       if (!clientId || !clientSecret) {
         onSuccess()
         onClose()
-        setError('客户端已创建，但未返回密钥；请进入详情页点击“重新生成”获取新的密钥')
+        setError('Client created, but no secret was returned; open details and click "Regenerate" to get a new secret')
         return
       }
 
       setCreatedCredentials({ clientId, clientSecret })
     } catch (err: any) {
-      setError(err.response?.data?.error || '创建失败')
+      setError(err.response?.data?.error || 'Creation failed')
     } finally {
       setIsLoading(false)
     }
@@ -209,8 +209,8 @@ export default function CreateOAuthClientModal({
                 </div>
               </div>
               <div className="ml-4">
-                <h3 className="text-xl font-semibold text-gray-900">创建OAuth客户端</h3>
-                <p className="mt-1 text-sm text-gray-500">为您的应用配置OAuth2认证客户端</p>
+                <h3 className="text-xl font-semibold text-gray-900">Create OAuth Client</h3>
+                <p className="mt-1 text-sm text-gray-500">Configure an OAuth 2.0 client for your app</p>
               </div>
             </div>
             <button
@@ -220,7 +220,7 @@ export default function CreateOAuthClientModal({
               }}
               className="text-gray-400 hover:text-gray-600 transition-colors duration-200 p-2 hover:bg-gray-100 rounded-lg"
             >
-              <span className="sr-only">关闭</span>
+              <span className="sr-only">Close</span>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -244,7 +244,7 @@ export default function CreateOAuthClientModal({
         {createdCredentials ? (
           <div className="px-6 py-6 space-y-6">
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <p className="text-sm text-green-800">客户端已创建成功。密钥仅展示一次，请立即保存。</p>
+              <p className="text-sm text-green-800">Client created successfully. The secret is shown only once; please save it now.</p>
             </div>
 
             <div className="space-y-4">
@@ -256,7 +256,7 @@ export default function CreateOAuthClientModal({
                     type="button"
                     onClick={() => copyToClipboard(createdCredentials.clientId)}
                     className="text-gray-600 hover:text-gray-800"
-                    title="复制"
+                    title="Copy"
                   >
                     <ClipboardDocumentIcon className="h-4 w-4" />
                   </button>
@@ -266,14 +266,14 @@ export default function CreateOAuthClientModal({
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Client Secret</label>
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <p className="text-xs text-yellow-800 mb-2">请立即复制保存；关闭后将无法再次查看。</p>
+                  <p className="text-xs text-yellow-800 mb-2">Copy and save it now; it will not be shown again after closing.</p>
                   <div className="flex items-center space-x-2">
                     <code className="flex-1 text-sm bg-white p-2 rounded border border-yellow-200 break-all">{createdCredentials.clientSecret}</code>
                     <button
                       type="button"
                       onClick={() => copyToClipboard(createdCredentials.clientSecret)}
                       className="text-yellow-700 hover:text-yellow-900"
-                      title="复制"
+                      title="Copy"
                     >
                       <ClipboardDocumentIcon className="h-4 w-4" />
                     </button>
@@ -290,7 +290,7 @@ export default function CreateOAuthClientModal({
                 <div className="border-b border-gray-200 pb-6">
                   <div className="flex items-center mb-4">
                     <div className="h-2 w-2 bg-indigo-600 rounded-full mr-3"></div>
-                    <h4 className="text-lg font-medium text-gray-900">基本信息</h4>
+                    <h4 className="text-lg font-medium text-gray-900">Basic Information</h4>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -302,13 +302,13 @@ export default function CreateOAuthClientModal({
                         disabled={lockAppSelect}
                         label={
                           <span>
-                            关联应用 <span className="text-red-500">*</span>
+                            Linked App <span className="text-red-500">*</span>
                           </span>
                         }
                         variant="rounded"
                         size="lg"
                       >
-                        <option value={0}>请选择要配置的应用</option>
+                        <option value={0}>Please select an app to configure</option>
                         {(apps || []).map(app => (
                           <option key={app.id} value={app.id}>{app.name}</option>
                         ))}
@@ -323,10 +323,10 @@ export default function CreateOAuthClientModal({
                         onChange={(e) => setFormData(prev => ({ ...prev, name: (e.target as HTMLInputElement).value }))}
                         label={
                           <span>
-                            客户端名称 <span className="text-red-500">*</span>
+                            Client Name <span className="text-red-500">*</span>
                           </span>
                         }
-                        placeholder="例如：Web客户端"
+                        placeholder="e.g. Web Client"
                         variant="rounded"
                         size="lg"
                         autoComplete="off"
@@ -337,9 +337,9 @@ export default function CreateOAuthClientModal({
                       <PTextarea
                         value={formData.description}
                         onChange={(e) => setFormData(prev => ({ ...prev, description: (e.target as HTMLTextAreaElement).value }))}
-                        label="客户端描述"
+                        label="Client Description"
                         rows={3}
-                        placeholder="简要描述此客户端的用途..."
+                        placeholder="Briefly describe this client..."
                         variant="rounded"
                         size="lg"
                       />
@@ -350,12 +350,12 @@ export default function CreateOAuthClientModal({
                 <div className="border-b border-gray-200 pb-6">
                   <div className="flex items-center mb-4">
                     <div className="h-2 w-2 bg-emerald-600 rounded-full mr-3"></div>
-                    <h4 className="text-lg font-medium text-gray-900">回调地址</h4>
+                    <h4 className="text-lg font-medium text-gray-900">Callback URLs</h4>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-3">
-                      重定向URI <span className="text-red-500">*</span>
+                      Redirect URI <span className="text-red-500">*</span>
                     </label>
                     <div className="space-y-3">
                       {(formData.redirect_uris || []).map((uri, index) => (
@@ -368,7 +368,7 @@ export default function CreateOAuthClientModal({
                               placeholder="https://example.com/auth/callback"
                               variant="rounded"
                               size="lg"
-                              aria-label={`重定向URI ${index + 1}`}
+                              aria-label={`Redirect URI ${index + 1}`}
                               autoComplete="off"
                             />
                           </div>
@@ -379,8 +379,8 @@ export default function CreateOAuthClientModal({
                               size="sm"
                               onClick={() => removeRedirectUri(index)}
                               className="px-3"
-                              title="删除URI"
-                              aria-label="删除URI"
+                              title="Delete URI"
+                              aria-label="Delete URI"
                             >
                               <TrashIcon className="h-4 w-4" />
                             </PButton>
@@ -394,12 +394,12 @@ export default function CreateOAuthClientModal({
                         size="sm"
                         leftIcon={<PlusIcon className="h-4 w-4" />}
                       >
-                        添加重定向URI
+                        Add Redirect URI
                       </PButton>
                     </div>
                     <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
                       <p className="text-sm text-blue-800">
-                        <strong>提示：</strong>用户授权后将重定向到这些地址，请确保地址有效且支持HTTPS
+                        <strong>Note:</strong> Users will be redirected to these addresses after authorization. Ensure each URL is valid and uses HTTPS.
                       </p>
                     </div>
                   </div>
@@ -408,12 +408,12 @@ export default function CreateOAuthClientModal({
                 <div className="pb-6">
                   <div className="flex items-center mb-4">
                     <div className="h-2 w-2 bg-purple-600 rounded-full mr-3"></div>
-                    <h4 className="text-lg font-medium text-gray-900">CORS配置</h4>
-                    <span className="ml-2 text-sm text-gray-500">(可选)</span>
+                    <h4 className="text-lg font-medium text-gray-900">CORS Configuration</h4>
+                    <span className="ml-2 text-sm text-gray-500">(Optional)</span>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">允许的来源</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">Allowed Origins</label>
                     <div className="space-y-3">
                       {(formData.allowed_origins || []).map((origin, index) => (
                         <div key={index} className="flex items-center space-x-3">
@@ -425,7 +425,7 @@ export default function CreateOAuthClientModal({
                               placeholder="https://example.com"
                               variant="rounded"
                               size="lg"
-                              aria-label={`允许的来源 ${index + 1}`}
+                              aria-label={`Allowed origin ${index + 1}`}
                               autoComplete="off"
                             />
                           </div>
@@ -435,8 +435,8 @@ export default function CreateOAuthClientModal({
                             size="sm"
                             onClick={() => removeAllowedOrigin(index)}
                             className="px-3"
-                            title="删除来源"
-                            aria-label="删除来源"
+                            title="Delete origin"
+                            aria-label="Delete origin"
                           >
                             <TrashIcon className="h-4 w-4" />
                           </PButton>
@@ -449,10 +449,10 @@ export default function CreateOAuthClientModal({
                         size="sm"
                         leftIcon={<PlusIcon className="h-4 w-4" />}
                       >
-                        添加允许的来源
+                        Add Allowed Origin
                       </PButton>
                     </div>
-                    <p className="mt-2 text-xs text-gray-500">配置允许跨域请求的源域名</p>
+                    <p className="mt-2 text-xs text-gray-500">Configure origins allowed for cross-origin requests</p>
                   </div>
                 </div>
               </div>
@@ -462,7 +462,7 @@ export default function CreateOAuthClientModal({
                 <div className="border border-gray-200 rounded-xl p-5 bg-gray-50">
                   <div className="flex items-center mb-4">
                     <div className="h-2 w-2 bg-amber-600 rounded-full mr-3"></div>
-                    <h4 className="text-lg font-medium text-gray-900">权限范围</h4>
+                    <h4 className="text-lg font-medium text-gray-900">Scopes</h4>
                   </div>
                   <OAuthScopePicker
                     metas={scopeMetas}
@@ -488,7 +488,7 @@ export default function CreateOAuthClientModal({
             }}
             className="w-full sm:w-auto"
           >
-            {createdCredentials ? '完成' : '取消'}
+            {createdCredentials ? 'Done' : 'Cancel'}
           </PButton>
           {!createdCredentials && (
             <PButton
@@ -498,7 +498,7 @@ export default function CreateOAuthClientModal({
               className="w-full sm:w-auto"
               leftIcon={<KeyIcon className="h-4 w-4" />}
             >
-              创建客户端
+              Create Client
             </PButton>
           )}
         </div>

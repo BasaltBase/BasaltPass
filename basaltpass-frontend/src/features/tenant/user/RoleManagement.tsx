@@ -31,15 +31,17 @@ import {
 import TenantLayout from '@features/tenant/components/TenantLayout';
 import PTable, { PTableColumn } from '@ui/PTable';
 import useDebounce from '@hooks/useDebounce';
+import { useI18n } from '@shared/i18n';
 
 const TenantRoleManagement: React.FC = () => {
+  const { t } = useI18n();
   const [roles, setRoles] = useState<Role[]>([]);
   const [users, setUsers] = useState<TenantUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [userRoleModalVisible, setUserRoleModalVisible] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
-  // 删除确认改为统一使用确认框，无需内联二次确认状态
+  // ，
   const [selectedUser, setSelectedUser] = useState<TenantUser | null>(null);
   const [userRoles, setUserRoles] = useState<UserRole | null>(null);
   const [selectedRoleIds, setSelectedRoleIds] = useState<number[]>([]);
@@ -54,7 +56,7 @@ const TenantRoleManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 200);
 
-  // 表单数据
+  // 
   const [formData, setFormData] = useState<CreateRoleRequest>({
     code: '',
     name: '',
@@ -62,7 +64,7 @@ const TenantRoleManagement: React.FC = () => {
     app_id: undefined,
   });
 
-  // 消息提示
+  // 
   const [message, setMessage] = useState<{
     type: 'success' | 'error' | 'info';
     text: string;
@@ -80,7 +82,7 @@ const TenantRoleManagement: React.FC = () => {
     }, 3000);
   };
 
-  // 获取角色列表
+  // 
   const fetchRoles = async (page = 1, pageSize = 20) => {
     setLoading(true);
     try {
@@ -98,7 +100,7 @@ const TenantRoleManagement: React.FC = () => {
       });
     } catch (error: any) {
       setRoles([]);
-      showMessage('error', error.response?.data?.error || '获取角色列表失败');
+      showMessage('error', error.response?.data?.error || t('tenantRoleManagement.messages.fetchRolesFailed'));
     } finally {
       setLoading(false);
     }
@@ -112,16 +114,16 @@ const TenantRoleManagement: React.FC = () => {
 
 
 
-  // 创建/更新角色
+  // /
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       if (editingRole) {
         await updateTenantRole(editingRole.id, formData);
-        showMessage('success', '角色更新成功');
+        showMessage('success', t('tenantRoleManagement.messages.roleUpdated'));
       } else {
         await createTenantRole(formData);
-        showMessage('success', '角色创建成功');
+        showMessage('success', t('tenantRoleManagement.messages.roleCreated'));
       }
       setModalVisible(false);
       setEditingRole(null);
@@ -133,22 +135,22 @@ const TenantRoleManagement: React.FC = () => {
       });
       fetchRoles();
     } catch (error: any) {
-      showMessage('error', error.response?.data?.error || '操作失败');
+      showMessage('error', error.response?.data?.error || t('tenantRoleManagement.messages.operationFailed'));
     }
   };
 
-  // 删除角色
+  // 
   const handleDelete = async (id: number) => {
     try {
       await deleteTenantRole(id);
-      showMessage('success', '删除成功');
+      showMessage('success', t('tenantRoleManagement.messages.deleted'));
       fetchRoles();
     } catch (error: any) {
-      showMessage('error', error.response?.data?.error || '删除失败');
+      showMessage('error', error.response?.data?.error || t('tenantRoleManagement.messages.deleteFailed'));
     }
   };
 
-  // 打开编辑模态框
+  // 
   const handleEdit = (role: Role) => {
     setEditingRole(role);
     setFormData({
@@ -160,13 +162,13 @@ const TenantRoleManagement: React.FC = () => {
     setModalVisible(true);
   };
 
-  // 打开用户角色分配模态框
+  // 
   const handleUserRoleAssignment = (user: TenantUser) => {
     setSelectedUser(user);
     fetchUserRoles(user.id);
   };
 
-  // 获取用户角色
+  // 
   const fetchUserRoles = async (userId: number) => {
     try {
       const response = await getUserRoles(userId);
@@ -175,11 +177,11 @@ const TenantRoleManagement: React.FC = () => {
     } catch (error: any) {
       setUserRoles(null);
       setSelectedRoleIds([]);
-      showMessage('error', error.response?.data?.error || '获取用户角色失败');
+      showMessage('error', error.response?.data?.error || t('tenantRoleManagement.messages.fetchUserRolesFailed'));
     }
   };
 
-  // 分配用户角色
+  // 
   const handleAssignRoles = async () => {
     if (!selectedUser) return;
     
@@ -188,17 +190,17 @@ const TenantRoleManagement: React.FC = () => {
         user_id: selectedUser.id,
         role_ids: selectedRoleIds,
       });
-      showMessage('success', '角色分配成功');
+      showMessage('success', t('tenantRoleManagement.messages.rolesAssigned'));
       setUserRoleModalVisible(false);
       setSelectedUser(null);
       setUserRoles(null);
       setSelectedRoleIds([]);
     } catch (error: any) {
-      showMessage('error', error.response?.data?.error || '角色分配失败');
+      showMessage('error', error.response?.data?.error || t('tenantRoleManagement.messages.assignFailed'));
     }
   };
 
-  // 分页变化
+  // 
   const handlePageChange = (page: number) => {
     fetchRoles(page, pagination.pageSize);
   };
@@ -210,13 +212,13 @@ const TenantRoleManagement: React.FC = () => {
   };
 
   const getRoleTypeText = (isSystem: boolean) => {
-    return isSystem ? '系统角色' : '自定义角色';
+    return isSystem ? t('tenantRoleManagement.roleType.system') : t('tenantRoleManagement.roleType.custom');
   };
 
   return (
-    <TenantLayout title="角色权限管理">
+    <TenantLayout title={t('tenantRoleManagement.layoutTitle')}>
       <div className="p-6">
-        {/* 消息提示 */}
+        {/*  */}
         {message.visible && (
           <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg flex items-center space-x-2 ${
             message.type === 'success' ? 'bg-green-500 text-white' :
@@ -232,26 +234,26 @@ const TenantRoleManagement: React.FC = () => {
           </div>
         )}
 
-        {/* 页面标题与操作 */}
+        {/*  */}
         <PPageHeader
-          title="角色权限管理"
+          title={t('tenantRoleManagement.header.title')}
           icon={<ShieldCheckIcon className="w-8 h-8 text-blue-600" />}
           actions={
             <div className="flex space-x-3">
-              <PButton onClick={() => setUserRoleModalVisible(true)} leftIcon={<UsersIcon className="w-5 h-5" />}>用户角色分配</PButton>
-              <PButton onClick={() => setModalVisible(true)} leftIcon={<PlusIcon className="w-5 h-5" />}>创建角色</PButton>
+              <PButton onClick={() => setUserRoleModalVisible(true)} leftIcon={<UsersIcon className="w-5 h-5" />}>{t('tenantRoleManagement.actions.userRoleAssignment')}</PButton>
+              <PButton onClick={() => setModalVisible(true)} leftIcon={<PlusIcon className="w-5 h-5" />}>{t('tenantRoleManagement.actions.createRole')}</PButton>
             </div>
           }
         />
 
-        {/* 搜索和筛选 */}
+        {/*  */}
         <div className="bg-white p-4 rounded-lg shadow mb-6">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
                 <PInput
                   type="text"
-                  placeholder="搜索角色名称、代码或描述..."
+                  placeholder={t('tenantRoleManagement.search.placeholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   icon={<MagnifyingGlassIcon className="w-5 h-5" />}
@@ -266,18 +268,18 @@ const TenantRoleManagement: React.FC = () => {
                   onChange={(e) => setAppFilter(e.target.value)}
                   className="pl-10"
                 >
-                  <option value="">全部范围</option>
-                  <option value="tenant">租户级角色</option>
+                  <option value="">{t('tenantRoleManagement.filters.allScope')}</option>
+                  <option value="tenant">{t('tenantRoleManagement.filters.tenantScope')}</option>
                 </PSelect>
               </div>
             </div>
           </div>
         </div>
 
-        {/* 角色列表 */}
+        {/*  */}
         <div className="bg-white rounded-lg shadow">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">角色列表</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{t('tenantRoleManagement.list.title')}</h2>
           </div>
           
           {loading ? (
@@ -285,14 +287,14 @@ const TenantRoleManagement: React.FC = () => {
           ) : roles.length === 0 ? (
             <div className="p-8 text-center text-gray-500">
               <ShieldCheckIcon className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-              <p>暂无角色记录</p>
+              <p>{t('tenantRoleManagement.list.empty')}</p>
             </div>
           ) : (
             <PTable
               columns={[
                 {
                   key: 'info',
-                  title: '角色信息',
+                  title: t('tenantRoleManagement.table.roleInfo'),
                   render: (role: Role) => (
                     <div>
                       <div className="text-sm font-medium text-gray-900">{role.name}</div>
@@ -305,40 +307,40 @@ const TenantRoleManagement: React.FC = () => {
                 },
                 {
                   key: 'type',
-                  title: '类型',
+                  title: t('tenantRoleManagement.table.type'),
                   render: (role: Role) => (
                     <PBadge variant={getRoleTypeVariant(role.is_system) as any}>{getRoleTypeText(role.is_system)}</PBadge>
                   )
                 },
                 {
                   key: 'scope',
-                  title: '应用范围',
+                  title: t('tenantRoleManagement.table.scope'),
                   render: (role: Role) => (
                     role.app_name ? (
                       <PBadge variant="info">{role.app_name}</PBadge>
                     ) : (
-                      <PBadge variant="default">租户级</PBadge>
+                      <PBadge variant="default">{t('tenantRoleManagement.filters.tenantScope')}</PBadge>
                     )
                   )
                 },
-                { key: 'user_count', title: '用户数量', dataIndex: 'user_count' },
-                { key: 'created_at', title: '创建时间', dataIndex: 'created_at', sortable: true, sorter: (a: Role, b: Role) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime() },
+                { key: 'user_count', title: t('tenantRoleManagement.table.userCount'), dataIndex: 'user_count' },
+                { key: 'created_at', title: t('tenantRoleManagement.table.createdAt'), dataIndex: 'created_at', sortable: true, sorter: (a: Role, b: Role) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime() },
                 {
                   key: 'actions',
-                  title: '操作',
+                  title: t('tenantRoleManagement.table.actions'),
                   align: 'right',
                   render: (role: Role) => (
                     <div className="flex items-center justify-end space-x-2">
                       {!role.is_system && (
                         <>
-                          <PButton variant="ghost" size="sm" onClick={() => handleEdit(role)} title="编辑角色" className="text-blue-600 hover:text-blue-800">
+                          <PButton variant="ghost" size="sm" onClick={() => handleEdit(role)} title={t('tenantRoleManagement.actions.editRole')} className="text-blue-600 hover:text-blue-800">
                             <PencilIcon className="w-4 h-4" />
                           </PButton>
                           <PButton
                             variant="ghost"
                             size="sm"
-                            onClick={async () => { if (await uiConfirm('确认删除该角色？')) handleDelete(role.id); }}
-                            title="删除角色"
+                            onClick={async () => { if (await uiConfirm(t('tenantRoleManagement.confirm.deleteRole'))) handleDelete(role.id); }}
+                            title={t('tenantRoleManagement.actions.deleteRole')}
                             className="text-red-600 hover:text-red-800"
                           >
                             <TrashIcon className="w-4 h-4" />
@@ -355,12 +357,16 @@ const TenantRoleManagement: React.FC = () => {
             />
           )}
 
-          {/* 分页 */}
+          {/*  */}
           {roles.length > 0 && (
             <div className="px-6 py-4 border-t border-gray-200">
               <div className="flex items-center justify-between">
                 <div className="text-sm text-gray-700">
-                  显示第 {((pagination.current - 1) * pagination.pageSize) + 1} - {Math.min(pagination.current * pagination.pageSize, pagination.total)} 条，共 {pagination.total} 条
+                  {t('tenantRoleManagement.pagination.summary', {
+                    start: ((pagination.current - 1) * pagination.pageSize) + 1,
+                    end: Math.min(pagination.current * pagination.pageSize, pagination.total),
+                    total: pagination.total,
+                  })}
                 </div>
                 <div className="flex items-center space-x-2">
                   <PButton
@@ -374,7 +380,10 @@ const TenantRoleManagement: React.FC = () => {
                   </PButton>
                   
                   <span className="px-3 py-1 text-sm">
-                    第 {pagination.current} 页，共 {Math.ceil(pagination.total / pagination.pageSize)} 页
+                    {t('tenantRoleManagement.pagination.pageInfo', {
+                      current: pagination.current,
+                      total: Math.ceil(pagination.total / pagination.pageSize),
+                    })}
                   </span>
                   
                   <PButton
@@ -392,7 +401,7 @@ const TenantRoleManagement: React.FC = () => {
           )}
         </div>
 
-        {/* 创建/编辑角色模态框 */}
+        {/* / */}
         {modalVisible && (
           <div className="fixed inset-0 !m-0 z-50 overflow-y-auto">
             <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
@@ -408,59 +417,59 @@ const TenantRoleManagement: React.FC = () => {
                     <div className="flex items-center mb-4">
                       <ShieldCheckIcon className="w-6 h-6 text-blue-600 mr-2" />
                       <h3 className="text-lg font-medium text-gray-900">
-                        {editingRole ? '编辑角色' : '创建角色'}
+                        {editingRole ? t('tenantRoleManagement.modal.editTitle') : t('tenantRoleManagement.modal.createTitle')}
                       </h3>
                     </div>
 
                     <div className="space-y-4">
-                      {/* 角色代码 */}
+                      {/*  */}
                       <div>
                         <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-1">
-                          角色代码 <span className="text-red-500">*</span>
+                          {t('tenantRoleManagement.form.codeLabel')} <span className="text-red-500">*</span>
                         </label>
                         <PInput
                           type="text"
                           id="code"
                           value={formData.code}
                           onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                          placeholder="如：admin、user、viewer等"
+                          placeholder={t('tenantRoleManagement.form.codePlaceholder')}
                           required
                         />
                       </div>
 
-                      {/* 角色名称 */}
+                      {/*  */}
                       <div>
                         <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                          角色名称 <span className="text-red-500">*</span>
+                          {t('tenantRoleManagement.form.nameLabel')} <span className="text-red-500">*</span>
                         </label>
                         <PInput
                           type="text"
                           id="name"
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          placeholder="请输入角色名称"
+                          placeholder={t('tenantRoleManagement.form.namePlaceholder')}
                           required
                         />
                       </div>
 
-                      {/* 角色描述 */}
+                      {/*  */}
                       <div>
                         <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                          角色描述
+                          {t('tenantRoleManagement.form.descriptionLabel')}
                         </label>
                         <PTextarea
                           id="description"
                           rows={3}
                           value={formData.description}
                           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                          placeholder="请输入角色描述"
+                          placeholder={t('tenantRoleManagement.form.descriptionPlaceholder')}
                         />
                       </div>
                     </div>
                   </div>
                   <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                     <PButton type="submit">
-                      {editingRole ? '更新角色' : '创建角色'}
+                      {editingRole ? t('tenantRoleManagement.actions.updateRole') : t('tenantRoleManagement.actions.createRole')}
                     </PButton>
                     <PButton
                       type="button"
@@ -477,7 +486,7 @@ const TenantRoleManagement: React.FC = () => {
                       }}
                       className="sm:ml-3 sm:mt-0 mt-3"
                     >
-                      取消
+                      {t('tenantRoleManagement.actions.cancel')}
                     </PButton>
                   </div>
                 </form>
@@ -486,7 +495,7 @@ const TenantRoleManagement: React.FC = () => {
           </div>
         )}
 
-        {/* 用户角色分配模态框 */}
+        {/*  */}
         {userRoleModalVisible && (
           <div className="fixed inset-0 !m-0 z-50 overflow-y-auto">
             <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
@@ -501,7 +510,7 @@ const TenantRoleManagement: React.FC = () => {
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center">
                       <UsersIcon className="w-6 h-6 text-green-600 mr-2" />
-                      <h3 className="text-lg font-medium text-gray-900">用户角色分配</h3>
+                      <h3 className="text-lg font-medium text-gray-900">{t('tenantRoleManagement.userRole.title')}</h3>
                     </div>
                     <button
                       onClick={() => setUserRoleModalVisible(false)}
@@ -512,10 +521,10 @@ const TenantRoleManagement: React.FC = () => {
                   </div>
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* 用户列表 */}
+                    {/*  */}
                     <div className="border rounded-lg">
                       <div className="p-4 border-b bg-gray-50">
-                        <h4 className="font-medium text-gray-900 mb-3">选择用户</h4>
+                        <h4 className="font-medium text-gray-900 mb-3">{t('tenantRoleManagement.userRole.selectUser')}</h4>
                         <div className="mb-3">
                           <EntitySearchSelect
                             entity="user"
@@ -536,7 +545,7 @@ const TenantRoleManagement: React.FC = () => {
                                 setSelectedRoleIds([]);
                               }
                             }}
-                            placeholder="搜索用户..."
+                            placeholder={t('tenantRoleManagement.userRole.searchUserPlaceholder')}
                             maxSelect={1}
                             variant="list"
                           />
@@ -544,13 +553,13 @@ const TenantRoleManagement: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* 角色分配 */}
+                    {/*  */}
                     <div className="border rounded-lg">
                       <div className="p-4 border-b bg-gray-50">
-                        <h4 className="font-medium text-gray-900">分配角色</h4>
+                        <h4 className="font-medium text-gray-900">{t('tenantRoleManagement.userRole.assignRole')}</h4>
                         {selectedUser && (
                           <div className="mt-2 text-sm text-gray-600">
-                            当前用户：{selectedUser.nickname || selectedUser.email}
+                            {t('tenantRoleManagement.userRole.currentUser', { user: selectedUser.nickname || selectedUser.email })}
                           </div>
                         )}
                       </div>
@@ -583,14 +592,14 @@ const TenantRoleManagement: React.FC = () => {
                             ))}
                             <div className="pt-4 border-t">
                               <PButton onClick={handleAssignRoles} className="w-full">
-                                分配角色
+                                {t('tenantRoleManagement.actions.assignRoles')}
                               </PButton>
                             </div>
                           </div>
                         ) : (
                           <div className="text-center text-gray-500 py-8">
                             <UsersIcon className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                            <p>请先选择一个用户</p>
+                            <p>{t('tenantRoleManagement.userRole.selectUserFirst')}</p>
                           </div>
                         )}
                       </div>

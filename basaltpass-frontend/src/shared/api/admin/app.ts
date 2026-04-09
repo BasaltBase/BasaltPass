@@ -1,6 +1,6 @@
 import client from '../client'
 
-// 应用相关的API接口
+// apptranslatedAPItranslated
 
 export interface App {
   id: string
@@ -71,9 +71,9 @@ export interface UpdateOAuthClientRequest {
   redirect_uris?: string[]
 }
 
-// 应用管理API
+// appmanagementAPI
 export const appApi = {
-  // 应用CRUD
+  // appCRUD
   async listApps(page = 1, limit = 20) {
     const response = await client.get('/api/v1/admin/apps', {
       params: { page, limit }
@@ -101,7 +101,7 @@ export const appApi = {
     return response.data
   },
 
-  // OAuth客户端管理
+  // OAuthtranslatedmanagement
   async createOAuthClient(data: CreateOAuthClientRequest) {
     const response = await client.post('/admin/oauth-clients', data)
     return response.data
@@ -127,7 +127,7 @@ export const appApi = {
     return response.data
   },
 
-  // 应用统计
+  // apptranslated
   async getAppStats(appId: string, period = '30d') {
     const response = await client.get(`/admin/apps/${appId}/stats`, {
       params: { period }

@@ -2,32 +2,32 @@
 sidebar_position: 8
 ---
 
-# Upgrading BasaltPass
+# 升级 BasaltPass
 
-Learn how to safely upgrade your BasaltPass instance to the latest version.
+了解如何安全地将 BasaltPass 实例升级到最新版本。
 
-## Upgrade Steps
+## 升级步骤
 
-1.  **Backup**: Always backup your database and config before upgrading.
-2.  **Pull Latest Image**: If using Docker.
+1.  **备份**: 升级前务必备份数据库和配置。
+2.  **拉取最新镜像**: 如果使用 Docker。
     ```bash
     docker-compose pull
     ```
-3.  **Check Changelog**: Review release notes for breaking changes.
-4.  **Restart**:
+3.  **查看更新日志**: 查阅发布说明了解破坏性变更。
+4.  **重启**:
     ```bash
     docker-compose up -d
     ```
 
-## Database Migrations
+## 数据库迁移
 
-BasaltPass automatically runs necessary database migrations on startup.
--   **Forward Compatible**: We strive to make migrations additive to avoid downtime.
--   **Rollback**: Automatic rollback is not supported. You must restore from backup if a migration fails catastrophically.
+BasaltPass 在启动时自动运行必要的数据库迁移。
+-   **向前兼容**: 我们尽量使迁移保持增量式以避免停机。
+-   **回滚**: 不支持自动回滚。如果迁移灾难性失败，您必须从备份恢复。
 
-## Versioning Policy
+## 版本策略
 
-BasaltPass follows Semantic Versioning (SemVer).
--   **Major (x.0.0)**: Breaking changes.
--   **Minor (0.x.0)**: New features, backward compatible.
--   **Patch (0.0.x)**: Bug fixes.
+BasaltPass 遵循语义化版本控制 (SemVer)。
+-   **主版本 (x.0.0)**: 破坏性变更。
+-   **次版本 (0.x.0)**: 新功能，向后兼容。
+-   **补丁版本 (0.0.x)**: Bug 修复。

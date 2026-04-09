@@ -7,6 +7,7 @@ import PhoneInput from '@ui/common/PhoneInput'
 import { formatPhoneForDisplay } from '@utils/phoneValidator'
 import { getUserProfile, type UserProfile } from '@api/user/profile'
 import { ROUTES } from '@constants'
+import { useI18n } from '@shared/i18n'
 import { 
   UserIcon, 
   EnvelopeIcon, 
@@ -30,18 +31,19 @@ interface Profile {
   updated_at: string
 }
 
-const formatDisplayDate = (value?: string | null) => {
-  if (!value) return '未设置'
+const formatDisplayDate = (value: string | null | undefined, locale: string, unsetText: string) => {
+  if (!value) return unsetText
 
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) {
-    return '未设置'
+    return unsetText
   }
 
-  return date.toLocaleDateString('zh-CN')
+  return date.toLocaleDateString(locale)
 }
 
 function Profile() {
+  const { t, locale } = useI18n()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -71,7 +73,7 @@ function Profile() {
         phone: profileRes.data.phone || ''
       })
     } catch {
-      setLoadError('加载个人资料失败，请检查网络后重试')
+      setLoadError(t('userProfilePage.errors.loadFailed'))
     } finally {
       setIsLoading(false)
     }
@@ -92,7 +94,7 @@ function Profile() {
       setProfile(prev => prev ? { ...prev, nickname: editForm.nickname, phone: editForm.phone } : null)
       setIsEditing(false)
     } catch (error: any) {
-      setSaveError(error?.response?.data?.error || '保存失败，请稍后重试')
+      setSaveError(error?.response?.data?.error || t('userProfilePage.errors.saveFailed'))
     } finally {
       setIsSaving(false)
     }
@@ -125,7 +127,7 @@ function Profile() {
           <div className="space-y-4 text-center">
             <div className="text-red-600" role="alert">{loadError}</div>
             <PButton onClick={() => void loadProfile()} variant="secondary">
-                重试
+                {t('userProfilePage.actions.retry')}
             </PButton>
           </div>
         </div>
@@ -138,7 +140,7 @@ function Profile() {
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">{/* 头像和基本信息 */}
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           <div className="lg:col-span-1">
             <PCard variant="bordered" size="lg">
               <div className="flex flex-col items-center">
@@ -148,49 +150,49 @@ function Profile() {
                   </div>
                 </div>
                 <h3 className="mt-4 text-lg font-medium text-gray-900">
-                  {profile.nickname || '未设置昵称'}
+                  {profile.nickname || t('userProfilePage.unsetNickname')}
                 </h3>
-                <p className="text-sm text-gray-500">用户 ID: {profile.id}</p>
+                <p className="text-sm text-gray-500">{t('userProfilePage.userId', { id: profile.id })}</p>
                 <div className="mt-4 flex space-x-3">
-                  <PBadge variant="success">已验证</PBadge>
-                  <PBadge variant="info">活跃用户</PBadge>
+                  <PBadge variant="success">{t('userProfilePage.badges.verified')}</PBadge>
+                  <PBadge variant="info">{t('userProfilePage.badges.activeUser')}</PBadge>
                 </div>
 
               </div>
             </PCard>
 
-            {/* 账户统计 */}
+            {/*  */}
             <PCard variant="bordered" className="mt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">账户统计</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">{t('userProfilePage.accountStats.title')}</h3>
               <div className="space-y-4">
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-500">注册时间</span>
+                  <span className="text-sm text-gray-500">{t('userProfilePage.accountStats.registeredAt')}</span>
                   <span className="text-sm text-gray-900">
-                    {formatDisplayDate(profile.created_at)}
+                    {formatDisplayDate(profile.created_at, locale, t('userProfilePage.unset'))}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-500">最后更新</span>
+                  <span className="text-sm text-gray-500">{t('userProfilePage.accountStats.updatedAt')}</span>
                   <span className="text-sm text-gray-900">
-                    {formatDisplayDate(profile.updated_at)}
+                    {formatDisplayDate(profile.updated_at, locale, t('userProfilePage.unset'))}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-500">账户状态</span>
-                  <span className="text-sm text-green-600">正常</span>
+                  <span className="text-sm text-gray-500">{t('userProfilePage.accountStats.status')}</span>
+                  <span className="text-sm text-green-600">{t('userProfilePage.accountStats.normal')}</span>
                 </div>
               </div>
             </PCard>
           </div>
 
-          {/* 详细信息 */}
+          {/*  */}
           <div className="lg:col-span-2">
             <PCard variant="bordered" size="lg">
               <div className="mb-8 flex items-center justify-between">
-                <h3 className="text-xl font-semibold text-gray-900">基本信息</h3>
+                <h3 className="text-xl font-semibold text-gray-900">{t('userProfilePage.basicInfo.title')}</h3>
                 {!isEditing && (
                   <PButton onClick={() => setIsEditing(true)} variant="secondary" leftIcon={<PencilIcon className="h-4 w-4" />}>
-                    编辑资料
+                    {t('userProfilePage.actions.editProfile')}
                   </PButton>
                 )}
               </div>
@@ -199,20 +201,20 @@ function Profile() {
                 <div className="space-y-2">
                   <label className="flex items-center text-sm font-semibold text-gray-700">
                     <IdentificationIcon className="h-5 w-5 mr-2 text-indigo-500" />
-                    用户昵称
+                    {t('userProfilePage.basicInfo.nickname')}
                   </label>
                   {isEditing ? (
                     <PInput
                       type="text"
                       value={editForm.nickname}
                       onChange={(e) => setEditForm(prev => ({ ...prev, nickname: e.target.value }))}
-                      placeholder="请输入昵称"
+                      placeholder={t('userProfilePage.placeholders.nickname')}
                       icon={<IdentificationIcon className="h-5 w-5" />}
                     />
                   ) : (
                     <div className="px-4 py-3 bg-gray-50 rounded-lg border border-gray-100">
                       <p className="text-sm text-gray-900">
-                        {profile.nickname || '未设置昵称'}
+                        {profile.nickname || t('userProfilePage.unsetNickname')}
                       </p>
                     </div>
                   )}
@@ -221,7 +223,7 @@ function Profile() {
                 <div className="space-y-2">
                   <label className="flex items-center text-sm font-semibold text-gray-700">
                     <EnvelopeIcon className="h-5 w-5 mr-2 text-indigo-500" />
-                    邮箱地址
+                    {t('userProfilePage.basicInfo.email')}
                   </label>
                   <div className="space-y-2">
                     <div className="px-4 py-3 bg-gray-50 rounded-lg border border-gray-100">
@@ -229,11 +231,11 @@ function Profile() {
                     </div>
                     {isEditing && (
                       <p className="text-xs text-gray-500">
-                        邮箱修改需走安全校验流程，请前往{' '}
+                        {t('userProfilePage.emailEditHint.prefix')}{' '}
                         <Link to={ROUTES.user.security} className="text-blue-600 hover:underline">
-                          安全设置
+                          {t('userProfilePage.emailEditHint.securitySettings')}
                         </Link>{' '}
-                        操作。
+                        {t('userProfilePage.emailEditHint.suffix')}
                       </p>
                     )}
                   </div>
@@ -242,22 +244,22 @@ function Profile() {
                 <div className="space-y-2">
                   {isEditing ? (
                     <PhoneInput
-                      label="手机号码"
+                      label={t('userProfilePage.basicInfo.phone')}
                       value={editForm.phone}
                       onChange={(value) => {
                         setEditForm(prev => ({ ...prev, phone: value }))
                       }}
-                      placeholder="请输入手机号码"
+                      placeholder={t('userProfilePage.placeholders.phone')}
                       showValidation={true}
                     />
                   ) : (
                     <>
                       <label className="flex items-center text-sm font-semibold text-gray-700">
                         <PhoneIcon className="h-5 w-5 mr-2 text-indigo-500" />
-                        手机号码
+                        {t('userProfilePage.basicInfo.phone')}
                       </label>
                       <div className="px-4 py-3 bg-gray-50 rounded-lg border border-gray-100">
-                        <p className="text-sm text-gray-900">{formatPhoneForDisplay(profile.phone) || '未设置'}</p>
+                        <p className="text-sm text-gray-900">{formatPhoneForDisplay(profile.phone) || t('userProfilePage.unset')}</p>
                       </div>
                     </>
                   )}
@@ -273,30 +275,30 @@ function Profile() {
                       variant="secondary"
                       disabled={isSaving}
                     >
-                      取消
+                      {t('userProfilePage.actions.cancel')}
                     </PButton>
                     <PButton
                       onClick={handleSave}
                       loading={isSaving}
                       disabled={isSaving}
                     >
-                      保存更改
+                      {t('userProfilePage.actions.saveChanges')}
                     </PButton>
                   </div>
                 </div>
               )}
             </PCard>
 
-            {/* 详细资料 */}
+            {/*  */}
             {userProfile && (
               <PCard variant="bordered" size="lg" className="mt-6">
-                <h3 className="text-xl font-semibold text-gray-900 mb-6">详细资料</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-6">{t('userProfilePage.details.title')}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {userProfile.gender && (
                     <div className="space-y-2">
                       <label className="flex items-center text-sm font-medium text-gray-500">
                         <UserIcon className="h-4 w-4 mr-2" />
-                        性别
+                        {t('userProfilePage.details.gender')}
                       </label>
                       <p className="text-sm text-gray-900">{userProfile.gender.name_cn || userProfile.gender.name}</p>
                     </div>
@@ -305,16 +307,16 @@ function Profile() {
                     <div className="space-y-2">
                       <label className="flex items-center text-sm font-medium text-gray-500">
                         <CalendarIcon className="h-4 w-4 mr-2" />
-                        出生日期
+                        {t('userProfilePage.details.birthDate')}
                       </label>
-                      <p className="text-sm text-gray-900">{formatDisplayDate(userProfile.birth_date)}</p>
+                      <p className="text-sm text-gray-900">{formatDisplayDate(userProfile.birth_date, locale, t('userProfilePage.unset'))}</p>
                     </div>
                   )}
                   {userProfile.language && (
                     <div className="space-y-2">
                       <label className="flex items-center text-sm font-medium text-gray-500">
                         <GlobeAltIcon className="h-4 w-4 mr-2" />
-                        语言
+                        {t('userProfilePage.details.language')}
                       </label>
                       <p className="text-sm text-gray-900">{userProfile.language.name_local || userProfile.language.name}</p>
                     </div>
@@ -323,7 +325,7 @@ function Profile() {
                     <div className="space-y-2">
                       <label className="flex items-center text-sm font-medium text-gray-500">
                         <GlobeAltIcon className="h-4 w-4 mr-2" />
-                        时区
+                        {t('userProfilePage.details.timezone')}
                       </label>
                       <p className="text-sm text-gray-900">{userProfile.timezone}</p>
                     </div>
@@ -332,7 +334,7 @@ function Profile() {
                     <div className="space-y-2">
                       <label className="flex items-center text-sm font-medium text-gray-500">
                         <CurrencyDollarIcon className="h-4 w-4 mr-2" />
-                        主要货币
+                        {t('userProfilePage.details.primaryCurrency')}
                       </label>
                       <p className="text-sm text-gray-900">
                         {userProfile.currency.name_cn || userProfile.currency.name} ({userProfile.currency.code})
@@ -343,7 +345,7 @@ function Profile() {
                     <div className="space-y-2">
                       <label className="flex items-center text-sm font-medium text-gray-500">
                         <MapPinIcon className="h-4 w-4 mr-2" />
-                        所在地
+                        {t('userProfilePage.details.location')}
                       </label>
                       <p className="text-sm text-gray-900">{userProfile.location}</p>
                     </div>
@@ -352,7 +354,7 @@ function Profile() {
                     <div className="space-y-2">
                       <label className="flex items-center text-sm font-medium text-gray-500">
                         <BriefcaseIcon className="h-4 w-4 mr-2" />
-                        公司
+                        {t('userProfilePage.details.company')}
                       </label>
                       <p className="text-sm text-gray-900">{userProfile.company}</p>
                     </div>
@@ -361,7 +363,7 @@ function Profile() {
                     <div className="space-y-2">
                       <label className="flex items-center text-sm font-medium text-gray-500">
                         <BriefcaseIcon className="h-4 w-4 mr-2" />
-                        职位
+                        {t('userProfilePage.details.jobTitle')}
                       </label>
                       <p className="text-sm text-gray-900">{userProfile.job_title}</p>
                     </div>
@@ -370,7 +372,7 @@ function Profile() {
                     <div className="space-y-2">
                       <label className="flex items-center text-sm font-medium text-gray-500">
                         <LinkIcon className="h-4 w-4 mr-2" />
-                        个人网站
+                        {t('userProfilePage.details.website')}
                       </label>
                       <a 
                         href={userProfile.website} 
@@ -386,7 +388,7 @@ function Profile() {
                     <div className="space-y-2 md:col-span-2">
                       <label className="flex items-center text-sm font-medium text-gray-500">
                         <UserIcon className="h-4 w-4 mr-2" />
-                        个人简介
+                        {t('userProfilePage.details.bio')}
                       </label>
                       <p className="text-sm text-gray-900 whitespace-pre-wrap">{userProfile.bio}</p>
                     </div>
@@ -397,7 +399,7 @@ function Profile() {
                     href={ROUTES.user.settings}
                     className="text-sm text-blue-600 hover:underline"
                   >
-                    在设置中编辑详细资料 →
+                    {t('userProfilePage.details.editInSettings')}
                   </a>
                 </div>
               </PCard>

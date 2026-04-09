@@ -15,11 +15,13 @@ import { appApi, App } from '@api/admin/app'
 import TenantLayout from '@features/tenant/components/TenantLayout'
 import { ROUTES } from '@constants'
 import { PSkeleton, PBadge, PAlert, PPageHeader, PPagination, PButton } from '@ui'
+import { useI18n } from '@shared/i18n'
 
 const actionButtonClass =
   'inline-flex items-center rounded-lg border p-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-2'
 
 export default function AppList() {
+  const { t, locale } = useI18n()
   const [apps, setApps] = useState<App[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -38,14 +40,14 @@ export default function AppList() {
       setTotalPages(response.total_pages || 1)
     } catch (error) {
       console.error('Failed to load apps:', error)
-      setError('加载应用列表失败')
+      setError(t('tenantAppList.errors.loadFailed'))
     } finally {
       setLoading(false)
     }
   }
 
   const handleDeleteApp = async (id: string) => {
-    if (!await uiConfirm('确定要删除这个应用吗？此操作不可撤销。')) {
+    if (!await uiConfirm(t('tenantAppList.confirmDelete'))) {
       return
     }
 
@@ -54,7 +56,7 @@ export default function AppList() {
       await loadApps()
     } catch (error) {
       console.error('Failed to delete app:', error)
-      uiAlert('删除应用失败')
+      uiAlert(t('tenantAppList.errors.deleteFailed'))
     }
   }
 
@@ -69,11 +71,11 @@ export default function AppList() {
   const getStatusText = (status: string) => {
     switch (status) {
       case 'active':
-        return '运行中'
+        return t('tenantAppList.status.active')
       case 'inactive':
-        return '未激活'
+        return t('tenantAppList.status.inactive')
       case 'suspended':
-        return '已暂停'
+        return t('tenantAppList.status.suspended')
       default:
         return status
     }
@@ -88,24 +90,21 @@ export default function AppList() {
   }
 
   return (
-    <TenantLayout title="应用管理">
+    <TenantLayout title={t('tenantAppList.layoutTitle')}>
       <div className="space-y-6">
-      {/* 页面头部 */}
       <PPageHeader
-        title="应用管理"
-        description="管理你的 OAuth2 应用和服务"
+        title={t('tenantAppList.title')}
+        description={t('tenantAppList.description')}
         icon={<CubeIcon className="h-8 w-8 text-blue-600" />}
         actions={
           <Link to={ROUTES.tenant.appsNew}>
-            <PButton leftIcon={<PlusIcon className="h-4 w-4" />}>创建应用</PButton>
+            <PButton leftIcon={<PlusIcon className="h-4 w-4" />}>{t('tenantAppList.actions.createApp')}</PButton>
           </Link>
         }
       />
 
-        {/* 错误提示 */}
         {error && <PAlert variant="error" message={error} className="mb-6" />}
 
-        {/* 应用列表 */}
         <div className="overflow-hidden rounded-xl bg-white shadow-sm">
           <ul className="divide-y divide-gray-200">
             {apps.map((app) => (
@@ -138,7 +137,7 @@ export default function AppList() {
                             {app.oauth_client && (
                               <PBadge variant="info" className="ml-2">
                                 <KeyIcon className="h-3 w-3 mr-1" />
-                                OAuth已配置
+                                {t('tenantAppList.oauthConfigured')}
                               </PBadge>
                             )}
                           </div>
@@ -156,23 +155,23 @@ export default function AppList() {
                                   rel="noopener noreferrer"
                                   className="text-indigo-600 hover:text-indigo-800"
                                 >
-                                  站点主页
+                                  {t('tenantAppList.homepage')}
                                 </a>
                                 <span className="mx-2">•</span>
                               </>
                             )}
-                            <span>创建于 {new Date(app.created_at).toLocaleDateString()}</span>
+                            <span>{t('tenantAppList.createdAt', { date: new Date(app.created_at).toLocaleDateString(locale) })}</span>
                           </div>
                           <div className="mt-2">
                             <div className="text-sm text-gray-500">
-                              <span className="font-medium">回调地址：</span>
+                              <span className="font-medium">{t('tenantAppList.callbackUrlsLabel')}</span>
                               {app.callback_urls.length > 0 ? (
                                 <span className="ml-1">
                                   {app.callback_urls.slice(0, 2).join(', ')}
-                                  {app.callback_urls.length > 2 && ` (+${app.callback_urls.length - 2} 个)`}
+                                  {app.callback_urls.length > 2 && t('tenantAppList.moreCount', { count: app.callback_urls.length - 2 })}
                                 </span>
                               ) : (
-                                <span className="ml-1 text-gray-400">未配置</span>
+                                <span className="ml-1 text-gray-400">{t('tenantAppList.notConfigured')}</span>
                               )}
                             </div>
                           </div>
@@ -183,42 +182,42 @@ export default function AppList() {
                       <Link
                         to={`/tenant/apps/${app.id}`}
                         className={`${actionButtonClass} border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-blue-500`}
-                        title="查看详情"
+                        title={t('tenantAppList.actions.viewDetail')}
                       >
                         <EyeIcon className="h-4 w-4" />
                       </Link>
                       <Link
                         to={`/tenant/apps/${app.id}/edit`}
                         className={`${actionButtonClass} border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-blue-500`}
-                        title="编辑"
+                        title={t('tenantAppList.actions.edit')}
                       >
                         <PencilIcon className="h-4 w-4" />
                       </Link>
                       <Link
                         to={`/tenant/apps/${app.id}/oauth`}
                         className={`${actionButtonClass} border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-blue-500`}
-                        title="OAuth配置"
+                        title={t('tenantAppList.actions.oauthConfig')}
                       >
                         <KeyIcon className="h-4 w-4" />
                       </Link>
                       <Link
                         to={`/tenant/apps/${app.id}/stats`}
                         className={`${actionButtonClass} border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-blue-500`}
-                        title="统计"
+                        title={t('tenantAppList.actions.stats')}
                       >
                         <ChartBarIcon className="h-4 w-4" />
                       </Link>
                       <Link
                         to={`/tenant/apps/${app.id}/settings`}
                         className={`${actionButtonClass} border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-blue-500`}
-                        title="设置"
+                        title={t('tenantAppList.actions.settings')}
                       >
                         <Cog6ToothIcon className="h-4 w-4" />
                       </Link>
                       <button
                         onClick={() => handleDeleteApp(app.id)}
                         className={`${actionButtonClass} border-red-300 bg-white text-red-700 hover:bg-red-50 focus:ring-red-500`}
-                        title="删除"
+                        title={t('tenantAppList.actions.delete')}
                       >
                         <TrashIcon className="h-4 w-4" />
                       </button>
@@ -229,22 +228,20 @@ export default function AppList() {
             ))}
           </ul>
 
-          {/* 空状态 */}
           {apps.length === 0 && !loading && (
             <div className="text-center py-12">
               <CubeIcon className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">暂无应用</h3>
-              <p className="mt-1 text-sm text-gray-500">开始创建第一个应用</p>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">{t('tenantAppList.empty.title')}</h3>
+              <p className="mt-1 text-sm text-gray-500">{t('tenantAppList.empty.description')}</p>
               <div className="mt-6">
                 <Link to={ROUTES.tenant.appsNew}>
-                  <PButton leftIcon={<PlusIcon className="h-4 w-4" />}>创建应用</PButton>
+                  <PButton leftIcon={<PlusIcon className="h-4 w-4" />}>{t('tenantAppList.actions.createApp')}</PButton>
                 </Link>
               </div>
             </div>
           )}
         </div>
 
-        {/* 分页 */}
         {totalPages > 1 && (
           <PPagination
             currentPage={page}

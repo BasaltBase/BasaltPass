@@ -2,15 +2,17 @@ import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import client from '@api/client'
 import { ShieldCheckIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
+import { useI18n } from '@shared/i18n'
 
 export default function OAuthConsent() {
+  const { t } = useI18n()
   const [searchParams] = useSearchParams()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const submittedRef = useRef(false)
 
-  // 从URL参数中获取OAuth授权信息
-  const clientName = searchParams.get('client_name') || '未知应用'
+  // Read OAuth authorization information from URL parameters
+  const clientName = searchParams.get('client_name') || t('auth.oauthConsent.unknownApp')
   const clientDescription = searchParams.get('client_description') || ''
   const scopes = searchParams.get('scope')?.split(' ') || []
   const redirectUri = searchParams.get('redirect_uri') || ''
@@ -61,7 +63,7 @@ export default function OAuthConsent() {
       submitConsentForm('allow')
     } catch (err: any) {
       submittedRef.current = false
-      setError(err.message || '授权失败，请重试')
+      setError(err.message || t('auth.oauthConsent.errors.authorizeFailed'))
       setLoading(false)
     }
   }
@@ -74,43 +76,43 @@ export default function OAuthConsent() {
       submitConsentForm('deny')
     } catch (err: any) {
       submittedRef.current = false
-      setError(err.message || '操作失败，请重试')
+      setError(err.message || t('auth.oauthConsent.errors.operationFailed'))
       setLoading(false)
     }
   }
 
   useEffect(() => {
     if (!clientId || !redirectUri) {
-      setError('授权请求参数不完整')
+      setError(t('auth.oauthConsent.errors.missingParams'))
     }
-  }, [clientId, redirectUri])
+  }, [clientId, redirectUri, t])
 
   const getScopeDisplayName = (scope: string) => {
     const scopeNames: Record<string, string> = {
-      openid: '基本身份信息',
-      profile: '用户资料',
-      email: '邮箱地址',
-      phone: '手机号码',
-      address: '地址信息',
-      read: '读取权限',
-      write: '写入权限',
-      admin: '管理员权限',
+      openid: t('auth.oauthConsent.scopes.openid.name'),
+      profile: t('auth.oauthConsent.scopes.profile.name'),
+      email: t('auth.oauthConsent.scopes.email.name'),
+      phone: t('auth.oauthConsent.scopes.phone.name'),
+      address: t('auth.oauthConsent.scopes.address.name'),
+      read: t('auth.oauthConsent.scopes.read.name'),
+      write: t('auth.oauthConsent.scopes.write.name'),
+      admin: t('auth.oauthConsent.scopes.admin.name'),
     }
     return scopeNames[scope] || scope
   }
 
   const getScopeDescription = (scope: string) => {
     const scopeDescriptions: Record<string, string> = {
-      openid: '允许应用确认您的身份',
-      profile: '允许应用访问您的基本资料（昵称、头像等）',
-      email: '允许应用访问您的邮箱地址',
-      phone: '允许应用访问您的手机号码',
-      address: '允许应用访问您的地址信息',
-      read: '允许应用读取您的数据',
-      write: '允许应用修改您的数据',
-      admin: '允许应用执行管理员操作',
+      openid: t('auth.oauthConsent.scopes.openid.description'),
+      profile: t('auth.oauthConsent.scopes.profile.description'),
+      email: t('auth.oauthConsent.scopes.email.description'),
+      phone: t('auth.oauthConsent.scopes.phone.description'),
+      address: t('auth.oauthConsent.scopes.address.description'),
+      read: t('auth.oauthConsent.scopes.read.description'),
+      write: t('auth.oauthConsent.scopes.write.description'),
+      admin: t('auth.oauthConsent.scopes.admin.description'),
     }
-    return scopeDescriptions[scope] || `允许应用访问 ${scope} 相关数据`
+    return scopeDescriptions[scope] || t('auth.oauthConsent.scopes.defaultDescription', { scope })
   }
 
   return (
@@ -122,26 +124,26 @@ export default function OAuthConsent() {
               <div className="flex">
                 <ExclamationTriangleIcon className="h-5 w-5 text-red-400" />
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">错误</h3>
+                  <h3 className="text-sm font-medium text-red-800">{t('auth.oauthConsent.errorCard.title')}</h3>
                   <p className="mt-1 text-sm text-red-700">{error}</p>
                 </div>
               </div>
             </div>
           ) : (
             <div className="lg:grid lg:grid-cols-5 lg:gap-8">
-              {/* 左侧：应用信息 */}
+              {/* Left side: application details */}
               <div className="lg:col-span-2 flex flex-col items-center lg:items-start lg:border-r lg:border-gray-200 lg:pr-8">
                 <div className="flex justify-center lg:justify-start w-full mb-6">
                   <ShieldCheckIcon className="h-16 w-16 text-blue-600" />
                 </div>
                 <h2 className="text-2xl lg:text-3xl font-extrabold text-gray-900 text-center lg:text-left mb-4">
-                  授权确认
+                  {t('auth.oauthConsent.header.title')}
                 </h2>
                 <p className="text-sm text-gray-600 text-center lg:text-left mb-6">
-                  应用请求访问您的账户信息
+                  {t('auth.oauthConsent.header.description')}
                 </p>
 
-                {/* 应用头像 + 认证徽章 */}
+                {/* App avatar + verified badge */}
                 <div className="flex flex-col items-center lg:items-start w-full">
                   <div className="relative mb-4">
                     <div className="h-20 w-20 bg-blue-100 rounded-full flex items-center justify-center">
@@ -149,18 +151,18 @@ export default function OAuthConsent() {
                         {clientName.charAt(0).toUpperCase()}
                       </span>
                     </div>
-                    {/* Twitter-style 蓝V认证徽章 */}
+                    {/* Twitter-style verified badge */}
                     {isVerified && (
                       <div
                         className="absolute bottom-0 right-0 flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 shadow-md"
-                        title="认证应用"
+                        title={t('auth.oauthConsent.badges.verified')}
                       >
-                        {/* 勾选图标 */}
+                        {/* Checkmark icon */}
                         <svg
                           viewBox="0 0 24 24"
                           fill="white"
                           className="h-3.5 w-3.5"
-                          aria-label="认证"
+                          aria-label={t('auth.oauthConsent.badges.verified')}
                         >
                           <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                         </svg>
@@ -172,7 +174,7 @@ export default function OAuthConsent() {
                     {clientName}
                     {isVerified && (
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                        认证应用
+                        {t('auth.oauthConsent.badges.verified')}
                       </span>
                     )}
                   </h3>
@@ -183,10 +185,10 @@ export default function OAuthConsent() {
                   )}
                 </div>
 
-                {/* 隐私政策 & 服务条款 */}
+                {/* Privacy policy & terms of service */}
                 {(privacyPolicyUrl || termsOfServiceUrl) && (
                   <div className="mt-6 w-full text-center lg:text-left">
-                    <p className="text-xs text-gray-400 mb-1">相关链接</p>
+                    <p className="text-xs text-gray-400 mb-1">{t('auth.oauthConsent.links.title')}</p>
                     <div className="flex flex-wrap gap-x-3 gap-y-1 justify-center lg:justify-start">
                       {privacyPolicyUrl && (
                         <a
@@ -195,7 +197,7 @@ export default function OAuthConsent() {
                           rel="noopener noreferrer"
                           className="text-xs text-indigo-600 hover:text-indigo-800 underline"
                         >
-                          隐私政策
+                          {t('auth.oauthConsent.links.privacyPolicy')}
                         </a>
                       )}
                       {termsOfServiceUrl && (
@@ -205,7 +207,7 @@ export default function OAuthConsent() {
                           rel="noopener noreferrer"
                           className="text-xs text-indigo-600 hover:text-indigo-800 underline"
                         >
-                          服务条款
+                          {t('auth.oauthConsent.links.termsOfService')}
                         </a>
                       )}
                     </div>
@@ -213,11 +215,11 @@ export default function OAuthConsent() {
                 )}
               </div>
 
-              {/* 右侧：权限 & 操作 */}
+              {/* Right side: permissions & actions */}
               <div className="lg:col-span-3 mt-8 lg:mt-0">
                 <div className="mb-6">
                   <h4 className="text-sm font-medium text-gray-900 mb-3">
-                    该应用将获得以下权限：
+                    {t('auth.oauthConsent.permissions.title')}
                   </h4>
                   <div className="space-y-2">
                     {scopes.map((scope) => (
@@ -242,9 +244,9 @@ export default function OAuthConsent() {
                   <div className="flex">
                     <ExclamationTriangleIcon className="h-5 w-5 text-yellow-400 flex-shrink-0" />
                     <div className="ml-3">
-                      <h3 className="text-sm font-medium text-yellow-800">注意</h3>
+                      <h3 className="text-sm font-medium text-yellow-800">{t('auth.oauthConsent.notice.title')}</h3>
                       <p className="mt-1 text-sm text-yellow-700">
-                        只有当您信任该应用时才应授权。授权后，该应用将能够访问您的相关信息。
+                        {t('auth.oauthConsent.notice.description')}
                       </p>
                     </div>
                   </div>
@@ -256,20 +258,20 @@ export default function OAuthConsent() {
                     disabled={loading}
                     className="flex-1 px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
                   >
-                    {loading ? '处理中...' : '拒绝'}
+                    {loading ? t('auth.oauthConsent.actions.processing') : t('auth.oauthConsent.actions.deny')}
                   </button>
                   <button
                     onClick={handleAllow}
                     disabled={loading}
                     className="flex-1 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
                   >
-                    {loading ? '处理中...' : '授权'}
+                    {loading ? t('auth.oauthConsent.actions.processing') : t('auth.oauthConsent.actions.allow')}
                   </button>
                 </div>
 
                 <div className="mt-6 text-center lg:text-left">
                   <p className="text-xs text-gray-500">
-                    授权后，您可以随时在账户设置中撤销应用的访问权限
+                    {t('auth.oauthConsent.footerHint')}
                   </p>
                 </div>
               </div>

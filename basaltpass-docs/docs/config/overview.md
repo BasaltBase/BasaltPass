@@ -15,7 +15,7 @@ This layer controls the *infrastructure* settings of the application.
 
 ## 2. System Settings (`settings.yaml`)
 
-This layer controls the *business logic* and *运行时 behavior*.
+This layer controls the *business logic* and *runtime behavior*.
 -   **File**: `basaltpass-backend/config/settings.yaml` (Automatically generated/managed).
 -   **Scope**: Site Name, Registration rules, OAuth allow-lists.
 -   **Management**: Can be updated via Admin API without restarting the server.

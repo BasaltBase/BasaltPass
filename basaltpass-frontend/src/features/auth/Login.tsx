@@ -5,8 +5,9 @@ import { useAuth } from '@contexts/AuthContext'
 import { useConfig } from '@contexts/ConfigContext'
 import { getApiBase, getAuthRequestTimeoutMs } from '../../shared/config/env'
 import { resolveSafeRedirectTarget } from '@utils/redirect'
-import { consumeSessionNotice, getSessionNoticeMessage } from '@utils/sessionNotice'
+import { consumeSessionNotice } from '@utils/sessionNotice'
 import { PAlert } from '@ui'
+import { useI18n } from '@shared/i18n'
 import { LoginPasswordForm } from './login/LoginPasswordForm'
 import { LoginShell } from './login/LoginShell'
 import { LoginTwoFactorForm } from './login/LoginTwoFactorForm'
@@ -16,6 +17,7 @@ function Login() {
   const navigate = useNavigate()
   const { login } = useAuth()
   const { siteName, siteInitial, setPageTitle } = useConfig()
+  const { t } = useI18n()
   const [searchParams] = useSearchParams()
 
   const redirectParam = searchParams.get('redirect') || ''
@@ -67,15 +69,19 @@ function Login() {
   })
 
   useEffect(() => {
-    setPageTitle('管理员登录')
-  }, [setPageTitle])
+    setPageTitle(t('auth.login.pageTitleAdmin'))
+  }, [setPageTitle, t])
 
   useEffect(() => {
-    const message = getSessionNoticeMessage(consumeSessionNotice())
-    if (message) {
-      setError(message)
+    const code = consumeSessionNotice()
+    if (code === 'session_expired') {
+      setError(t('entry.adminSessionExpired'))
+      return
     }
-  }, [setError])
+    if (code) {
+      setError(t(`sessionNotice.${code}`))
+    }
+  }, [setError, t])
 
   useEffect(() => {
     if (step === 2 && twoFAType === 'totp') {
@@ -87,7 +93,7 @@ function Login() {
     <LoginShell siteInitial={siteInitial} siteName={siteName}>
       {error && step === 1 && (
         <div className="mt-6">
-          <PAlert variant="error" title="登录失败" message={error} />
+          <PAlert variant="error" title={t('auth.login.errorTitle')} message={error} />
         </div>
       )}
 

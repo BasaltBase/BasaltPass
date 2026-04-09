@@ -4,20 +4,20 @@ sidebar_position: 2
 
 # S2S API
 
-BasaltPass S2S API 面向应用后端与服务端之间的调用。
+BasaltPass S2S API 用于应用后端的服务端到服务端访问。
 
-## 基础地址
+## 基础 URL
 
 - 开发环境: `http://localhost:8101/api/v1/s2s`
 - 生产环境: `https://your-domain.com/api/v1/s2s`
 
-## 认证方式
+## 认证
 
-当前 S2S 接口直接使用 `client_id` 与 `client_secret` 认证。
+当前 S2S 端点直接使用 `client_id` 和 `client_secret` 进行认证。
 
-- 推荐方式: 在请求头中传递 `client_id` 与 `client_secret`
-- 兼容方式: 表单字段 `client_id` 与 `client_secret`
-- Query 参数方式只有在服务端显式开启时才会接受
+- 推荐: 通过请求头传递 `client_id` 和 `client_secret`
+- 也支持: 通过表单字段传递 `client_id` 和 `client_secret`
+- 仅当服务器配置明确允许时才接受查询参数
 
 示例:
 
@@ -29,7 +29,7 @@ client_secret: your_client_secret
 Accept: application/json
 ```
 
-## 响应 Envelope
+## 响应封装
 
 成功响应:
 
@@ -54,9 +54,9 @@ Accept: application/json
 }
 ```
 
-## Scopes
+## 权限范围 (Scopes)
 
-当前可用的 S2S scope:
+可用的 S2S 权限范围:
 
 - `s2s.read`
 - `s2s.user.read`
@@ -71,34 +71,58 @@ Accept: application/json
 - `s2s.products.read`
 - `s2s.email.send`
 
-其中 `s2s.read` 是旧版聚合只读 scope，目前等价于所有 `s2s.*.read`。
+`s2s.read` 是一个旧版的伞状权限，当前隐含所有 `s2s.*.read` 权限。
 
-## 元信息接口
+## 元信息端点
 
 ### `GET /health`
 
 返回 S2S 健康状态。
 
+响应:
+
+```json
+{
+  "data": {
+    "status": "ok"
+  }
+}
+```
+
 ### `GET /me`
 
-返回当前 S2S 客户端上下文：
+返回当前已认证的 S2S 客户端上下文。
+
+响应字段:
 
 - `client_id`
 - `app_id`
 - `tenant_id`
 - `scopes`
 
-## 用户接口
+## 用户端点
 
 ### `GET /users/:id`
 
-所需 scope: `s2s.user.read`
+所需权限: `s2s.user.read`
 
-返回当前 tenant 下的用户摘要信息。
+返回当前租户内的用户摘要。
+
+字段:
+
+- `id`
+- `email`
+- `nickname`
+- `avatar_url`
+- `email_verified`
+- `phone`
+- `phone_verified`
+- `created_at`
+- `updated_at`
 
 ### `GET /users/lookup`
 
-所需 scope: `s2s.user.read`
+所需权限: `s2s.user.read`
 
 查询参数:
 
@@ -108,11 +132,11 @@ Accept: application/json
 - `page`
 - `page_size`
 
-`email`、`phone`、`q` 三者必须且只能传一个。
+`email`、`phone` 或 `q` 三者必须提供其一。
 
 ### `PATCH /users/:id`
 
-所需 scope: `s2s.user.write`
+所需权限: `s2s.user.write`
 
 请求体:
 
@@ -122,7 +146,7 @@ Accept: application/json
 }
 ```
 
-兼容旧字段:
+旧版别名:
 
 ```json
 {
@@ -130,63 +154,70 @@ Accept: application/json
 }
 ```
 
-## RBAC 接口
+## RBAC 端点
 
 ### `GET /users/:id/roles`
 
-所需 scope: `s2s.rbac.read`
+所需权限: `s2s.rbac.read`
 
-可选参数:
+可选查询参数:
 
 - `tenant_id`
 
+返回角色对象，包含:
+
+- `id`
+- `code`
+- `name`
+- `description`
+
 ### `GET /users/:id/role-codes`
 
-所需 scope: `s2s.rbac.read`
+所需权限: `s2s.rbac.read`
 
-可选参数:
+可选查询参数:
 
 - `tenant_id`
 
 ### `GET /users/:id/permissions`
 
-所需 scope: `s2s.rbac.read`
+所需权限: `s2s.rbac.read`
 
-可选参数:
+可选查询参数:
 
 - `tenant_id`
 
-返回字段:
+返回:
 
 - `permission_codes`
 - `role_codes`
 - `roles`
 
-其中 `roles` 为兼容旧返回，目前与 `role_codes` 相同。
+`roles` 保留用于向后兼容，当前与 `role_codes` 相同。
 
-## 团队接口
+## 团队端点
 
 ### `GET /teams`
 
-所需 scope: `s2s.team.read`
+所需权限: `s2s.team.read`
 
-可选参数:
+可选查询参数:
 
 - `user_id`
 - `q`
 - `page`
 - `page_size`
 
-行为说明:
+行为:
 
-- 不传 `user_id` 时，返回当前 tenant 的团队列表
-- 传入 `user_id` 时，返回该用户所在的团队
+- 不带 `user_id` 时，列出租户内的团队
+- 带 `user_id` 时，返回指定用户所属的团队
 
 ### `POST /teams`
 
-所需 scope: `s2s.team.write`
+所需权限: `s2s.team.write`
 
-在当前 tenant 下创建团队。
+在当前租户中创建团队。
 
 请求体:
 
@@ -202,27 +233,27 @@ Accept: application/json
 
 规则:
 
-- `name` 必填
-- `owner_user_id` 与 `member_user_ids` 必须属于当前 tenant
-- 重复用户 ID 会自动去重
+- `name` 为必填
+- `owner_user_id` 和 `member_user_ids` 必须属于当前租户
+- 重复的用户 ID 会被忽略
 
 ### `GET /teams/:id`
 
-所需 scope: `s2s.team.read`
+所需权限: `s2s.team.read`
 
-返回团队详情和成员信息。
+返回团队及其成员详情。
 
 ### `GET /users/:id/teams`
 
-所需 scope: `s2s.team.read`
+所需权限: `s2s.team.read`
 
-返回指定用户在当前 tenant 下所属的全部团队。
+返回指定用户在当前租户中所属的所有团队。
 
-## 钱包接口
+## 钱包端点
 
 ### `GET /users/:id/wallets`
 
-所需 scope: `s2s.wallet.read`
+所需权限: `s2s.wallet.read`
 
 查询参数:
 
@@ -230,9 +261,16 @@ Accept: application/json
 - `limit` 可选
 - `tenant_id` 可选
 
+返回:
+
+- `wallet_id`
+- `currency`
+- `balance`
+- `transactions`
+
 ### `POST /users/:id/wallets/adjust`
 
-所需 scope: `s2s.wallet.write`
+所需权限: `s2s.wallet.write`
 
 请求体:
 
@@ -245,11 +283,13 @@ Accept: application/json
 }
 ```
 
-## 通知接口
+`operation` 必须为 `increase` 或 `decrease`。
+
+## 通知端点
 
 ### `GET /users/:id/messages`
 
-所需 scope: `s2s.messages.read`
+所需权限: `s2s.messages.read`
 
 查询参数:
 
@@ -260,20 +300,20 @@ Accept: application/json
 
 ### `POST /notifications`
 
-所需 scope: `s2s.notifications.write`
+所需权限: `s2s.notifications.write`
 
-该接口只会向满足以下条件的用户发通知：
+仅向以下用户发送通知:
 
-- 属于当前 app
-- 已授权当前 app
-- 在 `app_users` 中状态为 `active`
+- 属于当前应用
+- 已授权当前应用
+- 当前处于 `active` 应用用户状态
 
 请求体:
 
 ```json
 {
-  "title": "Maintenance notice",
-  "content": "Service window starts at 01:00 UTC",
+  "title": "维护通知",
+  "content": "服务窗口将于 UTC 01:00 开始",
   "type": "warning",
   "user_ids": [123, 124],
   "sender_name": "My App"
@@ -284,56 +324,63 @@ Accept: application/json
 
 ```json
 {
-  "title": "Welcome",
-  "content": "New feature is live",
+  "title": "欢迎",
+  "content": "新功能已上线",
   "type": "info",
   "broadcast": true
 }
 ```
 
-支持的 `type`:
+支持的 `type` 值:
 
 - `info`
 - `success`
 - `warning`
 - `error`
 
-## 商品接口
+响应字段:
+
+- `sent_count`
+- `target_user_ids`
+- `notification_type`
+- `broadcast`
+
+## 产品端点
 
 ### `GET /users/:id/products`
 
-所需 scope: `s2s.products.read`
+所需权限: `s2s.products.read`
 
-返回用户通过活跃订阅或已支付订单拥有的产品。
+返回用户通过活跃订阅或已付费订单拥有的产品。
 
 ### `GET /users/:id/products/:product_id/ownership`
 
-所需 scope: `s2s.products.read`
+所需权限: `s2s.products.read`
 
 返回:
 
 - `has_ownership`
 - `via`
 
-## 邮件接口
+## 邮件端点
 
 ### `POST /emails/send`
 
-所需 scope: `s2s.email.send`
+所需权限: `s2s.email.send`
 
-该接口只会向满足以下条件的用户发邮件：
+仅向以下用户发送邮件:
 
-- 属于当前 app
-- 已授权当前 app
-- 在 `app_users` 中状态为 `active`
+- 属于当前应用
+- 已授权当前应用
+- 当前处于 `active` 应用用户状态
 
 请求体:
 
 ```json
 {
-  "subject": "Your verification code",
-  "text_body": "Code: 123456",
-  "html_body": "<p>Code: <strong>123456</strong></p>",
+  "subject": "您的验证码",
+  "text_body": "验证码: 123456",
+  "html_body": "<p>验证码: <strong>123456</strong></p>",
   "user_ids": [123, 124],
   "reply_to": "support@example.com"
 }
@@ -343,20 +390,20 @@ Accept: application/json
 
 ```json
 {
-  "subject": "Release note",
-  "text_body": "A new version is available",
+  "subject": "发布说明",
+  "text_body": "新版本已发布",
   "broadcast": true
 }
 ```
 
-返回字段:
+响应:
 
 - `results`
 - `sent_count`
 - `failed_count`
 - `broadcast`
 
-`results` 中的单项可能包含:
+`results` 中每个条目可能包含:
 
 - `user_id`
 - `email`
@@ -367,7 +414,7 @@ Accept: application/json
 - `sent_at`
 - `error`
 
-## 常见错误码
+## 常见错误
 
 - `invalid_client`
 - `insufficient_scope`

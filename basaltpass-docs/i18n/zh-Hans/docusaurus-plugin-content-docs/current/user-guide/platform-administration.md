@@ -2,32 +2,32 @@
 sidebar_position: 10
 ---
 
-# Platform Administration
+# 平台管理
 
-Platform Admin APIs are used for managing the entire BasaltPass instance. These are distinct from Tenant Admin APIs.
+平台管理 API 用于管理整个 BasaltPass 实例。这些 API 与租户管理 API 不同。
 
-## Authentication
+## 认证
 
-Requires a JWT with `scp: admin`. Secure this role carefully.
+需要带有 `scp: admin` 的 JWT。请妥善保护此角色。
 
-## Key Capabilities
+## 核心功能
 
-### Dashboard
-View global statistics and activities.
+### 仪表盘
+查看全局统计数据和活动。
 -   `GET /api/v1/admin/dashboard/stats`
 
-### Tenant Management
-Create, suspend, or delete tenants.
+### 租户管理
+创建、挂起或删除租户。
 -   `GET /api/v1/admin/tenants`
 -   `POST /api/v1/admin/tenants`
 
-### User Management
-Manage specific users across any tenant (usually for support or moderation).
+### 用户管理
+管理任何租户中的特定用户 (通常用于支持或审核)。
 -   `POST /api/v1/admin/users/:id/ban`
 
-### System Settings
-Configure global policies (registrations, allowed emails, etc.).
+### 系统设置
+配置全局策略 (注册、允许的邮箱等)。
 -   `GET /api/v1/admin/settings`
 
-## Note on Routing
-Some legacy admin endpoints might be under `/api/v1/tenant/`. It is recommended to use `/api/v1/admin/` where available.
+## 路由说明
+一些旧版管理端点可能在 `/api/v1/tenant/` 下。建议尽可能使用 `/api/v1/admin/`。

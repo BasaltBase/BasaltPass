@@ -11,15 +11,15 @@ import {
 } from '@heroicons/react/24/solid'
 import { useNotifications }                   from '../contexts/NotificationContext'
 
-// 增强版通知图标组件，使用NotificationProvider
-// 可配置“查看全部通知”跳转路径，默认 /notifications
+// translatednotificationtranslatedcomponent，translatedNotificationProvider
+// canconfig“translatednotification”translated，default /notifications
 const EnhancedNotificationIcon: React.FC<{ viewAllPath?: string }> = ({ viewAllPath = '/notifications' }) => {
   const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotifications()
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
 
-  // 点击外部关闭下拉菜单
+  // translated
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -63,9 +63,9 @@ const EnhancedNotificationIcon: React.FC<{ viewAllPath?: string }> = ({ viewAllP
     const now = new Date()
     const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60))
     
-    if (diffInMinutes < 1) return '刚刚'
-    if (diffInMinutes < 60) return `${diffInMinutes}分钟前`
-    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}小时前`
+    if (diffInMinutes < 1) return 'translated'
+    if (diffInMinutes < 60) return `${diffInMinutes}translated`
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}translated`
     return date.toLocaleDateString()
   }
 
@@ -91,14 +91,14 @@ const EnhancedNotificationIcon: React.FC<{ viewAllPath?: string }> = ({ viewAllP
         <div className="absolute right-0 z-50 mt-2 w-80 rounded-xl bg-white shadow-lg ring-1 ring-black ring-opacity-5">
           <div className="py-2">
             <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200">
-              <h3 className="text-sm font-medium text-gray-900">通知</h3>
+              <h3 className="text-sm font-medium text-gray-900">notification</h3>
               <div className="flex items-center space-x-2">
                 {unreadCount > 0 && (
                   <button
                     onClick={markAllAsRead}
                     className="text-xs text-blue-600 hover:text-blue-800"
                   >
-                    全部已读
+                    translatedalreadytranslated
                   </button>
                 )}
                 <button
@@ -114,7 +114,7 @@ const EnhancedNotificationIcon: React.FC<{ viewAllPath?: string }> = ({ viewAllP
               {notifications.length === 0 ? (
                 <div className="px-4 py-8 text-center text-gray-500">
                   <BellIcon className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-                  <p className="text-sm">暂无通知</p>
+                  <p className="text-sm">translatednonenotification</p>
                 </div>
               ) : (
                 <div className="divide-y divide-gray-200">
@@ -180,7 +180,7 @@ const EnhancedNotificationIcon: React.FC<{ viewAllPath?: string }> = ({ viewAllP
                   onClick={handleViewAllNotifications}
                   className="w-full text-sm text-blue-600 hover:text-blue-800 text-center"
                 >
-                  查看全部通知
+                  translatednotification
                 </button>
               </div>
             )}

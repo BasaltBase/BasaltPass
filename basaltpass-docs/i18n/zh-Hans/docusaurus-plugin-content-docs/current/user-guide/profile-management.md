@@ -2,23 +2,23 @@
 sidebar_position: 8
 ---
 
-# Profile Management
+# 个人资料管理
 
-Users can manage their personal information via the **User Console**.
+用户可以通过 **用户控制台** 管理其个人信息。
 
-## Editable Fields
+## 可编辑字段
 
--   **Avatar**: Upload a profile picture.
--   **Name**: Display name.
--   **Phone**: Contact number (may require verification).
--   **Password**: Change current password.
+-   **头像**: 上传个人头像。
+-   **昵称**: 显示名称。
+-   **手机号**: 联系电话 (可能需要验证)。
+-   **密码**: 修改当前密码。
 
-## Read-Only Fields
+## 只读字段
 
--   **Email**: Often locked after registration or requires a special change flow.
--   **Role**: Managed by Tenant Admins only.
--   **Tenant ID**: Fixed.
+-   **邮箱**: 注册后通常锁定，或需要特殊流程更改。
+-   **角色**: 仅由租户管理员管理。
+-   **租户 ID**: 固定不变。
 
-## Linked Accounts
+## 关联账户
 
-Users can view and unlink 3rd-party social accounts (Google, GitHub) connected to their profile.
+用户可以查看和解绑与其个人资料关联的第三方社交账户 (Google、GitHub)。

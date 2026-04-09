@@ -21,6 +21,7 @@ import { tenantUserManagementApi } from '@api/tenant/tenantUserManagement'
 import { tenantSubscriptionAPI } from '@api/tenant/subscription'
 import { tenantApi } from '@api/tenant/tenant'
 import { useConfig } from '@contexts/ConfigContext'
+import { useI18n } from '@shared/i18n'
 
 interface TenantStats {
   appsTotal: number
@@ -34,8 +35,9 @@ interface TenantStats {
 }
 
 interface QuickAction {
-  name: string
-  description: string
+  id: string
+  nameKey: string
+  descriptionKey: string
   href: string
   icon: React.ComponentType<any>
   color: string
@@ -47,45 +49,51 @@ const quickActionCardClass =
 
 const quickActions: QuickAction[] = [
   {
-    name: '应用管理',
-    description: '管理您的应用',
+    id: 'apps',
+    nameKey: 'tenantDashboardPage.quickActions.apps.name',
+    descriptionKey: 'tenantDashboardPage.quickActions.apps.description',
     href: '/tenant/apps',
     icon: CubeIcon,
     color: 'bg-blue-500'
   },
   {
-    name: '用户管理',
-    description: '管理租户下的用户',
+    id: 'users',
+    nameKey: 'tenantDashboardPage.quickActions.users.name',
+    descriptionKey: 'tenantDashboardPage.quickActions.users.description',
     href: '/tenant/users',
     icon: UsersIcon,
     color: 'bg-indigo-500'
   },
   {
-    name: '权限管理',
-    description: '管理用户权限和角色',
+    id: 'roles',
+    nameKey: 'tenantDashboardPage.quickActions.roles.name',
+    descriptionKey: 'tenantDashboardPage.quickActions.roles.description',
     href: '/tenant/roles',
     icon: ShieldCheckIcon,
     color: 'bg-green-500'
   },
   {
-    name: '订阅概览',
-    description: '查看订阅状态和收入',
+    id: 'subscriptions',
+    nameKey: 'tenantDashboardPage.quickActions.subscriptions.name',
+    descriptionKey: 'tenantDashboardPage.quickActions.subscriptions.description',
     href: '/tenant/subscriptions',
     icon: ChartBarIcon,
     color: 'bg-indigo-500',
     requiresMarket: true
   },
   {
-    name: '产品管理',
-    description: '管理订阅产品',
+    id: 'products',
+    nameKey: 'tenantDashboardPage.quickActions.products.name',
+    descriptionKey: 'tenantDashboardPage.quickActions.products.description',
     href: '/tenant/subscriptions/products',
     icon: ServerIcon,
     color: 'bg-yellow-500',
     requiresMarket: true
   },
   {
-    name: '优惠券管理',
-    description: '创建和管理优惠券',
+    id: 'coupons',
+    nameKey: 'tenantDashboardPage.quickActions.coupons.name',
+    descriptionKey: 'tenantDashboardPage.quickActions.coupons.description',
     href: '/tenant/subscriptions/coupons',
     icon: CreditCardIcon,
     color: 'bg-red-500',
@@ -94,6 +102,7 @@ const quickActions: QuickAction[] = [
 ]
 
 export default function TenantDashboard() {
+  const { t, locale } = useI18n()
   const { marketEnabled } = useConfig()
   const [stats, setStats] = useState<TenantStats | null>(null)
   const [loading, setLoading] = useState(true)
@@ -140,13 +149,13 @@ export default function TenantDashboard() {
           subscriptionsActive,
         })
 
-        // 获取租户code
+        // code
         if (tenantInfoRes?.data?.code) {
           setTenantCode(tenantInfoRes.data.code)
         }
       } catch (err) {
-        console.error('获取数据失败:', err);
-        setError('加载数据失败');
+        console.error(t('tenantDashboardPage.logs.fetchDataFailed'), err);
+        setError(t('tenantDashboardPage.errors.loadDataFailed'));
       } finally {
         setLoading(false);
       }
@@ -161,7 +170,7 @@ export default function TenantDashboard() {
       setCopiedField(field)
       setTimeout(() => setCopiedField(null), 2000)
     } catch (err) {
-      console.error('复制失败:', err)
+      console.error('Copy failed:', err)
     }
   }
 
@@ -179,11 +188,11 @@ export default function TenantDashboard() {
     try {
       setIsCheckingLiveness(true)
       const response = await tenantApi.triggerLivenessCheck()
-      const checkedAt = response?.checked_at ? new Date(response.checked_at).toLocaleString() : ''
-      setLivenessTip(checkedAt ? `存活检查通过（${checkedAt}）` : '存活检查通过')
+      const checkedAt = response?.checked_at ? new Date(response.checked_at).toLocaleString(locale) : ''
+          setLivenessTip(checkedAt ? t('tenantDashboardPage.liveness.successWithTime', { time: checkedAt }) : t('tenantDashboardPage.liveness.success'))
     } catch (err: any) {
-      const msg = err?.response?.data?.message || err?.message || '存活检查失败'
-      setLivenessTip(`存活检查失败：${msg}`)
+      const msg = err?.response?.data?.message || err?.message || t('tenantDashboardPage.liveness.failed')
+      setLivenessTip(t('tenantDashboardPage.liveness.failedWithReason', { reason: msg }))
     } finally {
       setIsCheckingLiveness(false)
     }
@@ -193,46 +202,46 @@ export default function TenantDashboard() {
     if (!stats) return []
     const allCards = [
       {
-        title: '应用',
+        title: t('tenantDashboardPage.cards.apps.title'),
         value: stats.appsTotal,
-        sub: `活跃 ${stats.appsActive}`,
+        sub: t('tenantDashboardPage.cards.apps.active', { count: stats.appsActive }),
         icon: CubeIcon,
         href: '/tenant/apps',
         tone: 'text-blue-700 bg-blue-50',
       },
       {
-        title: '租户用户',
+        title: t('tenantDashboardPage.cards.users.title'),
         value: stats.usersTotal,
-        sub: `活跃 ${stats.usersActive}`,
+        sub: t('tenantDashboardPage.cards.users.active', { count: stats.usersActive }),
         icon: UsersIcon,
         href: '/tenant/users',
         tone: 'text-indigo-700 bg-indigo-50',
       },
       {
-        title: '通知',
+        title: t('tenantDashboardPage.cards.notifications.title'),
         value: stats.notificationsTotal,
-        sub: `未读 ${stats.notificationsUnread}`,
+        sub: t('tenantDashboardPage.cards.notifications.unread', { count: stats.notificationsUnread }),
         icon: BellIcon,
         href: '/tenant/notifications',
         tone: 'text-amber-700 bg-amber-50',
       },
       {
-        title: '订阅',
+        title: t('tenantDashboardPage.cards.subscriptions.title'),
         value: stats.subscriptionsTotal,
-        sub: `活跃 ${stats.subscriptionsActive}`,
+        sub: t('tenantDashboardPage.cards.subscriptions.active', { count: stats.subscriptionsActive }),
         icon: ChartBarIcon,
         href: '/tenant/subscriptions/subscriptions',
         tone: 'text-indigo-700 bg-indigo-50',
         requiresMarket: true,
       },
     ]
-    // 根据市场功能配置过滤卡片
+    // 
     return allCards.filter(card => !card.requiresMarket || marketEnabled)
-  }, [stats, marketEnabled])
+  }, [stats, marketEnabled, t])
 
   if (loading) {
     return (
-      <TenantLayout title="仪表板">
+      <TenantLayout title={t('tenantDashboardPage.layoutTitle')}>
         <PSkeleton.Dashboard statsCount={4} />
       </TenantLayout>
     )
@@ -240,11 +249,11 @@ export default function TenantDashboard() {
 
   if (error) {
     return (
-      <TenantLayout title="仪表板">
+      <TenantLayout title={t('tenantDashboardPage.layoutTitle')}>
         <div className="flex min-h-screen items-center justify-center">
           <div className="text-center">
             <div className="text-lg font-medium text-red-600">{error}</div>
-            <PButton onClick={() => window.location.reload()} className="mt-4">重新加载</PButton>
+            <PButton onClick={() => window.location.reload()} className="mt-4">{t('tenantDashboardPage.actions.reload')}</PButton>
           </div>
         </div>
       </TenantLayout>
@@ -252,12 +261,12 @@ export default function TenantDashboard() {
   }
 
   return (
-    <TenantLayout title="仪表板">
+    <TenantLayout title={t('tenantDashboardPage.layoutTitle')}>
       <div className="space-y-6">
         <PPageHeader
-          title="租户仪表盘"
-          description="关键指标与快捷入口"
-          actions={<PButton onClick={handleLivenessCheck} loading={isCheckingLiveness}>存活检查</PButton>}
+          title={t('tenantDashboardPage.title')}
+          description={t('tenantDashboardPage.description')}
+          actions={<PButton onClick={handleLivenessCheck} loading={isCheckingLiveness}>{t('tenantDashboardPage.actions.livenessCheck')}</PButton>}
         />
         {livenessTip && <p className="text-sm text-gray-600">{livenessTip}</p>}
 
@@ -278,22 +287,22 @@ export default function TenantDashboard() {
           ))}
         </div>
 
-        {/* 用户访问链接 */}
+        {/*  */}
         {tenantCode && (
           <PCard className="rounded-xl p-0 shadow-sm">
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-center">
                 <LinkIcon className="h-5 w-5 text-blue-500 mr-2" />
-                <h2 className="text-base font-medium text-gray-900">用户访问链接</h2>
+                <h2 className="text-base font-medium text-gray-900">{t('tenantDashboardPage.userAccessLinks.title')}</h2>
               </div>
-              <p className="mt-1 text-sm text-gray-500">分享这些链接给您的用户进行登录或注册</p>
+              <p className="mt-1 text-sm text-gray-500">{t('tenantDashboardPage.userAccessLinks.description')}</p>
             </div>
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* 登录链接 */}
+                {/*  */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    登录页面
+                    {t('tenantDashboardPage.userAccessLinks.loginPage')}
                   </label>
                   <div className="flex items-center space-x-2">
                     <div className="w-full md:w-1/2 min-w-0">
@@ -308,7 +317,7 @@ export default function TenantDashboard() {
                       type="button"
                       variant="secondary"
                       onClick={() => copyToClipboard(getLoginUrl(), 'login')}
-                      title="复制链接"
+                      title={t('tenantDashboardPage.actions.copyLink')}
                     >
                       {copiedField === 'login' ? (
                         <CheckIcon className="h-5 w-5 text-green-500" />
@@ -319,10 +328,10 @@ export default function TenantDashboard() {
                   </div>
                 </div>
 
-                {/* 注册链接 */}
+                {/*  */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    注册页面
+                    {t('tenantDashboardPage.userAccessLinks.registerPage')}
                   </label>
                   <div className="flex items-center space-x-2">
                     <div className="w-full md:w-1/2 min-w-0">
@@ -337,7 +346,7 @@ export default function TenantDashboard() {
                       type="button"
                       variant="secondary"
                       onClick={() => copyToClipboard(getRegisterUrl(), 'register')}
-                      title="复制链接"
+                      title={t('tenantDashboardPage.actions.copyLink')}
                     >
                       {copiedField === 'register' ? (
                         <CheckIcon className="h-5 w-5 text-green-500" />
@@ -349,12 +358,12 @@ export default function TenantDashboard() {
                 </div>
               </div>
 
-              {/* 提示信息 */}
+              {/*  */}
               <div className="mt-4 rounded-lg bg-blue-50 p-3">
                 <div className="flex">
                   <InformationCircleIcon className="h-5 w-5 text-blue-400 mr-2 flex-shrink-0 mt-0.5" />
                   <div className="text-sm text-blue-700">
-                    <p>将这些链接分享给您的用户，他们可以通过这些链接直接访问您租户的登录和注册页面。</p>
+                    <p>{t('tenantDashboardPage.userAccessLinks.tip')}</p>
                   </div>
                 </div>
               </div>
@@ -364,14 +373,14 @@ export default function TenantDashboard() {
 
             <PCard className="rounded-xl p-0 shadow-sm">
               <div className="px-6 py-4 border-b border-gray-200">
-                <h2 className="text-base font-medium text-gray-900">快捷操作</h2>
+                <h2 className="text-base font-medium text-gray-900">{t('tenantDashboardPage.quickActions.title')}</h2>
               </div>
               <div className="p-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {quickActions
                   .filter(action => !action.requiresMarket || marketEnabled)
                   .map((action) => (
                   <Link
-                    key={action.name}
+                    key={action.id}
                     to={action.href}
                     className={quickActionCardClass}
                   >
@@ -379,8 +388,8 @@ export default function TenantDashboard() {
                       <action.icon className="h-6 w-6 text-white" />
                     </div>
                     <div className="flex-1">
-                      <div className="text-sm font-medium text-gray-900 group-hover:text-gray-900">{action.name}</div>
-                      <div className="mt-0.5 text-sm text-gray-500">{action.description}</div>
+                      <div className="text-sm font-medium text-gray-900 group-hover:text-gray-900">{t(action.nameKey)}</div>
+                      <div className="mt-0.5 text-sm text-gray-500">{t(action.descriptionKey)}</div>
                     </div>
                   </Link>
                 ))}

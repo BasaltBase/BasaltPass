@@ -3,9 +3,11 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import client from '@api/client'
 import { PInput, PButton, PAlert } from '@ui'
 import { ROUTES } from '@constants'
+import { useI18n } from '@shared/i18n'
 
 function ResetPassword() {
   const navigate = useNavigate()
+  const { t } = useI18n()
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token')
   
@@ -24,9 +26,9 @@ function ResetPassword() {
     
     try {
       await client.post('/api/v1/security/password/reset', { email })
-      setSuccess('如果该邮箱存在，我们已发送密码重置邮件')
+      setSuccess(t('auth.resetPassword.request.success'))
     } catch (err: any) {
-      setError(err.response?.data?.error || '请求失败')
+      setError(err.response?.data?.error || t('auth.resetPassword.request.failed'))
     } finally {
       setIsLoading(false)
     }
@@ -36,7 +38,7 @@ function ResetPassword() {
     e.preventDefault()
     
     if (newPassword !== confirmPassword) {
-      setError('两次输入的密码不一致')
+      setError(t('auth.resetPassword.reset.passwordMismatch'))
       return
     }
     
@@ -48,10 +50,10 @@ function ResetPassword() {
         token,
         new_password: newPassword
       })
-      setSuccess('密码重置成功！正在跳转到登录页面...')
+      setSuccess(t('auth.resetPassword.reset.success'))
       setTimeout(() => navigate(ROUTES.user.login), 2000)
     } catch (err: any) {
-      setError(err.response?.data?.error || '重置失败')
+      setError(err.response?.data?.error || t('auth.resetPassword.reset.failed'))
     } finally {
       setIsLoading(false)
     }
@@ -68,10 +70,10 @@ function ResetPassword() {
               </svg>
             </div>
             <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-              重置密码
+              {t('auth.resetPassword.request.title')}
             </h2>
             <p className="mt-2 text-center text-sm text-gray-600">
-              输入您的邮箱地址，我们将发送重置链接
+              {t('auth.resetPassword.request.description')}
             </p>
           </div>
           
@@ -81,11 +83,11 @@ function ResetPassword() {
             <form className="mt-8 space-y-6" onSubmit={handleRequestReset}>
               <div>
                 <PInput
-                  label="邮箱地址"
+                  label={t('auth.resetPassword.request.emailLabel')}
                   type="email"
                   value={email}
                   onChange={setEmail}
-                  placeholder="输入您的邮箱地址"
+                  placeholder={t('auth.resetPassword.request.emailPlaceholder')}
                   required
                 />
               </div>
@@ -99,13 +101,13 @@ function ResetPassword() {
                   fullWidth
                   loading={isLoading}
                 >
-                  发送重置邮件
+                  {t('auth.resetPassword.request.submit')}
                 </PButton>
               </div>
 
               <div className="text-center">
                 <PButton type="button" variant="ghost" onClick={() => navigate(ROUTES.user.login)}>
-                  返回登录
+                  {t('auth.resetPassword.actions.backToLogin')}
                 </PButton>
               </div>
             </form>
@@ -125,10 +127,10 @@ function ResetPassword() {
             </svg>
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            设置新密码
+            {t('auth.resetPassword.reset.title')}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            请输入您的新密码
+            {t('auth.resetPassword.reset.description')}
           </p>
         </div>
 
@@ -138,22 +140,22 @@ function ResetPassword() {
           <form className="mt-8 space-y-6" onSubmit={handleResetPassword}>
             <div>
               <PInput
-                label="新密码"
+                label={t('auth.resetPassword.reset.newPasswordLabel')}
                 type="password"
                 value={newPassword}
                 onChange={setNewPassword}
-                placeholder="输入新密码"
+                placeholder={t('auth.resetPassword.reset.newPasswordPlaceholder')}
                 required
               />
             </div>
 
             <div>
               <PInput
-                label="确认新密码"
+                label={t('auth.resetPassword.reset.confirmPasswordLabel')}
                 type="password"
                 value={confirmPassword}
                 onChange={setConfirmPassword}
-                placeholder="再次输入新密码"
+                placeholder={t('auth.resetPassword.reset.confirmPasswordPlaceholder')}
                 required
               />
             </div>
@@ -167,7 +169,7 @@ function ResetPassword() {
                 fullWidth
                 loading={isLoading}
               >
-                重置密码
+                {t('auth.resetPassword.reset.submit')}
               </PButton>
             </div>
           </form>
