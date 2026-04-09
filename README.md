@@ -1,70 +1,165 @@
 # BasaltPass
 
-多租户身份与权限平台，提供 OAuth2/OIDC、RBAC、租户隔离、S2S API 与多控制台管理能力。
+BasaltPass is a production-ready, multi-tenant identity and access platform for modern SaaS systems.
+It provides OAuth 2.0 / OIDC authentication, tenant-aware RBAC, and service-to-service (S2S) APIs in one unified stack.
 
-## Overview
+## Why BasaltPass
 
-- **定位**：统一认证与授权中心（AuthN/AuthZ）
-- **核心能力**：登录注册、OAuth2/OIDC、租户与角色权限管理、S2S 接口
-- **运行形态**：后端 + 前端（user/tenant/admin）+ 文档站
+- **Centralized AuthN/AuthZ**: One identity core for user, tenant, and admin experiences.
+- **Multi-tenant by design**: Tenant isolation and scoped permission boundaries are first-class.
+- **Standards-based integration**: OAuth 2.0, OIDC discovery, PKCE, token lifecycle, and interoperable client flows.
+- **Operationally practical**: Local development scripts, containerized deployment, and production compose support.
+- **Developer-focused**: Clear APIs, modular architecture, and dedicated documentation site.
+
+## Core Capabilities
+
+- User authentication flows (sign-in, account/session security, passkey/MFA related modules)
+- OAuth 2.0 / OIDC authorization server endpoints
+- Tenant management and tenant-level role/permission governance
+- Admin control plane for system-wide operations
+- S2S integration model for backend-to-backend authorization
+- Subscription/payment related modules integrated with identity and tenant scope
+
+## Architecture at a Glance
+
+BasaltPass ships as three major parts:
+
+- **Backend API**: Go service (`basaltpass-backend`), default port `8101`
+- **Frontend Consoles**: React monorepo (`basaltpass-frontend`) with User / Tenant / Admin consoles
+- **Documentation Site**: Docusaurus docs (`basaltpass-docs`)
+
+Key local ports:
+
+- Backend API: `8101`
+- User console dev: `5101`
+- Tenant console dev: `5102`
+- Admin console dev: `5103`
+- Frontend production mapping (container): `5104`
 
 ## Repository Structure
 
 ```text
 BasaltPass/
-├─ basaltpass-backend/      # Go 后端
-├─ basaltpass-frontend/     # React 前端（多控制台）
-├─ basaltpass-docs/         # Docusaurus 文档站
-├─ scripts/                 # 开发脚本
-├─ docker-compose.yml       # 开发编排
-├─ deploy/docker-compose.prod.yml
+├─ basaltpass-backend/              # Go API, auth services, domain/business modules
+├─ basaltpass-frontend/             # React + TypeScript monorepo (user/tenant/admin)
+├─ basaltpass-docs/                 # Docusaurus documentation site
+├─ scripts/                         # Dev helper scripts (dev.sh / dev.ps1)
+├─ docker-compose.yml               # Local compose orchestration
+├─ deploy/docker-compose.prod.yml   # Production compose template
+├─ backend.Dockerfile
+├─ frontend.Dockerfile
 └─ README.md
 ```
 
 ## Quick Start
 
-### Docker
+### Option A: Full Stack via Docker Compose
 
 ```bash
 cd BasaltPass
-docker compose up -d --build
+docker compose --profile localdb up -d --build
 ```
 
-- Backend: `http://localhost:8101`
-- Frontend（反向代理后）: `http://localhost:5104`
+This starts backend + frontend + local MySQL profile.
 
-### Local Development
+- Backend health: `http://localhost:8101/health`
+- Backend readiness: `http://localhost:8101/api/v1/health`
+- Frontend gateway: `http://localhost:5104`
+
+### Option B: Native Dev Workflow (Recommended for active coding)
+
+Linux/macOS:
 
 ```bash
+cd BasaltPass
 ./scripts/dev.sh up
 ./scripts/dev.sh status
 ```
 
+Windows PowerShell:
+
+```powershell
+cd BasaltPass
+.\scripts\dev.ps1 up
+.\scripts\dev.ps1 status
+```
+
+This mode runs backend + three frontend consoles on dedicated dev ports.
+
 ## Configuration
 
-- 机密与易变配置：项目根 `.env`
-- 稳定默认配置：`basaltpass-backend/config/config.yaml`
-- 环境变量优先级高于配置文件
+Configuration precedence:
 
-常用变量：
+1. Environment variables
+2. Root `.env`
+3. Backend defaults in `basaltpass-backend/config/config.yaml`
+
+Important variables:
 
 - `JWT_SECRET`
+- `BASALTPASS_SERVER_ADDRESS`
 - `BASALTPASS_DATABASE_DRIVER`
 - `BASALTPASS_DATABASE_DSN`
-- OAuth / S2S 相关 client 配置
+- `BASALTPASS_CORS_ALLOW_ORIGINS`
 
-## Persistence Mounts
+For production, always use a strong secret and an external managed database.
 
-- 开发编排 `docker-compose.yml`：
-  - MySQL 使用 Docker volume `basaltpass_mysql_data`
-- 生产编排 `deploy/docker-compose.prod.yml`：
-  - 不内置数据库，要求外部数据库连接串
+## OAuth / OIDC Endpoints (Typical)
+
+With base URL `https://auth.example.com/api/v1`:
+
+- `/.well-known/openid-configuration`
+- `/oauth/authorize`
+- `/oauth/token`
+- `/oauth/userinfo`
+- `/oauth/jwks`
+- `/oauth/introspect`
+
+## Frontend Workspaces
+
+`basaltpass-frontend` uses npm workspaces:
+
+- `@basaltpass/console-user`
+- `@basaltpass/console-tenant`
+- `@basaltpass/console-admin`
+
+Useful commands:
+
+```bash
+cd basaltpass-frontend
+npm run dev:user
+npm run dev:tenant
+npm run dev:admin
+npm run build
+```
+
+## Testing
+
+Backend unit/integration tests:
+
+```bash
+cd basaltpass-backend
+go test ./...
+```
+
+Project-level test and verification scripts are available under `test/`.
+
+## Deployment
+
+Recommended production approach:
+
+- Build and publish backend/frontend images (GHCR supported)
+- Use `deploy/docker-compose.prod.yml`
+- Inject runtime configuration via `.env`
+- Place BasaltPass behind HTTPS reverse proxy / ingress
+
+See detailed deployment guidance in `DEPLOYMENT.md`.
 
 ## Documentation
 
-BasaltPass 已使用 Docusaurus 文档站：`basaltpass-docs/`。
+The documentation site lives in `basaltpass-docs`.
 
-- 本地预览：
+Run locally:
 
 ```bash
 cd basaltpass-docs
@@ -72,22 +167,10 @@ npm install
 npm run start
 ```
 
-- GitHub Pages 部署：`BasaltPass/.github/workflows/deploy-docs.yml`
+## License
 
-## Testing
-
-```bash
-# 示例
-cd basaltpass-backend
-go test ./...
-```
-
-## Deployment
-
-- 推荐生产环境使用独立数据库与缓存
-- 启用 HTTPS、审计日志、限流
-- 通过 CI/CD（含镜像与文档部署）发布
+See `LICENSE` for licensing details.
 
 ---
 
-更多集成指南请访问文档站。
+If you are building multi-tenant SaaS products and need a secure, standards-compliant identity core, BasaltPass gives you a practical foundation that scales from local development to production operations.
