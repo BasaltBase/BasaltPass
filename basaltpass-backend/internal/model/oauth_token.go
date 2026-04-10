@@ -19,6 +19,12 @@ type OAuthAccessToken struct {
 	ExpiresAt time.Time `gorm:"not null;index" json:"expires_at"`
 	CreatedAt time.Time `json:"created_at"`
 
+	// Token Exchange (RFC 8693) actor context — populated when this token was
+	// created via a token-exchange grant.
+	ActorClientID string `gorm:"size:64;index" json:"actor_client_id,omitempty"` // the client that initiated the exchange
+	ActorAppID    uint   `gorm:"index" json:"actor_app_id,omitempty"`            // the app that initiated the exchange
+	IsExchanged   bool   `gorm:"default:false" json:"is_exchanged"`              // true when created via token exchange
+
 	// 关联
 	User   User        `gorm:"foreignKey:UserID" json:"user,omitempty"`
 	Tenant Tenant      `gorm:"foreignKey:TenantID" json:"tenant,omitempty"`
@@ -97,6 +103,15 @@ func GenerateAuthCode() (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(bytes), nil
+}
+
+// GenerateCrossAppToken generates a token for cross-app exchange (bp_xat_ prefix).
+func GenerateCrossAppToken() (string, error) {
+	bytes := make([]byte, 32)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return "bp_xat_" + hex.EncodeToString(bytes), nil
 }
 
 // IsExpired 检查令牌是否过期

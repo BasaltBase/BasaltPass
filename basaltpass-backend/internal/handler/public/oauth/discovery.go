@@ -78,6 +78,7 @@ func DiscoveryHandler(c *fiber.Ctx) error {
 		GrantTypesSupported: []string{
 			"authorization_code",
 			"refresh_token",
+			"urn:ietf:params:oauth:grant-type:token-exchange",
 		},
 		TokenEndpointAuthMethodsSupported: []string{
 			"client_secret_basic",

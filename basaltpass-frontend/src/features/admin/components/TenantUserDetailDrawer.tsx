@@ -1,7 +1,7 @@
 import React from 'react'
 import { XMarkIcon, EnvelopeIcon, ClockIcon, ShieldCheckIcon, DevicePhoneMobileIcon } from '@heroicons/react/24/outline'
 import { AdminTenantUserDetail } from '@api/admin/tenant'
-import { useI18n } from '@shared/i18n/useI18n'
+import { useI18n } from '@shared/i18n'
 import { PSkeleton } from '@ui'
 
 interface TenantUserDetailDrawerProps {

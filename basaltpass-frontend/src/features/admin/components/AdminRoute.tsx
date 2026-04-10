@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@contexts/AuthContext'
-import { useI18n } from '@shared/i18n/useI18n'
+import { useI18n } from '@shared/i18n'
 import PSkeleton from '@ui/PSkeleton'
 import { setSessionNotice } from '@utils/sessionNotice'
 

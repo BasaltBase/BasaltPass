@@ -238,6 +238,10 @@ func RunMigrations() {
 
 		// 手动 API Key
 		&model.ManualAPIKey{},
+
+		// 跨应用信任 (Token Exchange, RFC 8693)
+		&model.CrossAppTrust{},
+		&model.TokenExchangeLog{},
 	)
 	if err != nil {
 		log.Fatalf("[Error][RunMigrations] auto migration failed: %v", err)

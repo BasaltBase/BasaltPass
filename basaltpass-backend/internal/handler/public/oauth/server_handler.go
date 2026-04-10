@@ -273,6 +273,8 @@ func TokenHandler(c *fiber.Ctx) error {
 		return handleAuthorizationCodeGrant(c)
 	case "refresh_token":
 		return handleRefreshTokenGrant(c)
+	case "urn:ietf:params:oauth:grant-type:token-exchange":
+		return handleTokenExchangeGrant(c)
 	default:
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error":             "unsupported_grant_type",
@@ -400,7 +402,7 @@ func IntrospectHandler(c *fiber.Ctx) error {
 	}
 
 	// 返回令牌信息
-	return c.JSON(fiber.Map{
+	resp := fiber.Map{
 		"active":    true,
 		"client_id": oauthToken.ClientID,
 		"username":  oauthToken.User.Email,
@@ -408,7 +410,17 @@ func IntrospectHandler(c *fiber.Ctx) error {
 		"exp":       oauthToken.ExpiresAt.Unix(),
 		"iat":       oauthToken.CreatedAt.Unix(),
 		"sub":       oauthToken.UserID,
-	})
+	}
+
+	// RFC 8693 §4.1 — include actor information for exchanged tokens
+	if oauthToken.IsExchanged && oauthToken.ActorClientID != "" {
+		resp["act"] = fiber.Map{
+			"client_id": oauthToken.ActorClientID,
+			"app_id":    oauthToken.ActorAppID,
+		}
+	}
+
+	return c.JSON(resp)
 }
 
 // RevokeHandler 令牌撤销端点

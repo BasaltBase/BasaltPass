@@ -20,7 +20,7 @@ import { adminGiftCardApi, type AdminGiftCard } from '@api/admin/giftCard'
 import AdminLayout from '@features/admin/components/AdminLayout';
 import WalletStatsCard from '@features/admin/components/WalletStatsCard';
 import { PInput, PSelect, PButton, PCard, PSkeleton, PBadge, PTextarea, UserTooltip } from '@ui';
-import { useI18n } from '@i18n/useI18n';
+import { useI18n } from '@shared/i18n';
 
 interface WalletManagementProps {}
 

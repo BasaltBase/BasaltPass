@@ -27,6 +27,7 @@ func DefaultAllowedScopes() []string {
 		S2SNotificationsWrite,
 		S2SProductsRead,
 		S2SEmailSend,
+		S2STokenExchange,
 	}
 }
 
@@ -75,6 +76,8 @@ func Describe(s string) Meta {
 		return Meta{Scope: s, Category: "s2s", Title: "S2S Products Read", Description: "读取用户产品拥有情况（/products、/ownership）"}
 	case S2SEmailSend:
 		return Meta{Scope: s, Category: "s2s", Title: "S2S Email Send", Description: "向当前应用已授权用户发送邮件（POST /api/v1/s2s/emails/send）"}
+	case S2STokenExchange:
+		return Meta{Scope: s, Category: "s2s", Title: "S2S Token Exchange", Description: "允许通过 Token Exchange (RFC 8693) 代用户获取其他应用的受限 token"}
 	default:
 		return Meta{Scope: s, Category: "custom", Title: s, Description: "自定义/未知 scope（请确认后端是否有实际使用）"}
 	}
@@ -105,6 +108,7 @@ const (
 	S2SNotificationsWrite = "s2s.notifications.write"
 	S2SProductsRead       = "s2s.products.read"
 	S2SEmailSend          = "s2s.email.send"
+	S2STokenExchange      = "s2s.token_exchange"
 )
 
 func NormalizeList(in []string) []string {

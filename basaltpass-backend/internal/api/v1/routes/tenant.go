@@ -147,6 +147,14 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 	tenantManualAPIGroup.Post("/keys", manualapi.TenantCreateManualAPIKeyHandler)
 	tenantManualAPIGroup.Delete("/keys/:id", manualapi.TenantDeleteManualAPIKeyHandler)
 
+	// 跨应用信任关系管理（Token Exchange, RFC 8693）
+	crossAppTrustGroup := tenantAdminGroup.Group("/cross-app-trusts")
+	crossAppTrustGroup.Get("/", tenant2.ListCrossAppTrustsHandler)
+	crossAppTrustGroup.Post("/", tenant2.CreateCrossAppTrustHandler)
+	crossAppTrustGroup.Patch("/:id", tenant2.UpdateCrossAppTrustHandler)
+	crossAppTrustGroup.Delete("/:id", tenant2.DeleteCrossAppTrustHandler)
+	crossAppTrustGroup.Get("/logs", tenant2.ListTokenExchangeLogsHandler)
+
 	// 租户订阅管理（读写，所有租户成员可访问）
 	tenantSubscriptionMgmtGroup := tenantAdminGroup.Group("/subscription")
 

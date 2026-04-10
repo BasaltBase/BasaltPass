@@ -8,6 +8,7 @@ import AppUserManagement from '@pages/tenant/app/AppUserManagement'
 import AppRoleManagement from '@pages/tenant/app/AppRoleManagement'
 import AppPermissionManagement from '@pages/tenant/app/AppPermissionManagement'
 import CreateApp from '@pages/admin/app/CreateApp'
+import CrossAppTrustManagement from '@pages/tenant/security/CrossAppTrustManagement'
 import { withTenant } from '@/routes/helpers'
 
 export function TenantAppRoutes() {
@@ -22,6 +23,7 @@ export function TenantAppRoutes() {
       <Route path="/tenant/apps/:id/permissions" element={withTenant(<AppPermissionManagement />)} />
       <Route path="/tenant/apps/:id" element={withTenant(<AppDetail />)} />
       <Route path="/tenant/oauth/clients" element={withTenant(<TenantOAuthClients />)} />
+      <Route path="/tenant/cross-app-trusts" element={withTenant(<CrossAppTrustManagement />)} />
     </>
   )
 }

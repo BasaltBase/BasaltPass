@@ -17,7 +17,7 @@ import AdminLayout from '@features/admin/components/AdminLayout'
 import { PInput, PSelect, PTextarea, PCheckbox, PButton, PSkeleton, PBadge, PAlert, PCard, PPageHeader } from '@ui'
 import { adminTenantApi, AdminTenantDetailResponse, AdminUpdateTenantRequest, TenantSettings } from '@api/admin/tenant'
 import { ROUTES } from '@constants'
-import { useI18n } from '@i18n/useI18n'
+import { useI18n } from '@shared/i18n'
 
 const TenantDetail: React.FC = () => {
   const { t, locale } = useI18n()

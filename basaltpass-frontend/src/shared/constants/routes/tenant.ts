@@ -5,6 +5,7 @@ export const TENANT_ROUTES = {
   apps: '/tenant/apps',
   appsNew: '/tenant/apps/new',
   oauthClients: '/tenant/oauth/clients',
+  crossAppTrusts: '/tenant/cross-app-trusts',
   automationTokens: '/tenant/automation-tokens',
   users: '/tenant/users',
   teams: '/tenant/teams',

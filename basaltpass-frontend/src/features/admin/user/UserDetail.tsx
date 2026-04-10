@@ -29,7 +29,7 @@ import { listRoles, type AdminRole } from '@api/admin/roles'
 import { ROUTES } from '@constants'
 import { PBadge, PButton } from '@ui'
 import Modal from '@ui/common/Modal'
-import { useI18n } from '@i18n/useI18n'
+import { useI18n } from '@shared/i18n'
 
 export default function UserDetail() {
   const { t, locale } = useI18n()

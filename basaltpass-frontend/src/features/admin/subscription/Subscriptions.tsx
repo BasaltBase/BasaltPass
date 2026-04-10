@@ -7,7 +7,7 @@ import { adminTenantApi, AdminTenantResponse } from '@api/admin/tenant'
 import useDebounce from '@hooks/useDebounce'
 import UserTooltip from '@ui/UserTooltip'
 import { ROUTES } from '@constants'
-import { useI18n } from '@i18n/useI18n'
+import { useI18n } from '@shared/i18n'
 
 interface Subscription {
   ID: number

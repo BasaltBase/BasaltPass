@@ -46,6 +46,7 @@ const navigationItems: NavigationItem[] = [
     children: [
       { key: 'tenantNav.myApps', href: ROUTES.tenant.apps, icon: CubeIcon },
       { key: 'tenantNav.oauthClients', href: ROUTES.tenant.oauthClients, icon: KeyIcon },
+      { key: 'tenantNav.crossAppTrusts', href: ROUTES.tenant.crossAppTrusts, icon: ArrowsRightLeftIcon },
       { key: 'tenantNav.automationTokens', href: ROUTES.tenant.automationTokens, icon: KeyIcon },
     ]
   },

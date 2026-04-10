@@ -31,7 +31,7 @@ import { adminWalletApi, Currency } from '@api/admin/wallet'
 import TenantUserDetailDrawer from '@features/admin/components/TenantUserDetailDrawer'
 import Modal from '@ui/common/Modal'
 import { PSkeleton, PBadge, PAlert, PPagination, PButton, PInput, PSelect, PPageHeader } from '@ui'
-import { useI18n } from '@i18n/useI18n'
+import { useI18n } from '@shared/i18n'
 
 interface TenantUser extends AdminTenantUser {
 }

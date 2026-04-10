@@ -23,7 +23,7 @@ import { PInput, PButton, PCheckbox } from '@ui'
 import PTable, { PTableColumn } from '@ui/PTable'
 import PSelect from '@ui/PSelect'
 import { ROUTES } from '@constants'
-import { useI18n } from '@i18n/useI18n'
+import { useI18n } from '@shared/i18n'
 
 export default function Users() {
   const { t, locale } = useI18n()
