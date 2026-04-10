@@ -1,4 +1,4 @@
-import type {ReactNode} from 'react';
+import {useEffect, type ReactNode} from 'react';
 import clsx from 'clsx';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
@@ -220,6 +220,29 @@ function QuickLinksSection() {
 
 export default function Home(): ReactNode {
   const {siteConfig} = useDocusaurusContext();
+
+  useEffect(() => {
+    const body = document.body;
+    body.classList.add('home-landing');
+
+    const updateScrollState = () => {
+      if (window.scrollY <= 4) {
+        body.classList.add('home-top');
+      } else {
+        body.classList.remove('home-top');
+      }
+    };
+
+    updateScrollState();
+    window.addEventListener('scroll', updateScrollState, {passive: true});
+
+    return () => {
+      window.removeEventListener('scroll', updateScrollState);
+      body.classList.remove('home-landing');
+      body.classList.remove('home-top');
+    };
+  }, []);
+
   return (
     <Layout
       title={`${siteConfig.title} Documentation`}

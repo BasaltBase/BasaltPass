@@ -28,3 +28,39 @@
   --ifm-color-primary-lightest: #4fddbf;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }
+
+body.home-landing {
+  --ifm-font-color-base: #1f2937;
+}
+
+body.home-landing .main-wrapper {
+  background:
+    linear-gradient(180deg, #fafaf9 0%, #f8fafc 44%, #f8fafc 100%),
+    repeating-linear-gradient(
+      115deg,
+      rgba(148, 163, 184, 0.07) 0,
+      rgba(148, 163, 184, 0.07) 1px,
+      transparent 1px,
+      transparent 26px
+    );
+  background-blend-mode: multiply;
+}
+
+body.home-landing .navbar {
+  transition:
+    background-color 220ms ease,
+    border-color 220ms ease,
+    box-shadow 220ms ease,
+    backdrop-filter 220ms ease;
+  background: rgba(255, 255, 255, 0.92);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.32);
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.06);
+  backdrop-filter: blur(10px);
+}
+
+body.home-landing.home-top .navbar {
+  background: transparent;
+  border-bottom-color: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
