@@ -86,7 +86,7 @@ export default function OrderConfirmPage() {
       
       const sessionData = {
         payment_intent_id: paymentIntentResponse.payment_intent.ID,
-        success_url: `${window.location.origin}/orders/${order.id}/success`,
+        success_url: `${window.location.origin}/orders/${order.id}/success?paid=1`,
         cancel_url: `${window.location.origin}/orders/${order.id}/confirm`
       }
 

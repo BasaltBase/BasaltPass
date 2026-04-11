@@ -126,17 +126,17 @@ func RegisterUserRoutes(v1 fiber.Router) {
 	orderGroup.Get("/number/:number", order.GetOrderByNumberHandler)
 
 	// 产品相关路由
-	productsGroup := v1.Group("/products")
+	productsGroup := v1.Group("/products", middleware.JWTMiddleware())
 	productsGroup.Get("/", subscription.ListProductsHandler)
 	productsGroup.Get("/:id", subscription.GetProductHandler)
 
 	// 套餐相关路由
-	plansGroup := v1.Group("/plans")
+	plansGroup := v1.Group("/plans", middleware.JWTMiddleware())
 	plansGroup.Get("/", subscription.ListPlansHandler)
 	plansGroup.Get("/:id", subscription.GetPlanHandler)
 
 	// 价格相关路由
-	pricesGroup := v1.Group("/prices")
+	pricesGroup := v1.Group("/prices", middleware.JWTMiddleware())
 	pricesGroup.Get("/", subscription.ListPricesHandler)
 	pricesGroup.Get("/:id", subscription.GetPriceHandler)
 

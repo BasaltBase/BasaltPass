@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"basaltpass-backend/internal/model"
+	paymentservice "basaltpass-backend/internal/service/payment"
 
 	"gorm.io/gorm"
 )
@@ -184,14 +185,30 @@ func (s *OrderService) CreateOrder(req *CreateOrderRequest) (*OrderResponse, err
 }
 
 // GetOrder 获取订单
-func (s *OrderService) GetOrder(userID uint, orderID uint) (*OrderResponse, error) {
+func (s *OrderService) GetOrder(userID uint, orderID uint, activate bool) (*OrderResponse, error) {
 	var order model.Order
-	if err := s.db.Preload("Price.Plan.Product").Preload("Coupon").
+	if err := s.db.Preload("Price.Plan.Product").Preload("Coupon").Preload("PaymentSession").
 		Where("id = ? AND user_id = ?", orderID, userID).First(&order).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf("订单不存在")
 		}
 		return nil, fmt.Errorf("查询订单失败: %w", err)
+	}
+
+	if activate && order.Status == model.OrderStatusPending && order.PaymentSession != nil {
+		_ = paymentservice.FinalizeOrderPaymentBySessionForUser(userID, order.PaymentSession.StripeSessionID)
+		_ = s.db.Preload("Price.Plan.Product").Preload("Coupon").Preload("PaymentSession").
+			Where("id = ? AND user_id = ?", orderID, userID).First(&order).Error
+	}
+	if activate && order.Status == model.OrderStatusPending {
+		_ = paymentservice.ReconcileUserOrderPaymentsFromStripe(userID)
+		_ = s.db.Preload("Price.Plan.Product").Preload("Coupon").Preload("PaymentSession").
+			Where("id = ? AND user_id = ?", orderID, userID).First(&order).Error
+		if order.Status == model.OrderStatusPending && order.PaymentSession != nil {
+			_ = paymentservice.FinalizeOrderPaymentBySessionForUser(userID, order.PaymentSession.StripeSessionID)
+			_ = s.db.Preload("Price.Plan.Product").Preload("Coupon").Preload("PaymentSession").
+				Where("id = ? AND user_id = ?", orderID, userID).First(&order).Error
+		}
 	}
 
 	return &OrderResponse{

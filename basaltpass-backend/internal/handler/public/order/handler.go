@@ -68,7 +68,9 @@ func GetOrderHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	order, err := orderService.GetOrder(userID, uint(orderID))
+	activate := c.Query("activate") == "1" || c.Query("activate") == "true"
+
+	order, err := orderService.GetOrder(userID, uint(orderID), activate)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": err.Error(),

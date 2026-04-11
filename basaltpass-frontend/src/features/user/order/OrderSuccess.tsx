@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useLocation } from 'react-router-dom'
 import Layout from '@features/user/components/Layout'
 import { getOrder } from '@api/subscription/payment/order'
 import { OrderResponse } from '@api/subscription/payment/order'
@@ -11,6 +11,7 @@ import { useI18n } from '@shared/i18n'
 export default function OrderSuccessPage() {
   const { t, locale } = useI18n()
   const { orderId } = useParams<{ orderId: string }>()
+  const location = useLocation()
   const [order, setOrder] = useState<OrderResponse | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -23,7 +24,9 @@ export default function OrderSuccessPage() {
   const fetchOrder = async (id: number) => {
     try {
       setLoading(true)
-      const orderData = await getOrder(id)
+      const search = new URLSearchParams(location.search)
+      const shouldActivate = search.get('paid') === '1' || search.get('activate') === '1'
+      const orderData = await getOrder(id, shouldActivate ? { activate: true } : undefined)
       setOrder(orderData)
     } catch (error: any) {
       console.error(t('userOrderSuccess.logs.fetchOrderFailed'), error)

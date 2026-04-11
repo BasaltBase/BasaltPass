@@ -1,7 +1,9 @@
 package subscription
 
 import (
+	"basaltpass-backend/internal/common"
 	subdto "basaltpass-backend/internal/dto/subscription"
+	"fmt"
 	"strconv"
 
 	"basaltpass-backend/internal/model"
@@ -9,6 +11,36 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 )
+
+func resolveCurrentUserTenantID(c *fiber.Ctx) (*uint64, error) {
+	userID, ok := c.Locals("userID").(uint)
+	if !ok || userID == 0 {
+		return nil, fmt.Errorf("无法识别当前用户")
+	}
+
+	if tenantLocal, ok := c.Locals("tenantID").(uint); ok && tenantLocal > 0 {
+		tenantID := uint64(tenantLocal)
+		return &tenantID, nil
+	}
+
+	var user model.User
+	if err := common.DB().Select("id", "tenant_id").First(&user, userID).Error; err != nil {
+		return nil, fmt.Errorf("查询用户租户失败: %w", err)
+	}
+	if user.TenantID == 0 {
+		var tenantUser model.TenantUser
+		if err := common.DB().Select("tenant_id").Where("user_id = ?", userID).Order("id asc").First(&tenantUser).Error; err != nil {
+			return nil, fmt.Errorf("当前用户没有关联租户")
+		}
+		if tenantUser.TenantID == 0 {
+			return nil, fmt.Errorf("当前用户没有关联租户")
+		}
+		tenantID := uint64(tenantUser.TenantID)
+		return &tenantID, nil
+	}
+	tenantID := uint64(user.TenantID)
+	return &tenantID, nil
+}
 
 type Handler struct {
 	service *Service
@@ -60,6 +92,11 @@ func GetProductHandler(c *fiber.Ctx) error {
 }
 
 func (h *Handler) GetProduct(c *fiber.Ctx) error {
+	tenantID, err := resolveCurrentUserTenantID(c)
+	if err != nil {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": err.Error()})
+	}
+
 	id, err := strconv.ParseUint(c.Params("id"), 10, 32)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "产品ID无效"})
@@ -68,6 +105,9 @@ func (h *Handler) GetProduct(c *fiber.Ctx) error {
 	product, err := h.service.GetProduct(uint(id))
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": err.Error()})
+	}
+	if product.TenantID != nil && *product.TenantID != *tenantID {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "产品不存在"})
 	}
 
 	return c.JSON(fiber.Map{"data": product})
@@ -79,10 +119,16 @@ func ListProductsHandler(c *fiber.Ctx) error {
 }
 
 func (h *Handler) ListProducts(c *fiber.Ctx) error {
+	tenantID, err := resolveCurrentUserTenantID(c)
+	if err != nil {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": err.Error()})
+	}
+
 	var req subdto.ListProductsRequest
 	if err := c.QueryParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid query parameters"})
 	}
+	req.TenantID = tenantID
 
 	// 设置默认分页参数
 	if req.Page <= 0 {
@@ -175,6 +221,11 @@ func GetPlanHandler(c *fiber.Ctx) error {
 }
 
 func (h *Handler) GetPlan(c *fiber.Ctx) error {
+	tenantID, err := resolveCurrentUserTenantID(c)
+	if err != nil {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": err.Error()})
+	}
+
 	id, err := strconv.ParseUint(c.Params("id"), 10, 32)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "套餐ID无效"})
@@ -183,6 +234,9 @@ func (h *Handler) GetPlan(c *fiber.Ctx) error {
 	plan, err := h.service.GetPlan(uint(id))
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": err.Error()})
+	}
+	if plan.TenantID != nil && *plan.TenantID != *tenantID {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "套餐不存在"})
 	}
 
 	return c.JSON(fiber.Map{"data": plan})
@@ -194,10 +248,16 @@ func ListPlansHandler(c *fiber.Ctx) error {
 }
 
 func (h *Handler) ListPlans(c *fiber.Ctx) error {
+	tenantID, err := resolveCurrentUserTenantID(c)
+	if err != nil {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": err.Error()})
+	}
+
 	var req subdto.ListPlansRequest
 	if err := c.QueryParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid query parameters"})
 	}
+	req.TenantID = tenantID
 
 	// 设置默认分页参数
 	if req.Page <= 0 {
@@ -281,10 +341,16 @@ func GetPriceHandler(c *fiber.Ctx) error {
 }
 
 func (h *Handler) ListPrices(c *fiber.Ctx) error {
+	tenantID, err := resolveCurrentUserTenantID(c)
+	if err != nil {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": err.Error()})
+	}
+
 	var req subdto.ListPricesRequest
 	if err := c.QueryParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid query parameters"})
 	}
+	req.TenantID = tenantID
 
 	// 设置默认分页参数
 	if req.Page <= 0 {
@@ -313,6 +379,11 @@ func (h *Handler) ListPrices(c *fiber.Ctx) error {
 }
 
 func (h *Handler) GetPrice(c *fiber.Ctx) error {
+	tenantID, err := resolveCurrentUserTenantID(c)
+	if err != nil {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": err.Error()})
+	}
+
 	id, err := strconv.ParseUint(c.Params("id"), 10, 32)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "定价ID无效"})
@@ -321,6 +392,9 @@ func (h *Handler) GetPrice(c *fiber.Ctx) error {
 	price, err := h.service.GetPrice(uint(id))
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": err.Error()})
+	}
+	if price.TenantID != nil && *price.TenantID != *tenantID {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "定价不存在"})
 	}
 
 	return c.JSON(fiber.Map{"data": price})
@@ -392,6 +466,11 @@ func CreateSubscriptionHandler(c *fiber.Ctx) error {
 }
 
 func (h *Handler) CreateSubscription(c *fiber.Ctx) error {
+	tenantID, err := resolveCurrentUserTenantID(c)
+	if err != nil {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": err.Error()})
+	}
+
 	var req subdto.CreateSubscriptionRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
@@ -402,6 +481,11 @@ func (h *Handler) CreateSubscription(c *fiber.Ctx) error {
 		userID := c.Locals("userID").(uint)
 		req.UserID = userID
 	}
+
+	if req.Metadata == nil {
+		req.Metadata = map[string]interface{}{}
+	}
+	req.Metadata["tenant_id"] = *tenantID
 
 	subscription, err := h.service.CreateSubscription(&req)
 	if err != nil {
@@ -442,6 +526,11 @@ func ListSubscriptionsHandler(c *fiber.Ctx) error {
 }
 
 func (h *Handler) ListSubscriptions(c *fiber.Ctx) error {
+	tenantID, err := resolveCurrentUserTenantID(c)
+	if err != nil {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": err.Error()})
+	}
+
 	var req subdto.SubscriptionListRequest
 
 	// 解析查询参数
@@ -486,6 +575,7 @@ func (h *Handler) ListSubscriptions(c *fiber.Ctx) error {
 			req.UserID = &userID
 		}
 	}
+	req.TenantID = tenantID
 
 	subscriptions, total, err := h.service.ListSubscriptions(&req)
 	if err != nil {

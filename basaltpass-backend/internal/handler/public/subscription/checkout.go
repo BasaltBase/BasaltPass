@@ -59,6 +59,11 @@ func (s *CheckoutService) CreateCheckout(req *CheckoutRequest) (*CheckoutRespons
 		}
 		return nil, fmt.Errorf("查询客户失败: %w", err)
 	}
+	if user.TenantID == 0 {
+		tx.Rollback()
+		return nil, fmt.Errorf("用户未绑定租户")
+	}
+	userTenantID := uint64(user.TenantID)
 
 	// 步骤2: 验证价格
 	var price model.Price
@@ -69,6 +74,10 @@ func (s *CheckoutService) CreateCheckout(req *CheckoutRequest) (*CheckoutRespons
 		}
 		return nil, fmt.Errorf("查询价格失败: %w", err)
 	}
+	if price.TenantID != nil && *price.TenantID != userTenantID {
+		tx.Rollback()
+		return nil, fmt.Errorf("价格不属于当前租户")
+	}
 
 	// 步骤3: 验证和获取优惠券（如果提供）
 	var coupon *model.Coupon
@@ -77,7 +86,7 @@ func (s *CheckoutService) CreateCheckout(req *CheckoutRequest) (*CheckoutRespons
 
 	if req.CouponCode != nil && *req.CouponCode != "" {
 		var c model.Coupon
-		if err := tx.Where("code = ? AND is_active = true", *req.CouponCode).First(&c).Error; err != nil {
+		if err := tx.Where("code = ? AND is_active = true AND (tenant_id IS NULL OR tenant_id = ?)", *req.CouponCode, userTenantID).First(&c).Error; err != nil {
 			tx.Rollback()
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return nil, fmt.Errorf("优惠券不存在或已失效")
@@ -136,6 +145,7 @@ func (s *CheckoutService) CreateCheckout(req *CheckoutRequest) (*CheckoutRespons
 	}
 
 	subscription := &model.Subscription{
+		TenantID:           &userTenantID,
 		UserID:             req.UserID,
 		Status:             status,
 		CurrentPriceID:     req.PriceID,
@@ -151,8 +161,23 @@ func (s *CheckoutService) CreateCheckout(req *CheckoutRequest) (*CheckoutRespons
 		return nil, fmt.Errorf("创建订阅失败: %w", err)
 	}
 
+	// 创建订阅项目，确保用户端可正确展示订阅内容
+	subscriptionItem := &model.SubscriptionItem{
+		SubscriptionID:   subscription.ID,
+		PriceID:          price.ID,
+		Quantity:         quantity,
+		Metering:         model.MeteringPerUnit,
+		UsageAggregation: model.UsageAggregationSum,
+		Metadata:         model.JSONB{"source": "subscription_checkout"},
+	}
+	if err := tx.Create(subscriptionItem).Error; err != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("创建订阅项目失败: %w", err)
+	}
+
 	// 步骤7: 创建账单（状态为draft）
 	invoice := &model.Invoice{
+		TenantID:       &userTenantID,
 		UserID:         req.UserID,
 		SubscriptionID: &subscription.ID,
 		Status:         model.InvoiceStatusDraft,
@@ -207,6 +232,7 @@ func (s *CheckoutService) CreateCheckout(req *CheckoutRequest) (*CheckoutRespons
 
 	// 步骤9: 创建支付记录（状态为pending）
 	paymentRecord := &model.Payment{
+		TenantID:    &userTenantID,
 		InvoiceID:   invoice.ID,
 		AmountCents: totalAmount,
 		Currency:    price.Currency,

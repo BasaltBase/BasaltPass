@@ -33,6 +33,7 @@ export default function ProductsPage() {
       let list: any = []
       if (Array.isArray(raw)) list = raw
       else if (Array.isArray(raw.data)) list = raw.data
+      else if (Array.isArray(raw.data?.data)) list = raw.data.data
       else if (Array.isArray(raw.data?.Data)) list = raw.data.Data
 
       setProducts(list)

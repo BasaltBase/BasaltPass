@@ -477,8 +477,12 @@ func processStripeCheckoutSessionEvent(tx *gorm.DB, eventType string, eventObjec
 			}
 		}
 
-		_ = processSubscriptionPaymentWebhook(stripeSessionID, true)
-		_ = processOrderPaymentWebhook(stripeSessionID, true)
+		if err := processSubscriptionPaymentWebhook(stripeSessionID, true); err != nil {
+			return fmt.Errorf("process subscription webhook failed: %w", err)
+		}
+		if err := processOrderPaymentWebhook(stripeSessionID, true); err != nil {
+			return fmt.Errorf("process order webhook failed: %w", err)
+		}
 		return nil
 	}
 
@@ -492,8 +496,12 @@ func processStripeCheckoutSessionEvent(tx *gorm.DB, eventType string, eventObjec
 		if err := tx.Save(&session.PaymentIntent).Error; err != nil {
 			return err
 		}
-		_ = processSubscriptionPaymentWebhook(stripeSessionID, false)
-		_ = processOrderPaymentWebhook(stripeSessionID, false)
+		if err := processSubscriptionPaymentWebhook(stripeSessionID, false); err != nil {
+			return fmt.Errorf("process subscription webhook failed: %w", err)
+		}
+		if err := processOrderPaymentWebhook(stripeSessionID, false); err != nil {
+			return fmt.Errorf("process order webhook failed: %w", err)
+		}
 	}
 
 	return nil
@@ -820,6 +828,10 @@ func CreatePaymentSession(userID uint, req CreatePaymentSessionRequest) (*model.
 		return nil, nil, err
 	}
 
+	if err := bindOrderPaymentSessionIfPresent(db, userID, &paymentIntent, &session); err != nil {
+		return nil, nil, err
+	}
+
 	// Stripe Checkout Session API响应
 	mockResponse := &MockStripeResponse{
 		RequestURL:    "https://api.stripe.com/v1/checkout/sessions",
@@ -834,6 +846,36 @@ func CreatePaymentSession(userID uint, req CreatePaymentSessionRequest) (*model.
 	}
 
 	return &session, mockResponse, nil
+}
+
+func bindOrderPaymentSessionIfPresent(db *gorm.DB, userID uint, paymentIntent *model.PaymentIntent, session *model.PaymentSession) error {
+	if paymentIntent == nil || session == nil {
+		return nil
+	}
+
+	var metadata map[string]interface{}
+	if err := json.Unmarshal([]byte(paymentIntent.Metadata), &metadata); err != nil {
+		return nil
+	}
+
+	orderID, err := parseOrderIDFromMetadata(metadata)
+	if err != nil {
+		return nil
+	}
+
+	updates := map[string]interface{}{
+		"payment_session_id": session.ID,
+		"updated_at":         time.Now(),
+	}
+
+	if err := db.Model(&model.Order{}).
+		Where("id = ? AND user_id = ?", orderID, userID).
+		Where("status = ?", model.OrderStatusPending).
+		Updates(updates).Error; err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // SimulatePayment 模拟支付处理
@@ -995,12 +1037,10 @@ func processSubscriptionPaymentWebhook(sessionID string, success bool) error {
 			return err
 		}
 
-		subscriptionIDFloat, ok := metadata["subscription_id"].(float64)
-		if !ok {
+		subscriptionID, err := parseSubscriptionIDFromMetadata(metadata)
+		if err != nil {
 			return nil // 不是订阅支付，忽略
 		}
-
-		subscriptionID := uint(subscriptionIDFloat)
 		now := time.Now()
 
 		//var order model.Order
@@ -1022,8 +1062,7 @@ func processSubscriptionPaymentWebhook(sessionID string, success bool) error {
 			}
 
 			// 更新invoice状态为已支付
-			if invoiceIDFloat, ok := metadata["invoice_id"].(float64); ok {
-				invoiceID := uint(invoiceIDFloat)
+			if invoiceID, err := parseInvoiceIDFromMetadata(metadata); err == nil {
 				if err := tx.Model(&model.Invoice{}).Where("id = ?", invoiceID).Updates(map[string]interface{}{
 					"status":     model.InvoiceStatusPaid,
 					"paid_at":    &now,
@@ -1090,7 +1129,7 @@ func checkIfOrderPayment(sessionID string) (*bool, error) {
 		return nil, err
 	}
 
-	if _, hasOrder := metadata["order_id"]; hasOrder {
+	if _, err := parseOrderIDFromMetadata(metadata); err == nil {
 		result := true
 		return &result, nil
 	}
@@ -1116,12 +1155,10 @@ func processOrderPaymentWebhook(sessionID string, success bool) error {
 			return err
 		}
 
-		orderIDFloat, ok := metadata["order_id"].(float64)
-		if !ok {
+		orderID, err := parseOrderIDFromMetadata(metadata)
+		if err != nil {
 			return nil // 不是订单支付，忽略
 		}
-
-		orderID := uint(orderIDFloat)
 		now := time.Now()
 
 		if success {
@@ -1158,6 +1195,18 @@ func processOrderPaymentWebhook(sessionID string, success bool) error {
 				return err
 			}
 
+			item := &model.SubscriptionItem{
+				SubscriptionID:   subscription.ID,
+				PriceID:          order.PriceID,
+				Quantity:         1,
+				Metering:         model.MeteringPerUnit,
+				UsageAggregation: model.UsageAggregationSum,
+				Metadata:         model.JSONB{"source": "order_payment"},
+			}
+			if err := tx.Create(item).Error; err != nil {
+				return err
+			}
+
 			// 更新订单关联的订阅ID
 			if err := tx.Model(&order).Update("subscription_id", subscription.ID).Error; err != nil {
 				return err
@@ -1175,6 +1224,262 @@ func processOrderPaymentWebhook(sessionID string, success bool) error {
 
 		return nil
 	})
+}
+
+func parseOrderIDFromMetadata(metadata map[string]interface{}) (uint, error) {
+	if metadata == nil {
+		return 0, fmt.Errorf("metadata is nil")
+	}
+	v, ok := metadata["order_id"]
+	if !ok || v == nil {
+		return 0, fmt.Errorf("order_id not found")
+	}
+
+	switch typed := v.(type) {
+	case float64:
+		if typed <= 0 {
+			return 0, fmt.Errorf("invalid order_id")
+		}
+		return uint(typed), nil
+	case int:
+		if typed <= 0 {
+			return 0, fmt.Errorf("invalid order_id")
+		}
+		return uint(typed), nil
+	case int64:
+		if typed <= 0 {
+			return 0, fmt.Errorf("invalid order_id")
+		}
+		return uint(typed), nil
+	case uint:
+		if typed == 0 {
+			return 0, fmt.Errorf("invalid order_id")
+		}
+		return typed, nil
+	case string:
+		parsed, err := strconv.ParseUint(strings.TrimSpace(typed), 10, 64)
+		if err != nil || parsed == 0 {
+			return 0, fmt.Errorf("invalid order_id string")
+		}
+		return uint(parsed), nil
+	default:
+		return 0, fmt.Errorf("unsupported order_id type")
+	}
+}
+
+func parseSubscriptionIDFromMetadata(metadata map[string]interface{}) (uint, error) {
+	if metadata == nil {
+		return 0, fmt.Errorf("metadata is nil")
+	}
+	v, ok := metadata["subscription_id"]
+	if !ok || v == nil {
+		return 0, fmt.Errorf("subscription_id not found")
+	}
+
+	switch typed := v.(type) {
+	case float64:
+		if typed <= 0 {
+			return 0, fmt.Errorf("invalid subscription_id")
+		}
+		return uint(typed), nil
+	case int:
+		if typed <= 0 {
+			return 0, fmt.Errorf("invalid subscription_id")
+		}
+		return uint(typed), nil
+	case int64:
+		if typed <= 0 {
+			return 0, fmt.Errorf("invalid subscription_id")
+		}
+		return uint(typed), nil
+	case uint:
+		if typed == 0 {
+			return 0, fmt.Errorf("invalid subscription_id")
+		}
+		return typed, nil
+	case string:
+		parsed, err := strconv.ParseUint(strings.TrimSpace(typed), 10, 64)
+		if err != nil || parsed == 0 {
+			return 0, fmt.Errorf("invalid subscription_id string")
+		}
+		return uint(parsed), nil
+	default:
+		return 0, fmt.Errorf("unsupported subscription_id type")
+	}
+}
+
+func parseInvoiceIDFromMetadata(metadata map[string]interface{}) (uint, error) {
+	if metadata == nil {
+		return 0, fmt.Errorf("metadata is nil")
+	}
+	v, ok := metadata["invoice_id"]
+	if !ok || v == nil {
+		return 0, fmt.Errorf("invoice_id not found")
+	}
+
+	switch typed := v.(type) {
+	case float64:
+		if typed <= 0 {
+			return 0, fmt.Errorf("invalid invoice_id")
+		}
+		return uint(typed), nil
+	case int:
+		if typed <= 0 {
+			return 0, fmt.Errorf("invalid invoice_id")
+		}
+		return uint(typed), nil
+	case int64:
+		if typed <= 0 {
+			return 0, fmt.Errorf("invalid invoice_id")
+		}
+		return uint(typed), nil
+	case uint:
+		if typed == 0 {
+			return 0, fmt.Errorf("invalid invoice_id")
+		}
+		return typed, nil
+	case string:
+		parsed, err := strconv.ParseUint(strings.TrimSpace(typed), 10, 64)
+		if err != nil || parsed == 0 {
+			return 0, fmt.Errorf("invalid invoice_id string")
+		}
+		return uint(parsed), nil
+	default:
+		return 0, fmt.Errorf("unsupported invoice_id type")
+	}
+}
+
+// FinalizeOrderPaymentBySessionForUser 在确认用户归属后，按会话立即完成订单支付并创建订阅。
+func FinalizeOrderPaymentBySessionForUser(userID uint, sessionID string) error {
+	sessionID = strings.TrimSpace(sessionID)
+	if sessionID == "" {
+		return fmt.Errorf("session_id is required")
+	}
+
+	db := common.DB()
+	var paymentSession model.PaymentSession
+	if err := db.Preload("PaymentIntent").
+		Where("stripe_session_id = ? AND user_id = ?", sessionID, userID).
+		First(&paymentSession).Error; err != nil {
+		return err
+	}
+
+	var metadata map[string]interface{}
+	if err := json.Unmarshal([]byte(paymentSession.PaymentIntent.Metadata), &metadata); err != nil {
+		return err
+	}
+
+	orderID, err := parseOrderIDFromMetadata(metadata)
+	if err != nil {
+		return err
+	}
+
+	var order model.Order
+	if err := db.Where("id = ? AND user_id = ?", orderID, userID).First(&order).Error; err != nil {
+		return err
+	}
+
+	if order.Status == model.OrderStatusPaid && order.SubscriptionID != nil {
+		return nil
+	}
+
+	return processOrderPaymentWebhook(sessionID, true)
+}
+
+// ReconcileUserOrderPaymentsFromStripe 主动向Stripe核验用户待支付订单，并在已支付时补齐订单/订阅状态。
+func ReconcileUserOrderPaymentsFromStripe(userID uint) error {
+	db := common.DB()
+	stripeConfig, err := resolveTenantStripeConfigByUser(db, userID)
+	if err != nil {
+		return err
+	}
+
+	var orders []model.Order
+	if err := db.Preload("PaymentSession").
+		Where("user_id = ?", userID).
+		Where("status = ?", model.OrderStatusPending).
+		Find(&orders).Error; err != nil {
+		return err
+	}
+
+	for _, order := range orders {
+		paymentSession := order.PaymentSession
+		if paymentSession == nil || strings.TrimSpace(paymentSession.StripeSessionID) == "" {
+			discoveredSession, discoverErr := findLatestPaymentSessionForOrder(db, userID, order.ID)
+			if discoverErr != nil {
+				continue
+			}
+			if discoveredSession == nil || strings.TrimSpace(discoveredSession.StripeSessionID) == "" {
+				continue
+			}
+
+			paymentSession = discoveredSession
+			_ = db.Model(&model.Order{}).Where("id = ?", order.ID).Updates(map[string]interface{}{
+				"payment_session_id": paymentSession.ID,
+				"updated_at":         time.Now(),
+			}).Error
+		}
+
+		endpoint := "https://api.stripe.com/v1/checkout/sessions/" + url.PathEscape(paymentSession.StripeSessionID)
+		sessionBody, err := stripeRequest(stripeConfig.SecretKey, endpoint, nil)
+		if err != nil {
+			continue
+		}
+
+		status := strings.ToLower(strings.TrimSpace(parseString(sessionBody["status"])))
+		paymentStatus := strings.ToLower(strings.TrimSpace(parseString(sessionBody["payment_status"])))
+		if paymentStatus != "paid" && status != "complete" {
+			continue
+		}
+
+		if err := processOrderPaymentWebhook(paymentSession.StripeSessionID, true); err != nil {
+			continue
+		}
+
+		now := time.Now()
+		_ = db.Model(&model.PaymentSession{}).Where("id = ?", paymentSession.ID).Updates(map[string]interface{}{
+			"status":       model.PaymentSessionStatusComplete,
+			"completed_at": &now,
+			"updated_at":   now,
+		}).Error
+	}
+
+	return nil
+}
+
+func findLatestPaymentSessionForOrder(db *gorm.DB, userID uint, orderID uint) (*model.PaymentSession, error) {
+	var sessions []model.PaymentSession
+	if err := db.Preload("PaymentIntent").
+		Where("user_id = ?", userID).
+		Order("id DESC").
+		Limit(200).
+		Find(&sessions).Error; err != nil {
+		return nil, err
+	}
+
+	for _, session := range sessions {
+		if session.PaymentIntent.ID == 0 || strings.TrimSpace(session.PaymentIntent.Metadata) == "" {
+			continue
+		}
+
+		var metadata map[string]interface{}
+		if err := json.Unmarshal([]byte(session.PaymentIntent.Metadata), &metadata); err != nil {
+			continue
+		}
+
+		metadataOrderID, err := parseOrderIDFromMetadata(metadata)
+		if err != nil {
+			continue
+		}
+		if metadataOrderID != orderID {
+			continue
+		}
+
+		matched := session
+		return &matched, nil
+	}
+
+	return nil, nil
 }
 
 // calculatePeriodEnd 计算订阅期间结束时间

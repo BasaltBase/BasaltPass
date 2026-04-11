@@ -2,6 +2,7 @@ package subscription
 
 import (
 	subdto "basaltpass-backend/internal/dto/subscription"
+	paymentservice "basaltpass-backend/internal/service/payment"
 	"errors"
 	"fmt"
 	"time"
@@ -61,7 +62,7 @@ func (s *Service) ListProducts(req *subdto.ListProductsRequest) ([]*model.Produc
 
 	// 按租户筛选（可选）
 	if req.TenantID != nil {
-		query = query.Where("tenant_id = ?", *req.TenantID)
+		query = query.Where("(tenant_id = ? OR tenant_id IS NULL)", *req.TenantID)
 	}
 
 	// 根据code过滤
@@ -187,7 +188,7 @@ func (s *Service) ListPlans(req *subdto.ListPlansRequest) ([]*model.Plan, int64,
 
 	// 按租户筛选（可选）
 	if req.TenantID != nil {
-		query = query.Where("tenant_id = ?", *req.TenantID)
+		query = query.Where("(tenant_id = ? OR tenant_id IS NULL)", *req.TenantID)
 	}
 
 	if req.ProductID != nil {
@@ -353,7 +354,7 @@ func (s *Service) ListPrices(req *subdto.ListPricesRequest) ([]*model.Price, int
 
 	// 按租户筛选（可选）
 	if req.TenantID != nil {
-		query = query.Where("tenant_id = ?", *req.TenantID)
+		query = query.Where("(tenant_id = ? OR tenant_id IS NULL)", *req.TenantID)
 	}
 
 	if req.PlanID != nil {
@@ -596,6 +597,11 @@ func (s *Service) CreateSubscription(req *subdto.CreateSubscriptionRequest) (*mo
 		}
 		return nil, fmt.Errorf("查询用户失败: %w", err)
 	}
+	if user.TenantID == 0 {
+		tx.Rollback()
+		return nil, fmt.Errorf("用户未绑定租户")
+	}
+	userTenantID := uint64(user.TenantID)
 
 	// 验证价格存在
 	var price model.Price
@@ -606,6 +612,10 @@ func (s *Service) CreateSubscription(req *subdto.CreateSubscriptionRequest) (*mo
 		}
 		return nil, fmt.Errorf("查询价格失败: %w", err)
 	}
+	if price.TenantID != nil && *price.TenantID != userTenantID {
+		tx.Rollback()
+		return nil, fmt.Errorf("价格不属于当前租户")
+	}
 
 	// 处理优惠券
 	var couponID *uint
@@ -614,6 +624,10 @@ func (s *Service) CreateSubscription(req *subdto.CreateSubscriptionRequest) (*mo
 		if err != nil {
 			tx.Rollback()
 			return nil, err
+		}
+		if coupon.TenantID != nil && *coupon.TenantID != userTenantID {
+			tx.Rollback()
+			return nil, fmt.Errorf("优惠券不属于当前租户")
 		}
 		couponID = &coupon.ID
 	}
@@ -642,6 +656,7 @@ func (s *Service) CreateSubscription(req *subdto.CreateSubscriptionRequest) (*mo
 	}
 
 	subscription := &model.Subscription{
+		TenantID:           &userTenantID,
 		UserID:             req.UserID,
 		Status:             status,
 		CurrentPriceID:     req.PriceID,
@@ -763,11 +778,16 @@ func (s *Service) ListSubscriptions(req *subdto.SubscriptionListRequest) ([]mode
 	var subscriptions []model.Subscription
 	var total int64
 
+	if req.UserID != nil {
+		_ = paymentservice.ReconcileUserOrderPaymentsFromStripe(*req.UserID)
+		_ = s.backfillSubscriptionsFromPaidOrders(*req.UserID, req.TenantID)
+	}
+
 	query := s.db.Model(&model.Subscription{})
 
 	// 按租户筛选（可选）
 	if req.TenantID != nil {
-		query = query.Where("tenant_id = ?", *req.TenantID)
+		query = query.Where("(tenant_id = ? OR tenant_id IS NULL)", *req.TenantID)
 	}
 
 	if req.UserID != nil {
@@ -798,6 +818,64 @@ func (s *Service) ListSubscriptions(req *subdto.SubscriptionListRequest) ([]mode
 	}
 
 	return subscriptions, total, nil
+}
+
+func (s *Service) backfillSubscriptionsFromPaidOrders(userID uint, tenantID *uint64) error {
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		query := tx.Preload("Price").
+			Where("user_id = ?", userID).
+			Where("status = ?", model.OrderStatusPaid).
+			Where("subscription_id IS NULL")
+
+		if tenantID != nil {
+			query = query.Joins("JOIN market_prices ON market_prices.id = market_orders.price_id").
+				Where("(market_prices.tenant_id = ? OR market_prices.tenant_id IS NULL)", *tenantID)
+		}
+
+		var orders []model.Order
+		if err := query.Find(&orders).Error; err != nil {
+			return err
+		}
+
+		now := time.Now()
+		for _, order := range orders {
+			periodEnd := s.calculateNextBillingDate(now, order.Price.BillingPeriod, order.Price.BillingInterval)
+			subscription := &model.Subscription{
+				UserID:             order.UserID,
+				Status:             model.SubscriptionStatusActive,
+				CurrentPriceID:     order.PriceID,
+				CouponID:           order.CouponID,
+				TenantID:           order.Price.TenantID,
+				StartAt:            now,
+				CurrentPeriodStart: now,
+				CurrentPeriodEnd:   periodEnd,
+				Metadata:           model.JSONB{"source": "order_payment_backfill", "order_id": order.ID},
+			}
+
+			if err := tx.Create(subscription).Error; err != nil {
+				return err
+			}
+
+			item := &model.SubscriptionItem{
+				SubscriptionID:   subscription.ID,
+				PriceID:          order.PriceID,
+				Quantity:         1,
+				Metering:         model.MeteringPerUnit,
+				UsageAggregation: model.UsageAggregationSum,
+				Metadata:         model.JSONB{"source": "order_payment_backfill"},
+			}
+			if err := tx.Create(item).Error; err != nil {
+				return err
+			}
+
+			if err := tx.Model(&model.Order{}).Where("id = ?", order.ID).
+				Updates(map[string]interface{}{"subscription_id": subscription.ID, "updated_at": now}).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }
 
 // CancelSubscription 取消订阅

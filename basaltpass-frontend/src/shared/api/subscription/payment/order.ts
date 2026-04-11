@@ -64,8 +64,9 @@ export class OrderAPI {
   }
 
   // getorderdetails
-  async getOrder(orderId: number): Promise<OrderResponse> {
-    const response = await client.get(`/api/v1/orders/${orderId}`);
+  async getOrder(orderId: number, options?: { activate?: boolean }): Promise<OrderResponse> {
+    const params = options?.activate ? { activate: 1 } : undefined;
+    const response = await client.get(`/api/v1/orders/${orderId}`, { params });
     return response.data.data;
   }
 
@@ -88,6 +89,6 @@ export const orderAPI = new OrderAPI();
 
 // translated
 export const createOrder = (data: CreateOrderRequest) => orderAPI.createOrder(data);
-export const getOrder = (orderId: number) => orderAPI.getOrder(orderId);
+export const getOrder = (orderId: number, options?: { activate?: boolean }) => orderAPI.getOrder(orderId, options);
 export const getOrderByNumber = (orderNumber: string) => orderAPI.getOrderByNumber(orderNumber);
 export const listOrders = (limit?: number) => orderAPI.listOrders(limit); 
