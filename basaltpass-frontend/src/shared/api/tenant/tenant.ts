@@ -44,6 +44,24 @@ export interface TenantQuotaInfo {
   max_tokens_per_hour: number
 }
 
+export interface TenantStripeConfig {
+  enabled: boolean
+  publishable_key: string
+  has_secret_key: boolean
+  secret_key_masked?: string
+  has_webhook_secret: boolean
+  webhook_secret_masked?: string
+}
+
+export interface UpdateTenantStripeConfigRequest {
+  enabled?: boolean
+  publishable_key?: string
+  secret_key?: string
+  webhook_secret?: string
+  clear_secret_key?: boolean
+  clear_webhook_secret?: boolean
+}
+
 export interface CreateTenantRequest {
   name: string
   domain: string
@@ -106,6 +124,16 @@ export const tenantApi = {
 
   async triggerLivenessCheck(): Promise<LivenessCheckResponse> {
     const response = await client.post<LivenessCheckResponse>('/api/v1/tenant/liveness-check')
+    return response.data
+  },
+
+  async getStripeConfig(): Promise<{ data: TenantStripeConfig }> {
+    const response = await client.get('/api/v1/tenant/stripe-config')
+    return response.data
+  },
+
+  async updateStripeConfig(data: UpdateTenantStripeConfigRequest): Promise<{ data: TenantStripeConfig; message: string }> {
+    const response = await client.put('/api/v1/tenant/stripe-config', data)
     return response.data
   },
 }

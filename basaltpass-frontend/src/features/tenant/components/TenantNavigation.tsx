@@ -4,6 +4,7 @@ import {
   ChartBarIcon,
   CubeIcon,
   UsersIcon,
+  ArrowsRightLeftIcon,
   ChevronDownIcon,
   ChevronRightIcon,
   CreditCardIcon,

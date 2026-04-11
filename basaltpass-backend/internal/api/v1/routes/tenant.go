@@ -36,6 +36,8 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 
 	// 租户信息管理
 	tenantGroup.Get("/info", tenant2.TenantGetInfoHandler)
+	tenantGroup.Get("/stripe-config", tenant2.TenantGetStripeConfigHandler)
+	tenantAdminGroup.Put("/stripe-config", tenant2.TenantUpdateStripeConfigHandler)
 	tenantGroup.Get("/currencies", walletHandler.GetCurrencies)
 	tenantGroup.Post("/liveness-check", func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{

@@ -41,12 +41,10 @@ func RegisterPublicRoutes(v1 fiber.Router) {
 
 	// 支付模拟/调试路由（高风险）：仅允许系统管理员访问
 	// 需要 JWT + admin scope + super admin 身份
-	adminPaymentGroup := v1.Group(
-		"/payment",
-		profileSuperAdminConsole()...,
-	)
-	adminPaymentGroup.Get("/checkout/:session_id", payment.PaymentCheckoutHandler)
-	adminPaymentGroup.Post("/simulate/:session_id", payment.SimulatePaymentHandler)
+	v1.Post("/payment/simulate/:session_id", append(profileSuperAdminConsole(), payment.SimulatePaymentHandler)...)
+	v1.Get("/payment/webhook/stripe/events/:event_id", append(profileSuperAdminConsole(), payment.StripeWebhookStatusHandler)...)
+	v1.Get("/payment/checkout/:session_id", payment.PaymentCheckoutHandler)
+	v1.Post("/payment/webhook/stripe", payment.StripeWebhookHandler)
 
 	// 货币系统路由（公开API，不需要认证）
 	currencyGroup := v1.Group("/currencies")

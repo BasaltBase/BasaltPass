@@ -75,3 +75,46 @@ func TenantGetInfoHandler(c *fiber.Ctx) error {
 		"message": "获取租户信息成功",
 	})
 }
+
+// TenantGetStripeConfigHandler 获取租户 Stripe 配置（脱敏）
+// GET /api/v1/tenant/stripe-config
+func TenantGetStripeConfigHandler(c *fiber.Ctx) error {
+	tenantID := c.Locals("tenantID").(uint)
+
+	config, err := tenantService.GetTenantStripeConfig(tenantID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"data":    config,
+		"message": "获取 Stripe 配置成功",
+	})
+}
+
+// TenantUpdateStripeConfigHandler 更新租户 Stripe 配置
+// PUT /api/v1/tenant/stripe-config
+func TenantUpdateStripeConfigHandler(c *fiber.Ctx) error {
+	tenantID := c.Locals("tenantID").(uint)
+
+	var req tenant2.UpdateTenantStripeConfigRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "请求参数错误",
+		})
+	}
+
+	config, err := tenantService.UpdateTenantStripeConfig(tenantID, &req)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"data":    config,
+		"message": "更新 Stripe 配置成功",
+	})
+}

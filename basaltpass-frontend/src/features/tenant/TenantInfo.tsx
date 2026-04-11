@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type ChangeEvent } from 'react'
 import { 
   BuildingOffice2Icon,
   CubeIcon,
@@ -18,6 +18,7 @@ import TenantLayout from '@features/tenant/components/TenantLayout'
 import { tenantApi, TenantInfo } from '@api/tenant/tenant'
 import { PSkeleton, PBadge, PButton, PCard, PInput, PPageHeader } from '@ui'
 import { useI18n } from '@shared/i18n'
+import { uiAlert } from '@contexts/DialogContext'
 
 export default function TenantInfoPage() {
   const { t, locale } = useI18n()
@@ -26,9 +27,25 @@ export default function TenantInfoPage() {
   const [error, setError] = useState('')
   const [debugInfo, setDebugInfo] = useState<any>(null)
   const [copiedField, setCopiedField] = useState<string | null>(null)
+  const [stripeLoading, setStripeLoading] = useState(false)
+  const [stripeSaving, setStripeSaving] = useState(false)
+  const [stripeError, setStripeError] = useState('')
+  const [stripeMeta, setStripeMeta] = useState({
+    has_secret_key: false,
+    secret_key_masked: '',
+    has_webhook_secret: false,
+    webhook_secret_masked: ''
+  })
+  const [stripeForm, setStripeForm] = useState({
+    enabled: false,
+    publishable_key: '',
+    secret_key: '',
+    webhook_secret: ''
+  })
 
   useEffect(() => {
     fetchTenantInfo()
+    fetchStripeConfig()
   }, [])
 
   const fetchTenantInfo = async () => {
@@ -49,6 +66,122 @@ export default function TenantInfoPage() {
       }
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchStripeConfig = async () => {
+    try {
+      setStripeLoading(true)
+      setStripeError('')
+      const response = await tenantApi.getStripeConfig()
+      const data = response.data
+      setStripeForm(prev => ({
+        ...prev,
+        enabled: data.enabled,
+        publishable_key: data.publishable_key || '',
+        secret_key: '',
+        webhook_secret: ''
+      }))
+      setStripeMeta({
+        has_secret_key: data.has_secret_key,
+        secret_key_masked: data.secret_key_masked || '',
+        has_webhook_secret: data.has_webhook_secret,
+        webhook_secret_masked: data.webhook_secret_masked || ''
+      })
+    } catch (err: any) {
+      console.error('Failed to fetch tenant stripe config', err)
+      setStripeError(err.response?.data?.error || '加载 Stripe 配置失败')
+    } finally {
+      setStripeLoading(false)
+    }
+  }
+
+  const saveStripeConfig = async () => {
+    const publishableKey = stripeForm.publishable_key.trim()
+    const secretKey = stripeForm.secret_key.trim()
+    const webhookSecret = stripeForm.webhook_secret.trim()
+
+    if (publishableKey && !publishableKey.startsWith('pk_')) {
+      setStripeError('Publishable Key 必须以 pk_ 开头')
+      return
+    }
+    if (secretKey && !secretKey.startsWith('sk_')) {
+      setStripeError('Secret Key 必须以 sk_ 开头')
+      return
+    }
+    if (stripeForm.enabled) {
+      if (!publishableKey) {
+        setStripeError('启用 Stripe 前请先填写 Publishable Key')
+        return
+      }
+      if (!secretKey && !stripeMeta.has_secret_key) {
+        setStripeError('启用 Stripe 前请先填写 Secret Key')
+        return
+      }
+    }
+
+    try {
+      setStripeSaving(true)
+      setStripeError('')
+      await tenantApi.updateStripeConfig({
+        enabled: stripeForm.enabled,
+        publishable_key: publishableKey,
+        secret_key: secretKey || undefined,
+        webhook_secret: webhookSecret || undefined
+      })
+      uiAlert('Stripe 配置已保存')
+      await fetchStripeConfig()
+      setStripeForm(prev => ({
+        ...prev,
+        secret_key: '',
+        webhook_secret: ''
+      }))
+    } catch (err: any) {
+      console.error('Failed to save tenant stripe config', err)
+      const message = err.response?.data?.error || '保存 Stripe 配置失败'
+      setStripeError(message)
+      uiAlert(message)
+    } finally {
+      setStripeSaving(false)
+    }
+  }
+
+  const clearSecretKey = async () => {
+    try {
+      setStripeSaving(true)
+      setStripeError('')
+      await tenantApi.updateStripeConfig({
+        clear_secret_key: true,
+        enabled: false
+      })
+      uiAlert('Secret Key 已清除')
+      await fetchStripeConfig()
+      setStripeForm(prev => ({ ...prev, enabled: false, secret_key: '' }))
+    } catch (err: any) {
+      const message = err.response?.data?.error || '清除 Secret Key 失败'
+      setStripeError(message)
+      uiAlert(message)
+    } finally {
+      setStripeSaving(false)
+    }
+  }
+
+  const clearWebhookSecret = async () => {
+    try {
+      setStripeSaving(true)
+      setStripeError('')
+      await tenantApi.updateStripeConfig({
+        clear_webhook_secret: true
+      })
+      uiAlert('Webhook Secret 已清除')
+      await fetchStripeConfig()
+      setStripeForm(prev => ({ ...prev, webhook_secret: '' }))
+    } catch (err: any) {
+      const message = err.response?.data?.error || '清除 Webhook Secret 失败'
+      setStripeError(message)
+      uiAlert(message)
+    } finally {
+      setStripeSaving(false)
     }
   }
 
@@ -234,6 +367,75 @@ export default function TenantInfoPage() {
                     </div>
                   )}
                 </dl>
+              </div>
+            </PCard>
+
+            <PCard className="rounded-xl p-0 shadow-sm mt-6">
+              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <h3 className="text-lg font-medium text-gray-900">Stripe 收款配置</h3>
+                {stripeLoading && <span className="text-sm text-gray-500">加载中...</span>}
+              </div>
+              <div className="px-6 py-6 space-y-4">
+                {stripeError && (
+                  <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                    {stripeError}
+                  </div>
+                )}
+
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={stripeForm.enabled}
+                    onChange={(e) => setStripeForm(prev => ({ ...prev, enabled: e.target.checked }))}
+                  />
+                  启用租户 Stripe 收款
+                </label>
+
+                <PInput
+                  label="Publishable Key"
+                  type="text"
+                  value={stripeForm.publishable_key}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setStripeForm(prev => ({ ...prev, publishable_key: e.target.value }))}
+                  placeholder="pk_test_..."
+                />
+
+                <PInput
+                  label="Secret Key（留空=不改）"
+                  type="password"
+                  value={stripeForm.secret_key}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setStripeForm(prev => ({ ...prev, secret_key: e.target.value }))}
+                  placeholder="sk_test_..."
+                />
+                {stripeMeta.has_secret_key && (
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs text-gray-500">当前已保存 Secret Key：{stripeMeta.secret_key_masked}</p>
+                    <PButton type="button" variant="secondary" onClick={clearSecretKey} loading={stripeSaving}>
+                      清除 Secret Key
+                    </PButton>
+                  </div>
+                )}
+
+                <PInput
+                  label="Webhook Secret（可选，留空=不改）"
+                  type="password"
+                  value={stripeForm.webhook_secret}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setStripeForm(prev => ({ ...prev, webhook_secret: e.target.value }))}
+                  placeholder="whsec_..."
+                />
+                {stripeMeta.has_webhook_secret && (
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs text-gray-500">当前已保存 Webhook Secret：{stripeMeta.webhook_secret_masked}</p>
+                    <PButton type="button" variant="secondary" onClick={clearWebhookSecret} loading={stripeSaving}>
+                      清除 Webhook Secret
+                    </PButton>
+                  </div>
+                )}
+
+                <div className="pt-2">
+                  <PButton onClick={saveStripeConfig} loading={stripeSaving}>
+                    {stripeSaving ? '保存中...' : '保存 Stripe 配置'}
+                  </PButton>
+                </div>
               </div>
             </PCard>
           </div>

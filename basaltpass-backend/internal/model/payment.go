@@ -1,6 +1,7 @@
 package model
 
 import (
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -102,4 +103,38 @@ type PaymentWebhookEvent struct {
 // TableName 指定表名
 func (PaymentWebhookEvent) TableName() string {
 	return "market_payment_webhook_events"
+}
+
+func normalizeJSONField(raw string) string {
+	if strings.TrimSpace(raw) == "" {
+		return "{}"
+	}
+	return raw
+}
+
+func (p *PaymentIntent) BeforeCreate(_ *gorm.DB) error {
+	p.Metadata = normalizeJSONField(p.Metadata)
+	p.NextAction = normalizeJSONField(p.NextAction)
+	return nil
+}
+
+func (p *PaymentIntent) BeforeUpdate(_ *gorm.DB) error {
+	p.Metadata = normalizeJSONField(p.Metadata)
+	p.NextAction = normalizeJSONField(p.NextAction)
+	return nil
+}
+
+func (s *PaymentSession) BeforeCreate(_ *gorm.DB) error {
+	s.Metadata = normalizeJSONField(s.Metadata)
+	return nil
+}
+
+func (s *PaymentSession) BeforeUpdate(_ *gorm.DB) error {
+	s.Metadata = normalizeJSONField(s.Metadata)
+	return nil
+}
+
+func (e *PaymentWebhookEvent) BeforeCreate(_ *gorm.DB) error {
+	e.EventData = normalizeJSONField(e.EventData)
+	return nil
 }

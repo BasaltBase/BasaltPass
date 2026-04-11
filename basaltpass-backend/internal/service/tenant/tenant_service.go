@@ -4,6 +4,7 @@ import (
 	"basaltpass-backend/internal/service/aduit"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"basaltpass-backend/internal/common"
@@ -70,6 +71,29 @@ type TenantInfo struct {
 
 	// 配额信息
 	Quota *TenantQuotaInfo `json:"quota,omitempty"`
+
+	// 支付配置
+	StripeConfig *TenantStripeConfigResponse `json:"stripe_config,omitempty"`
+}
+
+// TenantStripeConfigResponse 租户 Stripe 配置响应（脱敏）
+type TenantStripeConfigResponse struct {
+	Enabled             bool   `json:"enabled"`
+	PublishableKey      string `json:"publishable_key"`
+	HasSecretKey        bool   `json:"has_secret_key"`
+	SecretKeyMasked     string `json:"secret_key_masked,omitempty"`
+	HasWebhookSecret    bool   `json:"has_webhook_secret"`
+	WebhookSecretMasked string `json:"webhook_secret_masked,omitempty"`
+}
+
+// UpdateTenantStripeConfigRequest 更新租户 Stripe 配置请求
+type UpdateTenantStripeConfigRequest struct {
+	Enabled            *bool   `json:"enabled"`
+	PublishableKey     *string `json:"publishable_key"`
+	SecretKey          *string `json:"secret_key"`
+	WebhookSecret      *string `json:"webhook_secret"`
+	ClearSecretKey     bool    `json:"clear_secret_key"`
+	ClearWebhookSecret bool    `json:"clear_webhook_secret"`
 }
 
 // TenantDetailStats 详细统计信息
@@ -193,18 +217,116 @@ func (s *TenantService) GetTenantInfo(tenantID uint) (*TenantInfo, error) {
 	quota := s.getTenantQuota(tenantID)
 
 	info := &TenantInfo{
-		ID:          tenant.ID,
-		Name:        tenant.Name,
-		Code:        tenant.Code,
-		Description: tenant.Description,
-		Status:      tenant.Status,
-		CreatedAt:   tenant.CreatedAt.Format("2006-01-02 15:04:05"),
-		UpdatedAt:   tenant.UpdatedAt.Format("2006-01-02 15:04:05"),
-		Stats:       *stats,
-		Quota:       quota,
+		ID:           tenant.ID,
+		Name:         tenant.Name,
+		Code:         tenant.Code,
+		Description:  tenant.Description,
+		Status:       tenant.Status,
+		CreatedAt:    tenant.CreatedAt.Format("2006-01-02 15:04:05"),
+		UpdatedAt:    tenant.UpdatedAt.Format("2006-01-02 15:04:05"),
+		Stats:        *stats,
+		Quota:        quota,
+		StripeConfig: s.buildTenantStripeConfigResponse(tenant.Metadata),
 	}
 
 	return info, nil
+}
+
+// GetTenantStripeConfig 获取租户 Stripe 配置（脱敏）
+func (s *TenantService) GetTenantStripeConfig(tenantID uint) (*TenantStripeConfigResponse, error) {
+	var tenant model.Tenant
+	if err := s.db.First(&tenant, tenantID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("租户不存在")
+		}
+		return nil, err
+	}
+
+	return s.buildTenantStripeConfigResponse(tenant.Metadata), nil
+}
+
+// UpdateTenantStripeConfig 更新租户 Stripe 配置
+func (s *TenantService) UpdateTenantStripeConfig(tenantID uint, req *UpdateTenantStripeConfigRequest) (*TenantStripeConfigResponse, error) {
+	var tenant model.Tenant
+	if err := s.db.First(&tenant, tenantID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("租户不存在")
+		}
+		return nil, err
+	}
+
+	metadata := map[string]interface{}(tenant.Metadata)
+	if metadata == nil {
+		metadata = make(map[string]interface{})
+	}
+
+	stripeMap := map[string]interface{}{}
+	if raw, ok := metadata["stripe"]; ok {
+		if existing, ok := raw.(map[string]interface{}); ok {
+			for k, v := range existing {
+				stripeMap[k] = v
+			}
+		}
+	}
+
+	if req.Enabled != nil {
+		stripeMap["enabled"] = *req.Enabled
+	}
+
+	if req.PublishableKey != nil {
+		publishableKey := strings.TrimSpace(*req.PublishableKey)
+		if publishableKey != "" && !strings.HasPrefix(publishableKey, "pk_") {
+			return nil, errors.New("Stripe publishable key 必须以 pk_ 开头")
+		}
+		stripeMap["publishable_key"] = publishableKey
+	}
+
+	if req.SecretKey != nil {
+		secretKey := strings.TrimSpace(*req.SecretKey)
+		if secretKey != "" {
+			if !strings.HasPrefix(secretKey, "sk_") {
+				return nil, errors.New("Stripe secret key 必须以 sk_ 开头")
+			}
+			stripeMap["secret_key"] = secretKey
+		}
+	}
+
+	if req.WebhookSecret != nil {
+		stripeMap["webhook_secret"] = strings.TrimSpace(*req.WebhookSecret)
+	}
+
+	if req.ClearSecretKey {
+		delete(stripeMap, "secret_key")
+	}
+
+	if req.ClearWebhookSecret {
+		delete(stripeMap, "webhook_secret")
+	}
+
+	enabled, _ := stripeMap["enabled"].(bool)
+	publishableKey, _ := stripeMap["publishable_key"].(string)
+	secretKey, _ := stripeMap["secret_key"].(string)
+
+	if enabled {
+		if strings.TrimSpace(publishableKey) == "" {
+			return nil, errors.New("启用 Stripe 前请先配置 publishable key")
+		}
+		if strings.TrimSpace(secretKey) == "" {
+			return nil, errors.New("启用 Stripe 前请先配置 secret key")
+		}
+	}
+
+	metadata["stripe"] = stripeMap
+
+	if err := s.db.Model(&tenant).Updates(map[string]interface{}{
+		"metadata":   model.JSONMap(metadata),
+		"updated_at": time.Now(),
+	}).Error; err != nil {
+		return nil, err
+	}
+
+	tenant.Metadata = model.JSONMap(metadata)
+	return s.buildTenantStripeConfigResponse(tenant.Metadata), nil
 }
 
 // ListTenants 获取租户列表（超级管理员）
@@ -381,6 +503,58 @@ func (s *TenantService) tenantToResponse(tenant *model.Tenant, stats *TenantStat
 	}
 
 	return resp
+}
+
+func (s *TenantService) buildTenantStripeConfigResponse(metadata model.JSONMap) *TenantStripeConfigResponse {
+	resp := &TenantStripeConfigResponse{}
+	rawMeta := map[string]interface{}(metadata)
+	if rawMeta == nil {
+		return resp
+	}
+
+	rawStripe, ok := rawMeta["stripe"]
+	if !ok {
+		return resp
+	}
+
+	stripeMap, ok := rawStripe.(map[string]interface{})
+	if !ok {
+		return resp
+	}
+
+	resp.Enabled = toBool(stripeMap["enabled"])
+	resp.PublishableKey = toString(stripeMap["publishable_key"])
+
+	secret := toString(stripeMap["secret_key"])
+	resp.HasSecretKey = secret != ""
+	resp.SecretKeyMasked = maskKey(secret)
+
+	webhookSecret := toString(stripeMap["webhook_secret"])
+	resp.HasWebhookSecret = webhookSecret != ""
+	resp.WebhookSecretMasked = maskKey(webhookSecret)
+
+	return resp
+}
+
+func maskKey(v string) string {
+	v = strings.TrimSpace(v)
+	if v == "" {
+		return ""
+	}
+	if len(v) <= 8 {
+		return "****"
+	}
+	return v[:6] + "..." + v[len(v)-4:]
+}
+
+func toString(v interface{}) string {
+	s, _ := v.(string)
+	return strings.TrimSpace(s)
+}
+
+func toBool(v interface{}) bool {
+	b, _ := v.(bool)
+	return b
 }
 
 func (s *TenantService) getTenantStats(tenantID uint) *TenantStats {
