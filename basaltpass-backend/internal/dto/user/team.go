@@ -1,4 +1,4 @@
-package team
+package user
 
 import "basaltpass-backend/internal/model"
 

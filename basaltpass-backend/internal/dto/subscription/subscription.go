@@ -6,12 +6,6 @@ import (
 	"basaltpass-backend/internal/model"
 )
 
-//  DTO: Data Transfer Object
-//  DTO 是用于在不同层之间传递数据的对象。
-//  在 Go 中，DTO 通常是结构体，用于在不同层之间传递数据。
-
-// ========== 产品相关 DTO ==========
-
 // CreateProductRequest 创建产品请求
 type CreateProductRequest struct {
 	Code        string                 `json:"code" validate:"required,max=64"`
@@ -51,8 +45,6 @@ type ProductResponse struct {
 	UpdatedAt    time.Time              `json:"updated_at"`
 }
 
-// ========== 套餐相关 DTO ==========
-
 // CreatePlanRequest 创建套餐请求
 type CreatePlanRequest struct {
 	ProductID   uint                   `json:"product_id" validate:"required"`
@@ -87,8 +79,6 @@ type PlanResponse struct {
 	Prices       []PriceResponse        `json:"prices,omitempty"`
 }
 
-// ========== 套餐功能相关 DTO ==========
-
 // CreatePlanFeatureRequest 创建套餐功能请求
 type CreatePlanFeatureRequest struct {
 	PlanID       uint                   `json:"plan_id" validate:"required"`
@@ -122,8 +112,6 @@ type PlanFeatureResponse struct {
 	CreatedAt    time.Time              `json:"created_at"`
 	UpdatedAt    time.Time              `json:"updated_at"`
 }
-
-// ========== 定价相关 DTO ==========
 
 // CreatePriceRequest 创建定价请求
 type CreatePriceRequest struct {
@@ -166,19 +154,17 @@ type PriceResponse struct {
 	UpdatedAt       time.Time              `json:"updated_at"`
 }
 
-// ========== 优惠券相关 DTO ==========
-
 // CreateCouponRequest 创建优惠券请求
 type CreateCouponRequest struct {
 	Code             string                 `json:"code" validate:"required,max=64"`
 	Name             string                 `json:"name,omitempty"`
 	DiscountType     model.DiscountType     `json:"discount_type" validate:"required"`
 	DiscountValue    int64                  `json:"discount_value" validate:"required,min=0"`
-	Duration         model.CouponDuration   `json:"duration,omitempty"` // 改为可选，有默认值
+	Duration         model.CouponDuration   `json:"duration,omitempty"`
 	DurationInCycles *int                   `json:"duration_in_cycles,omitempty"`
 	MaxRedemptions   *int                   `json:"max_redemptions,omitempty"`
 	ExpiresAt        *time.Time             `json:"expires_at,omitempty"`
-	IsActive         *bool                  `json:"is_active,omitempty"` // 添加is_active字段
+	IsActive         *bool                  `json:"is_active,omitempty"`
 	Metadata         map[string]interface{} `json:"metadata,omitempty"`
 }
 
@@ -199,8 +185,6 @@ type CouponResponse struct {
 	CreatedAt        time.Time              `json:"created_at"`
 	UpdatedAt        time.Time              `json:"updated_at"`
 }
-
-// ========== 订阅相关 DTO ==========
 
 // CreateSubscriptionRequest 创建订阅请求
 type CreateSubscriptionRequest struct {
@@ -231,7 +215,7 @@ type UpdateSubscriptionRequest struct {
 
 // CancelSubscriptionRequest 取消订阅请求
 type CancelSubscriptionRequest struct {
-	CancelAt *time.Time `json:"cancel_at,omitempty"` // 为空表示立即取消
+	CancelAt *time.Time `json:"cancel_at,omitempty"`
 	Reason   *string    `json:"reason,omitempty"`
 }
 
@@ -252,12 +236,10 @@ type SubscriptionResponse struct {
 	Metadata              map[string]interface{}   `json:"metadata"`
 	CreatedAt             time.Time                `json:"created_at"`
 	UpdatedAt             time.Time                `json:"updated_at"`
-
-	// 关联数据
-	CurrentPrice *PriceResponse             `json:"current_price,omitempty"`
-	NextPrice    *PriceResponse             `json:"next_price,omitempty"`
-	Coupon       *CouponResponse            `json:"coupon,omitempty"`
-	Items        []SubscriptionItemResponse `json:"items,omitempty"`
+	CurrentPrice          *PriceResponse           `json:"current_price,omitempty"`
+	NextPrice             *PriceResponse           `json:"next_price,omitempty"`
+	Coupon                *CouponResponse          `json:"coupon,omitempty"`
+	Items                 []SubscriptionItemResponse `json:"items,omitempty"`
 }
 
 // SubscriptionItemResponse 订阅项目响应
@@ -271,12 +253,8 @@ type SubscriptionItemResponse struct {
 	Metadata         map[string]interface{} `json:"metadata"`
 	CreatedAt        time.Time              `json:"created_at"`
 	UpdatedAt        time.Time              `json:"updated_at"`
-
-	// 关联数据
-	Price *PriceResponse `json:"price,omitempty"`
+	Price            *PriceResponse         `json:"price,omitempty"`
 }
-
-// ========== 使用记录相关 DTO ==========
 
 // CreateUsageRecordRequest 创建使用记录请求
 type CreateUsageRecordRequest struct {
@@ -297,8 +275,6 @@ type UsageRecordResponse struct {
 	IdempotencyKey     *string   `json:"idempotency_key"`
 	CreatedAt          time.Time `json:"created_at"`
 }
-
-// ========== 账单相关 DTO ==========
 
 // CreateInvoiceRequest 创建账单请求
 type CreateInvoiceRequest struct {
@@ -332,10 +308,8 @@ type InvoiceResponse struct {
 	Metadata       map[string]interface{} `json:"metadata"`
 	CreatedAt      time.Time              `json:"created_at"`
 	UpdatedAt      time.Time              `json:"updated_at"`
-
-	// 关联数据
-	Items    []InvoiceItemResponse `json:"items,omitempty"`
-	Payments []PaymentResponse     `json:"payments,omitempty"`
+	Items          []InvoiceItemResponse  `json:"items,omitempty"`
+	Payments       []PaymentResponse      `json:"payments,omitempty"`
 }
 
 // InvoiceItemResponse 账单项目响应
@@ -350,8 +324,6 @@ type InvoiceItemResponse struct {
 	CreatedAt   time.Time              `json:"created_at"`
 	UpdatedAt   time.Time              `json:"updated_at"`
 }
-
-// ========== 支付相关 DTO ==========
 
 // CreatePaymentRequest 创建支付请求
 type CreatePaymentRequest struct {
@@ -377,8 +349,6 @@ type PaymentResponse struct {
 	CreatedAt              time.Time              `json:"created_at"`
 	UpdatedAt              time.Time              `json:"updated_at"`
 }
-
-// ========== 查询相关 DTO ==========
 
 // PaginationRequest 分页请求
 type PaginationRequest struct {
@@ -461,7 +431,7 @@ type ListCouponsRequest struct {
 
 // UpdateCouponRequest 更新优惠券请求
 type UpdateCouponRequest struct {
-	Name           *string                 `json:"name,omitempty"` // 添加name字段
+	Name           *string                 `json:"name,omitempty"`
 	DiscountValue  *int64                  `json:"discount_value,omitempty"`
 	MaxRedemptions *int                    `json:"max_redemptions,omitempty"`
 	ExpiresAt      *time.Time              `json:"expires_at,omitempty"`

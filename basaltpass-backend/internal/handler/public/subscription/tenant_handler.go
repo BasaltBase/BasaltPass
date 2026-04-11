@@ -1,6 +1,7 @@
 package subscription
 
 import (
+	subdto "basaltpass-backend/internal/dto/subscription"
 	"basaltpass-backend/internal/middleware"
 	"strconv"
 
@@ -35,7 +36,7 @@ func (h *TenantHandler) getTenantService(c *fiber.Ctx) *TenantService {
 
 // CreateTenantProductHandler 创建产品
 func (h *TenantHandler) CreateTenantProductHandler(c *fiber.Ctx) error {
-	var req CreateProductRequest
+	var req subdto.CreateProductRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
 	}
@@ -70,7 +71,7 @@ func (h *TenantHandler) GetTenantProductHandler(c *fiber.Ctx) error {
 
 // ListTenantProductsHandler 获取产品列表
 func (h *TenantHandler) ListTenantProductsHandler(c *fiber.Ctx) error {
-	var req ListProductsRequest
+	var req subdto.ListProductsRequest
 	if err := c.QueryParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "查询参数无效"})
 	}
@@ -109,7 +110,7 @@ func (h *TenantHandler) UpdateTenantProductHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "产品ID无效"})
 	}
 
-	var req UpdateProductRequest
+	var req subdto.UpdateProductRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
 	}
@@ -145,7 +146,7 @@ func (h *TenantHandler) DeleteTenantProductHandler(c *fiber.Ctx) error {
 
 // CreateTenantPlanHandler 创建套餐
 func (h *TenantHandler) CreateTenantPlanHandler(c *fiber.Ctx) error {
-	var req CreatePlanRequest
+	var req subdto.CreatePlanRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
 	}
@@ -180,7 +181,7 @@ func (h *TenantHandler) GetTenantPlanHandler(c *fiber.Ctx) error {
 
 // ListTenantPlansHandler 获取套餐列表
 func (h *TenantHandler) ListTenantPlansHandler(c *fiber.Ctx) error {
-	var req ListPlansRequest
+	var req subdto.ListPlansRequest
 	if err := c.QueryParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "查询参数无效"})
 	}
@@ -219,7 +220,7 @@ func (h *TenantHandler) UpdateTenantPlanHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "套餐ID无效"})
 	}
 
-	var req UpdatePlanRequest
+	var req subdto.UpdatePlanRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
 	}
@@ -255,7 +256,7 @@ func (h *TenantHandler) DeleteTenantPlanHandler(c *fiber.Ctx) error {
 
 // CreateTenantPriceHandler 创建定价
 func (h *TenantHandler) CreateTenantPriceHandler(c *fiber.Ctx) error {
-	var req CreatePriceRequest
+	var req subdto.CreatePriceRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
 	}
@@ -290,7 +291,7 @@ func (h *TenantHandler) GetTenantPriceHandler(c *fiber.Ctx) error {
 
 // ListTenantPricesHandler 获取定价列表
 func (h *TenantHandler) ListTenantPricesHandler(c *fiber.Ctx) error {
-	var req ListPricesRequest
+	var req subdto.ListPricesRequest
 	if err := c.QueryParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "查询参数无效"})
 	}
@@ -329,7 +330,7 @@ func (h *TenantHandler) UpdateTenantPriceHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "定价ID无效"})
 	}
 
-	var req UpdatePriceRequest
+	var req subdto.UpdatePriceRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
 	}
@@ -365,7 +366,7 @@ func (h *TenantHandler) DeleteTenantPriceHandler(c *fiber.Ctx) error {
 
 // CreateTenantSubscriptionHandler 创建订阅
 func (h *TenantHandler) CreateTenantSubscriptionHandler(c *fiber.Ctx) error {
-	var req CreateSubscriptionRequest
+	var req subdto.CreateSubscriptionRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
 	}
@@ -408,7 +409,7 @@ func (h *TenantHandler) GetTenantSubscriptionHandler(c *fiber.Ctx) error {
 
 // ListTenantSubscriptionsHandler 获取订阅列表
 func (h *TenantHandler) ListTenantSubscriptionsHandler(c *fiber.Ctx) error {
-	var req SubscriptionListRequest
+	var req subdto.SubscriptionListRequest
 	if err := c.QueryParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "查询参数无效"})
 	}
@@ -447,7 +448,7 @@ func (h *TenantHandler) CancelTenantSubscriptionHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "订阅ID无效"})
 	}
 
-	var req CancelSubscriptionRequest
+	var req subdto.CancelSubscriptionRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
 	}
@@ -474,7 +475,7 @@ func (h *TenantHandler) CancelTenantSubscriptionHandler(c *fiber.Ctx) error {
 
 // CreateTenantCouponHandler 创建优惠券
 func (h *TenantHandler) CreateTenantCouponHandler(c *fiber.Ctx) error {
-	var req CreateCouponRequest
+	var req subdto.CreateCouponRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
 	}
@@ -493,7 +494,7 @@ func (h *TenantHandler) CreateTenantCouponHandler(c *fiber.Ctx) error {
 
 // ListTenantCouponsHandler 获取优惠券列表
 func (h *TenantHandler) ListTenantCouponsHandler(c *fiber.Ctx) error {
-	var req ListCouponsRequest
+	var req subdto.ListCouponsRequest
 	if err := c.QueryParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "查询参数无效"})
 	}
@@ -548,7 +549,7 @@ func (h *TenantHandler) UpdateTenantCouponHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "优惠券代码无效"})
 	}
 
-	var req UpdateCouponRequest
+	var req subdto.UpdateCouponRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
 	}
@@ -606,7 +607,7 @@ func (h *TenantHandler) ValidateTenantCouponHandler(c *fiber.Ctx) error {
 
 // CreateTenantInvoiceHandler 创建账单
 func (h *TenantHandler) CreateTenantInvoiceHandler(c *fiber.Ctx) error {
-	var req CreateInvoiceRequest
+	var req subdto.CreateInvoiceRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
 	}
@@ -625,7 +626,7 @@ func (h *TenantHandler) CreateTenantInvoiceHandler(c *fiber.Ctx) error {
 
 // ListTenantInvoicesHandler 获取账单列表
 func (h *TenantHandler) ListTenantInvoicesHandler(c *fiber.Ctx) error {
-	var req InvoiceListRequest
+	var req subdto.InvoiceListRequest
 	if err := c.QueryParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "查询参数无效"})
 	}
@@ -661,7 +662,7 @@ func (h *TenantHandler) ListTenantInvoicesHandler(c *fiber.Ctx) error {
 
 // ListTenantUserSubscriptionsHandler 租户用户获取订阅列表
 func (h *TenantHandler) ListTenantUserSubscriptionsHandler(c *fiber.Ctx) error {
-	var req SubscriptionListRequest
+	var req subdto.SubscriptionListRequest
 	if err := c.QueryParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数无效"})
 	}

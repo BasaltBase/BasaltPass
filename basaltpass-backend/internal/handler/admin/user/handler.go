@@ -2,6 +2,7 @@ package user
 
 import (
 	"basaltpass-backend/internal/common"
+	userdto "basaltpass-backend/internal/dto/user"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -16,7 +17,7 @@ func init() {
 // ListUsersHandler 获取用户列表
 // GET /tenant/users
 func ListUsersHandler(c *fiber.Ctx) error {
-	var req AdminUserListRequest
+	var req userdto.AdminUserListRequest
 	if err := c.QueryParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "无效的查询参数",
@@ -96,7 +97,7 @@ func UpdateUserHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	var req UpdateUserRequest
+	var req userdto.UpdateUserRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "无效的请求数据",
@@ -126,7 +127,7 @@ func BanUserHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	var req BanUserRequest
+	var req userdto.BanUserRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "无效的请求数据",
@@ -211,7 +212,7 @@ func AssignGlobalRoleHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	var req AssignGlobalRoleRequest
+	var req userdto.AssignGlobalRoleRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "无效的请求数据",
@@ -264,7 +265,7 @@ func RemoveGlobalRoleHandler(c *fiber.Ctx) error {
 // CreateUserHandler 创建新用户
 // POST /tenant/users
 func CreateUserHandler(c *fiber.Ctx) error {
-	var req AdminCreateUserRequest
+	var req userdto.AdminCreateUserRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "无效的请求数据",
@@ -279,7 +280,7 @@ func CreateUserHandler(c *fiber.Ctx) error {
 	}
 
 	// 返回创建的用户信息，但不包含密码哈希
-	response := AdminUserListResponse{
+	response := userdto.AdminUserListResponse{
 		ID:            user.ID,
 		Email:         user.Email,
 		Phone:         user.Phone,

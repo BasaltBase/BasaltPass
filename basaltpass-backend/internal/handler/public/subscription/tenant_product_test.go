@@ -1,6 +1,7 @@
 package subscription
 
 import (
+	subdto "basaltpass-backend/internal/dto/subscription"
 	"testing"
 
 	"basaltpass-backend/internal/model"
@@ -25,7 +26,7 @@ func TestTenantProductService(t *testing.T) {
 	service := NewTenantService(db, &tenantID)
 
 	t.Run("CreateProduct", func(t *testing.T) {
-		req := &CreateProductRequest{
+		req := &subdto.CreateProductRequest{
 			Code:        "TEST_PRODUCT",
 			Name:        "测试产品",
 			Description: "这是一个测试产品",
@@ -46,8 +47,8 @@ func TestTenantProductService(t *testing.T) {
 
 	t.Run("GetProduct", func(t *testing.T) {
 		// 首先获取刚创建的产品
-		products, _, err := service.ListProducts(&ListProductsRequest{
-			PaginationRequest: PaginationRequest{
+		products, _, err := service.ListProducts(&subdto.ListProductsRequest{
+			PaginationRequest: subdto.PaginationRequest{
 				Page:     1,
 				PageSize: 10,
 			},
@@ -65,14 +66,14 @@ func TestTenantProductService(t *testing.T) {
 
 	t.Run("ListProducts", func(t *testing.T) {
 		// 创建更多测试产品
-		service.CreateProduct(&CreateProductRequest{
+		service.CreateProduct(&subdto.CreateProductRequest{
 			Code:        "TEST_PRODUCT_2",
 			Name:        "测试产品2",
 			Description: "这是第二个测试产品",
 		})
 
-		req := &ListProductsRequest{
-			PaginationRequest: PaginationRequest{
+		req := &subdto.ListProductsRequest{
+			PaginationRequest: subdto.PaginationRequest{
 				Page:     1,
 				PageSize: 10,
 			},
@@ -86,8 +87,8 @@ func TestTenantProductService(t *testing.T) {
 
 	t.Run("UpdateProduct", func(t *testing.T) {
 		// 获取第一个产品
-		products, _, err := service.ListProducts(&ListProductsRequest{
-			PaginationRequest: PaginationRequest{
+		products, _, err := service.ListProducts(&subdto.ListProductsRequest{
+			PaginationRequest: subdto.PaginationRequest{
 				Page:     1,
 				PageSize: 1,
 			},
@@ -99,7 +100,7 @@ func TestTenantProductService(t *testing.T) {
 		newName := "更新后的产品名称"
 		newDescription := "更新后的产品描述"
 
-		req := &UpdateProductRequest{
+		req := &subdto.UpdateProductRequest{
 			Name:        &newName,
 			Description: &newDescription,
 		}
@@ -112,8 +113,8 @@ func TestTenantProductService(t *testing.T) {
 
 	t.Run("DeleteProduct", func(t *testing.T) {
 		// 获取第二个产品来删除
-		products, _, err := service.ListProducts(&ListProductsRequest{
-			PaginationRequest: PaginationRequest{
+		products, _, err := service.ListProducts(&subdto.ListProductsRequest{
+			PaginationRequest: subdto.PaginationRequest{
 				Page:     1,
 				PageSize: 10,
 			},
@@ -149,7 +150,7 @@ func TestTenantProductIsolation(t *testing.T) {
 	service2 := NewTenantService(db, &tenant2ID)
 
 	// 租户1创建产品
-	req1 := &CreateProductRequest{
+	req1 := &subdto.CreateProductRequest{
 		Code:        "TENANT1_PRODUCT",
 		Name:        "租户1产品",
 		Description: "租户1的产品",
@@ -159,7 +160,7 @@ func TestTenantProductIsolation(t *testing.T) {
 	assert.Equal(t, &tenant1ID, product1.TenantID)
 
 	// 租户2创建同名产品（应该允许，因为租户隔离）
-	req2 := &CreateProductRequest{
+	req2 := &subdto.CreateProductRequest{
 		Code:        "TENANT1_PRODUCT", // 同样的代码
 		Name:        "租户2产品",
 		Description: "租户2的产品",
@@ -179,16 +180,16 @@ func TestTenantProductIsolation(t *testing.T) {
 	assert.Contains(t, err.Error(), "产品不存在")
 
 	// 验证各自只能看到自己的产品列表
-	products1, total1, err := service1.ListProducts(&ListProductsRequest{
-		PaginationRequest: PaginationRequest{Page: 1, PageSize: 10},
+	products1, total1, err := service1.ListProducts(&subdto.ListProductsRequest{
+		PaginationRequest: subdto.PaginationRequest{Page: 1, PageSize: 10},
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, int64(1), total1)
 	assert.Len(t, products1, 1)
 	assert.Equal(t, "租户1产品", products1[0].Name)
 
-	products2, total2, err := service2.ListProducts(&ListProductsRequest{
-		PaginationRequest: PaginationRequest{Page: 1, PageSize: 10},
+	products2, total2, err := service2.ListProducts(&subdto.ListProductsRequest{
+		PaginationRequest: subdto.PaginationRequest{Page: 1, PageSize: 10},
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, int64(1), total2)

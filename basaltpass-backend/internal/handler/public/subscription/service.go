@@ -1,6 +1,7 @@
 package subscription
 
 import (
+	subdto "basaltpass-backend/internal/dto/subscription"
 	"errors"
 	"fmt"
 	"time"
@@ -21,7 +22,7 @@ func NewService(db *gorm.DB) *Service {
 // ========== 产品管理 ==========
 
 // CreateProduct 创建产品
-func (s *Service) CreateProduct(req *CreateProductRequest) (*model.Product, error) {
+func (s *Service) CreateProduct(req *subdto.CreateProductRequest) (*model.Product, error) {
 	product := &model.Product{
 		Code:        req.Code,
 		Name:        req.Name,
@@ -52,7 +53,7 @@ func (s *Service) GetProduct(id uint) (*model.Product, error) {
 }
 
 // ListProducts 获取产品列表
-func (s *Service) ListProducts(req *ListProductsRequest) ([]*model.Product, int64, error) {
+func (s *Service) ListProducts(req *subdto.ListProductsRequest) ([]*model.Product, int64, error) {
 	var products []*model.Product
 	var total int64
 
@@ -92,7 +93,7 @@ func (s *Service) ListProducts(req *ListProductsRequest) ([]*model.Product, int6
 }
 
 // UpdateProduct 更新产品
-func (s *Service) UpdateProduct(id uint, req *UpdateProductRequest) (*model.Product, error) {
+func (s *Service) UpdateProduct(id uint, req *subdto.UpdateProductRequest) (*model.Product, error) {
 	var product model.Product
 	if err := s.db.First(&product, id).Error; err != nil {
 		return nil, err
@@ -132,7 +133,7 @@ func (s *Service) DeleteProduct(id uint) error {
 // ========== 套餐管理 ==========
 
 // CreatePlan 创建套餐
-func (s *Service) CreatePlan(req *CreatePlanRequest) (*model.Plan, error) {
+func (s *Service) CreatePlan(req *subdto.CreatePlanRequest) (*model.Plan, error) {
 	// 检查产品是否存在
 	var product model.Product
 	if err := s.db.First(&product, req.ProductID).Error; err != nil {
@@ -178,7 +179,7 @@ func (s *Service) GetPlan(id uint) (*model.Plan, error) {
 }
 
 // ListPlans 获取套餐列表
-func (s *Service) ListPlans(req *ListPlansRequest) ([]*model.Plan, int64, error) {
+func (s *Service) ListPlans(req *subdto.ListPlansRequest) ([]*model.Plan, int64, error) {
 	var plans []*model.Plan
 	var total int64
 
@@ -220,7 +221,7 @@ func (s *Service) ListPlans(req *ListPlansRequest) ([]*model.Plan, int64, error)
 }
 
 // UpdatePlan 更新套餐
-func (s *Service) UpdatePlan(id uint, req *UpdatePlanRequest) (*model.Plan, error) {
+func (s *Service) UpdatePlan(id uint, req *subdto.UpdatePlanRequest) (*model.Plan, error) {
 	var plan model.Plan
 	if err := s.db.First(&plan, id).Error; err != nil {
 		return nil, err
@@ -265,7 +266,7 @@ func (s *Service) DeletePlan(id uint) error {
 }
 
 // CreatePlanFeature 创建套餐功能
-func (s *Service) CreatePlanFeature(req *CreatePlanFeatureRequest) (*model.PlanFeature, error) {
+func (s *Service) CreatePlanFeature(req *subdto.CreatePlanFeatureRequest) (*model.PlanFeature, error) {
 	// 检查套餐是否存在
 	var plan model.Plan
 	if err := s.db.First(&plan, req.PlanID).Error; err != nil {
@@ -295,7 +296,7 @@ func (s *Service) CreatePlanFeature(req *CreatePlanFeatureRequest) (*model.PlanF
 // ========== 定价管理 ==========
 
 // CreatePrice 创建定价
-func (s *Service) CreatePrice(req *CreatePriceRequest) (*model.Price, error) {
+func (s *Service) CreatePrice(req *subdto.CreatePriceRequest) (*model.Price, error) {
 	// 检查套餐是否存在
 	var plan model.Plan
 	if err := s.db.First(&plan, req.PlanID).Error; err != nil {
@@ -344,7 +345,7 @@ func (s *Service) GetPrice(id uint) (*model.Price, error) {
 }
 
 // ListPrices 获取定价列表
-func (s *Service) ListPrices(req *ListPricesRequest) ([]*model.Price, int64, error) {
+func (s *Service) ListPrices(req *subdto.ListPricesRequest) ([]*model.Price, int64, error) {
 	var prices []*model.Price
 	var total int64
 
@@ -390,7 +391,7 @@ func (s *Service) ListPrices(req *ListPricesRequest) ([]*model.Price, int64, err
 }
 
 // UpdatePrice 更新定价
-func (s *Service) UpdatePrice(id uint, req *UpdatePriceRequest) (*model.Price, error) {
+func (s *Service) UpdatePrice(id uint, req *subdto.UpdatePriceRequest) (*model.Price, error) {
 	var price model.Price
 	if err := s.db.First(&price, id).Error; err != nil {
 		return nil, err
@@ -435,7 +436,7 @@ func (s *Service) DeletePrice(id uint) error {
 // ========== 优惠券管理 ==========
 
 // CreateCoupon 创建优惠券
-func (s *Service) CreateCoupon(req *CreateCouponRequest) (*model.Coupon, error) {
+func (s *Service) CreateCoupon(req *subdto.CreateCouponRequest) (*model.Coupon, error) {
 	// 检查优惠券代码是否已存在
 	var existingCoupon model.Coupon
 	if err := s.db.Where("code = ?", req.Code).First(&existingCoupon).Error; err == nil {
@@ -492,7 +493,7 @@ func (s *Service) GetCoupon(code string) (*model.Coupon, error) {
 }
 
 // ListCoupons 获取优惠券列表
-func (s *Service) ListCoupons(req *ListCouponsRequest) ([]*model.Coupon, int64, error) {
+func (s *Service) ListCoupons(req *subdto.ListCouponsRequest) ([]*model.Coupon, int64, error) {
 	var coupons []*model.Coupon
 	var total int64
 
@@ -525,7 +526,7 @@ func (s *Service) ListCoupons(req *ListCouponsRequest) ([]*model.Coupon, int64, 
 }
 
 // UpdateCoupon 更新优惠券
-func (s *Service) UpdateCoupon(code string, req *UpdateCouponRequest) (*model.Coupon, error) {
+func (s *Service) UpdateCoupon(code string, req *subdto.UpdateCouponRequest) (*model.Coupon, error) {
 	var coupon model.Coupon
 	if err := s.db.Where("code = ?", code).First(&coupon).Error; err != nil {
 		return nil, err
@@ -577,7 +578,7 @@ func (s *Service) DeleteCoupon(code string) error {
 // ========== 订阅管理 ==========
 
 // CreateSubscription 创建订阅
-func (s *Service) CreateSubscription(req *CreateSubscriptionRequest) (*model.Subscription, error) {
+func (s *Service) CreateSubscription(req *subdto.CreateSubscriptionRequest) (*model.Subscription, error) {
 	// 开启事务
 	tx := s.db.Begin()
 	defer func() {
@@ -758,7 +759,7 @@ func (s *Service) GetSubscription(id uint, userID *uint) (*model.Subscription, e
 }
 
 // ListSubscriptions 获取订阅列表
-func (s *Service) ListSubscriptions(req *SubscriptionListRequest) ([]model.Subscription, int64, error) {
+func (s *Service) ListSubscriptions(req *subdto.SubscriptionListRequest) ([]model.Subscription, int64, error) {
 	var subscriptions []model.Subscription
 	var total int64
 
@@ -800,7 +801,7 @@ func (s *Service) ListSubscriptions(req *SubscriptionListRequest) ([]model.Subsc
 }
 
 // CancelSubscription 取消订阅
-func (s *Service) CancelSubscription(id uint, userID *uint, req *CancelSubscriptionRequest) error {
+func (s *Service) CancelSubscription(id uint, userID *uint, req *subdto.CancelSubscriptionRequest) error {
 	// 开启事务
 	tx := s.db.Begin()
 	defer func() {
@@ -885,7 +886,7 @@ func (s *Service) CancelSubscription(id uint, userID *uint, req *CancelSubscript
 // ========== 使用记录管理 ==========
 
 // CreateUsageRecord 创建使用记录
-func (s *Service) CreateUsageRecord(req *CreateUsageRecordRequest) (*model.UsageRecord, error) {
+func (s *Service) CreateUsageRecord(req *subdto.CreateUsageRecordRequest) (*model.UsageRecord, error) {
 	// 验证订阅项目存在
 	var item model.SubscriptionItem
 	if err := s.db.First(&item, req.SubscriptionItemID).Error; err != nil {

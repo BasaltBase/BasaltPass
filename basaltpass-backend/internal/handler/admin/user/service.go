@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	userdto "basaltpass-backend/internal/dto/user"
 	"basaltpass-backend/internal/model"
 
 	"golang.org/x/crypto/bcrypt"
@@ -33,7 +34,7 @@ func NewAdminUserService(db *gorm.DB) *AdminUserService {
 }
 
 // GetUserList 获取用户列表
-func (s *AdminUserService) GetUserList(req AdminUserListRequest) (*UserListResponse, error) {
+func (s *AdminUserService) GetUserList(req userdto.AdminUserListRequest) (*userdto.UserListResponse, error) {
 	// 设置默认值
 	if req.Page < 1 {
 		req.Page = 1
@@ -111,16 +112,16 @@ func (s *AdminUserService) GetUserList(req AdminUserListRequest) (*UserListRespo
 	}
 
 	// 转换为响应格式
-	userResponses := make([]AdminUserListResponse, len(users))
+	userResponses := make([]userdto.AdminUserListResponse, len(users))
 	for i, user := range users {
 		userResponses[i] = s.convertToAdminUserListResponse(user)
 	}
 
 	totalPages := int((total + int64(req.Limit) - 1) / int64(req.Limit))
 
-	return &UserListResponse{
+	return &userdto.UserListResponse{
 		Users: userResponses,
-		Pagination: PaginationResponse{
+		Pagination: userdto.PaginationResponse{
 			Page:       req.Page,
 			Limit:      req.Limit,
 			Total:      total,
@@ -130,7 +131,7 @@ func (s *AdminUserService) GetUserList(req AdminUserListRequest) (*UserListRespo
 }
 
 // GetUserDetail 获取用户详情
-func (s *AdminUserService) GetUserDetail(userID uint) (*AdminUserDetailResponse, error) {
+func (s *AdminUserService) GetUserDetail(userID uint) (*userdto.AdminUserDetailResponse, error) {
 	var user model.User
 
 	err := s.db.Preload("TenantMemberships.Tenant").
@@ -146,7 +147,7 @@ func (s *AdminUserService) GetUserDetail(userID uint) (*AdminUserDetailResponse,
 		return nil, err
 	}
 
-	response := &AdminUserDetailResponse{
+	response := &userdto.AdminUserDetailResponse{
 		AdminUserListResponse: s.convertToAdminUserListResponse(user),
 	}
 
@@ -164,7 +165,7 @@ func (s *AdminUserService) GetUserDetail(userID uint) (*AdminUserDetailResponse,
 }
 
 // GetUserSummary 获取用户摘要
-func (s *AdminUserService) GetUserSummary(userID uint) (*AdminUserSummaryResponse, error) {
+func (s *AdminUserService) GetUserSummary(userID uint) (*userdto.AdminUserSummaryResponse, error) {
 	var user model.User
 	if err := s.db.First(&user, userID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -173,7 +174,7 @@ func (s *AdminUserService) GetUserSummary(userID uint) (*AdminUserSummaryRespons
 		return nil, err
 	}
 
-	return &AdminUserSummaryResponse{
+	return &userdto.AdminUserSummaryResponse{
 		ID:            user.ID,
 		Email:         user.Email,
 		Phone:         user.Phone,
@@ -191,7 +192,7 @@ func (s *AdminUserService) GetUserSummary(userID uint) (*AdminUserSummaryRespons
 }
 
 // UpdateUser 更新用户信息
-func (s *AdminUserService) UpdateUser(userID uint, req UpdateUserRequest) error {
+func (s *AdminUserService) UpdateUser(userID uint, req userdto.UpdateUserRequest) error {
 	updates := make(map[string]interface{})
 
 	if req.Email != nil {
@@ -230,7 +231,7 @@ func (s *AdminUserService) UpdateUser(userID uint, req UpdateUserRequest) error 
 }
 
 // BanUser 封禁/解封用户
-func (s *AdminUserService) BanUser(userID uint, req BanUserRequest, operatorID uint) error {
+func (s *AdminUserService) BanUser(userID uint, req userdto.BanUserRequest, operatorID uint) error {
 	var user model.User
 	if err := s.db.First(&user, userID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -294,8 +295,8 @@ func (s *AdminUserService) DeleteUser(userID uint) error {
 }
 
 // GetUserStats 获取用户统计数据
-func (s *AdminUserService) GetUserStats() (*UserStatsResponse, error) {
-	var stats UserStatsResponse
+func (s *AdminUserService) GetUserStats() (*userdto.UserStatsResponse, error) {
+	var stats userdto.UserStatsResponse
 
 	// 总用户数
 	s.db.Model(&model.User{}).Count(&stats.TotalUsers)
@@ -374,8 +375,8 @@ func (s *AdminUserService) RemoveGlobalRole(userID uint, roleID uint) error {
 // 私有方法
 
 // convertToAdminUserListResponse 转换为管理员用户列表响应
-func (s *AdminUserService) convertToAdminUserListResponse(user model.User) AdminUserListResponse {
-	response := AdminUserListResponse{
+func (s *AdminUserService) convertToAdminUserListResponse(user model.User) userdto.AdminUserListResponse {
+	response := userdto.AdminUserListResponse{
 		ID:            user.ID,
 		Email:         user.Email,
 		Phone:         user.Phone,
@@ -390,9 +391,9 @@ func (s *AdminUserService) convertToAdminUserListResponse(user model.User) Admin
 	}
 
 	// 转换租户成员信息
-	response.TenantMemberships = make([]TenantMembership, len(user.TenantMemberships))
+	response.TenantMemberships = make([]userdto.TenantMembership, len(user.TenantMemberships))
 	for i, membership := range user.TenantMemberships {
-		response.TenantMemberships[i] = TenantMembership{
+		response.TenantMemberships[i] = userdto.TenantMembership{
 			TenantID:   membership.TenantID,
 			TenantName: membership.Tenant.Name,
 			TenantCode: membership.Tenant.Code,
@@ -408,15 +409,15 @@ func (s *AdminUserService) convertToAdminUserListResponse(user model.User) Admin
 }
 
 // getGlobalRoles 获取用户的全局角色
-func (s *AdminUserService) getGlobalRoles(userID uint) []GlobalRole {
+func (s *AdminUserService) getGlobalRoles(userID uint) []userdto.GlobalRole {
 	var roles []model.Role
 	s.db.Joins("JOIN system_auth_user_roles ON system_auth_roles.id = system_auth_user_roles.role_id").
 		Where("system_auth_user_roles.user_id = ? AND (system_auth_roles.tenant_id = 0 OR system_auth_roles.tenant_id IS NULL)", userID).
 		Find(&roles)
 
-	globalRoles := make([]GlobalRole, len(roles))
+	globalRoles := make([]userdto.GlobalRole, len(roles))
 	for i, role := range roles {
-		globalRoles[i] = GlobalRole{
+		globalRoles[i] = userdto.GlobalRole{
 			ID:          role.ID,
 			Name:        role.Name,
 			Code:        role.Code,
@@ -428,10 +429,10 @@ func (s *AdminUserService) getGlobalRoles(userID uint) []GlobalRole {
 }
 
 // getAppAuthorizations 获取应用授权信息
-func (s *AdminUserService) getAppAuthorizations(appUsers []model.AppUser) []AppAuthorization {
-	authorizations := make([]AppAuthorization, len(appUsers))
+func (s *AdminUserService) getAppAuthorizations(appUsers []model.AppUser) []userdto.AppAuthorization {
+	authorizations := make([]userdto.AppAuthorization, len(appUsers))
 	for i, appUser := range appUsers {
-		authorizations[i] = AppAuthorization{
+		authorizations[i] = userdto.AppAuthorization{
 			AppID:             appUser.AppID,
 			AppName:           appUser.App.Name,
 			TenantID:          appUser.App.TenantID,
@@ -446,8 +447,8 @@ func (s *AdminUserService) getAppAuthorizations(appUsers []model.AppUser) []AppA
 }
 
 // getUserActivityStats 获取用户活动统计
-func (s *AdminUserService) getUserActivityStats(userID uint) (*ActivityStats, error) {
-	var stats ActivityStats
+func (s *AdminUserService) getUserActivityStats(userID uint) (*userdto.ActivityStats, error) {
+	var stats userdto.ActivityStats
 
 	// 获取用户授权的应用总数
 	s.db.Model(&model.AppUser{}).Where("user_id = ?", userID).Count(&stats.TotalAppsUsed)
@@ -481,7 +482,7 @@ func (s *AdminUserService) getUserActivityStats(userID uint) (*ActivityStats, er
 }
 
 // CreateUser 创建新用户
-func (s *AdminUserService) CreateUser(req AdminCreateUserRequest) (*model.User, error) {
+func (s *AdminUserService) CreateUser(req userdto.AdminCreateUserRequest) (*model.User, error) {
 	// 验证必填字段
 	if req.Email == "" {
 		return nil, errors.New("邮箱不能为空")

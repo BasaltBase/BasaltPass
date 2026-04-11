@@ -2,6 +2,7 @@ package user
 
 import (
 	"basaltpass-backend/internal/common"
+	userdto "basaltpass-backend/internal/dto/user"
 	"basaltpass-backend/internal/model"
 	"basaltpass-backend/internal/utils"
 	"errors"
@@ -11,10 +12,10 @@ import (
 type Service struct{}
 
 // GetProfile returns user profile by ID.
-func (s Service) GetProfile(userID uint) (ProfileResponse, error) {
+func (s Service) GetProfile(userID uint) (userdto.ProfileResponse, error) {
 	var u model.User
 	if err := common.DB().First(&u, userID).Error; err != nil {
-		return ProfileResponse{}, err
+		return userdto.ProfileResponse{}, err
 	}
 
 	isSuperAdmin := u.IsSuperAdmin()
@@ -43,7 +44,7 @@ func (s Service) GetProfile(userID uint) (ProfileResponse, error) {
 		}
 	}
 
-	return ProfileResponse{
+	return userdto.ProfileResponse{
 		ID:           u.ID,
 		Email:        u.Email,
 		Phone:        u.Phone,
@@ -58,7 +59,7 @@ func (s Service) GetProfile(userID uint) (ProfileResponse, error) {
 }
 
 // UpdateProfile updates allowed fields for user.
-func (s Service) UpdateProfile(userID uint, req UpdateProfileRequest) error {
+func (s Service) UpdateProfile(userID uint, req userdto.UpdateProfileRequest) error {
 	var updates = make(map[string]interface{})
 	if req.Nickname != nil {
 		updates["nickname"] = *req.Nickname
@@ -91,7 +92,7 @@ func (s Service) UpdateProfile(userID uint, req UpdateProfileRequest) error {
 }
 
 // SearchUsers searches users by nickname or email within the same tenant
-func (s Service) SearchUsers(query string, limit int, tenantID uint) ([]UserSearchResult, error) {
+func (s Service) SearchUsers(query string, limit int, tenantID uint) ([]userdto.UserSearchResult, error) {
 	var users []model.User
 
 	if limit <= 0 || limit > 50 {
@@ -108,9 +109,9 @@ func (s Service) SearchUsers(query string, limit int, tenantID uint) ([]UserSear
 		return nil, err
 	}
 
-	var results []UserSearchResult
+	var results []userdto.UserSearchResult
 	for _, user := range users {
-		results = append(results, UserSearchResult{
+		results = append(results, userdto.UserSearchResult{
 			ID:       user.ID,
 			Nickname: user.Nickname,
 			Email:    user.Email,

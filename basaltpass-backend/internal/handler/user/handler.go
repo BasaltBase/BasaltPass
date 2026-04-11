@@ -2,6 +2,7 @@ package user
 
 import (
 	"basaltpass-backend/internal/common"
+	userdto "basaltpass-backend/internal/dto/user"
 	"basaltpass-backend/internal/model"
 	tenant2 "basaltpass-backend/internal/service/tenant"
 	"strconv"
@@ -42,7 +43,7 @@ func GetUserTenantsHandler(c *fiber.Ctx) error {
 // UpdateProfileHandler handles PUT /user/profile
 func UpdateProfileHandler(c *fiber.Ctx) error {
 	uid := c.Locals("userID").(uint)
-	var req UpdateProfileRequest
+	var req userdto.UpdateProfileRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}

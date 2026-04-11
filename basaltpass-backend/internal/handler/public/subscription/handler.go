@@ -1,6 +1,7 @@
 package subscription
 
 import (
+	subdto "basaltpass-backend/internal/dto/subscription"
 	"strconv"
 
 	"basaltpass-backend/internal/model"
@@ -37,7 +38,7 @@ func CreateProductHandler(c *fiber.Ctx) error {
 }
 
 func (h *Handler) CreateProduct(c *fiber.Ctx) error {
-	var req CreateProductRequest
+	var req subdto.CreateProductRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
 	}
@@ -78,7 +79,7 @@ func ListProductsHandler(c *fiber.Ctx) error {
 }
 
 func (h *Handler) ListProducts(c *fiber.Ctx) error {
-	var req ListProductsRequest
+	var req subdto.ListProductsRequest
 	if err := c.QueryParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid query parameters"})
 	}
@@ -99,7 +100,7 @@ func (h *Handler) ListProducts(c *fiber.Ctx) error {
 	totalPages := int((total + int64(req.PageSize) - 1) / int64(req.PageSize))
 
 	return c.JSON(fiber.Map{
-		"data": PaginatedResponse{
+		"data": subdto.PaginatedResponse{
 			Data:       products,
 			Total:      total,
 			Page:       req.Page,
@@ -116,7 +117,7 @@ func UpdateProductHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid product ID"})
 	}
 
-	var req UpdateProductRequest
+	var req subdto.UpdateProductRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 	}
@@ -152,7 +153,7 @@ func CreatePlanHandler(c *fiber.Ctx) error {
 }
 
 func (h *Handler) CreatePlan(c *fiber.Ctx) error {
-	var req CreatePlanRequest
+	var req subdto.CreatePlanRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
 	}
@@ -193,7 +194,7 @@ func ListPlansHandler(c *fiber.Ctx) error {
 }
 
 func (h *Handler) ListPlans(c *fiber.Ctx) error {
-	var req ListPlansRequest
+	var req subdto.ListPlansRequest
 	if err := c.QueryParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid query parameters"})
 	}
@@ -214,7 +215,7 @@ func (h *Handler) ListPlans(c *fiber.Ctx) error {
 	totalPages := int((total + int64(req.PageSize) - 1) / int64(req.PageSize))
 
 	return c.JSON(fiber.Map{
-		"data": PaginatedResponse{
+		"data": subdto.PaginatedResponse{
 			Data:       plans,
 			Total:      total,
 			Page:       req.Page,
@@ -230,7 +231,7 @@ func CreatePlanFeatureHandler(c *fiber.Ctx) error {
 }
 
 func (h *Handler) CreatePlanFeature(c *fiber.Ctx) error {
-	var req CreatePlanFeatureRequest
+	var req subdto.CreatePlanFeatureRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
 	}
@@ -254,7 +255,7 @@ func CreatePriceHandler(c *fiber.Ctx) error {
 }
 
 func (h *Handler) CreatePrice(c *fiber.Ctx) error {
-	var req CreatePriceRequest
+	var req subdto.CreatePriceRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
 	}
@@ -280,7 +281,7 @@ func GetPriceHandler(c *fiber.Ctx) error {
 }
 
 func (h *Handler) ListPrices(c *fiber.Ctx) error {
-	var req ListPricesRequest
+	var req subdto.ListPricesRequest
 	if err := c.QueryParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid query parameters"})
 	}
@@ -301,7 +302,7 @@ func (h *Handler) ListPrices(c *fiber.Ctx) error {
 	totalPages := int((total + int64(req.PageSize) - 1) / int64(req.PageSize))
 
 	return c.JSON(fiber.Map{
-		"data": PaginatedResponse{
+		"data": subdto.PaginatedResponse{
 			Data:       prices,
 			Total:      total,
 			Page:       req.Page,
@@ -333,7 +334,7 @@ func CreateCouponHandler(c *fiber.Ctx) error {
 }
 
 func (h *Handler) CreateCoupon(c *fiber.Ctx) error {
-	var req CreateCouponRequest
+	var req subdto.CreateCouponRequest
 
 	// 解析请求体 当请求体为空时，返回错误
 	if err := c.BodyParser(&req); err != nil {
@@ -391,7 +392,7 @@ func CreateSubscriptionHandler(c *fiber.Ctx) error {
 }
 
 func (h *Handler) CreateSubscription(c *fiber.Ctx) error {
-	var req CreateSubscriptionRequest
+	var req subdto.CreateSubscriptionRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
 	}
@@ -441,7 +442,7 @@ func ListSubscriptionsHandler(c *fiber.Ctx) error {
 }
 
 func (h *Handler) ListSubscriptions(c *fiber.Ctx) error {
-	var req SubscriptionListRequest
+	var req subdto.SubscriptionListRequest
 
 	// 解析查询参数
 	if userIDStr := c.Query("user_id"); userIDStr != "" {
@@ -494,7 +495,7 @@ func (h *Handler) ListSubscriptions(c *fiber.Ctx) error {
 	totalPages := int((total + int64(req.PageSize) - 1) / int64(req.PageSize))
 
 	return c.JSON(fiber.Map{
-		"data": PaginatedResponse{
+		"data": subdto.PaginatedResponse{
 			Data:       subscriptions,
 			Total:      total,
 			Page:       req.Page,
@@ -515,7 +516,7 @@ func (h *Handler) CancelSubscription(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "订阅ID无效"})
 	}
 
-	var req CancelSubscriptionRequest
+	var req subdto.CancelSubscriptionRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
 	}
@@ -538,7 +539,7 @@ func CreateUsageRecordHandler(c *fiber.Ctx) error {
 }
 
 func (h *Handler) CreateUsageRecord(c *fiber.Ctx) error {
-	var req CreateUsageRecordRequest
+	var req subdto.CreateUsageRecordRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
 	}
@@ -581,7 +582,7 @@ func AdminListSubscriptionsHandler(c *fiber.Ctx) error {
 }
 
 func (h *Handler) AdminListSubscriptions(c *fiber.Ctx) error {
-	var req SubscriptionListRequest
+	var req subdto.SubscriptionListRequest
 
 	// 解析查询参数
 	if userIDStr := c.Query("user_id"); userIDStr != "" {
@@ -630,7 +631,7 @@ func (h *Handler) AdminListSubscriptions(c *fiber.Ctx) error {
 	totalPages := int((total + int64(req.PageSize) - 1) / int64(req.PageSize))
 
 	return c.JSON(fiber.Map{
-		"data": PaginatedResponse{
+		"data": subdto.PaginatedResponse{
 			Data:       subscriptions,
 			Total:      total,
 			Page:       req.Page,
@@ -651,7 +652,7 @@ func (h *Handler) AdminCancelSubscription(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "订阅ID无效"})
 	}
 
-	var req CancelSubscriptionRequest
+	var req subdto.CancelSubscriptionRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
 	}
@@ -665,7 +666,7 @@ func (h *Handler) AdminCancelSubscription(c *fiber.Ctx) error {
 
 // AdminListPlansHandler 管理员获取所有套餐列表
 func AdminListPlansHandler(c *fiber.Ctx) error {
-	var req ListPlansRequest
+	var req subdto.ListPlansRequest
 	if err := c.QueryParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid query parameters"})
 	}
@@ -686,7 +687,7 @@ func AdminListPlansHandler(c *fiber.Ctx) error {
 	totalPages := int((total + int64(req.PageSize) - 1) / int64(req.PageSize))
 
 	return c.JSON(fiber.Map{
-		"data": PaginatedResponse{
+		"data": subdto.PaginatedResponse{
 			Data:       plans,
 			Total:      total,
 			Page:       req.Page,
@@ -718,7 +719,7 @@ func UpdatePlanHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid plan ID"})
 	}
 
-	var req UpdatePlanRequest
+	var req subdto.UpdatePlanRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 	}
@@ -748,7 +749,7 @@ func DeletePlanHandler(c *fiber.Ctx) error {
 
 // AdminListPricesHandler 管理员获取所有定价列表
 func AdminListPricesHandler(c *fiber.Ctx) error {
-	var req ListPricesRequest
+	var req subdto.ListPricesRequest
 	if err := c.QueryParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid query parameters"})
 	}
@@ -769,7 +770,7 @@ func AdminListPricesHandler(c *fiber.Ctx) error {
 	totalPages := int((total + int64(req.PageSize) - 1) / int64(req.PageSize))
 
 	return c.JSON(fiber.Map{
-		"data": PaginatedResponse{
+		"data": subdto.PaginatedResponse{
 			Data:       prices,
 			Total:      total,
 			Page:       req.Page,
@@ -798,7 +799,7 @@ func AdminGetPriceHandler(c *fiber.Ctx) error {
 
 // AdminListProductsHandler 管理员获取所有产品列表
 func AdminListProductsHandler(c *fiber.Ctx) error {
-	var req ListProductsRequest
+	var req subdto.ListProductsRequest
 	if err := c.QueryParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid query parameters"})
 	}
@@ -819,7 +820,7 @@ func AdminListProductsHandler(c *fiber.Ctx) error {
 	totalPages := int((total + int64(req.PageSize) - 1) / int64(req.PageSize))
 
 	return c.JSON(fiber.Map{
-		"data": PaginatedResponse{
+		"data": subdto.PaginatedResponse{
 			Data:       products,
 			Total:      total,
 			Page:       req.Page,
@@ -851,7 +852,7 @@ func UpdatePriceHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid price ID"})
 	}
 
-	var req UpdatePriceRequest
+	var req subdto.UpdatePriceRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 	}
@@ -880,7 +881,7 @@ func DeletePriceHandler(c *fiber.Ctx) error {
 
 // AdminListCouponsHandler 管理员获取所有优惠券列表
 func AdminListCouponsHandler(c *fiber.Ctx) error {
-	var req ListCouponsRequest
+	var req subdto.ListCouponsRequest
 	if err := c.QueryParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid query parameters"})
 	}
@@ -901,7 +902,7 @@ func AdminListCouponsHandler(c *fiber.Ctx) error {
 	totalPages := int((total + int64(req.PageSize) - 1) / int64(req.PageSize))
 
 	return c.JSON(fiber.Map{
-		"data": PaginatedResponse{
+		"data": subdto.PaginatedResponse{
 			Data:       coupons,
 			Total:      total,
 			Page:       req.Page,
@@ -933,7 +934,7 @@ func UpdateCouponHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid coupon code"})
 	}
 
-	var req UpdateCouponRequest
+	var req subdto.UpdateCouponRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 	}

@@ -1,6 +1,7 @@
 package subscription
 
 import (
+	subdto "basaltpass-backend/internal/dto/subscription"
 	"encoding/json"
 	"testing"
 	"time"
@@ -27,7 +28,7 @@ func TestTenantCouponService(t *testing.T) {
 	service := NewTenantService(db, &tenantID)
 
 	t.Run("CreateCoupon", func(t *testing.T) {
-		req := &CreateCouponRequest{
+		req := &subdto.CreateCouponRequest{
 			Code:          "TEST20",
 			Name:          "测试优惠券",
 			DiscountType:  model.DiscountTypePercent,
@@ -54,7 +55,7 @@ func TestTenantCouponService(t *testing.T) {
 
 	t.Run("ListCoupons", func(t *testing.T) {
 		// 创建更多测试优惠券
-		service.CreateCoupon(&CreateCouponRequest{
+		service.CreateCoupon(&subdto.CreateCouponRequest{
 			Code:          "TEST30",
 			Name:          "测试优惠券2",
 			DiscountType:  model.DiscountTypeFixed,
@@ -62,8 +63,8 @@ func TestTenantCouponService(t *testing.T) {
 			Duration:      model.CouponDurationOnce,
 		})
 
-		req := &ListCouponsRequest{
-			PaginationRequest: PaginationRequest{
+		req := &subdto.ListCouponsRequest{
+			PaginationRequest: subdto.PaginationRequest{
 				Page:     1,
 				PageSize: 10,
 			},
@@ -79,7 +80,7 @@ func TestTenantCouponService(t *testing.T) {
 		newName := "更新后的优惠券"
 		newValue := int64(2500)
 
-		req := &UpdateCouponRequest{
+		req := &subdto.UpdateCouponRequest{
 			Name:          &newName,
 			DiscountValue: &newValue,
 		}
@@ -105,7 +106,7 @@ func TestTenantCouponService(t *testing.T) {
 	t.Run("ValidateCouponExpired", func(t *testing.T) {
 		// 创建已过期的优惠券
 		expiredTime := time.Now().Add(-24 * time.Hour)
-		service.CreateCoupon(&CreateCouponRequest{
+		service.CreateCoupon(&subdto.CreateCouponRequest{
 			Code:          "EXPIRED",
 			Name:          "过期优惠券",
 			DiscountType:  model.DiscountTypePercent,
@@ -122,7 +123,7 @@ func TestTenantCouponService(t *testing.T) {
 	t.Run("ValidateCouponInactive", func(t *testing.T) {
 		// 创建未激活的优惠券
 		isActive := false
-		service.CreateCoupon(&CreateCouponRequest{
+		service.CreateCoupon(&subdto.CreateCouponRequest{
 			Code:          "INACTIVE",
 			Name:          "未激活优惠券",
 			DiscountType:  model.DiscountTypePercent,
@@ -168,7 +169,7 @@ func TestCouponMetadata(t *testing.T) {
 		},
 	}
 
-	req := &CreateCouponRequest{
+	req := &subdto.CreateCouponRequest{
 		Code:          "META_TEST",
 		Name:          "元数据测试优惠券",
 		DiscountType:  model.DiscountTypePercent,
@@ -206,7 +207,7 @@ func TestTenantIsolation(t *testing.T) {
 	service2 := NewTenantService(db, &tenant2ID)
 
 	// 租户1创建优惠券
-	req1 := &CreateCouponRequest{
+	req1 := &subdto.CreateCouponRequest{
 		Code:          "TENANT1",
 		Name:          "租户1优惠券",
 		DiscountType:  model.DiscountTypePercent,
@@ -218,7 +219,7 @@ func TestTenantIsolation(t *testing.T) {
 	assert.Equal(t, &tenant1ID, coupon1.TenantID)
 
 	// 租户2创建同名优惠券（应该允许，因为租户隔离）
-	req2 := &CreateCouponRequest{
+	req2 := &subdto.CreateCouponRequest{
 		Code:          "TENANT1", // 同样的代码
 		Name:          "租户2优惠券",
 		DiscountType:  model.DiscountTypeFixed,

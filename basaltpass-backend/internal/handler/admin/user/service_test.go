@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	userdto "basaltpass-backend/internal/dto/user"
 	"basaltpass-backend/internal/model"
 
 	"gorm.io/driver/sqlite"
@@ -93,7 +94,7 @@ func TestBanUserCreatesAuditLog(t *testing.T) {
 	reason := "spam activity"
 	comment := "violation of terms"
 
-	if err := svc.BanUser(target.ID, BanUserRequest{Banned: true, Reason: reason, Comment: comment}, operator.ID); err != nil {
+	if err := svc.BanUser(target.ID, userdto.BanUserRequest{Banned: true, Reason: reason, Comment: comment}, operator.ID); err != nil {
 		t.Fatalf("ban user failed: %v", err)
 	}
 
@@ -137,7 +138,7 @@ func TestBanUserCreatesAuditLog(t *testing.T) {
 		t.Fatalf("expected comment %q, got %#v", comment, payload["comment"])
 	}
 
-	if err := svc.BanUser(target.ID, BanUserRequest{Banned: false, Comment: "appeal accepted"}, operator.ID); err != nil {
+	if err := svc.BanUser(target.ID, userdto.BanUserRequest{Banned: false, Comment: "appeal accepted"}, operator.ID); err != nil {
 		t.Fatalf("unban user failed: %v", err)
 	}
 

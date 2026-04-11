@@ -2,10 +2,12 @@ package email
 
 import (
 	"basaltpass-backend/internal/config"
+	emaildto "basaltpass-backend/internal/dto/email"
 	"basaltpass-backend/internal/model"
 	"basaltpass-backend/internal/service/email"
 	"context"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -13,7 +15,7 @@ import (
 
 // SendTestEmailHandler sends a test email to the specified recipient
 func SendTestEmailHandler(c *fiber.Ctx) error {
-	var req SendTestEmailRequest
+	var req emaildto.SendTestEmailRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body: " + err.Error(),
@@ -21,7 +23,7 @@ func SendTestEmailHandler(c *fiber.Ctx) error {
 	}
 
 	// Basic validation
-	if req.To == " " {
+	if strings.TrimSpace(req.To) == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Email recipient is required",
 		})

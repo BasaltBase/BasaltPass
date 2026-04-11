@@ -1,6 +1,7 @@
 package subscription
 
 import (
+	subdto "basaltpass-backend/internal/dto/subscription"
 	"errors"
 	"fmt"
 	"time"
@@ -27,7 +28,7 @@ func NewTenantService(db *gorm.DB, tenantID *uint64) *TenantService {
 // ========== 产品管理 ==========
 
 // CreateProduct 创建产品
-func (s *TenantService) CreateProduct(req *CreateProductRequest) (*model.Product, error) {
+func (s *TenantService) CreateProduct(req *subdto.CreateProductRequest) (*model.Product, error) {
 	isActive := true
 	if req.IsActive != nil {
 		isActive = *req.IsActive
@@ -96,7 +97,7 @@ func (s *TenantService) GetProduct(id uint) (*model.Product, error) {
 }
 
 // ListProducts 获取产品列表
-func (s *TenantService) ListProducts(req *ListProductsRequest) ([]*model.Product, int64, error) {
+func (s *TenantService) ListProducts(req *subdto.ListProductsRequest) ([]*model.Product, int64, error) {
 	var products []*model.Product
 	var total int64
 
@@ -138,7 +139,7 @@ func (s *TenantService) ListProducts(req *ListProductsRequest) ([]*model.Product
 }
 
 // UpdateProduct 更新产品
-func (s *TenantService) UpdateProduct(id uint, req *UpdateProductRequest) (*model.Product, error) {
+func (s *TenantService) UpdateProduct(id uint, req *subdto.UpdateProductRequest) (*model.Product, error) {
 	var product model.Product
 	query := s.db.Where("id = ?", id)
 
@@ -225,7 +226,7 @@ func (s *TenantService) DeleteProduct(id uint) error {
 // ========== 套餐管理 ==========
 
 // CreatePlan 创建套餐
-func (s *TenantService) CreatePlan(req *CreatePlanRequest) (*model.Plan, error) {
+func (s *TenantService) CreatePlan(req *subdto.CreatePlanRequest) (*model.Plan, error) {
 	// 检查产品是否存在且属于当前租户
 	var product model.Product
 	productQuery := s.db.Where("id = ?", req.ProductID)
@@ -288,7 +289,7 @@ func (s *TenantService) GetPlan(id uint) (*model.Plan, error) {
 }
 
 // ListPlans 获取套餐列表
-func (s *TenantService) ListPlans(req *ListPlansRequest) ([]*model.Plan, int64, error) {
+func (s *TenantService) ListPlans(req *subdto.ListPlansRequest) ([]*model.Plan, int64, error) {
 	var plans []*model.Plan
 	var total int64
 
@@ -332,7 +333,7 @@ func (s *TenantService) ListPlans(req *ListPlansRequest) ([]*model.Plan, int64, 
 }
 
 // UpdatePlan 更新套餐
-func (s *TenantService) UpdatePlan(id uint, req *UpdatePlanRequest) (*model.Plan, error) {
+func (s *TenantService) UpdatePlan(id uint, req *subdto.UpdatePlanRequest) (*model.Plan, error) {
 	var plan model.Plan
 	query := s.db.Where("id = ?", id)
 
@@ -382,7 +383,7 @@ func (s *TenantService) DeletePlan(id uint) error {
 // ========== 定价管理 ==========
 
 // CreatePrice 创建定价
-func (s *TenantService) CreatePrice(req *CreatePriceRequest) (*model.Price, error) {
+func (s *TenantService) CreatePrice(req *subdto.CreatePriceRequest) (*model.Price, error) {
 	// 检查套餐是否存在且属于当前租户
 	var plan model.Plan
 	planQuery := s.db.Where("id = ?", req.PlanID)
@@ -448,7 +449,7 @@ func (s *TenantService) GetPrice(id uint) (*model.Price, error) {
 }
 
 // ListPrices 获取定价列表
-func (s *TenantService) ListPrices(req *ListPricesRequest) ([]*model.Price, int64, error) {
+func (s *TenantService) ListPrices(req *subdto.ListPricesRequest) ([]*model.Price, int64, error) {
 	var prices []*model.Price
 	var total int64
 
@@ -496,7 +497,7 @@ func (s *TenantService) ListPrices(req *ListPricesRequest) ([]*model.Price, int6
 }
 
 // UpdatePrice 更新定价
-func (s *TenantService) UpdatePrice(id uint, req *UpdatePriceRequest) (*model.Price, error) {
+func (s *TenantService) UpdatePrice(id uint, req *subdto.UpdatePriceRequest) (*model.Price, error) {
 	var price model.Price
 	query := s.db.Where("id = ?", id)
 
@@ -552,7 +553,7 @@ func (s *TenantService) DeletePrice(id uint) error {
 // ========== 订阅管理 ==========
 
 // CreateSubscription 创建订阅
-func (s *TenantService) CreateSubscription(req *CreateSubscriptionRequest) (*model.Subscription, error) {
+func (s *TenantService) CreateSubscription(req *subdto.CreateSubscriptionRequest) (*model.Subscription, error) {
 	// 检查价格是否存在且属于当前租户
 	var price model.Price
 	priceQuery := s.db.Where("id = ?", req.PriceID)
@@ -617,7 +618,7 @@ func (s *TenantService) GetSubscription(id uint, userID *uint) (*model.Subscript
 }
 
 // ListSubscriptions 获取订阅列表
-func (s *TenantService) ListSubscriptions(req *SubscriptionListRequest) ([]model.Subscription, int64, error) {
+func (s *TenantService) ListSubscriptions(req *subdto.SubscriptionListRequest) ([]model.Subscription, int64, error) {
 	var subscriptions []model.Subscription
 	var total int64
 
@@ -664,7 +665,7 @@ func (s *TenantService) ListSubscriptions(req *SubscriptionListRequest) ([]model
 }
 
 // CancelSubscription 取消订阅
-func (s *TenantService) CancelSubscription(id uint, userID *uint, req *CancelSubscriptionRequest) error {
+func (s *TenantService) CancelSubscription(id uint, userID *uint, req *subdto.CancelSubscriptionRequest) error {
 	query := s.db.Model(&model.Subscription{}).Where("id = ?", id)
 
 	// 添加租户过滤
@@ -697,7 +698,7 @@ func (s *TenantService) CancelSubscription(id uint, userID *uint, req *CancelSub
 // ========== 优惠券管理 ==========
 
 // CreateCoupon 创建优惠券
-func (s *TenantService) CreateCoupon(req *CreateCouponRequest) (*model.Coupon, error) {
+func (s *TenantService) CreateCoupon(req *subdto.CreateCouponRequest) (*model.Coupon, error) {
 	// 设置默认值
 	duration := req.Duration
 	if duration == "" {
@@ -760,7 +761,7 @@ func (s *TenantService) GetCoupon(code string) (*model.Coupon, error) {
 }
 
 // ListCoupons 获取优惠券列表
-func (s *TenantService) ListCoupons(req *ListCouponsRequest) ([]*model.Coupon, int64, error) {
+func (s *TenantService) ListCoupons(req *subdto.ListCouponsRequest) ([]*model.Coupon, int64, error) {
 	var coupons []*model.Coupon
 	var total int64
 
@@ -804,7 +805,7 @@ func (s *TenantService) ListCoupons(req *ListCouponsRequest) ([]*model.Coupon, i
 }
 
 // UpdateCoupon 更新优惠券
-func (s *TenantService) UpdateCoupon(code string, req *UpdateCouponRequest) (*model.Coupon, error) {
+func (s *TenantService) UpdateCoupon(code string, req *subdto.UpdateCouponRequest) (*model.Coupon, error) {
 	var coupon model.Coupon
 	query := s.db.Where("code = ?", code)
 
@@ -930,7 +931,7 @@ func (s *TenantService) ValidateCoupon(code string) (*model.Coupon, error) {
 // ========== 账单管理 ==========
 
 // CreateInvoice 创建账单
-func (s *TenantService) CreateInvoice(req *CreateInvoiceRequest) (*model.Invoice, error) {
+func (s *TenantService) CreateInvoice(req *subdto.CreateInvoiceRequest) (*model.Invoice, error) {
 	// 计算总金额
 	var totalCents int64
 	for _, item := range req.Items {
@@ -956,7 +957,7 @@ func (s *TenantService) CreateInvoice(req *CreateInvoiceRequest) (*model.Invoice
 }
 
 // ListInvoices 获取账单列表
-func (s *TenantService) ListInvoices(req *InvoiceListRequest) ([]model.Invoice, int64, error) {
+func (s *TenantService) ListInvoices(req *subdto.InvoiceListRequest) ([]model.Invoice, int64, error) {
 	var invoices []model.Invoice
 	var total int64
 

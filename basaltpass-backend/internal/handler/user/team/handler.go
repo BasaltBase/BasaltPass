@@ -1,6 +1,7 @@
 package team
 
 import (
+	userdto "basaltpass-backend/internal/dto/user"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -41,7 +42,7 @@ func LeaveTeamHandler(c *fiber.Ctx) error        { return userTeamHandler.LeaveT
 
 // CreateTeam 创建团队
 func (h *Handler) CreateTeam(c *fiber.Ctx) error {
-	var req CreateTeamRequest
+	var req userdto.CreateTeamRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
 	}
@@ -76,7 +77,7 @@ func (h *Handler) UpdateTeam(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "团队ID无效"})
 	}
-	var req UpdateTeamRequest
+	var req userdto.UpdateTeamRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
 	}
@@ -116,7 +117,7 @@ func (h *Handler) AddMember(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "团队ID无效"})
 	}
-	var req AddMemberRequest
+	var req userdto.AddMemberRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
 	}
@@ -137,7 +138,7 @@ func (h *Handler) UpdateMemberRole(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "成员ID无效"})
 	}
-	var req UpdateMemberRoleRequest
+	var req userdto.UpdateMemberRoleRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求参数错误"})
 	}

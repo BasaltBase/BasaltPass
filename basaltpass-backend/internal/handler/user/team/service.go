@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	userdto "basaltpass-backend/internal/dto/user"
 	"basaltpass-backend/internal/model"
 
 	"gorm.io/gorm"
@@ -17,7 +18,7 @@ type Service struct {
 func NewService(db *gorm.DB) *Service { return &Service{db: db} }
 
 // CreateTeam 创建团队
-func (s *Service) CreateTeam(userID uint, req *CreateTeamRequest) (*model.Team, error) {
+func (s *Service) CreateTeam(userID uint, req *userdto.CreateTeamRequest) (*model.Team, error) {
 	// 获取当前用户的tenant_id
 	var user model.User
 	if err := s.db.Select("tenant_id").First(&user, userID).Error; err != nil {
@@ -50,7 +51,7 @@ func (s *Service) CreateTeam(userID uint, req *CreateTeamRequest) (*model.Team, 
 }
 
 // GetTeam 获取团队信息
-func (s *Service) GetTeam(teamID uint, userID uint) (*TeamResponse, error) {
+func (s *Service) GetTeam(teamID uint, userID uint) (*userdto.TeamResponse, error) {
 	// 获取当前用户的tenant_id
 	var user model.User
 	if err := s.db.Select("tenant_id").First(&user, userID).Error; err != nil {
@@ -81,12 +82,12 @@ func (s *Service) GetTeam(teamID uint, userID uint) (*TeamResponse, error) {
 	if userRole == nil {
 		return nil, errors.New("您不是该团队成员")
 	}
-	resp := &TeamResponse{ID: team.ID, Name: team.Name, Description: team.Description, AvatarURL: team.AvatarURL, IsActive: team.IsActive, CreatedAt: team.CreatedAt.Format(time.RFC3339), UpdatedAt: team.UpdatedAt.Format(time.RFC3339), MemberCount: len(team.Members), UserRole: userRole}
+	resp := &userdto.TeamResponse{ID: team.ID, Name: team.Name, Description: team.Description, AvatarURL: team.AvatarURL, IsActive: team.IsActive, CreatedAt: team.CreatedAt.Format(time.RFC3339), UpdatedAt: team.UpdatedAt.Format(time.RFC3339), MemberCount: len(team.Members), UserRole: userRole}
 	return resp, nil
 }
 
 // UpdateTeam 更新团队信息
-func (s *Service) UpdateTeam(teamID uint, userID uint, req *UpdateTeamRequest) error {
+func (s *Service) UpdateTeam(teamID uint, userID uint, req *userdto.UpdateTeamRequest) error {
 	member, err := s.getTeamMember(teamID, userID)
 	if err != nil {
 		return err
@@ -140,7 +141,7 @@ func (s *Service) DeleteTeam(teamID uint, userID uint) error {
 }
 
 // GetUserTeams 获取用户的所有团队
-func (s *Service) GetUserTeams(userID uint) ([]UserTeamResponse, error) {
+func (s *Service) GetUserTeams(userID uint) ([]userdto.UserTeamResponse, error) {
 	// 获取当前用户的tenant_id
 	var user model.User
 	if err := s.db.Select("tenant_id").First(&user, userID).Error; err != nil {
@@ -155,15 +156,15 @@ func (s *Service) GetUserTeams(userID uint) ([]UserTeamResponse, error) {
 		Find(&members).Error; err != nil {
 		return nil, fmt.Errorf("获取用户团队失败: %w", err)
 	}
-	teams := make([]UserTeamResponse, 0, len(members))
+	teams := make([]userdto.UserTeamResponse, 0, len(members))
 	for _, m := range members {
-		teams = append(teams, UserTeamResponse{TeamID: m.TeamID, TeamName: m.Team.Name, Role: string(m.Role), JoinedAt: time.Unix(m.JoinedAt, 0).Format(time.RFC3339)})
+		teams = append(teams, userdto.UserTeamResponse{TeamID: m.TeamID, TeamName: m.Team.Name, Role: string(m.Role), JoinedAt: time.Unix(m.JoinedAt, 0).Format(time.RFC3339)})
 	}
 	return teams, nil
 }
 
 // AddMember 添加团队成员
-func (s *Service) AddMember(teamID uint, userID uint, req *AddMemberRequest) error {
+func (s *Service) AddMember(teamID uint, userID uint, req *userdto.AddMemberRequest) error {
 	operator, err := s.getTeamMember(teamID, userID)
 	if err != nil {
 		return err
@@ -202,7 +203,7 @@ func (s *Service) AddMember(teamID uint, userID uint, req *AddMemberRequest) err
 }
 
 // UpdateMemberRole 更新成员角色
-func (s *Service) UpdateMemberRole(teamID uint, operatorID uint, memberID uint, req *UpdateMemberRoleRequest) error {
+func (s *Service) UpdateMemberRole(teamID uint, operatorID uint, memberID uint, req *userdto.UpdateMemberRoleRequest) error {
 	operator, err := s.getTeamMember(teamID, operatorID)
 	if err != nil {
 		return err
@@ -246,7 +247,7 @@ func (s *Service) RemoveMember(teamID uint, operatorID uint, memberID uint) erro
 }
 
 // GetTeamMembers 获取团队成员列表
-func (s *Service) GetTeamMembers(teamID uint, userID uint) ([]TeamMemberResponse, error) {
+func (s *Service) GetTeamMembers(teamID uint, userID uint) ([]userdto.TeamMemberResponse, error) {
 	if _, err := s.getTeamMember(teamID, userID); err != nil {
 		return nil, err
 	}
@@ -254,9 +255,9 @@ func (s *Service) GetTeamMembers(teamID uint, userID uint) ([]TeamMemberResponse
 	if err := s.db.Preload("User").Where("team_id = ?", teamID).Find(&members).Error; err != nil {
 		return nil, fmt.Errorf("获取团队成员失败: %w", err)
 	}
-	res := make([]TeamMemberResponse, 0, len(members))
+	res := make([]userdto.TeamMemberResponse, 0, len(members))
 	for _, m := range members {
-		r := TeamMemberResponse{ID: m.ID, TeamID: m.TeamID, UserID: m.UserID, Role: string(m.Role), Status: m.Status, JoinedAt: time.Unix(m.JoinedAt, 0).Format(time.RFC3339), CreatedAt: m.CreatedAt.Format(time.RFC3339)}
+		r := userdto.TeamMemberResponse{ID: m.ID, TeamID: m.TeamID, UserID: m.UserID, Role: string(m.Role), Status: m.Status, JoinedAt: time.Unix(m.JoinedAt, 0).Format(time.RFC3339), CreatedAt: m.CreatedAt.Format(time.RFC3339)}
 		r.User.ID = m.User.ID
 		r.User.Email = m.User.Email
 		r.User.Nickname = m.User.Nickname
