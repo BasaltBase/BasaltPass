@@ -62,6 +62,7 @@ export default function Layout({ children }: LayoutProps) {
     { name: t('userLayout.nav.wallet'), href: ROUTES.user.wallet, icon: WalletIcon, requiresMarket: true },
     { name: t('userLayout.nav.subscriptions'), href: ROUTES.user.subscriptions, icon: CreditCardIcon, requiresMarket: true },
     { name: t('userLayout.nav.products'), href: ROUTES.user.products, icon: CubeIcon, requiresMarket: true },
+    { name: t('userLayout.nav.orders'), href: ROUTES.user.orders, icon: ArrowsRightLeftIcon, requiresMarket: true },
     { name: t('userLayout.nav.myApps'), href: ROUTES.user.myApps, icon: Squares2X2Icon },
     { name: t('userLayout.nav.security'), href: ROUTES.user.security, icon: ShieldCheckIcon },
     { name: t('userLayout.nav.settings'), href: ROUTES.user.settings, icon: CogIcon },

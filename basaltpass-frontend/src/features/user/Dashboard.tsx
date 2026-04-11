@@ -379,6 +379,22 @@ export default function Dashboard() {
                 </Link>
               )}
 
+              {marketEnabled && (
+                <Link
+                  to={ROUTES.user.orders}
+                  className={quickActionCardClass}
+                >
+                  <div className="flex-shrink-0">
+                    <ShoppingCartIcon className="h-6 w-6 text-emerald-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="absolute inset-0" aria-hidden="true" />
+                    <p className="text-sm font-medium text-gray-900">{t('pages.dashboard.quickActions.orders')}</p>
+                    <p className="text-sm text-gray-500">{t('pages.dashboard.quickActions.ordersDesc')}</p>
+                  </div>
+                </Link>
+              )}
+
               <Link
                 to={ROUTES.user.notifications}
                 className={quickActionCardClass}

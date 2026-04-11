@@ -1220,6 +1220,8 @@ const en = {
         teamsDesc: 'Manage teams and members',
         subscriptions: 'Subscription Management',
         subscriptionsDesc: 'Manage subscription plans',
+        orders: 'My Orders',
+        ordersDesc: 'View your order list and status',
         notifications: 'Notification Center',
         notificationsDesc: 'View system notifications',
         profile: 'Profile',
@@ -1441,6 +1443,7 @@ const en = {
       wallet: 'Wallet',
       subscriptions: 'My Subscriptions',
       products: 'Products & Plans',
+      orders: 'My Orders',
       myApps: 'My Apps',
       security: 'Security',
       settings: 'Settings',
@@ -4043,6 +4046,42 @@ const en = {
     logs: {
       fetchOrderFailed: 'Failed to fetch order:',
       createPaymentFailed: 'Failed to create payment:',
+    },
+  },
+  userOrderList: {
+    header: {
+      title: 'My Orders',
+      description: 'View all orders and track payment status',
+    },
+    filters: {
+      all: 'All',
+      pending: 'Pending',
+      paid: 'Paid',
+      expired: 'Expired',
+    },
+    status: {
+      pending: 'Pending Payment',
+      paid: 'Paid',
+      expired: 'Expired',
+      cancelled: 'Cancelled',
+    },
+    fields: {
+      createdAt: 'Created At',
+      expiresAt: 'Expires At',
+      totalAmount: 'Total',
+    },
+    actions: {
+      refresh: 'Refresh',
+      payNow: 'Pay Now',
+      viewDetail: 'View Detail',
+    },
+    empty: {
+      title: 'No Orders',
+      description: 'No orders match the current filter.',
+      browseProducts: 'Browse Products',
+    },
+    logs: {
+      fetchOrdersFailed: 'Failed to fetch orders:',
     },
   },
   userNotifications: {

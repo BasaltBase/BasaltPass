@@ -1,11 +1,11 @@
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
+import { useEffect, useState } from 'react'
+import { uiAlert } from '@contexts/DialogContext'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import Layout from '@features/user/components/Layout'
 import { getOrder } from '@api/subscription/payment/order'
 import { paymentAPI } from '@api/subscription/payment/payment'
 import { OrderResponse } from '@api/subscription/payment/order'
-import { ChevronRightIcon, ClockIcon, CreditCardIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
+import { ClockIcon, CreditCardIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import { CheckCircleIcon, ShoppingCartIcon } from '@heroicons/react/24/solid'
 import { ROUTES } from '@constants'
 import { PButton, PBadge, PEmptyState } from '@ui'
@@ -141,40 +141,16 @@ export default function OrderConfirmPage() {
 
   return (
     <Layout>
-      <div className="space-y-6">
-        {/*  */}
-        <nav className="flex" aria-label="Breadcrumb">
-          <ol className="flex items-center space-x-4">
-            <li>
-              <Link to={ROUTES.user.dashboard} className="text-gray-400 hover:text-gray-500">
-                {t('userOrderConfirm.breadcrumb.dashboard')}
-              </Link>
-            </li>
-            <li>
-              <div className="flex items-center">
-                <ChevronRightIcon className="flex-shrink-0 h-5 w-5 text-gray-400" />
-                <Link to={ROUTES.user.products} className="ml-4 text-gray-400 hover:text-gray-500">
-                  {t('userOrderConfirm.breadcrumb.products')}
-                </Link>
-              </div>
-            </li>
-            <li>
-              <div className="flex items-center">
-                <ChevronRightIcon className="flex-shrink-0 h-5 w-5 text-gray-400" />
-                <span className="ml-4 text-sm font-medium text-gray-500">{t('userOrderConfirm.breadcrumb.confirm')}</span>
-              </div>
-            </li>
-          </ol>
-        </nav>
-
-        <div className="max-w-2xl mx-auto">
-          {/*  */}
-          <div className="bg-white shadow-lg rounded-lg border border-gray-200 overflow-hidden">
-            <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+      <div className="mx-auto w-full max-w-5xl">
+          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+            <div className="border-b border-gray-200 bg-gray-50 px-8 py-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <ShoppingCartIcon className="h-6 w-6 text-indigo-600 mr-2" />
-                  <h1 className="text-xl font-semibold text-gray-900">{t('userOrderConfirm.title')}</h1>
+                  <ShoppingCartIcon className="mr-3 h-7 w-7 text-indigo-600" />
+                  <div>
+                    <h1 className="text-2xl font-semibold text-gray-900">{t('userOrderConfirm.title')}</h1>
+                    <p className="mt-1 text-sm text-gray-500">{order.order_number}</p>
+                  </div>
                 </div>
                 <div className="flex items-center space-x-2">
                   <PBadge variant={
@@ -191,72 +167,71 @@ export default function OrderConfirmPage() {
               </div>
             </div>
 
-            <div className="px-6 py-6">
-              {/*  */}
-              <div className="mb-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-3">{t('userOrderConfirm.sections.orderInfo')}</h3>
-                <dl className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500">{t('userOrderConfirm.fields.orderNumber')}</dt>
-                    <dd className="text-sm text-gray-900 font-mono">{order.order_number}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500">{t('userOrderConfirm.fields.createdAt')}</dt>
-                    <dd className="text-sm text-gray-900">{new Date(order.created_at).toLocaleString(locale)}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500">{t('userOrderConfirm.fields.expiresAt')}</dt>
-                    <dd className="text-sm text-gray-900">{new Date(order.expires_at).toLocaleString(locale)}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500">{t('userOrderConfirm.fields.timeLeft')}</dt>
-                    <dd className={`text-sm font-medium flex items-center ${isExpired() ? 'text-red-600' : 'text-orange-600'}`}>
-                      <ClockIcon className="h-4 w-4 mr-1" />
-                      {timeLeft}
-                    </dd>
-                  </div>
-                </dl>
-              </div>
+            <div className="grid gap-8 px-8 py-8 lg:grid-cols-3">
+              <div className="space-y-8 lg:col-span-2">
+                <section>
+                  <h3 className="mb-4 text-lg font-semibold text-gray-900">{t('userOrderConfirm.sections.orderInfo')}</h3>
+                  <dl className="grid grid-cols-1 gap-5 rounded-xl border border-gray-200 bg-gray-50 p-5 md:grid-cols-2">
+                    <div>
+                      <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">{t('userOrderConfirm.fields.orderNumber')}</dt>
+                      <dd className="mt-1 font-mono text-sm text-gray-900">{order.order_number}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">{t('userOrderConfirm.fields.createdAt')}</dt>
+                      <dd className="mt-1 text-sm text-gray-900">{new Date(order.created_at).toLocaleString(locale)}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">{t('userOrderConfirm.fields.expiresAt')}</dt>
+                      <dd className="mt-1 text-sm text-gray-900">{new Date(order.expires_at).toLocaleString(locale)}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">{t('userOrderConfirm.fields.timeLeft')}</dt>
+                      <dd className={`mt-1 flex items-center text-sm font-semibold ${isExpired() ? 'text-red-600' : 'text-orange-600'}`}>
+                        <ClockIcon className="mr-1 h-4 w-4" />
+                        {timeLeft}
+                      </dd>
+                    </div>
+                  </dl>
+                </section>
 
-              {/*  */}
-              {order.price && (
-                <div className="mb-6">
-                  <h3 className="text-lg font-medium text-gray-900 mb-3">{t('userOrderConfirm.sections.productDetail')}</h3>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-900">
-                          {order.price.plan?.product?.name} - {order.price.plan?.display_name}
-                        </h4>
-                        <p className="text-sm text-gray-500 mt-1">{order.description}</p>
-                        <div className="mt-2 flex items-center text-sm text-gray-600">
-                          <span>{t('userOrderConfirm.quantity', { count: order.quantity })}</span>
-                          <span className="mx-2">|</span>
-                          <span>
-                            {t('userOrderConfirm.billing', {
-                              count: order.price.billing_interval_count > 1 ? order.price.billing_interval_count : '',
-                              unit: order.price.billing_interval === 'month'
-                                ? t('userOrderConfirm.billingUnits.month')
-                                : order.price.billing_interval === 'year'
-                                ? t('userOrderConfirm.billingUnits.year')
-                                : order.price.billing_interval === 'week'
-                                ? t('userOrderConfirm.billingUnits.week')
-                                : order.price.billing_interval === 'day'
-                                ? t('userOrderConfirm.billingUnits.day')
-                                : order.price.billing_interval
-                            })}
-                          </span>
+                {order.price && (
+                  <section>
+                    <h3 className="mb-4 text-lg font-semibold text-gray-900">{t('userOrderConfirm.sections.productDetail')}</h3>
+                    <div className="rounded-xl border border-gray-200 bg-gray-50 p-5">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className="text-base font-semibold text-gray-900">
+                            {order.price.plan?.product?.name} - {order.price.plan?.display_name}
+                          </h4>
+                          <p className="mt-1 text-sm leading-6 text-gray-600">{order.description}</p>
+                          <div className="mt-3 flex items-center text-sm text-gray-700">
+                            <span>{t('userOrderConfirm.quantity', { count: order.quantity })}</span>
+                            <span className="mx-2">|</span>
+                            <span>
+                              {t('userOrderConfirm.billing', {
+                                count: order.price.billing_interval_count > 1 ? order.price.billing_interval_count : '',
+                                unit: order.price.billing_interval === 'month'
+                                  ? t('userOrderConfirm.billingUnits.month')
+                                  : order.price.billing_interval === 'year'
+                                  ? t('userOrderConfirm.billingUnits.year')
+                                  : order.price.billing_interval === 'week'
+                                  ? t('userOrderConfirm.billingUnits.week')
+                                  : order.price.billing_interval === 'day'
+                                  ? t('userOrderConfirm.billingUnits.day')
+                                  : order.price.billing_interval
+                              })}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </div>
-              )}
+                  </section>
+                )}
+              </div>
 
-              {/*  */}
-              <div className="mb-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-3">{t('userOrderConfirm.sections.priceDetail')}</h3>
-                <div className="bg-gray-50 rounded-lg p-4">
+              <div className="space-y-6 lg:col-span-1">
+                <section className="rounded-xl border border-gray-200 bg-gray-50 p-5 lg:sticky lg:top-6">
+                  <h3 className="mb-4 text-lg font-semibold text-gray-900">{t('userOrderConfirm.sections.priceDetail')}</h3>
                   <dl className="space-y-2">
                     <div className="flex justify-between">
                       <dt className="text-sm text-gray-600">{t('userOrderConfirm.price.base')}</dt>
@@ -281,39 +256,37 @@ export default function OrderConfirmPage() {
                       </div>
                     </div>
                   </dl>
-                </div>
-              </div>
 
-              {/*  */}
-              <div className="flex flex-col sm:flex-row gap-3">
-                {order.status === 'pending' && !isExpired() ? (
-                  <PButton
-                    onClick={handlePayment}
-                    disabled={paying}
-                    loading={paying}
-                    variant="primary"
-                    leftIcon={<CreditCardIcon className="h-5 w-5" />}
-                    fullWidth
-                  >
-                    {t('userOrderConfirm.actions.payNow', { amount: formatAmount(order.total_amount) })}
-                  </PButton>
-                ) : order.status === 'paid' ? (
-                  <PButton variant="secondary" disabled fullWidth leftIcon={<CheckCircleIcon className="h-5 w-5" />}>
-                    {t('userOrderConfirm.actions.paid')}
-                  </PButton>
-                ) : (
-                  <PButton variant="secondary" disabled fullWidth leftIcon={<ExclamationTriangleIcon className="h-5 w-5" />}>
-                    {isExpired() ? t('userOrderConfirm.actions.expired') : t('userOrderConfirm.actions.cancelled')}
-                  </PButton>
-                )}
-                
-                <Link to={ROUTES.user.products}>
-                  <PButton variant="secondary" fullWidth>{t('userOrderConfirm.actions.backToProducts')}</PButton>
-                </Link>
+                  <div className="mt-6 flex flex-col gap-3">
+                    {order.status === 'pending' && !isExpired() ? (
+                      <PButton
+                        onClick={handlePayment}
+                        disabled={paying}
+                        loading={paying}
+                        variant="primary"
+                        leftIcon={<CreditCardIcon className="h-5 w-5" />}
+                        fullWidth
+                      >
+                        {t('userOrderConfirm.actions.payNow', { amount: formatAmount(order.total_amount) })}
+                      </PButton>
+                    ) : order.status === 'paid' ? (
+                      <PButton variant="secondary" disabled fullWidth leftIcon={<CheckCircleIcon className="h-5 w-5" />}>
+                        {t('userOrderConfirm.actions.paid')}
+                      </PButton>
+                    ) : (
+                      <PButton variant="secondary" disabled fullWidth leftIcon={<ExclamationTriangleIcon className="h-5 w-5" />}>
+                        {isExpired() ? t('userOrderConfirm.actions.expired') : t('userOrderConfirm.actions.cancelled')}
+                      </PButton>
+                    )}
+
+                    <Link to={ROUTES.user.products}>
+                      <PButton variant="secondary" fullWidth>{t('userOrderConfirm.actions.backToProducts')}</PButton>
+                    </Link>
+                  </div>
+                </section>
               </div>
             </div>
           </div>
-        </div>
       </div>
     </Layout>
   )

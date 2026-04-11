@@ -48,6 +48,7 @@ import SubscriptionCheckout from '../../../src/features/user/subscription/Checko
 
 import OrderConfirm from '../../../src/features/user/order/OrderConfirm'
 import OrderSuccess from '../../../src/features/user/order/OrderSuccess'
+import OrderList from '../../../src/features/user/order/OrderList'
 
 import NotFound from '../../../src/features/NotFound'
 
@@ -203,8 +204,12 @@ export default function AppRouter() {
       <Route path="/subscriptions/checkout" element={<ProtectedRoute><SubscriptionCheckout /></ProtectedRoute>} />
 
       {/* Orders */}
+      <Route path="/orders" element={<ProtectedRoute><OrderList /></ProtectedRoute>} />
+      <Route path="/order" element={<ProtectedRoute><OrderList /></ProtectedRoute>} />
       <Route path="/orders/:orderId/confirm" element={<ProtectedRoute><OrderConfirm /></ProtectedRoute>} />
+      <Route path="/order/:orderId/confirm" element={<ProtectedRoute><OrderConfirm /></ProtectedRoute>} />
       <Route path="/orders/:orderId/success" element={<ProtectedRoute><OrderSuccess /></ProtectedRoute>} />
+      <Route path="/order/:orderId/success" element={<ProtectedRoute><OrderSuccess /></ProtectedRoute>} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>

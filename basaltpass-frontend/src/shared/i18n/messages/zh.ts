@@ -508,7 +508,7 @@ const en = {
         lastUpdated: 'Last updated: {{time}}',
       },
       quickActions: {
-        title: 'Quick Actions',
+        title: '快捷操作',
         recharge: 'Recharge',
         rechargeDesc: 'Add funds to your wallet',
         rechargeDisabledTitle: 'Wallet recharge is not available yet',
@@ -1220,6 +1220,8 @@ const en = {
         teamsDesc: 'Manage teams and members',
         subscriptions: 'Subscription Management',
         subscriptionsDesc: 'Manage subscription plans',
+        orders: '我的订单',
+        ordersDesc: '查看订单列表与支付状态',
         notifications: 'Notification Center',
         notificationsDesc: 'View system notifications',
         profile: 'Profile',
@@ -1433,7 +1435,7 @@ const en = {
     admin_access_required: 'This account has no available Admin Console access. Please log in again or switch to another account.',
   },
   userLayout: {
-    pageTitle: 'User Center',
+    pageTitle: '用户中心',
     nav: {
       dashboard: 'Dashboard',
       profile: 'Profile',
@@ -1441,6 +1443,7 @@ const en = {
       wallet: 'Wallet',
       subscriptions: 'My Subscriptions',
       products: 'Products & Plans',
+      orders: '我的订单',
       myApps: 'My Apps',
       security: 'Security',
       settings: 'Settings',
@@ -4043,6 +4046,42 @@ const en = {
     logs: {
       fetchOrderFailed: 'Failed to fetch order:',
       createPaymentFailed: 'Failed to create payment:',
+    },
+  },
+  userOrderList: {
+    header: {
+      title: '我的订单',
+      description: '查看全部订单并跟踪支付状态',
+    },
+    filters: {
+      all: '全部',
+      pending: '待付款',
+      paid: '已付款',
+      expired: '已过期',
+    },
+    status: {
+      pending: '待付款',
+      paid: '已付款',
+      expired: '已过期',
+      cancelled: '已取消',
+    },
+    fields: {
+      createdAt: '创建时间',
+      expiresAt: '过期时间',
+      totalAmount: '总金额',
+    },
+    actions: {
+      refresh: '刷新',
+      payNow: '立即支付',
+      viewDetail: '查看详情',
+    },
+    empty: {
+      title: '暂无订单',
+      description: '当前筛选条件下没有匹配订单。',
+      browseProducts: '浏览商品',
+    },
+    logs: {
+      fetchOrdersFailed: '获取订单失败：',
     },
   },
   userNotifications: {
