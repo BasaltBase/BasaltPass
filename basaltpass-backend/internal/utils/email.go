@@ -16,7 +16,7 @@ func NewEmailValidator() *EmailValidator {
 
 // Validate 验证邮箱格式是否合法
 func (ev *EmailValidator) Validate(email string) error {
-	normalized := strings.TrimSpace(strings.ToLower(email))
+	normalized := normalizeEmail(email)
 	if normalized == "" {
 		return errors.New("邮箱不能为空")
 	}
@@ -40,9 +40,13 @@ func (ev *EmailValidator) Validate(email string) error {
 
 // Normalize 规范化邮箱（trim + lower）
 func (ev *EmailValidator) Normalize(email string) (string, error) {
-	normalized := strings.TrimSpace(strings.ToLower(email))
+	normalized := normalizeEmail(email)
 	if err := ev.Validate(normalized); err != nil {
 		return "", err
 	}
 	return normalized, nil
+}
+
+func normalizeEmail(email string) string {
+	return strings.TrimSpace(strings.ToLower(email))
 }
