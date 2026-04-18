@@ -17,6 +17,9 @@ func GetWalletBalanceHandler(c *fiber.Ctx) error {
 	currency := c.Query("currency", "USD")
 	w, err := wallet.GetBalanceByCodeWithTenant(uid, activeTenantID, currency)
 	if err != nil {
+		if errors.Is(err, wallet.ErrNoTenantIdentity) {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "wallet is unavailable for users without tenant"})
+		}
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.JSON(fiber.Map{"balance": w.Balance, "currency_id": w.CurrencyID, "tenant_id": w.TenantID})
@@ -34,6 +37,9 @@ func RechargeWalletHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 	if err := wallet.RechargeByCodeWithTenant(uid, activeTenantID, body.Currency, body.Amount); err != nil {
+		if errors.Is(err, wallet.ErrNoTenantIdentity) {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "wallet is unavailable for users without tenant"})
+		}
 		if errors.Is(err, wallet.ErrWalletRechargeWithdrawDisabled) {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": err.Error()})
 		}
@@ -54,6 +60,9 @@ func WithdrawWalletHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 	if err := wallet.WithdrawByCodeWithTenant(uid, activeTenantID, body.Currency, body.Amount); err != nil {
+		if errors.Is(err, wallet.ErrNoTenantIdentity) {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "wallet is unavailable for users without tenant"})
+		}
 		if errors.Is(err, wallet.ErrWalletRechargeWithdrawDisabled) {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": err.Error()})
 		}
@@ -77,6 +86,9 @@ func WalletHistoryHandler(c *fiber.Ctx) error {
 		txs, err = wallet.HistoryByCodeWithTenant(uid, activeTenantID, currency, limit)
 	}
 	if err != nil {
+		if errors.Is(err, wallet.ErrNoTenantIdentity) {
+			return c.JSON([]interface{}{})
+		}
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.JSON(txs)

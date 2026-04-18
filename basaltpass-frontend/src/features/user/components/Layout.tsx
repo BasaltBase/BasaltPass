@@ -43,7 +43,7 @@ export default function Layout({ children }: LayoutProps) {
   const mobileUserMenuRef = useRef<HTMLDivElement | null>(null)
   const location = useLocation()
   const { t } = useI18n()
-  const { user, tenants, logout, canAccessTenant, canAccessAdmin } = useAuth()
+  const { user, tenants, logout, canAccessTenant, canAccessAdmin, canUseWallet } = useAuth()
   const { marketEnabled, siteName, siteInitial, setPageTitle } = useConfig()
   const currentSessionKey = `${user?.id || 0}:${Number(user?.tenant_id || 0)}`
 
@@ -129,6 +129,9 @@ export default function Layout({ children }: LayoutProps) {
 
   // 
   const filteredNavigation = navigation.filter(item => {
+    if (item.href === ROUTES.user.wallet && !canUseWallet) {
+      return false
+    }
     if (item.requiresMarket && !marketEnabled) {
       return false
     }

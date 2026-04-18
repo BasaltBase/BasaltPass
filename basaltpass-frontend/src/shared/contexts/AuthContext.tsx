@@ -43,6 +43,7 @@ interface AuthContextType {
   userSessions: UserConsoleSession[]
   canAccessAdmin: boolean
   canAccessTenant: boolean
+  canUseWallet: boolean
   isAuthenticated: boolean
   isLoading: boolean
   login: (token: string) => Promise<void>
@@ -332,6 +333,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return Number(tenant?.id || 0) > 0 && ['owner', 'admin'].includes(role)
   })
   const canManageTenant = canManageCurrentTenant || canManageAnyTenant
+  const canUseWallet = !!user && (Boolean(user.has_tenant) || Number(user.tenant_id || 0) > 0 || tenants.length > 0)
 
   const value: AuthContextType = {
     user,
@@ -339,6 +341,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     userSessions,
     canAccessAdmin: !!user?.is_super_admin,
     canAccessTenant: canManageTenant,
+    canUseWallet,
     isAuthenticated: !!user,
     isLoading,
     login,

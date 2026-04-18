@@ -17,6 +17,11 @@ const (
 	fallbackCreditCode2 = "USD"
 )
 
+var (
+	ErrNoTenantIdentity       = errors.New("user has no tenant identity")
+	ErrUserNotInTenantContext = errors.New("user does not belong to requested tenant")
+)
+
 func resolveCreditCurrency(tx *gorm.DB) (model.Currency, error) {
 	var curr model.Currency
 	if err := tx.Where("code = ? AND is_active = ?", CreditCurrencyCode, true).First(&curr).Error; err == nil {
@@ -53,7 +58,7 @@ func resolveEffectiveTenantID(tx *gorm.DB, userID uint, requestedTenantID uint) 
 		var membership model.TenantUser
 		if err := tx.Select("tenant_id").Where("user_id = ?", userID).Order("created_at ASC").First(&membership).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return 0, errors.New("user has no tenant identity")
+				return 0, ErrNoTenantIdentity
 			}
 			return 0, err
 		}
@@ -71,7 +76,7 @@ func resolveEffectiveTenantID(tx *gorm.DB, userID uint, requestedTenantID uint) 
 		return 0, err
 	}
 	if membershipCount == 0 {
-		return 0, errors.New("user does not belong to requested tenant")
+		return 0, ErrUserNotInTenantContext
 	}
 
 	return requestedTenantID, nil

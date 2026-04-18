@@ -1,6 +1,9 @@
 package wallet
 
 import (
+	"errors"
+	"fmt"
+	"strings"
 	"testing"
 
 	"basaltpass-backend/internal/common"
@@ -13,7 +16,8 @@ import (
 func setupWalletServiceTestDB(t *testing.T) *gorm.DB {
 	t.Helper()
 
-	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
+	dsn := fmt.Sprintf("file:%s?mode=memory&cache=shared", strings.ReplaceAll(t.Name(), "/", "_"))
+	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
 	if err != nil {
 		t.Fatalf("open sqlite failed: %v", err)
 	}
@@ -74,8 +78,8 @@ func TestWalletTenantIsolationByActiveTenant(t *testing.T) {
 		t.Fatalf("unexpected tenant B wallet: tenant=%d balance=%d", wb.TenantID, wb.Balance)
 	}
 
-	if err := RechargeByCodeWithTenant(user.ID, tenantA, "USD", 250); err != nil {
-		t.Fatalf("recharge tenant A wallet failed: %v", err)
+	if _, err := AdjustByCodeWithTenant(user.ID, tenantA, "USD", 250, "test_adjust", ""); err != nil {
+		t.Fatalf("adjust tenant A wallet failed: %v", err)
 	}
 
 	var afterA model.Wallet
@@ -92,5 +96,23 @@ func TestWalletTenantIsolationByActiveTenant(t *testing.T) {
 	}
 	if afterB.Balance != 3000 {
 		t.Fatalf("tenant B balance changed unexpectedly: %d", afterB.Balance)
+	}
+}
+
+func TestWalletRequiresTenantIdentity(t *testing.T) {
+	db := setupWalletServiceTestDB(t)
+
+	curr := model.Currency{Code: "USD", Name: "US Dollar", IsActive: true, DecimalPlaces: 2}
+	if err := db.Create(&curr).Error; err != nil {
+		t.Fatalf("create currency failed: %v", err)
+	}
+
+	user := model.User{TenantID: 0, Email: "wallet-no-tenant@example.com", PasswordHash: "x"}
+	if err := db.Create(&user).Error; err != nil {
+		t.Fatalf("create user failed: %v", err)
+	}
+
+	if _, err := GetBalanceByCodeWithTenant(user.ID, 0, "USD"); !errors.Is(err, ErrNoTenantIdentity) {
+		t.Fatalf("expected ErrNoTenantIdentity, got %v", err)
 	}
 }

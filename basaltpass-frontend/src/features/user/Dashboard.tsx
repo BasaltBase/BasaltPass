@@ -6,21 +6,18 @@ import { history as getWalletHistory } from '@api/user/wallet'
 import { getSecurityStatus, SecurityStatus } from '@api/user/security'
 import { getProfile, UserBasicProfile } from '@api/user/profile'
 import { ROUTES } from '@constants'
+import { useAuth } from '@contexts/AuthContext'
 import { useConfig } from '@contexts/ConfigContext'
 import { useI18n } from '@shared/i18n'
 import {
-  WalletIcon, 
   UserIcon, 
   ShieldCheckIcon,
-  ChartBarIcon,
   ArrowUpIcon,
   ArrowDownIcon,
-  CurrencyDollarIcon,
   ClockIcon,
   UserGroupIcon,
   CogIcon,
   BellIcon,
-  DocumentTextIcon,
   CreditCardIcon,
   ShoppingCartIcon,
   QuestionMarkCircleIcon
@@ -52,6 +49,7 @@ interface WalletHistoryItem {
 
 export default function Dashboard() {
   const { marketEnabled, walletRechargeWithdrawEnabled } = useConfig()
+  const { canUseWallet } = useAuth()
   const { t, locale } = useI18n()
   const [userProfile, setUserProfile] = useState<UserBasicProfile | null>(null)
   const [securityStatus, setSecurityStatus] = useState<SecurityStatus | null>(null)
@@ -66,41 +64,46 @@ export default function Dashboard() {
         setError(null)
 
         // 、
-        const [profileResponse, securityResponse, historyResponse] = await Promise.all([
+        const [profileResponse, securityResponse] = await Promise.all([
           getProfile(),
           getSecurityStatus(),
-          getWalletHistory(undefined, 3) // 3（）
         ])
 
         setUserProfile(profileResponse.data)
         setSecurityStatus(securityResponse.data)
-        
-        const historyItems = Array.isArray(historyResponse.data)
-          ? historyResponse.data
-          : Array.isArray(historyResponse.data?.transactions)
-            ? historyResponse.data.transactions
-            : []
 
-        setRecentTransactions(
-          historyItems.map((transaction: WalletHistoryItem) => ({
-            id: String(transaction.ID ?? crypto.randomUUID()),
-            type: transaction.Type === 'withdraw' ? 'withdraw' : 'recharge',
-            amount: Math.abs(Number(transaction.Amount ?? 0)),
-            status:
-              transaction.Status === 'success'
-                ? 'completed'
-                : transaction.Status === 'fail'
-                  ? 'failed'
-                  : 'pending',
-            date: transaction.CreatedAt ?? new Date().toISOString(),
-            description:
-              transaction.Reference?.trim()
-                ? transaction.Reference
-                : transaction.Type === 'withdraw'
-                  ? t('pages.dashboard.recentTransactions.withdrawFallback')
-                  : t('pages.dashboard.recentTransactions.rechargeFallback'),
-          }))
-        )
+        const hasTenantIdentity = Boolean(profileResponse.data?.has_tenant) || Number(profileResponse.data?.tenant_id || 0) > 0
+        if (hasTenantIdentity) {
+          const historyResponse = await getWalletHistory(undefined, 3) // 3（）
+          const historyItems = Array.isArray(historyResponse.data)
+            ? historyResponse.data
+            : Array.isArray(historyResponse.data?.transactions)
+              ? historyResponse.data.transactions
+              : []
+
+          setRecentTransactions(
+            historyItems.map((transaction: WalletHistoryItem) => ({
+              id: String(transaction.ID ?? crypto.randomUUID()),
+              type: transaction.Type === 'withdraw' ? 'withdraw' : 'recharge',
+              amount: Math.abs(Number(transaction.Amount ?? 0)),
+              status:
+                transaction.Status === 'success'
+                  ? 'completed'
+                  : transaction.Status === 'fail'
+                    ? 'failed'
+                    : 'pending',
+              date: transaction.CreatedAt ?? new Date().toISOString(),
+              description:
+                transaction.Reference?.trim()
+                  ? transaction.Reference
+                  : transaction.Type === 'withdraw'
+                    ? t('pages.dashboard.recentTransactions.withdrawFallback')
+                    : t('pages.dashboard.recentTransactions.rechargeFallback'),
+            }))
+          )
+        } else {
+          setRecentTransactions([])
+        }
       } catch (err) {
         console.error('Failed to load dashboard data:', err)
         setError(t('pages.dashboard.errors.loadFailedMessage'))
@@ -260,7 +263,7 @@ export default function Dashboard() {
             {t('pages.dashboard.quickActions.title')}
           </h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
-              {walletRechargeWithdrawEnabled ? (
+              {canUseWallet && (walletRechargeWithdrawEnabled ? (
                 <Link
                   to={ROUTES.user.walletRecharge}
                   className={quickActionCardClass}
@@ -288,9 +291,9 @@ export default function Dashboard() {
                     <p className="text-sm text-gray-400">{t('pages.dashboard.quickActions.rechargeDisabledDesc')}</p>
                   </div>
                 </div>
-              )}
+              ))}
 
-              {walletRechargeWithdrawEnabled ? (
+              {canUseWallet && (walletRechargeWithdrawEnabled ? (
                 <Link
                   to={ROUTES.user.walletWithdraw}
                   className={quickActionCardClass}
@@ -318,21 +321,23 @@ export default function Dashboard() {
                     <p className="text-sm text-gray-400">{t('pages.dashboard.quickActions.withdrawDisabledDesc')}</p>
                   </div>
                 </div>
-              )}
+              ))}
 
-              <Link
-                to={ROUTES.user.walletHistory}
-                className={quickActionCardClass}
-              >
-                <div className="flex-shrink-0">
-                  <ClockIcon className="h-6 w-6 text-blue-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <span className="absolute inset-0" aria-hidden="true" />
-                  <p className="text-sm font-medium text-gray-900">{t('pages.dashboard.quickActions.history')}</p>
-                  <p className="text-sm text-gray-500">{t('pages.dashboard.quickActions.historyDesc')}</p>
-                </div>
-              </Link>
+              {canUseWallet && (
+                <Link
+                  to={ROUTES.user.walletHistory}
+                  className={quickActionCardClass}
+                >
+                  <div className="flex-shrink-0">
+                    <ClockIcon className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="absolute inset-0" aria-hidden="true" />
+                    <p className="text-sm font-medium text-gray-900">{t('pages.dashboard.quickActions.history')}</p>
+                    <p className="text-sm text-gray-500">{t('pages.dashboard.quickActions.historyDesc')}</p>
+                  </div>
+                </Link>
+              )}
 
               <Link
                 to={ROUTES.user.securityTwoFA}
@@ -454,6 +459,7 @@ export default function Dashboard() {
         </PCard>
 
         {/*  */}
+        {canUseWallet && (
         <PCard>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-medium leading-6 text-gray-900">
@@ -517,6 +523,7 @@ export default function Dashboard() {
               </ul>
             </div>
         </PCard>
+        )}
       </div>
     </Layout>
   )

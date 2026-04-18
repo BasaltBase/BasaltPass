@@ -181,11 +181,11 @@ export default function AppRouter() {
       <Route path="/invitations/inbox" element={<ProtectedRoute><InvitationInbox /></ProtectedRoute>} />
 
       {/* Wallet */}
-      <Route path="/wallet" element={<ProtectedRoute><WalletIndex /></ProtectedRoute>} />
-      <Route path="/wallet/recharge" element={<ProtectedRoute><Recharge /></ProtectedRoute>} />
-      <Route path="/wallet/withdraw" element={<ProtectedRoute><Withdraw /></ProtectedRoute>} />
-      <Route path="/wallet/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
-      <Route path="/wallet/gift-cards/redeem" element={<ProtectedRoute><RedeemGiftCard /></ProtectedRoute>} />
+      <Route path="/wallet" element={<ProtectedRoute requiresTenant><WalletIndex /></ProtectedRoute>} />
+      <Route path="/wallet/recharge" element={<ProtectedRoute requiresTenant><Recharge /></ProtectedRoute>} />
+      <Route path="/wallet/withdraw" element={<ProtectedRoute requiresTenant><Withdraw /></ProtectedRoute>} />
+      <Route path="/wallet/history" element={<ProtectedRoute requiresTenant><History /></ProtectedRoute>} />
+      <Route path="/wallet/gift-cards/redeem" element={<ProtectedRoute requiresTenant><RedeemGiftCard /></ProtectedRoute>} />
       <Route path="/payment" element={<ProtectedRoute><Payment /></ProtectedRoute>} />
 
       {/* Security */}
