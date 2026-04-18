@@ -297,8 +297,8 @@ func (s *Service) Redeem(userID uint, code string) (*GiftCardDTO, error) {
 		}
 
 		var walletModel model.Wallet
-		if err := tx.Where("user_id = ? AND currency_id = ?", userID, card.CurrencyID).
-			FirstOrCreate(&walletModel, model.Wallet{UserID: &userID, CurrencyID: &card.CurrencyID}).Error; err != nil {
+		if err := tx.Where("user_id = ? AND currency_id = ? AND tenant_id = ?", userID, card.CurrencyID, card.TenantID).
+			FirstOrCreate(&walletModel, model.Wallet{TenantID: card.TenantID, UserID: &userID, CurrencyID: &card.CurrencyID}).Error; err != nil {
 			return err
 		}
 		newBalance := walletModel.Balance + card.Amount

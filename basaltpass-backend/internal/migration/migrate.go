@@ -186,6 +186,7 @@ func RunMigrations() {
 		&model.App{},
 		&model.AppUser{},     // 业务应用用户映射
 		&model.TenantQuota{}, // 租户配额
+		&model.TenantAuthSetting{},
 		&model.TenantUsageMetric{},
 
 		// OAuth2模型
@@ -246,6 +247,9 @@ func RunMigrations() {
 	if err != nil {
 		log.Fatalf("[Error][RunMigrations] auto migration failed: %v", err)
 	}
+
+	// 回填钱包 tenant_id（兼容历史数据）
+	MigrateWalletTenantField()
 
 	// 在自动迁移后处理特殊的迁移情况
 	handleSpecialMigrations()

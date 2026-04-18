@@ -4,6 +4,7 @@ import (
 	security "basaltpass-backend/internal/handler/user/security"
 	authsvc "basaltpass-backend/internal/service/auth"
 	passkey2 "basaltpass-backend/internal/service/passkey"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -236,6 +237,9 @@ func FinishLoginHandler(c *fiber.Ctx) error {
 	ctx := newRequestContext(c, map[string]interface{}{"email": req.Email, "tenant_id": tenantID})
 	tokens, err := svc.GenerateTokensForUser(user.ID, tenantID, scope, ctx)
 	if err != nil {
+		if errors.Is(err, authsvc.ErrTenantLoginDisabled) {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": err.Error()})
+		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
@@ -353,6 +357,9 @@ func Finish2FAHandler(c *fiber.Ctx) error {
 	scope := normalizeScope(c.Get("X-Auth-Scope"))
 	tokens, err := svc.GenerateTokensForUser(user.ID, tenantID, scope, ctx)
 	if err != nil {
+		if errors.Is(err, authsvc.ErrTenantLoginDisabled) {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": err.Error()})
+		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 

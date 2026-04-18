@@ -148,6 +148,16 @@ func (s *TenantService) CreateTenant(ownerUserID uint, req *CreateTenantRequest)
 		return nil, err
 	}
 
+	authSetting := &model.TenantAuthSetting{
+		TenantID:          tenant.ID,
+		AllowRegistration: true,
+		AllowLogin:        true,
+	}
+	if err := tx.Create(authSetting).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
 	// 添加创建者为租户所有者
 	tenantUser := &model.TenantUser{
 		UserID:   ownerUserID,

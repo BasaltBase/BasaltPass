@@ -95,6 +95,8 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 	adminTenantGroup.Get("/:id", adminTenant.GetTenantDetailHandler)  // /tenant/tenants/:id
 	adminTenantGroup.Put("/:id", adminTenant.UpdateTenantHandler)     // /tenant/tenants/:id
 	adminTenantGroup.Delete("/:id", adminTenant.DeleteTenantHandler)  // /tenant/tenants/:id
+	adminTenantGroup.Get("/:id/auth-settings", adminTenant.GetTenantAuthSettingsHandler)
+	adminTenantGroup.Put("/:id/auth-settings", adminTenant.UpdateTenantAuthSettingsHandler)
 
 	// alias: /api/v1/admin/tenants 与 /api/v1/tenant/tenants 对齐
 	aliasTenantGroup := adminAliasGroup.Group("/tenants")
@@ -104,6 +106,8 @@ func RegisterAdminRoutes(v1 fiber.Router) {
 	aliasTenantGroup.Get("/:id", adminTenant.GetTenantDetailHandler)
 	aliasTenantGroup.Put("/:id", adminTenant.UpdateTenantHandler)
 	aliasTenantGroup.Delete("/:id", adminTenant.DeleteTenantHandler)
+	aliasTenantGroup.Get("/:id/auth-settings", adminTenant.GetTenantAuthSettingsHandler)
+	aliasTenantGroup.Put("/:id/auth-settings", adminTenant.UpdateTenantAuthSettingsHandler)
 
 	// 租户用户管理
 	adminTenantGroup.Get("/:id/users", adminTenant.GetTenantUsersHandler)              // /tenant/tenants/:id/users

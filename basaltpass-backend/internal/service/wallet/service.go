@@ -31,6 +31,18 @@ func resolveCreditCurrency(tx *gorm.DB) (model.Currency, error) {
 	return model.Currency{}, errors.New("no active currency available for credit wallet")
 }
 
+func resolveUserTenantID(tx *gorm.DB, userID uint) (uint, error) {
+	if userID == 0 {
+		return 0, errors.New("invalid user id")
+	}
+
+	var user model.User
+	if err := tx.Select("tenant_id").First(&user, userID).Error; err != nil {
+		return 0, err
+	}
+	return user.TenantID, nil
+}
+
 // EnsureUserCreditWalletTx ensures one credit wallet exists for user under current transaction.
 func EnsureUserCreditWalletTx(tx *gorm.DB, userID uint) error {
 	if userID == 0 {
@@ -42,16 +54,21 @@ func EnsureUserCreditWalletTx(tx *gorm.DB, userID uint) error {
 		return err
 	}
 
+	tenantID, err := resolveUserTenantID(tx, userID)
+	if err != nil {
+		return err
+	}
+
 	var w model.Wallet
-	return tx.Where("user_id = ? AND currency_id = ?", userID, curr.ID).
-		FirstOrCreate(&w, model.Wallet{UserID: &userID, CurrencyID: &curr.ID}).Error
+	return tx.Where("user_id = ? AND currency_id = ? AND tenant_id = ?", userID, curr.ID, tenantID).
+		FirstOrCreate(&w, model.Wallet{TenantID: tenantID, UserID: &userID, CurrencyID: &curr.ID}).Error
 }
 
 // EnsureCreditWalletsForAllUsers ensures every user has one credit wallet.
 func EnsureCreditWalletsForAllUsers() (int64, error) {
 	db := common.DB()
 	var users []model.User
-	if err := db.Select("id").Find(&users).Error; err != nil {
+	if err := db.Select("id", "tenant_id").Find(&users).Error; err != nil {
 		return 0, err
 	}
 
@@ -64,7 +81,7 @@ func EnsureCreditWalletsForAllUsers() (int64, error) {
 
 		for _, user := range users {
 			var existing model.Wallet
-			errFind := tx.Where("user_id = ? AND currency_id = ?", user.ID, curr.ID).First(&existing).Error
+			errFind := tx.Where("user_id = ? AND currency_id = ? AND tenant_id = ?", user.ID, curr.ID, user.TenantID).First(&existing).Error
 			if errFind == nil {
 				continue
 			}
@@ -72,7 +89,7 @@ func EnsureCreditWalletsForAllUsers() (int64, error) {
 				return errFind
 			}
 
-			w := model.Wallet{UserID: &user.ID, CurrencyID: &curr.ID}
+			w := model.Wallet{TenantID: user.TenantID, UserID: &user.ID, CurrencyID: &curr.ID}
 			if errCreate := tx.Create(&w).Error; errCreate != nil {
 				return errCreate
 			}
@@ -97,10 +114,17 @@ func GetBalance(userID uint, currencyID uint) (model.Wallet, error) {
 	}
 
 	db := common.DB()
+	tenantID, err := resolveUserTenantID(db, userID)
+	if err != nil {
+		return model.Wallet{}, err
+	}
+
 	var w model.Wallet
-	if err := db.Where("user_id = ? AND currency_id = ?", userID, currencyID).First(&w).Error; err != nil {
-		w = model.Wallet{UserID: &userID, CurrencyID: &currencyID}
-		db.Create(&w)
+	if err := db.Where("user_id = ? AND currency_id = ? AND tenant_id = ?", userID, currencyID, tenantID).First(&w).Error; err != nil {
+		w = model.Wallet{TenantID: tenantID, UserID: &userID, CurrencyID: &currencyID}
+		if err := db.Create(&w).Error; err != nil {
+			return model.Wallet{}, err
+		}
 	}
 	return w, nil
 }
@@ -131,9 +155,17 @@ func Recharge(userID uint, currencyID uint, amount int64) error {
 	}
 
 	db := common.DB()
+	tenantID, err := resolveUserTenantID(db, userID)
+	if err != nil {
+		return err
+	}
+
 	return db.Transaction(func(tx *gorm.DB) error {
 		var w model.Wallet
-		tx.Where("user_id = ? AND currency_id = ?", userID, currencyID).FirstOrCreate(&w, model.Wallet{UserID: &userID, CurrencyID: &currencyID})
+		if err := tx.Where("user_id = ? AND currency_id = ? AND tenant_id = ?", userID, currencyID, tenantID).
+			FirstOrCreate(&w, model.Wallet{TenantID: tenantID, UserID: &userID, CurrencyID: &currencyID}).Error; err != nil {
+			return err
+		}
 		w.Balance += amount
 		if err := tx.Save(&w).Error; err != nil {
 			return err
@@ -168,9 +200,14 @@ func Withdraw(userID uint, currencyID uint, amount int64) error {
 	}
 
 	db := common.DB()
+	tenantID, err := resolveUserTenantID(db, userID)
+	if err != nil {
+		return err
+	}
+
 	return db.Transaction(func(tx *gorm.DB) error {
 		var w model.Wallet
-		if err := tx.Where("user_id = ? AND currency_id = ?", userID, currencyID).First(&w).Error; err != nil {
+		if err := tx.Where("user_id = ? AND currency_id = ? AND tenant_id = ?", userID, currencyID, tenantID).First(&w).Error; err != nil {
 			return err
 		}
 		if w.Balance < amount {
@@ -206,11 +243,16 @@ func AdjustByCode(userID uint, currencyCode string, delta int64, txType string, 
 	}
 
 	db := common.DB()
+	tenantID, err := resolveUserTenantID(db, userID)
+	if err != nil {
+		return model.Wallet{}, err
+	}
+
 	var updated model.Wallet
 	err = db.Transaction(func(tx *gorm.DB) error {
 		var w model.Wallet
-		if err := tx.Where("user_id = ? AND currency_id = ?", userID, curr.ID).
-			FirstOrCreate(&w, model.Wallet{UserID: &userID, CurrencyID: &curr.ID}).Error; err != nil {
+		if err := tx.Where("user_id = ? AND currency_id = ? AND tenant_id = ?", userID, curr.ID, tenantID).
+			FirstOrCreate(&w, model.Wallet{TenantID: tenantID, UserID: &userID, CurrencyID: &curr.ID}).Error; err != nil {
 			return err
 		}
 
@@ -257,7 +299,12 @@ func AdjustByCode(userID uint, currencyCode string, delta int64, txType string, 
 func History(userID uint, currencyID uint, limit int) ([]model.WalletTx, error) {
 	var w model.Wallet
 	db := common.DB()
-	if err := db.Where("user_id = ? AND currency_id = ?", userID, currencyID).First(&w).Error; err != nil {
+	tenantID, err := resolveUserTenantID(db, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := db.Where("user_id = ? AND currency_id = ? AND tenant_id = ?", userID, currencyID, tenantID).First(&w).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return []model.WalletTx{}, nil
 		}
@@ -284,9 +331,14 @@ func HistoryAllByUser(userID uint, limit int) ([]model.WalletTx, error) {
 	}
 
 	db := common.DB()
+	tenantID, err := resolveUserTenantID(db, userID)
+	if err != nil {
+		return nil, err
+	}
+
 	var walletIDs []uint
 	if err := db.Model(&model.Wallet{}).
-		Where("user_id = ?", userID).
+		Where("user_id = ? AND tenant_id = ?", userID, tenantID).
 		Pluck("id", &walletIDs).Error; err != nil {
 		return nil, err
 	}

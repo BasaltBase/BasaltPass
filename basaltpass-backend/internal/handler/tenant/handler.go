@@ -118,3 +118,46 @@ func TenantUpdateStripeConfigHandler(c *fiber.Ctx) error {
 		"message": "更新 Stripe 配置成功",
 	})
 }
+
+// TenantGetAuthSettingsHandler 获取租户注册/登录开关
+// GET /api/v1/tenant/auth-settings
+func TenantGetAuthSettingsHandler(c *fiber.Ctx) error {
+	tenantID := c.Locals("tenantID").(uint)
+
+	settings, err := tenantService.GetTenantAuthSettings(tenantID)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"data":    settings,
+		"message": "获取租户认证开关成功",
+	})
+}
+
+// TenantUpdateAuthSettingsHandler 更新租户注册/登录开关
+// PUT /api/v1/tenant/auth-settings
+func TenantUpdateAuthSettingsHandler(c *fiber.Ctx) error {
+	tenantID := c.Locals("tenantID").(uint)
+
+	var req tenant2.UpdateTenantAuthSettingsRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "请求参数错误",
+		})
+	}
+
+	settings, err := tenantService.UpdateTenantAuthSettings(tenantID, &req)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"data":    settings,
+		"message": "更新租户认证开关成功",
+	})
+}

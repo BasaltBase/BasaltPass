@@ -3,6 +3,7 @@ package migration
 import (
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
+	"errors"
 	"log"
 
 	"gorm.io/gorm"
@@ -154,4 +155,84 @@ func dropOldCurrencyColumns(db *gorm.DB, hasCurrency, hasCurrencyCode bool) {
 			log.Println("[Migration] Dropped old currency_code column")
 		}
 	}
+}
+
+// MigrateWalletTenantField ensures tenant_id exists and backfills data for historical rows.
+func MigrateWalletTenantField() {
+	db := common.DB()
+
+	if !db.Migrator().HasTable("market_wallets") {
+		log.Println("[Migration] Wallets table doesn't exist, skipping tenant_id migration")
+		return
+	}
+
+	if !db.Migrator().HasColumn("market_wallets", "tenant_id") {
+		if err := db.Migrator().AddColumn(&model.Wallet{}, "TenantID"); err != nil {
+			log.Printf("[Migration] Failed to add tenant_id to wallets: %v", err)
+			return
+		}
+		log.Println("[Migration] Added tenant_id column to wallets")
+	}
+
+	type walletRow struct {
+		ID       uint
+		UserID   *uint
+		TeamID   *uint
+		TenantID uint
+	}
+
+	var wallets []walletRow
+	if err := db.Table("market_wallets").
+		Select("id", "user_id", "team_id", "tenant_id").
+		Where("tenant_id = ?", 0).
+		Find(&wallets).Error; err != nil {
+		log.Printf("[Migration] Failed to query wallets for tenant backfill: %v", err)
+		return
+	}
+
+	if len(wallets) == 0 {
+		log.Println("[Migration] Wallet tenant_id already populated")
+		return
+	}
+
+	migrated := 0
+	for _, w := range wallets {
+		tenantID := uint(0)
+
+		if w.UserID != nil && *w.UserID != 0 {
+			var user model.User
+			err := db.Select("tenant_id").First(&user, *w.UserID).Error
+			if err != nil {
+				if !errors.Is(err, gorm.ErrRecordNotFound) {
+					log.Printf("[Migration] Failed to load user %d for wallet %d: %v", *w.UserID, w.ID, err)
+				}
+			} else {
+				tenantID = user.TenantID
+			}
+		}
+
+		if tenantID == 0 && w.TeamID != nil && *w.TeamID != 0 {
+			var team model.Team
+			err := db.Select("tenant_id").First(&team, *w.TeamID).Error
+			if err != nil {
+				if !errors.Is(err, gorm.ErrRecordNotFound) {
+					log.Printf("[Migration] Failed to load team %d for wallet %d: %v", *w.TeamID, w.ID, err)
+				}
+			} else {
+				tenantID = team.TenantID
+			}
+		}
+
+		if tenantID == 0 {
+			continue
+		}
+
+		if err := db.Table("market_wallets").Where("id = ?", w.ID).Update("tenant_id", tenantID).Error; err != nil {
+			log.Printf("[Migration] Failed to backfill tenant_id for wallet %d: %v", w.ID, err)
+			continue
+		}
+		migrated++
+	}
+
+	log.Printf("[Migration] Wallet tenant_id backfill completed: %d rows updated", migrated)
 }

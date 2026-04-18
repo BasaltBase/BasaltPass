@@ -4,6 +4,7 @@ import (
 	"basaltpass-backend/internal/handler/user/security"
 	"basaltpass-backend/internal/service/aduit"
 	settingssvc "basaltpass-backend/internal/service/settings"
+	tenantservice "basaltpass-backend/internal/service/tenant"
 	"basaltpass-backend/internal/utils"
 	"context"
 	"errors"
@@ -22,10 +23,11 @@ import (
 type Service struct{}
 
 var (
-	ErrMissingCredentials = errors.New("identifier and password required")
-	ErrInvalidCredentials = errors.New("invalid email or password")
-	ErrPlatformAdminOnly  = errors.New("only administrators can login to platform")
-	ErrServiceUnavailable = errors.New("authentication service temporarily unavailable")
+	ErrMissingCredentials  = errors.New("identifier and password required")
+	ErrInvalidCredentials  = errors.New("invalid email or password")
+	ErrPlatformAdminOnly   = errors.New("only administrators can login to platform")
+	ErrTenantLoginDisabled = errors.New("tenant login is disabled")
+	ErrServiceUnavailable  = errors.New("authentication service temporarily unavailable")
 )
 
 const loginQueryTimeout = 8 * time.Second
@@ -153,6 +155,19 @@ type LoginResult struct {
 func (s Service) LoginV2(req LoginRequest) (LoginResult, error) {
 	if req.EmailOrPhone == "" || req.Password == "" {
 		return LoginResult{}, ErrMissingCredentials
+	}
+
+	if req.TenantID > 0 {
+		allowed, err := tenantservice.IsTenantLoginAllowed(req.TenantID)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return LoginResult{}, ErrInvalidCredentials
+			}
+			return LoginResult{}, fmt.Errorf("%w: %v", ErrServiceUnavailable, err)
+		}
+		if !allowed {
+			return LoginResult{}, ErrTenantLoginDisabled
+		}
 	}
 
 	var user model.User

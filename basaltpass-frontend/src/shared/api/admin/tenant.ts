@@ -106,6 +106,17 @@ export interface TenantStatsResponse {
   new_tenants_this_month: number;
 }
 
+export interface TenantAuthSettings {
+  tenant_id: number;
+  allow_registration: boolean;
+  allow_login: boolean;
+}
+
+export interface UpdateTenantAuthSettingsRequest {
+  allow_registration?: boolean;
+  allow_login?: boolean;
+}
+
 // tenantusermanagementtranslatedtype
 export interface AdminTenantUser {
   id: number;
@@ -199,6 +210,16 @@ export const adminTenantApi = {
   // deletetenant
   async deleteTenant(id: number): Promise<void> {
     await client.delete(`/api/v1/admin/tenants/${id}`);
+  },
+
+  async getTenantAuthSettings(tenantId: number): Promise<TenantAuthSettings> {
+    const response = await client.get(`/api/v1/admin/tenants/${tenantId}/auth-settings`);
+    return response.data.data;
+  },
+
+  async updateTenantAuthSettings(tenantId: number, data: UpdateTenantAuthSettingsRequest): Promise<TenantAuthSettings> {
+    const response = await client.put(`/api/v1/admin/tenants/${tenantId}/auth-settings`, data);
+    return response.data.data;
   },
 
   // gettenanttranslated

@@ -15,8 +15,8 @@ import {
   CheckIcon
 } from '@heroicons/react/24/outline'
 import TenantLayout from '@features/tenant/components/TenantLayout'
-import { tenantApi, TenantInfo } from '@api/tenant/tenant'
-import { PSkeleton, PBadge, PButton, PCard, PInput, PPageHeader } from '@ui'
+import { tenantApi, TenantAuthSettings, TenantInfo } from '@api/tenant/tenant'
+import { PSkeleton, PBadge, PButton, PCard, PCheckbox, PInput, PPageHeader } from '@ui'
 import { useI18n } from '@shared/i18n'
 import { uiAlert } from '@contexts/DialogContext'
 
@@ -30,6 +30,10 @@ export default function TenantInfoPage() {
   const [stripeLoading, setStripeLoading] = useState(false)
   const [stripeSaving, setStripeSaving] = useState(false)
   const [stripeError, setStripeError] = useState('')
+  const [authLoading, setAuthLoading] = useState(false)
+  const [authSaving, setAuthSaving] = useState(false)
+  const [authError, setAuthError] = useState('')
+  const [authSettings, setAuthSettings] = useState<TenantAuthSettings | null>(null)
   const [stripeMeta, setStripeMeta] = useState({
     has_secret_key: false,
     secret_key_masked: '',
@@ -46,6 +50,7 @@ export default function TenantInfoPage() {
   useEffect(() => {
     fetchTenantInfo()
     fetchStripeConfig()
+    fetchAuthSettings()
   }, [])
 
   const fetchTenantInfo = async () => {
@@ -93,6 +98,57 @@ export default function TenantInfoPage() {
       setStripeError(err.response?.data?.error || '加载 Stripe 配置失败')
     } finally {
       setStripeLoading(false)
+    }
+  }
+
+  const fetchAuthSettings = async () => {
+    try {
+      setAuthLoading(true)
+      setAuthError('')
+      const response = await tenantApi.getAuthSettings()
+      setAuthSettings(response.data)
+    } catch (err: any) {
+      console.error('Failed to fetch tenant auth settings', err)
+      setAuthError(err.response?.data?.error || '加载认证开关失败')
+      setAuthSettings(null)
+    } finally {
+      setAuthLoading(false)
+    }
+  }
+
+  const handleAuthSwitchChange = (key: 'allow_registration' | 'allow_login', checked: boolean) => {
+    setAuthSettings(prev => {
+      if (!prev) {
+        return prev
+      }
+      return {
+        ...prev,
+        [key]: checked,
+      }
+    })
+  }
+
+  const saveAuthSettings = async () => {
+    if (!authSettings) {
+      return
+    }
+
+    try {
+      setAuthSaving(true)
+      setAuthError('')
+      const response = await tenantApi.updateAuthSettings({
+        allow_registration: authSettings.allow_registration,
+        allow_login: authSettings.allow_login,
+      })
+      setAuthSettings(response.data)
+      uiAlert('认证开关已保存')
+    } catch (err: any) {
+      console.error('Failed to save tenant auth settings', err)
+      const message = err.response?.data?.error || '保存认证开关失败'
+      setAuthError(message)
+      uiAlert(message)
+    } finally {
+      setAuthSaving(false)
     }
   }
 
@@ -244,6 +300,9 @@ export default function TenantInfoPage() {
     const baseUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || 'http://localhost:5101'
     return `${baseUrl}/auth/tenant/${tenantInfo?.code}/register`
   }
+
+  const loginEnabled = authSettings?.allow_login ?? true
+  const registrationEnabled = authSettings?.allow_registration ?? true
 
   if (loading) {
     return (
@@ -438,6 +497,64 @@ export default function TenantInfoPage() {
                 </div>
               </div>
             </PCard>
+
+            <PCard className="rounded-xl p-0 shadow-sm mt-6">
+              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <h3 className="text-lg font-medium text-gray-900">认证访问控制</h3>
+                {authLoading && <span className="text-sm text-gray-500">加载中...</span>}
+              </div>
+              <div className="px-6 py-6 space-y-4">
+                {authError && (
+                  <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                    {authError}
+                  </div>
+                )}
+
+                {!authLoading && authSettings && (
+                  <>
+                    <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-3">
+                      <PCheckbox
+                        variant="switch"
+                        label="允许新用户注册"
+                        checked={authSettings.allow_registration}
+                        onChange={(e) => handleAuthSwitchChange('allow_registration', (e.target as HTMLInputElement).checked)}
+                        disabled={authSaving}
+                      />
+                      <p className="text-xs text-gray-500 mt-2">关闭后，租户注册页将拒绝新账号创建。</p>
+                    </div>
+
+                    <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-3">
+                      <PCheckbox
+                        variant="switch"
+                        label="允许租户用户登录"
+                        checked={authSettings.allow_login}
+                        onChange={(e) => handleAuthSwitchChange('allow_login', (e.target as HTMLInputElement).checked)}
+                        disabled={authSaving}
+                      />
+                      <p className="text-xs text-gray-500 mt-2">关闭后，租户用户无法登录和刷新令牌。</p>
+                    </div>
+
+                    {(!authSettings.allow_registration || !authSettings.allow_login) && (
+                      <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+                        当前租户已启用部分认证限制，建议先通知业务方后再执行。
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between pt-1">
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <span>注册</span>
+                        <PBadge variant={registrationEnabled ? 'success' : 'warning'}>{registrationEnabled ? '开启' : '关闭'}</PBadge>
+                        <span>登录</span>
+                        <PBadge variant={loginEnabled ? 'success' : 'warning'}>{loginEnabled ? '开启' : '关闭'}</PBadge>
+                      </div>
+                      <PButton onClick={saveAuthSettings} loading={authSaving}>
+                        {authSaving ? '保存中...' : '保存认证开关'}
+                      </PButton>
+                    </div>
+                  </>
+                )}
+              </div>
+            </PCard>
           </div>
 
           {/*  */}
@@ -455,9 +572,12 @@ export default function TenantInfoPage() {
                 <div className="space-y-4">
                   {/*  */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t('tenantInfoPage.userAccessLinks.loginPage')}
-                    </label>
+                    <div className="mb-2 flex items-center justify-between">
+                      <label className="block text-sm font-medium text-gray-700">
+                        {t('tenantInfoPage.userAccessLinks.loginPage')}
+                      </label>
+                      <PBadge variant={loginEnabled ? 'success' : 'warning'}>{loginEnabled ? '可访问' : '已禁用'}</PBadge>
+                    </div>
                     <div className="flex items-center space-x-2">
                       <PInput
                         type="text"
@@ -482,9 +602,12 @@ export default function TenantInfoPage() {
 
                   {/*  */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t('tenantInfoPage.userAccessLinks.registerPage')}
-                    </label>
+                    <div className="mb-2 flex items-center justify-between">
+                      <label className="block text-sm font-medium text-gray-700">
+                        {t('tenantInfoPage.userAccessLinks.registerPage')}
+                      </label>
+                      <PBadge variant={registrationEnabled ? 'success' : 'warning'}>{registrationEnabled ? '可访问' : '已禁用'}</PBadge>
+                    </div>
                     <div className="flex items-center space-x-2">
                       <PInput
                         type="text"
@@ -513,6 +636,11 @@ export default function TenantInfoPage() {
                       <InformationCircleIcon className="h-5 w-5 text-blue-400 mr-2 flex-shrink-0 mt-0.5" />
                       <div className="text-sm text-blue-700">
                         <p>{t('tenantInfoPage.userAccessLinks.tip')}</p>
+                        {(!loginEnabled || !registrationEnabled) && (
+                          <p className="mt-2 font-medium text-amber-700">
+                            当前有认证开关被关闭，部分链接将无法正常使用。
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>

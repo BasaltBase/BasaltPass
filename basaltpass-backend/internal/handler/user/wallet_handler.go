@@ -18,7 +18,7 @@ func GetWalletBalanceHandler(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
-	return c.JSON(fiber.Map{"balance": w.Balance, "currency_id": w.CurrencyID})
+	return c.JSON(fiber.Map{"balance": w.Balance, "currency_id": w.CurrencyID, "tenant_id": w.TenantID})
 }
 
 // RechargeWalletHandler POST /wallet/recharge {currency, amount}

@@ -196,6 +196,15 @@ func (s *AdminTenantService) CreateTenant(req admindto.AdminCreateTenantRequest)
 			return fmt.Errorf("创建租户失败: %w", err)
 		}
 
+		authSetting := &model.TenantAuthSetting{
+			TenantID:          tenant.ID,
+			AllowRegistration: true,
+			AllowLogin:        true,
+		}
+		if err := tx.Create(authSetting).Error; err != nil {
+			return fmt.Errorf("创建租户认证设置失败: %w", err)
+		}
+
 		quota := &model.TenantQuota{
 			TenantID:         tenant.ID,
 			MaxApps:          req.MaxApps,

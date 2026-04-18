@@ -7,6 +7,7 @@ import (
 
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
+	tenantservice "basaltpass-backend/internal/service/tenant"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -74,6 +75,16 @@ func GenerateTokenPairWithTenant(userID uint, tenantID uint) (TokenPair, error) 
 func GenerateTokenPairWithTenantAndScope(userID uint, tenantID uint, scope string) (TokenPair, error) {
 	if scope == "" {
 		scope = ConsoleScopeUser
+	}
+
+	if scope != ConsoleScopeAdmin && tenantID > 0 {
+		allowed, err := tenantservice.IsTenantLoginAllowed(tenantID)
+		if err != nil {
+			return TokenPair{}, err
+		}
+		if !allowed {
+			return TokenPair{}, ErrTenantLoginDisabled
+		}
 	}
 
 	accessClaims := jwt.MapClaims{

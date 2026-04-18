@@ -5,6 +5,7 @@ import (
 	"basaltpass-backend/internal/config"
 	"basaltpass-backend/internal/model"
 	emailservice "basaltpass-backend/internal/service/email"
+	tenantservice "basaltpass-backend/internal/service/tenant"
 	"basaltpass-backend/internal/service/wallet"
 	"basaltpass-backend/internal/utils"
 	"context"
@@ -88,6 +89,18 @@ type CompleteSignupRequest struct {
 func (s *Service) StartSignup(req StartSignupRequest) (*StartSignupResponse, error) {
 	if req.Email == "" && req.Phone == "" {
 		return nil, errors.New("email or phone required")
+	}
+	if req.TenantID > 0 {
+		allowed, err := tenantservice.IsTenantRegistrationAllowed(req.TenantID)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, errors.New("tenant not found")
+			}
+			return nil, errors.New("failed to validate tenant registration setting")
+		}
+		if !allowed {
+			return nil, errors.New("tenant registration is disabled")
+		}
 	}
 	if req.Password == "" {
 		return nil, errors.New("password required")
@@ -339,6 +352,19 @@ func (s *Service) CompleteSignup(req CompleteSignupRequest) (*model.User, error)
 			return nil, errors.New("signup session not found or not ready for completion")
 		}
 		return nil, err
+	}
+
+	if pendingSignup.TenantID > 0 {
+		allowed, err := tenantservice.IsTenantRegistrationAllowed(pendingSignup.TenantID)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, errors.New("tenant not found")
+			}
+			return nil, errors.New("failed to validate tenant registration setting")
+		}
+		if !allowed {
+			return nil, errors.New("tenant registration is disabled")
+		}
 	}
 
 	// 开始事务

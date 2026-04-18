@@ -15,6 +15,30 @@ import (
 // AdminWalletService provides tenant-level wallet management functions
 type AdminWalletService struct{}
 
+func resolveUserTenantID(db *gorm.DB, userID uint) (uint, error) {
+	if userID == 0 {
+		return 0, errors.New("invalid user id")
+	}
+
+	var user model.User
+	if err := db.Select("tenant_id").First(&user, userID).Error; err != nil {
+		return 0, err
+	}
+	return user.TenantID, nil
+}
+
+func resolveTeamTenantID(db *gorm.DB, teamID uint) (uint, error) {
+	if teamID == 0 {
+		return 0, errors.New("invalid team id")
+	}
+
+	var team model.Team
+	if err := db.Select("tenant_id").First(&team, teamID).Error; err != nil {
+		return 0, err
+	}
+	return team.TenantID, nil
+}
+
 // getMultiplier returns the multiplier for converting decimal to smallest unit
 func getMultiplier(decimalPlaces int) int64 {
 	multiplier := int64(1)
@@ -43,8 +67,12 @@ func NewAdminWalletService() *AdminWalletService {
 func (s *AdminWalletService) GetUserWallets(userID uint) ([]model.Wallet, error) {
 	var wallets []model.Wallet
 	db := common.DB()
+	tenantID, err := resolveUserTenantID(db, userID)
+	if err != nil {
+		return nil, err
+	}
 
-	err := db.Preload("Currency").Where("user_id = ?", userID).Order("created_at DESC").Find(&wallets).Error
+	err = db.Preload("Currency").Where("user_id = ? AND tenant_id = ?", userID, tenantID).Order("created_at DESC").Find(&wallets).Error
 	return wallets, err
 }
 
@@ -85,8 +113,12 @@ func (s *AdminWalletService) UserBelongsToTenant(userID uint, tenantID uint) (bo
 func (s *AdminWalletService) GetTeamWallets(teamID uint) ([]model.Wallet, error) {
 	var wallets []model.Wallet
 	db := common.DB()
+	tenantID, err := resolveTeamTenantID(db, teamID)
+	if err != nil {
+		return nil, err
+	}
 
-	err := db.Preload("Currency").Where("team_id = ?", teamID).Order("created_at DESC").Find(&wallets).Error
+	err = db.Preload("Currency").Where("team_id = ? AND tenant_id = ?", teamID, tenantID).Order("created_at DESC").Find(&wallets).Error
 	return wallets, err
 }
 
@@ -141,7 +173,12 @@ func (s *AdminWalletService) CreateWalletForUser(userID uint, currencyCode strin
 	// Check if wallet already exists
 	var existingWallet model.Wallet
 	db := common.DB()
-	err = db.Where("user_id = ? AND currency_id = ?", userID, curr.ID).First(&existingWallet).Error
+	tenantID, err := resolveUserTenantID(db, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	err = db.Where("user_id = ? AND currency_id = ? AND tenant_id = ?", userID, curr.ID, tenantID).First(&existingWallet).Error
 	if err == nil {
 		return nil, errors.New("wallet already exists for this user and currency")
 	}
@@ -151,6 +188,7 @@ func (s *AdminWalletService) CreateWalletForUser(userID uint, currencyCode strin
 
 	// Create wallet
 	newWallet := model.Wallet{
+		TenantID:   tenantID,
 		UserID:     &userID,
 		CurrencyID: &curr.ID,
 		Balance:    balanceInSmallestUnit,
@@ -195,7 +233,12 @@ func (s *AdminWalletService) CreateWalletForTeam(teamID uint, currencyCode strin
 	// Check if wallet already exists
 	var existingWallet model.Wallet
 	db := common.DB()
-	err = db.Where("team_id = ? AND currency_id = ?", teamID, curr.ID).First(&existingWallet).Error
+	tenantID, err := resolveTeamTenantID(db, teamID)
+	if err != nil {
+		return nil, err
+	}
+
+	err = db.Where("team_id = ? AND currency_id = ? AND tenant_id = ?", teamID, curr.ID, tenantID).First(&existingWallet).Error
 	if err == nil {
 		return nil, errors.New("wallet already exists for this team and currency")
 	}
@@ -205,6 +248,7 @@ func (s *AdminWalletService) CreateWalletForTeam(teamID uint, currencyCode strin
 
 	// Create wallet
 	newWallet := model.Wallet{
+		TenantID:   tenantID,
 		TeamID:     &teamID,
 		CurrencyID: &curr.ID,
 		Balance:    balanceInSmallestUnit,
@@ -298,8 +342,13 @@ func (s *AdminWalletService) AdjustUserBalance(userID uint, currencyCode string,
 	}
 
 	db := common.DB()
+	tenantID, err := resolveUserTenantID(db, userID)
+	if err != nil {
+		return nil, err
+	}
+
 	var walletModel model.Wallet
-	err = db.Preload("Currency").Preload("User").Where("user_id = ? AND currency_id = ?", userID, curr.ID).First(&walletModel).Error
+	err = db.Preload("Currency").Preload("User").Where("user_id = ? AND currency_id = ? AND tenant_id = ?", userID, curr.ID, tenantID).First(&walletModel).Error
 	if err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, err
@@ -308,6 +357,7 @@ func (s *AdminWalletService) AdjustUserBalance(userID uint, currencyCode string,
 			return nil, errors.New("wallet not found")
 		}
 		walletModel = model.Wallet{
+			TenantID:   tenantID,
 			UserID:     &userID,
 			CurrencyID: &curr.ID,
 			Balance:    0,
@@ -342,8 +392,13 @@ func (s *AdminWalletService) AdjustTeamBalance(teamID uint, currencyCode string,
 	}
 
 	db := common.DB()
+	tenantID, err := resolveTeamTenantID(db, teamID)
+	if err != nil {
+		return nil, err
+	}
+
 	var walletModel model.Wallet
-	err = db.Preload("Currency").Preload("Team").Where("team_id = ? AND currency_id = ?", teamID, curr.ID).First(&walletModel).Error
+	err = db.Preload("Currency").Preload("Team").Where("team_id = ? AND currency_id = ? AND tenant_id = ?", teamID, curr.ID, tenantID).First(&walletModel).Error
 	if err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, err
@@ -352,6 +407,7 @@ func (s *AdminWalletService) AdjustTeamBalance(teamID uint, currencyCode string,
 			return nil, errors.New("wallet not found")
 		}
 		walletModel = model.Wallet{
+			TenantID:   tenantID,
 			TeamID:     &teamID,
 			CurrencyID: &curr.ID,
 			Balance:    0,

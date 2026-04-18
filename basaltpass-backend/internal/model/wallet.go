@@ -5,9 +5,10 @@ import "gorm.io/gorm"
 // Wallet represents a multi-currency account for a user or team.
 type Wallet struct {
 	gorm.Model
-	UserID     *uint `gorm:"index"`          // 用户钱包
-	TeamID     *uint `gorm:"index"`          // 团队钱包
-	CurrencyID *uint `gorm:"index;not null"` // 关联到currency表的ID字段
+	TenantID   uint  `gorm:"index;not null;default:0"` // 租户隔离字段，0表示平台级
+	UserID     *uint `gorm:"index"`                    // 用户钱包
+	TeamID     *uint `gorm:"index"`                    // 团队钱包
+	CurrencyID *uint `gorm:"index;not null"`           // 关联到currency表的ID字段
 	Balance    int64 // in smallest unit (e.g. cents, satoshi)
 	Freeze     int64 // frozen amount
 

@@ -62,6 +62,17 @@ export interface UpdateTenantStripeConfigRequest {
   clear_webhook_secret?: boolean
 }
 
+export interface TenantAuthSettings {
+  tenant_id: number
+  allow_registration: boolean
+  allow_login: boolean
+}
+
+export interface UpdateTenantAuthSettingsRequest {
+  allow_registration?: boolean
+  allow_login?: boolean
+}
+
 export interface CreateTenantRequest {
   name: string
   domain: string
@@ -134,6 +145,16 @@ export const tenantApi = {
 
   async updateStripeConfig(data: UpdateTenantStripeConfigRequest): Promise<{ data: TenantStripeConfig; message: string }> {
     const response = await client.put('/api/v1/tenant/stripe-config', data)
+    return response.data
+  },
+
+  async getAuthSettings(): Promise<{ data: TenantAuthSettings }> {
+    const response = await client.get('/api/v1/tenant/auth-settings')
+    return response.data
+  },
+
+  async updateAuthSettings(data: UpdateTenantAuthSettingsRequest): Promise<{ data: TenantAuthSettings; message: string }> {
+    const response = await client.put('/api/v1/tenant/auth-settings', data)
     return response.data
   },
 }

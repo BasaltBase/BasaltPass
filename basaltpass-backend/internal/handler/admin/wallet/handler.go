@@ -11,6 +11,7 @@ import (
 // WalletResponse represents a wallet with computed status field for API response
 type WalletResponse struct {
 	ID         uint        `json:"id"`
+	TenantID   uint        `json:"tenant_id"`
 	UserID     *uint       `json:"user_id"`
 	TeamID     *uint       `json:"team_id"`
 	CurrencyID *uint       `json:"currency_id"`
@@ -44,6 +45,7 @@ func walletToResponse(wallet model.Wallet) WalletResponse {
 
 	return WalletResponse{
 		ID:         wallet.ID,
+		TenantID:   wallet.TenantID,
 		UserID:     wallet.UserID,
 		TeamID:     wallet.TeamID,
 		CurrencyID: wallet.CurrencyID,

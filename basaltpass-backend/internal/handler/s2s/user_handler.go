@@ -496,6 +496,7 @@ func GetUserWalletHandler(c *fiber.Ctx) error {
 		"currency":     currency,
 		"balance":      w.Balance,
 		"wallet_id":    w.ID,
+		"tenant_id":    w.TenantID,
 		"transactions": txs,
 	}
 	return unifiedResponse(c, fiber.StatusOK, resp, nil)
@@ -565,6 +566,7 @@ func AdjustUserWalletHandler(c *fiber.Ctx) error {
 	resp := fiber.Map{
 		"user_id":       userID,
 		"wallet_id":     w.ID,
+		"tenant_id":     w.TenantID,
 		"currency":      req.Currency,
 		"operation":     req.Operation,
 		"amount":        req.Amount,

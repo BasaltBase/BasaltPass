@@ -235,3 +235,54 @@ func RemoveTenantUserHandler(c *fiber.Ctx) error {
 		"message": "用户移除成功",
 	})
 }
+
+// GetTenantAuthSettingsHandler 获取租户认证开关
+func GetTenantAuthSettingsHandler(c *fiber.Ctx) error {
+	tenantID, err := strconv.ParseUint(c.Params("id"), 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "无效的租户ID",
+		})
+	}
+
+	settings, err := adminTenantService.GetTenantAuthSettings(uint(tenantID))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"data":    settings,
+		"message": "获取租户认证开关成功",
+	})
+}
+
+// UpdateTenantAuthSettingsHandler 更新租户认证开关
+func UpdateTenantAuthSettingsHandler(c *fiber.Ctx) error {
+	tenantID, err := strconv.ParseUint(c.Params("id"), 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "无效的租户ID",
+		})
+	}
+
+	var req tenant2.UpdateTenantAuthSettingsRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "请求参数错误",
+		})
+	}
+
+	settings, err := adminTenantService.UpdateTenantAuthSettings(uint(tenantID), &req)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"data":    settings,
+		"message": "更新租户认证开关成功",
+	})
+}

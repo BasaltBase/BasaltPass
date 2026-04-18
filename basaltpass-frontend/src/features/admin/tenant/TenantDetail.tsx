@@ -15,7 +15,13 @@ import {
 } from '@heroicons/react/24/outline'
 import AdminLayout from '@features/admin/components/AdminLayout'
 import { PInput, PSelect, PTextarea, PCheckbox, PButton, PSkeleton, PBadge, PAlert, PCard, PPageHeader } from '@ui'
-import { adminTenantApi, AdminTenantDetailResponse, AdminUpdateTenantRequest, TenantSettings } from '@api/admin/tenant'
+import {
+  adminTenantApi,
+  AdminTenantDetailResponse,
+  AdminUpdateTenantRequest,
+  TenantAuthSettings,
+  TenantSettings,
+} from '@api/admin/tenant'
 import { ROUTES } from '@constants'
 import { useI18n } from '@shared/i18n'
 
@@ -28,6 +34,10 @@ const TenantDetail: React.FC = () => {
   const [updating, setUpdating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [editMode, setEditMode] = useState(false)
+  const [authSettings, setAuthSettings] = useState<TenantAuthSettings | null>(null)
+  const [authLoading, setAuthLoading] = useState(false)
+  const [authSaving, setAuthSaving] = useState(false)
+  const [authError, setAuthError] = useState<string | null>(null)
   const [formData, setFormData] = useState<AdminUpdateTenantRequest>({
     name: '',
     description: '',
@@ -72,11 +82,61 @@ const TenantDetail: React.FC = () => {
           enable_audit: false,
         }
       })
+
+      await fetchTenantAuthSettings(parseInt(id))
     } catch (err: any) {
       console.error(t('adminTenantDetail.logs.fetchDetailFailed'), err)
       setError(err.response?.data?.message || t('adminTenantDetail.errors.fetchDetailFailed'))
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchTenantAuthSettings = async (tenantID: number) => {
+    try {
+      setAuthLoading(true)
+      setAuthError(null)
+      const settings = await adminTenantApi.getTenantAuthSettings(tenantID)
+      setAuthSettings(settings)
+    } catch (err: any) {
+      console.error('Failed to fetch tenant auth settings', err)
+      setAuthError(err.response?.data?.error || '加载租户认证开关失败')
+      setAuthSettings(null)
+    } finally {
+      setAuthLoading(false)
+    }
+  }
+
+  const handleAuthSettingChange = (key: 'allow_registration' | 'allow_login', checked: boolean) => {
+    setAuthSettings(prev => {
+      if (!prev) {
+        return prev
+      }
+      return {
+        ...prev,
+        [key]: checked,
+      }
+    })
+  }
+
+  const handleSaveAuthSettings = async () => {
+    if (!id || !authSettings) return
+
+    try {
+      setAuthSaving(true)
+      setAuthError(null)
+      const updated = await adminTenantApi.updateTenantAuthSettings(parseInt(id), {
+        allow_registration: authSettings.allow_registration,
+        allow_login: authSettings.allow_login,
+      })
+      setAuthSettings(updated)
+      uiAlert('租户认证开关已更新')
+    } catch (err: any) {
+      console.error('Failed to save tenant auth settings', err)
+      const message = err.response?.data?.error || '更新租户认证开关失败'
+      setAuthError(message)
+    } finally {
+      setAuthSaving(false)
     }
   }
 
@@ -460,6 +520,82 @@ const TenantDetail: React.FC = () => {
                       </div>
                     </div>
                   </div>
+                )}
+              </div>
+            </PCard>
+
+            <PCard className="mt-6 rounded-xl p-0 shadow-sm">
+              <div className="px-4 py-5 sm:p-6">
+                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4 flex items-center">
+                  <CogIcon className="h-5 w-5 mr-2 text-gray-400" />
+                  认证访问控制
+                </h3>
+
+                {authError && (
+                  <PAlert
+                    variant="error"
+                    title="认证开关加载失败"
+                    message={authError}
+                    className="mb-4"
+                  />
+                )}
+
+                {authLoading ? (
+                  <div className="space-y-3">
+                    <PSkeleton variant="text" lines={2} />
+                  </div>
+                ) : authSettings ? (
+                  <div className="space-y-4">
+                    <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                      <PCheckbox
+                        variant="switch"
+                        label="允许租户用户注册"
+                        checked={authSettings.allow_registration}
+                        onChange={(e) => handleAuthSettingChange('allow_registration', (e.target as HTMLInputElement).checked)}
+                        disabled={authSaving}
+                      />
+                      <p className="mt-2 text-sm text-gray-500">
+                        关闭后，所有新用户将无法通过租户注册页创建账号。
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                      <PCheckbox
+                        variant="switch"
+                        label="允许租户用户登录"
+                        checked={authSettings.allow_login}
+                        onChange={(e) => handleAuthSettingChange('allow_login', (e.target as HTMLInputElement).checked)}
+                        disabled={authSaving}
+                      />
+                      <p className="mt-2 text-sm text-gray-500">
+                        关闭后，租户下账号将无法完成登录与令牌刷新。
+                      </p>
+                    </div>
+
+                    {(!authSettings.allow_registration || !authSettings.allow_login) && (
+                      <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+                        当前租户存在认证限制，请确保业务方已知晓影响范围。
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <span>注册</span>
+                        <PBadge variant={authSettings.allow_registration ? 'success' : 'warning'}>
+                          {authSettings.allow_registration ? '开启' : '关闭'}
+                        </PBadge>
+                        <span>登录</span>
+                        <PBadge variant={authSettings.allow_login ? 'success' : 'warning'}>
+                          {authSettings.allow_login ? '开启' : '关闭'}
+                        </PBadge>
+                      </div>
+                      <PButton onClick={handleSaveAuthSettings} loading={authSaving} disabled={authLoading || !authSettings}>
+                        保存认证开关
+                      </PButton>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-500">暂无认证开关数据</div>
                 )}
               </div>
             </PCard>

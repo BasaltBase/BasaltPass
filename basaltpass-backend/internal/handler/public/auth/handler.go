@@ -108,6 +108,9 @@ func LoginHandler(c *fiber.Ctx) error {
 		if errors.Is(err, auth2.ErrPlatformAdminOnly) {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": err.Error()})
 		}
+		if errors.Is(err, auth2.ErrTenantLoginDisabled) {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": err.Error()})
+		}
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": err.Error()})
 	}
 	if result.Need2FA {
@@ -161,6 +164,9 @@ func RefreshHandler(c *fiber.Ctx) error {
 	}
 	tokens, err := svc.Refresh(rt)
 	if err != nil {
+		if errors.Is(err, auth2.ErrTenantLoginDisabled) {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": err.Error()})
+		}
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": err.Error()})
 	}
 	setAuthCookies(c, scope, tokens.AccessToken, tokens.RefreshToken)
@@ -176,6 +182,9 @@ func Verify2FAHandler(c *fiber.Ctx) error {
 	}
 	tokens, err := svc.Verify2FA(req)
 	if err != nil {
+		if errors.Is(err, auth2.ErrTenantLoginDisabled) {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": err.Error()})
+		}
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": err.Error()})
 	}
 	setAuthCookies(c, c.Get("X-Auth-Scope"), tokens.AccessToken, tokens.RefreshToken)

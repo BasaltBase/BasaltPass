@@ -49,7 +49,7 @@ func GetUserWalletBalanceHandler(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
-	return c.JSON(fiber.Map{"user_id": userID, "balance": w.Balance, "currency_id": w.CurrencyID})
+	return c.JSON(fiber.Map{"user_id": userID, "balance": w.Balance, "currency_id": w.CurrencyID, "tenant_id": w.TenantID})
 }
 
 // parseUint 简易转换
