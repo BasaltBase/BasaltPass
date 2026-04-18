@@ -21,12 +21,62 @@ const resources: Record<AppLanguage, Record<string, any>> = {
   zh,
 }
 
-function normalizeLanguage(value?: string | null): AppLanguage {
-  const raw = (value || '').toLowerCase()
-  if (raw.startsWith('zh')) {
+function matchLanguageCandidate(value?: string | null): AppLanguage | undefined {
+  const raw = (value || '').toLowerCase().trim()
+  if (!raw) {
+    return undefined
+  }
+  if (raw.startsWith('zh') || raw.includes('chinese')) {
     return 'zh'
   }
+  if (raw.startsWith('en') || raw.includes('english')) {
+    return 'en'
+  }
+  return undefined
+}
+
+function normalizeLanguage(value?: string | null): AppLanguage {
+  const matched = matchLanguageCandidate(value)
+  if (matched) {
+    return matched
+  }
   return 'en'
+}
+
+export function resolveLanguageFromProfile(profile: any): AppLanguage | undefined {
+  if (!profile || typeof profile !== 'object') {
+    return undefined
+  }
+
+  const profileLanguage = profile.language
+  if (typeof profileLanguage === 'string') {
+    const matched = matchLanguageCandidate(profileLanguage)
+    if (matched) {
+      return matched
+    }
+  } else if (profileLanguage && typeof profileLanguage === 'object') {
+    const fromCode = matchLanguageCandidate(profileLanguage.code)
+    if (fromCode) {
+      return fromCode
+    }
+    const fromName = matchLanguageCandidate(profileLanguage.name)
+    if (fromName) {
+      return fromName
+    }
+    const fromLocalName = matchLanguageCandidate(profileLanguage.name_local)
+    if (fromLocalName) {
+      return fromLocalName
+    }
+  }
+
+  for (const key of ['language_code', 'locale', 'preferred_language']) {
+    const matched = matchLanguageCandidate(profile[key])
+    if (matched) {
+      return matched
+    }
+  }
+
+  return undefined
 }
 
 function getByPath(source: Record<string, any>, path: string): string | undefined {

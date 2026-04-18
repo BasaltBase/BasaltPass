@@ -3,7 +3,7 @@ import { uiAlert } from '@contexts/DialogContext'
 import Layout from '@features/user/components/Layout'
 import { PCard, PButton, PInput, PSelect, PSkeleton, PTextarea, PPageHeader } from '@ui'
 import { UserIcon, BellIcon, GlobeAltIcon } from '@heroicons/react/24/outline'
-import { useI18n } from '@shared/i18n'
+import { useI18n, resolveLanguageFromProfile } from '@shared/i18n'
 import {
   getUserProfile,
   updateUserProfile,
@@ -140,7 +140,7 @@ function ToggleCheckbox({
 }
 
 export default function Settings() {
-  const { t } = useI18n()
+  const { t, setLanguage } = useI18n()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -169,6 +169,25 @@ export default function Settings() {
     security_enabled: true,
   })
 
+  const applyProfileLanguage = (profileData: any, languageOptions: Language[] = languages) => {
+    const resolved = resolveLanguageFromProfile(profileData)
+    if (resolved) {
+      setLanguage(resolved)
+      return
+    }
+
+    const languageId = Number(profileData?.language_id)
+    if (!Number.isFinite(languageId)) {
+      return
+    }
+
+    const matchedLanguage = languageOptions.find((item) => Number(item.id) === languageId)
+    const fromCatalog = resolveLanguageFromProfile({ language: matchedLanguage })
+    if (fromCatalog) {
+      setLanguage(fromCatalog)
+    }
+  }
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -182,12 +201,15 @@ export default function Settings() {
           userNotificationApi.getNotificationSettings(),
         ])
 
+        const normalizedLanguages = (languagesRes.data.languages || []).map(normalizeLanguage).filter((item) => item.id > 0)
+
         if (profileRes.data.profile) {
           setProfile(toSettingsProfile(profileRes.data.profile))
+          applyProfileLanguage(profileRes.data.profile, normalizedLanguages)
         }
 
         setGenders((gendersRes.data.genders || []).map(normalizeGender).filter((item) => item.id > 0))
-        setLanguages((languagesRes.data.languages || []).map(normalizeLanguage).filter((item) => item.id > 0))
+        setLanguages(normalizedLanguages)
         setCurrencies((currenciesRes.data.currencies || []).map(normalizeCurrency).filter((item) => item.id > 0))
         setTimezones(timezonesRes.data.timezones)
         setNotifications(notificationSettingsRes.data.data)
@@ -207,6 +229,7 @@ export default function Settings() {
       setSaving(true)
       const response = await updateUserProfile(changes)
       setProfile(toSettingsProfile(response.data.profile))
+      applyProfileLanguage(response.data.profile)
       if (!silent) uiAlert(t('pages.settings.alerts.saved'))
     } catch (err) {
       console.error('Failed to save settings:', err)
@@ -245,6 +268,7 @@ export default function Settings() {
       ])
 
       setProfile(toSettingsProfile(profileResponse.data.profile))
+      applyProfileLanguage(profileResponse.data.profile)
       setNotifications(notificationResponse.data.data)
       uiAlert(t('pages.settings.alerts.saved'))
     } catch (err) {

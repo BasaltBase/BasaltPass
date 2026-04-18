@@ -23,7 +23,6 @@ import { PButton } from '@ui'
 import { useAuth } from '@contexts/AuthContext'
 import { useConfig } from '@contexts/ConfigContext'
 import EnhancedNotificationIcon from '@components/EnhancedNotificationIcon'
-import LanguageSwitcher from '@components/LanguageSwitcher'
 import { authorizeConsole } from '@api/console'
 import { uiAlert } from '@contexts/DialogContext'
 import { ROUTES } from '@constants'
@@ -323,7 +322,6 @@ export default function Layout({ children }: LayoutProps) {
         {/*  */}
         <div className="hidden md:flex md:items-center md:justify-end md:px-6 md:py-4 bg-white border-b border-gray-200">
           <div className="flex items-center space-x-4">
-            <LanguageSwitcher />
             {/*  - admin */}
 
             {canAccessTenant && (

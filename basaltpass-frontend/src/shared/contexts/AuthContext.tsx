@@ -14,6 +14,7 @@ import {
   upsertUserConsoleSession,
 } from '../utils/userSessions'
 import { ROUTES } from '@constants'
+import { resolveLanguageFromProfile, useI18n } from '@shared/i18n'
 
 interface User {
   id: number
@@ -57,6 +58,7 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const expectedScope = getAuthScope()
+  const { setLanguage } = useI18n()
   const [user, setUser] = useState<User | null>(null)
   const [tenants, setTenants] = useState<UserTenant[]>([])
   const [userSessions, setUserSessions] = useState<UserConsoleSession[]>(() =>
@@ -82,6 +84,43 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setUserSessions(listUserConsoleSessions())
   }, [expectedScope])
 
+  const syncLanguageFromProfile = useCallback(async (profileData: any) => {
+    const directLanguage = resolveLanguageFromProfile(profileData)
+    if (directLanguage) {
+      setLanguage(directLanguage)
+      return
+    }
+
+    try {
+      const profileDetailRes = await client.get('/api/v1/user/profile-detail')
+      const detailProfile =
+        profileDetailRes.data?.profile ??
+        profileDetailRes.data?.data?.profile ??
+        profileDetailRes.data?.data ??
+        profileDetailRes.data
+      const detailLanguage = resolveLanguageFromProfile(detailProfile)
+      if (detailLanguage) {
+        setLanguage(detailLanguage)
+        return
+      }
+
+      const languageId = Number(detailProfile?.language_id)
+      if (Number.isFinite(languageId)) {
+        const languagesRes = await client.get('/api/v1/user/languages')
+        const languageList = languagesRes.data?.languages ?? languagesRes.data?.data ?? []
+        const matchedLanguage = Array.isArray(languageList)
+          ? languageList.find((item: any) => Number(item?.id ?? item?.ID) === languageId)
+          : undefined
+        const mappedLanguage = resolveLanguageFromProfile({ language: matchedLanguage })
+        if (mappedLanguage) {
+          setLanguage(mappedLanguage)
+        }
+      }
+    } catch {
+      // Keep current language if profile detail is unavailable.
+    }
+  }, [setLanguage])
+
   const loadIdentity = useCallback(async (token: string) => {
     if (!tokenMatchesScope(token)) {
       throw new Error('Token scope mismatch')
@@ -105,6 +144,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     setUser(profileData)
     setTenants(tenantList)
+    await syncLanguageFromProfile(profileData)
 
     if (expectedScope === 'user') {
       upsertUserConsoleSession(profileData, token, tenantList)
@@ -112,7 +152,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     return { profileData, tenantList }
-  }, [expectedScope, syncUserSessions, tokenMatchesScope])
+  }, [expectedScope, syncLanguageFromProfile, syncUserSessions, tokenMatchesScope])
 
   const checkAuth = useCallback(async () => {
     debugAuth.log('Starting auth check')

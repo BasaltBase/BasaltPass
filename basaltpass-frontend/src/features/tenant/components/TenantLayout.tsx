@@ -7,7 +7,6 @@ import { useAuth } from '@contexts/AuthContext'
 import { useConfig } from '@contexts/ConfigContext'
 import EnhancedNotificationIcon from '@components/EnhancedNotificationIcon'
 import ConsoleAccountSwitcherModal from '@components/ConsoleAccountSwitcherModal'
-import LanguageSwitcher from '@components/LanguageSwitcher'
 import { PButton } from '@ui'
 import { authorizeConsole, joinConsoleUrl } from '@api/console'
 import { ROUTES } from '@constants'
@@ -128,7 +127,6 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
             
             <div className="flex items-center space-x-4">
               {actions}
-              <LanguageSwitcher />
               
               {/*  -  */}
               {isTenantPath && canAccessAdmin && (
