@@ -175,18 +175,18 @@ export default function TenantDashboard() {
   }
 
   const getLoginUrl = () => {
-    const baseUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || 'http://localhost:5101'
+    const baseUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || window.location.origin
     return `${baseUrl}/auth/tenant/${tenantCode}/login`
   }
 
   const getRegisterUrl = () => {
-    const baseUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || 'http://localhost:5101'
+    const baseUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || window.location.origin
     return `${baseUrl}/auth/tenant/${tenantCode}/register`
   }
 
   const getJoinUrl = () => {
-    const baseUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || 'http://localhost:5101'
-    return `${baseUrl}/tenant/${tenantCode}/register`
+    const baseUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || window.location.origin
+    return `${baseUrl}/auth/tenant/${tenantCode}/register`
   }
 
   const handleLivenessCheck = async () => {

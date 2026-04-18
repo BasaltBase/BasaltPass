@@ -292,18 +292,18 @@ export default function TenantInfoPage() {
   }
 
   const getLoginUrl = () => {
-    const baseUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || 'http://localhost:5101'
+    const baseUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || window.location.origin
     return `${baseUrl}/auth/tenant/${tenantInfo?.code}/login`
   }
 
   const getRegisterUrl = () => {
-    const baseUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || 'http://localhost:5101'
+    const baseUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || window.location.origin
     return `${baseUrl}/auth/tenant/${tenantInfo?.code}/register`
   }
 
   const getJoinUrl = () => {
-    const baseUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || 'http://localhost:5101'
-    return `${baseUrl}/tenant/${tenantInfo?.code}/register`
+    const baseUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || window.location.origin
+    return `${baseUrl}/auth/tenant/${tenantInfo?.code}/register`
   }
 
   const loginEnabled = authSettings?.allow_login ?? true
