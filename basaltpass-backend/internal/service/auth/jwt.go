@@ -129,16 +129,14 @@ func resolveTokenTenantID(userID uint, claimedTenantID uint, scope string) (uint
 			return claimedTenantID, nil
 		}
 
-		if scope == ConsoleScopeTenant {
-			var membershipCount int64
-			if err := common.DB().Model(&model.TenantUser{}).
-				Where("user_id = ? AND tenant_id = ?", userID, claimedTenantID).
-				Count(&membershipCount).Error; err != nil {
-				return 0, err
-			}
-			if membershipCount > 0 {
-				return claimedTenantID, nil
-			}
+		var membershipCount int64
+		if err := common.DB().Model(&model.TenantUser{}).
+			Where("user_id = ? AND tenant_id = ?", userID, claimedTenantID).
+			Count(&membershipCount).Error; err != nil {
+			return 0, err
+		}
+		if membershipCount > 0 {
+			return claimedTenantID, nil
 		}
 	}
 

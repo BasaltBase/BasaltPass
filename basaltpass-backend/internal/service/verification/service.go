@@ -123,6 +123,10 @@ func (s *Service) StartSignup(req StartSignupRequest) (*StartSignupResponse, err
 		normalizedPhone = normalized
 	}
 
+	if err := s.ensureSignupEmailAvailable(common.DB(), normalizedEmail, req.TenantID); err != nil {
+		return nil, err
+	}
+
 	// 风控评估
 	riskLevel := s.assessRisk(req.IP, req.UserAgent, normalizedEmail)
 
@@ -375,11 +379,9 @@ func (s *Service) CompleteSignup(req CompleteSignupRequest) (*model.User, error)
 		}
 	}()
 
-	// 检查邮箱和租户组合是否已被注册（同一邮箱可以在不同租户注册）
-	var existingUser model.User
-	if err := tx.Where("email = ? AND tenant_id = ?", pendingSignup.Email, pendingSignup.TenantID).First(&existingUser).Error; err == nil {
+	if err := s.ensureSignupEmailAvailable(tx, strings.ToLower(strings.TrimSpace(pendingSignup.Email)), pendingSignup.TenantID); err != nil {
 		tx.Rollback()
-		return nil, errors.New("email already registered in this tenant")
+		return nil, err
 	}
 
 	// 检查是否是第一个用户
@@ -469,6 +471,42 @@ func (s *Service) generateSignupID() (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(bytes), nil
+}
+
+func (s *Service) ensureSignupEmailAvailable(tx *gorm.DB, email string, tenantID uint) error {
+	email = strings.ToLower(strings.TrimSpace(email))
+	if email == "" {
+		return nil
+	}
+
+	if tenantID == 0 {
+		var exists int64
+		if err := tx.Model(&model.User{}).Where("email = ?", email).Count(&exists).Error; err != nil {
+			return errors.New("failed to check existing account")
+		}
+		if exists > 0 {
+			return errors.New("email already registered")
+		}
+		return nil
+	}
+
+	var sameTenant int64
+	if err := tx.Model(&model.User{}).Where("email = ? AND tenant_id = ?", email, tenantID).Count(&sameTenant).Error; err != nil {
+		return errors.New("failed to check existing account")
+	}
+	if sameTenant > 0 {
+		return errors.New("email already registered in this tenant")
+	}
+
+	var globalExists int64
+	if err := tx.Model(&model.User{}).Where("email = ? AND tenant_id = 0", email).Count(&globalExists).Error; err != nil {
+		return errors.New("failed to check existing account")
+	}
+	if globalExists > 0 {
+		return errors.New("email already registered as a global account")
+	}
+
+	return nil
 }
 
 // assessRisk 评估风险等级

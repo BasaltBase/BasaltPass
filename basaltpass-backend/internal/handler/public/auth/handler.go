@@ -92,6 +92,7 @@ func LoginHandler(c *fiber.Ctx) error {
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
+	req.Scope = normalizeScope(c.Get("X-Auth-Scope"))
 	// Hydrate legacy fields for backward compatibility with old clients.
 	hydrateLegacyLoginFields(c, &req)
 
@@ -106,6 +107,9 @@ func LoginHandler(c *fiber.Ctx) error {
 			})
 		}
 		if errors.Is(err, auth2.ErrPlatformAdminOnly) {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": err.Error()})
+		}
+		if errors.Is(err, auth2.ErrTenantAccountOnly) {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": err.Error()})
 		}
 		if errors.Is(err, auth2.ErrTenantLoginDisabled) {

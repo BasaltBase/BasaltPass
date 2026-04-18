@@ -13,6 +13,7 @@ type LoginRequest struct {
 	EmailOrPhone string `json:"identifier"`
 	Password     string `json:"password"`
 	TenantID     uint   `json:"tenant_id"` // 租户ID，用于识别用户属于哪个租户
+	Scope        string `json:"-"`
 }
 
 // Verify2FARequest defines input for 2FA verification.

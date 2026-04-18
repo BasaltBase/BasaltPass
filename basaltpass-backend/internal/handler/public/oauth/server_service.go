@@ -23,6 +23,13 @@ type OAuthServerService struct {
 	db *gorm.DB
 }
 
+type UserTenantAuthorizationDecision struct {
+	Allowed      bool
+	JoinRequired bool
+	TenantID     uint
+	Reason       string
+}
+
 // NewOAuthServerService 创建新的OAuth2服务器服务
 func NewOAuthServerService() *OAuthServerService {
 	return &OAuthServerService{
@@ -597,29 +604,90 @@ func (s *OAuthServerService) RevokeToken(token string) error {
 	return nil
 }
 
-// ValidateUserTenant 验证用户是否属于应用所在的租户
-func (s *OAuthServerService) ValidateUserTenant(userID uint, client *model.OAuthClient) error {
-	// 获取用户信息
-	var user model.User
-	if err := s.db.Select("id", "tenant_id", "is_system_admin").First(&user, userID).Error; err != nil {
-		return errors.New("user_not_found")
+func (s *OAuthServerService) EnsureUserTenantIdentity(userID, tenantID uint, role model.TenantRole) error {
+	if userID == 0 || tenantID == 0 {
+		return errors.New("invalid_identity_context")
+	}
+	if role == "" {
+		role = model.TenantRoleMember
 	}
 
-	// 系统管理员可以访问所有租户的应用
-	if user.IsSystemAdmin != nil && *user.IsSystemAdmin {
+	var existing model.TenantUser
+	err := s.db.Where("user_id = ? AND tenant_id = ?", userID, tenantID).First(&existing).Error
+	if err == nil {
 		return nil
 	}
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
 
-	// 获取应用所属租户ID（支持历史脏数据的兜底恢复）
+	return s.db.Create(&model.TenantUser{
+		UserID:   userID,
+		TenantID: tenantID,
+		Role:     role,
+	}).Error
+}
+
+func (s *OAuthServerService) EvaluateUserTenantAuthorization(userID uint, client *model.OAuthClient) (*UserTenantAuthorizationDecision, error) {
+	var user model.User
+	if err := s.db.Select("id", "tenant_id", "is_system_admin").First(&user, userID).Error; err != nil {
+		return nil, errors.New("user_not_found")
+	}
+
 	tenantID := s.resolveClientTenantID(client)
 	if tenantID == 0 {
-		return errors.New("app_tenant_not_found")
+		return nil, errors.New("app_tenant_not_found")
 	}
 
-	// 验证用户的tenant_id是否与应用的tenant_id匹配
-	if user.TenantID != tenantID {
-		return errors.New("tenant_mismatch")
+	if user.IsSystemAdmin != nil && *user.IsSystemAdmin {
+		return &UserTenantAuthorizationDecision{Allowed: true, TenantID: tenantID}, nil
 	}
 
-	return nil
+	if user.TenantID == tenantID {
+		return &UserTenantAuthorizationDecision{Allowed: true, TenantID: tenantID}, nil
+	}
+
+	if user.TenantID == 0 {
+		var membershipCount int64
+		if err := s.db.Model(&model.TenantUser{}).
+			Where("user_id = ? AND tenant_id = ?", userID, tenantID).
+			Count(&membershipCount).Error; err != nil {
+			return nil, err
+		}
+		if membershipCount > 0 {
+			return &UserTenantAuthorizationDecision{Allowed: true, TenantID: tenantID}, nil
+		}
+
+		return &UserTenantAuthorizationDecision{
+			Allowed:      false,
+			JoinRequired: true,
+			TenantID:     tenantID,
+			Reason:       "join_required",
+		}, nil
+	}
+
+	return &UserTenantAuthorizationDecision{
+		Allowed:      false,
+		JoinRequired: false,
+		TenantID:     tenantID,
+		Reason:       "tenant_mismatch",
+	}, nil
+}
+
+// ValidateUserTenant 验证用户是否属于应用所在的租户
+func (s *OAuthServerService) ValidateUserTenant(userID uint, client *model.OAuthClient) error {
+	decision, err := s.EvaluateUserTenantAuthorization(userID, client)
+	if err != nil {
+		return err
+	}
+	if decision.Allowed {
+		return nil
+	}
+	if decision.JoinRequired {
+		return errors.New("join_required")
+	}
+	if decision.Reason != "" {
+		return errors.New(decision.Reason)
+	}
+	return errors.New("tenant_mismatch")
 }
