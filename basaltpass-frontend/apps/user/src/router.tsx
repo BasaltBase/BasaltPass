@@ -5,6 +5,7 @@ import Login from '../../../src/features/auth/Login'
 import Register from '../../../src/features/auth/Register'
 import TenantLogin from '../../../src/features/auth/TenantLogin'
 import TenantRegister from '../../../src/features/auth/TenantRegister'
+import TenantJoin from '../../../src/features/auth/TenantJoin'
 import OauthSuccess from '../../../src/features/auth/OauthSuccess'
 import OAuthConsent from '../../../src/features/auth/OAuthConsent'
 import ResetPassword from '../../../src/features/auth/ResetPassword'
@@ -90,6 +91,14 @@ export default function AppRouter() {
           </PublicRoute>
         }
       />
+      <Route
+        path="/auth/tenant/:tenantCode/join"
+        element={
+          <PublicRoute>
+            <TenantJoin />
+          </PublicRoute>
+        }
+      />
       {/* Backward compatibility */}
       <Route
         path="/tenant/:tenantCode/login"
@@ -104,6 +113,14 @@ export default function AppRouter() {
         element={
           <PublicRoute>
             <TenantRegister />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/tenant/:tenantCode/join"
+        element={
+          <PublicRoute>
+            <TenantJoin />
           </PublicRoute>
         }
       />

@@ -27,6 +27,7 @@ func RegisterUserRoutes(v1 fiber.Router) {
 	// 用户租户管理
 	userGroup := v1.Group("/user", middleware.JWTMiddleware())
 	userGroup.Get("/tenants", user.GetUserTenantsHandler)
+	userGroup.Post("/tenants/join-by-code/:code", user.JoinTenantByCodeHandler)
 	userGroup.Get("/profile", user.GetProfileHandler)
 	userGroup.Put("/profile", user.UpdateProfileHandler)
 

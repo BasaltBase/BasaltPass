@@ -303,7 +303,7 @@ export default function TenantInfoPage() {
 
   const getJoinUrl = () => {
     const baseUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || window.location.origin
-    return `${baseUrl}/auth/tenant/${tenantInfo?.code}/register`
+    return `${baseUrl}/auth/tenant/${tenantInfo?.code}/join`
   }
 
   const loginEnabled = authSettings?.allow_login ?? true

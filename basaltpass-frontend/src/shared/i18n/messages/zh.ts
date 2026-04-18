@@ -378,6 +378,34 @@ const en = {
         sendCode: 'Send verification code',
       },
     },
+    tenantJoin: {
+      title: '加入租户',
+      descriptionPrefix: '你即将加入',
+      descriptionSuffix: '。点击下方按钮继续。',
+      loginRequired: {
+        title: '需要先登录',
+        descriptionPrefix: '请先使用全局账号登录，再加入',
+        descriptionSuffix: '。',
+      },
+      actions: {
+        loginToJoin: '登录并继续',
+        joinNow: '加入该租户',
+        joining: '加入中...',
+        goTenantLogin: '前往租户登录',
+        goUserDashboard: '返回用户控制台',
+      },
+      success: {
+        title: '加入租户成功',
+        joinedPrefix: '你的账号已成功加入',
+        joinedSuffix: '。现在可以通过租户入口登录。',
+        alreadyJoinedPrefix: '你的账号已经是',
+        alreadyJoinedSuffix: '的成员。',
+      },
+      errors: {
+        title: '加入失败',
+        joinFailed: '无法加入租户，请稍后重试。',
+      },
+    },
   },
   pages: {
     terms: {

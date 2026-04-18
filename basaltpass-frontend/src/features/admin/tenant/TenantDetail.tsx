@@ -265,7 +265,7 @@ const TenantDetail: React.FC = () => {
     if (!tenant?.code || !userConsoleBaseUrl) {
       return ''
     }
-    return `${userConsoleBaseUrl}/auth/tenant/${tenant.code}/register`
+    return `${userConsoleBaseUrl}/auth/tenant/${tenant.code}/join`
   }, [tenant?.code, userConsoleBaseUrl])
 
   if (loading) {

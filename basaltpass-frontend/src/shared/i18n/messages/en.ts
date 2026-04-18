@@ -378,6 +378,34 @@ const en = {
         sendCode: 'Send verification code',
       },
     },
+    tenantJoin: {
+      title: 'Join Tenant',
+      descriptionPrefix: 'You are about to join',
+      descriptionSuffix: '. Click the button below to continue.',
+      loginRequired: {
+        title: 'Sign in required',
+        descriptionPrefix: 'Please sign in with your global account first, then join',
+        descriptionSuffix: '.',
+      },
+      actions: {
+        loginToJoin: 'Sign in and continue',
+        joinNow: 'Join this tenant',
+        joining: 'Joining...',
+        goTenantLogin: 'Go to tenant sign in',
+        goUserDashboard: 'Back to user dashboard',
+      },
+      success: {
+        title: 'Tenant join successful',
+        joinedPrefix: 'Your account has joined',
+        joinedSuffix: 'successfully. You can now sign in through the tenant portal.',
+        alreadyJoinedPrefix: 'Your account is already a member of',
+        alreadyJoinedSuffix: '.',
+      },
+      errors: {
+        title: 'Join failed',
+        joinFailed: 'Unable to join tenant. Please try again later.',
+      },
+    },
   },
   pages: {
     terms: {
