@@ -15,6 +15,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+	"gorm.io/gorm"
 )
 
 type consoleCodeState struct {
@@ -126,14 +127,6 @@ func userHasTenantAdminAccess(userID uint, tenantID uint) (bool, error) {
 		return false, nil
 	}
 
-	var user model.User
-	if err := common.DB().Select("id", "tenant_id").First(&user, userID).Error; err != nil {
-		return false, err
-	}
-	if user.TenantID != tenantID {
-		return false, nil
-	}
-
 	var cnt int64
 	err := common.DB().Model(&model.TenantUser{}).
 		Where("user_id = ? AND tenant_id = ? AND role IN ?", userID, tenantID, []model.TenantRole{model.TenantRoleOwner, model.TenantRoleAdmin}).
@@ -145,21 +138,22 @@ func userHasTenantAdminAccess(userID uint, tenantID uint) (bool, error) {
 }
 
 func userDefaultTenantIDForAdminConsole(userID uint) (uint, error) {
-	var user model.User
-	if err := common.DB().Select("id", "tenant_id").First(&user, userID).Error; err != nil {
-		return 0, err
-	}
-	if user.TenantID == 0 {
-		return 0, errors.New("tenant admin access required")
-	}
-	ok, err := userHasTenantAdminAccess(userID, user.TenantID)
+	var membership model.TenantUser
+	err := common.DB().
+		Where("user_id = ? AND role IN ?", userID, []model.TenantRole{model.TenantRoleOwner, model.TenantRoleAdmin}).
+		Order("created_at ASC").
+		First(&membership).Error
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return 0, errors.New("tenant admin access required")
+		}
 		return 0, err
 	}
-	if !ok {
+	if membership.TenantID == 0 {
 		return 0, errors.New("tenant admin access required")
 	}
-	return user.TenantID, nil
+
+	return membership.TenantID, nil
 }
 
 func mustGetUserID(c *fiber.Ctx) (uint, error) {

@@ -33,6 +33,7 @@ interface UserTenant {
   name?: string
   code?: string
   role?: string
+  metadata?: Record<string, any>
   status?: string
 }
 
@@ -324,7 +325,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [user, isLoading, hasChecked])
 
   const tenantRole = (user?.tenant_role || '').toLowerCase()
-  const canManageTenant = user?.tenant_id ? user.tenant_id > 0 && ['owner', 'admin'].includes(tenantRole) : false
+  const canManageCurrentTenant = user?.tenant_id ? user.tenant_id > 0 && ['owner', 'admin'].includes(tenantRole) : false
+  const canManageAnyTenant = tenants.some((tenant) => {
+    const roleFromMetadata = String(tenant?.metadata?.user_role || '').toLowerCase()
+    const role = roleFromMetadata || String(tenant?.role || '').toLowerCase()
+    return Number(tenant?.id || 0) > 0 && ['owner', 'admin'].includes(role)
+  })
+  const canManageTenant = canManageCurrentTenant || canManageAnyTenant
 
   const value: AuthContextType = {
     user,

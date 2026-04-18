@@ -1455,6 +1455,11 @@ const en = {
     switchToAdminTitle: 'Switch to Global Admin Console (on-demand authorization)',
     tenantSwitchFailed: 'This account has no tenant management permission, or tenant console authorization failed.',
     tenantSwitchFailedTitle: 'Unable to Open Tenant Management',
+    noTenantPerspectiveAvailable: 'No tenant perspective is available for this account.',
+    selectTenantPerspectiveTitle: 'Select Tenant Perspective',
+    selectTenantPerspectiveDescription: 'Choose a tenant to enter its dashboard view.',
+    switchToTenantFor: 'Enter {{tenant}}',
+    tenantUnknown: 'Unknown tenant',
   },
   tenantLayout: {
     consoleTitle: 'Tenant Console',

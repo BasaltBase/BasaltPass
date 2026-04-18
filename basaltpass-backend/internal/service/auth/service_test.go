@@ -9,6 +9,7 @@ import (
 	"basaltpass-backend/internal/model"
 
 	"github.com/glebarez/sqlite"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -26,13 +27,14 @@ func TestGenerateTokenPair(t *testing.T) {
 
 func setupAuthLoginTestDB(t *testing.T) *gorm.DB {
 	t.Helper()
+	os.Setenv("JWT_SECRET", "test-secret-for-unit-tests")
 
 	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
 	if err != nil {
 		t.Fatalf("open sqlite failed: %v", err)
 	}
 
-	if err := db.AutoMigrate(&model.User{}, &model.Passkey{}, &model.TenantUser{}); err != nil {
+	if err := db.AutoMigrate(&model.User{}, &model.Passkey{}, &model.TenantUser{}, &model.UserTenantTOTP{}); err != nil {
 		t.Fatalf("auto migrate failed: %v", err)
 	}
 
@@ -100,5 +102,48 @@ func TestLoginV2GlobalPortalAllowsGlobalAccount(t *testing.T) {
 	}
 	if res.UserID != user.ID {
 		t.Fatalf("expected user id %d, got %d", user.ID, res.UserID)
+	}
+}
+
+func TestLoginV2GlobalPortalAllowsRegularUserInAdminScope(t *testing.T) {
+	db := setupAuthLoginTestDB(t)
+
+	user := model.User{
+		TenantID:      0,
+		Email:         "regular-admin-scope@example.com",
+		PasswordHash:  mustPasswordHash(t, "pass-789"),
+		Nickname:      "regular-user",
+		EmailVerified: true,
+	}
+	if err := db.Create(&user).Error; err != nil {
+		t.Fatalf("create user failed: %v", err)
+	}
+
+	res, err := Service{}.LoginV2(LoginRequest{
+		EmailOrPhone: user.Email,
+		Password:     "pass-789",
+		TenantID:     0,
+		Scope:        ConsoleScopeAdmin,
+	})
+	if err != nil {
+		t.Fatalf("admin-scope login for regular global user should succeed, got error: %v", err)
+	}
+	if res.UserID != user.ID {
+		t.Fatalf("expected user id %d, got %d", user.ID, res.UserID)
+	}
+
+	accessToken, parseErr := ParseToken(res.AccessToken)
+	if parseErr != nil || accessToken == nil || !accessToken.Valid {
+		t.Fatalf("access token invalid: %v", parseErr)
+	}
+	claims, ok := accessToken.Claims.(jwt.MapClaims)
+	if !ok {
+		t.Fatalf("unexpected claims type: %T", accessToken.Claims)
+	}
+	if scope, _ := claims["scp"].(string); scope != ConsoleScopeAdmin {
+		t.Fatalf("expected scope %q, got %q", ConsoleScopeAdmin, scope)
+	}
+	if tenantID, _ := claims["tid"].(float64); uint(tenantID) != 0 {
+		t.Fatalf("expected tenant id 0, got %v", claims["tid"])
 	}
 }

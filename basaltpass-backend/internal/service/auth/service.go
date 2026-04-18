@@ -226,10 +226,6 @@ func (s Service) LoginV2(req LoginRequest) (LoginResult, error) {
 			}
 			return LoginResult{}, normalizeLoginQueryError(err)
 		}
-
-		if req.Scope == ConsoleScopeAdmin && !user.IsSuperAdmin() {
-			return LoginResult{}, ErrPlatformAdminOnly
-		}
 	} else {
 		// 租户登录：查询指定租户下的用户
 		query = query.Where("tenant_id = ?", req.TenantID)

@@ -19,7 +19,7 @@ import {
   ChevronDownIcon,
   ArrowRightOnRectangleIcon
 } from '@heroicons/react/24/outline'
-import { PButton } from '@ui'
+import { Modal, PButton } from '@ui'
 import { useAuth } from '@contexts/AuthContext'
 import { useConfig } from '@contexts/ConfigContext'
 import EnhancedNotificationIcon from '@components/EnhancedNotificationIcon'
@@ -37,6 +37,8 @@ export default function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [showAccountSwitcher, setShowAccountSwitcher] = useState(false)
+  const [showTenantPerspectivePicker, setShowTenantPerspectivePicker] = useState(false)
+  const [switchingTenantId, setSwitchingTenantId] = useState<number | null>(null)
   const desktopUserMenuRef = useRef<HTMLDivElement | null>(null)
   const mobileUserMenuRef = useRef<HTMLDivElement | null>(null)
   const location = useLocation()
@@ -53,6 +55,12 @@ export default function Layout({ children }: LayoutProps) {
     if (tenants.length === 1 && tenants[0]?.name) return tenants[0].name
     return siteName
   })()
+
+  const manageableTenants = tenants.filter((tenant) => {
+    const roleFromMetadata = String((tenant as any)?.metadata?.user_role || '').toLowerCase()
+    const role = roleFromMetadata || String(tenant?.role || '').toLowerCase()
+    return Number(tenant?.id || 0) > 0 && ['owner', 'admin'].includes(role)
+  })
 
   const navigation = [
     { name: t('userLayout.nav.dashboard'), href: ROUTES.user.dashboard, icon: HomeIcon },
@@ -138,15 +146,31 @@ export default function Layout({ children }: LayoutProps) {
     return `${b}/${p}`
   }
 
-  const switchToTenant = async () => {
+  const switchToTenantById = async (tenantId: number) => {
+    setSwitchingTenantId(tenantId)
     try {
-      const { code } = await authorizeConsole('tenant')
+      const { code } = await authorizeConsole('tenant', tenantId)
       const url = joinUrl(consoleTenantUrl, `tenant/dashboard?code=${encodeURIComponent(code)}`)
       window.location.href = url
     } catch (error: any) {
       const message = error?.response?.data?.error || t('userLayout.tenantSwitchFailed')
       await uiAlert(message, t('userLayout.tenantSwitchFailedTitle'))
+      setSwitchingTenantId(null)
     }
+  }
+
+  const switchToTenant = async () => {
+    if (manageableTenants.length === 0) {
+      await uiAlert(t('userLayout.noTenantPerspectiveAvailable'), t('userLayout.tenantSwitchFailedTitle'))
+      return
+    }
+
+    if (manageableTenants.length === 1) {
+      await switchToTenantById(Number(manageableTenants[0].id || 0))
+      return
+    }
+
+    setShowTenantPerspectivePicker(true)
   }
 
   const switchToAdmin = async () => {
@@ -443,6 +467,45 @@ export default function Layout({ children }: LayoutProps) {
         consoleTenantUrl={consoleTenantUrl}
         consoleAdminUrl={consoleAdminUrl}
       />
+
+      <Modal
+        open={showTenantPerspectivePicker}
+        onClose={() => {
+          if (!switchingTenantId) {
+            setShowTenantPerspectivePicker(false)
+          }
+        }}
+        title={t('userLayout.selectTenantPerspectiveTitle')}
+        description={t('userLayout.selectTenantPerspectiveDescription')}
+        widthClass="max-w-xl"
+      >
+        <div className="space-y-3">
+          {manageableTenants.map((tenant) => {
+            const roleFromMetadata = String((tenant as any)?.metadata?.user_role || '').toLowerCase()
+            const role = roleFromMetadata || String(tenant?.role || '').toLowerCase()
+            const tenantName = tenant?.name || t('userLayout.tenantUnknown')
+            const tenantId = Number(tenant?.id || 0)
+
+            return (
+              <div key={tenantId} className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3">
+                <div>
+                  <div className="text-sm font-semibold text-gray-900">{tenantName}</div>
+                  <div className="mt-1 text-xs text-gray-500">ID: {tenantId} {role ? `· ${role}` : ''}</div>
+                </div>
+                <PButton
+                  type="button"
+                  size="sm"
+                  loading={switchingTenantId === tenantId}
+                  disabled={!!switchingTenantId}
+                  onClick={() => void switchToTenantById(tenantId)}
+                >
+                  {t('userLayout.switchToTenantFor', { tenant: tenantName })}
+                </PButton>
+              </div>
+            )
+          })}
+        </div>
+      </Modal>
 
   {/* ， */}
     </div>
