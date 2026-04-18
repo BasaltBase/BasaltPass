@@ -14,6 +14,7 @@ import AppStats from '../../../src/features/tenant/app/AppStats'
 import TenantOAuthClients from '../../../src/features/tenant/app/OAuthClients'
 import TenantAutomationTokens from '../../../src/features/tenant/security/AutomationTokens'
 import TenantUserManagement from '../../../src/features/tenant/user/UserManagement'
+import TenantGlobalUserAuthorization from '../../../src/features/tenant/user/GlobalUserAuthorization'
 import TenantTeamsPage from '../../../src/features/tenant/team/Teams'
 import TenantWalletManagement from '../../../src/features/tenant/wallet/WalletManagement'
 import GiftCardManagement from '../../../src/features/tenant/wallet/GiftCardManagement'
@@ -98,6 +99,7 @@ export default function AppRouter() {
       <Route path="/tenant/automation-tokens" element={<TenantRoute><TenantAutomationTokens /></TenantRoute>} />
 
       <Route path="/tenant/users" element={<TenantRoute><TenantUserManagement /></TenantRoute>} />
+      <Route path="/tenant/users/global-authorization" element={<TenantRoute><TenantGlobalUserAuthorization /></TenantRoute>} />
       <Route path="/tenant/teams" element={<TenantRoute><TenantTeamsPage /></TenantRoute>} />
       <Route path="/tenant/wallets" element={<TenantRoute><TenantWalletManagement /></TenantRoute>} />
       <Route path="/tenant/gift-cards" element={<TenantRoute><GiftCardManagement /></TenantRoute>} />

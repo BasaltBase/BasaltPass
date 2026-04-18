@@ -8,6 +8,7 @@ export const TENANT_ROUTES = {
   crossAppTrusts: '/tenant/cross-app-trusts',
   automationTokens: '/tenant/automation-tokens',
   users: '/tenant/users',
+  globalUserAuthorization: '/tenant/users/global-authorization',
   teams: '/tenant/teams',
   roles: '/tenant/roles',
   permissions: '/tenant/permissions',

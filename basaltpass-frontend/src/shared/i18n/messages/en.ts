@@ -1481,6 +1481,7 @@ const en = {
     automationTokens: 'Automation Tokens',
     userManagement: 'User Management',
     userList: 'Users',
+    globalUserAuthorization: 'Global User Authorization',
     teamManagement: 'Teams',
     walletManagement: 'Wallet Management',
     giftCardManagement: 'Gift Card Management',
@@ -3033,6 +3034,46 @@ const en = {
       fetchTenantUserStatsFailed: 'Failed to fetch tenant user stats:',
       fetchAppStatsFailed: 'Failed to fetch app {{appId}} user stats:',
       fetchAppsFailed: 'Failed to fetch app list:',
+    },
+  },
+  tenantGlobalUserAuthorization: {
+    page: {
+      title: 'Global User Authorization',
+      subtitle: 'Authorize platform-level users to join current tenant',
+    },
+    common: {
+      noNickname: 'No nickname',
+    },
+    actions: {
+      refresh: 'Refresh',
+      authorize: 'Authorize Join',
+      authorizing: 'Authorizing...',
+    },
+    filters: {
+      searchPlaceholder: 'Search email or nickname...',
+    },
+    list: {
+      title: 'Global Users ({{count}} users)',
+    },
+    table: {
+      user: 'User',
+      createdAt: 'Created At',
+      actions: 'Actions',
+    },
+    empty: {
+      title: 'No global users available',
+      description: 'No platform-level user can be authorized at the moment',
+    },
+    pagination: {
+      showing: 'Showing {{start}} - {{end}}, total {{total}}',
+      pageInfo: 'Page {{current}} of {{total}}',
+    },
+    confirm: {
+      authorizeUser: 'Authorize {{email}} to join this tenant?',
+    },
+    errors: {
+      fetchFailed: 'Failed to fetch global users',
+      authorizeFailed: 'Failed to authorize this user',
     },
   },
   tenantRoleManagement: {

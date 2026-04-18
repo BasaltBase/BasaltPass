@@ -55,6 +55,20 @@ type InviteTenantUserRequest struct {
 	Message string `json:"message,omitempty"`
 }
 
+// GlobalUserCandidateResponse 全局用户候选响应
+type GlobalUserCandidateResponse struct {
+	ID        uint      `json:"id"`
+	Email     string    `json:"email"`
+	Nickname  string    `json:"nickname"`
+	Avatar    string    `json:"avatar"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+// AuthorizeGlobalUserRequest 授权全局用户加入当前租户
+type AuthorizeGlobalUserRequest struct {
+	Role string `json:"role,omitempty"`
+}
+
 func normalizeTenantInviteRole(raw string) (model.TenantRole, string, bool) {
 	switch strings.ToLower(strings.TrimSpace(raw)) {
 	case string(model.TenantRoleAdmin):
@@ -366,6 +380,178 @@ func GetTenantUserStatsHandler(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{
 		"stats": stats,
+	})
+}
+
+// GetGlobalUserCandidatesHandler 获取可授权加入当前租户的全局用户候选
+// GET /api/v1/tenant/users/global-candidates
+func GetGlobalUserCandidatesHandler(c *fiber.Ctx) error {
+	if err := requireTenantAdminRole(c); err != nil {
+		return err
+	}
+
+	page, _ := strconv.Atoi(c.Query("page", "1"))
+	limit, _ := strconv.Atoi(c.Query("limit", "20"))
+	search := strings.TrimSpace(c.Query("search", ""))
+
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit > 100 {
+		limit = 20
+	}
+	offset := (page - 1) * limit
+
+	query := common.DB().Table("system_auth_users").
+		Where("tenant_id = ?", 0).
+		Where("deleted_at IS NULL").
+		Where("COALESCE(is_system_admin, 0) = 0")
+
+	if search != "" {
+		query = query.Where("LOWER(email) LIKE LOWER(?) OR LOWER(nickname) LIKE LOWER(?)", "%"+search+"%", "%"+search+"%")
+	}
+
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "查询全局用户失败",
+		})
+	}
+
+	var users []GlobalUserCandidateResponse
+	if err := query.Select("id, email, nickname, COALESCE(avatar_url, '') as avatar, created_at").
+		Order("created_at DESC").
+		Offset(offset).
+		Limit(limit).
+		Scan(&users).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "查询全局用户失败",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"users": users,
+		"pagination": fiber.Map{
+			"page":  page,
+			"limit": limit,
+			"total": total,
+		},
+	})
+}
+
+// AuthorizeGlobalUserToTenantHandler 授权全局用户加入当前租户
+// POST /api/v1/tenant/users/global-candidates/:id/authorize
+func AuthorizeGlobalUserToTenantHandler(c *fiber.Ctx) error {
+	if err := requireTenantAdminRole(c); err != nil {
+		return err
+	}
+
+	tenantID := c.Locals("tenantID").(uint)
+	userIDUint64, err := strconv.ParseUint(c.Params("id"), 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "无效的用户ID",
+		})
+	}
+	userID := uint(userIDUint64)
+
+	var req AuthorizeGlobalUserRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "请求参数错误",
+		})
+	}
+
+	assignedRole := model.TenantRoleMember
+	if strings.TrimSpace(req.Role) != "" {
+		normalizedRole, _, ok := normalizeTenantInviteRole(req.Role)
+		if !ok {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "无效的角色类型",
+			})
+		}
+		assignedRole = normalizedRole
+	}
+
+	var user model.User
+	if err := common.DB().First(&user, userID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "用户不存在",
+			})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "查询用户失败",
+		})
+	}
+
+	if user.IsSuperAdmin() {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error": "不支持授权系统管理员加入租户",
+		})
+	}
+
+	if user.TenantID != 0 && user.TenantID != tenantID {
+		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+			"error": "用户已属于其他租户",
+		})
+	}
+
+	tx := common.DB().Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	if user.TenantID == 0 {
+		if err := tx.Model(&model.User{}).Where("id = ?", user.ID).Update("tenant_id", tenantID).Error; err != nil {
+			tx.Rollback()
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "授权加入租户失败",
+			})
+		}
+	}
+
+	var tenantUser model.TenantUser
+	err = tx.Where("tenant_id = ? AND user_id = ?", tenantID, user.ID).First(&tenantUser).Error
+	if err != nil {
+		if err != gorm.ErrRecordNotFound {
+			tx.Rollback()
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "授权加入租户失败",
+			})
+		}
+
+		newTenantUser := model.TenantUser{
+			UserID:   user.ID,
+			TenantID: tenantID,
+			Role:     assignedRole,
+		}
+		if err := tx.Create(&newTenantUser).Error; err != nil {
+			tx.Rollback()
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "授权加入租户失败",
+			})
+		}
+	} else if strings.TrimSpace(req.Role) != "" && tenantUser.Role != model.TenantRoleOwner {
+		tenantUser.Role = assignedRole
+		if err := tx.Save(&tenantUser).Error; err != nil {
+			tx.Rollback()
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "授权加入租户失败",
+			})
+		}
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "授权加入租户失败",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "用户已加入当前租户",
 	})
 }
 

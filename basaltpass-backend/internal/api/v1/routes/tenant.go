@@ -55,6 +55,8 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 	tenantUserGroup.Get("/", tenant2.GetTenantUsersHandler) // 获取tenant的全部app的全部用户
 	tenantUserGroup.Get("/app-linked", tenant2.GetTenantAppLinkedUsersHandler)
 	tenantUserGroup.Get("/stats", tenant2.GetTenantUserStatsHandler)
+	tenantUserGroup.Get("/global-candidates", tenant2.GetGlobalUserCandidatesHandler)
+	tenantUserGroup.Post("/global-candidates/:id/authorize", tenant2.AuthorizeGlobalUserToTenantHandler)
 	tenantUserGroup.Get("/:id", tenant2.GetTenantUserHandler)
 	tenantUserGroup.Put("/:id", tenant2.UpdateTenantUserHandler)
 	tenantUserGroup.Delete("/:id", tenant2.RemoveTenantUserHandler)

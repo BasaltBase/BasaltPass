@@ -15,7 +15,8 @@ import {
   ShoppingCartIcon,
   InformationCircleIcon,
   RocketLaunchIcon,
-  CurrencyDollarIcon
+  CurrencyDollarIcon,
+  UserPlusIcon
 } from '@heroicons/react/24/outline'
 import { ROUTES } from '@constants'
 import { useConfig } from '@contexts/ConfigContext'
@@ -56,6 +57,7 @@ const navigationItems: NavigationItem[] = [
     icon: UsersIcon,
     children: [
       { key: 'tenantNav.userList', href: ROUTES.tenant.users, icon: UsersIcon },
+      { key: 'tenantNav.globalUserAuthorization', href: ROUTES.tenant.globalUserAuthorization, icon: UserPlusIcon },
       { key: 'tenantNav.teamManagement', href: ROUTES.tenant.teams, icon: UsersIcon },
       { key: 'tenantNav.walletManagement', href: ROUTES.tenant.wallets, icon: CurrencyDollarIcon },
       { key: 'tenantNav.giftCardManagement', href: ROUTES.tenant.giftCards, icon: GiftIcon },

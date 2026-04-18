@@ -1481,6 +1481,7 @@ const en = {
     automationTokens: '自动化 API 令牌',
     userManagement: 'User Management',
     userList: 'Users',
+    globalUserAuthorization: '全局用户授权',
     teamManagement: 'Teams',
     walletManagement: 'Wallet Management',
     giftCardManagement: 'Gift Card Management',
@@ -3033,6 +3034,46 @@ const en = {
       fetchTenantUserStatsFailed: 'Failed to fetch tenant user stats:',
       fetchAppStatsFailed: 'Failed to fetch app {{appId}} user stats:',
       fetchAppsFailed: 'Failed to fetch app list:',
+    },
+  },
+  tenantGlobalUserAuthorization: {
+    page: {
+      title: '全局用户授权',
+      subtitle: '将平台级用户授权加入当前租户',
+    },
+    common: {
+      noNickname: '未设置昵称',
+    },
+    actions: {
+      refresh: '刷新',
+      authorize: '授权加入',
+      authorizing: '授权中...',
+    },
+    filters: {
+      searchPlaceholder: '搜索邮箱或昵称...',
+    },
+    list: {
+      title: '全局用户（{{count}}人）',
+    },
+    table: {
+      user: '用户',
+      createdAt: '创建时间',
+      actions: '操作',
+    },
+    empty: {
+      title: '暂无可授权的全局用户',
+      description: '当前没有可加入本租户的平台级用户',
+    },
+    pagination: {
+      showing: '显示 {{start}} - {{end}}，共 {{total}} 条',
+      pageInfo: '第 {{current}} / {{total}} 页',
+    },
+    confirm: {
+      authorizeUser: '确认授权 {{email}} 加入当前租户吗？',
+    },
+    errors: {
+      fetchFailed: '获取全局用户失败',
+      authorizeFailed: '授权加入失败',
     },
   },
   tenantRoleManagement: {
