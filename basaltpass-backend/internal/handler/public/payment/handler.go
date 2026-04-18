@@ -36,9 +36,35 @@ func requireSuperAdmin(c *fiber.Ctx) error {
 	return nil
 }
 
+func resolvePaymentTenantID(c *fiber.Ctx) uint {
+	if tid, ok := c.Locals("tenantID").(uint); ok && tid > 0 {
+		return tid
+	}
+
+	userID, ok := c.Locals("userID").(uint)
+	if !ok || userID == 0 {
+		return 0
+	}
+
+	var user model.User
+	if err := common.DB().Select("id", "tenant_id").First(&user, userID).Error; err == nil {
+		if user.TenantID > 0 {
+			return user.TenantID
+		}
+	}
+
+	var membership model.TenantUser
+	if err := common.DB().Select("tenant_id").Where("user_id = ?", userID).Order("created_at ASC").First(&membership).Error; err == nil {
+		return membership.TenantID
+	}
+
+	return 0
+}
+
 // CreatePaymentIntentHandler POST /payment/intents - 创建支付意图
 func CreatePaymentIntentHandler(c *fiber.Ctx) error {
 	userID := c.Locals("userID").(uint)
+	activeTenantID := resolvePaymentTenantID(c)
 
 	var req payment2.CreatePaymentIntentRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -54,7 +80,7 @@ func CreatePaymentIntentHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	paymentIntent, mockResponse, err := payment2.CreatePaymentIntent(userID, req)
+	paymentIntent, mockResponse, err := payment2.CreatePaymentIntentForTenant(userID, activeTenantID, req)
 	if err != nil {
 		if errors.Is(err, payment2.ErrTenantStripeNotConfigured) {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -80,6 +106,7 @@ func CreatePaymentIntentHandler(c *fiber.Ctx) error {
 // CreatePaymentSessionHandler POST /payment/sessions - 创建支付会话
 func CreatePaymentSessionHandler(c *fiber.Ctx) error {
 	userID := c.Locals("userID").(uint)
+	activeTenantID := resolvePaymentTenantID(c)
 
 	var req payment2.CreatePaymentSessionRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -88,7 +115,7 @@ func CreatePaymentSessionHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	session, mockResponse, err := payment2.CreatePaymentSession(userID, req)
+	session, mockResponse, err := payment2.CreatePaymentSessionForTenant(userID, activeTenantID, req)
 	if err != nil {
 		if errors.Is(err, payment2.ErrTenantStripeNotConfigured) {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -109,6 +136,7 @@ func CreatePaymentSessionHandler(c *fiber.Ctx) error {
 // GetPaymentIntentHandler GET /payment/intents/:id - 获取支付意图
 func GetPaymentIntentHandler(c *fiber.Ctx) error {
 	userID := c.Locals("userID").(uint)
+	activeTenantID := resolvePaymentTenantID(c)
 
 	paymentIntentIDStr := c.Params("id")
 	paymentIntentID, err := strconv.ParseUint(paymentIntentIDStr, 10, 32)
@@ -118,7 +146,7 @@ func GetPaymentIntentHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	paymentIntent, err := payment2.GetPaymentIntent(userID, uint(paymentIntentID))
+	paymentIntent, err := payment2.GetPaymentIntentForTenant(userID, uint(paymentIntentID), activeTenantID)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": "[GetPaymentIntentHandler] Payment intent not found",
@@ -131,9 +159,10 @@ func GetPaymentIntentHandler(c *fiber.Ctx) error {
 // GetPaymentSessionHandler GET /payment/sessions/:session_id - 获取支付会话
 func GetPaymentSessionHandler(c *fiber.Ctx) error {
 	userID := c.Locals("userID").(uint)
+	activeTenantID := resolvePaymentTenantID(c)
 	sessionID := c.Params("session_id")
 
-	session, err := payment2.GetPaymentSession(userID, sessionID)
+	session, err := payment2.GetPaymentSessionForTenant(userID, sessionID, activeTenantID)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": "Payment session not found",
@@ -146,6 +175,7 @@ func GetPaymentSessionHandler(c *fiber.Ctx) error {
 // ListPaymentIntentsHandler GET /payment/intents - 获取支付意图列表
 func ListPaymentIntentsHandler(c *fiber.Ctx) error {
 	userID := c.Locals("userID").(uint)
+	activeTenantID := resolvePaymentTenantID(c)
 
 	limitStr := c.Query("limit", "20")
 	limit, _ := strconv.Atoi(limitStr)
@@ -153,7 +183,7 @@ func ListPaymentIntentsHandler(c *fiber.Ctx) error {
 		limit = 100 // 限制最大查询数量
 	}
 
-	paymentIntents, err := payment2.ListPaymentIntents(userID, limit)
+	paymentIntents, err := payment2.ListPaymentIntentsForTenant(userID, activeTenantID, limit)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),

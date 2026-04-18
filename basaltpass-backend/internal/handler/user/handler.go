@@ -16,7 +16,11 @@ var tenantSvc = tenant2.NewTenantService()
 // GetProfileHandler handles GET /user/profile
 func GetProfileHandler(c *fiber.Ctx) error {
 	uid := c.Locals("userID").(uint)
-	profile, err := svc.GetProfile(uid)
+	var activeTenantID uint
+	if tid, ok := c.Locals("tenantID").(uint); ok {
+		activeTenantID = tid
+	}
+	profile, err := svc.GetProfile(uid, activeTenantID)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": err.Error()})
 	}

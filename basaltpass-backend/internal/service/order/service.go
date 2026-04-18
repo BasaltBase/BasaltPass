@@ -64,7 +64,7 @@ func (s *OrderService) generateOrderNumber() string {
 }
 
 // CreateOrder 创建订单
-func (s *OrderService) CreateOrder(req *CreateOrderRequest) (*OrderResponse, error) {
+func (s *OrderService) CreateOrder(req *CreateOrderRequest, tenantID uint64) (*OrderResponse, error) {
 	var result *OrderResponse
 	err := s.db.Transaction(func(tx *gorm.DB) error {
 		// 验证用户
@@ -78,7 +78,11 @@ func (s *OrderService) CreateOrder(req *CreateOrderRequest) (*OrderResponse, err
 
 		// 验证价格
 		var price model.Price
-		if err := tx.Preload("Plan.Product").First(&price, req.PriceID).Error; err != nil {
+		priceQuery := tx.Preload("Plan.Product")
+		if tenantID > 0 {
+			priceQuery = priceQuery.Where("id = ? AND tenant_id = ?", req.PriceID, tenantID)
+		}
+		if err := priceQuery.First(&price).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return fmt.Errorf("价格不存在")
 			}
@@ -92,7 +96,11 @@ func (s *OrderService) CreateOrder(req *CreateOrderRequest) (*OrderResponse, err
 
 		if req.CouponCode != nil && *req.CouponCode != "" {
 			var c model.Coupon
-			if err := tx.Where("code = ? AND is_active = true", *req.CouponCode).First(&c).Error; err != nil {
+			couponQuery := tx.Where("code = ? AND is_active = true", *req.CouponCode)
+			if tenantID > 0 {
+				couponQuery = couponQuery.Where("tenant_id = ?", tenantID)
+			}
+			if err := couponQuery.First(&c).Error; err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
 					return fmt.Errorf("优惠券不存在或已失效")
 				}
@@ -134,6 +142,11 @@ func (s *OrderService) CreateOrder(req *CreateOrderRequest) (*OrderResponse, err
 		}
 
 		// 创建订单
+		metadata := model.JSONB{"source": "web_order"}
+		if tenantID > 0 {
+			metadata["tenant_id"] = tenantID
+		}
+
 		order := &model.Order{
 			OrderNumber:    s.generateOrderNumber(),
 			UserID:         req.UserID,
@@ -147,7 +160,7 @@ func (s *OrderService) CreateOrder(req *CreateOrderRequest) (*OrderResponse, err
 			Currency:       price.Currency,
 			Description:    fmt.Sprintf("订阅：%s - %s", price.Plan.Product.Name, price.Plan.DisplayName),
 			ExpiresAt:      time.Now().Add(30 * time.Minute), // 30分钟内支付
-			Metadata:       model.JSONB{"source": "web_order"},
+			Metadata:       metadata,
 		}
 
 		if err := tx.Create(order).Error; err != nil {
@@ -185,10 +198,16 @@ func (s *OrderService) CreateOrder(req *CreateOrderRequest) (*OrderResponse, err
 }
 
 // GetOrder 获取订单
-func (s *OrderService) GetOrder(userID uint, orderID uint, activate bool) (*OrderResponse, error) {
+func (s *OrderService) GetOrder(userID uint, orderID uint, activate bool, tenantID uint64) (*OrderResponse, error) {
+	query := s.db.Preload("Price.Plan.Product").Preload("Coupon").Preload("PaymentSession").
+		Where("market_orders.id = ? AND market_orders.user_id = ?", orderID, userID)
+	if tenantID > 0 {
+		query = query.Joins("JOIN market_prices ON market_prices.id = market_orders.price_id").
+			Where("market_prices.tenant_id = ?", tenantID)
+	}
+
 	var order model.Order
-	if err := s.db.Preload("Price.Plan.Product").Preload("Coupon").Preload("PaymentSession").
-		Where("id = ? AND user_id = ?", orderID, userID).First(&order).Error; err != nil {
+	if err := query.First(&order).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf("订单不存在")
 		}
@@ -197,17 +216,32 @@ func (s *OrderService) GetOrder(userID uint, orderID uint, activate bool) (*Orde
 
 	if activate && order.Status == model.OrderStatusPending && order.PaymentSession != nil {
 		_ = paymentservice.FinalizeOrderPaymentBySessionForUser(userID, order.PaymentSession.StripeSessionID)
-		_ = s.db.Preload("Price.Plan.Product").Preload("Coupon").Preload("PaymentSession").
-			Where("id = ? AND user_id = ?", orderID, userID).First(&order).Error
+		reloadQuery := s.db.Preload("Price.Plan.Product").Preload("Coupon").Preload("PaymentSession").
+			Where("market_orders.id = ? AND market_orders.user_id = ?", orderID, userID)
+		if tenantID > 0 {
+			reloadQuery = reloadQuery.Joins("JOIN market_prices ON market_prices.id = market_orders.price_id").
+				Where("market_prices.tenant_id = ?", tenantID)
+		}
+		_ = reloadQuery.First(&order).Error
 	}
 	if activate && order.Status == model.OrderStatusPending {
 		_ = paymentservice.ReconcileUserOrderPaymentsFromStripe(userID)
-		_ = s.db.Preload("Price.Plan.Product").Preload("Coupon").Preload("PaymentSession").
-			Where("id = ? AND user_id = ?", orderID, userID).First(&order).Error
+		reloadQuery := s.db.Preload("Price.Plan.Product").Preload("Coupon").Preload("PaymentSession").
+			Where("market_orders.id = ? AND market_orders.user_id = ?", orderID, userID)
+		if tenantID > 0 {
+			reloadQuery = reloadQuery.Joins("JOIN market_prices ON market_prices.id = market_orders.price_id").
+				Where("market_prices.tenant_id = ?", tenantID)
+		}
+		_ = reloadQuery.First(&order).Error
 		if order.Status == model.OrderStatusPending && order.PaymentSession != nil {
 			_ = paymentservice.FinalizeOrderPaymentBySessionForUser(userID, order.PaymentSession.StripeSessionID)
-			_ = s.db.Preload("Price.Plan.Product").Preload("Coupon").Preload("PaymentSession").
-				Where("id = ? AND user_id = ?", orderID, userID).First(&order).Error
+			reloadQuery = s.db.Preload("Price.Plan.Product").Preload("Coupon").Preload("PaymentSession").
+				Where("market_orders.id = ? AND market_orders.user_id = ?", orderID, userID)
+			if tenantID > 0 {
+				reloadQuery = reloadQuery.Joins("JOIN market_prices ON market_prices.id = market_orders.price_id").
+					Where("market_prices.tenant_id = ?", tenantID)
+			}
+			_ = reloadQuery.First(&order).Error
 		}
 	}
 
@@ -234,10 +268,16 @@ func (s *OrderService) GetOrder(userID uint, orderID uint, activate bool) (*Orde
 }
 
 // GetOrderByNumber 根据订单号获取订单
-func (s *OrderService) GetOrderByNumber(userID uint, orderNumber string) (*OrderResponse, error) {
+func (s *OrderService) GetOrderByNumber(userID uint, orderNumber string, tenantID uint64) (*OrderResponse, error) {
+	query := s.db.Preload("Price.Plan.Product").Preload("Coupon").
+		Where("market_orders.order_number = ? AND market_orders.user_id = ?", orderNumber, userID)
+	if tenantID > 0 {
+		query = query.Joins("JOIN market_prices ON market_prices.id = market_orders.price_id").
+			Where("market_prices.tenant_id = ?", tenantID)
+	}
+
 	var order model.Order
-	if err := s.db.Preload("Price.Plan.Product").Preload("Coupon").
-		Where("order_number = ? AND user_id = ?", orderNumber, userID).First(&order).Error; err != nil {
+	if err := query.First(&order).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf("订单不存在")
 		}
@@ -282,10 +322,15 @@ func (s *OrderService) UpdateOrderStatus(orderID uint, status model.OrderStatus)
 }
 
 // ListUserOrders 获取用户订单列表
-func (s *OrderService) ListUserOrders(userID uint, limit int) ([]*OrderResponse, error) {
+func (s *OrderService) ListUserOrders(userID uint, limit int, tenantID uint64) ([]*OrderResponse, error) {
 	var orders []model.Order
 	query := s.db.Preload("Price.Plan.Product").Preload("Coupon").
-		Where("user_id = ?", userID).Order("created_at desc")
+		Where("market_orders.user_id = ?", userID).Order("market_orders.created_at desc")
+
+	if tenantID > 0 {
+		query = query.Joins("JOIN market_prices ON market_prices.id = market_orders.price_id").
+			Where("market_prices.tenant_id = ?", tenantID)
+	}
 
 	if limit > 0 {
 		query = query.Limit(limit)

@@ -447,7 +447,14 @@ func (h *Handler) ValidateCoupon(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "优惠券代码不能为空"})
 	}
 
-	coupon, err := h.service.GetCouponByCode(code)
+	tenantID, tenantErr := resolveCurrentUserTenantID(c)
+	var coupon *model.Coupon
+	var err error
+	if tenantErr == nil && tenantID != nil {
+		coupon, err = h.service.GetCouponByCodeForTenant(code, tenantID)
+	} else {
+		coupon, err = h.service.GetCouponByCode(code)
+	}
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}

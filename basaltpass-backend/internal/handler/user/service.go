@@ -12,7 +12,7 @@ import (
 type Service struct{}
 
 // GetProfile returns user profile by ID.
-func (s Service) GetProfile(userID uint) (userdto.ProfileResponse, error) {
+func (s Service) GetProfile(userID uint, activeTenantID uint) (userdto.ProfileResponse, error) {
 	var u model.User
 	if err := common.DB().First(&u, userID).Error; err != nil {
 		return userdto.ProfileResponse{}, err
@@ -26,21 +26,38 @@ func (s Service) GetProfile(userID uint) (userdto.ProfileResponse, error) {
 		tenantRole string
 	)
 
-	// 普通租户用户始终以 users.tenant_id 作为其默认租户上下文。
-	if u.TenantID > 0 {
-		tid := u.TenantID
-		tenantID = &tid
-		hasTenant = true
+	// activeTenantID 来自当前 token 的 tid，可支持全局用户切换到某个 tenant identity。
+	resolvedTenantID := activeTenantID
+	if resolvedTenantID == 0 {
+		if u.TenantID > 0 {
+			resolvedTenantID = u.TenantID
+		} else {
+			var firstMembership model.TenantUser
+			if err := common.DB().
+				Select("tenant_id").
+				Where("user_id = ?", userID).
+				Order("created_at ASC").
+				First(&firstMembership).Error; err == nil {
+				resolvedTenantID = firstMembership.TenantID
+			}
+		}
 	}
 
-	// 平台管理员（tenant_id=0）不应因为 tenant_users 历史记录而自动获得租户控制台上下文。
-	if u.TenantID > 0 {
-		var ta model.TenantUser
+	if resolvedTenantID > 0 {
+		var membership model.TenantUser
 		if err := common.DB().
-			Where("user_id = ? AND tenant_id = ?", userID, u.TenantID).
+			Where("user_id = ? AND tenant_id = ?", userID, resolvedTenantID).
 			Order("created_at ASC").
-			First(&ta).Error; err == nil {
-			tenantRole = string(ta.Role)
+			First(&membership).Error; err == nil {
+			hasTenant = true
+			tid := resolvedTenantID
+			tenantID = &tid
+			tenantRole = string(membership.Role)
+		} else if u.TenantID == resolvedTenantID {
+			hasTenant = true
+			tid := resolvedTenantID
+			tenantID = &tid
+			tenantRole = string(model.TenantRoleUser)
 		}
 	}
 

@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"basaltpass-backend/internal/common"
+	"basaltpass-backend/internal/model"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -20,11 +21,46 @@ func InitOrderHandler() {
 	}
 }
 
+func resolveOrderTenantID(c *fiber.Ctx) (uint64, error) {
+	if tenantLocal, ok := c.Locals("tenantID").(uint); ok && tenantLocal > 0 {
+		return uint64(tenantLocal), nil
+	}
+
+	userID, ok := c.Locals("userID").(uint)
+	if !ok || userID == 0 {
+		return 0, fiber.NewError(fiber.StatusUnauthorized, "未登录")
+	}
+
+	var user model.User
+	if err := common.DB().Select("id", "tenant_id").First(&user, userID).Error; err != nil {
+		return 0, fiber.NewError(fiber.StatusForbidden, "无法识别当前租户")
+	}
+
+	if user.TenantID > 0 {
+		return uint64(user.TenantID), nil
+	}
+
+	var tenantUser model.TenantUser
+	if err := common.DB().Select("tenant_id").Where("user_id = ?", userID).Order("created_at ASC").First(&tenantUser).Error; err != nil {
+		return 0, fiber.NewError(fiber.StatusForbidden, "当前用户没有关联租户")
+	}
+
+	if tenantUser.TenantID == 0 {
+		return 0, fiber.NewError(fiber.StatusForbidden, "当前用户没有关联租户")
+	}
+
+	return uint64(tenantUser.TenantID), nil
+}
+
 // CreateOrderHandler POST /orders - 创建订单
 func CreateOrderHandler(c *fiber.Ctx) error {
 	InitOrderHandler()
 
 	userID := c.Locals("userID").(uint)
+	tenantID, tenantErr := resolveOrderTenantID(c)
+	if tenantErr != nil {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": tenantErr.Error()})
+	}
 
 	var req order2.CreateOrderRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -40,7 +76,7 @@ func CreateOrderHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	order, err := orderService.CreateOrder(&req)
+	order, err := orderService.CreateOrder(&req, tenantID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
@@ -59,6 +95,10 @@ func GetOrderHandler(c *fiber.Ctx) error {
 	InitOrderHandler()
 
 	userID := c.Locals("userID").(uint)
+	tenantID, tenantErr := resolveOrderTenantID(c)
+	if tenantErr != nil {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": tenantErr.Error()})
+	}
 
 	orderIDStr := c.Params("id")
 	orderID, err := strconv.ParseUint(orderIDStr, 10, 32)
@@ -70,7 +110,7 @@ func GetOrderHandler(c *fiber.Ctx) error {
 
 	activate := c.Query("activate") == "1" || c.Query("activate") == "true"
 
-	order, err := orderService.GetOrder(userID, uint(orderID), activate)
+	order, err := orderService.GetOrder(userID, uint(orderID), activate, tenantID)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": err.Error(),
@@ -88,9 +128,13 @@ func GetOrderByNumberHandler(c *fiber.Ctx) error {
 	InitOrderHandler()
 
 	userID := c.Locals("userID").(uint)
+	tenantID, tenantErr := resolveOrderTenantID(c)
+	if tenantErr != nil {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": tenantErr.Error()})
+	}
 	orderNumber := c.Params("number")
 
-	order, err := orderService.GetOrderByNumber(userID, orderNumber)
+	order, err := orderService.GetOrderByNumber(userID, orderNumber, tenantID)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": err.Error(),
@@ -108,6 +152,10 @@ func ListOrdersHandler(c *fiber.Ctx) error {
 	InitOrderHandler()
 
 	userID := c.Locals("userID").(uint)
+	tenantID, tenantErr := resolveOrderTenantID(c)
+	if tenantErr != nil {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": tenantErr.Error()})
+	}
 
 	limitStr := c.Query("limit", "20")
 	limit, _ := strconv.Atoi(limitStr)
@@ -115,7 +163,7 @@ func ListOrdersHandler(c *fiber.Ctx) error {
 		limit = 100
 	}
 
-	orders, err := orderService.ListUserOrders(userID, limit)
+	orders, err := orderService.ListUserOrders(userID, limit, tenantID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),

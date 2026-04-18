@@ -5,6 +5,8 @@ import (
 	paymentservice "basaltpass-backend/internal/service/payment"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"basaltpass-backend/internal/model"
@@ -18,6 +20,57 @@ type Service struct {
 
 func NewService(db *gorm.DB) *Service {
 	return &Service{db: db}
+}
+
+func parseTenantIDFromMetadata(metadata map[string]interface{}) uint64 {
+	if metadata == nil {
+		return 0
+	}
+	v, ok := metadata["tenant_id"]
+	if !ok {
+		return 0
+	}
+	switch value := v.(type) {
+	case string:
+		n, err := strconv.ParseUint(strings.TrimSpace(value), 10, 64)
+		if err == nil {
+			return n
+		}
+	case float64:
+		return uint64(value)
+	case uint64:
+		return value
+	case uint:
+		return uint64(value)
+	case int:
+		if value >= 0 {
+			return uint64(value)
+		}
+	}
+	return 0
+}
+
+func userHasTenantIdentity(tx *gorm.DB, userID uint, tenantID uint64) (bool, error) {
+	if userID == 0 || tenantID == 0 {
+		return false, nil
+	}
+
+	var user model.User
+	if err := tx.Select("tenant_id").First(&user, userID).Error; err != nil {
+		return false, err
+	}
+	if user.TenantID > 0 && uint64(user.TenantID) == tenantID {
+		return true, nil
+	}
+
+	var membershipCount int64
+	if err := tx.Model(&model.TenantUser{}).
+		Where("user_id = ? AND tenant_id = ?", userID, tenantID).
+		Count(&membershipCount).Error; err != nil {
+		return false, err
+	}
+
+	return membershipCount > 0, nil
 }
 
 // ========== 产品管理 ==========
@@ -472,8 +525,17 @@ func (s *Service) CreateCoupon(req *subdto.CreateCouponRequest) (*model.Coupon, 
 
 // GetCouponByCode 根据代码获取优惠券
 func (s *Service) GetCouponByCode(code string) (*model.Coupon, error) {
+	return s.GetCouponByCodeForTenant(code, nil)
+}
+
+func (s *Service) GetCouponByCodeForTenant(code string, tenantID *uint64) (*model.Coupon, error) {
 	var coupon model.Coupon
-	if err := s.db.Where("code = ?", code).First(&coupon).Error; err != nil {
+	query := s.db.Where("code = ?", code)
+	if tenantID != nil {
+		query = query.Where("tenant_id = ?", *tenantID)
+	}
+
+	if err := query.First(&coupon).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf("优惠券不存在")
 		}
@@ -597,11 +659,25 @@ func (s *Service) CreateSubscription(req *subdto.CreateSubscriptionRequest) (*mo
 		}
 		return nil, fmt.Errorf("查询用户失败: %w", err)
 	}
-	if user.TenantID == 0 {
+
+	tenantID := parseTenantIDFromMetadata(req.Metadata)
+	if tenantID == 0 && user.TenantID > 0 {
+		tenantID = uint64(user.TenantID)
+	}
+	if tenantID == 0 {
 		tx.Rollback()
 		return nil, fmt.Errorf("用户未绑定租户")
 	}
-	userTenantID := uint64(user.TenantID)
+
+	hasIdentity, err := userHasTenantIdentity(tx, req.UserID, tenantID)
+	if err != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("校验用户租户身份失败: %w", err)
+	}
+	if !hasIdentity {
+		tx.Rollback()
+		return nil, fmt.Errorf("用户不属于当前租户")
+	}
 
 	// 验证价格存在
 	var price model.Price
@@ -612,7 +688,7 @@ func (s *Service) CreateSubscription(req *subdto.CreateSubscriptionRequest) (*mo
 		}
 		return nil, fmt.Errorf("查询价格失败: %w", err)
 	}
-	if price.TenantID != nil && *price.TenantID != userTenantID {
+	if price.TenantID == nil || *price.TenantID != tenantID {
 		tx.Rollback()
 		return nil, fmt.Errorf("价格不属于当前租户")
 	}
@@ -620,14 +696,10 @@ func (s *Service) CreateSubscription(req *subdto.CreateSubscriptionRequest) (*mo
 	// 处理优惠券
 	var couponID *uint
 	if req.CouponCode != nil {
-		coupon, err := s.GetCouponByCode(*req.CouponCode)
+		coupon, err := s.GetCouponByCodeForTenant(*req.CouponCode, &tenantID)
 		if err != nil {
 			tx.Rollback()
 			return nil, err
-		}
-		if coupon.TenantID != nil && *coupon.TenantID != userTenantID {
-			tx.Rollback()
-			return nil, fmt.Errorf("优惠券不属于当前租户")
 		}
 		couponID = &coupon.ID
 	}
@@ -656,7 +728,7 @@ func (s *Service) CreateSubscription(req *subdto.CreateSubscriptionRequest) (*mo
 	}
 
 	subscription := &model.Subscription{
-		TenantID:           &userTenantID,
+		TenantID:           &tenantID,
 		UserID:             req.UserID,
 		Status:             status,
 		CurrentPriceID:     req.PriceID,

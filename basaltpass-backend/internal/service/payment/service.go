@@ -81,18 +81,13 @@ func generateStripeID(prefix string) string {
 	return fmt.Sprintf("%s_%s", prefix, hex.EncodeToString(bytes))
 }
 
-func resolveTenantStripeConfigByUser(db *gorm.DB, userID uint) (*tenantStripeConfig, error) {
-	var user model.User
-	if err := db.Select("id", "tenant_id").First(&user, userID).Error; err != nil {
-		return nil, err
-	}
-
-	if user.TenantID == 0 {
+func resolveTenantStripeConfigByTenantID(db *gorm.DB, tenantID uint) (*tenantStripeConfig, error) {
+	if tenantID == 0 {
 		return &tenantStripeConfig{SecretKey: "sk_test_legacy_placeholder", TenantID: 0}, nil
 	}
 
 	var tenant model.Tenant
-	if err := db.Select("id", "metadata").First(&tenant, user.TenantID).Error; err != nil {
+	if err := db.Select("id", "metadata").First(&tenant, tenantID).Error; err != nil {
 		return nil, err
 	}
 
@@ -123,6 +118,15 @@ func resolveTenantStripeConfigByUser(db *gorm.DB, userID uint) (*tenantStripeCon
 	}
 
 	return config, nil
+}
+
+func resolveTenantStripeConfigByUser(db *gorm.DB, userID uint) (*tenantStripeConfig, error) {
+	var user model.User
+	if err := db.Select("id", "tenant_id").First(&user, userID).Error; err != nil {
+		return nil, err
+	}
+
+	return resolveTenantStripeConfigByTenantID(db, user.TenantID)
 }
 
 func parseString(v interface{}) string {
@@ -437,6 +441,20 @@ func parseUIntFromAny(v interface{}) uint {
 	return 0
 }
 
+func parseTenantIDFromRawMetadata(raw string) uint {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return 0
+	}
+
+	var metadata map[string]interface{}
+	if err := json.Unmarshal([]byte(raw), &metadata); err != nil {
+		return 0
+	}
+
+	return parseUIntFromAny(metadata["tenant_id"])
+}
+
 func processStripeCheckoutSessionEvent(tx *gorm.DB, eventType string, eventObject map[string]interface{}) error {
 	stripeSessionID := parseString(eventObject["id"])
 	if stripeSessionID == "" {
@@ -472,7 +490,8 @@ func processStripeCheckoutSessionEvent(tx *gorm.DB, eventType string, eventObjec
 		}
 
 		if !wasComplete {
-			if err := wallet.RechargeByCode(session.UserID, session.Currency, session.Amount); err != nil {
+			tenantID := parseTenantIDFromRawMetadata(session.PaymentIntent.Metadata)
+			if err := wallet.RechargeByCodeWithTenant(session.UserID, tenantID, session.Currency, session.Amount); err != nil {
 				return fmt.Errorf("failed to update wallet: %w", err)
 			}
 		}
@@ -687,8 +706,21 @@ func GetWebhookEventStatus(eventID string) (*WebhookEventStatus, error) {
 
 // CreatePaymentIntent 创建支付意图
 func CreatePaymentIntent(userID uint, req CreatePaymentIntentRequest) (*model.PaymentIntent, *MockStripeResponse, error) {
+	return CreatePaymentIntentForTenant(userID, 0, req)
+}
+
+// CreatePaymentIntentForTenant creates payment intent in explicit tenant context.
+func CreatePaymentIntentForTenant(userID uint, tenantID uint, req CreatePaymentIntentRequest) (*model.PaymentIntent, *MockStripeResponse, error) {
 	db := common.DB()
-	stripeConfig, err := resolveTenantStripeConfigByUser(db, userID)
+	var (
+		stripeConfig *tenantStripeConfig
+		err          error
+	)
+	if tenantID > 0 {
+		stripeConfig, err = resolveTenantStripeConfigByTenantID(db, tenantID)
+	} else {
+		stripeConfig, err = resolveTenantStripeConfigByUser(db, userID)
+	}
 	if err != nil {
 		return nil, nil, err
 	}
@@ -715,8 +747,12 @@ func CreatePaymentIntent(userID uint, req CreatePaymentIntentRequest) (*model.Pa
 	if req.Metadata == nil {
 		req.Metadata = map[string]interface{}{}
 	}
-	if stripeConfig.TenantID > 0 {
-		req.Metadata["tenant_id"] = strconv.FormatUint(uint64(stripeConfig.TenantID), 10)
+	effectiveTenantID := stripeConfig.TenantID
+	if tenantID > 0 {
+		effectiveTenantID = tenantID
+	}
+	if effectiveTenantID > 0 {
+		req.Metadata["tenant_id"] = strconv.FormatUint(uint64(effectiveTenantID), 10)
 	}
 	req.Metadata["user_id"] = strconv.FormatUint(uint64(userID), 10)
 
@@ -766,7 +802,7 @@ func CreatePaymentIntent(userID uint, req CreatePaymentIntentRequest) (*model.Pa
 		},
 		RequestBody: req,
 		Response:    stripePIBody,
-		Timestamp: time.Now(),
+		Timestamp:   time.Now(),
 	}
 
 	return &paymentIntent, mockResponse, nil
@@ -774,8 +810,21 @@ func CreatePaymentIntent(userID uint, req CreatePaymentIntentRequest) (*model.Pa
 
 // CreatePaymentSession 创建支付会话
 func CreatePaymentSession(userID uint, req CreatePaymentSessionRequest) (*model.PaymentSession, *MockStripeResponse, error) {
+	return CreatePaymentSessionForTenant(userID, 0, req)
+}
+
+// CreatePaymentSessionForTenant creates payment session in explicit tenant context.
+func CreatePaymentSessionForTenant(userID uint, tenantID uint, req CreatePaymentSessionRequest) (*model.PaymentSession, *MockStripeResponse, error) {
 	db := common.DB()
-	stripeConfig, err := resolveTenantStripeConfigByUser(db, userID)
+	var (
+		stripeConfig *tenantStripeConfig
+		err          error
+	)
+	if tenantID > 0 {
+		stripeConfig, err = resolveTenantStripeConfigByTenantID(db, tenantID)
+	} else {
+		stripeConfig, err = resolveTenantStripeConfigByUser(db, userID)
+	}
 	if err != nil {
 		return nil, nil, err
 	}
@@ -785,6 +834,12 @@ func CreatePaymentSession(userID uint, req CreatePaymentSessionRequest) (*model.
 	// 检查支付意图是否存在且属于该用户
 	if err := db.Where("id = ? AND user_id = ?", req.PaymentIntentID, userID).First(&paymentIntent).Error; err != nil {
 		return nil, nil, errors.New("[CreatePaymentSession] payment intent not found. userID: " + fmt.Sprintf("%d", userID) + " paymentIntentID: " + fmt.Sprintf("%d", req.PaymentIntentID))
+	}
+	if tenantID > 0 {
+		intentTenantID := parseTenantIDFromRawMetadata(paymentIntent.Metadata)
+		if intentTenantID != tenantID {
+			return nil, nil, errors.New("payment intent tenant mismatch")
+		}
 	}
 
 	stripeSessionBody, err := stripeRequest(stripeConfig.SecretKey, "https://api.stripe.com/v1/checkout/sessions", buildStripeCheckoutSessionForm(&paymentIntent, req))
@@ -842,7 +897,7 @@ func CreatePaymentSession(userID uint, req CreatePaymentSessionRequest) (*model.
 		},
 		RequestBody: req,
 		Response:    stripeSessionBody,
-		Timestamp: time.Now(),
+		Timestamp:   time.Now(),
 	}
 
 	return &session, mockResponse, nil
@@ -932,7 +987,8 @@ func SimulatePayment(sessionID string, success bool) (*MockStripeResponse, error
 	// 如果支付成功，更新用户钱包
 	if success {
 		if !wasComplete {
-			if err := wallet.RechargeByCode(session.UserID, session.Currency, session.Amount); err != nil {
+			tenantID := parseTenantIDFromRawMetadata(session.PaymentIntent.Metadata)
+			if err := wallet.RechargeByCodeWithTenant(session.UserID, tenantID, session.Currency, session.Amount); err != nil {
 				return nil, fmt.Errorf("failed to update wallet: %w", err)
 			}
 		}
@@ -1500,11 +1556,20 @@ func calculatePeriodEnd(start time.Time, price *model.Price) time.Time {
 
 // GetPaymentIntent 获取支付意图
 func GetPaymentIntent(userID uint, paymentIntentID uint) (*model.PaymentIntent, error) {
+	return GetPaymentIntentForTenant(userID, paymentIntentID, 0)
+}
+
+func GetPaymentIntentForTenant(userID uint, paymentIntentID uint, tenantID uint) (*model.PaymentIntent, error) {
 	db := common.DB()
 	var paymentIntent model.PaymentIntent
 
 	if err := db.Where("id = ? AND user_id = ?", paymentIntentID, userID).First(&paymentIntent).Error; err != nil {
 		return nil, err
+	}
+	if tenantID > 0 {
+		if parseTenantIDFromRawMetadata(paymentIntent.Metadata) != tenantID {
+			return nil, gorm.ErrRecordNotFound
+		}
 	}
 
 	return &paymentIntent, nil
@@ -1512,11 +1577,20 @@ func GetPaymentIntent(userID uint, paymentIntentID uint) (*model.PaymentIntent, 
 
 // GetPaymentSession 获取支付会话
 func GetPaymentSession(userID uint, sessionID string) (*model.PaymentSession, error) {
+	return GetPaymentSessionForTenant(userID, sessionID, 0)
+}
+
+func GetPaymentSessionForTenant(userID uint, sessionID string, tenantID uint) (*model.PaymentSession, error) {
 	db := common.DB()
 	var session model.PaymentSession
 
 	if err := db.Preload("PaymentIntent").Where("stripe_session_id = ? AND user_id = ?", sessionID, userID).First(&session).Error; err != nil {
 		return nil, err
+	}
+	if tenantID > 0 {
+		if parseTenantIDFromRawMetadata(session.PaymentIntent.Metadata) != tenantID {
+			return nil, gorm.ErrRecordNotFound
+		}
 	}
 
 	return &session, nil
@@ -1536,6 +1610,10 @@ func GetPaymentSessionByStripeID(sessionID string) (*model.PaymentSession, error
 
 // ListPaymentIntents 获取用户的支付意图列表
 func ListPaymentIntents(userID uint, limit int) ([]model.PaymentIntent, error) {
+	return ListPaymentIntentsForTenant(userID, 0, limit)
+}
+
+func ListPaymentIntentsForTenant(userID uint, tenantID uint, limit int) ([]model.PaymentIntent, error) {
 	db := common.DB()
 	var paymentIntents []model.PaymentIntent
 
@@ -1547,6 +1625,16 @@ func ListPaymentIntents(userID uint, limit int) ([]model.PaymentIntent, error) {
 	if err := query.Find(&paymentIntents).Error; err != nil {
 		return nil, err
 	}
+	if tenantID == 0 {
+		return paymentIntents, nil
+	}
 
-	return paymentIntents, nil
+	filtered := make([]model.PaymentIntent, 0, len(paymentIntents))
+	for _, item := range paymentIntents {
+		if parseTenantIDFromRawMetadata(item.Metadata) == tenantID {
+			filtered = append(filtered, item)
+		}
+	}
+
+	return filtered, nil
 }
