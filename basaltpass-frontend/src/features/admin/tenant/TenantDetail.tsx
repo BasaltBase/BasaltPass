@@ -5,6 +5,8 @@ import {
   BuildingOfficeIcon, 
   DocumentTextIcon,
   CogIcon,
+  LinkIcon,
+  ClipboardDocumentIcon,
   ExclamationTriangleIcon,
   CheckCircleIcon,
   UserIcon,
@@ -38,6 +40,7 @@ const TenantDetail: React.FC = () => {
   const [authLoading, setAuthLoading] = useState(false)
   const [authSaving, setAuthSaving] = useState(false)
   const [authError, setAuthError] = useState<string | null>(null)
+  const [copiedField, setCopiedField] = useState<string | null>(null)
   const [formData, setFormData] = useState<AdminUpdateTenantRequest>({
     name: '',
     description: '',
@@ -223,15 +226,47 @@ const TenantDetail: React.FC = () => {
     return new Intl.NumberFormat(locale).format(value ?? 0)
   }
 
+  const copyToClipboard = async (text: string, field: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopiedField(field)
+      setTimeout(() => setCopiedField(null), 2000)
+    } catch {
+      setCopiedField(null)
+    }
+  }
+
+  const userConsoleBaseUrl = useMemo(() => {
+    const configured = (import.meta as any).env?.VITE_CONSOLE_USER_URL
+    if (configured && typeof configured === 'string') {
+      return configured.replace(/\/+$/, '')
+    }
+    if (typeof window !== 'undefined') {
+      return window.location.origin
+    }
+    return ''
+  }, [])
+
   const tenantLoginUrl = useMemo(() => {
-    if (!tenant?.code) {
+    if (!tenant?.code || !userConsoleBaseUrl) {
       return ''
     }
-    if (typeof window === 'undefined') {
-      return `/auth/tenant/${tenant.code}/login`
+    return `${userConsoleBaseUrl}/auth/tenant/${tenant.code}/login`
+  }, [tenant?.code, userConsoleBaseUrl])
+
+  const tenantRegisterUrl = useMemo(() => {
+    if (!tenant?.code || !userConsoleBaseUrl) {
+      return ''
     }
-    return `${window.location.origin}/auth/tenant/${tenant.code}/login`
-  }, [tenant?.code])
+    return `${userConsoleBaseUrl}/auth/tenant/${tenant.code}/register`
+  }, [tenant?.code, userConsoleBaseUrl])
+
+  const tenantJoinUrl = useMemo(() => {
+    if (!tenant?.code || !userConsoleBaseUrl) {
+      return ''
+    }
+    return `${userConsoleBaseUrl}/tenant/${tenant.code}/register`
+  }, [tenant?.code, userConsoleBaseUrl])
 
   if (loading) {
     return (
@@ -379,16 +414,53 @@ const TenantDetail: React.FC = () => {
                       <dd className="mt-1 text-sm text-gray-900">{tenant.owner_email}</dd>
                     </div>
                     <div>
-                      <dt className="text-sm font-medium text-gray-500">{t('adminTenantDetail.meta.loginUrl')}</dt>
-                      <dd className="mt-1 text-sm">
-                        <a
-                          href={tenantLoginUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="font-mono text-indigo-600 hover:text-indigo-800 break-all"
-                        >
-                          {tenantLoginUrl}
-                        </a>
+                      <dt className="text-sm font-medium text-gray-500 mb-2 flex items-center">
+                        <LinkIcon className="h-4 w-4 mr-2 text-blue-500" />
+                        {t('adminTenantDetail.meta.accessLinks')}
+                      </dt>
+                      <dd className="space-y-3">
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">{t('adminTenantDetail.meta.joinUrl')}</div>
+                          <div className="flex items-center space-x-2">
+                            <PInput type="text" readOnly value={tenantJoinUrl} className="flex-1 bg-gray-50 font-mono text-gray-600" />
+                            <PButton
+                              type="button"
+                              variant="secondary"
+                              onClick={() => copyToClipboard(tenantJoinUrl, 'join')}
+                              title={t('adminTenantDetail.actions.copyLink')}
+                            >
+                              {copiedField === 'join' ? <CheckCircleIcon className="h-5 w-5 text-green-500" /> : <ClipboardDocumentIcon className="h-5 w-5" />}
+                            </PButton>
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">{t('adminTenantDetail.meta.loginUrl')}</div>
+                          <div className="flex items-center space-x-2">
+                            <PInput type="text" readOnly value={tenantLoginUrl} className="flex-1 bg-gray-50 font-mono text-gray-600" />
+                            <PButton
+                              type="button"
+                              variant="secondary"
+                              onClick={() => copyToClipboard(tenantLoginUrl, 'login')}
+                              title={t('adminTenantDetail.actions.copyLink')}
+                            >
+                              {copiedField === 'login' ? <CheckCircleIcon className="h-5 w-5 text-green-500" /> : <ClipboardDocumentIcon className="h-5 w-5" />}
+                            </PButton>
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">{t('adminTenantDetail.meta.registerUrl')}</div>
+                          <div className="flex items-center space-x-2">
+                            <PInput type="text" readOnly value={tenantRegisterUrl} className="flex-1 bg-gray-50 font-mono text-gray-600" />
+                            <PButton
+                              type="button"
+                              variant="secondary"
+                              onClick={() => copyToClipboard(tenantRegisterUrl, 'register')}
+                              title={t('adminTenantDetail.actions.copyLink')}
+                            >
+                              {copiedField === 'register' ? <CheckCircleIcon className="h-5 w-5 text-green-500" /> : <ClipboardDocumentIcon className="h-5 w-5" />}
+                            </PButton>
+                          </div>
+                        </div>
                       </dd>
                     </div>
                     <div>

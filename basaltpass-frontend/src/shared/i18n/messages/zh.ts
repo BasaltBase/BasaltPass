@@ -3895,6 +3895,7 @@ const en = {
     userAccessLinks: {
       title: 'User Access Links',
       description: 'Share these links with your users for sign in or sign up',
+      joinPage: 'Join Page',
       loginPage: 'Login Page',
       registerPage: 'Register Page',
       tip: 'Share these links with your users so they can directly access your tenant login and registration pages.',
@@ -3968,6 +3969,7 @@ const en = {
     userAccessLinks: {
       title: 'User Access Links',
       description: 'Share these links with your users for sign in or sign up',
+      joinPage: 'Join Page',
       loginPage: 'Login Page',
       registerPage: 'Register Page',
       tip: 'Share these links with your users so they can directly access your tenant login and registration pages.',
@@ -4558,13 +4560,17 @@ const en = {
       tenantCode: 'Tenant Code',
       description: 'Description',
       ownerEmail: 'Owner Email',
+      accessLinks: 'Tenant Access Links',
+      joinUrl: 'Join URL',
       loginUrl: 'Tenant Console URL',
+      registerUrl: 'Registration URL',
       createdAt: 'Created At',
       updatedAt: 'Updated At',
       createdAtLabel: 'Created At',
     },
     actions: {
       backToList: 'Back to Tenant List',
+      copyLink: 'Copy Link',
       cancelEdit: 'Cancel Edit',
       edit: 'Edit',
       delete: 'Delete',

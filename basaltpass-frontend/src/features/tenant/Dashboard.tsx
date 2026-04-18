@@ -184,6 +184,11 @@ export default function TenantDashboard() {
     return `${baseUrl}/auth/tenant/${tenantCode}/register`
   }
 
+  const getJoinUrl = () => {
+    const baseUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || 'http://localhost:5101'
+    return `${baseUrl}/tenant/${tenantCode}/register`
+  }
+
   const handleLivenessCheck = async () => {
     try {
       setIsCheckingLiveness(true)
@@ -298,7 +303,7 @@ export default function TenantDashboard() {
               <p className="mt-1 text-sm text-gray-500">{t('tenantDashboardPage.userAccessLinks.description')}</p>
             </div>
             <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/*  */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -320,6 +325,34 @@ export default function TenantDashboard() {
                       title={t('tenantDashboardPage.actions.copyLink')}
                     >
                       {copiedField === 'login' ? (
+                        <CheckIcon className="h-5 w-5 text-green-500" />
+                      ) : (
+                        <ClipboardDocumentIcon className="h-5 w-5" />
+                      )}
+                    </PButton>
+                  </div>
+                </div>
+                {/* 加入链接 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {t('tenantDashboardPage.userAccessLinks.joinPage')}
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-full md:w-1/2 min-w-0">
+                      <PInput
+                        type="text"
+                        readOnly
+                        value={getJoinUrl()}
+                        className="bg-gray-50 font-mono text-gray-600"
+                      />
+                    </div>
+                    <PButton
+                      type="button"
+                      variant="secondary"
+                      onClick={() => copyToClipboard(getJoinUrl(), 'join')}
+                      title={t('tenantDashboardPage.actions.copyLink')}
+                    >
+                      {copiedField === 'join' ? (
                         <CheckIcon className="h-5 w-5 text-green-500" />
                       ) : (
                         <ClipboardDocumentIcon className="h-5 w-5" />

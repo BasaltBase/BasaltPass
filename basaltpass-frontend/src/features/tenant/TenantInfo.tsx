@@ -301,6 +301,11 @@ export default function TenantInfoPage() {
     return `${baseUrl}/auth/tenant/${tenantInfo?.code}/register`
   }
 
+  const getJoinUrl = () => {
+    const baseUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || 'http://localhost:5101'
+    return `${baseUrl}/tenant/${tenantInfo?.code}/register`
+  }
+
   const loginEnabled = authSettings?.allow_login ?? true
   const registrationEnabled = authSettings?.allow_registration ?? true
 
@@ -570,6 +575,36 @@ export default function TenantInfoPage() {
               </div>
               <div className="px-6 py-6">
                 <div className="space-y-4">
+                  {/* 加入链接 */}
+                  <div>
+                    <div className="mb-2 flex items-center justify-between">
+                      <label className="block text-sm font-medium text-gray-700">
+                        {t('tenantInfoPage.userAccessLinks.joinPage')}
+                      </label>
+                      <PBadge variant={registrationEnabled ? 'success' : 'warning'}>{registrationEnabled ? '可访问' : '已禁用'}</PBadge>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <PInput
+                        type="text"
+                        readOnly
+                        value={getJoinUrl()}
+                        className="flex-1 bg-gray-50 font-mono text-gray-600"
+                      />
+                      <PButton
+                        type="button"
+                        variant="secondary"
+                        onClick={() => copyToClipboard(getJoinUrl(), 'join')}
+                        title={t('tenantInfoPage.actions.copyLink')}
+                      >
+                        {copiedField === 'join' ? (
+                          <CheckIcon className="h-5 w-5 text-green-500" />
+                        ) : (
+                          <ClipboardDocumentIcon className="h-5 w-5" />
+                        )}
+                      </PButton>
+                    </div>
+                  </div>
+
                   {/*  */}
                   <div>
                     <div className="mb-2 flex items-center justify-between">
