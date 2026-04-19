@@ -755,7 +755,6 @@ export default function TenantUserManagement() {
             onClose={() => setShowEditModal(false)}
           />
         )}
-      </div>
     </TenantLayout>
   )
 }

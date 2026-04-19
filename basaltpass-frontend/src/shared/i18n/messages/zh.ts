@@ -1515,6 +1515,7 @@ const en = {
     userList: 'Users',
     globalUserAuthorization: '全局用户授权',
     teamManagement: 'Teams',
+    walletAndGiftCard: '钱包管理',
     walletManagement: 'Wallet Management',
     giftCardManagement: 'Gift Card Management',
     roleManagement: 'Role Management',

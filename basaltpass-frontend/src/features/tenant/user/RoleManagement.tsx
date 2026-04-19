@@ -562,7 +562,6 @@ const TenantRoleManagement: React.FC = () => {
             </div>
           </div>
         )}
-      </div>
     </TenantLayout>
   );
 };

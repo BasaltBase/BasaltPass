@@ -57,12 +57,18 @@ const navigationItems: NavigationItem[] = [
     icon: UsersIcon,
     children: [
       { key: 'tenantNav.userList', href: ROUTES.tenant.users, icon: UsersIcon },
-      { key: 'tenantNav.globalUserAuthorization', href: ROUTES.tenant.globalUserAuthorization, icon: UserPlusIcon },
       { key: 'tenantNav.teamManagement', href: ROUTES.tenant.teams, icon: UsersIcon },
-      { key: 'tenantNav.walletManagement', href: ROUTES.tenant.wallets, icon: CurrencyDollarIcon },
-      { key: 'tenantNav.giftCardManagement', href: ROUTES.tenant.giftCards, icon: GiftIcon },
       { key: 'tenantNav.roleManagement', href: ROUTES.tenant.roles, icon: KeyIcon },
       { key: 'tenantNav.permissionManagement', href: ROUTES.tenant.permissions, icon: KeyIcon },
+      { key: 'tenantNav.globalUserAuthorization', href: ROUTES.tenant.globalUserAuthorization, icon: UserPlusIcon },
+    ]
+  },
+  {
+    key: 'tenantNav.walletAndGiftCard',
+    icon: CurrencyDollarIcon,
+    children: [
+      { key: 'tenantNav.walletManagement', href: ROUTES.tenant.wallets, icon: CurrencyDollarIcon },
+      { key: 'tenantNav.giftCardManagement', href: ROUTES.tenant.giftCards, icon: GiftIcon },
     ]
   },
   {

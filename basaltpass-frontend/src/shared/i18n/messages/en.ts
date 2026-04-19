@@ -1515,6 +1515,7 @@ const en = {
     userList: 'Users',
     globalUserAuthorization: 'Global User Authorization',
     teamManagement: 'Teams',
+    walletAndGiftCard: 'Wallet Management',
     walletManagement: 'Wallet Management',
     giftCardManagement: 'Gift Card Management',
     roleManagement: 'Role Management',
