@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom'
 import {
   UsersIcon,
   CubeIcon,
-  MagnifyingGlassIcon,
   FunnelIcon,
   ExclamationTriangleIcon,
   CheckCircleIcon,
@@ -12,21 +11,20 @@ import {
   ClockIcon,
   ShieldExclamationIcon,
   EyeIcon,
-  PlusIcon,
   PencilIcon,
   TrashIcon,
   XMarkIcon,
   UserPlusIcon,
   EnvelopeIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon
 } from '@heroicons/react/24/outline'
 import TenantLayout from '@features/tenant/components/TenantLayout'
-import { PInput, PSelect, PButton, PTextarea, PSkeleton, PBadge, PEmptyState, PPageHeader } from '@ui'
-import PTable, { PTableColumn } from '@ui/PTable'
+import { PInput, PSelect, PButton, PTextarea, PSkeleton, PBadge, PPageHeader, PManagementFilterCard, PManagedTableSection } from '@ui'
+import { PManagementPageContainer, PManagementStatsGrid, PManagementToast } from '@ui'
+import { type PTableColumn } from '@ui/PTable'
 import { tenantAppApi } from '@api/tenant/tenantApp'
 import { appUserApi, type AppUserStats } from '@api/tenant/appUser'
 import useDebounce from '@hooks/useDebounce'
+import useManagedPaginationBar from '@hooks/useManagedPaginationBar'
 import { ROUTES } from '@constants'
 import { useI18n } from '@shared/i18n'
 import { 
@@ -343,6 +341,15 @@ export default function TenantUserManagement() {
     fetchTenantUsers(page, pagination.pageSize)
   }
 
+  const userListPaginationBar = useManagedPaginationBar({
+    currentPage: pagination.current,
+    pageSize: pagination.pageSize,
+    totalItems: pagination.total,
+    onPageChange: handlePageChange,
+    summary: ({ start, end, total }) => t('tenantUserManagement.pagination.showing', { start, end, total }),
+    pageInfo: ({ currentPage, totalPages }) => t('tenantUserManagement.pagination.pageInfo', { current: currentPage, total: totalPages }),
+  })
+
   // 
   const appStats = apps.reduce((acc, app) => ({
     totalUsers: acc.totalUsers + app.userStats.total_users,
@@ -358,6 +365,202 @@ export default function TenantUserManagement() {
     suspendedUsers: tenantUserStats.suspended_users,
     newUsers: tenantUserStats.new_users_this_month
   }
+
+  const userStatItems = [
+    { key: 'total_users', title: t('tenantUserManagement.stats.totalUsers'), value: userStats.totalUsers, icon: <UsersIcon className="h-6 w-6 text-blue-400" /> },
+    { key: 'active_users', title: t('tenantUserManagement.stats.activeUsers'), value: userStats.activeUsers, icon: <CheckCircleIcon className="h-6 w-6 text-green-400" /> },
+    { key: 'suspended_users', title: t('tenantUserManagement.stats.suspendedUsers'), value: userStats.suspendedUsers, icon: <NoSymbolIcon className="h-6 w-6 text-red-400" /> },
+    { key: 'new_users_this_month', title: t('tenantUserManagement.stats.newUsersThisMonth'), value: userStats.newUsers, icon: <ClockIcon className="h-6 w-6 text-yellow-400" /> },
+  ]
+
+  const appStatItems = [
+    { key: 'total_users', title: t('tenantUserManagement.stats.totalUsers'), value: appStats.totalUsers, icon: <UsersIcon className="h-6 w-6 text-blue-400" /> },
+    { key: 'active_users', title: t('tenantUserManagement.stats.activeUsers'), value: appStats.activeUsers, icon: <CheckCircleIcon className="h-6 w-6 text-green-400" /> },
+    { key: 'new_users', title: t('tenantUserManagement.stats.newUsers'), value: appStats.newUsers, icon: <ClockIcon className="h-6 w-6 text-yellow-400" /> },
+    { key: 'total_apps', title: t('tenantUserManagement.stats.totalApps'), value: appStats.totalApps, icon: <CubeIcon className="h-6 w-6 text-purple-400" /> },
+    { key: 'active_apps', title: t('tenantUserManagement.stats.activeApps'), value: appStats.activeApps, icon: <CheckCircleIcon className="h-6 w-6 text-green-400" /> },
+  ]
+
+  const tenantUserColumns: PTableColumn<TenantUser>[] = [
+    {
+      key: 'user',
+      title: t('tenantUserManagement.table.user'),
+      render: (user) => (
+        <div className="flex items-center">
+          {user.avatar ? (
+            <img className="h-10 w-10 rounded-full object-cover" src={user.avatar} alt={user.nickname} />
+          ) : (
+            <div className="h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center">
+              <UsersIcon className="h-6 w-6 text-gray-400" />
+            </div>
+          )}
+          <div className="ml-4">
+            <div className="text-sm font-medium text-gray-900">{user.nickname}</div>
+            <div className="text-sm text-gray-500">{user.email}</div>
+          </div>
+        </div>
+      )
+    },
+    {
+      key: 'app_count',
+      title: t('tenantUserManagement.table.appCount'),
+      render: (u) => <span className="text-sm text-gray-700">{u.app_count ?? 0}</span>
+    },
+    {
+      key: 'role',
+      title: t('tenantUserManagement.table.role'),
+      render: (user) => (
+        <div className="flex items-center gap-2">
+          <PBadge variant={getRoleVariant(user.role) as any}>{getRoleText(user.role)}</PBadge>
+          {!user.is_tenant_user ? (
+            <PBadge variant="default">{t('tenantUserManagement.table.appUser')}</PBadge>
+          ) : null}
+        </div>
+      )
+    },
+    {
+      key: 'status',
+      title: t('tenantUserManagement.table.status'),
+      render: (user) => (
+        <PBadge variant={getStatusVariant(user.status) as any}>{getStatusText(user.status)}</PBadge>
+      )
+    },
+    {
+      key: 'last_login',
+      title: t('tenantUserManagement.table.lastLogin'),
+      render: (user) => (
+        <span className="text-sm text-gray-500">
+          {user.last_login_at
+            ? new Date(user.last_login_at).toLocaleDateString(locale)
+            : user.last_active_at
+            ? new Date(user.last_active_at).toLocaleDateString(locale)
+            : t('tenantUserManagement.table.notAvailable')}
+        </span>
+      )
+    },
+    {
+      key: 'created_at',
+      title: t('tenantUserManagement.table.joinedAt'),
+      dataIndex: 'created_at',
+      sortable: true,
+      sorter: (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    },
+    {
+      key: 'actions',
+      title: t('tenantUserManagement.table.actions'),
+      align: 'right',
+      render: (user) => (
+        <div className="flex items-center justify-end space-x-2">
+          {user.is_tenant_user && user.role !== 'owner' ? (
+            <>
+              <PButton
+                variant="ghost"
+                size="sm"
+                onClick={() => handleEditUser(user)}
+                className="text-blue-600 hover:text-blue-800"
+                title={t('tenantUserManagement.actions.editUser')}
+              >
+                <PencilIcon className="h-4 w-4" />
+              </PButton>
+              <PButton
+                variant="ghost"
+                size="sm"
+                onClick={() => handleRemoveUser(user)}
+                className="text-red-600 hover:text-red-800"
+                title={t('tenantUserManagement.actions.removeUser')}
+              >
+                <TrashIcon className="h-4 w-4" />
+              </PButton>
+            </>
+          ) : null}
+          {user.is_tenant_user && user.status === 'inactive' ? (
+            <PButton
+              variant="ghost"
+              size="sm"
+              onClick={() => handleResendInvitation(user)}
+              className="text-green-600 hover:text-green-800"
+              title={t('tenantUserManagement.actions.resendInvitation')}
+            >
+              <EnvelopeIcon className="h-4 w-4" />
+            </PButton>
+          ) : null}
+        </div>
+      )
+    }
+  ]
+
+  const appColumns: PTableColumn<AppWithUserStats>[] = [
+    {
+      key: 'app',
+      title: t('tenantUserManagement.appTable.app'),
+      render: (app) => (
+        <div className="flex items-center">
+          {app.logo_url ? (
+            <img className="h-10 w-10 rounded-lg object-cover" src={app.logo_url} alt={app.name} />
+          ) : (
+            <div className="h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <CubeIcon className="h-6 w-6 text-blue-600" />
+            </div>
+          )}
+          <div className="ml-4">
+            <div className="text-sm font-medium text-gray-900">{app.name}</div>
+            <div className="text-sm text-gray-500 max-w-xs truncate">{app.description}</div>
+          </div>
+        </div>
+      )
+    },
+    {
+      key: 'status',
+      title: t('tenantUserManagement.appTable.status'),
+      render: (app) => (
+        <PBadge variant={getStatusVariant(app.status) as any}>{getStatusText(app.status)}</PBadge>
+      )
+    },
+    {
+      key: 'total_users',
+      title: t('tenantUserManagement.appTable.totalUsers'),
+      render: (app) => (
+        <div className="flex items-center text-sm text-gray-900">
+          <UsersIcon className="h-4 w-4 text-gray-400 mr-1" />
+          {app.userStats.total_users}
+        </div>
+      )
+    },
+    {
+      key: 'active_users',
+      title: t('tenantUserManagement.appTable.activeUsers'),
+      render: (app) => (
+        <div className="flex items-center text-sm text-gray-900">
+          <CheckCircleIcon className="h-4 w-4 text-green-400 mr-1" />
+          {app.userStats.active_users}
+        </div>
+      )
+    },
+    {
+      key: 'new_users',
+      title: t('tenantUserManagement.appTable.newUsers'),
+      render: (app) => (
+        <div className="flex items-center text-sm text-gray-900">
+          <ClockIcon className="h-4 w-4 text-yellow-400 mr-1" />
+          {app.userStats.new_users}
+        </div>
+      )
+    },
+    {
+      key: 'actions',
+      title: t('tenantUserManagement.appTable.actions'),
+      align: 'right',
+      render: (app) => (
+        <Link
+          to={`/tenant/apps/${app.id}/users`}
+          className="inline-flex items-center rounded-md border border-transparent bg-blue-100 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-200"
+        >
+          <EyeIcon className="h-4 w-4 mr-1" />
+          {t('tenantUserManagement.appTable.manageUsers')}
+        </Link>
+      )
+    }
+  ]
 
   if (loading) {
     return (
@@ -395,546 +598,140 @@ export default function TenantUserManagement() {
 
   return (
     <TenantLayout title={t('tenantUserManagement.page.title')}>
-      <div className="space-y-6">
-        {/*  */}
-        {message.visible && (
-          <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg flex items-center space-x-2 ${
-            message.type === 'success' ? 'bg-green-500 text-white' :
-            message.type === 'error' ? 'bg-red-500 text-white' :
-            'bg-blue-500 text-white'
-          }`}>
-            {message.type === 'success' && <CheckCircleIcon className="w-5 h-5" />}
-            {message.type === 'error' && <ExclamationTriangleIcon className="w-5 h-5" />}
-            <span>{message.text}</span>
-            <button 
-              onClick={() => setMessage(prev => ({ ...prev, visible: false }))}
-              className="ml-2 hover:opacity-75"
-            >
-              <XMarkIcon className="w-4 h-4" />
-            </button>
+      <PManagementPageContainer
+        notice={
+          <PManagementToast
+            visible={message.visible}
+            type={message.type}
+            text={message.text}
+            onClose={() => setMessage((prev) => ({ ...prev, visible: false }))}
+          />
+        }
+        header={
+          <PPageHeader
+            title={t('tenantUserManagement.page.title')}
+            description={t('tenantUserManagement.page.subtitle')}
+            icon={<UsersIcon className="h-8 w-8 text-blue-600" />}
+            actions={activeTab === 'users' ? (
+              <PButton onClick={() => setShowInviteModal(true)} leftIcon={<UserPlusIcon className="w-5 h-5" />}>{t('tenantUserManagement.actions.inviteUser')}</PButton>
+            ) : undefined}
+          />
+        }
+        toolbar={
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8">
+              <button
+                onClick={() => setActiveTab('users')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'users'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <UsersIcon className="w-5 h-5 inline mr-2" />
+                {t('tenantUserManagement.tabs.tenantUsers')}
+              </button>
+              <button
+                onClick={() => setActiveTab('apps')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'apps'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <CubeIcon className="w-5 h-5 inline mr-2" />
+                {t('tenantUserManagement.tabs.appUsers')}
+              </button>
+            </nav>
           </div>
-        )}
-
-        {/*  */}
-        <PPageHeader
-          title={t('tenantUserManagement.page.title')}
-          description={t('tenantUserManagement.page.subtitle')}
-          icon={<UsersIcon className="h-8 w-8 text-blue-600" />}
-          actions={activeTab === 'users' ? (
-            <PButton onClick={() => setShowInviteModal(true)} leftIcon={<UserPlusIcon className="w-5 h-5" />}>{t('tenantUserManagement.actions.inviteUser')}</PButton>
-          ) : undefined}
-        />
-
-        {/*  */}
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8">
-            <button
-              onClick={() => setActiveTab('users')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'users'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              <UsersIcon className="w-5 h-5 inline mr-2" />
-              {t('tenantUserManagement.tabs.tenantUsers')}
-            </button>
-            <button
-              onClick={() => setActiveTab('apps')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'apps'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              <CubeIcon className="w-5 h-5 inline mr-2" />
-              {t('tenantUserManagement.tabs.appUsers')}
-            </button>
-          </nav>
-        </div>
-
-        {/*  */}
-        {activeTab === 'users' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <UsersIcon className="h-6 w-6 text-blue-400" />
+        }
+        stats={
+          <PManagementStatsGrid
+            items={activeTab === 'users' ? userStatItems : appStatItems}
+            gridClassName={activeTab === 'users' ? 'grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4' : 'grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-5'}
+          />
+        }
+        filter={
+          <PManagementFilterCard
+            searchValue={searchTerm}
+            onSearchChange={setSearchTerm}
+            searchPlaceholder={activeTab === 'users' ? t('tenantUserManagement.filters.searchUsers') : t('tenantUserManagement.filters.searchApps')}
+            rightContentClassName={activeTab === 'users' ? 'lg:w-[28rem]' : 'lg:w-64'}
+            rightContent={
+              <div className={`grid gap-3 ${activeTab === 'users' ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
+                {activeTab === 'users' ? (
+                  <div className="relative">
+                    <FunnelIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400 z-10" />
+                    <PSelect
+                      value={roleFilter}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setRoleFilter(e.target.value)}
+                      className="pl-10"
+                    >
+                      <option value="">{t('tenantUserManagement.filters.allRoles')}</option>
+                      <option value="owner">{t('tenantUserManagement.role.owner')}</option>
+                      <option value="admin">{t('tenantUserManagement.role.admin')}</option>
+                      <option value="user">{t('tenantUserManagement.role.member')}</option>
+                    </PSelect>
                   </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">{t('tenantUserManagement.stats.totalUsers')}</dt>
-                      <dd className="text-lg font-medium text-gray-900">{userStats.totalUsers}</dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <CheckCircleIcon className="h-6 w-6 text-green-400" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">{t('tenantUserManagement.stats.activeUsers')}</dt>
-                      <dd className="text-lg font-medium text-gray-900">{userStats.activeUsers}</dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <NoSymbolIcon className="h-6 w-6 text-red-400" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">{t('tenantUserManagement.stats.suspendedUsers')}</dt>
-                      <dd className="text-lg font-medium text-gray-900">{userStats.suspendedUsers}</dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <ClockIcon className="h-6 w-6 text-yellow-400" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">{t('tenantUserManagement.stats.newUsersThisMonth')}</dt>
-                      <dd className="text-lg font-medium text-gray-900">{userStats.newUsers}</dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <UsersIcon className="h-6 w-6 text-blue-400" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">{t('tenantUserManagement.stats.totalUsers')}</dt>
-                      <dd className="text-lg font-medium text-gray-900">{appStats.totalUsers}</dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <CheckCircleIcon className="h-6 w-6 text-green-400" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">{t('tenantUserManagement.stats.activeUsers')}</dt>
-                      <dd className="text-lg font-medium text-gray-900">{appStats.activeUsers}</dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <ClockIcon className="h-6 w-6 text-yellow-400" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">{t('tenantUserManagement.stats.newUsers')}</dt>
-                      <dd className="text-lg font-medium text-gray-900">{appStats.newUsers}</dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <CubeIcon className="h-6 w-6 text-purple-400" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">{t('tenantUserManagement.stats.totalApps')}</dt>
-                      <dd className="text-lg font-medium text-gray-900">{appStats.totalApps}</dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <CheckCircleIcon className="h-6 w-6 text-green-400" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">{t('tenantUserManagement.stats.activeApps')}</dt>
-                      <dd className="text-lg font-medium text-gray-900">{appStats.activeApps}</dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/*  */}
-        <div className="bg-white shadow rounded-lg p-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <MagnifyingGlassIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                <PInput
-                  type="text"
-                  placeholder={activeTab === 'users' ? t('tenantUserManagement.filters.searchUsers') : t('tenantUserManagement.filters.searchApps')}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  icon={<MagnifyingGlassIcon className="h-5 w-5" />}
-                />
-              </div>
-            </div>
-            {activeTab === 'users' && (
-              <div className="sm:w-48">
+                ) : null}
                 <div className="relative">
                   <FunnelIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400 z-10" />
                   <PSelect
-                    value={roleFilter}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setRoleFilter(e.target.value)}
+                    value={statusFilter}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value)}
                     className="pl-10"
                   >
-                    <option value="">{t('tenantUserManagement.filters.allRoles')}</option>
-                    <option value="owner">{t('tenantUserManagement.role.owner')}</option>
-                    <option value="admin">{t('tenantUserManagement.role.admin')}</option>
-                    <option value="user">{t('tenantUserManagement.role.member')}</option>
+                    <option value="">{t('tenantUserManagement.filters.allStatuses')}</option>
+                    {activeTab === 'users' ? (
+                      <>
+                        <option value="active">{t('tenantUserManagement.status.active')}</option>
+                        <option value="inactive">{t('tenantUserManagement.status.inactive')}</option>
+                        <option value="suspended">{t('tenantUserManagement.status.suspended')}</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="active">{t('tenantUserManagement.appStatus.active')}</option>
+                        <option value="inactive">{t('tenantUserManagement.appStatus.inactive')}</option>
+                        <option value="pending">{t('tenantUserManagement.appStatus.pending')}</option>
+                      </>
+                    )}
                   </PSelect>
                 </div>
               </div>
-            )}
-            <div className="sm:w-48">
-              <div className="relative">
-                <FunnelIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400 z-10" />
-                <PSelect
-                  value={statusFilter}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value)}
-                  className="pl-10"
-                >
-                  <option value="">{t('tenantUserManagement.filters.allStatuses')}</option>
-                  {activeTab === 'users' ? (
-                    <>
-                      <option value="active">{t('tenantUserManagement.status.active')}</option>
-                      <option value="inactive">{t('tenantUserManagement.status.inactive')}</option>
-                      <option value="suspended">{t('tenantUserManagement.status.suspended')}</option>
-                    </>
-                  ) : (
-                    <>
-                      <option value="active">{t('tenantUserManagement.appStatus.active')}</option>
-                      <option value="inactive">{t('tenantUserManagement.appStatus.inactive')}</option>
-                      <option value="pending">{t('tenantUserManagement.appStatus.pending')}</option>
-                    </>
-                  )}
-                </PSelect>
-              </div>
-            </div>
-          </div>
-        </div>
+            }
+          />
+        }
+      >
 
-        {/*  */}
         {activeTab === 'users' ? (
-          /*  */
-          <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-            <div className="px-4 py-5 sm:p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg leading-6 font-medium text-gray-900">
-                  {t('tenantUserManagement.list.tenantUsersCount', { count: filteredTenantUsers.length })}
-                </h3>
-              </div>
-
-              {filteredTenantUsers.length === 0 ? (
-                <PEmptyState
-                  icon={UsersIcon}
-                  title={t('tenantUserManagement.empty.noUsers')}
-                  description={searchTerm ? t('tenantUserManagement.empty.noUserMatch') : t('tenantUserManagement.empty.noUsersYet')}
-                >
-                  {!searchTerm && (
-                    <PButton onClick={() => setShowInviteModal(true)} leftIcon={<UserPlusIcon className="h-4 w-4" />}>{t('tenantUserManagement.actions.inviteUser')}</PButton>
-                  )}
-                </PEmptyState>
-              ) : (
-                <>
-                  <PTable
-                    columns={[
-                      {
-                        key: 'user',
-                        title: t('tenantUserManagement.table.user'),
-                        render: (user: TenantUser) => (
-                          <div className="flex items-center">
-                            {user.avatar ? (
-                              <img className="h-10 w-10 rounded-full object-cover" src={user.avatar} alt={user.nickname} />
-                            ) : (
-                              <div className="h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center">
-                                <UsersIcon className="h-6 w-6 text-gray-400" />
-                              </div>
-                            )}
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">{user.nickname}</div>
-                              <div className="text-sm text-gray-500">{user.email}</div>
-                            </div>
-                          </div>
-                        )
-                      },
-                      { key: 'app_count', title: t('tenantUserManagement.table.appCount'), render: (u: TenantUser) => <span className="text-sm text-gray-700">{u.app_count ?? 0}</span> },
-                      {
-                        key: 'role',
-                        title: t('tenantUserManagement.table.role'),
-                        render: (user: TenantUser) => (
-                          <div className="flex items-center gap-2">
-                            <PBadge variant={getRoleVariant(user.role) as any}>{getRoleText(user.role)}</PBadge>
-                            {!user.is_tenant_user && (
-                              <PBadge variant="default">{t('tenantUserManagement.table.appUser')}</PBadge>
-                            )}
-                          </div>
-                        )
-                      },
-                      {
-                        key: 'status',
-                        title: t('tenantUserManagement.table.status'),
-                        render: (user: TenantUser) => (
-                          <PBadge variant={getStatusVariant(user.status) as any}>{getStatusText(user.status)}</PBadge>
-                        )
-                      },
-                      {
-                        key: 'last_login',
-                        title: t('tenantUserManagement.table.lastLogin'),
-                        render: (user: TenantUser) => (
-                          <span className="text-sm text-gray-500">
-                            {user.last_login_at
-                              ? new Date(user.last_login_at).toLocaleDateString(locale)
-                              : user.last_active_at
-                              ? new Date(user.last_active_at).toLocaleDateString(locale)
-                              : t('tenantUserManagement.table.notAvailable')}
-                          </span>
-                        )
-                      },
-                      { key: 'created_at', title: t('tenantUserManagement.table.joinedAt'), dataIndex: 'created_at', sortable: true, sorter: (a: TenantUser, b: TenantUser) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime() },
-                      {
-                        key: 'actions',
-                        title: t('tenantUserManagement.table.actions'),
-                        align: 'right',
-                        render: (user: TenantUser) => (
-                          <div className="flex items-center justify-end space-x-2">
-                            {user.is_tenant_user && user.role !== 'owner' && (
-                              <>
-                                <PButton
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleEditUser(user)}
-                                  className="text-blue-600 hover:text-blue-800"
-                                  title={t('tenantUserManagement.actions.editUser')}
-                                >
-                                  <PencilIcon className="h-4 w-4" />
-                                </PButton>
-                                <PButton
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleRemoveUser(user)}
-                                  className="text-red-600 hover:text-red-800"
-                                  title={t('tenantUserManagement.actions.removeUser')}
-                                >
-                                  <TrashIcon className="h-4 w-4" />
-                                </PButton>
-                              </>
-                            )}
-                            {user.is_tenant_user && user.status === 'inactive' && (
-                              <PButton
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleResendInvitation(user)}
-                                className="text-green-600 hover:text-green-800"
-                                title={t('tenantUserManagement.actions.resendInvitation')}
-                              >
-                                <EnvelopeIcon className="h-4 w-4" />
-                              </PButton>
-                            )}
-                          </div>
-                        )
-                      },
-                    ]}
-                    data={filteredTenantUsers}
-                    rowKey={(row) => row.id}
-                    defaultSort={{ key: 'created_at', order: 'desc' }}
-                  />
-
-                  {/*  */}
-                  {filteredTenantUsers.length > 0 && (
-                    <div className="px-6 py-4 border-t border-gray-200">
-                      <div className="flex items-center justify-between">
-                        <div className="text-sm text-gray-700">
-                          {t('tenantUserManagement.pagination.showing', {
-                            start: ((pagination.current - 1) * pagination.pageSize) + 1,
-                            end: Math.min(pagination.current * pagination.pageSize, pagination.total),
-                            total: pagination.total
-                          })}
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => handlePageChange(pagination.current - 1)}
-                            disabled={pagination.current <= 1}
-                            className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                          >
-                            <ChevronLeftIcon className="w-4 h-4" />
-                          </button>
-                          
-                          <span className="px-3 py-1 text-sm">
-                            {t('tenantUserManagement.pagination.pageInfo', {
-                              current: pagination.current,
-                              total: Math.ceil(pagination.total / pagination.pageSize)
-                            })}
-                          </span>
-                          
-                          <button
-                            onClick={() => handlePageChange(pagination.current + 1)}
-                            disabled={pagination.current >= Math.ceil(pagination.total / pagination.pageSize)}
-                            className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                          >
-                            <ChevronRightIcon className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
+          <PManagedTableSection<TenantUser>
+            data={filteredTenantUsers}
+            columns={tenantUserColumns}
+            rowKey={(row) => row.id}
+            defaultSort={{ key: 'created_at', order: 'desc' }}
+            emptyText={searchTerm ? t('tenantUserManagement.empty.noUserMatch') : t('tenantUserManagement.empty.noUsersYet')}
+            emptyContent={!searchTerm ? (
+              <PButton onClick={() => setShowInviteModal(true)} leftIcon={<UserPlusIcon className="h-4 w-4" />}>
+                {t('tenantUserManagement.actions.inviteUser')}
+              </PButton>
+            ) : undefined}
+            pagination={userListPaginationBar}
+          />
         ) : (
-          /*  */
-          <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-            <div className="px-4 py-5 sm:p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg leading-6 font-medium text-gray-900">
-                  {t('tenantUserManagement.appUsers.title')}
-                </h3>
-              </div>
-
-              {filteredApps.length === 0 ? (
-                <PEmptyState
-                  icon={CubeIcon}
-                  title={t('tenantUserManagement.appUsers.noApps')}
-                  description={searchTerm ? t('tenantUserManagement.appUsers.noAppMatch') : t('tenantUserManagement.appUsers.noAppsYet')}
-                >
-                  {!searchTerm && (
-                    <Link to={ROUTES.tenant.appsNew}>
-                      <PButton>{t('tenantUserManagement.appUsers.createApp')}</PButton>
-                    </Link>
-                  )}
-                </PEmptyState>
-              ) : (
-                <PTable
-                  columns={[
-                    {
-                      key: 'app',
-                      title: t('tenantUserManagement.appTable.app'),
-                      render: (app: AppWithUserStats) => (
-                        <div className="flex items-center">
-                          {app.logo_url ? (
-                            <img className="h-10 w-10 rounded-lg object-cover" src={app.logo_url} alt={app.name} />
-                          ) : (
-                            <div className="h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                              <CubeIcon className="h-6 w-6 text-blue-600" />
-                            </div>
-                          )}
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{app.name}</div>
-                            <div className="text-sm text-gray-500 max-w-xs truncate">{app.description}</div>
-                          </div>
-                        </div>
-                      )
-                    },
-                    {
-                      key: 'status',
-                      title: t('tenantUserManagement.appTable.status'),
-                      render: (app: AppWithUserStats) => (
-                        <PBadge variant={getStatusVariant(app.status) as any}>{getStatusText(app.status)}</PBadge>
-                      )
-                    },
-                    {
-                      key: 'total_users',
-                      title: t('tenantUserManagement.appTable.totalUsers'),
-                      render: (app: AppWithUserStats) => (
-                        <div className="flex items-center text-sm text-gray-900">
-                          <UsersIcon className="h-4 w-4 text-gray-400 mr-1" />
-                          {app.userStats.total_users}
-                        </div>
-                      )
-                    },
-                    {
-                      key: 'active_users',
-                      title: t('tenantUserManagement.appTable.activeUsers'),
-                      render: (app: AppWithUserStats) => (
-                        <div className="flex items-center text-sm text-gray-900">
-                          <CheckCircleIcon className="h-4 w-4 text-green-400 mr-1" />
-                          {app.userStats.active_users}
-                        </div>
-                      )
-                    },
-                    {
-                      key: 'new_users',
-                      title: t('tenantUserManagement.appTable.newUsers'),
-                      render: (app: AppWithUserStats) => (
-                        <div className="flex items-center text-sm text-gray-900">
-                          <ClockIcon className="h-4 w-4 text-yellow-400 mr-1" />
-                          {app.userStats.new_users}
-                        </div>
-                      )
-                    },
-                    {
-                      key: 'actions',
-                      title: t('tenantUserManagement.appTable.actions'),
-                      align: 'right',
-                      render: (app: AppWithUserStats) => (
-                        <Link
-                          to={`/tenant/apps/${app.id}/users`}
-                          className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200"
-                        >
-                          <EyeIcon className="h-4 w-4 mr-1" />
-                          {t('tenantUserManagement.appTable.manageUsers')}
-                        </Link>
-                      )
-                    },
-                  ]}
-                  data={filteredApps}
-                  rowKey={(row) => row.id}
-                />
-              )}
-            </div>
-          </div>
+          <PManagedTableSection<AppWithUserStats>
+            data={filteredApps}
+            columns={appColumns}
+            rowKey={(row) => row.id}
+            emptyText={searchTerm ? t('tenantUserManagement.appUsers.noAppMatch') : t('tenantUserManagement.appUsers.noAppsYet')}
+            emptyContent={!searchTerm ? (
+              <Link to={ROUTES.tenant.appsNew}>
+                <PButton>{t('tenantUserManagement.appUsers.createApp')}</PButton>
+              </Link>
+            ) : undefined}
+          />
         )}
+
+      </PManagementPageContainer>
 
         {/*  */}
         {showInviteModal && (
@@ -974,16 +771,16 @@ const InviteUserModal: React.FC<{
   const { t } = useI18n()
   return (
     <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-10 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+      <div className="relative top-10 mx-auto w-full max-w-md rounded-2xl border bg-white p-5 shadow-xl">
         <div className="mt-3">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-medium text-gray-900">{t('tenantUserManagement.modalInvite.title')}</h3>
-            <button
+            <PButton
+              variant="ghost"
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
             >
               <XMarkIcon className="h-6 w-6" />
-            </button>
+            </PButton>
           </div>
 
           <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="space-y-4">
@@ -1053,16 +850,16 @@ const EditUserModal: React.FC<{
   const { t } = useI18n()
   return (
     <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-10 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+      <div className="relative top-10 mx-auto w-full max-w-md rounded-2xl border bg-white p-5 shadow-xl">
         <div className="mt-3">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-medium text-gray-900">{t('tenantUserManagement.modalEdit.title', { user: user.nickname })}</h3>
-            <button
+            <PButton
+              variant="ghost"
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
             >
               <XMarkIcon className="h-6 w-6" />
-            </button>
+            </PButton>
           </div>
 
           <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="space-y-4">

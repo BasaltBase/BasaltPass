@@ -1,23 +1,25 @@
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
+import React, { useEffect, useState } from 'react'
+import { uiAlert, uiConfirm } from '@contexts/DialogContext'
 import { useNavigate } from 'react-router-dom'
 import {
   KeyIcon,
   PlusIcon,
   PencilIcon,
   TrashIcon,
-  MagnifyingGlassIcon,
   XMarkIcon,
   ExclamationTriangleIcon,
   TagIcon,
-  ShieldCheckIcon
+  ShieldCheckIcon,
+  FunnelIcon
 } from '@heroicons/react/24/outline'
 import TenantLayout from '@features/tenant/components/TenantLayout'
-import { PInput, PSelect, PTextarea, PButton, PSkeleton, PBadge, PPageHeader, PPagination } from '@ui'
-import PTable, { type PTableColumn, type PTableAction } from '@ui/PTable'
+import { PInput, PSelect, PTextarea, PButton, PSkeleton, PBadge, PPageHeader, PManagedTableSection, PManagementFilterCard } from '@ui'
+import { PManagementPageContainer } from '@ui'
+import { type PTableColumn, type PTableAction } from '@ui/PTable'
 import useDebounce from '@hooks/useDebounce'
 import useLocalStorage from '@hooks/useLocalStorage'
 import usePagination from '@hooks/usePagination'
+import useManagedPaginationBar from '@hooks/useManagedPaginationBar'
 import {
   getTenantPermissions,
   createTenantPermission,
@@ -44,6 +46,15 @@ export default function TenantPermissionManagement() {
   const [pageSize] = useLocalStorage<number>('tenant.permissions.pageSize', 20)
 
   const { pagination, setPage, setTotal, resetPage } = usePagination({ pageSize })
+
+  const paginationBar = useManagedPaginationBar({
+    currentPage: pagination.current,
+    pageSize: pagination.pageSize,
+    totalItems: pagination.total,
+    onPageChange: setPage,
+    summary: ({ start, end, total }) => t('tenantRoleManagement.pagination.summary', { start, end, total }),
+    pageInfo: ({ currentPage, totalPages }) => t('tenantRoleManagement.pagination.pageInfo', { current: currentPage, total: totalPages }),
+  })
 
   // 
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -179,7 +190,7 @@ export default function TenantPermissionManagement() {
       title: t('tenantPermissionManagement.table.category'),
       key: 'category',
       render: (permission) => (
-        <PBadge variant="purple" icon={<TagIcon className="h-3 w-3" />}>{permission.category}</PBadge>
+        <PBadge variant="info" icon={<TagIcon className="h-3 w-3" />}>{permission.category}</PBadge>
       )
     },
     {
@@ -194,9 +205,12 @@ export default function TenantPermissionManagement() {
     {
       title: t('tenantPermissionManagement.table.createdAt'),
       key: 'created_at',
+      sortable: true,
+      sorter: (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+      align: 'right',
       render: (permission) => (
         <div className="text-sm text-gray-500">
-          {new Date(permission.created_at).toLocaleDateString(locale)}
+          {new Date(permission.created_at).toLocaleString(locale)}
         </div>
       )
     }
@@ -204,15 +218,17 @@ export default function TenantPermissionManagement() {
 
   const actions: PTableAction<TenantPermission>[] = [
     {
+      key: 'edit',
       label: t('tenantPermissionManagement.actions.edit'),
       onClick: handleEditPermission,
       icon: <PencilIcon className="h-4 w-4" />
     },
     {
+      key: 'delete',
       label: t('tenantPermissionManagement.actions.delete'),
       onClick: handleDeletePermission,
       icon: <TrashIcon className="h-4 w-4" />,
-      danger: true
+      variant: 'danger'
     }
   ]
 
@@ -237,74 +253,68 @@ export default function TenantPermissionManagement() {
 
   return (
     <TenantLayout title={t('tenantPermissionManagement.layoutTitle')}>
-      <div className="space-y-6">
-        {/*  */}
-        <PPageHeader
-          title={t('tenantPermissionManagement.header.title')}
-          description={t('tenantPermissionManagement.header.description')}
-          icon={<KeyIcon className="h-8 w-8 text-blue-600" />}
-          actions={
-            <div className="flex space-x-3">
-              <PButton variant="secondary" onClick={() => navigate(ROUTES.tenant.roles)} leftIcon={<ShieldCheckIcon className="h-4 w-4" />}>{t('tenantPermissionManagement.actions.roleManagement')}</PButton>
-              <PButton onClick={handleCreatePermission} leftIcon={<PlusIcon className="h-4 w-4" />}>{t('tenantPermissionManagement.actions.createPermission')}</PButton>
-            </div>
-          }
-        />
-
-        {/*  */}
-        <div className="bg-white shadow rounded-lg p-6">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1">
-              <PInput
-                placeholder={t('tenantPermissionManagement.search.placeholder')}
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm((e.target as HTMLInputElement).value)
-                  setPagination(prev => ({ ...prev, current: 1 }))
-                }}
-                icon={<MagnifyingGlassIcon className="h-5 w-5" />}
-              />
-            </div>
-            <div className="lg:w-64">
-              <PSelect
-                value={selectedCategory}
-                onChange={(e) => {
-                  setSelectedCategory((e.target as HTMLSelectElement).value)
-                  setPagination(prev => ({ ...prev, current: 1 }))
-                }}
-              >
-                <option value="">{t('tenantPermissionManagement.search.allCategories')}</option>
-                {categories.map(category => (
-                  <option key={category} value={category}>{category}</option>
-                ))}
-              </PSelect>
-            </div>
-          </div>
-        </div>
-
-        {/*  */}
-        <div>
-          <PTable<TenantPermission>
-            data={permissions}
-            columns={columns}
-            actions={actions}
-            rowKey={(row) => String(row.id)}
-            loading={loading}
-            emptyText={searchTerm || selectedCategory ? t('tenantPermissionManagement.empty.filtered') : t('tenantPermissionManagement.empty.noData')}
-            emptyContent={!searchTerm && !selectedCategory ? (
-              <PButton onClick={handleCreatePermission} leftIcon={<PlusIcon className="h-4 w-4" />}>
-                {t('tenantPermissionManagement.actions.createPermission')}
-              </PButton>
-            ) : undefined}
-            pagination={{
-              current: pagination.current,
-              pageSize: pagination.pageSize,
-              total: pagination.total,
-              onChange: (page) => setPage(page)
-            }}
+      <PManagementPageContainer
+        header={
+          <PPageHeader
+            title={t('tenantPermissionManagement.header.title')}
+            description={t('tenantPermissionManagement.header.description')}
+            icon={<KeyIcon className="h-8 w-8 text-blue-600" />}
+            actions={
+              <div className="flex space-x-3">
+                <PButton variant="secondary" onClick={() => navigate(ROUTES.tenant.roles)} leftIcon={<ShieldCheckIcon className="h-4 w-4" />}>{t('tenantPermissionManagement.actions.roleManagement')}</PButton>
+                <PButton onClick={handleCreatePermission} leftIcon={<PlusIcon className="h-4 w-4" />}>{t('tenantPermissionManagement.actions.createPermission')}</PButton>
+              </div>
+            }
           />
-        </div>
-      </div>
+        }
+        filter={
+          <PManagementFilterCard
+            searchValue={searchTerm}
+            onSearchChange={(value) => {
+              setSearchTerm(value)
+              setPage(1)
+            }}
+            searchPlaceholder={t('tenantPermissionManagement.search.placeholder')}
+            rightContentClassName="lg:w-64"
+            rightContent={
+              <div className="relative">
+                <FunnelIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                <PSelect
+                  value={selectedCategory}
+                  onChange={(e) => {
+                    setSelectedCategory((e.target as HTMLSelectElement).value)
+                    setPage(1)
+                  }}
+                  className="pl-10"
+                >
+                  <option value="">{t('tenantPermissionManagement.search.allCategories')}</option>
+                  {categories.map(category => (
+                    <option key={category} value={category}>{category}</option>
+                  ))}
+                </PSelect>
+              </div>
+            }
+          />
+        }
+      >
+        <PManagedTableSection<TenantPermission>
+          data={permissions}
+          columns={columns}
+          actions={actions}
+          rowKey={(row) => String(row.id)}
+          loading={loading}
+          emptyText={searchTerm || selectedCategory ? t('tenantPermissionManagement.empty.filtered') : t('tenantPermissionManagement.empty.noData')}
+          emptyContent={!searchTerm && !selectedCategory ? (
+            <PButton onClick={handleCreatePermission} leftIcon={<PlusIcon className="h-4 w-4" />}>
+              {t('tenantPermissionManagement.actions.createPermission')}
+            </PButton>
+          ) : undefined}
+          size="md"
+          striped
+          defaultSort={{ key: 'created_at', order: 'desc' }}
+          pagination={paginationBar}
+        />
+      </PManagementPageContainer>
 
       {/*  */}
       {showCreateModal && (
@@ -351,16 +361,16 @@ const PermissionModal: React.FC<{
 
   return (
     <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+      <div className="relative top-10 mx-auto w-full max-w-2xl rounded-2xl border bg-white p-5 shadow-xl">
         <div className="mt-3">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-medium text-gray-900">{title}</h3>
-            <button
+            <PButton
+              variant="ghost"
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
             >
               <XMarkIcon className="h-6 w-6" />
-            </button>
+            </PButton>
           </div>
 
           <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }}>

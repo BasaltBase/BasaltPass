@@ -1870,6 +1870,11 @@ const en = {
     title: 'Role Management',
     description: 'Manage roles and permissions for app "{{name}}"',
     searchPlaceholder: 'Search role name, code, or description...',
+    table: {
+      roleInfo: 'Role Info',
+      permissionCount: 'Permission Count',
+      createdAt: 'Created At',
+    },
     list: {
       title: 'Role List ({{count}} roles)',
     },
@@ -1933,6 +1938,7 @@ const en = {
       allCategories: 'All categories',
     },
     table: {
+      permissionCode: 'Permission Code',
       permissionName: 'Permission Name',
       category: 'Category',
       description: 'Description',

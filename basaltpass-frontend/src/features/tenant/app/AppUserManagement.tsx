@@ -1,9 +1,8 @@
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
+import React, { useEffect, useMemo, useState } from 'react'
+import { uiAlert, uiConfirm } from '@contexts/DialogContext'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   UsersIcon,
-  MagnifyingGlassIcon,
   FunnelIcon,
   ExclamationTriangleIcon,
   NoSymbolIcon,
@@ -15,15 +14,16 @@ import {
   ShieldCheckIcon,
   KeyIcon,
   PlusIcon,
-  XMarkIcon,
-  Cog6ToothIcon
+  XMarkIcon
 } from '@heroicons/react/24/outline'
 import TenantLayout from '@features/tenant/components/TenantLayout'
 import { tenantAppApi } from '@api/tenant/tenantApp'
 import { appUserApi, type AppUser, type AppUsersResponse } from '@api/tenant/appUser'
 import { userPermissionsApi, type Permission, type Role, type UserPermission, type UserRole } from '@api/tenant/appPermissions'
 import useDebounce from '@hooks/useDebounce'
-import { PSkeleton, PBadge, PPagination, PPageHeader, PEmptyState, PButton, PCard } from '@ui'
+import useManagedPaginationBar from '@hooks/useManagedPaginationBar'
+import { PSkeleton, PBadge, PPageHeader, PButton, PManagementFilterCard, PManagedTableSection, PSelect, PManagementPageContainer, PTextarea } from '@ui'
+import { type PTableColumn } from '@ui/PTable'
 import { useI18n } from '@shared/i18n'
 
 export default function AppUserManagement() {
@@ -327,13 +327,136 @@ export default function AppUserManagement() {
     }
   }
 
-  const filteredUsers = users.filter(user => 
-    debouncedSearchTerm === '' || 
-    user.user_email.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-    (user.user_nickname && user.user_nickname.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
-  )
+  const filteredUsers = useMemo(() => {
+    return users.filter(user =>
+      debouncedSearchTerm === '' ||
+      user.user_email.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+      (user.user_nickname && user.user_nickname.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
+    )
+  }, [users, debouncedSearchTerm])
 
-  const totalPages = Math.ceil(totalUsers / pageSize)
+  const userColumns: PTableColumn<AppUser>[] = [
+    {
+      key: 'user',
+      title: t('tenantAppUserManagement.table.user'),
+      render: (user) => (
+        <div className="flex items-center">
+          {user.user_avatar ? (
+            <img
+              className="h-10 w-10 rounded-full"
+              src={user.user_avatar}
+              alt={user.user_nickname || user.user_email}
+            />
+          ) : (
+            <UserCircleIcon className="h-10 w-10 text-gray-300" />
+          )}
+          <div className="ml-4">
+            <div className="text-sm font-medium text-gray-900">
+              {user.user_nickname || t('tenantAppUserManagement.fields.nicknameNotSet')}
+            </div>
+            <div className="text-sm text-gray-500 flex items-center">
+              <EnvelopeIcon className="h-4 w-4 mr-1" />
+              {user.user_email}
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      key: 'status',
+      title: t('tenantAppUserManagement.table.status'),
+      render: (user) => (
+        <div>
+          <div className="flex items-center">
+            {getStatusIcon(user.status)}
+            <PBadge variant={getStatusVariant(user.status) as any} className="ml-2">
+              {getStatusText(user.status)}
+            </PBadge>
+          </div>
+          {user.ban_reason ? (
+            <div className="text-xs text-gray-500 mt-1">
+              {t('tenantAppUserManagement.fields.reason')}: {user.ban_reason}
+            </div>
+          ) : null}
+        </div>
+      )
+    },
+    {
+      key: 'last_active_at',
+      title: t('tenantAppUserManagement.table.lastActive'),
+      render: (user) => (
+        <span className="text-sm text-gray-500">
+          {user.last_active_at
+            ? new Date(user.last_active_at).toLocaleString(locale)
+            : t('tenantAppUserManagement.fields.neverActive')}
+        </span>
+      )
+    },
+    {
+      key: 'first_authorized_at',
+      title: t('tenantAppUserManagement.table.authorizedAt'),
+      sortable: true,
+      sorter: (a, b) => new Date(a.first_authorized_at).getTime() - new Date(b.first_authorized_at).getTime(),
+      render: (user) => (
+        <span className="text-sm text-gray-500">{new Date(user.first_authorized_at).toLocaleString(locale)}</span>
+      )
+    },
+    {
+      key: 'scopes',
+      title: t('tenantAppUserManagement.table.scopes'),
+      render: (user) => (
+        <div className="max-w-xs truncate text-sm text-gray-500">
+          {user.scopes || t('tenantAppUserManagement.fields.defaultScopes')}
+        </div>
+      )
+    },
+    {
+      key: 'actions',
+      title: t('tenantAppUserManagement.table.actions'),
+      align: 'right',
+      render: (user) => (
+        <div className="flex flex-wrap justify-end gap-2">
+          <PButton
+            size="sm"
+            variant="secondary"
+            onClick={() => handleManagePermissions(user)}
+            leftIcon={<ShieldCheckIcon className="h-3 w-3" />}
+          >
+            {t('tenantAppUserManagement.actions.permissions')}
+          </PButton>
+          {user.status === 'active' ? (
+            <>
+              <PButton size="sm" variant="secondary" onClick={() => handleUserAction(user, 'restrict')}>
+                {t('tenantAppUserManagement.actions.restrict')}
+              </PButton>
+              <PButton size="sm" variant="secondary" onClick={() => handleUserAction(user, 'suspend')}>
+                {t('tenantAppUserManagement.actions.suspend')}
+              </PButton>
+              <PButton size="sm" variant="danger" onClick={() => handleUserAction(user, 'ban')}>
+                {t('tenantAppUserManagement.actions.ban')}
+              </PButton>
+            </>
+          ) : (
+            <PButton size="sm" variant="secondary" onClick={() => handleUserAction(user, 'unban')}>
+              {t('tenantAppUserManagement.actions.unban')}
+            </PButton>
+          )}
+          <PButton size="sm" variant="danger" onClick={() => handleRevokeAuthorization(user)}>
+            {t('tenantAppUserManagement.actions.revokeAuthorization')}
+          </PButton>
+        </div>
+      )
+    }
+  ]
+
+  const paginationBar = useManagedPaginationBar({
+    currentPage,
+    pageSize,
+    totalItems: totalUsers,
+    onPageChange: setCurrentPage,
+    summary: ({ start, end, total }) => t('tenantRoleManagement.pagination.summary', { start, end, total }),
+    pageInfo: ({ currentPage: page, totalPages }) => t('tenantRoleManagement.pagination.pageInfo', { current: page, total: totalPages }),
+  })
 
   if (loading && users.length === 0) {
     return (
@@ -363,220 +486,62 @@ export default function AppUserManagement() {
 
   return (
     <TenantLayout title={t('tenantAppUserManagement.layoutTitle')}>
-      <div className="space-y-6">
-        {/*  */}
-        <PPageHeader
-          title={t('tenantAppUserManagement.title')}
-          description={t('tenantAppUserManagement.description', { name: app?.name || '-' })}
-          icon={<UsersIcon className="h-8 w-8 text-blue-600" />}
-          actions={
-            <div className="flex space-x-3">
-              <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/permissions`)} leftIcon={<KeyIcon className="h-4 w-4" />}>{t('tenantAppUserManagement.actions.permissionManagement')}</PButton>
-              <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/roles`)} leftIcon={<ShieldCheckIcon className="h-4 w-4" />}>{t('tenantAppUserManagement.actions.roleManagement')}</PButton>
-              <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}`)}>{t('tenantAppUserManagement.actions.backToAppDetail')}</PButton>
-            </div>
-          }
-        />
-
-        {/*  */}
-        <PCard className="rounded-xl p-6 shadow-sm">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <MagnifyingGlassIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder={t('tenantAppUserManagement.searchPlaceholder')}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="block w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-3 leading-5 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500"
-                />
+      <PManagementPageContainer
+        header={
+          <PPageHeader
+            title={t('tenantAppUserManagement.title')}
+            description={t('tenantAppUserManagement.description', { name: app?.name || '-' })}
+            icon={<UsersIcon className="h-8 w-8 text-blue-600" />}
+            actions={
+              <div className="flex space-x-3">
+                <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/permissions`)} leftIcon={<KeyIcon className="h-4 w-4" />}>{t('tenantAppUserManagement.actions.permissionManagement')}</PButton>
+                <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/roles`)} leftIcon={<ShieldCheckIcon className="h-4 w-4" />}>{t('tenantAppUserManagement.actions.roleManagement')}</PButton>
+                <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}`)}>{t('tenantAppUserManagement.actions.backToAppDetail')}</PButton>
               </div>
-            </div>
-            <div className="sm:w-48">
+            }
+          />
+        }
+        filter={
+          <PManagementFilterCard
+            searchValue={searchTerm}
+            onSearchChange={(value: string) => {
+              setSearchTerm(value)
+              setCurrentPage(1)
+            }}
+            searchPlaceholder={t('tenantAppUserManagement.searchPlaceholder')}
+            rightContent={
               <div className="relative">
                 <FunnelIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                <select
+                <PSelect
                   value={statusFilter}
-                  onChange={(e) => {
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                     setStatusFilter(e.target.value)
                     setCurrentPage(1)
                   }}
-                  className="block w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-3 leading-5 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="pl-10"
                 >
                   <option value="">{t('tenantAppUserManagement.filters.allStatus')}</option>
                   <option value="active">{t('tenantAppUserManagement.status.active')}</option>
                   <option value="banned">{t('tenantAppUserManagement.status.banned')}</option>
                   <option value="suspended">{t('tenantAppUserManagement.status.suspended')}</option>
                   <option value="restricted">{t('tenantAppUserManagement.status.restricted')}</option>
-                </select>
+                </PSelect>
               </div>
-            </div>
-          </div>
-        </PCard>
-
-        {/*  */}
-        <PCard className="overflow-hidden rounded-xl p-0 shadow-sm">
-          <div className="px-4 py-5 sm:p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg leading-6 font-medium text-gray-900">
-                {t('tenantAppUserManagement.listTitle', { total: totalUsers })}
-              </h3>
-            </div>
-
-            {filteredUsers.length === 0 ? (
-              <PEmptyState
-                icon={UsersIcon}
-                title={t('tenantAppUserManagement.empty.title')}
-                description={searchTerm ? t('tenantAppUserManagement.empty.searchNoResult') : t('tenantAppUserManagement.empty.noAuthorizedUser')}
-              />
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        {t('tenantAppUserManagement.table.user')}
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        {t('tenantAppUserManagement.table.status')}
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        {t('tenantAppUserManagement.table.lastActive')}
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        {t('tenantAppUserManagement.table.authorizedAt')}
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        {t('tenantAppUserManagement.table.scopes')}
-                      </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        {t('tenantAppUserManagement.table.actions')}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredUsers.map((user) => (
-                      <tr key={user.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            {user.user_avatar ? (
-                              <img
-                                className="h-10 w-10 rounded-full"
-                                src={user.user_avatar}
-                                alt={user.user_nickname || user.user_email}
-                              />
-                            ) : (
-                              <UserCircleIcon className="h-10 w-10 text-gray-300" />
-                            )}
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">
-                                {user.user_nickname || t('tenantAppUserManagement.fields.nicknameNotSet')}
-                              </div>
-                              <div className="text-sm text-gray-500 flex items-center">
-                                <EnvelopeIcon className="h-4 w-4 mr-1" />
-                                {user.user_email}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            {getStatusIcon(user.status)}
-                            <PBadge variant={getStatusVariant(user.status) as any} className="ml-2">
-                              {getStatusText(user.status)}
-                            </PBadge>
-                          </div>
-                          {user.ban_reason && (
-                            <div className="text-xs text-gray-500 mt-1">
-                              {t('tenantAppUserManagement.fields.reason')}: {user.ban_reason}
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {user.last_active_at ? (
-                            new Date(user.last_active_at).toLocaleString(locale)
-                          ) : (
-                            t('tenantAppUserManagement.fields.neverActive')
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(user.first_authorized_at).toLocaleString(locale)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          <div className="max-w-xs truncate">
-                            {user.scopes || t('tenantAppUserManagement.fields.defaultScopes')}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex justify-end space-x-2">
-                            <button
-                              onClick={() => handleManagePermissions(user)}
-                              className="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200"
-                            >
-                              <ShieldCheckIcon className="h-3 w-3 mr-1" />
-                              {t('tenantAppUserManagement.actions.permissions')}
-                            </button>
-                            {user.status === 'active' ? (
-                              <>
-                                <button
-                                  onClick={() => handleUserAction(user, 'restrict')}
-                                  className="text-orange-600 hover:text-orange-900"
-                                >
-                                  {t('tenantAppUserManagement.actions.restrict')}
-                                </button>
-                                <button
-                                  onClick={() => handleUserAction(user, 'suspend')}
-                                  className="text-yellow-600 hover:text-yellow-900"
-                                >
-                                  {t('tenantAppUserManagement.actions.suspend')}
-                                </button>
-                                <button
-                                  onClick={() => handleUserAction(user, 'ban')}
-                                  className="text-red-600 hover:text-red-900"
-                                >
-                                  {t('tenantAppUserManagement.actions.ban')}
-                                </button>
-                              </>
-                            ) : (
-                              <button
-                                onClick={() => handleUserAction(user, 'unban')}
-                                className="text-green-600 hover:text-green-900"
-                              >
-                                {t('tenantAppUserManagement.actions.unban')}
-                              </button>
-                            )}
-                            <button
-                              onClick={() => handleRevokeAuthorization(user)}
-                              className="text-gray-600 hover:text-gray-900"
-                            >
-                              {t('tenantAppUserManagement.actions.revokeAuthorization')}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {/*  */}
-            {totalPages > 1 && (
-              <div className="mt-6">
-                <PPagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={setCurrentPage}
-                  total={totalUsers}
-                  pageSize={pageSize}
-                  showInfo
-                />
-              </div>
-            )}
-          </div>
-        </PCard>
-      </div>
+            }
+          />
+        }
+      >
+        <PManagedTableSection<AppUser>
+          data={filteredUsers}
+          columns={userColumns}
+          rowKey={(row: AppUser) => row.id}
+          emptyText={searchTerm ? t('tenantAppUserManagement.empty.searchNoResult') : t('tenantAppUserManagement.empty.noAuthorizedUser')}
+          size="md"
+          striped
+          defaultSort={{ key: 'first_authorized_at', order: 'desc' }}
+          pagination={paginationBar}
+        />
+      </PManagementPageContainer>
 
       {/*  */}
       {showActionModal && selectedUser && (
@@ -594,11 +559,10 @@ export default function AppUserManagement() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   {actionType === 'unban' ? t('tenantAppUserManagement.modal.unbanReason') : t('tenantAppUserManagement.modal.reasonLabel')}
                 </label>
-                <textarea
+                <PTextarea
                   value={actionReason}
-                  onChange={(e) => setActionReason(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setActionReason(e.target.value)}
                   placeholder={actionType === 'unban' ? t('tenantAppUserManagement.modal.unbanReasonPlaceholder') : t('tenantAppUserManagement.modal.reasonPlaceholder')}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   rows={3}
                 />
               </div>
@@ -622,24 +586,21 @@ export default function AppUserManagement() {
             </div>
 
             <div className="flex justify-end space-x-3 mt-6">
-              <button
+              <PButton
+                variant="secondary"
                 onClick={() => setShowActionModal(false)}
                 disabled={processingAction}
-                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
               >
                 {t('tenantAppUserManagement.actions.cancel')}
-              </button>
-              <button
+              </PButton>
+              <PButton
+                variant={actionType === 'unban' ? 'secondary' : 'danger'}
                 onClick={executeUserAction}
                 disabled={processingAction || !actionReason.trim()}
-                className={`rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50 ${
-                  actionType === 'unban' 
-                    ? 'bg-green-600 hover:bg-green-700' 
-                    : 'bg-red-600 hover:bg-red-700'
-                }`}
+                loading={processingAction}
               >
-                {processingAction ? t('tenantAppUserManagement.actions.processing') : t('tenantAppUserManagement.actions.confirmAction', { action: getActionText(actionType) })}
-              </button>
+                {t('tenantAppUserManagement.actions.confirmAction', { action: getActionText(actionType) })}
+              </PButton>
             </div>
           </div>
         </div>
@@ -654,12 +615,12 @@ export default function AppUserManagement() {
                 <h3 className="text-lg font-medium text-gray-900">
                   {t('tenantAppUserManagement.permissionModal.title', { user: selectedUser.user_nickname || selectedUser.user_email })}
                 </h3>
-                <button
+                <PButton
+                  variant="ghost"
                   onClick={() => setShowPermissionModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
                 >
                   <XMarkIcon className="h-6 w-6" />
-                </button>
+                </PButton>
               </div>
 
               {loadingPermissions ? (
@@ -814,13 +775,13 @@ export default function AppUserManagement() {
                               className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                             />
                           </div>
-                          <button
+                          <PButton
+                            className="w-full"
                             onClick={handleGrantPermissions}
                             disabled={selectedPermissions.length === 0}
-                            className="w-full rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             {t('tenantAppUserManagement.permissionModal.grantSelectedPermissions', { count: selectedPermissions.length })}
-                          </button>
+                          </PButton>
                         </div>
                       </div>
                     </div>
@@ -873,13 +834,14 @@ export default function AppUserManagement() {
                               })}
                             </div>
                           </div>
-                          <button
+                          <PButton
+                            variant="secondary"
+                            className="w-full"
                             onClick={handleAssignRoles}
                             disabled={selectedRoles.length === 0}
-                            className="w-full rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             {t('tenantAppUserManagement.permissionModal.assignSelectedRoles', { count: selectedRoles.length })}
-                          </button>
+                          </PButton>
                         </div>
                       </div>
                     </div>
@@ -888,12 +850,12 @@ export default function AppUserManagement() {
               )}
 
               <div className="flex justify-end mt-6">
-                <button
+                <PButton
+                  variant="secondary"
                   onClick={() => setShowPermissionModal(false)}
-                  className="rounded-lg bg-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-400"
                 >
                   {t('tenantAppUserManagement.actions.close')}
-                </button>
+                </PButton>
               </div>
             </div>
           </div>
