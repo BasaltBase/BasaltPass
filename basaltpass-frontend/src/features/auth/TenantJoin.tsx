@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import client from '@api/client'
 import PSkeleton from '@ui/PSkeleton'
@@ -21,7 +21,6 @@ function TenantJoin() {
   const [joining, setJoining] = useState(false)
   const [joinSuccess, setJoinSuccess] = useState(false)
   const [alreadyJoined, setAlreadyJoined] = useState(false)
-  const [attemptedAutoJoin, setAttemptedAutoJoin] = useState(false)
 
   const { tenantInfo, loadingTenant } = useTenantInfo({
     tenantCode,
@@ -58,14 +57,16 @@ function TenantJoin() {
     }
   }, [checkAuth, joining, t, tenantCode])
 
-  useEffect(() => {
-    if (!isAuthenticated || isAuthLoading || !tenantInfo || attemptedAutoJoin) {
+  const handleConfirmJoin = () => {
+    if (!tenantInfo) {
       return
     }
-
-    setAttemptedAutoJoin(true)
+    const ok = window.confirm(t('auth.tenantJoin.confirm.prompt', { tenantName: tenantInfo.name }))
+    if (!ok) {
+      return
+    }
     void joinTenant()
-  }, [attemptedAutoJoin, isAuthLoading, isAuthenticated, joinTenant, tenantInfo])
+  }
 
   if (loadingTenant || isAuthLoading) {
     return <PSkeleton.PageLoader message={t('auth.tenant.loadingTenantInfo')} />
@@ -146,8 +147,8 @@ function TenantJoin() {
         {joinError ? <PAlert variant="error" title={t('auth.tenantJoin.errors.title')} message={joinError} /> : null}
 
         {!joinSuccess ? (
-          <PButton type="button" onClick={() => void joinTenant()} loading={joining} fullWidth>
-            {joining ? t('auth.tenantJoin.actions.joining') : t('auth.tenantJoin.actions.joinNow')}
+          <PButton type="button" onClick={handleConfirmJoin} loading={joining} fullWidth>
+            {joining ? t('auth.tenantJoin.actions.joining') : t('auth.tenantJoin.actions.confirmJoin')}
           </PButton>
         ) : null}
 

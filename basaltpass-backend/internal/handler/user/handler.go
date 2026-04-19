@@ -74,6 +74,11 @@ func JoinTenantByCodeHandler(c *fiber.Ctx) error {
 		})
 	}
 
+	var membershipCount int64
+	if err := db.Model(&model.TenantUser{}).Where("user_id = ?", user.ID).Count(&membershipCount).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to load user membership"})
+	}
+
 	var tenant model.Tenant
 	if err := db.Where("code = ? AND status = ?", tenantCode, model.TenantStatusActive).
 		Select("id", "name", "code", "status").
@@ -84,7 +89,7 @@ func JoinTenantByCodeHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to load tenant"})
 	}
 
-	if user.TenantID != 0 && user.TenantID != tenant.ID {
+	if user.TenantID != 0 && user.TenantID != tenant.ID && membershipCount == 0 {
 		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
 			"error": "user already belongs to another tenant",
 		})
@@ -118,12 +123,13 @@ func JoinTenantByCodeHandler(c *fiber.Ctx) error {
 		joinedNow = true
 	}
 
-	if user.TenantID == 0 {
-		if err := tx.Model(&model.User{}).Where("id = ?", user.ID).Update("tenant_id", tenant.ID).Error; err != nil {
+	// Keep global account identity at tenant_id=0 and use tenant_users for tenant perspective switching.
+	// For legacy data drift (tenant_id changed after join), normalize it back to 0 when membership exists.
+	if user.TenantID != 0 && membershipCount > 0 {
+		if err := tx.Model(&model.User{}).Where("id = ?", user.ID).Update("tenant_id", 0).Error; err != nil {
 			tx.Rollback()
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to join tenant"})
 		}
-		joinedNow = true
 	}
 
 	if err := tx.Commit().Error; err != nil {
@@ -131,8 +137,8 @@ func JoinTenantByCodeHandler(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{
-		"message":      "joined tenant successfully",
-		"joined":       joinedNow,
+		"message":        "joined tenant successfully",
+		"joined":         joinedNow,
 		"already_joined": !joinedNow,
 		"tenant": fiber.Map{
 			"id":   tenant.ID,

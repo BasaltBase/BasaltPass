@@ -54,6 +54,7 @@ func RegisterOAuthRoutes(v1 fiber.Router) {
 		ratelimit.Verify2FARateLimit(),
 		timeout.NewWithContext(auth2.Verify2FAHandler, authRouteTimeout),
 	)
+	authGroup.Post("/identity/switch", middleware.JWTMiddleware(), auth2.SwitchUserTenantIdentityHandler)
 	authGroup.Post("/console/authorize", middleware.JWTMiddleware(), auth2.ConsoleAuthorizeHandler)
 	authGroup.Post("/console/exchange", auth2.ConsoleExchangeHandler)
 

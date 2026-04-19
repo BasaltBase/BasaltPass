@@ -217,22 +217,60 @@ func (s Service) LoginV2(req LoginRequest) (LoginResult, error) {
 		query = query.Where("tenant_id = 0")
 		if err := query.First(&user).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				var tenantAccountCount int64
-				if countErr := db.Model(&model.User{}).
-					Where("(email = ? OR phone = ?) AND tenant_id > 0", identifier, identifier).
-					Count(&tenantAccountCount).Error; countErr == nil && tenantAccountCount > 0 {
-					return LoginResult{}, ErrTenantAccountOnly
+				// 兼容历史数据：若全局账号曾被错误迁移到 tenant_id>0，但具备 tenant_users 关系，
+				// 仍允许从全局入口登录（token tid=0）。
+				var legacyUser model.User
+				if legacyErr := db.Where("email = ? OR phone = ?", identifier, identifier).
+					Order("id ASC").
+					First(&legacyUser).Error; legacyErr == nil {
+					var membershipCount int64
+					if countErr := db.Model(&model.TenantUser{}).
+						Where("user_id = ?", legacyUser.ID).
+						Count(&membershipCount).Error; countErr == nil && membershipCount > 0 {
+						if preloadErr := db.Preload("Passkeys").First(&user, legacyUser.ID).Error; preloadErr == nil {
+							goto LOGIN_USER_FOUND
+						}
+					}
+
+					if legacyUser.TenantID > 0 {
+						return LoginResult{}, ErrTenantAccountOnly
+					}
 				}
 			}
 			return LoginResult{}, normalizeLoginQueryError(err)
 		}
 	} else {
-		// 租户登录：查询指定租户下的用户
+		// 租户登录：优先查询指定租户下的本地账户
 		query = query.Where("tenant_id = ?", req.TenantID)
 		if err := query.First(&user).Error; err != nil {
-			return LoginResult{}, normalizeLoginQueryError(err)
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				return LoginResult{}, normalizeLoginQueryError(err)
+			}
+
+			// 允许全局账号（tenant_id=0）通过 tenant_users 成员关系登录租户入口。
+			var globalUser model.User
+			if gErr := db.Where("(email = ? OR phone = ?) AND tenant_id = 0", identifier, identifier).
+				First(&globalUser).Error; gErr != nil {
+				return LoginResult{}, normalizeLoginQueryError(err)
+			}
+
+			var membershipCount int64
+			if mErr := db.Model(&model.TenantUser{}).
+				Where("user_id = ? AND tenant_id = ?", globalUser.ID, req.TenantID).
+				Count(&membershipCount).Error; mErr != nil {
+				return LoginResult{}, fmt.Errorf("%w: %v", ErrServiceUnavailable, mErr)
+			}
+			if membershipCount == 0 {
+				return LoginResult{}, ErrInvalidCredentials
+			}
+
+			if pErr := db.Preload("Passkeys").First(&user, globalUser.ID).Error; pErr != nil {
+				return LoginResult{}, normalizeLoginQueryError(pErr)
+			}
 		}
 	}
+
+LOGIN_USER_FOUND:
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
 		return LoginResult{}, ErrInvalidCredentials

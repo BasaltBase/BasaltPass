@@ -31,15 +31,6 @@ func (s Service) GetProfile(userID uint, activeTenantID uint) (userdto.ProfileRe
 	if resolvedTenantID == 0 {
 		if u.TenantID > 0 {
 			resolvedTenantID = u.TenantID
-		} else {
-			var firstMembership model.TenantUser
-			if err := common.DB().
-				Select("tenant_id").
-				Where("user_id = ?", userID).
-				Order("created_at ASC").
-				First(&firstMembership).Error; err == nil {
-				resolvedTenantID = firstMembership.TenantID
-			}
 		}
 	}
 

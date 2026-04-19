@@ -491,7 +491,14 @@ func AuthorizeGlobalUserToTenantHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	if user.TenantID != 0 && user.TenantID != tenantID {
+	var membershipCount int64
+	if err := common.DB().Model(&model.TenantUser{}).Where("user_id = ?", user.ID).Count(&membershipCount).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "查询用户失败",
+		})
+	}
+
+	if user.TenantID != 0 && user.TenantID != tenantID && membershipCount == 0 {
 		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
 			"error": "用户已属于其他租户",
 		})
@@ -504,8 +511,10 @@ func AuthorizeGlobalUserToTenantHandler(c *fiber.Ctx) error {
 		}
 	}()
 
-	if user.TenantID == 0 {
-		if err := tx.Model(&model.User{}).Where("id = ?", user.ID).Update("tenant_id", tenantID).Error; err != nil {
+	// Keep global user identity in users.tenant_id=0 and rely on tenant_users for tenant perspective.
+	// For legacy drifted data, normalize back to 0 when membership exists.
+	if user.TenantID != 0 && membershipCount > 0 {
+		if err := tx.Model(&model.User{}).Where("id = ?", user.ID).Update("tenant_id", 0).Error; err != nil {
 			tx.Rollback()
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": "授权加入租户失败",

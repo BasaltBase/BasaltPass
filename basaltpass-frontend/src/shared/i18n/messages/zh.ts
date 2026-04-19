@@ -390,9 +390,13 @@ const en = {
       actions: {
         loginToJoin: '登录并继续',
         joinNow: '加入该租户',
+        confirmJoin: '确认加入该租户',
         joining: '加入中...',
         goTenantLogin: '前往租户登录',
         goUserDashboard: '返回用户控制台',
+      },
+      confirm: {
+        prompt: '确认加入租户“{{tenantName}}”吗？',
       },
       success: {
         title: '加入租户成功',
@@ -5891,6 +5895,7 @@ const en = {
     cleanedNotice: '{{count}} expired historical account sessions were cleaned automatically. Sign in again to switch with them.',
     switchTitleAdmin: 'Admin console switch',
     switchTitleTenant: 'Tenant console switch',
+    switchTitleUser: 'Account and identity switch',
     switchDescription: 'The system reuses existing user sessions in this browser and issues matching tokens and cookies for the target console.',
     empty: 'No usable user session was found in this browser. Please sign in to the target account in User Console first.',
     groups: {
@@ -5903,6 +5908,12 @@ const en = {
         description: 'These accounts are signed in, but no matching switch entry is available for the current target.',
       },
     },
+    sections: {
+      identityTitle: '身份视角',
+      identityDescription: '在不离开用户控制台的情况下切换当前账号的身份视角。',
+      accountsTitle: '其他已登录账号',
+      accountsDescription: '切换到当前浏览器中已登录的其他账号会话。',
+    },
     badges: {
       platformAdmin: 'Platform Admin',
       tenantFallback: 'Tenant {{tenantId}}',
@@ -5914,11 +5925,16 @@ const en = {
       enterAdminPanel: 'Open admin panel',
       switchToAdminPanel: 'Switch to admin panel',
       switchToDefaultTenantPanel: 'Switch to default tenant panel',
+      switchToThisSession: 'Switch to this signed-in account',
+      switchToTenantIdentity: 'Switch identity to tenant: {{tenant}}',
+      switchToGlobalIdentity: 'Switch identity to global account',
       signOutAccount: 'Sign out account',
     },
     noAvailableAction: 'No available console switch entry for now',
     errors: {
       sessionExpired: 'This account session has expired and was marked as signed out. Please sign in again for that account.',
+      sessionSwitchUnavailable: 'Session switching is only available in User Console.',
+      identitySwitchUnavailable: 'Identity switching is only available in User Console.',
       switchFailed: 'Account switch failed. Please sign in to the target account again.',
       switchFailedTitle: 'Unable to switch account',
     },

@@ -187,7 +187,7 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
 
                 {/*  */}
                 {isUserMenuOpen && (
-                  <div className="absolute right-0 z-50 mt-2 w-56 origin-top-right rounded-xl bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                  <div className="absolute right-0 z-50 mt-2 w-56 origin-top-right overflow-hidden rounded-xl bg-white pt-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                     <div className="px-4 py-3 border-b border-gray-200">
                       <p className="text-sm text-gray-900 font-medium">
                         {user?.nickname || t('common.tenantUser')}
@@ -221,7 +221,7 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
                         setShowAccountSwitcher(true)
                         setIsUserMenuOpen(false)
                       }}
-                      className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 justify-start"
+                      className="flex w-full items-center justify-start rounded-none px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700"
                     >
                       <ArrowsRightLeftIcon className="mr-3 h-4 w-4" />
                       {t('common.switchAccount')}
@@ -232,7 +232,7 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
                     <PButton
                       variant="ghost"
                       onClick={handleLogout}
-                      className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 justify-start"
+                      className="flex w-full items-center justify-start rounded-t-none rounded-b-xl px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 hover:text-red-700"
                     >
                       <ArrowRightOnRectangleIcon className="mr-3 h-4 w-4" />
                       {t('common.logout')}

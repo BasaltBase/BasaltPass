@@ -417,11 +417,6 @@ func (s *Service) CompleteSignup(req CompleteSignupRequest) (*model.User, error)
 		return nil, err
 	}
 
-	if err := wallet.EnsureUserCreditWalletTx(tx, user.ID); err != nil {
-		tx.Rollback()
-		return nil, err
-	}
-
 	// 自动处理租户邀请（如果用户存在未处理的邀请记录）
 	var invitations []model.TenantInvitation
 	if err := tx.Where("email = ? AND status = ?", user.Email, "pending").Find(&invitations).Error; err == nil && len(invitations) > 0 {
@@ -448,6 +443,14 @@ func (s *Service) CompleteSignup(req CompleteSignupRequest) (*model.User, error)
 				tx.Create(&tenantUser)
 			}
 		}
+	}
+
+	// 钱包初始化放在邀请处理之后：
+	// 1) 若用户因邀请获得了租户身份，可正常创建租户上下文钱包；
+	// 2) 对纯平台用户（无租户身份）跳过钱包初始化，不阻塞注册。
+	if err := wallet.EnsureUserCreditWalletTx(tx, user.ID); err != nil && !errors.Is(err, wallet.ErrNoTenantIdentity) {
+		tx.Rollback()
+		return nil, err
 	}
 
 	// 清理：标记注册会话为已完成，使相关挑战失效
