@@ -6,7 +6,7 @@ import {
   UsersIcon,
   ArrowsRightLeftIcon,
   ChevronDownIcon,
-  ChevronRightIcon,
+  ChevronUpIcon,
   CreditCardIcon,
   GiftIcon,
   DocumentTextIcon,
@@ -133,12 +133,14 @@ export default function TenantNavigation() {
       ? 'bg-blue-100 text-blue-900 shadow-sm'
       : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
 
+    const fontWeightClass = depth === 0 ? 'font-medium' : 'font-light'
+
     if (item.children) {
       return (
         <div key={item.key}>
           <button
             onClick={() => toggleSection(item.key)}
-            className={`w-full flex items-center justify-between px-3 py-2 text-left text-sm font-medium rounded-lg transition-colors ${sharedStateClass}`}
+            className={`w-full flex items-center justify-between px-3 py-2 text-left text-sm ${fontWeightClass} rounded-lg transition-colors ${sharedStateClass}`}
             style={{ paddingLeft: `${0.75 + depth * 1}rem` }}
           >
             <div className="flex items-center">
@@ -146,9 +148,9 @@ export default function TenantNavigation() {
               {t(item.key)}
             </div>
             {isExpanded ? (
-              <ChevronDownIcon className="h-4 w-4" />
+              <ChevronUpIcon className="h-4 w-4" />
             ) : (
-              <ChevronRightIcon className="h-4 w-4" />
+              <ChevronDownIcon className="h-4 w-4" />
             )}
           </button>
           {isExpanded && (
@@ -164,7 +166,7 @@ export default function TenantNavigation() {
       <Link
         key={item.key}
         to={item.href!}
-        className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+        className={`flex items-center px-3 py-2 text-sm ${fontWeightClass} rounded-lg transition-colors ${
           isCurrent
             ? 'bg-blue-100 text-blue-900 shadow-sm'
             : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
