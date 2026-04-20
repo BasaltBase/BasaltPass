@@ -50,7 +50,7 @@ const PCheckbox = forwardRef<HTMLInputElement, PCheckboxProps>(
           container: `
             ${sizeStyles[size] === 'h-4 w-4' ? 'h-6 w-10' : sizeStyles[size] === 'h-5 w-5' ? 'h-6 w-11' : 'h-7 w-12'}
             ${isChecked ? 'bg-indigo-600' : 'bg-gray-200'}
-            border-transparent rounded-full cursor-pointer
+            !justify-start p-0.5 border-transparent rounded-full cursor-pointer
             ${disabled ? 'cursor-not-allowed' : ''}
           `,
           thumb: `
@@ -59,7 +59,7 @@ const PCheckbox = forwardRef<HTMLInputElement, PCheckboxProps>(
             ${isChecked ? 
               (sizeStyles[size] === 'h-4 w-4' ? 'translate-x-4' : 
                sizeStyles[size] === 'h-5 w-5' ? 'translate-x-5' : 'translate-x-5') 
-              : 'translate-x-1'}
+              : 'translate-x-0'}
           `
         };
       }

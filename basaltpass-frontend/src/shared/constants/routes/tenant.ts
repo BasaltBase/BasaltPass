@@ -2,6 +2,7 @@ export const TENANT_ROUTES = {
   root: '/tenant',
   dashboard: '/tenant/dashboard',
   info: '/tenant/info',
+  settings: '/tenant/settings',
   apps: '/tenant/apps',
   appsNew: '/tenant/apps/new',
   oauthClients: '/tenant/oauth/clients',

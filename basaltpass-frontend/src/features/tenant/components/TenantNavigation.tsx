@@ -16,7 +16,8 @@ import {
   InformationCircleIcon,
   RocketLaunchIcon,
   CurrencyDollarIcon,
-  UserPlusIcon
+  UserPlusIcon,
+  Cog6ToothIcon
 } from '@heroicons/react/24/outline'
 import { ROUTES } from '@constants'
 import { useConfig } from '@contexts/ConfigContext'
@@ -41,6 +42,11 @@ const navigationItems: NavigationItem[] = [
     key: 'tenantNav.info',
     href: ROUTES.tenant.info,
     icon: InformationCircleIcon,
+  },
+  {
+    key: 'tenantNav.settings',
+    href: ROUTES.tenant.settings,
+    icon: Cog6ToothIcon,
   },
   {
     key: 'tenantNav.appManagement',

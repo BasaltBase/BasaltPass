@@ -19,8 +19,8 @@ func RegisterS2SRoutes(v1 fiber.Router) {
 	group.Get("/me", s2sHandler.GetMeHandler)
 
 	// 用户基础信息
-	group.Get("/users/:id", middleware.ClientScopeMiddleware(sc.S2SUserRead), s2sHandler.GetUserByIDHandler)
 	group.Get("/users/lookup", middleware.ClientScopeMiddleware(sc.S2SUserRead), s2sHandler.LookupUsersHandler)
+	group.Get("/users/:id", middleware.ClientScopeMiddleware(sc.S2SUserRead), s2sHandler.GetUserByIDHandler)
 	group.Patch("/users/:id", middleware.ClientScopeMiddleware(sc.S2SUserWrite), s2sHandler.PatchUserHandler)
 
 	// 角色与权限（作用域：租户）
