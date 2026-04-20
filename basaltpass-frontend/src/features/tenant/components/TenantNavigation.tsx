@@ -45,8 +45,16 @@ const navigationItems: NavigationItem[] = [
   },
   {
     key: 'tenantNav.settings',
-    href: ROUTES.tenant.settings,
     icon: Cog6ToothIcon,
+    children: [
+      { key: 'tenantNav.generalSettings', href: ROUTES.tenant.settings, icon: Cog6ToothIcon },
+      { key: 'tenantNav.automationTokens', href: ROUTES.tenant.automationTokens, icon: KeyIcon },
+    ]
+  },
+  {
+    key: 'tenantNav.notificationManagement',
+    href: ROUTES.tenant.notifications,
+    icon: BellIcon,
   },
   {
     key: 'tenantNav.appManagement',
@@ -55,7 +63,6 @@ const navigationItems: NavigationItem[] = [
       { key: 'tenantNav.myApps', href: ROUTES.tenant.apps, icon: CubeIcon },
       { key: 'tenantNav.oauthClients', href: ROUTES.tenant.oauthClients, icon: KeyIcon },
       { key: 'tenantNav.crossAppTrusts', href: ROUTES.tenant.crossAppTrusts, icon: ArrowsRightLeftIcon },
-      { key: 'tenantNav.automationTokens', href: ROUTES.tenant.automationTokens, icon: KeyIcon },
     ]
   },
   {
@@ -76,11 +83,6 @@ const navigationItems: NavigationItem[] = [
       { key: 'tenantNav.walletManagement', href: ROUTES.tenant.wallets, icon: CurrencyDollarIcon },
       { key: 'tenantNav.giftCardManagement', href: ROUTES.tenant.giftCards, icon: GiftIcon },
     ]
-  },
-  {
-    key: 'tenantNav.notificationManagement',
-    href: ROUTES.tenant.notifications,
-    icon: BellIcon,
   },
   {
     key: 'tenantNav.subscriptionManagement',

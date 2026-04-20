@@ -56,7 +56,7 @@ const PPageHeader: React.FC<PPageHeaderProps> = ({
           )}
         </div>
       )}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
           {icon && (
             <div className="flex-shrink-0 text-gray-600">
@@ -73,7 +73,7 @@ const PPageHeader: React.FC<PPageHeaderProps> = ({
           </div>
         </div>
         {actions && (
-          <div className="flex-shrink-0 flex items-center gap-2">
+          <div className="flex-shrink-0 flex flex-wrap items-center gap-2">
             {actions}
           </div>
         )}

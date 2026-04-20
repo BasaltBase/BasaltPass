@@ -147,9 +147,9 @@ export default function TenantAppList() {
             {apps.map((app) => (
               <li key={app.id}>
                 <div className="px-6 py-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center">
+                      <div className="flex items-start sm:items-center">
                         <div className="flex-shrink-0">
                           {app.logo_url ? (
                             <img
@@ -185,7 +185,7 @@ export default function TenantAppList() {
                               {app.description}
                             </p>
                           </div>
-                          <div className="mt-2 flex items-center text-sm text-gray-500">
+                          <div className="mt-2 flex flex-wrap items-center text-sm gap-y-1 text-gray-500">
                             {app.homepage_url && (
                               <>
                                 <a
@@ -208,7 +208,7 @@ export default function TenantAppList() {
                             )}
                           </div>
                           <div className="mt-2">
-                            <div className="flex items-center space-x-4 text-sm text-gray-500">
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-500">
                               <span>{t('tenantAppList.stats.totalUsers')}: <span className="font-medium text-gray-900">{app.stats?.total_users || 0}</span></span>
                               <span>{t('tenantAppList.stats.activeUsers')}: <span className="font-medium text-green-600">{app.stats?.active_users || 0}</span></span>
                               <span>{t('tenantAppList.stats.requestsToday')}: <span className="font-medium text-blue-600">{app.stats?.requests_today || 0}</span></span>
@@ -217,7 +217,7 @@ export default function TenantAppList() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <button
                         onClick={() => handleToggleStatus(app.id, app.status)}
                         className={`${actionButtonClass} ${

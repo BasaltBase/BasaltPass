@@ -276,7 +276,7 @@ export default function AppPermissionManagement() {
             description={t('tenantAppPermissionManagement.description', { name: app?.name || '-' })}
             icon={<KeyIcon className="h-8 w-8 text-blue-600" />}
             actions={
-              <div className="flex space-x-3">
+              <div className="flex flex-wrap gap-2">
                 <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/roles`)}>{t('tenantAppPermissionManagement.actions.roleManagement')}</PButton>
                 <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/users`)}>{t('tenantAppPermissionManagement.actions.userManagement')}</PButton>
                 <PButton onClick={handleCreatePermission} leftIcon={<PlusIcon className="h-4 w-4" />}>{t('tenantAppPermissionManagement.actions.createPermission')}</PButton>

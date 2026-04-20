@@ -292,7 +292,7 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
         </div>
 
         {/*  */}
-        <div className="lg:ml-64 flex-1">
+        <div className="lg:ml-64 flex-1 min-w-0 w-full lg:max-w-[calc(100vw-16rem)] max-w-[100vw]">
           <main className="py-6">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
               {children}

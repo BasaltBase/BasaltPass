@@ -72,6 +72,8 @@ const PCard = forwardRef<HTMLDivElement, PCardProps>(
     const combinedClasses = [
       // translatedstyle：translatedandtranslated
       'rounded-xl',
+      'max-w-full',
+      'overflow-x-auto',
       // translatedstyle
       variantClasses[variant],
       // translatedstyle

@@ -181,7 +181,7 @@ export default function AppStats() {
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {/*  */}
         <div className="mb-6">
-          <nav className="flex items-center space-x-4">
+          <nav className="flex flex-wrap items-center gap-2">
             <Link
               to={ROUTES.tenant.apps}
               className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700"

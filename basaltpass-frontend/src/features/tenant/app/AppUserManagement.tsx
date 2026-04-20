@@ -493,7 +493,7 @@ export default function AppUserManagement() {
             description={t('tenantAppUserManagement.description', { name: app?.name || '-' })}
             icon={<UsersIcon className="h-8 w-8 text-blue-600" />}
             actions={
-              <div className="flex space-x-3">
+              <div className="flex flex-wrap gap-2">
                 <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/permissions`)} leftIcon={<KeyIcon className="h-4 w-4" />}>{t('tenantAppUserManagement.actions.permissionManagement')}</PButton>
                 <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/roles`)} leftIcon={<ShieldCheckIcon className="h-4 w-4" />}>{t('tenantAppUserManagement.actions.roleManagement')}</PButton>
                 <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}`)}>{t('tenantAppUserManagement.actions.backToAppDetail')}</PButton>
@@ -641,9 +641,9 @@ export default function AppUserManagement() {
                         {userPermissions.length > 0 ? (
                           <div className="space-y-2">
                             {userPermissions.map((userPerm) => (
-                              <div key={userPerm.id} className="flex items-center justify-between rounded-lg border bg-white p-3">
-                                <div className="flex-1">
-                                  <div className="text-sm font-medium text-gray-900">
+                                <div key={userPerm.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-lg border bg-white p-3">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-sm font-medium text-gray-900 truncate">
                                     {userPerm.permission?.name || t('tenantAppUserManagement.permissionModal.permissionWithId', { id: userPerm.permission_id })}
                                   </div>
                                   <div className="text-xs text-gray-500">
@@ -682,9 +682,9 @@ export default function AppUserManagement() {
                         {userRoles.length > 0 ? (
                           <div className="space-y-2">
                             {userRoles.map((userRole) => (
-                              <div key={userRole.id} className="flex items-center justify-between rounded-lg border bg-white p-3">
-                                <div className="flex-1">
-                                  <div className="text-sm font-medium text-gray-900">
+                                <div key={userRole.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-lg border bg-white p-3">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-sm font-medium text-gray-900 truncate">
                                     {userRole.role?.name || t('tenantAppUserManagement.permissionModal.roleWithId', { id: userRole.role_id })}
                                   </div>
                                   <div className="text-xs text-gray-500">

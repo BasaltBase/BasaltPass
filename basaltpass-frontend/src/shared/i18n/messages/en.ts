@@ -1507,6 +1507,7 @@ const en = {
     dashboard: 'Dashboard',
     info: 'Tenant Info',
     settings: 'Settings',
+    generalSettings: 'General Settings',
     appManagement: 'App Management',
     myApps: 'My Apps',
     oauthClients: 'OAuth Clients',
