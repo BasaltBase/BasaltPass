@@ -44,7 +44,7 @@ export default function Layout({ children }: LayoutProps) {
   const location = useLocation()
   const { t } = useI18n()
   const { user, tenants, logout, switchAccount, switchTenantIdentity, canAccessTenant, canAccessAdmin, canUseWallet } = useAuth()
-  const { marketEnabled, siteName, siteInitial, setPageTitle } = useConfig()
+  const { marketEnabled, siteName, setPageTitle } = useConfig()
   const currentSessionKey = `${user?.id || 0}:${Number(user?.tenant_id || 0)}`
 
   const tenantDisplayName = (() => {
@@ -124,6 +124,8 @@ export default function Layout({ children }: LayoutProps) {
     return 'U'
   }
 
+  const userDisplayName = user?.nickname || user?.email || t('common.user')
+
   const isActive = (href: string) =>
     location.pathname === href || location.pathname.startsWith(`${href}/`)
 
@@ -202,10 +204,7 @@ export default function Layout({ children }: LayoutProps) {
             </div>
             <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
               <div className="flex-shrink-0 flex items-center px-4">
-                <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center">
-                  <span className="text-sm font-bold text-white">{siteInitial}</span>
-                </div>
-                <h1 className="ml-3 text-xl font-bold text-gray-900">{tenantDisplayName}</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{tenantDisplayName}</h1>
               </div>
               <nav className="mt-5 px-2 space-y-1">
                 {filteredNavigation.map((item) => (
@@ -224,6 +223,115 @@ export default function Layout({ children }: LayoutProps) {
                 ))}
               </nav>
             </div>
+            <div className="flex flex-shrink-0 border-t border-gray-200 p-2">
+              <div className="flex w-full items-center justify-between">
+                <div ref={mobileUserMenuRef} className="relative">
+                  <PButton
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    className="flex items-center justify-start rounded-lg bg-white px-1 py-1 text-sm hover:bg-gray-50"
+                    aria-label={t('common.openUserMenu')}
+                  >
+                    {user?.avatar_url ? (
+                      <img
+                        className="h-7 w-7 rounded-full object-cover"
+                        src={user.avatar_url}
+                        alt={user?.nickname || user?.email || 'User'}
+                      />
+                    ) : (
+                      <div className="h-7 w-7 rounded-full bg-blue-600 flex items-center justify-center">
+                        <span className="text-xs font-medium text-white">{getUserInitial()}</span>
+                      </div>
+                    )}
+                    <span className="ml-2 max-w-[8rem] truncate text-sm font-medium text-gray-700">{userDisplayName}</span>
+                    <ChevronDownIcon className="ml-1 h-4 w-4 text-gray-500" />
+                  </PButton>
+
+                  {isUserMenuOpen && (
+                    <div className="absolute left-0 z-50 bottom-full mb-2 w-56 origin-bottom-left overflow-hidden rounded-xl bg-white pt-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                      <div className="px-4 py-3 border-b border-gray-200">
+                        <p className="text-sm text-gray-900 font-medium">{user?.nickname || t('common.user')}</p>
+                        <p className="text-sm text-gray-500 truncate">{user?.email}</p>
+                      </div>
+                      <Link
+                        to={ROUTES.user.profile}
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        <UserIcon className="mr-3 h-4 w-4" />
+                        {t('common.profile')}
+                      </Link>
+                      <Link
+                        to={ROUTES.user.settings}
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        <CogIcon className="mr-3 h-4 w-4" />
+                        {t('common.settings')}
+                      </Link>
+
+                      {canAccessTenant && (
+                        <PButton
+                          variant="ghost"
+                          onClick={() => {
+                            setIsUserMenuOpen(false)
+                            void switchToTenant()
+                          }}
+                          className="flex w-full items-center justify-start rounded-none px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700"
+                        >
+                          <ArrowsRightLeftIcon className="mr-3 h-4 w-4" />
+                          {t('userLayout.tenantManagement')}
+                        </PButton>
+                      )}
+
+                      {canAccessAdmin && (
+                        <PButton
+                          variant="ghost"
+                          onClick={() => {
+                            setIsUserMenuOpen(false)
+                            void switchToAdmin()
+                          }}
+                          className="flex w-full items-center justify-start rounded-none px-4 py-2 text-sm font-medium text-indigo-600 transition-colors hover:bg-indigo-50 hover:text-indigo-700"
+                        >
+                          <ArrowsRightLeftIcon className="mr-3 h-4 w-4" />
+                          {t('userLayout.adminPanel')}
+                        </PButton>
+                      )}
+
+                      <PButton
+                        variant="ghost"
+                        onClick={() => {
+                          setShowAccountSwitcher(true)
+                          setIsUserMenuOpen(false)
+                        }}
+                        className="flex w-full items-center justify-start rounded-none px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700"
+                      >
+                        <ArrowsRightLeftIcon className="mr-3 h-4 w-4" />
+                        {t('common.switchAccount')}
+                      </PButton>
+                      <div className="border-t border-gray-200"></div>
+                      <PButton
+                        variant="ghost"
+                        onClick={handleLogout}
+                        className="flex w-full items-center justify-start rounded-t-none rounded-b-xl px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 hover:text-red-700"
+                      >
+                        <ArrowRightOnRectangleIcon className="mr-3 h-4 w-4" />
+                        {t('common.logout')}
+                      </PButton>
+                    </div>
+                  )}
+                </div>
+
+                <div className="relative ml-3 flex-shrink-0">
+                  <EnhancedNotificationIcon
+                    viewAllPath={ROUTES.user.notifications}
+                    dropdownDirection="up"
+                    dropdownAlign="left"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -234,10 +342,7 @@ export default function Layout({ children }: LayoutProps) {
           <div className="flex flex-col h-0 flex-1 border-r border-gray-200 bg-white">
             <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
               <div className="flex items-center flex-shrink-0 px-4">
-                <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center">
-                  <span className="text-sm font-bold text-white">{siteInitial}</span>
-                </div>
-                <h1 className="ml-3 text-xl font-bold text-gray-900">{tenantDisplayName}</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{tenantDisplayName}</h1>
               </div>
               <nav className="mt-5 flex-1 px-2 bg-white space-y-1">
                 {filteredNavigation.map((item) => (
@@ -256,6 +361,116 @@ export default function Layout({ children }: LayoutProps) {
                 ))}
               </nav>
             </div>
+            <div className="flex flex-shrink-0 border-t border-gray-200 p-2">
+              <div className="flex w-full items-center justify-between">
+                <div ref={desktopUserMenuRef} className="relative">
+                  <PButton
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    className="flex items-center justify-start rounded-lg bg-white px-1 py-1 text-sm focus:ring-blue-500 focus:ring-offset-2 hover:bg-gray-50"
+                    title={t('common.openUserMenu')}
+                  >
+                    <span className="sr-only">{t('common.openUserMenu')}</span>
+                    {user?.avatar_url ? (
+                      <img
+                        className="h-7 w-7 rounded-full object-cover"
+                        src={user.avatar_url}
+                        alt={user?.nickname || user?.email || 'User'}
+                      />
+                    ) : (
+                      <div className="h-7 w-7 rounded-full bg-blue-600 flex items-center justify-center">
+                        <span className="text-xs font-medium text-white">{getUserInitial()}</span>
+                      </div>
+                    )}
+                    <span className="ml-2 max-w-[8rem] truncate text-sm font-medium text-gray-700">{userDisplayName}</span>
+                    <ChevronDownIcon className="ml-1 h-4 w-4 text-gray-500" />
+                  </PButton>
+
+                  {isUserMenuOpen && (
+                    <div className="absolute left-0 z-50 bottom-full mb-2 w-56 origin-bottom-left overflow-hidden rounded-xl bg-white pt-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                      <div className="px-4 py-3 border-b border-gray-200">
+                        <p className="text-sm text-gray-900 font-medium">{user?.nickname || t('common.user')}</p>
+                        <p className="text-sm text-gray-500 truncate">{user?.email}</p>
+                      </div>
+                      <Link
+                        to={ROUTES.user.profile}
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        <UserIcon className="mr-3 h-4 w-4" />
+                        {t('common.profile')}
+                      </Link>
+                      <Link
+                        to={ROUTES.user.settings}
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        <CogIcon className="mr-3 h-4 w-4" />
+                        {t('common.settings')}
+                      </Link>
+
+                      {canAccessTenant && (
+                        <PButton
+                          variant="ghost"
+                          onClick={() => {
+                            setIsUserMenuOpen(false)
+                            void switchToTenant()
+                          }}
+                          className="flex w-full items-center justify-start rounded-none px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700"
+                        >
+                          <ArrowsRightLeftIcon className="mr-3 h-4 w-4" />
+                          {t('userLayout.tenantManagement')}
+                        </PButton>
+                      )}
+
+                      {canAccessAdmin && (
+                        <PButton
+                          variant="ghost"
+                          onClick={() => {
+                            setIsUserMenuOpen(false)
+                            void switchToAdmin()
+                          }}
+                          className="flex w-full items-center justify-start rounded-none px-4 py-2 text-sm font-medium text-indigo-600 transition-colors hover:bg-indigo-50 hover:text-indigo-700"
+                        >
+                          <ArrowsRightLeftIcon className="mr-3 h-4 w-4" />
+                          {t('userLayout.adminPanel')}
+                        </PButton>
+                      )}
+
+                      <PButton
+                        variant="ghost"
+                        onClick={() => {
+                          setShowAccountSwitcher(true)
+                          setIsUserMenuOpen(false)
+                        }}
+                        className="flex w-full items-center justify-start rounded-none px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700"
+                      >
+                        <ArrowsRightLeftIcon className="mr-3 h-4 w-4" />
+                        {t('common.switchAccount')}
+                      </PButton>
+                      <div className="border-t border-gray-200"></div>
+                      <PButton
+                        variant="ghost"
+                        onClick={handleLogout}
+                        className="flex w-full items-center justify-start rounded-t-none rounded-b-xl px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 hover:text-red-700"
+                      >
+                        <ArrowRightOnRectangleIcon className="mr-3 h-4 w-4" />
+                        {t('common.logout')}
+                      </PButton>
+                    </div>
+                  )}
+                </div>
+
+                <div className="relative ml-3 flex-shrink-0">
+                  <EnhancedNotificationIcon
+                    viewAllPath={ROUTES.user.notifications}
+                    dropdownDirection="up"
+                    dropdownAlign="left"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -264,7 +479,7 @@ export default function Layout({ children }: LayoutProps) {
       <div className="flex flex-col w-0 flex-1 overflow-hidden">
         {/*  */}
         <div className="md:hidden border-b border-gray-200 bg-white px-3 py-2">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-start">
             <PButton
               variant="ghost"
               size="md"
@@ -274,182 +489,9 @@ export default function Layout({ children }: LayoutProps) {
             >
               <Bars3Icon className="h-6 w-6" />
             </PButton>
-            <div className="flex items-center space-x-2">
-              <EnhancedNotificationIcon viewAllPath={ROUTES.user.notifications} />
-              <PButton
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="flex items-center rounded-full bg-white p-1 text-sm hover:bg-gray-50"
-                aria-label={t('common.openUserMenu')}
-              >
-                {user?.avatar_url ? (
-                  <img
-                    className="h-8 w-8 rounded-full object-cover"
-                    src={user.avatar_url}
-                    alt={user?.nickname || user?.email || 'User'}
-                  />
-                ) : (
-                  <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center">
-                    <span className="text-sm font-medium text-white">{getUserInitial()}</span>
-                  </div>
-                )}
-              </PButton>
-            </div>
           </div>
         </div>
-
-        {isUserMenuOpen && (
-          <div ref={mobileUserMenuRef} className="md:hidden relative z-50 bg-white border-b border-gray-200 shadow-sm">
-            <div className="px-4 py-3 border-b border-gray-200">
-              <p className="text-sm text-gray-900 font-medium">{user?.nickname || t('common.user')}</p>
-              <p className="text-sm text-gray-500 truncate">{user?.email}</p>
-            </div>
-            <Link
-              to={ROUTES.user.profile}
-              className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
-              onClick={() => setIsUserMenuOpen(false)}
-            >
-              <UserIcon className="mr-3 h-4 w-4" />
-              {t('common.profile')}
-            </Link>
-            <Link
-              to={ROUTES.user.settings}
-              className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
-              onClick={() => setIsUserMenuOpen(false)}
-            >
-              <CogIcon className="mr-3 h-4 w-4" />
-              {t('common.settings')}
-            </Link>
-            <PButton
-              variant="ghost"
-              onClick={() => {
-                setShowAccountSwitcher(true)
-                setIsUserMenuOpen(false)
-              }}
-              className="flex w-full items-center justify-start rounded-none px-4 py-3 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700"
-            >
-              <ArrowsRightLeftIcon className="mr-3 h-4 w-4" />
-              {t('common.switchAccount')}
-            </PButton>
-            <PButton
-              variant="ghost"
-              onClick={() => {
-                setIsUserMenuOpen(false)
-                handleLogout()
-              }}
-              className="flex w-full items-center justify-start rounded-none px-4 py-3 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 hover:text-red-700"
-            >
-              <ArrowRightOnRectangleIcon className="mr-3 h-4 w-4" />
-              {t('common.logout')}
-            </PButton>
-          </div>
-        )}
         
-        {/*  */}
-        <div className="hidden md:flex md:items-center md:justify-end md:px-6 md:py-4 bg-white border-b border-gray-200">
-          <div className="flex items-center space-x-4">
-            {/*  - admin */}
-
-            {canAccessTenant && (
-                <button
-                  onClick={switchToTenant}
-                  className="relative rounded-lg bg-blue-50 px-3 py-2 text-blue-600 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
-                  title={t('userLayout.switchToTenantTitle')}
-                >
-                <div className="flex items-center space-x-2">
-                  <ArrowsRightLeftIcon className="h-4 w-4" />
-                  <span className="text-sm font-medium">{t('userLayout.tenantManagement')}</span>
-                </div>
-              </button>
-            )}
-
-            {canAccessAdmin && (
-                <button
-                  onClick={switchToAdmin}
-                  className="relative rounded-lg bg-indigo-50 px-3 py-2 text-indigo-600 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200"
-                  title={t('userLayout.switchToAdminTitle')}
-                >
-                <div className="flex items-center space-x-2">
-                  <ArrowsRightLeftIcon className="h-4 w-4" />
-                  <span className="text-sm font-medium">{t('userLayout.adminPanel')}</span>
-                </div>
-              </button>
-            )}
-              
-            <EnhancedNotificationIcon viewAllPath={ROUTES.user.notifications} />
-            {/*  */}
-            <div ref={desktopUserMenuRef} className="relative">
-              <PButton
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="flex items-center rounded-full bg-white p-1 text-sm focus:ring-blue-500 focus:ring-offset-2 hover:bg-gray-50"
-                title={t('common.openUserMenu')}
-              >
-                <span className="sr-only">{t('common.openUserMenu')}</span>
-                {user?.avatar_url ? (
-                  <img
-                    className="h-8 w-8 rounded-full object-cover"
-                    src={user.avatar_url}
-                    alt={user?.nickname || user?.email || 'User'}
-                  />
-                ) : (
-                  <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center">
-                    <span className="text-sm font-medium text-white">{getUserInitial()}</span>
-                  </div>
-                )}
-                <ChevronDownIcon className="ml-1 h-4 w-4 text-gray-500" />
-              </PButton>
-
-              {isUserMenuOpen && (
-                <div className="absolute right-0 z-50 mt-2 w-56 origin-top-right overflow-hidden rounded-xl bg-white pt-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                  <div className="px-4 py-3 border-b border-gray-200">
-                    <p className="text-sm text-gray-900 font-medium">{user?.nickname || t('common.user')}</p>
-                    <p className="text-sm text-gray-500 truncate">{user?.email}</p>
-                  </div>
-                  <Link
-                    to={ROUTES.user.profile}
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    onClick={() => setIsUserMenuOpen(false)}
-                  >
-                    <UserIcon className="mr-3 h-4 w-4" />
-                    {t('common.profile')}
-                  </Link>
-                  <Link
-                    to={ROUTES.user.settings}
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    onClick={() => setIsUserMenuOpen(false)}
-                  >
-                    <CogIcon className="mr-3 h-4 w-4" />
-                    {t('common.settings')}
-                  </Link>
-                  <PButton
-                    variant="ghost"
-                    onClick={() => {
-                      setShowAccountSwitcher(true)
-                      setIsUserMenuOpen(false)
-                    }}
-                    className="flex w-full items-center justify-start rounded-none px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700"
-                  >
-                    <ArrowsRightLeftIcon className="mr-3 h-4 w-4" />
-                    {t('common.switchAccount')}
-                  </PButton>
-                  <div className="border-t border-gray-200"></div>
-                  <PButton
-                    variant="ghost"
-                    onClick={handleLogout}
-                    className="flex w-full items-center justify-start rounded-t-none rounded-b-xl px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 hover:text-red-700"
-                  >
-                    <ArrowRightOnRectangleIcon className="mr-3 h-4 w-4" />
-                    {t('common.logout')}
-                  </PButton>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
         {/*  */}
         <main className="flex-1 relative overflow-y-auto focus:outline-none">
           <div className="py-6">

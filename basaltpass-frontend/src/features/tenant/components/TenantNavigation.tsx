@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { 
   ChartBarIcon,
@@ -6,7 +6,6 @@ import {
   UsersIcon,
   ArrowsRightLeftIcon,
   ChevronDownIcon,
-  ChevronUpIcon,
   CreditCardIcon,
   GiftIcon,
   DocumentTextIcon,
@@ -103,7 +102,10 @@ export default function TenantNavigation() {
   const { t } = useI18n()
   const location = useLocation()
   const { marketEnabled } = useConfig()
-  const [expandedSections, setExpandedSections] = useState<string[]>(['tenantNav.appManagement', 'tenantNav.subscriptionManagement'])
+
+  const isCurrentPath = (href: string) => {
+    return location.pathname === href || location.pathname.startsWith(href + '/')
+  }
 
   // 
   const navigation = navigationItems.filter(item => {
@@ -113,20 +115,25 @@ export default function TenantNavigation() {
     return true
   })
 
-  const toggleSection = (sectionKey: string) => {
-    setExpandedSections(prev => 
-      prev.includes(sectionKey)
-        ? prev.filter(name => name !== sectionKey)
-        : [...prev, sectionKey]
-    )
-  }
+  const activeSectionKey =
+    navigation.find(item => item.children?.some(child => child.href && isCurrentPath(child.href)))?.key ?? null
 
-  const isCurrentPath = (href: string) => {
-    return location.pathname === href || location.pathname.startsWith(href + '/')
+  const [expandedSection, setExpandedSection] = useState<string | null>(
+    activeSectionKey ?? 'tenantNav.appManagement'
+  )
+
+  useEffect(() => {
+    if (activeSectionKey) {
+      setExpandedSection(activeSectionKey)
+    }
+  }, [activeSectionKey])
+
+  const toggleSection = (sectionKey: string) => {
+    setExpandedSection(prev => (prev === sectionKey ? null : sectionKey))
   }
 
   const renderNavigationItem = (item: NavigationItem, depth = 0) => {
-    const isExpanded = expandedSections.includes(item.key)
+    const isExpanded = expandedSection === item.key
     const isCurrent = item.href ? isCurrentPath(item.href) : false
     const hasCurrentChild = item.children?.some(child => child.href && isCurrentPath(child.href))
     const sharedStateClass = hasCurrentChild || isCurrent
@@ -142,22 +149,23 @@ export default function TenantNavigation() {
             onClick={() => toggleSection(item.key)}
             className={`w-full flex items-center justify-between px-3 py-2 text-left text-sm ${fontWeightClass} rounded-lg transition-colors ${sharedStateClass}`}
             style={{ paddingLeft: `${0.75 + depth * 1}rem` }}
+            aria-expanded={isExpanded}
           >
             <div className="flex items-center">
               <item.icon className="h-5 w-5 mr-3" />
               {t(item.key)}
             </div>
-            {isExpanded ? (
-              <ChevronUpIcon className="h-4 w-4" />
-            ) : (
-              <ChevronDownIcon className="h-4 w-4" />
-            )}
+            <ChevronDownIcon
+              className={`h-4 w-4 transition-transform duration-300 ${isExpanded ? 'rotate-180' : 'rotate-0'}`}
+            />
           </button>
-          {isExpanded && (
-            <div className="mt-1 space-y-1">
-              {item.children.map(child => renderNavigationItem(child, depth + 1))}
-            </div>
-          )}
+          <div
+            className={`mt-1 space-y-1 overflow-hidden transition-all duration-300 ease-out ${
+              isExpanded ? 'max-h-[800px] opacity-100 translate-y-0' : 'max-h-0 opacity-0 -translate-y-1 pointer-events-none'
+            }`}
+          >
+            {item.children.map(child => renderNavigationItem(child, depth + 1))}
+          </div>
         </div>
       )
     }

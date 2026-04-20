@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useRef, useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import { Bars3Icon, ChevronDownIcon, ArrowsRightLeftIcon } from '@heroicons/react/24/outline'
 import { UserIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline'
 import TenantNavigation from './TenantNavigation'
@@ -21,12 +21,13 @@ interface TenantLayoutProps {
 export default function TenantLayout({ children, title, actions }: TenantLayoutProps) {
   const { t } = useI18n()
   const { user, logout, canAccessAdmin } = useAuth()
-  const { siteName, siteInitial, setPageTitle } = useConfig()
+  const { siteName, setPageTitle } = useConfig()
   const location = useLocation()
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showAccountSwitcher, setShowAccountSwitcher] = useState(false)
-  const userMenuRef = useRef<HTMLDivElement | null>(null)
+  const mobileUserMenuRef = useRef<HTMLDivElement | null>(null)
+  const desktopUserMenuRef = useRef<HTMLDivElement | null>(null)
   const currentSessionKey = `${user?.id || 0}:${Number(user?.tenant_id || 0)}`
 
   const handleLogout = () => {
@@ -51,7 +52,9 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
     const handlePointerDown = (event: MouseEvent) => {
       const target = event.target as Node | null
       if (!target) return
-      if (userMenuRef.current?.contains(target)) return
+      const clickedMobileMenu = mobileUserMenuRef.current?.contains(target)
+      const clickedDesktopMenu = desktopUserMenuRef.current?.contains(target)
+      if (clickedMobileMenu || clickedDesktopMenu) return
       setIsUserMenuOpen(false)
     }
 
@@ -93,101 +96,72 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
     return 'U'
   }
 
+  const userDisplayName = user?.nickname || user?.email || t('common.tenantUser')
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/*  */}
-      <header className="sticky top-0 bg-white shadow z-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 justify-between items-center">
-            <div className="flex items-center">
-              {/*  */}
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="mr-3 inline-flex items-center justify-center rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 lg:hidden"
-              >
-                <span className="sr-only">{t('common.openSidebar')}</span>
-                <Bars3Icon className="h-6 w-6" />
-              </button>
-              <Link to={ROUTES.tenant.dashboard} className="flex items-center">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600">
-                  <span className="text-white font-bold text-lg">{siteInitial}</span>
-                </div>
-                <div className="ml-2 flex items-baseline">
-                  <span className="text-xl font-bold text-gray-900">{siteName}</span>
-                  <span className="ml-2 text-sm font-medium text-gray-500">{t('tenantLayout.consoleTitle')}</span>
-                </div>
-              </Link>
-              {title && (
-                <>
-                  <span className="mx-3 text-gray-400">/</span>
-                  <h1 className="text-lg font-medium text-gray-900">{title}</h1>
-                </>
-              )}
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              {actions}
-              
-              {/*  -  */}
-              {isTenantPath && canAccessAdmin && (
-                <button
-                  onClick={switchToAdmin}
-                  className="relative rounded-lg bg-indigo-50 px-3 py-2 text-indigo-600 transition-colors duration-200 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                  title={t('tenantLayout.switchToAdminTitle')}
-                >
-                  <div className="flex items-center space-x-2">
-                    <ArrowsRightLeftIcon className="h-4 w-4" />
-                    <span className="text-sm font-medium">{t('tenantLayout.switchToAdminLabel')}</span>
-                  </div>
-                </button>
-              )}
-              
-              {/*  -  */}
-              {isTenantPath && (
-                <button
-                  onClick={switchToUser}
-                  className="relative rounded-lg bg-green-50 px-3 py-2 text-green-600 transition-colors duration-200 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                  title={t('tenantLayout.switchToUserTitle')}
-                >
-                  <div className="flex items-center space-x-2">
-                    <ArrowsRightLeftIcon className="h-4 w-4" />
-                    <span className="text-sm font-medium">{t('tenantLayout.switchToUserLabel')}</span>
-                  </div>
-                </button>
-              )}
-              
-              {/* ： NotificationProvider ， */}
-              <div className="relative">
-                <span className="sr-only">{t('common.viewNotifications')}</span>
-                <EnhancedNotificationIcon viewAllPath={ROUTES.tenant.notifications} />
-              </div>
+      <button
+        onClick={() => setSidebarOpen(true)}
+        className="fixed left-3 top-3 z-30 inline-flex items-center justify-center rounded-lg bg-white p-2 text-gray-500 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 lg:hidden"
+      >
+        <span className="sr-only">{t('common.openSidebar')}</span>
+        <Bars3Icon className="h-6 w-6" />
+      </button>
 
+      <div className="flex">
+        {/*  */}
+        {sidebarOpen && (
+          <div className="fixed inset-0 !m-0 z-40 flex lg:hidden">
+            <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
+            <div className="relative flex w-full max-w-xs flex-1 flex-col bg-white">
+              <div className="absolute top-0 right-0 -mr-12 pt-2">
+                <button 
+                  onClick={() => setSidebarOpen(false)}
+                  className="ml-1 flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                >
+                  <span className="sr-only">{t('common.closeSidebar')}</span>
+                  <svg className="h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="h-0 min-h-0 flex-1 overflow-y-auto pt-5 pb-4">
+                <div className="flex flex-shrink-0 items-center px-4">
+                  <h1 className="text-2xl font-bold text-gray-900">{siteName}</h1>
+                </div>
+                <nav className="mt-5 space-y-1 px-2">
+                  <TenantNavigation />
+                </nav>
+              </div>
+            <div className="flex flex-shrink-0 border-t border-gray-200 p-2">
+              <div className="flex w-full items-center justify-between">
               {/*  */}
-              <div ref={userMenuRef} className="relative">
+              <div ref={mobileUserMenuRef} className="relative">
                 <PButton
                   variant="ghost" 
                   size="sm"
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center rounded-full bg-white p-1 text-sm focus:ring-blue-500 focus:ring-offset-2 hover:bg-gray-50"
+                  className="flex items-center justify-start rounded-lg bg-white px-1 py-1 text-sm focus:ring-blue-500 focus:ring-offset-2 hover:bg-gray-50"
                 >
                   <span className="sr-only">{t('common.openUserMenu')}</span>
                   {user?.avatar_url ? (
                     <img 
-                      className="h-8 w-8 rounded-full object-cover" 
+                      className="h-7 w-7 rounded-full object-cover" 
                       src={user.avatar_url} 
                       alt={user.nickname || user.email}
                     />
                   ) : (
-                    <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center">
-                      <span className="text-sm font-medium text-white">{getUserInitial()}</span>
+                    <div className="h-7 w-7 rounded-full bg-blue-600 flex items-center justify-center">
+                      <span className="text-xs font-medium text-white">{getUserInitial()}</span>
                     </div>
                   )}
+                  <span className="ml-2 max-w-[8rem] truncate text-sm font-medium text-gray-700">{userDisplayName}</span>
                   <ChevronDownIcon className="ml-1 h-4 w-4 text-gray-500" />
                 </PButton>
 
                 {/*  */}
                 {isUserMenuOpen && (
-                  <div className="absolute right-0 z-50 mt-2 w-56 origin-top-right overflow-hidden rounded-xl bg-white pt-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                  <div className="absolute left-0 z-50 bottom-full mb-2 w-56 origin-bottom-left overflow-hidden rounded-xl bg-white pt-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                     <div className="px-4 py-3 border-b border-gray-200">
                       <p className="text-sm text-gray-900 font-medium">
                         {user?.nickname || t('common.tenantUser')}
@@ -214,6 +188,34 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
                       <Cog6ToothIcon className="mr-3 h-4 w-4" />
                       {t('tenantLayout.tenantSettings')}
                     </a>
+
+                    {isTenantPath && canAccessAdmin && (
+                      <PButton
+                        variant="ghost"
+                        onClick={() => {
+                          setIsUserMenuOpen(false)
+                          void switchToAdmin()
+                        }}
+                        className="flex w-full items-center justify-start rounded-none px-4 py-2 text-sm font-medium text-indigo-600 transition-colors hover:bg-indigo-50 hover:text-indigo-700"
+                      >
+                        <ArrowsRightLeftIcon className="mr-3 h-4 w-4" />
+                        {t('tenantLayout.switchToAdminLabel')}
+                      </PButton>
+                    )}
+
+                    {isTenantPath && (
+                      <PButton
+                        variant="ghost"
+                        onClick={() => {
+                          setIsUserMenuOpen(false)
+                          switchToUser()
+                        }}
+                        className="flex w-full items-center justify-start rounded-none px-4 py-2 text-sm font-medium text-green-600 transition-colors hover:bg-green-50 hover:text-green-700"
+                      >
+                        <ArrowsRightLeftIcon className="mr-3 h-4 w-4" />
+                        {t('tenantLayout.switchToUserLabel')}
+                      </PButton>
+                    )}
                     
                     <PButton
                       variant="ghost"
@@ -240,54 +242,158 @@ export default function TenantLayout({ children, title, actions }: TenantLayoutP
                   </div>
                 )}
               </div>
-            </div>
-          </div>
-        </div>
-      </header>
 
-      <div className="flex">
-        {/*  */}
-        {sidebarOpen && (
-          <div className="fixed inset-0 !m-0 z-40 flex lg:hidden">
-            <div className="fixed inset-0 !m-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
-            <div className="relative flex w-full max-w-xs flex-1 flex-col bg-white">
-              <div className="absolute top-0 right-0 -mr-12 pt-2">
-                <button 
-                  onClick={() => setSidebarOpen(false)}
-                  className="ml-1 flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
-                >
-                  <span className="sr-only">{t('common.closeSidebar')}</span>
-                  <svg className="h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+              {/* ： NotificationProvider ， */}
+              <div className="relative ml-3 flex-shrink-0">
+                <span className="sr-only">{t('common.viewNotifications')}</span>
+                <EnhancedNotificationIcon
+                  viewAllPath={ROUTES.tenant.notifications}
+                  dropdownDirection="up"
+                  dropdownAlign="left"
+                />
               </div>
-              <div className="h-0 flex-1 overflow-y-auto pt-5 pb-4">
-                <div className="flex flex-shrink-0 items-center px-4">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600">
-                    <span className="text-white font-bold text-lg">{siteInitial}</span>
-                  </div>
-                  <div className="ml-2 flex items-baseline">
-                    <span className="text-xl font-bold text-gray-900">{siteName}</span>
-                    <span className="ml-2 text-sm font-medium text-gray-500">{t('tenantLayout.consoleTitle')}</span>
-                  </div>
-                </div>
-                <nav className="mt-5 space-y-1 px-2">
-                  <TenantNavigation />
-                </nav>
+
               </div>
+            </div>
+
             </div>
           </div>
         )}
 
         {/*  */}
-        <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 lg:pt-16">
-          <div className="flex flex-1 flex-col overflow-y-auto bg-white border-r border-gray-200">
-            <div className="flex flex-1 flex-col pt-5 pb-4">
-              <div className="flex flex-1 flex-col px-3">
+        <div className="hidden lg:flex lg:w-64 lg:min-h-0 lg:flex-col lg:fixed lg:inset-y-0">
+          <div className="flex flex-1 min-h-0 flex-col bg-white border-r border-gray-200">
+            <div className="flex flex-1 min-h-0 flex-col overflow-y-auto pt-5 pb-4">
+              <div className="flex items-center flex-shrink-0 px-4">
+                <h1 className="text-2xl font-bold text-gray-900">{siteName}</h1>
+              </div>
+              <div className="mt-5 flex flex-1 flex-col px-3">
                 <TenantNavigation />
               </div>
             </div>
+            <div className="flex flex-shrink-0 border-t border-gray-200 p-2">
+              <div className="flex w-full items-center justify-between">
+              {/*  */}
+              <div ref={desktopUserMenuRef} className="relative">
+                <PButton
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className="flex items-center justify-start rounded-lg bg-white px-1 py-1 text-sm focus:ring-blue-500 focus:ring-offset-2 hover:bg-gray-50"
+                >
+                  <span className="sr-only">{t('common.openUserMenu')}</span>
+                  {user?.avatar_url ? (
+                    <img 
+                      className="h-7 w-7 rounded-full object-cover" 
+                      src={user.avatar_url} 
+                      alt={user.nickname || user.email}
+                    />
+                  ) : (
+                    <div className="h-7 w-7 rounded-full bg-blue-600 flex items-center justify-center">
+                      <span className="text-xs font-medium text-white">{getUserInitial()}</span>
+                    </div>
+                  )}
+                  <span className="ml-2 max-w-[8rem] truncate text-sm font-medium text-gray-700">{userDisplayName}</span>
+                  <ChevronDownIcon className="ml-1 h-4 w-4 text-gray-500" />
+                </PButton>
+
+                {/*  */}
+                {isUserMenuOpen && (
+                  <div className="absolute left-0 z-50 bottom-full mb-2 w-56 origin-bottom-left overflow-hidden rounded-xl bg-white pt-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                    <div className="px-4 py-3 border-b border-gray-200">
+                      <p className="text-sm text-gray-900 font-medium">
+                        {user?.nickname || t('common.tenantUser')}
+                      </p>
+                      <p className="text-sm text-gray-500 truncate">
+                        {user?.email}
+                      </p>
+                    </div>
+                    
+                    <a
+                      href={joinConsoleUrl(consoleUserUrl, 'profile')}
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      <UserIcon className="mr-3 h-4 w-4" />
+                      {t('common.profile')}
+                    </a>
+                    
+                    <a
+                      href={joinConsoleUrl(consoleUserUrl, 'settings')}
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      <Cog6ToothIcon className="mr-3 h-4 w-4" />
+                      {t('tenantLayout.tenantSettings')}
+                    </a>
+
+                    {isTenantPath && canAccessAdmin && (
+                      <PButton
+                        variant="ghost"
+                        onClick={() => {
+                          setIsUserMenuOpen(false)
+                          void switchToAdmin()
+                        }}
+                        className="flex w-full items-center justify-start rounded-none px-4 py-2 text-sm font-medium text-indigo-600 transition-colors hover:bg-indigo-50 hover:text-indigo-700"
+                      >
+                        <ArrowsRightLeftIcon className="mr-3 h-4 w-4" />
+                        {t('tenantLayout.switchToAdminLabel')}
+                      </PButton>
+                    )}
+
+                    {isTenantPath && (
+                      <PButton
+                        variant="ghost"
+                        onClick={() => {
+                          setIsUserMenuOpen(false)
+                          switchToUser()
+                        }}
+                        className="flex w-full items-center justify-start rounded-none px-4 py-2 text-sm font-medium text-green-600 transition-colors hover:bg-green-50 hover:text-green-700"
+                      >
+                        <ArrowsRightLeftIcon className="mr-3 h-4 w-4" />
+                        {t('tenantLayout.switchToUserLabel')}
+                      </PButton>
+                    )}
+                    
+                    <PButton
+                      variant="ghost"
+                      onClick={() => {
+                        setShowAccountSwitcher(true)
+                        setIsUserMenuOpen(false)
+                      }}
+                      className="flex w-full items-center justify-start rounded-none px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700"
+                    >
+                      <ArrowsRightLeftIcon className="mr-3 h-4 w-4" />
+                      {t('common.switchAccount')}
+                    </PButton>
+                    
+                    <div className="border-t border-gray-200"></div>
+                    
+                    <PButton
+                      variant="ghost"
+                      onClick={handleLogout}
+                      className="flex w-full items-center justify-start rounded-t-none rounded-b-xl px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 hover:text-red-700"
+                    >
+                      <ArrowRightOnRectangleIcon className="mr-3 h-4 w-4" />
+                      {t('common.logout')}
+                    </PButton>
+                  </div>
+                )}
+              </div>
+
+              {/* ： NotificationProvider ， */}
+              <div className="relative ml-3 flex-shrink-0">
+                <span className="sr-only">{t('common.viewNotifications')}</span>
+                <EnhancedNotificationIcon
+                  viewAllPath={ROUTES.tenant.notifications}
+                  dropdownDirection="up"
+                  dropdownAlign="left"
+                />
+              </div>
+
+              </div>
+            </div>
+
           </div>
         </div>
 
