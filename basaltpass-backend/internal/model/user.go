@@ -3,10 +3,12 @@ package model
 import (
 	"basaltpass-backend/internal/common"
 	"encoding/base64"
+	"strings"
 	"time"
 
 	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -23,6 +25,7 @@ type User struct {
 	// (email, tenant_id) 与 (phone, tenant_id)
 	// 这样同一个邮箱/手机号可以在不同租户下注册不同账户。
 	// 注意：这里不声明 unique，避免 AutoMigrate 误建成单列唯一索引。
+	UserUUID      string `gorm:"column:user_uuid;size:36;<-:create" json:"user_uuid"`
 	Email         string `gorm:"size:128;index;default:null" json:"email"`
 	Phone         string `gorm:"size:32;index;default:null" json:"phone"`
 	PasswordHash  string `gorm:"size:255"`
@@ -62,6 +65,14 @@ type User struct {
 
 func (User) TableName() string {
 	return "system_auth_users"
+}
+
+// BeforeCreate guarantees an immutable, globally unique user UUID at creation time.
+func (u *User) BeforeCreate(_ *gorm.DB) error {
+	if strings.TrimSpace(u.UserUUID) == "" {
+		u.UserUUID = uuid.NewString()
+	}
+	return nil
 }
 
 // IsSuperAdmin 检查用户是否为系统最高管理员，以 is_system_admin 字段为唯一依据。

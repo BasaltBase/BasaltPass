@@ -18,12 +18,14 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 // TenantUserResponse 租户用户响应
 type TenantUserResponse struct {
 	ID          uint       `json:"id"`
+	UserUUID    string     `json:"user_uuid"`
 	Email       string     `json:"email"`
 	Nickname    string     `json:"nickname"`
 	Avatar      string     `json:"avatar"`
@@ -58,6 +60,7 @@ type InviteTenantUserRequest struct {
 // GlobalUserCandidateResponse 全局用户候选响应
 type GlobalUserCandidateResponse struct {
 	ID        uint      `json:"id"`
+	UserUUID  string    `json:"user_uuid"`
 	Email     string    `json:"email"`
 	Nickname  string    `json:"nickname"`
 	Avatar    string    `json:"avatar"`
@@ -119,6 +122,52 @@ func loadTenantMembership(userID, tenantID uint) (model.User, *model.TenantUser,
 	}
 
 	return user, tenantUserPtr, true, nil
+}
+
+func loadTenantMembershipByUUID(userUUID string, tenantID uint) (model.User, *model.TenantUser, bool, error) {
+	normalizedUUID := strings.ToLower(strings.TrimSpace(userUUID))
+	if normalizedUUID == "" {
+		return model.User{}, nil, false, gorm.ErrRecordNotFound
+	}
+
+	var user model.User
+	if err := common.DB().Unscoped().Where("LOWER(user_uuid) = ?", normalizedUUID).First(&user).Error; err != nil {
+		return model.User{}, nil, false, err
+	}
+
+	return loadTenantMembership(user.ID, tenantID)
+}
+
+func buildTenantUserResponse(user model.User, tenantUser *model.TenantUser) TenantUserResponse {
+	role := string(model.TenantRoleUser)
+	createdAt := user.CreatedAt
+	updatedAt := user.UpdatedAt
+	if tenantUser != nil {
+		role = string(tenantUser.Role)
+		createdAt = tenantUser.CreatedAt
+		updatedAt = tenantUser.UpdatedAt
+	}
+
+	status := "active"
+	if role == "baned" {
+		status = "baned"
+	} else if !user.EmailVerified {
+		status = "inactive"
+	} else if user.DeletedAt.Valid {
+		status = "suspended"
+	}
+
+	return TenantUserResponse{
+		ID:        user.ID,
+		UserUUID:  user.UserUUID,
+		Email:     user.Email,
+		Nickname:  user.Nickname,
+		Avatar:    user.AvatarURL,
+		Role:      role,
+		Status:    status,
+		CreatedAt: createdAt,
+		UpdatedAt: updatedAt,
+	}
 }
 
 // GetTenantUsersHandler 获取租户用户列表
@@ -187,6 +236,7 @@ func GetTenantUsersHandler(c *fiber.Ctx) error {
 	// 注意：SQLite 中时间字段需要特殊处理
 	type tenantUserRow struct {
 		ID        uint   `json:"id"`
+		UserUUID  string `json:"user_uuid"`
 		Email     string `json:"email"`
 		Nickname  string `json:"nickname"`
 		Avatar    string `json:"avatar"`
@@ -199,6 +249,7 @@ func GetTenantUsersHandler(c *fiber.Ctx) error {
 	var rows []tenantUserRow
 	listQuery := base.Select(`
 			u.id,
+			u.user_uuid,
 			u.email,
 			u.nickname,
 			COALESCE(u.avatar_url, '') as avatar,
@@ -225,6 +276,7 @@ func GetTenantUsersHandler(c *fiber.Ctx) error {
 	for _, r := range rows {
 		user := TenantUserResponse{
 			ID:       r.ID,
+			UserUUID: r.UserUUID,
 			Email:    r.Email,
 			Nickname: r.Nickname,
 			Avatar:   r.Avatar,
@@ -260,6 +312,7 @@ func GetTenantUsersHandler(c *fiber.Ctx) error {
 // TenantAppLinkedUserResponse 授权了当前租户任一应用的用户（从 app_users 聚合）
 type TenantAppLinkedUserResponse struct {
 	ID               uint       `json:"id"`
+	UserUUID         string     `json:"user_uuid"`
 	Email            string     `json:"email"`
 	Nickname         string     `json:"nickname"`
 	Avatar           string     `json:"avatar"`
@@ -312,13 +365,14 @@ func GetTenantAppLinkedUsersHandler(c *fiber.Ctx) error {
 	var users []TenantAppLinkedUserResponse
 	listQuery := base.Select(`
 			system_auth_users.id,
+			system_auth_users.user_uuid,
 			system_auth_users.email,
 			system_auth_users.nickname,
 			system_auth_users.avatar_url as avatar,
 			COUNT(DISTINCT au.app_id) as app_count,
 			MAX(au.last_authorized_at) as last_authorized_at,
 			MAX(au.last_active_at) as last_active_at`).
-		Group("system_auth_users.id, system_auth_users.email, system_auth_users.nickname, system_auth_users.avatar_url").
+		Group("system_auth_users.id, system_auth_users.user_uuid, system_auth_users.email, system_auth_users.nickname, system_auth_users.avatar_url").
 		Order("MAX(au.last_authorized_at) DESC").
 		Offset(offset).Limit(limit)
 
@@ -419,7 +473,7 @@ func GetGlobalUserCandidatesHandler(c *fiber.Ctx) error {
 	}
 
 	var users []GlobalUserCandidateResponse
-	if err := query.Select("id, email, nickname, COALESCE(avatar_url, '') as avatar, created_at").
+	if err := query.Select("id, user_uuid, email, nickname, COALESCE(avatar_url, '') as avatar, created_at").
 		Order("created_at DESC").
 		Offset(offset).
 		Limit(limit).
@@ -1014,34 +1068,43 @@ func GetTenantUserHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	role := string(model.TenantRoleUser)
-	createdAt := user.CreatedAt
-	updatedAt := user.UpdatedAt
-	if tenantUser != nil {
-		role = string(tenantUser.Role)
-		createdAt = tenantUser.CreatedAt
-		updatedAt = tenantUser.UpdatedAt
+	resp := buildTenantUserResponse(user, tenantUser)
+
+	return c.JSON(fiber.Map{
+		"user": resp,
+	})
+}
+
+// GetTenantUserByUUIDHandler 获取租户用户详情（通过 user_uuid）
+// GET /api/v1/tenant/users/by-uuid/:user_uuid
+func GetTenantUserByUUIDHandler(c *fiber.Ctx) error {
+	tenantID := c.Locals("tenantID").(uint)
+	userUUID := strings.TrimSpace(c.Params("user_uuid"))
+
+	if _, err := uuid.Parse(userUUID); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "无效的用户UUID",
+		})
 	}
 
-	status := "active"
-	if role == "baned" {
-		status = "baned"
-	} else if !user.EmailVerified {
-		status = "inactive"
-	} else if user.DeletedAt.Valid {
-		status = "suspended"
+	user, tenantUser, belongs, err := loadTenantMembershipByUUID(userUUID, tenantID)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "用户不存在",
+			})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "查询用户失败",
+		})
+	}
+	if !belongs {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "用户不存在或不属于当前租户",
+		})
 	}
 
-	resp := TenantUserResponse{
-		ID:        user.ID,
-		Email:     user.Email,
-		Nickname:  user.Nickname,
-		Avatar:    user.AvatarURL,
-		Role:      role,
-		Status:    status,
-		CreatedAt: createdAt,
-		UpdatedAt: updatedAt,
-	}
+	resp := buildTenantUserResponse(user, tenantUser)
 
 	return c.JSON(fiber.Map{
 		"user": resp,

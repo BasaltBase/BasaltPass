@@ -45,6 +45,7 @@ func (e *ApiError) Error() string {
 
 type S2SUser struct {
 	ID            int64  `json:"id"`
+	UserUUID      string `json:"user_uuid"`
 	Email         string `json:"email"`
 	Nickname      string `json:"nickname"`
 	AvatarURL     string `json:"avatar_url"`

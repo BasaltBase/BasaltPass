@@ -57,6 +57,7 @@ func RegisterTenantRoutes(v1 fiber.Router) {
 	tenantUserGroup.Get("/stats", tenant2.GetTenantUserStatsHandler)
 	tenantUserGroup.Get("/global-candidates", tenant2.GetGlobalUserCandidatesHandler)
 	tenantUserGroup.Post("/global-candidates/:id/authorize", tenant2.AuthorizeGlobalUserToTenantHandler)
+	tenantUserGroup.Get("/by-uuid/:user_uuid", tenant2.GetTenantUserByUUIDHandler)
 	tenantUserGroup.Get("/:id", tenant2.GetTenantUserHandler)
 	tenantUserGroup.Put("/:id", tenant2.UpdateTenantUserHandler)
 	tenantUserGroup.Delete("/:id", tenant2.RemoveTenantUserHandler)

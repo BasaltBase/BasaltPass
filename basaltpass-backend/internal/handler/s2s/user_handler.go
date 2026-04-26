@@ -24,6 +24,7 @@ func unifiedResponse(c *fiber.Ctx, status int, data interface{}, errObj interfac
 func userSummary(u model.User) fiber.Map {
 	return fiber.Map{
 		"id":             u.ID,
+		"user_uuid":      u.UserUUID,
 		"email":          u.Email,
 		"nickname":       u.Nickname,
 		"avatar_url":     u.AvatarURL,

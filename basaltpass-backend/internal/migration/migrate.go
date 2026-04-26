@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -254,6 +255,7 @@ func RunMigrations() {
 	// 在自动迁移后处理特殊的迁移情况
 	handleSpecialMigrations()
 	ensureUserTenantScopedUniqueIndexes()
+	ensureUserUUIDBackfillAndUniqueIndex()
 	ensureIsSystemAdminNonUniqueIndex()
 
 	seedSystemApps()
@@ -1459,6 +1461,100 @@ func ensureUserTenantScopedUniqueIndexes() {
 		"CREATE INDEX idx_users_tenant_id ON system_auth_users (tenant_id)",
 	); err != nil {
 		log.Printf("[Migration] Failed to create idx_users_tenant_id: %v", err)
+	}
+}
+
+// ensureUserUUIDBackfillAndUniqueIndex guarantees every user has a stable UUID and enforces uniqueness.
+func ensureUserUUIDBackfillAndUniqueIndex() {
+	db := common.DB()
+	log.Println("[Migration] Ensuring immutable UUID for every user...")
+
+	type userRow struct {
+		ID       uint
+		UserUUID string
+	}
+	var users []userRow
+	if err := db.Model(&model.User{}).Select("id", "user_uuid").Find(&users).Error; err != nil {
+		log.Printf("[Migration] Failed to load users for UUID backfill: %v", err)
+		return
+	}
+
+	filled := 0
+	for _, u := range users {
+		if strings.TrimSpace(u.UserUUID) != "" {
+			continue
+		}
+		if err := db.Model(&model.User{}).Where("id = ?", u.ID).Update("user_uuid", uuid.NewString()).Error; err != nil {
+			log.Printf("[Migration] Failed to backfill user_uuid for user %d: %v", u.ID, err)
+			continue
+		}
+		filled++
+	}
+	if filled > 0 {
+		log.Printf("[Migration] Backfilled user_uuid for %d users", filled)
+	}
+
+	type duplicateUUID struct {
+		UserUUID string
+		Count    int64
+	}
+	var duplicates []duplicateUUID
+	if err := db.Table("system_auth_users").
+		Select("user_uuid, COUNT(1) AS count").
+		Where("user_uuid IS NOT NULL AND TRIM(user_uuid) <> ''").
+		Group("user_uuid").
+		Having("COUNT(1) > 1").
+		Scan(&duplicates).Error; err != nil {
+		log.Printf("[Migration] Failed to scan duplicate user_uuid values: %v", err)
+	}
+
+	deduped := 0
+	for _, dup := range duplicates {
+		type idRow struct {
+			ID uint
+		}
+		var rows []idRow
+		if err := db.Table("system_auth_users").
+			Select("id").
+			Where("user_uuid = ?", dup.UserUUID).
+			Order("id ASC").
+			Scan(&rows).Error; err != nil {
+			log.Printf("[Migration] Failed to load duplicate users for user_uuid %s: %v", dup.UserUUID, err)
+			continue
+		}
+
+		for i := 1; i < len(rows); i++ {
+			if err := db.Model(&model.User{}).Where("id = ?", rows[i].ID).Update("user_uuid", uuid.NewString()).Error; err != nil {
+				log.Printf("[Migration] Failed to deduplicate user_uuid for user %d: %v", rows[i].ID, err)
+				continue
+			}
+			deduped++
+		}
+	}
+	if deduped > 0 {
+		log.Printf("[Migration] Re-assigned duplicated user_uuid for %d users", deduped)
+	}
+
+	dropIndexIfExists("system_auth_users", "idx_users_uuid")
+	dropIndexIfExists("system_auth_users", "idx_users_user_uuid")
+
+	dialect := strings.ToLower(db.Dialector.Name())
+	if dialect == "sqlite" || dialect == "postgres" || dialect == "postgresql" {
+		if err := createIndexIfMissing(
+			"system_auth_users",
+			"idx_users_uuid",
+			"CREATE UNIQUE INDEX idx_users_uuid ON system_auth_users (user_uuid) WHERE user_uuid IS NOT NULL AND user_uuid != ''",
+		); err != nil {
+			log.Printf("[Migration] Failed to create idx_users_uuid: %v", err)
+		}
+	} else {
+		if err := createIndexIfMissing(
+			"system_auth_users",
+			"idx_users_uuid",
+			"CREATE UNIQUE INDEX idx_users_uuid ON system_auth_users (user_uuid)",
+		); err != nil {
+			log.Printf("[Migration] Failed to create idx_users_uuid: %v", err)
+		}
 	}
 }
 
