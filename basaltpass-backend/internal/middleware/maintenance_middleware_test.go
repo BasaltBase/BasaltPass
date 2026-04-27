@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/glebarez/sqlite"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 

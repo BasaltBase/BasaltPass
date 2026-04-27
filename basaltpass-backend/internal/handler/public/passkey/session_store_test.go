@@ -9,9 +9,9 @@ import (
 
 	"basaltpass-backend/internal/common"
 
+	"github.com/glebarez/sqlite"
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/stretchr/testify/require"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )

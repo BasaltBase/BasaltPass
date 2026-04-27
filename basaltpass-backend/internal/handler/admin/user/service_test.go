@@ -8,7 +8,7 @@ import (
 	userdto "basaltpass-backend/internal/dto/user"
 	"basaltpass-backend/internal/model"
 
-	"gorm.io/driver/sqlite"
+	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 )
 
