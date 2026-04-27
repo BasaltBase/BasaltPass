@@ -104,65 +104,13 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
   const userDisplayName = user?.nickname || user?.email || t('common.user')
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="sticky top-0 z-40 bg-white shadow">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 justify-between items-center">
-            <div className="flex items-center">
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="lg:hidden mr-3 inline-flex items-center justify-center rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
-              >
-                <span className="sr-only">{t('common.openSidebar')}</span>
-                <Bars3Icon className="h-6 w-6" />
-              </button>
-              <Link to={ROUTES.admin.dashboard} className="flex items-center">
-                <div className="h-8 w-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">{siteInitial}</span>
-                </div>
-                <span className="ml-2 text-xl font-bold text-gray-900">{siteName}</span>
-              </Link>
-              {title && (
-                <>
-                  <span className="mx-3 text-gray-400">/</span>
-                  <h1 className="text-lg font-medium text-gray-900">{title}</h1>
-                </>
-              )}
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              {actions}
-              
-              {isAdminPath && canAccessTenant && (
-                <button
-                  onClick={switchToTenant}
-                  className="relative rounded-lg bg-indigo-50 px-3 py-2 text-indigo-600 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200"
-                  title={t('adminLayout.switchToTenantTitle')}
-                >
-                  <div className="flex items-center space-x-2">
-                    <ArrowsRightLeftIcon className="h-4 w-4" />
-                    <span className="text-sm font-medium">{t('adminLayout.switchToTenantLabel')}</span>
-                  </div>
-                </button>
-              )}
-              
-              {isAdminPath && (
-                <button
-                  onClick={switchToUser}
-                  className="relative rounded-lg bg-green-50 px-3 py-2 text-green-600 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors duration-200"
-                  title={t('adminLayout.switchToUserTitle')}
-                >
-                  <div className="flex items-center space-x-2">
-                    <ArrowsRightLeftIcon className="h-4 w-4" />
-                    <span className="text-sm font-medium">{t('adminLayout.switchToUserLabel')}</span>
-                  </div>
-                </button>
-              )}
-              
-              
-            </div>
-          </div>
-        </div>
-      </header>
+      <button
+        onClick={() => setSidebarOpen(true)}
+        className="fixed left-3 top-3 z-30 inline-flex items-center justify-center rounded-lg bg-white p-2 text-gray-500 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 lg:hidden"
+      >
+        <span className="sr-only">{t('common.openSidebar')}</span>
+        <Bars3Icon className="h-6 w-6" />
+      </button>
 
       <div className="flex">
         {sidebarOpen && (
@@ -244,6 +192,34 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
                       <Cog6ToothIcon className="mr-3 h-4 w-4" />
                       {t('common.settings')}
                     </Link>
+
+                    {isAdminPath && canAccessTenant && (
+                      <PButton
+                        variant="ghost"
+                        onClick={() => {
+                          setIsUserMenuOpen(false)
+                          void switchToTenant()
+                        }}
+                        className="flex w-full items-center justify-start rounded-none px-4 py-2 text-sm font-medium text-indigo-600 transition-colors hover:bg-indigo-50 hover:text-indigo-700"
+                      >
+                        <ArrowsRightLeftIcon className="mr-3 h-4 w-4" />
+                        {t('adminLayout.switchToTenantLabel')}
+                      </PButton>
+                    )}
+
+                    {isAdminPath && (
+                      <PButton
+                        variant="ghost"
+                        onClick={() => {
+                          setIsUserMenuOpen(false)
+                          switchToUser()
+                        }}
+                        className="flex w-full items-center justify-start rounded-none px-4 py-2 text-sm font-medium text-green-600 transition-colors hover:bg-green-50 hover:text-green-700"
+                      >
+                        <ArrowsRightLeftIcon className="mr-3 h-4 w-4" />
+                        {t('adminLayout.switchToUserLabel')}
+                      </PButton>
+                    )}
                     
                     <PButton
                       variant="ghost"
@@ -285,7 +261,7 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
           </div>
         )}
 
-        <div className="hidden lg:flex lg:w-64 lg:min-h-0 lg:flex-col lg:fixed lg:inset-y-0 lg:pt-16">
+        <div className="hidden lg:flex lg:w-64 lg:min-h-0 lg:flex-col lg:fixed lg:inset-y-0">
           <div className="flex flex-1 min-h-0 flex-col bg-white border-r border-gray-200">
             <div className="flex flex-1 min-h-0 flex-col overflow-y-auto pt-5 pb-4">
               <div className="flex items-center flex-shrink-0 px-4">
@@ -352,6 +328,34 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
                       <Cog6ToothIcon className="mr-3 h-4 w-4" />
                       {t('common.settings')}
                     </Link>
+
+                    {isAdminPath && canAccessTenant && (
+                      <PButton
+                        variant="ghost"
+                        onClick={() => {
+                          setIsUserMenuOpen(false)
+                          void switchToTenant()
+                        }}
+                        className="flex w-full items-center justify-start rounded-none px-4 py-2 text-sm font-medium text-indigo-600 transition-colors hover:bg-indigo-50 hover:text-indigo-700"
+                      >
+                        <ArrowsRightLeftIcon className="mr-3 h-4 w-4" />
+                        {t('adminLayout.switchToTenantLabel')}
+                      </PButton>
+                    )}
+
+                    {isAdminPath && (
+                      <PButton
+                        variant="ghost"
+                        onClick={() => {
+                          setIsUserMenuOpen(false)
+                          switchToUser()
+                        }}
+                        className="flex w-full items-center justify-start rounded-none px-4 py-2 text-sm font-medium text-green-600 transition-colors hover:bg-green-50 hover:text-green-700"
+                      >
+                        <ArrowsRightLeftIcon className="mr-3 h-4 w-4" />
+                        {t('adminLayout.switchToUserLabel')}
+                      </PButton>
+                    )}
                     
                     <PButton
                       variant="ghost"
@@ -391,9 +395,15 @@ export default function AdminLayout({ children, title, actions }: AdminLayoutPro
             </div></div>
         </div>
 
-        <div className="lg:ml-64 flex-1">
+        <div className="lg:ml-64 flex-1 min-w-0 w-full lg:max-w-[calc(100vw-16rem)] max-w-[100vw]">
           <main className="py-6">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+              {(title || actions) && (
+                <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+                  {title ? <h1 className="text-lg font-medium text-gray-900">{title}</h1> : <div />}
+                  {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
+                </div>
+              )}
               {children}
             </div>
           </main>
