@@ -6,7 +6,7 @@ import (
 	"basaltpass-backend/internal/common"
 	"basaltpass-backend/internal/model"
 
-	"gorm.io/driver/sqlite"
+	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 )
 
@@ -23,6 +23,7 @@ func setupTenantServiceTestDB(t *testing.T) *gorm.DB {
 		&model.Tenant{},
 		&model.TenantUser{},
 		&model.TenantQuota{},
+		&model.TenantAuthSetting{},
 		&model.TenantRbacPermission{},
 		&model.TenantRbacRole{},
 		&model.TenantRbacRolePermission{},

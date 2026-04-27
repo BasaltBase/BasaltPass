@@ -7,7 +7,7 @@ import (
 	admindto "basaltpass-backend/internal/dto/tenant"
 	"basaltpass-backend/internal/model"
 
-	"gorm.io/driver/sqlite"
+	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 )
 
@@ -24,6 +24,7 @@ func setupAdminTenantServiceTestDB(t *testing.T) *gorm.DB {
 		&model.Tenant{},
 		&model.TenantUser{},
 		&model.TenantQuota{},
+		&model.TenantAuthSetting{},
 		&model.TenantRbacPermission{},
 		&model.TenantRbacRole{},
 		&model.TenantRbacRolePermission{},
