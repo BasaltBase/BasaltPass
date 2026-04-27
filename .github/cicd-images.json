@@ -1,6 +1,6 @@
 {
   "project": "basaltpass",
-  "namespace": "basaltpass",
+  "namespace": "beancs-system",
   "images": [
     {
       "name": "backend",

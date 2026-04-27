@@ -46,6 +46,9 @@ func normalizeLoginQueryError(err error) error {
 
 // Register creates a new user with hashed password.
 func (s Service) Register(req RegisterRequest) (*model.User, error) {
+	if !settingssvc.GetBool("auth.enable_register", true) {
+		return nil, errors.New("registration is disabled")
+	}
 	if req.Email == "" && req.Phone == "" {
 		return nil, errors.New("email or phone required")
 	}

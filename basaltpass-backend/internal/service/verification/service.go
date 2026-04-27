@@ -5,6 +5,7 @@ import (
 	"basaltpass-backend/internal/config"
 	"basaltpass-backend/internal/model"
 	emailservice "basaltpass-backend/internal/service/email"
+	settingssvc "basaltpass-backend/internal/service/settings"
 	tenantservice "basaltpass-backend/internal/service/tenant"
 	"basaltpass-backend/internal/service/wallet"
 	"basaltpass-backend/internal/utils"
@@ -87,6 +88,9 @@ type CompleteSignupRequest struct {
 
 // StartSignup 开始注册流程
 func (s *Service) StartSignup(req StartSignupRequest) (*StartSignupResponse, error) {
+	if !settingssvc.GetBool("auth.enable_register", true) {
+		return nil, errors.New("registration is disabled")
+	}
 	if req.Email == "" && req.Phone == "" {
 		return nil, errors.New("email or phone required")
 	}
@@ -349,6 +353,10 @@ func (s *Service) ChangeEmail(req ChangeEmailRequest) error {
 
 // CompleteSignup 完成注册
 func (s *Service) CompleteSignup(req CompleteSignupRequest) (*model.User, error) {
+	if !settingssvc.GetBool("auth.enable_register", true) {
+		return nil, errors.New("registration is disabled")
+	}
+
 	var pendingSignup model.PendingSignup
 	if err := common.DB().Where("id = ? AND status = ?",
 		req.SignupID, model.SignupStatusCompleted).First(&pendingSignup).Error; err != nil {
