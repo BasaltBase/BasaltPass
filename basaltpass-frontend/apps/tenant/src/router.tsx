@@ -6,6 +6,7 @@ import { useI18n } from '../../../src/shared/i18n'
 
 import TenantDashboard from '../../../src/features/tenant/Dashboard'
 import TenantInfo from '../../../src/features/tenant/TenantInfo'
+import TenantSettings from '../../../src/features/tenant/TenantSettings'
 import TenantApps from '../../../src/features/tenant/app/Apps'
 import CreateApp from '../../../src/features/tenant/app/CreateApp'
 import AppDetail from '../../../src/features/tenant/app/AppDetail'
@@ -13,7 +14,9 @@ import AppSettings from '../../../src/features/tenant/app/AppSettings'
 import AppStats from '../../../src/features/tenant/app/AppStats'
 import TenantOAuthClients from '../../../src/features/tenant/app/OAuthClients'
 import TenantAutomationTokens from '../../../src/features/tenant/security/AutomationTokens'
+import CrossAppTrustManagement from '../../../src/features/tenant/security/CrossAppTrustManagement'
 import TenantUserManagement from '../../../src/features/tenant/user/UserManagement'
+import TenantGlobalUserAuthorization from '../../../src/features/tenant/user/GlobalUserAuthorization'
 import TenantTeamsPage from '../../../src/features/tenant/team/Teams'
 import TenantWalletManagement from '../../../src/features/tenant/wallet/WalletManagement'
 import GiftCardManagement from '../../../src/features/tenant/wallet/GiftCardManagement'
@@ -86,6 +89,7 @@ export default function AppRouter() {
 
       <Route path="/tenant/dashboard" element={<TenantRoute><TenantDashboard /></TenantRoute>} />
       <Route path="/tenant/info" element={<TenantRoute><TenantInfo /></TenantRoute>} />
+      <Route path="/tenant/settings" element={<TenantRoute><TenantSettings /></TenantRoute>} />
       <Route path="/tenant/apps" element={<TenantRoute><TenantApps /></TenantRoute>} />
       <Route path="/tenant/apps/new" element={<TenantRoute><CreateApp /></TenantRoute>} />
       <Route path="/tenant/apps/:id" element={<TenantRoute><AppDetail /></TenantRoute>} />
@@ -95,9 +99,11 @@ export default function AppRouter() {
       <Route path="/tenant/apps/:id/roles" element={<TenantRoute><AppRoleManagement /></TenantRoute>} />
       <Route path="/tenant/apps/:id/permissions" element={<TenantRoute><AppPermissionManagement /></TenantRoute>} />
       <Route path="/tenant/oauth/clients" element={<TenantRoute><TenantOAuthClients /></TenantRoute>} />
+      <Route path="/tenant/cross-app-trusts" element={<TenantRoute><CrossAppTrustManagement /></TenantRoute>} />
       <Route path="/tenant/automation-tokens" element={<TenantRoute><TenantAutomationTokens /></TenantRoute>} />
 
       <Route path="/tenant/users" element={<TenantRoute><TenantUserManagement /></TenantRoute>} />
+      <Route path="/tenant/users/global-authorization" element={<TenantRoute><TenantGlobalUserAuthorization /></TenantRoute>} />
       <Route path="/tenant/teams" element={<TenantRoute><TenantTeamsPage /></TenantRoute>} />
       <Route path="/tenant/wallets" element={<TenantRoute><TenantWalletManagement /></TenantRoute>} />
       <Route path="/tenant/gift-cards" element={<TenantRoute><GiftCardManagement /></TenantRoute>} />

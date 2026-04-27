@@ -1,8 +1,18 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import client from '@api/client'
 import { ShieldCheckIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import { useI18n } from '@shared/i18n'
+import { getAccessToken } from '@utils/auth'
+import {
+  pruneExpiredUserConsoleSessions,
+  type UserConsoleSession,
+} from '@utils/userSessions'
+
+type SessionOption = UserConsoleSession & {
+  joinRequired: boolean
+  tenantMismatch: boolean
+}
 
 export default function OAuthConsent() {
   const { t } = useI18n()
@@ -23,11 +33,57 @@ export default function OAuthConsent() {
   const privacyPolicyUrl = searchParams.get('privacy_policy_url') || ''
   const termsOfServiceUrl = searchParams.get('terms_of_service_url') || ''
   const isVerified = searchParams.get('is_verified') === 'true'
+  const appTenantId = Number(searchParams.get('app_tenant_id') || 0)
+  const currentUserJoinRequired = searchParams.get('current_user_join_required') === 'true'
+
+  const sessionOptions = useMemo<SessionOption[]>(() => {
+    return pruneExpiredUserConsoleSessions().map((session) => {
+      const tenantId = Number(session.tenant_id || 0)
+      const joinRequired = appTenantId > 0 && tenantId === 0
+      const tenantMismatch = appTenantId > 0 && tenantId > 0 && tenantId !== appTenantId
+      return {
+        ...session,
+        joinRequired,
+        tenantMismatch,
+      }
+    })
+  }, [appTenantId])
+
+  const [selectedSessionKey, setSelectedSessionKey] = useState('')
+  const [confirmJoinTenant, setConfirmJoinTenant] = useState(false)
+
+  useEffect(() => {
+    if (!sessionOptions.length) {
+      setSelectedSessionKey('')
+      return
+    }
+
+    const currentToken = getAccessToken()
+    const currentSession = currentToken
+      ? sessionOptions.find((session) => session.token === currentToken)
+      : null
+
+    if (currentSession) {
+      setSelectedSessionKey(currentSession.key)
+      return
+    }
+
+    setSelectedSessionKey((prev) => {
+      if (prev && sessionOptions.some((session) => session.key === prev)) {
+        return prev
+      }
+      return sessionOptions[0].key
+    })
+  }, [sessionOptions])
+
+  const selectedSession = useMemo(() => {
+    return sessionOptions.find((session) => session.key === selectedSessionKey) || null
+  }, [sessionOptions, selectedSessionKey])
 
   const apiBase = client.defaults.baseURL || (import.meta as any).env?.VITE_API_BASE || 'http://localhost:8101'
   const consentEndpoint = String(apiBase).replace(/\/$/, '') + '/api/v1/oauth/consent'
 
-  const submitConsentForm = (action: 'allow' | 'deny') => {
+  const submitConsentForm = (action: 'allow' | 'deny', opts?: { selectedToken?: string; joinTenant?: boolean }) => {
     if (submittedRef.current) return
     submittedRef.current = true
 
@@ -50,6 +106,8 @@ export default function OAuthConsent() {
     if (state) append('state', state)
     if (codeChallenge) append('code_challenge', codeChallenge)
     if (codeChallengeMethod) append('code_challenge_method', codeChallengeMethod)
+    if (opts?.selectedToken) append('selected_access_token', opts.selectedToken)
+    if (opts?.joinTenant) append('join_tenant', 'true')
 
     document.body.appendChild(form)
     form.submit()
@@ -60,7 +118,21 @@ export default function OAuthConsent() {
     setLoading(true)
     setError('')
     try {
-      submitConsentForm('allow')
+      const needsJoin = !!selectedSession?.joinRequired || (!selectedSession && currentUserJoinRequired)
+      if (selectedSession?.tenantMismatch) {
+        setError('Selected account does not belong to this application tenant. Please choose another account.')
+        setLoading(false)
+        return
+      }
+      if (needsJoin && !confirmJoinTenant) {
+        setError('Please confirm joining this tenant before continuing.')
+        setLoading(false)
+        return
+      }
+      submitConsentForm('allow', {
+        selectedToken: selectedSession?.token,
+        joinTenant: needsJoin && confirmJoinTenant,
+      })
     } catch (err: any) {
       submittedRef.current = false
       setError(err.message || t('auth.oauthConsent.errors.authorizeFailed'))
@@ -86,6 +158,10 @@ export default function OAuthConsent() {
       setError(t('auth.oauthConsent.errors.missingParams'))
     }
   }, [clientId, redirectUri, t])
+
+  useEffect(() => {
+    setConfirmJoinTenant(false)
+  }, [selectedSessionKey])
 
   const getScopeDisplayName = (scope: string) => {
     const scopeNames: Record<string, string> = {
@@ -221,6 +297,56 @@ export default function OAuthConsent() {
                   <h4 className="text-sm font-medium text-gray-900 mb-3">
                     {t('auth.oauthConsent.permissions.title')}
                   </h4>
+
+                  {sessionOptions.length > 0 ? (
+                    <div className="mb-4 rounded-md border border-indigo-100 bg-indigo-50 p-3">
+                      <label className="block text-xs font-semibold uppercase tracking-wide text-indigo-700 mb-2">
+                        Select account
+                      </label>
+                      <select
+                        value={selectedSessionKey}
+                        onChange={(event) => setSelectedSessionKey(event.target.value)}
+                        className="w-full rounded-md border border-indigo-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none"
+                      >
+                        {sessionOptions.map((session) => {
+                          const tenantLabel = session.tenant_id > 0
+                            ? `tenant:${session.tenant_name || session.tenant_id}`
+                            : 'global'
+                          const suffix = session.tenantMismatch
+                            ? ' - tenant mismatch'
+                            : session.joinRequired
+                              ? ' - requires join'
+                              : ''
+                          const label = `${session.nickname || session.email} (${tenantLabel})${suffix}`
+                          return (
+                            <option key={session.key} value={session.key} disabled={session.tenantMismatch}>
+                              {label}
+                            </option>
+                          )
+                        })}
+                      </select>
+                      {selectedSession?.tenantMismatch ? (
+                        <p className="mt-2 text-xs text-red-600">
+                          This account cannot authorize this app because its tenant does not match.
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  {(selectedSession?.joinRequired || (!selectedSession && currentUserJoinRequired)) ? (
+                    <label className="mb-4 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                      <input
+                        type="checkbox"
+                        checked={confirmJoinTenant}
+                        onChange={(event) => setConfirmJoinTenant(event.target.checked)}
+                        className="mt-0.5 h-4 w-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+                      />
+                      <span>
+                        I confirm creating a tenant identity for this global account in tenant #{appTenantId}.
+                      </span>
+                    </label>
+                  ) : null}
+
                   <div className="space-y-2">
                     {scopes.map((scope) => (
                       <div key={scope} className="flex items-start">

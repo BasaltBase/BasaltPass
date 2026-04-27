@@ -13,9 +13,13 @@ import (
 // GetWalletBalanceHandler GET /wallet/balance?currency=USD
 func GetWalletBalanceHandler(c *fiber.Ctx) error {
 	uid := c.Locals("userID").(uint)
+	activeTenantID, _ := c.Locals("tenantID").(uint)
 	currency := c.Query("currency", "USD")
-	w, err := wallet.GetBalanceByCode(uid, currency)
+	w, err := wallet.GetBalanceByCodeWithTenant(uid, activeTenantID, currency)
 	if err != nil {
+		if errors.Is(err, wallet.ErrNoTenantIdentity) {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "wallet is unavailable for users without tenant"})
+		}
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.JSON(fiber.Map{"balance": w.Balance, "currency_id": w.CurrencyID, "tenant_id": w.TenantID})
@@ -24,6 +28,7 @@ func GetWalletBalanceHandler(c *fiber.Ctx) error {
 // RechargeWalletHandler POST /wallet/recharge {currency, amount}
 func RechargeWalletHandler(c *fiber.Ctx) error {
 	uid := c.Locals("userID").(uint)
+	activeTenantID, _ := c.Locals("tenantID").(uint)
 	var body struct {
 		Currency string `json:"currency"`
 		Amount   int64  `json:"amount"`
@@ -31,7 +36,10 @@ func RechargeWalletHandler(c *fiber.Ctx) error {
 	if err := c.BodyParser(&body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
-	if err := wallet.RechargeByCode(uid, body.Currency, body.Amount); err != nil {
+	if err := wallet.RechargeByCodeWithTenant(uid, activeTenantID, body.Currency, body.Amount); err != nil {
+		if errors.Is(err, wallet.ErrNoTenantIdentity) {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "wallet is unavailable for users without tenant"})
+		}
 		if errors.Is(err, wallet.ErrWalletRechargeWithdrawDisabled) {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": err.Error()})
 		}
@@ -43,6 +51,7 @@ func RechargeWalletHandler(c *fiber.Ctx) error {
 // WithdrawWalletHandler POST /wallet/withdraw {currency, amount}
 func WithdrawWalletHandler(c *fiber.Ctx) error {
 	uid := c.Locals("userID").(uint)
+	activeTenantID, _ := c.Locals("tenantID").(uint)
 	var body struct {
 		Currency string `json:"currency"`
 		Amount   int64  `json:"amount"`
@@ -50,7 +59,10 @@ func WithdrawWalletHandler(c *fiber.Ctx) error {
 	if err := c.BodyParser(&body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
-	if err := wallet.WithdrawByCode(uid, body.Currency, body.Amount); err != nil {
+	if err := wallet.WithdrawByCodeWithTenant(uid, activeTenantID, body.Currency, body.Amount); err != nil {
+		if errors.Is(err, wallet.ErrNoTenantIdentity) {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "wallet is unavailable for users without tenant"})
+		}
 		if errors.Is(err, wallet.ErrWalletRechargeWithdrawDisabled) {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": err.Error()})
 		}
@@ -62,17 +74,21 @@ func WithdrawWalletHandler(c *fiber.Ctx) error {
 // WalletHistoryHandler GET /wallet/history?currency=USD&limit=20
 func WalletHistoryHandler(c *fiber.Ctx) error {
 	uid := c.Locals("userID").(uint)
+	activeTenantID, _ := c.Locals("tenantID").(uint)
 	currency := c.Query("currency", "")
 	limitStr := c.Query("limit", "20")
 	limit, _ := strconv.Atoi(limitStr)
 	var txs interface{}
 	var err error
 	if currency == "" || currency == "all" {
-		txs, err = wallet.HistoryAllByUser(uid, limit)
+		txs, err = wallet.HistoryAllByUserWithTenant(uid, activeTenantID, limit)
 	} else {
-		txs, err = wallet.HistoryByCode(uid, currency, limit)
+		txs, err = wallet.HistoryByCodeWithTenant(uid, activeTenantID, currency, limit)
 	}
 	if err != nil {
+		if errors.Is(err, wallet.ErrNoTenantIdentity) {
+			return c.JSON([]interface{}{})
+		}
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.JSON(txs)

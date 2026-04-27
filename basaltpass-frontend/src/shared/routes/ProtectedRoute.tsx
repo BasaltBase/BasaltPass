@@ -1,15 +1,16 @@
 import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { debugAuth } from '../utils/debug'
 import PSkeleton from '@ui/PSkeleton'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
+  requiresTenant?: boolean
 }
 
-export default function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading } = useAuth()
+export default function ProtectedRoute({ children, requiresTenant = false }: ProtectedRouteProps) {
+  const { isAuthenticated, isLoading, canUseWallet } = useAuth()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -39,6 +40,9 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   // translatedalreadytranslated，translatedcomponent
   if (isAuthenticated) {
+    if (requiresTenant && !canUseWallet) {
+      return <Navigate to="/dashboard" replace />
+    }
     debugAuth.log('ProtectedRoute: showing protected content')
     return <>{children}</>
   }

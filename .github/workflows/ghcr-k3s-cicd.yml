@@ -1,10 +1,10 @@
-name: GHCR + k3s CI/CD
+name: BasaltPass GHCR + beancs-system Deploy
 
 on:
   push:
     branches: [main, deploy]
     tags:
-      - 'v*'
+      - "beancs-*"
   workflow_dispatch:
 
 permissions:
@@ -12,45 +12,63 @@ permissions:
   packages: write
 
 env:
-  CONFIG_FILE: .github/cicd-images.json
+  NAMESPACE: beancs-system
+  APP: basaltpass
 
 jobs:
-  prepare:
+  test:
     runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.matrix.outputs.matrix }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Validate config
-        run: |
-          test -f "${CONFIG_FILE}"
-          jq -e '.project and .images and (.images | length > 0)' "${CONFIG_FILE}" >/dev/null
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: basaltpass-backend/go.mod
+          cache-dependency-path: basaltpass-backend/go.sum
 
-      - name: Build matrix
-        id: matrix
-        run: |
-          MATRIX_JSON=$(jq -c '{include: [.images[] | {name, context, dockerfile, build_args: (.build_args // "")}]}' "${CONFIG_FILE}")
-          echo "matrix=${MATRIX_JSON}" >> "$GITHUB_OUTPUT"
+      - name: Test backend
+        working-directory: basaltpass-backend
+        env:
+          JWT_SECRET: test-secret-for-ci
+        run: go test ./...
 
   build_and_push:
-    needs: prepare
+    needs: test
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    outputs:
+      backend_image: ${{ steps.meta.outputs.backend_image }}
+      frontend_image: ${{ steps.meta.outputs.frontend_image }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Resolve image prefix
+      - name: Resolve image tags
         id: meta
         shell: bash
         run: |
-          PROJECT_SLUG=$(jq -r '.project' "${CONFIG_FILE}")
-          OWNER_LC=$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')
-          echo "image_prefix=ghcr.io/${OWNER_LC}/${PROJECT_SLUG}" >> "$GITHUB_OUTPUT"
+          OWNER_LC="$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')"
+          BACKEND_IMAGE="ghcr.io/${OWNER_LC}/basaltpass-backend"
+          FRONTEND_IMAGE="ghcr.io/${OWNER_LC}/basaltpass-frontend"
+          echo "backend_image=${BACKEND_IMAGE}" >> "$GITHUB_OUTPUT"
+          echo "frontend_image=${FRONTEND_IMAGE}" >> "$GITHUB_OUTPUT"
+          {
+            echo "backend_tags<<EOF"
+            echo "${BACKEND_IMAGE}:${GITHUB_SHA}"
+            echo "${BACKEND_IMAGE}:latest"
+            if [[ "${GITHUB_REF}" == refs/tags/beancs-* ]]; then
+              echo "${BACKEND_IMAGE}:${GITHUB_REF_NAME}"
+            fi
+            echo "EOF"
+            echo "frontend_tags<<EOF"
+            echo "${FRONTEND_IMAGE}:${GITHUB_SHA}"
+            echo "${FRONTEND_IMAGE}:latest"
+            if [[ "${GITHUB_REF}" == refs/tags/beancs-* ]]; then
+              echo "${FRONTEND_IMAGE}:${GITHUB_REF_NAME}"
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -62,20 +80,31 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push ${{ matrix.name }}
+      - name: Build and push backend
         uses: docker/build-push-action@v6
         with:
-          context: ${{ matrix.context }}
-          file: ${{ matrix.dockerfile }}
+          context: .
+          file: ./backend.Dockerfile
           push: true
-          build-args: ${{ matrix.build_args }}
-          tags: |
-            ${{ steps.meta.outputs.image_prefix }}-${{ matrix.name }}:${{ github.sha }}
-            ${{ steps.meta.outputs.image_prefix }}-${{ matrix.name }}:latest
+          tags: ${{ steps.meta.outputs.backend_tags }}
 
-  deploy_k3s:
+      - name: Build and push frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./frontend.Dockerfile
+          push: true
+          build-args: |
+            VITE_API_BASE=${{ vars.BASALTPASS_PUBLIC_URL }}
+            VITE_APP_VERSION=${{ github.ref_name }}
+            VITE_CONSOLE_USER_URL=${{ vars.BASALTPASS_PUBLIC_URL }}
+            VITE_CONSOLE_TENANT_URL=${{ vars.BASALTPASS_PUBLIC_URL }}/tenant
+            VITE_CONSOLE_ADMIN_URL=${{ vars.BASALTPASS_PUBLIC_URL }}/admin
+          tags: ${{ steps.meta.outputs.frontend_tags }}
+
+  deploy_beancs_system:
     needs: build_and_push
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/beancs-')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -87,9 +116,9 @@ jobs:
         shell: bash
         run: |
           git fetch origin deploy --depth=1
-          TAG_SHA=$(git rev-list -n 1 "${GITHUB_REF}")
+          TAG_SHA="$(git rev-list -n 1 "${GITHUB_REF}")"
           if ! git merge-base --is-ancestor "${TAG_SHA}" "origin/deploy"; then
-            echo "Tag commit is not contained in origin/deploy, skip deployment."
+            echo "Tag commit is not contained in origin/deploy."
             exit 1
           fi
 
@@ -104,47 +133,208 @@ jobs:
           printf '%s' "${{ secrets.KUBE_CONFIG }}" > ~/.kube/config
           chmod 600 ~/.kube/config
 
-      - name: Deploy workloads
+      - name: Ensure namespace and pull secret
         shell: bash
         run: |
-          PROJECT_SLUG=$(jq -r '.project' "${CONFIG_FILE}")
-          NAMESPACE=$(jq -r '.namespace // .project' "${CONFIG_FILE}")
-          OWNER_LC=$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')
-          GHCR_PASSWORD="${{ secrets.GITHUB_TOKEN }}"
-
+          OWNER_LC="$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')"
           kubectl get namespace "${NAMESPACE}" >/dev/null 2>&1 || kubectl create namespace "${NAMESPACE}"
-
           kubectl -n "${NAMESPACE}" create secret docker-registry ghcr-creds \
             --docker-server=ghcr.io \
             --docker-username="${OWNER_LC}" \
-            --docker-password="${GHCR_PASSWORD}" \
+            --docker-password="${{ secrets.GHCR_PAT || secrets.GITHUB_TOKEN }}" \
             --dry-run=client -o yaml | kubectl apply -f -
 
-          jq -c '.images[]' "${CONFIG_FILE}" | while read -r item; do
-            NAME=$(jq -r '.name' <<< "${item}")
-            KIND=$(jq -r '.kind // "deployment"' <<< "${item}")
-            PORT=$(jq -r '.port // empty' <<< "${item}")
-            REPLICAS=$(jq -r '.replicas // 1' <<< "${item}")
-            IMAGE="ghcr.io/${OWNER_LC}/${PROJECT_SLUG}-${NAME}:${GITHUB_SHA}"
+      - name: Configure BasaltPass backend secret
+        shell: bash
+        run: |
+          kubectl -n "${NAMESPACE}" create secret generic basaltpass-env \
+            --from-literal=JWT_SECRET="${{ secrets.PROD_JWT_SECRET }}" \
+            --from-literal=BASALTPASS_ENV=production \
+            --from-literal=BASALTPASS_SERVER_ADDRESS=:8101 \
+            --from-literal=BASALTPASS_DATABASE_DRIVER="${{ vars.BASALTPASS_DATABASE_DRIVER || 'postgres' }}" \
+            --from-literal=BASALTPASS_DATABASE_DSN="${{ secrets.BASALTPASS_DATABASE_DSN }}" \
+            --from-literal=BASALTPASS_CORS_ALLOW_ORIGINS="${{ vars.BASALTPASS_CORS_ALLOW_ORIGINS }}" \
+            --from-literal=BASALTPASS_EMAIL_PROVIDER="${{ vars.BASALTPASS_EMAIL_PROVIDER }}" \
+            --from-literal=BASALTPASS_EMAIL_FROM="${{ vars.BASALTPASS_EMAIL_FROM }}" \
+            --from-literal=BASALTPASS_EMAIL_AWS_SES_REGION="${{ secrets.BASALTPASS_EMAIL_AWS_SES_REGION }}" \
+            --from-literal=BASALTPASS_EMAIL_AWS_SES_ACCESS_KEY_ID="${{ secrets.BASALTPASS_EMAIL_AWS_SES_ACCESS_KEY_ID }}" \
+            --from-literal=BASALTPASS_EMAIL_AWS_SES_SECRET_ACCESS_KEY="${{ secrets.BASALTPASS_EMAIL_AWS_SES_SECRET_ACCESS_KEY }}" \
+            --dry-run=client -o yaml | kubectl apply -f -
 
-            if [ "${KIND}" = "job" ]; then
-              kubectl -n "${NAMESPACE}" delete job "${PROJECT_SLUG}-${NAME}" --ignore-not-found=true
-              kubectl -n "${NAMESPACE}" create job "${PROJECT_SLUG}-${NAME}" \
-                --image="${IMAGE}" \
-                --dry-run=client -o yaml | kubectl apply -f -
-              continue
-            fi
+      - name: Deploy BasaltPass workloads
+        shell: bash
+        run: |
+          BACKEND_IMAGE="${{ needs.build_and_push.outputs.backend_image }}:${GITHUB_SHA}"
+          FRONTEND_IMAGE="${{ needs.build_and_push.outputs.frontend_image }}:${GITHUB_SHA}"
 
-            kubectl -n "${NAMESPACE}" create deployment "${PROJECT_SLUG}-${NAME}" \
-              --image="${IMAGE}" \
-              --dry-run=client -o yaml | kubectl apply -f -
-            kubectl -n "${NAMESPACE}" scale deployment/${PROJECT_SLUG}-${NAME} --replicas="${REPLICAS}"
+          cat <<YAML | kubectl apply -f -
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: basaltpass-backend
+            namespace: ${NAMESPACE}
+            labels:
+              app: basaltpass-backend
+              managed-by: beancs
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: basaltpass-backend
+            template:
+              metadata:
+                labels:
+                  app: basaltpass-backend
+                  managed-by: beancs
+              spec:
+                imagePullSecrets:
+                  - name: ghcr-creds
+                containers:
+                  - name: backend
+                    image: ${BACKEND_IMAGE}
+                    imagePullPolicy: IfNotPresent
+                    ports:
+                      - name: http
+                        containerPort: 8101
+                    envFrom:
+                      - secretRef:
+                          name: basaltpass-env
+                    readinessProbe:
+                      httpGet:
+                        path: /health
+                        port: http
+                      initialDelaySeconds: 10
+                      periodSeconds: 10
+                    livenessProbe:
+                      httpGet:
+                        path: /health
+                        port: http
+                      initialDelaySeconds: 30
+                      periodSeconds: 20
+          ---
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: backend
+            namespace: ${NAMESPACE}
+            labels:
+              app: basaltpass-backend
+              managed-by: beancs
+          spec:
+            selector:
+              app: basaltpass-backend
+            ports:
+              - name: http
+                port: 8101
+                targetPort: http
+          ---
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: basaltpass-backend
+            namespace: ${NAMESPACE}
+            labels:
+              app: basaltpass-backend
+              managed-by: beancs
+          spec:
+            selector:
+              app: basaltpass-backend
+            ports:
+              - name: http
+                port: 8101
+                targetPort: http
+          ---
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: basaltpass-frontend
+            namespace: ${NAMESPACE}
+            labels:
+              app: basaltpass-frontend
+              managed-by: beancs
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: basaltpass-frontend
+            template:
+              metadata:
+                labels:
+                  app: basaltpass-frontend
+                  managed-by: beancs
+              spec:
+                imagePullSecrets:
+                  - name: ghcr-creds
+                containers:
+                  - name: frontend
+                    image: ${FRONTEND_IMAGE}
+                    imagePullPolicy: IfNotPresent
+                    ports:
+                      - name: http
+                        containerPort: 80
+                    readinessProbe:
+                      httpGet:
+                        path: /health
+                        port: http
+                      initialDelaySeconds: 10
+                      periodSeconds: 10
+                    livenessProbe:
+                      httpGet:
+                        path: /health
+                        port: http
+                      initialDelaySeconds: 30
+                      periodSeconds: 20
+          ---
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: basaltpass-frontend
+            namespace: ${NAMESPACE}
+            labels:
+              app: basaltpass-frontend
+              managed-by: beancs
+          spec:
+            selector:
+              app: basaltpass-frontend
+            ports:
+              - name: http
+                port: 80
+                targetPort: http
+          YAML
 
-            if [ -n "${PORT}" ]; then
-              kubectl -n "${NAMESPACE}" create service clusterip "${PROJECT_SLUG}-${NAME}" \
-                --tcp="${PORT}:${PORT}" \
-                --dry-run=client -o yaml | kubectl apply -f -
-            fi
+          kubectl -n "${NAMESPACE}" rollout status deployment/basaltpass-backend --timeout=240s
+          kubectl -n "${NAMESPACE}" rollout status deployment/basaltpass-frontend --timeout=240s
 
-            kubectl -n "${NAMESPACE}" rollout status deployment/${PROJECT_SLUG}-${NAME} --timeout=180s
-          done
+      - name: Configure optional Traefik ingress
+        if: ${{ vars.BASALTPASS_PUBLIC_HOST != '' }}
+        shell: bash
+        run: |
+          cat <<YAML | kubectl apply -f -
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: basaltpass-public
+            namespace: ${NAMESPACE}
+            labels:
+              app: basaltpass
+              managed-by: beancs
+            annotations:
+              cert-manager.io/cluster-issuer: letsencrypt-prod
+          spec:
+            ingressClassName: traefik
+            tls:
+              - hosts:
+                  - ${{ vars.BASALTPASS_PUBLIC_HOST }}
+                secretName: basaltpass-public-tls
+            rules:
+              - host: ${{ vars.BASALTPASS_PUBLIC_HOST }}
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: basaltpass-frontend
+                          port:
+                            number: 80
+          YAML

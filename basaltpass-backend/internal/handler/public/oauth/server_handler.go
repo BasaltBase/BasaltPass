@@ -57,34 +57,37 @@ func AuthorizeHandler(c *fiber.Ctx) error {
 
 	// 用户已登录，验证用户是否属于该租户
 	uid := userID.(uint)
-	if err := oauthServerService.ValidateUserTenant(uid, client); err != nil {
+	decision, err := oauthServerService.EvaluateUserTenantAuthorization(uid, client)
+	if err != nil {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
-			"error":             "tenant_mismatch",
-			"error_description": "User does not belong to the tenant of this application",
+			"error":             "tenant_context_error",
+			"error_description": err.Error(),
 		})
 	}
 
 	// 用户已登录且属于正确的租户，重定向到前端托管的授权同意页面
-	alreadyAuthorized, err := oauthServerService.HasAppUserAuthorization(client.AppID, uid)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error":             "server_error",
-			"error_description": "Failed to check existing app authorization",
-		})
-	}
-
-	// Skip consent when the user has already authorized this app.
-	if alreadyAuthorized {
-		code, err := oauthServerService.GenerateAuthorizationCode(uid, req, client)
+	if decision.Allowed {
+		alreadyAuthorized, err := oauthServerService.HasAppUserAuthorization(client.AppID, uid)
 		if err != nil {
-			return redirectWithError(c, req.RedirectURI, "server_error", req.State)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error":             "server_error",
+				"error_description": "Failed to check existing app authorization",
+			})
 		}
 
-		aduit.LogAudit(uid, "OAuth2授权(免再次确认)", "oauth_client", req.ClientID, c.IP(), c.Get("User-Agent"))
-		return redirectWithCode(c, req.RedirectURI, code, req.State)
+		// Skip consent when the user has already authorized this app.
+		if alreadyAuthorized {
+			code, err := oauthServerService.GenerateAuthorizationCode(uid, req, client)
+			if err != nil {
+				return redirectWithError(c, req.RedirectURI, "server_error", req.State)
+			}
+
+			aduit.LogAudit(uid, "OAuth2授权(免再次确认)", "oauth_client", req.ClientID, c.IP(), c.Get("User-Agent"))
+			return redirectWithCode(c, req.RedirectURI, code, req.State)
+		}
 	}
 
-	consentURL := buildConsentURL(req, client)
+	consentURL := buildConsentURL(req, client, decision)
 	return c.Redirect(consentURL, http.StatusFound)
 }
 
@@ -150,7 +153,7 @@ func parseUserIDFromJWT(tokenStr string) (uint, bool) {
 	return 0, false
 }
 
-func buildConsentURL(req *AuthorizeRequest, client *model.OAuthClient) string {
+func buildConsentURL(req *AuthorizeRequest, client *model.OAuthClient, decision *UserTenantAuthorizationDecision) string {
 	uiBaseURL := strings.TrimRight(config.Get().UI.BaseURL, "/")
 	consentPath := "/oauth-consent"
 	base := consentPath
@@ -172,6 +175,20 @@ func buildConsentURL(req *AuthorizeRequest, client *model.OAuthClient) string {
 	}
 	if req.CodeChallengeMethod != "" {
 		q.Set("code_challenge_method", req.CodeChallengeMethod)
+	}
+	if client != nil {
+		appTenantID := oauthServerService.resolveClientTenantID(client)
+		if appTenantID > 0 {
+			q.Set("app_tenant_id", strconv.FormatUint(uint64(appTenantID), 10))
+		}
+	}
+	if decision != nil {
+		if decision.JoinRequired {
+			q.Set("current_user_join_required", "true")
+		}
+		if decision.TenantID > 0 {
+			q.Set("decision_tenant_id", strconv.FormatUint(uint64(decision.TenantID), 10))
+		}
 	}
 	if client != nil {
 		// Prefer app display fields when available.
@@ -218,11 +235,24 @@ func ConsentHandler(c *fiber.Ctx) error {
 	scope := c.FormValue("scope")
 	codeChallenge := c.FormValue("code_challenge")
 	codeChallengeMethod := c.FormValue("code_challenge_method")
+	selectedAccessToken := strings.TrimSpace(c.FormValue("selected_access_token"))
+	joinTenant := strings.EqualFold(strings.TrimSpace(c.FormValue("join_tenant")), "true") || c.FormValue("join_tenant") == "1"
 	action := c.FormValue("action") // "allow" 或 "deny"
 
 	if action != "allow" {
 		// 用户拒绝授权
 		return redirectWithErrorIfAllowed(c, clientID, redirectURI, "access_denied", state)
+	}
+
+	if selectedAccessToken != "" {
+		selectedUserID, ok := parseUserIDFromJWT(selectedAccessToken)
+		if !ok || selectedUserID == 0 {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":             "invalid_selected_session",
+				"error_description": "Selected account session is invalid or expired",
+			})
+		}
+		userID = selectedUserID
 	}
 
 	// 构建授权请求
@@ -242,12 +272,34 @@ func ConsentHandler(c *fiber.Ctx) error {
 		return redirectWithErrorIfAllowed(c, clientID, redirectURI, err.Error(), state)
 	}
 
-	// 验证用户是否属于该租户
-	if err := oauthServerService.ValidateUserTenant(userID, client); err != nil {
+	decision, err := oauthServerService.EvaluateUserTenantAuthorization(userID, client)
+	if err != nil {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
-			"error":             "tenant_mismatch",
-			"error_description": "User does not belong to the tenant of this application",
+			"error":             "tenant_context_error",
+			"error_description": err.Error(),
 		})
+	}
+
+	if !decision.Allowed {
+		if decision.JoinRequired {
+			if !joinTenant {
+				return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+					"error":             "join_confirmation_required",
+					"error_description": "Global account must confirm tenant join before authorization",
+				})
+			}
+			if err := oauthServerService.EnsureUserTenantIdentity(userID, decision.TenantID, model.TenantRoleMember); err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"error":             "identity_join_failed",
+					"error_description": "Failed to join tenant identity",
+				})
+			}
+		} else {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"error":             "tenant_mismatch",
+				"error_description": "User does not belong to the tenant of this application",
+			})
+		}
 	}
 
 	// 生成授权码

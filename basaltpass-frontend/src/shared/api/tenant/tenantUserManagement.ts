@@ -46,6 +46,27 @@ export interface InviteTenantUserRequest {
   message?: string
 }
 
+export interface GlobalUserCandidate {
+  id: number
+  email: string
+  nickname: string
+  avatar?: string
+  created_at: string
+}
+
+export interface GlobalUserCandidatesResponse {
+  users: GlobalUserCandidate[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+  }
+}
+
+export interface AuthorizeGlobalUserRequest {
+  role?: 'admin' | 'user'
+}
+
 // tenantusermanagementAPI
 export const tenantUserManagementApi = {
   // gettenantuserlist
@@ -93,6 +114,22 @@ export const tenantUserManagementApi = {
   // getuserdetails
   async getTenantUser(userId: number) {
     const response = await client.get(`/api/v1/tenant/users/${userId}`)
+    return response.data
+  },
+
+  // 获取可加入当前租户的全局用户
+  async getGlobalUserCandidates(params?: {
+    page?: number
+    limit?: number
+    search?: string
+  }): Promise<GlobalUserCandidatesResponse> {
+    const response = await client.get('/api/v1/tenant/users/global-candidates', { params })
+    return response.data
+  },
+
+  // 授权全局用户加入当前租户
+  async authorizeGlobalUser(userId: number, data?: AuthorizeGlobalUserRequest) {
+    const response = await client.post(`/api/v1/tenant/users/global-candidates/${userId}/authorize`, data || {})
     return response.data
   }
 }

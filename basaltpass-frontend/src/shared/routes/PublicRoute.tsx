@@ -17,7 +17,9 @@ export default function PublicRoute({ children }: PublicRouteProps) {
     /^\/auth\/tenant\/[^/]+\/login$/.test(pathname) ||
     /^\/tenant\/[^/]+\/login$/.test(pathname) ||
     /^\/auth\/tenant\/[^/]+\/register$/.test(pathname) ||
-    /^\/tenant\/[^/]+\/register$/.test(pathname)
+    /^\/tenant\/[^/]+\/register$/.test(pathname) ||
+    /^\/auth\/tenant\/[^/]+\/join$/.test(pathname) ||
+    /^\/tenant\/[^/]+\/join$/.test(pathname)
 
   // OAuth hosted login requires a real login page even when localStorage token exists:
   // /api/v1/oauth/authorize cannot read SPA localStorage token and relies on backend cookies.

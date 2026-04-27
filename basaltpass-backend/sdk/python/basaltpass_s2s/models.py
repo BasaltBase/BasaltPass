@@ -4,6 +4,7 @@ from typing import List, Optional
 @dataclass
 class S2SUser:
     id: int
+    user_uuid: Optional[str] = None
     email: Optional[str] = None
     nickname: Optional[str] = None
     avatar_url: Optional[str] = None

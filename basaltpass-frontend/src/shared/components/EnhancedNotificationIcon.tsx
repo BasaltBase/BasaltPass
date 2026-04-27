@@ -11,13 +11,42 @@ import {
 } from '@heroicons/react/24/solid'
 import { useNotifications }                   from '../contexts/NotificationContext'
 
+type DropdownDirection = 'down' | 'up'
+type DropdownAlign = 'left' | 'right'
+
+interface EnhancedNotificationIconProps {
+  viewAllPath?: string
+  dropdownDirection?: DropdownDirection
+  dropdownAlign?: DropdownAlign
+}
+
 // translatednotificationtranslatedcomponent，translatedNotificationProvider
 // canconfig“translatednotification”translated，default /notifications
-const EnhancedNotificationIcon: React.FC<{ viewAllPath?: string }> = ({ viewAllPath = '/notifications' }) => {
+const EnhancedNotificationIcon: React.FC<EnhancedNotificationIconProps> = ({
+  viewAllPath = '/notifications',
+  dropdownDirection = 'down',
+  dropdownAlign = 'right',
+}) => {
   const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotifications()
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
+  const [panelOffsetX, setPanelOffsetX] = useState(0)
   const navigate = useNavigate()
+
+  const dropdownPositionClass =
+    dropdownDirection === 'up'
+      ? 'bottom-full mb-2'
+      : 'top-full mt-2'
+  const dropdownAlignClass = dropdownAlign === 'left' ? 'left-0' : 'right-0'
+  const dropdownOriginClass =
+    dropdownDirection === 'up'
+      ? dropdownAlign === 'left'
+        ? 'origin-bottom-left'
+        : 'origin-bottom-right'
+      : dropdownAlign === 'left'
+        ? 'origin-top-left'
+        : 'origin-top-right'
 
   // translated
   useEffect(() => {
@@ -32,6 +61,41 @@ const EnhancedNotificationIcon: React.FC<{ viewAllPath?: string }> = ({ viewAllP
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [])
+
+  useEffect(() => {
+    if (!isOpen) {
+      setPanelOffsetX(0)
+      return
+    }
+
+    const viewportPadding = 8
+
+    const updatePanelOffset = () => {
+      const panel = panelRef.current
+      if (!panel) return
+
+      const rect = panel.getBoundingClientRect()
+      let offset = 0
+
+      if (rect.left < viewportPadding) {
+        offset += viewportPadding - rect.left
+      }
+
+      if (rect.right > window.innerWidth - viewportPadding) {
+        offset -= rect.right - (window.innerWidth - viewportPadding)
+      }
+
+      setPanelOffsetX(Math.round(offset))
+    }
+
+    const rafId = requestAnimationFrame(updatePanelOffset)
+    window.addEventListener('resize', updatePanelOffset)
+
+    return () => {
+      cancelAnimationFrame(rafId)
+      window.removeEventListener('resize', updatePanelOffset)
+    }
+  }, [isOpen, dropdownAlign, dropdownDirection, notifications.length])
 
   const handleNotificationClick = async (notificationId: number) => {
     if (!notifications.find(n => n.id === notificationId)?.is_read) {
@@ -88,7 +152,11 @@ const EnhancedNotificationIcon: React.FC<{ viewAllPath?: string }> = ({ viewAllP
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 z-50 mt-2 w-80 rounded-xl bg-white shadow-lg ring-1 ring-black ring-opacity-5">
+        <div
+          ref={panelRef}
+          className={`absolute z-50 w-80 max-w-[calc(100vw-1rem)] rounded-xl bg-white shadow-lg ring-1 ring-black ring-opacity-5 ${dropdownAlignClass} ${dropdownPositionClass} ${dropdownOriginClass}`}
+          style={panelOffsetX !== 0 ? { transform: `translateX(${panelOffsetX}px)` } : undefined}
+        >
           <div className="py-2">
             <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200">
               <h3 className="text-sm font-medium text-gray-900">notification</h3>

@@ -7,6 +7,12 @@ export interface UserConsoleSession {
   user_id: number
   tenant_id: number
   tenant_code?: string
+  tenant_memberships?: Array<{
+    id: number
+    name?: string
+    code?: string
+    role?: string
+  }>
   email: string
   nickname?: string
   avatar_url?: string
@@ -31,6 +37,8 @@ interface SessionTenantLike {
   id: number
   name?: string
   code?: string
+  role?: string
+  metadata?: Record<string, any>
 }
 
 function isBrowser() {
@@ -117,6 +125,14 @@ export function upsertUserConsoleSession(
   const tenantID = Number(profile.tenant_id || 0)
   const key = buildSessionKey(profile.id, tenantID)
   const currentTenant = tenantID > 0 ? tenants.find((tenant) => Number(tenant.id) === tenantID) : null
+  const tenantMemberships = tenants
+    .map((tenant) => ({
+      id: Number(tenant.id || 0),
+      name: tenant.name,
+      code: tenant.code,
+      role: String(tenant.metadata?.user_role || tenant.role || '').toLowerCase(),
+    }))
+    .filter((tenant) => tenant.id > 0)
   const sessions = readSessions().filter((session) => session.key !== key)
 
   sessions.unshift({
@@ -124,6 +140,7 @@ export function upsertUserConsoleSession(
     user_id: profile.id,
     tenant_id: tenantID,
     tenant_code: currentTenant?.code,
+    tenant_memberships: tenantMemberships,
     email: profile.email,
     nickname: profile.nickname,
     avatar_url: profile.avatar_url,

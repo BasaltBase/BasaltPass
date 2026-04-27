@@ -175,13 +175,18 @@ export default function TenantDashboard() {
   }
 
   const getLoginUrl = () => {
-    const baseUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || 'http://localhost:5101'
+    const baseUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || window.location.origin
     return `${baseUrl}/auth/tenant/${tenantCode}/login`
   }
 
   const getRegisterUrl = () => {
-    const baseUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || 'http://localhost:5101'
+    const baseUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || window.location.origin
     return `${baseUrl}/auth/tenant/${tenantCode}/register`
+  }
+
+  const getJoinUrl = () => {
+    const baseUrl = (import.meta as any).env?.VITE_CONSOLE_USER_URL || window.location.origin
+    return `${baseUrl}/auth/tenant/${tenantCode}/join`
   }
 
   const handleLivenessCheck = async () => {
@@ -287,98 +292,127 @@ export default function TenantDashboard() {
           ))}
         </div>
 
-        {/*  */}
-        {tenantCode && (
-          <PCard className="rounded-xl p-0 shadow-sm">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center">
-                <LinkIcon className="h-5 w-5 text-blue-500 mr-2" />
-                <h2 className="text-base font-medium text-gray-900">{t('tenantDashboardPage.userAccessLinks.title')}</h2>
-              </div>
-              <p className="mt-1 text-sm text-gray-500">{t('tenantDashboardPage.userAccessLinks.description')}</p>
-            </div>
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/*  */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('tenantDashboardPage.userAccessLinks.loginPage')}
-                  </label>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-full md:w-1/2 min-w-0">
-                      <PInput
-                        type="text"
-                        readOnly
-                        value={getLoginUrl()}
-                        className="bg-gray-50 font-mono text-gray-600"
-                      />
-                    </div>
-                    <PButton
-                      type="button"
-                      variant="secondary"
-                      onClick={() => copyToClipboard(getLoginUrl(), 'login')}
-                      title={t('tenantDashboardPage.actions.copyLink')}
-                    >
-                      {copiedField === 'login' ? (
-                        <CheckIcon className="h-5 w-5 text-green-500" />
-                      ) : (
-                        <ClipboardDocumentIcon className="h-5 w-5" />
-                      )}
-                    </PButton>
-                  </div>
-                </div>
-
-                {/*  */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('tenantDashboardPage.userAccessLinks.registerPage')}
-                  </label>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-full md:w-1/2 min-w-0">
-                      <PInput
-                        type="text"
-                        readOnly
-                        value={getRegisterUrl()}
-                        className="bg-gray-50 font-mono text-gray-600"
-                      />
-                    </div>
-                    <PButton
-                      type="button"
-                      variant="secondary"
-                      onClick={() => copyToClipboard(getRegisterUrl(), 'register')}
-                      title={t('tenantDashboardPage.actions.copyLink')}
-                    >
-                      {copiedField === 'register' ? (
-                        <CheckIcon className="h-5 w-5 text-green-500" />
-                      ) : (
-                        <ClipboardDocumentIcon className="h-5 w-5" />
-                      )}
-                    </PButton>
-                  </div>
-                </div>
-              </div>
-
-              {/*  */}
-              <div className="mt-4 rounded-lg bg-blue-50 p-3">
-                <div className="flex">
-                  <InformationCircleIcon className="h-5 w-5 text-blue-400 mr-2 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm text-blue-700">
-                    <p>{t('tenantDashboardPage.userAccessLinks.tip')}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </PCard>
-        )}
-
+        <div className="-mx-4 space-y-6 sm:-mx-6 lg:-mx-8">
+          {/*  */}
+          {tenantCode && (
             <PCard className="rounded-xl p-0 shadow-sm">
               <div className="px-6 py-4 border-b border-gray-200">
-                <h2 className="text-base font-medium text-gray-900">{t('tenantDashboardPage.quickActions.title')}</h2>
+                <div className="flex items-center">
+                  <LinkIcon className="h-5 w-5 text-blue-500 mr-2" />
+                  <h2 className="text-base font-medium text-gray-900">{t('tenantDashboardPage.userAccessLinks.title')}</h2>
+                </div>
+                <p className="mt-1 text-sm text-gray-500">{t('tenantDashboardPage.userAccessLinks.description')}</p>
               </div>
-              <div className="p-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {quickActions
-                  .filter(action => !action.requiresMarket || marketEnabled)
-                  .map((action) => (
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/*  */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t('tenantDashboardPage.userAccessLinks.loginPage')}
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <div className="min-w-0 flex-1">
+                        <PInput
+                          type="text"
+                          readOnly
+                          value={getLoginUrl()}
+                          className="bg-gray-50 font-mono text-gray-600"
+                        />
+                      </div>
+                      <PButton
+                        type="button"
+                        variant="secondary"
+                        onClick={() => copyToClipboard(getLoginUrl(), 'login')}
+                        title={t('tenantDashboardPage.actions.copyLink')}
+                      >
+                        {copiedField === 'login' ? (
+                          <CheckIcon className="h-5 w-5 text-green-500" />
+                        ) : (
+                          <ClipboardDocumentIcon className="h-5 w-5" />
+                        )}
+                      </PButton>
+                    </div>
+                  </div>
+                  {/* 加入链接 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t('tenantDashboardPage.userAccessLinks.joinPage')}
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <div className="min-w-0 flex-1">
+                        <PInput
+                          type="text"
+                          readOnly
+                          value={getJoinUrl()}
+                          className="bg-gray-50 font-mono text-gray-600"
+                        />
+                      </div>
+                      <PButton
+                        type="button"
+                        variant="secondary"
+                        onClick={() => copyToClipboard(getJoinUrl(), 'join')}
+                        title={t('tenantDashboardPage.actions.copyLink')}
+                      >
+                        {copiedField === 'join' ? (
+                          <CheckIcon className="h-5 w-5 text-green-500" />
+                        ) : (
+                          <ClipboardDocumentIcon className="h-5 w-5" />
+                        )}
+                      </PButton>
+                    </div>
+                  </div>
+
+                  {/*  */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t('tenantDashboardPage.userAccessLinks.registerPage')}
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <div className="min-w-0 flex-1">
+                        <PInput
+                          type="text"
+                          readOnly
+                          value={getRegisterUrl()}
+                          className="bg-gray-50 font-mono text-gray-600"
+                        />
+                      </div>
+                      <PButton
+                        type="button"
+                        variant="secondary"
+                        onClick={() => copyToClipboard(getRegisterUrl(), 'register')}
+                        title={t('tenantDashboardPage.actions.copyLink')}
+                      >
+                        {copiedField === 'register' ? (
+                          <CheckIcon className="h-5 w-5 text-green-500" />
+                        ) : (
+                          <ClipboardDocumentIcon className="h-5 w-5" />
+                        )}
+                      </PButton>
+                    </div>
+                  </div>
+                </div>
+
+                {/*  */}
+                <div className="mt-4 rounded-lg bg-blue-50 p-3">
+                  <div className="flex">
+                    <InformationCircleIcon className="h-5 w-5 text-blue-400 mr-2 flex-shrink-0 mt-0.5" />
+                    <div className="text-sm text-blue-700">
+                      <p>{t('tenantDashboardPage.userAccessLinks.tip')}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </PCard>
+          )}
+
+          <PCard className="rounded-xl p-0 shadow-sm">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-base font-medium text-gray-900">{t('tenantDashboardPage.quickActions.title')}</h2>
+            </div>
+            <div className="p-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {quickActions
+                .filter(action => !action.requiresMarket || marketEnabled)
+                .map((action) => (
                   <Link
                     key={action.id}
                     to={action.href}
@@ -393,8 +427,9 @@ export default function TenantDashboard() {
                     </div>
                   </Link>
                 ))}
-              </div>
-            </PCard>
+            </div>
+          </PCard>
+        </div>
           </div>
     </TenantLayout>
   )

@@ -376,33 +376,65 @@ func (s *TenantService) ListTenants(page, pageSize int, search string) ([]*Tenan
 func (s *TenantService) GetUserTenants(userID uint) ([]*TenantResponse, error) {
 	var user model.User
 	if err := s.db.Select("tenant_id").First(&user, userID).Error; err != nil {
-		return nil, err
-	}
-	if user.TenantID == 0 {
-		return []*TenantResponse{}, nil
-	}
-
-	var tenant model.Tenant
-	if err := s.db.First(&tenant, user.TenantID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return []*TenantResponse{}, nil
 		}
 		return nil, err
 	}
 
-	resp := s.tenantToResponse(&tenant, nil)
-	if resp.Metadata == nil {
-		resp.Metadata = make(map[string]interface{})
+	var memberships []model.TenantUser
+	if err := s.db.Where("user_id = ?", userID).Order("created_at ASC").Find(&memberships).Error; err != nil {
+		return nil, err
 	}
 
-	var tenantUser model.TenantUser
-	if err := s.db.Where("user_id = ? AND tenant_id = ?", userID, user.TenantID).First(&tenantUser).Error; err == nil {
-		resp.Metadata["user_role"] = string(tenantUser.Role)
-	} else {
-		resp.Metadata["user_role"] = string(model.TenantRoleUser)
+	tenantOrder := make([]uint, 0, len(memberships)+1)
+	rolesByTenant := make(map[uint]model.TenantRole)
+
+	if user.TenantID > 0 {
+		tenantOrder = append(tenantOrder, user.TenantID)
+		rolesByTenant[user.TenantID] = model.TenantRoleUser
 	}
 
-	return []*TenantResponse{resp}, nil
+	for _, membership := range memberships {
+		if membership.TenantID == 0 {
+			continue
+		}
+		if _, ok := rolesByTenant[membership.TenantID]; !ok {
+			tenantOrder = append(tenantOrder, membership.TenantID)
+		}
+		rolesByTenant[membership.TenantID] = membership.Role
+	}
+
+	if len(tenantOrder) == 0 {
+		return []*TenantResponse{}, nil
+	}
+
+	tenantsByID := make(map[uint]*model.Tenant)
+	responses := make([]*TenantResponse, 0, len(tenantOrder))
+
+	for _, tenantID := range tenantOrder {
+		tenant, ok := tenantsByID[tenantID]
+		if !ok {
+			loaded := &model.Tenant{}
+			if err := s.db.First(loaded, tenantID).Error; err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					continue
+				}
+				return nil, err
+			}
+			tenantsByID[tenantID] = loaded
+			tenant = loaded
+		}
+
+		resp := s.tenantToResponse(tenant, nil)
+		if resp.Metadata == nil {
+			resp.Metadata = make(map[string]interface{})
+		}
+		resp.Metadata["user_role"] = string(rolesByTenant[tenantID])
+		responses = append(responses, resp)
+	}
+
+	return responses, nil
 }
 
 // UpdateTenant 更新租户

@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"basaltpass-backend/internal/common"
@@ -26,6 +27,7 @@ var (
 	ErrMissingCredentials  = errors.New("identifier and password required")
 	ErrInvalidCredentials  = errors.New("invalid email or password")
 	ErrPlatformAdminOnly   = errors.New("only administrators can login to platform")
+	ErrTenantAccountOnly   = errors.New("tenant account must login via tenant portal")
 	ErrTenantLoginDisabled = errors.New("tenant login is disabled")
 	ErrServiceUnavailable  = errors.New("authentication service temporarily unavailable")
 )
@@ -44,6 +46,9 @@ func normalizeLoginQueryError(err error) error {
 
 // Register creates a new user with hashed password.
 func (s Service) Register(req RegisterRequest) (*model.User, error) {
+	if !settingssvc.GetBool("auth.enable_register", true) {
+		return nil, errors.New("registration is disabled")
+	}
 	if req.Email == "" && req.Phone == "" {
 		return nil, errors.New("email or phone required")
 	}
@@ -74,21 +79,48 @@ func (s Service) Register(req RegisterRequest) (*model.User, error) {
 	}
 	isFirstUser := userCount == 0
 
-	// 检查用户是否已存在（同一个租户下的邮箱/手机号）
-	// 注意：admin用户（tenant_id=0）可以与普通用户使用相同的邮箱/手机号
+	// 全局注册（tenant_id=0）要求邮箱/手机号全局唯一；
+	// 租户注册（tenant_id>0）仅要求同租户唯一，同时不能与全局账号冲突。
 	db := common.DB()
-	var existingUser model.User
+	normalizedEmail := strings.ToLower(strings.TrimSpace(req.Email))
 
-	// 构建检查条件
-	checkQuery := db.Where("tenant_id = ?", req.TenantID)
-	if req.Email != "" {
-		checkQuery = checkQuery.Where("email = ?", req.Email)
-	} else if normalizedPhone != "" {
-		checkQuery = checkQuery.Where("phone = ?", normalizedPhone)
-	}
+	if req.TenantID == 0 {
+		var conflict int64
+		query := db.Model(&model.User{})
+		if normalizedEmail != "" {
+			query = query.Where("email = ?", normalizedEmail)
+		}
+		if normalizedPhone != "" {
+			if normalizedEmail != "" {
+				query = query.Or("phone = ?", normalizedPhone)
+			} else {
+				query = query.Where("phone = ?", normalizedPhone)
+			}
+		}
+		if err := query.Count(&conflict).Error; err != nil {
+			return nil, err
+		}
+		if conflict > 0 {
+			return nil, errors.New("user already exists")
+		}
+	} else {
+		if normalizedEmail != "" {
+			var sameTenant int64
+			if err := db.Model(&model.User{}).Where("email = ? AND tenant_id = ?", normalizedEmail, req.TenantID).Count(&sameTenant).Error; err != nil {
+				return nil, err
+			}
+			if sameTenant > 0 {
+				return nil, errors.New("user already exists in this tenant")
+			}
 
-	if err := checkQuery.First(&existingUser).Error; err == nil {
-		return nil, errors.New("user already exists in this tenant")
+			var globalConflict int64
+			if err := db.Model(&model.User{}).Where("email = ? AND tenant_id = 0", normalizedEmail).Count(&globalConflict).Error; err != nil {
+				return nil, err
+			}
+			if globalConflict > 0 {
+				return nil, errors.New("email already registered as a global account")
+			}
+		}
 	}
 
 	// 开始事务
@@ -100,7 +132,7 @@ func (s Service) Register(req RegisterRequest) (*model.User, error) {
 	}()
 
 	user := &model.User{
-		Email:        req.Email,
+		Email:        normalizedEmail,
 		Phone:        normalizedPhone,
 		PasswordHash: string(hash),
 		Nickname:     "New User",
@@ -156,6 +188,10 @@ func (s Service) LoginV2(req LoginRequest) (LoginResult, error) {
 	if req.EmailOrPhone == "" || req.Password == "" {
 		return LoginResult{}, ErrMissingCredentials
 	}
+	if req.Scope == "" {
+		req.Scope = ConsoleScopeUser
+	}
+	identifier := strings.TrimSpace(req.EmailOrPhone)
 
 	if req.TenantID > 0 {
 		allowed, err := tenantservice.IsTenantLoginAllowed(req.TenantID)
@@ -177,27 +213,67 @@ func (s Service) LoginV2(req LoginRequest) (LoginResult, error) {
 	db := common.DB().WithContext(ctx)
 
 	// 构建查询条件：email/phone + tenant_id
-	// 规则：
-	// 1. tenant_id = 0 表示平台登录，只允许 is_system_admin = true 的账号登录
-	// 2. tenant_id > 0 表示租户登录，只允许该租户下 (users.tenant_id = tenant_id) 的账号登录
-	query := db.Preload("Passkeys").Where("email = ? OR phone = ?", req.EmailOrPhone, req.EmailOrPhone)
+	query := db.Preload("Passkeys").Where("email = ? OR phone = ?", identifier, identifier)
 
 	if req.TenantID == 0 {
-		// 平台登录：只允许全局管理员账号
+		// 全局登录：仅允许 tenant_id=0 账户。
+		query = query.Where("tenant_id = 0")
 		if err := query.First(&user).Error; err != nil {
-			return LoginResult{}, normalizeLoginQueryError(err)
-		}
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				// 兼容历史数据：若全局账号曾被错误迁移到 tenant_id>0，但具备 tenant_users 关系，
+				// 仍允许从全局入口登录（token tid=0）。
+				var legacyUser model.User
+				if legacyErr := db.Where("email = ? OR phone = ?", identifier, identifier).
+					Order("id ASC").
+					First(&legacyUser).Error; legacyErr == nil {
+					var membershipCount int64
+					if countErr := db.Model(&model.TenantUser{}).
+						Where("user_id = ?", legacyUser.ID).
+						Count(&membershipCount).Error; countErr == nil && membershipCount > 0 {
+						if preloadErr := db.Preload("Passkeys").First(&user, legacyUser.ID).Error; preloadErr == nil {
+							goto LOGIN_USER_FOUND
+						}
+					}
 
-		if !user.IsSuperAdmin() {
-			return LoginResult{}, ErrPlatformAdminOnly
+					if legacyUser.TenantID > 0 {
+						return LoginResult{}, ErrTenantAccountOnly
+					}
+				}
+			}
+			return LoginResult{}, normalizeLoginQueryError(err)
 		}
 	} else {
-		// 租户登录：查询指定租户下的用户
+		// 租户登录：优先查询指定租户下的本地账户
 		query = query.Where("tenant_id = ?", req.TenantID)
 		if err := query.First(&user).Error; err != nil {
-			return LoginResult{}, normalizeLoginQueryError(err)
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				return LoginResult{}, normalizeLoginQueryError(err)
+			}
+
+			// 允许全局账号（tenant_id=0）通过 tenant_users 成员关系登录租户入口。
+			var globalUser model.User
+			if gErr := db.Where("(email = ? OR phone = ?) AND tenant_id = 0", identifier, identifier).
+				First(&globalUser).Error; gErr != nil {
+				return LoginResult{}, normalizeLoginQueryError(err)
+			}
+
+			var membershipCount int64
+			if mErr := db.Model(&model.TenantUser{}).
+				Where("user_id = ? AND tenant_id = ?", globalUser.ID, req.TenantID).
+				Count(&membershipCount).Error; mErr != nil {
+				return LoginResult{}, fmt.Errorf("%w: %v", ErrServiceUnavailable, mErr)
+			}
+			if membershipCount == 0 {
+				return LoginResult{}, ErrInvalidCredentials
+			}
+
+			if pErr := db.Preload("Passkeys").First(&user, globalUser.ID).Error; pErr != nil {
+				return LoginResult{}, normalizeLoginQueryError(pErr)
+			}
 		}
 	}
+
+LOGIN_USER_FOUND:
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
 		return LoginResult{}, ErrInvalidCredentials
@@ -274,7 +350,13 @@ func (s Service) LoginV2(req LoginRequest) (LoginResult, error) {
 	}
 
 	// 不需要二次验证，直接登录
-	tokens, err := GenerateTokenPair(user.ID)
+	tokenScope := ConsoleScopeUser
+	tokenTenantID := req.TenantID
+	if req.Scope == ConsoleScopeAdmin {
+		tokenScope = ConsoleScopeAdmin
+		tokenTenantID = 0
+	}
+	tokens, err := GenerateTokenPairWithTenantAndScope(user.ID, tokenTenantID, tokenScope)
 	if err != nil {
 		return LoginResult{}, fmt.Errorf("%w: %v", ErrServiceUnavailable, err)
 	}
@@ -370,7 +452,7 @@ func (s Service) Verify2FA(req Verify2FARequest) (TokenPair, error) {
 	default:
 		return TokenPair{}, errors.New("unsupported 2FA type")
 	}
-	return GenerateTokenPair(user.ID)
+	return GenerateTokenPairWithTenantAndScope(user.ID, tenantID, ConsoleScopeUser)
 }
 
 // setupFirstUserAsGlobalAdmin 设置第一个用户为全局管理员。

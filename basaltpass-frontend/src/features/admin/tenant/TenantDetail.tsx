@@ -5,6 +5,8 @@ import {
   BuildingOfficeIcon, 
   DocumentTextIcon,
   CogIcon,
+  LinkIcon,
+  ClipboardDocumentIcon,
   ExclamationTriangleIcon,
   CheckCircleIcon,
   UserIcon,
@@ -38,6 +40,7 @@ const TenantDetail: React.FC = () => {
   const [authLoading, setAuthLoading] = useState(false)
   const [authSaving, setAuthSaving] = useState(false)
   const [authError, setAuthError] = useState<string | null>(null)
+  const [copiedField, setCopiedField] = useState<string | null>(null)
   const [formData, setFormData] = useState<AdminUpdateTenantRequest>({
     name: '',
     description: '',
@@ -100,7 +103,7 @@ const TenantDetail: React.FC = () => {
       setAuthSettings(settings)
     } catch (err: any) {
       console.error('Failed to fetch tenant auth settings', err)
-      setAuthError(err.response?.data?.error || '加载租户认证开关失败')
+      setAuthError(err.response?.data?.error || t('adminTenantDetail.auth.loadFailed'))
       setAuthSettings(null)
     } finally {
       setAuthLoading(false)
@@ -130,10 +133,10 @@ const TenantDetail: React.FC = () => {
         allow_login: authSettings.allow_login,
       })
       setAuthSettings(updated)
-      uiAlert('租户认证开关已更新')
+      uiAlert(t('adminTenantDetail.auth.updateSuccess'))
     } catch (err: any) {
       console.error('Failed to save tenant auth settings', err)
-      const message = err.response?.data?.error || '更新租户认证开关失败'
+      const message = err.response?.data?.error || t('adminTenantDetail.auth.updateFailed')
       setAuthError(message)
     } finally {
       setAuthSaving(false)
@@ -223,15 +226,47 @@ const TenantDetail: React.FC = () => {
     return new Intl.NumberFormat(locale).format(value ?? 0)
   }
 
+  const copyToClipboard = async (text: string, field: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopiedField(field)
+      setTimeout(() => setCopiedField(null), 2000)
+    } catch {
+      setCopiedField(null)
+    }
+  }
+
+  const userConsoleBaseUrl = useMemo(() => {
+    const configured = (import.meta as any).env?.VITE_CONSOLE_USER_URL
+    if (configured && typeof configured === 'string') {
+      return configured.replace(/\/+$/, '')
+    }
+    if (typeof window !== 'undefined') {
+      return window.location.origin
+    }
+    return ''
+  }, [])
+
   const tenantLoginUrl = useMemo(() => {
-    if (!tenant?.code) {
+    if (!tenant?.code || !userConsoleBaseUrl) {
       return ''
     }
-    if (typeof window === 'undefined') {
-      return `/auth/tenant/${tenant.code}/login`
+    return `${userConsoleBaseUrl}/auth/tenant/${tenant.code}/login`
+  }, [tenant?.code, userConsoleBaseUrl])
+
+  const tenantRegisterUrl = useMemo(() => {
+    if (!tenant?.code || !userConsoleBaseUrl) {
+      return ''
     }
-    return `${window.location.origin}/auth/tenant/${tenant.code}/login`
-  }, [tenant?.code])
+    return `${userConsoleBaseUrl}/auth/tenant/${tenant.code}/register`
+  }, [tenant?.code, userConsoleBaseUrl])
+
+  const tenantJoinUrl = useMemo(() => {
+    if (!tenant?.code || !userConsoleBaseUrl) {
+      return ''
+    }
+    return `${userConsoleBaseUrl}/auth/tenant/${tenant.code}/join`
+  }, [tenant?.code, userConsoleBaseUrl])
 
   if (loading) {
     return (
@@ -379,16 +414,53 @@ const TenantDetail: React.FC = () => {
                       <dd className="mt-1 text-sm text-gray-900">{tenant.owner_email}</dd>
                     </div>
                     <div>
-                      <dt className="text-sm font-medium text-gray-500">{t('adminTenantDetail.meta.loginUrl')}</dt>
-                      <dd className="mt-1 text-sm">
-                        <a
-                          href={tenantLoginUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="font-mono text-indigo-600 hover:text-indigo-800 break-all"
-                        >
-                          {tenantLoginUrl}
-                        </a>
+                      <dt className="text-sm font-medium text-gray-500 mb-2 flex items-center">
+                        <LinkIcon className="h-4 w-4 mr-2 text-blue-500" />
+                        {t('adminTenantDetail.meta.accessLinks')}
+                      </dt>
+                      <dd className="space-y-3">
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">{t('adminTenantDetail.meta.joinUrl')}</div>
+                          <div className="flex items-center space-x-2">
+                            <PInput type="text" readOnly value={tenantJoinUrl} className="flex-1 bg-gray-50 font-mono text-gray-600" />
+                            <PButton
+                              type="button"
+                              variant="secondary"
+                              onClick={() => copyToClipboard(tenantJoinUrl, 'join')}
+                              title={t('adminTenantDetail.actions.copyLink')}
+                            >
+                              {copiedField === 'join' ? <CheckCircleIcon className="h-5 w-5 text-green-500" /> : <ClipboardDocumentIcon className="h-5 w-5" />}
+                            </PButton>
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">{t('adminTenantDetail.meta.loginUrl')}</div>
+                          <div className="flex items-center space-x-2">
+                            <PInput type="text" readOnly value={tenantLoginUrl} className="flex-1 bg-gray-50 font-mono text-gray-600" />
+                            <PButton
+                              type="button"
+                              variant="secondary"
+                              onClick={() => copyToClipboard(tenantLoginUrl, 'login')}
+                              title={t('adminTenantDetail.actions.copyLink')}
+                            >
+                              {copiedField === 'login' ? <CheckCircleIcon className="h-5 w-5 text-green-500" /> : <ClipboardDocumentIcon className="h-5 w-5" />}
+                            </PButton>
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">{t('adminTenantDetail.meta.registerUrl')}</div>
+                          <div className="flex items-center space-x-2">
+                            <PInput type="text" readOnly value={tenantRegisterUrl} className="flex-1 bg-gray-50 font-mono text-gray-600" />
+                            <PButton
+                              type="button"
+                              variant="secondary"
+                              onClick={() => copyToClipboard(tenantRegisterUrl, 'register')}
+                              title={t('adminTenantDetail.actions.copyLink')}
+                            >
+                              {copiedField === 'register' ? <CheckCircleIcon className="h-5 w-5 text-green-500" /> : <ClipboardDocumentIcon className="h-5 w-5" />}
+                            </PButton>
+                          </div>
+                        </div>
                       </dd>
                     </div>
                     <div>
@@ -528,13 +600,13 @@ const TenantDetail: React.FC = () => {
               <div className="px-4 py-5 sm:p-6">
                 <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4 flex items-center">
                   <CogIcon className="h-5 w-5 mr-2 text-gray-400" />
-                  认证访问控制
+                  {t('adminTenantDetail.auth.title')}
                 </h3>
 
                 {authError && (
                   <PAlert
                     variant="error"
-                    title="认证开关加载失败"
+                    title={t('adminTenantDetail.auth.loadFailedTitle')}
                     message={authError}
                     className="mb-4"
                   />
@@ -549,53 +621,53 @@ const TenantDetail: React.FC = () => {
                     <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
                       <PCheckbox
                         variant="switch"
-                        label="允许租户用户注册"
+                        label={t('adminTenantDetail.auth.allowRegistration')}
                         checked={authSettings.allow_registration}
                         onChange={(e) => handleAuthSettingChange('allow_registration', (e.target as HTMLInputElement).checked)}
                         disabled={authSaving}
                       />
                       <p className="mt-2 text-sm text-gray-500">
-                        关闭后，所有新用户将无法通过租户注册页创建账号。
+                        {t('adminTenantDetail.auth.registrationHint')}
                       </p>
                     </div>
 
                     <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
                       <PCheckbox
                         variant="switch"
-                        label="允许租户用户登录"
+                        label={t('adminTenantDetail.auth.allowLogin')}
                         checked={authSettings.allow_login}
                         onChange={(e) => handleAuthSettingChange('allow_login', (e.target as HTMLInputElement).checked)}
                         disabled={authSaving}
                       />
                       <p className="mt-2 text-sm text-gray-500">
-                        关闭后，租户下账号将无法完成登录与令牌刷新。
+                        {t('adminTenantDetail.auth.loginHint')}
                       </p>
                     </div>
 
                     {(!authSettings.allow_registration || !authSettings.allow_login) && (
                       <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
-                        当前租户存在认证限制，请确保业务方已知晓影响范围。
+                        {t('adminTenantDetail.auth.warning')}
                       </div>
                     )}
 
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <span>注册</span>
+                        <span>{t('adminTenantDetail.auth.registration')}</span>
                         <PBadge variant={authSettings.allow_registration ? 'success' : 'warning'}>
-                          {authSettings.allow_registration ? '开启' : '关闭'}
+                          {authSettings.allow_registration ? t('adminTenantDetail.auth.enabled') : t('adminTenantDetail.auth.disabled')}
                         </PBadge>
-                        <span>登录</span>
+                        <span>{t('adminTenantDetail.auth.login')}</span>
                         <PBadge variant={authSettings.allow_login ? 'success' : 'warning'}>
-                          {authSettings.allow_login ? '开启' : '关闭'}
+                          {authSettings.allow_login ? t('adminTenantDetail.auth.enabled') : t('adminTenantDetail.auth.disabled')}
                         </PBadge>
                       </div>
                       <PButton onClick={handleSaveAuthSettings} loading={authSaving} disabled={authLoading || !authSettings}>
-                        保存认证开关
+                        {t('adminTenantDetail.auth.save')}
                       </PButton>
                     </div>
                   </div>
                 ) : (
-                  <div className="text-sm text-gray-500">暂无认证开关数据</div>
+                  <div className="text-sm text-gray-500">{t('adminTenantDetail.auth.empty')}</div>
                 )}
               </div>
             </PCard>

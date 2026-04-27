@@ -33,6 +33,7 @@ interface UserTenant {
   name?: string
   code?: string
   role?: string
+  metadata?: Record<string, any>
   status?: string
 }
 
@@ -42,12 +43,14 @@ interface AuthContextType {
   userSessions: UserConsoleSession[]
   canAccessAdmin: boolean
   canAccessTenant: boolean
+  canUseWallet: boolean
   isAuthenticated: boolean
   isLoading: boolean
   login: (token: string) => Promise<void>
   logout: () => void
   checkAuth: () => Promise<void>
   switchAccount: (sessionKey: string) => Promise<void>
+  switchTenantIdentity: (tenantID: number) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -246,6 +249,36 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [loadIdentity, navigate, syncUserSessions])
 
+  const switchTenantIdentity = useCallback(async (tenantID: number) => {
+    if (expectedScope !== 'user') {
+      throw new Error('Tenant identity switching is only available in user console')
+    }
+
+    const previousToken = getAccessToken()
+    setIsLoading(true)
+    try {
+      const response = await client.post('/api/v1/auth/identity/switch', {
+        tenant_id: tenantID,
+      })
+      const nextToken = String(response.data?.access_token || '').trim()
+      if (!nextToken) {
+        throw new Error('Missing access token from identity switch response')
+      }
+
+      await loadIdentity(nextToken)
+      setHasChecked(true)
+    } catch (error) {
+      if (previousToken) {
+        setAccessToken(previousToken)
+      } else {
+        clearAccessToken()
+      }
+      throw error
+    } finally {
+      setIsLoading(false)
+    }
+  }, [expectedScope, loadIdentity])
+
   const logout = useCallback(() => {
     debugAuth.log('Logout called')
     if (expectedScope === 'user' && user?.id) {
@@ -324,20 +357,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [user, isLoading, hasChecked])
 
   const tenantRole = (user?.tenant_role || '').toLowerCase()
-  const canManageTenant = user?.tenant_id ? user.tenant_id > 0 && ['owner', 'admin'].includes(tenantRole) : false
+  const canAccessCurrentTenant = user?.tenant_id
+    ? user.tenant_id > 0 && ['owner', 'admin'].includes(tenantRole)
+    : false
+  const canAccessAnyTenant = tenants.some((tenant) => {
+    const roleFromMetadata = String(tenant?.metadata?.user_role || '').toLowerCase()
+    const role = roleFromMetadata || String(tenant?.role || '').toLowerCase()
+    return Number(tenant?.id || 0) > 0 && ['owner', 'admin'].includes(role)
+  })
+  const canAccessTenantConsole = canAccessCurrentTenant || canAccessAnyTenant
+  const canUseWallet = !!user && (Boolean(user.has_tenant) || Number(user.tenant_id || 0) > 0 || tenants.length > 0)
 
   const value: AuthContextType = {
     user,
     tenants,
     userSessions,
     canAccessAdmin: !!user?.is_super_admin,
-    canAccessTenant: canManageTenant,
+    canAccessTenant: canAccessTenantConsole,
+    canUseWallet,
     isAuthenticated: !!user,
     isLoading,
     login,
     logout,
     checkAuth,
     switchAccount,
+    switchTenantIdentity,
   }
 
   return (

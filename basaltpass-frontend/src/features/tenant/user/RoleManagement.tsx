@@ -6,15 +6,11 @@ import {
   PencilIcon, 
   TrashIcon,
   UsersIcon,
-  MagnifyingGlassIcon,
   FunnelIcon,
   XMarkIcon,
-  CheckIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
-import { PSelect, EntitySearchSelect, PSkeleton, PBadge, PPageHeader, PButton, PInput, PCheckbox, PTextarea } from '@ui';
+import { PSelect, EntitySearchSelect, PSkeleton, PBadge, PPageHeader, PButton, PInput, PCheckbox, PTextarea, PManagementFilterCard, PManagedTableSection, PManagementPageContainer, PManagementToast } from '@ui';
 import {
   Role,
   CreateRoleRequest,
@@ -29,8 +25,9 @@ import {
   UserRole
 } from '@api/tenant/tenantRole';
 import TenantLayout from '@features/tenant/components/TenantLayout';
-import PTable, { PTableColumn } from '@ui/PTable';
+import { PTableColumn } from '@ui/PTable';
 import useDebounce from '@hooks/useDebounce';
+import useManagedPaginationBar from '@hooks/useManagedPaginationBar';
 import { useI18n } from '@shared/i18n';
 
 const TenantRoleManagement: React.FC = () => {
@@ -205,6 +202,16 @@ const TenantRoleManagement: React.FC = () => {
     fetchRoles(page, pagination.pageSize);
   };
 
+  const paginationBar = useManagedPaginationBar({
+    currentPage: pagination.current,
+    pageSize: pagination.pageSize,
+    totalItems: pagination.total,
+    onPageChange: handlePageChange,
+    className: 'mt-0 rounded-none border-t border-gray-200 shadow-none',
+    summary: ({ start, end, total }) => t('tenantRoleManagement.pagination.summary', { start, end, total }),
+    pageInfo: ({ currentPage, totalPages }) => t('tenantRoleManagement.pagination.pageInfo', { current: currentPage, total: totalPages }),
+  });
+
 
 
   const getRoleTypeVariant = (isSystem: boolean) => {
@@ -217,52 +224,36 @@ const TenantRoleManagement: React.FC = () => {
 
   return (
     <TenantLayout title={t('tenantRoleManagement.layoutTitle')}>
-      <div className="p-6">
-        {/*  */}
-        {message.visible && (
-          <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg flex items-center space-x-2 ${
-            message.type === 'success' ? 'bg-green-500 text-white' :
-            message.type === 'error' ? 'bg-red-500 text-white' :
-            'bg-blue-500 text-white'
-          }`}>
-            {message.type === 'success' && <CheckIcon className="w-5 h-5" />}
-            {message.type === 'error' && <ExclamationTriangleIcon className="w-5 h-5" />}
-            <span>{message.text}</span>
-            <PButton variant="ghost" size="sm" onClick={() => setMessage(prev => ({ ...prev, visible: false }))} className="ml-2">
-              <XMarkIcon className="w-4 h-4" />
-            </PButton>
-          </div>
-        )}
-
-        {/*  */}
-        <PPageHeader
-          title={t('tenantRoleManagement.header.title')}
-          icon={<ShieldCheckIcon className="w-8 h-8 text-blue-600" />}
-          actions={
-            <div className="flex space-x-3">
-              <PButton onClick={() => setUserRoleModalVisible(true)} leftIcon={<UsersIcon className="w-5 h-5" />}>{t('tenantRoleManagement.actions.userRoleAssignment')}</PButton>
-              <PButton onClick={() => setModalVisible(true)} leftIcon={<PlusIcon className="w-5 h-5" />}>{t('tenantRoleManagement.actions.createRole')}</PButton>
-            </div>
-          }
-        />
-
-        {/*  */}
-        <div className="bg-white p-4 rounded-lg shadow mb-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <PInput
-                  type="text"
-                  placeholder={t('tenantRoleManagement.search.placeholder')}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  icon={<MagnifyingGlassIcon className="w-5 h-5" />}
-                />
+      <PManagementPageContainer
+        className="space-y-6 p-6"
+        notice={
+          <PManagementToast
+            visible={message.visible}
+            type={message.type}
+            text={message.text}
+            onClose={() => setMessage(prev => ({ ...prev, visible: false }) )}
+          />
+        }
+        header={
+          <PPageHeader
+            title={t('tenantRoleManagement.header.title')}
+            icon={<ShieldCheckIcon className="w-8 h-8 text-blue-600" />}
+            actions={
+              <div className="flex space-x-3">
+                <PButton onClick={() => setUserRoleModalVisible(true)} leftIcon={<UsersIcon className="w-5 h-5" />}>{t('tenantRoleManagement.actions.userRoleAssignment')}</PButton>
+                <PButton onClick={() => setModalVisible(true)} leftIcon={<PlusIcon className="w-5 h-5" />}>{t('tenantRoleManagement.actions.createRole')}</PButton>
               </div>
-            </div>
-            <div className="sm:w-48">
+            }
+          />
+        }
+        filter={
+          <PManagementFilterCard
+            searchValue={searchTerm}
+            onSearchChange={setSearchTerm}
+            searchPlaceholder={t('tenantRoleManagement.search.placeholder')}
+            rightContent={
               <div className="relative">
-                <FunnelIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 z-10" />
+                <FunnelIcon className="absolute left-3 top-1/2 z-10 h-5 w-5 -translate-y-1/2 transform text-gray-400" />
                 <PSelect
                   value={appFilter}
                   onChange={(e) => setAppFilter(e.target.value)}
@@ -272,9 +263,10 @@ const TenantRoleManagement: React.FC = () => {
                   <option value="tenant">{t('tenantRoleManagement.filters.tenantScope')}</option>
                 </PSelect>
               </div>
-            </div>
-          </div>
-        </div>
+            }
+          />
+        }
+      >
 
         {/*  */}
         <div className="bg-white rounded-lg shadow">
@@ -290,7 +282,7 @@ const TenantRoleManagement: React.FC = () => {
               <p>{t('tenantRoleManagement.list.empty')}</p>
             </div>
           ) : (
-            <PTable
+            <PManagedTableSection
               columns={[
                 {
                   key: 'info',
@@ -354,52 +346,12 @@ const TenantRoleManagement: React.FC = () => {
               data={roles}
               rowKey={(r) => String(r.id)}
               defaultSort={{ key: 'created_at', order: 'desc' }}
+              pagination={paginationBar}
             />
           )}
-
-          {/*  */}
-          {roles.length > 0 && (
-            <div className="px-6 py-4 border-t border-gray-200">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-700">
-                  {t('tenantRoleManagement.pagination.summary', {
-                    start: ((pagination.current - 1) * pagination.pageSize) + 1,
-                    end: Math.min(pagination.current * pagination.pageSize, pagination.total),
-                    total: pagination.total,
-                  })}
-                </div>
-                <div className="flex items-center space-x-2">
-                  <PButton
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handlePageChange(pagination.current - 1)}
-                    disabled={pagination.current <= 1}
-                    className="rounded-lg"
-                  >
-                    <ChevronLeftIcon className="w-4 h-4" />
-                  </PButton>
-                  
-                  <span className="px-3 py-1 text-sm">
-                    {t('tenantRoleManagement.pagination.pageInfo', {
-                      current: pagination.current,
-                      total: Math.ceil(pagination.total / pagination.pageSize),
-                    })}
-                  </span>
-                  
-                  <PButton
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handlePageChange(pagination.current + 1)}
-                    disabled={pagination.current >= Math.ceil(pagination.total / pagination.pageSize)}
-                    className="rounded-lg"
-                  >
-                    <ChevronRightIcon className="w-4 h-4" />
-                  </PButton>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
+
+      </PManagementPageContainer>
 
         {/* / */}
         {modalVisible && (
@@ -610,7 +562,6 @@ const TenantRoleManagement: React.FC = () => {
             </div>
           </div>
         )}
-      </div>
     </TenantLayout>
   );
 };

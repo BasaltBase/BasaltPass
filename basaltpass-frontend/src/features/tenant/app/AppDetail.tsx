@@ -167,7 +167,7 @@ export default function AppDetail() {
                 title={app.name}
                 description={app.description || t('tenantAppDetail.header.fallbackDescription', { date: new Date(app.created_at).toLocaleDateString(locale), id: app.id })}
               />
-              <div className="mt-2 flex items-center space-x-4 text-sm text-gray-500">
+              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-500">
                 <PBadge variant={getStatusVariant(app.status) as any}>
                   {getStatusText(app.status)}
                 </PBadge>
@@ -176,7 +176,7 @@ export default function AppDetail() {
               </div>
             </div>
           </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-wrap items-center gap-3">
             <Link
               to={`/tenant/apps/${app.id}/stats`}
               className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
@@ -346,7 +346,7 @@ export default function AppDetail() {
                     {t('tenantAppDetail.quickStart.description')}
                   </p>
                 </div>
-                <div className="flex space-x-3">
+                <div className="flex flex-wrap gap-3 mt-4 sm:mt-0">
                   <Link
                     to={`/tenant/apps/${app.id}/permissions`}
                     className="inline-flex items-center rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium leading-4 text-white transition-colors hover:bg-indigo-700"

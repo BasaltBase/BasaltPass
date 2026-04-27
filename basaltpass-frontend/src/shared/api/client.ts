@@ -111,9 +111,23 @@ client.interceptors.response.use(
       isRefreshing = true
 
       try {
-        // translatedtoken
-        const response = await client.post('/api/v1/auth/refresh')
-        const { access_token } = response.data
+        let response
+        let retries = 0
+        const maxRetries = 3
+        while (retries <= maxRetries) {
+          try {
+            response = await client.post('/api/v1/auth/refresh')
+            break
+          } catch (rErr: any) {
+            retries++
+            if (retries > maxRetries) {
+              throw rErr
+            }
+            await new Promise(res => setTimeout(res, 1000 * retries))
+          }
+        }
+        
+        const { access_token } = response!.data
         
         // updatetranslatedtoken
         setAccessToken(access_token)

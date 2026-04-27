@@ -13,12 +13,13 @@ import (
 
 // CheckoutRequest 订阅结账请求
 type CheckoutRequest struct {
-	UserID     uint    `json:"user_id" validate:"required"`
-	PriceID    uint    `json:"price_id" validate:"required"`
-	Quantity   float64 `json:"quantity,omitempty"`
-	CouponCode *string `json:"coupon_code,omitempty"`
-	SuccessURL string  `json:"success_url" validate:"required"`
-	CancelURL  string  `json:"cancel_url" validate:"required"`
+	UserID         uint    `json:"user_id" validate:"required"`
+	PriceID        uint    `json:"price_id" validate:"required"`
+	Quantity       float64 `json:"quantity,omitempty"`
+	CouponCode     *string `json:"coupon_code,omitempty"`
+	SuccessURL     string  `json:"success_url" validate:"required"`
+	CancelURL      string  `json:"cancel_url" validate:"required"`
+	ActiveTenantID uint64  `json:"-"`
 }
 
 // CheckoutResponse 订阅结账响应
@@ -59,11 +60,30 @@ func (s *CheckoutService) CreateCheckout(req *CheckoutRequest) (*CheckoutRespons
 		}
 		return nil, fmt.Errorf("查询客户失败: %w", err)
 	}
-	if user.TenantID == 0 {
+	userTenantID := req.ActiveTenantID
+	if userTenantID == 0 && user.TenantID > 0 {
+		userTenantID = uint64(user.TenantID)
+	}
+	if userTenantID == 0 {
+		var membership model.TenantUser
+		if err := tx.Select("tenant_id").Where("user_id = ?", req.UserID).Order("created_at ASC").First(&membership).Error; err == nil {
+			userTenantID = uint64(membership.TenantID)
+		}
+	}
+	if userTenantID == 0 {
 		tx.Rollback()
 		return nil, fmt.Errorf("用户未绑定租户")
 	}
-	userTenantID := uint64(user.TenantID)
+
+	hasIdentity, err := userHasTenantIdentity(tx, req.UserID, userTenantID)
+	if err != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("校验用户租户身份失败: %w", err)
+	}
+	if !hasIdentity {
+		tx.Rollback()
+		return nil, fmt.Errorf("用户不属于当前租户")
+	}
 
 	// 步骤2: 验证价格
 	var price model.Price
@@ -74,7 +94,7 @@ func (s *CheckoutService) CreateCheckout(req *CheckoutRequest) (*CheckoutRespons
 		}
 		return nil, fmt.Errorf("查询价格失败: %w", err)
 	}
-	if price.TenantID != nil && *price.TenantID != userTenantID {
+	if price.TenantID == nil || *price.TenantID != userTenantID {
 		tx.Rollback()
 		return nil, fmt.Errorf("价格不属于当前租户")
 	}
@@ -86,7 +106,7 @@ func (s *CheckoutService) CreateCheckout(req *CheckoutRequest) (*CheckoutRespons
 
 	if req.CouponCode != nil && *req.CouponCode != "" {
 		var c model.Coupon
-		if err := tx.Where("code = ? AND is_active = true AND (tenant_id IS NULL OR tenant_id = ?)", *req.CouponCode, userTenantID).First(&c).Error; err != nil {
+		if err := tx.Where("code = ? AND is_active = true AND tenant_id = ?", *req.CouponCode, userTenantID).First(&c).Error; err != nil {
 			tx.Rollback()
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return nil, fmt.Errorf("优惠券不存在或已失效")
@@ -269,10 +289,11 @@ func (s *CheckoutService) CreateCheckout(req *CheckoutRequest) (*CheckoutRespons
 			"invoice_id":      invoice.ID,
 			"payment_id":      paymentRecord.ID,
 			"source":          "subscription_checkout",
+			"tenant_id":       userTenantID,
 		},
 	}
 
-	paymentIntent, _, err := payment.CreatePaymentIntent(req.UserID, paymentIntentReq)
+	paymentIntent, _, err := payment.CreatePaymentIntentForTenant(req.UserID, uint(userTenantID), paymentIntentReq)
 	if err != nil {
 		return nil, fmt.Errorf("创建支付意图失败: %w", err)
 	}
@@ -290,7 +311,7 @@ func (s *CheckoutService) CreateCheckout(req *CheckoutRequest) (*CheckoutRespons
 		UserEmail:       user.Email,
 	}
 
-	paymentSession, sessionStripeResponse, err := payment.CreatePaymentSession(req.UserID, sessionReq)
+	paymentSession, sessionStripeResponse, err := payment.CreatePaymentSessionForTenant(req.UserID, uint(userTenantID), sessionReq)
 	if err != nil {
 		return nil, fmt.Errorf("创建支付会话失败: %w", err)
 	}

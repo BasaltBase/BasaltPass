@@ -1,20 +1,21 @@
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
+import React, { useEffect, useMemo, useState } from 'react'
+import { uiAlert, uiConfirm } from '@contexts/DialogContext'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   KeyIcon,
   PlusIcon,
   PencilIcon,
   TrashIcon,
-  MagnifyingGlassIcon,
   XMarkIcon,
   ExclamationTriangleIcon,
   TagIcon,
-  LockClosedIcon
+  FunnelIcon
 } from '@heroicons/react/24/outline'
 import TenantLayout from '@features/tenant/components/TenantLayout'
-import { PSkeleton, PInput, PSelect, PTextarea, PButton, PPageHeader } from '@ui'
-import PTable, { type PTableColumn, type PTableAction } from '@ui/PTable'
+import useClientPagination from '@hooks/useClientPagination'
+import useManagedPaginationBar from '@hooks/useManagedPaginationBar'
+import { PSkeleton, PInput, PSelect, PTextarea, PButton, PPageHeader, PBadge, PManagementFilterCard, PManagedTableSection, PManagementPageContainer } from '@ui'
+import { type PTableColumn, type PTableAction } from '@ui/PTable'
 import { tenantAppApi } from '@api/tenant/tenantApp'
 import userPermissionsApi, { type Permission } from '@api/tenant/appPermissions'
 import useDebounce from '@hooks/useDebounce'
@@ -24,6 +25,7 @@ export default function AppPermissionManagement() {
   const { t, locale } = useI18n()
   const { id: appId } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const pageSize = 20
   
   const [app, setApp] = useState<any>(null)
   const [permissions, setPermissions] = useState<Permission[]>([])
@@ -151,35 +153,93 @@ export default function AppPermissionManagement() {
     }
   }
 
-  // 
-  const getCategories = () => {
-    const categories = Array.from(new Set(permissions.map(p => p.category)))
-    return categories.sort()
-  }
+  const categories = useMemo(() => {
+    return Array.from(new Set(permissions.map(p => p.category))).sort()
+  }, [permissions])
 
   // 
-  const filteredPermissions = permissions.filter(permission => {
-    const matchesSearch = debouncedSearchTerm === '' ||
-      permission.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-      permission.code.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-      (permission.description && permission.description.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
-      
-    const matchesCategory = selectedCategory === '' || permission.category === selectedCategory
-    
-    return matchesSearch && matchesCategory
+  const filteredPermissions = useMemo(() => {
+    return permissions.filter(permission => {
+      const matchesSearch = debouncedSearchTerm === '' ||
+        permission.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        permission.code.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        (permission.description && permission.description.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
+
+      const matchesCategory = selectedCategory === '' || permission.category === selectedCategory
+      return matchesSearch && matchesCategory
+    })
+  }, [permissions, debouncedSearchTerm, selectedCategory])
+  const {
+    currentPage,
+    pageItems: paginatedPermissions,
+    totalItems,
+    setPage,
+    resetPage,
+  } = useClientPagination(filteredPermissions, pageSize)
+
+  const paginationBar = useManagedPaginationBar({
+    currentPage,
+    pageSize,
+    totalItems,
+    onPageChange: setPage,
+    summary: ({ start, end, total }) => t('tenantRoleManagement.pagination.summary', { start, end, total }),
+    pageInfo: ({ currentPage: page, totalPages }) => t('tenantRoleManagement.pagination.pageInfo', { current: page, total: totalPages }),
   })
 
-  // 
-  const getPermissionsByCategory = () => {
-    const categories: { [key: string]: Permission[] } = {}
-    filteredPermissions.forEach(permission => {
-      if (!categories[permission.category]) {
-        categories[permission.category] = []
-      }
-      categories[permission.category].push(permission)
-    })
-    return categories
-  }
+  useEffect(() => {
+    resetPage()
+  }, [debouncedSearchTerm, selectedCategory, resetPage])
+
+  const columns: PTableColumn<Permission>[] = [
+    {
+      key: 'code',
+      title: t('tenantAppPermissionManagement.table.permissionCode'),
+      sortable: true,
+      render: (row) => <div className="font-mono text-sm text-blue-600">{row.code}</div>
+    },
+    {
+      key: 'name',
+      title: t('tenantAppPermissionManagement.table.permissionName'),
+      sortable: true,
+      render: (row) => <div className="font-medium text-gray-900">{row.name}</div>
+    },
+    {
+      key: 'category',
+      title: t('tenantAppPermissionManagement.table.category'),
+      sortable: true,
+      render: (row) => <PBadge variant="info" icon={<TagIcon className="h-3 w-3" />}>{row.category}</PBadge>
+    },
+    {
+      key: 'description',
+      title: t('tenantAppPermissionManagement.table.description'),
+      render: (row) => <div className="max-w-xl truncate text-sm text-gray-600">{row.description || '-'}</div>
+    },
+    {
+      key: 'created_at',
+      title: t('tenantAppPermissionManagement.table.createdAt'),
+      align: 'right',
+      sortable: true,
+      sorter: (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+      render: (row) => new Date(row.created_at).toLocaleString(locale)
+    }
+  ]
+
+  const actions: PTableAction<Permission>[] = [
+    {
+      key: 'edit',
+      label: t('tenantAppPermissionManagement.actions.edit'),
+      icon: <PencilIcon className="h-4 w-4" />,
+      variant: 'secondary',
+      onClick: (row) => handleEditPermission(row)
+    },
+    {
+      key: 'delete',
+      label: t('tenantAppPermissionManagement.actions.delete'),
+      icon: <TrashIcon className="h-4 w-4" />,
+      variant: 'danger',
+      onClick: (row) => handleDeletePermission(row)
+    }
+  ]
 
   if (loading) {
     return (
@@ -209,117 +269,61 @@ export default function AppPermissionManagement() {
 
   return (
     <TenantLayout title={t('tenantAppPermissionManagement.layoutTitle')}>
-      <div className="space-y-6">
-        {/*  */}
-        <PPageHeader
-          title={t('tenantAppPermissionManagement.title')}
-          description={t('tenantAppPermissionManagement.description', { name: app?.name || '-' })}
-          icon={<KeyIcon className="h-8 w-8 text-blue-600" />}
-          actions={
-            <div className="flex space-x-3">
-              <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/roles`)}>{t('tenantAppPermissionManagement.actions.roleManagement')}</PButton>
-              <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/users`)}>{t('tenantAppPermissionManagement.actions.userManagement')}</PButton>
-              <PButton onClick={handleCreatePermission} leftIcon={<PlusIcon className="h-4 w-4" />}>{t('tenantAppPermissionManagement.actions.createPermission')}</PButton>
-            </div>
-          }
-        />
-
-        {/*  */}
-        <div className="rounded-xl bg-white p-6 shadow-sm">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1">
-              <PInput
-                placeholder={t('tenantAppPermissionManagement.searchPlaceholder')}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm((e.target as HTMLInputElement).value)}
-                icon={<MagnifyingGlassIcon className="h-5 w-5" />}
-              />
-            </div>
-            <div className="lg:w-64">
-              <PSelect
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory((e.target as HTMLSelectElement).value)}
-              >
-                <option value="">{t('tenantAppPermissionManagement.filters.allCategories')}</option>
-                {getCategories().map(category => (
-                  <option key={category} value={category}>{category}</option>
-                ))}
-              </PSelect>
-            </div>
-          </div>
-        </div>
-
-        {/* （ PTable）*/}
-        <div>
-          <PTable<Permission>
-            data={filteredPermissions}
-            rowKey={(row) => String(row.id)}
-            loading={loading}
-            emptyText={searchTerm || selectedCategory ? t('tenantAppPermissionManagement.empty.searchNoResult') : t('tenantAppPermissionManagement.empty.noPermission')}
-            emptyContent={!searchTerm && !selectedCategory ? (
-              <PButton onClick={handleCreatePermission} leftIcon={<PlusIcon className="h-4 w-4" />}>{t('tenantAppPermissionManagement.actions.createPermission')}</PButton>
-            ) : undefined}
-            size="md"
-            striped
-            defaultSort={{ key: 'name', order: 'asc' }}
-            columns={[
-              {
-                key: 'name',
-                title: t('tenantAppPermissionManagement.table.permissionName'),
-                dataIndex: 'name',
-                sortable: true,
-                render: (row) => (
-                  <div className="flex items-center">
-                    <LockClosedIcon className="h-5 w-5 text-blue-600 mr-2" />
-                    <div>
-                      <div className="font-medium text-gray-900">{row.name}</div>
-                      <div className="text-xs text-gray-500">{row.code}</div>
-                    </div>
-                  </div>
-                )
-              },
-              {
-                key: 'category',
-                title: t('tenantAppPermissionManagement.table.category'),
-                dataIndex: 'category',
-                sortable: true,
-              },
-              {
-                key: 'description',
-                title: t('tenantAppPermissionManagement.table.description'),
-                dataIndex: 'description',
-                className: 'max-w-xl truncate',
-              },
-              {
-                key: 'created_at',
-                title: t('tenantAppPermissionManagement.table.createdAt'),
-                dataIndex: 'created_at',
-                align: 'right',
-                sortable: true,
-                sorter: (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
-                render: (row) => new Date(row.created_at).toLocaleString(locale)
-              }
-            ]}
-            actions={[
-              {
-                key: 'edit',
-                label: t('tenantAppPermissionManagement.actions.edit'),
-                icon: <PencilIcon className="h-4 w-4" />,
-                variant: 'secondary',
-                onClick: (row) => handleEditPermission(row)
-              },
-              {
-                key: 'delete',
-                label: t('tenantAppPermissionManagement.actions.delete'),
-                icon: <TrashIcon className="h-4 w-4" />,
-                variant: 'danger',
-                confirm: t('tenantAppPermissionManagement.deleteActionConfirm'),
-                onClick: (row) => handleDeletePermission(row)
-              }
-            ]}
+      <PManagementPageContainer
+        header={
+          <PPageHeader
+            title={t('tenantAppPermissionManagement.title')}
+            description={t('tenantAppPermissionManagement.description', { name: app?.name || '-' })}
+            icon={<KeyIcon className="h-8 w-8 text-blue-600" />}
+            actions={
+              <div className="flex flex-wrap gap-2">
+                <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/roles`)}>{t('tenantAppPermissionManagement.actions.roleManagement')}</PButton>
+                <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/users`)}>{t('tenantAppPermissionManagement.actions.userManagement')}</PButton>
+                <PButton onClick={handleCreatePermission} leftIcon={<PlusIcon className="h-4 w-4" />}>{t('tenantAppPermissionManagement.actions.createPermission')}</PButton>
+              </div>
+            }
           />
-        </div>
-      </div>
+        }
+        filter={
+          <PManagementFilterCard
+            searchValue={searchTerm}
+            onSearchChange={setSearchTerm}
+            searchPlaceholder={t('tenantAppPermissionManagement.searchPlaceholder')}
+            rightContentClassName="lg:w-64"
+            rightContent={
+              <div className="relative">
+                <FunnelIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                <PSelect
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory((e.target as HTMLSelectElement).value)}
+                  className="pl-10"
+                >
+                  <option value="">{t('tenantAppPermissionManagement.filters.allCategories')}</option>
+                  {categories.map(category => (
+                    <option key={category} value={category}>{category}</option>
+                  ))}
+                </PSelect>
+              </div>
+            }
+          />
+        }
+      >
+        <PManagedTableSection<Permission>
+          data={paginatedPermissions}
+          columns={columns}
+          actions={actions}
+          rowKey={(row) => String(row.id)}
+          loading={loading}
+          emptyText={searchTerm || selectedCategory ? t('tenantAppPermissionManagement.empty.searchNoResult') : t('tenantAppPermissionManagement.empty.noPermission')}
+          emptyContent={!searchTerm && !selectedCategory ? (
+            <PButton onClick={handleCreatePermission} leftIcon={<PlusIcon className="h-4 w-4" />}>{t('tenantAppPermissionManagement.actions.createPermission')}</PButton>
+          ) : undefined}
+          size="md"
+          striped
+          defaultSort={{ key: 'created_at', order: 'desc' }}
+          pagination={paginationBar}
+        />
+      </PManagementPageContainer>
 
       {/*  */}
       {showCreateModal && (
@@ -352,8 +356,13 @@ export default function AppPermissionManagement() {
 // 
 const PermissionModal: React.FC<{
   title: string
-  formData: any
-  setFormData: (data: any) => void
+  formData: {
+    code: string
+    name: string
+    description: string
+    category: string
+  }
+  setFormData: (data: { code: string; name: string; description: string; category: string }) => void
   submitting: boolean
   onSubmit: () => void
   onClose: () => void

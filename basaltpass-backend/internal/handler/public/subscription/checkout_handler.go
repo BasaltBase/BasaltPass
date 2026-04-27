@@ -20,6 +20,10 @@ func CheckoutHandler(c *fiber.Ctx) error {
 	InitCheckoutHandler()
 
 	userID := c.Locals("userID").(uint)
+	tenantID, tenantErr := resolveCurrentUserTenantID(c)
+	if tenantErr != nil {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": tenantErr.Error()})
+	}
 
 	var req CheckoutRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -48,6 +52,10 @@ func CheckoutHandler(c *fiber.Ctx) error {
 		})
 	}
 
+	if tenantID != nil {
+		req.ActiveTenantID = *tenantID
+	}
+
 	response, err := checkoutService.CreateCheckout(&req)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -67,6 +75,10 @@ func QuickCheckoutHandler(c *fiber.Ctx) error {
 	InitCheckoutHandler()
 
 	userID := c.Locals("userID").(uint)
+	tenantID, tenantErr := resolveCurrentUserTenantID(c)
+	if tenantErr != nil {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": tenantErr.Error()})
+	}
 
 	var req struct {
 		PriceID    uint    `json:"price_id" validate:"required"`
@@ -88,6 +100,9 @@ func QuickCheckoutHandler(c *fiber.Ctx) error {
 		CouponCode: req.CouponCode,
 		SuccessURL: "http://localhost:5101/subscriptions?payment=success",
 		CancelURL:  "http://localhost:5101/subscriptions?payment=canceled",
+	}
+	if tenantID != nil {
+		checkoutReq.ActiveTenantID = *tenantID
 	}
 
 	response, err := checkoutService.CreateCheckout(&checkoutReq)

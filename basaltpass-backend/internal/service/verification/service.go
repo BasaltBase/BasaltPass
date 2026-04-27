@@ -5,6 +5,7 @@ import (
 	"basaltpass-backend/internal/config"
 	"basaltpass-backend/internal/model"
 	emailservice "basaltpass-backend/internal/service/email"
+	settingssvc "basaltpass-backend/internal/service/settings"
 	tenantservice "basaltpass-backend/internal/service/tenant"
 	"basaltpass-backend/internal/service/wallet"
 	"basaltpass-backend/internal/utils"
@@ -87,6 +88,9 @@ type CompleteSignupRequest struct {
 
 // StartSignup 开始注册流程
 func (s *Service) StartSignup(req StartSignupRequest) (*StartSignupResponse, error) {
+	if !settingssvc.GetBool("auth.enable_register", true) {
+		return nil, errors.New("registration is disabled")
+	}
 	if req.Email == "" && req.Phone == "" {
 		return nil, errors.New("email or phone required")
 	}
@@ -121,6 +125,10 @@ func (s *Service) StartSignup(req StartSignupRequest) (*StartSignupResponse, err
 			return nil, fmt.Errorf("invalid phone number: %v", err)
 		}
 		normalizedPhone = normalized
+	}
+
+	if err := s.ensureSignupEmailAvailable(common.DB(), normalizedEmail, req.TenantID); err != nil {
+		return nil, err
 	}
 
 	// 风控评估
@@ -345,6 +353,10 @@ func (s *Service) ChangeEmail(req ChangeEmailRequest) error {
 
 // CompleteSignup 完成注册
 func (s *Service) CompleteSignup(req CompleteSignupRequest) (*model.User, error) {
+	if !settingssvc.GetBool("auth.enable_register", true) {
+		return nil, errors.New("registration is disabled")
+	}
+
 	var pendingSignup model.PendingSignup
 	if err := common.DB().Where("id = ? AND status = ?",
 		req.SignupID, model.SignupStatusCompleted).First(&pendingSignup).Error; err != nil {
@@ -375,11 +387,9 @@ func (s *Service) CompleteSignup(req CompleteSignupRequest) (*model.User, error)
 		}
 	}()
 
-	// 检查邮箱和租户组合是否已被注册（同一邮箱可以在不同租户注册）
-	var existingUser model.User
-	if err := tx.Where("email = ? AND tenant_id = ?", pendingSignup.Email, pendingSignup.TenantID).First(&existingUser).Error; err == nil {
+	if err := s.ensureSignupEmailAvailable(tx, strings.ToLower(strings.TrimSpace(pendingSignup.Email)), pendingSignup.TenantID); err != nil {
 		tx.Rollback()
-		return nil, errors.New("email already registered in this tenant")
+		return nil, err
 	}
 
 	// 检查是否是第一个用户
@@ -415,11 +425,6 @@ func (s *Service) CompleteSignup(req CompleteSignupRequest) (*model.User, error)
 		return nil, err
 	}
 
-	if err := wallet.EnsureUserCreditWalletTx(tx, user.ID); err != nil {
-		tx.Rollback()
-		return nil, err
-	}
-
 	// 自动处理租户邀请（如果用户存在未处理的邀请记录）
 	var invitations []model.TenantInvitation
 	if err := tx.Where("email = ? AND status = ?", user.Email, "pending").Find(&invitations).Error; err == nil && len(invitations) > 0 {
@@ -448,6 +453,14 @@ func (s *Service) CompleteSignup(req CompleteSignupRequest) (*model.User, error)
 		}
 	}
 
+	// 钱包初始化放在邀请处理之后：
+	// 1) 若用户因邀请获得了租户身份，可正常创建租户上下文钱包；
+	// 2) 对纯平台用户（无租户身份）跳过钱包初始化，不阻塞注册。
+	if err := wallet.EnsureUserCreditWalletTx(tx, user.ID); err != nil && !errors.Is(err, wallet.ErrNoTenantIdentity) {
+		tx.Rollback()
+		return nil, err
+	}
+
 	// 清理：标记注册会话为已完成，使相关挑战失效
 	tx.Model(&pendingSignup).Update("status", model.SignupStatusCompleted)
 	tx.Model(&model.VerificationChallenge{}).Where("signup_id = ? AND status = ?",
@@ -469,6 +482,42 @@ func (s *Service) generateSignupID() (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(bytes), nil
+}
+
+func (s *Service) ensureSignupEmailAvailable(tx *gorm.DB, email string, tenantID uint) error {
+	email = strings.ToLower(strings.TrimSpace(email))
+	if email == "" {
+		return nil
+	}
+
+	if tenantID == 0 {
+		var exists int64
+		if err := tx.Model(&model.User{}).Where("email = ?", email).Count(&exists).Error; err != nil {
+			return errors.New("failed to check existing account")
+		}
+		if exists > 0 {
+			return errors.New("email already registered")
+		}
+		return nil
+	}
+
+	var sameTenant int64
+	if err := tx.Model(&model.User{}).Where("email = ? AND tenant_id = ?", email, tenantID).Count(&sameTenant).Error; err != nil {
+		return errors.New("failed to check existing account")
+	}
+	if sameTenant > 0 {
+		return errors.New("email already registered in this tenant")
+	}
+
+	var globalExists int64
+	if err := tx.Model(&model.User{}).Where("email = ? AND tenant_id = 0", email).Count(&globalExists).Error; err != nil {
+		return errors.New("failed to check existing account")
+	}
+	if globalExists > 0 {
+		return errors.New("email already registered as a global account")
+	}
+
+	return nil
 }
 
 // assessRisk 评估风险等级

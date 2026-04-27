@@ -1,12 +1,11 @@
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { uiAlert, uiConfirm, uiPrompt } from '@contexts/DialogContext'
+import React, { useEffect, useMemo, useState } from 'react'
+import { uiAlert, uiConfirm } from '@contexts/DialogContext'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   ShieldCheckIcon,
   PlusIcon,
   PencilIcon,
   TrashIcon,
-  MagnifyingGlassIcon,
   XMarkIcon,
   KeyIcon,
   ExclamationTriangleIcon
@@ -15,13 +14,17 @@ import TenantLayout from '@features/tenant/components/TenantLayout'
 import { tenantAppApi } from '@api/tenant/tenantApp'
 import { userPermissionsApi, type Permission, type Role } from '@api/tenant/appPermissions'
 import useDebounce from '@hooks/useDebounce'
-import { PSkeleton, PPageHeader, PEmptyState, PButton, PInput, PTextarea, PBadge } from '@ui'
+import useClientPagination from '@hooks/useClientPagination'
+import useManagedPaginationBar from '@hooks/useManagedPaginationBar'
+import { PSkeleton, PPageHeader, PEmptyState, PButton, PInput, PTextarea, PBadge, PManagementFilterCard, PManagedTableSection, PManagementPageContainer } from '@ui'
+import { type PTableAction, type PTableColumn } from '@ui/PTable'
 import { useI18n } from '@shared/i18n'
 
 export default function AppRoleManagement() {
   const { t, locale } = useI18n()
   const { id: appId } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const pageSize = 10
   
   const [app, setApp] = useState<any>(null)
   const [roles, setRoles] = useState<Role[]>([])
@@ -153,12 +156,80 @@ export default function AppRoleManagement() {
     }
   }
 
-  const filteredRoles = roles.filter(role =>
-    debouncedSearchTerm === '' ||
-    role.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-    role.code.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-    (role.description && role.description.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
-  )
+  const filteredRoles = useMemo(() => {
+    return roles.filter(role =>
+      debouncedSearchTerm === '' ||
+      role.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+      role.code.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+      (role.description && role.description.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
+    )
+  }, [roles, debouncedSearchTerm])
+  const {
+    currentPage,
+    pageItems: paginatedRoles,
+    totalItems,
+    setPage,
+    resetPage,
+  } = useClientPagination(filteredRoles, pageSize)
+
+  const paginationBar = useManagedPaginationBar({
+    currentPage,
+    pageSize,
+    totalItems,
+    onPageChange: setPage,
+    summary: ({ start, end, total }) => t('tenantRoleManagement.pagination.summary', { start, end, total }),
+    pageInfo: ({ currentPage: page, totalPages }) => t('tenantRoleManagement.pagination.pageInfo', { current: page, total: totalPages }),
+  })
+
+  useEffect(() => {
+    resetPage()
+  }, [debouncedSearchTerm, resetPage])
+
+  const columns: PTableColumn<Role>[] = [
+    {
+      key: 'role_info',
+      title: t('tenantAppRoleManagement.table.roleInfo'),
+      render: (role) => (
+        <div>
+          <div className="text-sm font-medium text-gray-900">{role.name}</div>
+          <div className="text-xs text-gray-500">{role.code}</div>
+          {role.description ? <div className="mt-1 text-xs text-gray-400">{role.description}</div> : null}
+        </div>
+      )
+    },
+    {
+      key: 'permission_count',
+      title: t('tenantAppRoleManagement.table.permissionCount'),
+      align: 'center',
+      render: (role) => (
+        <PBadge variant="info">{t('tenantAppRoleManagement.fields.permissionCount', { count: role.permissions?.length || 0 })}</PBadge>
+      )
+    },
+    {
+      key: 'created_at',
+      title: t('tenantAppRoleManagement.table.createdAt'),
+      sortable: true,
+      sorter: (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+      render: (role) => new Date(role.created_at).toLocaleDateString(locale)
+    }
+  ]
+
+  const actions: PTableAction<Role>[] = [
+    {
+      key: 'edit',
+      label: t('tenantAppRoleManagement.actions.edit'),
+      icon: <PencilIcon className="h-4 w-4" />,
+      variant: 'secondary',
+      onClick: (role) => handleEditRole(role)
+    },
+    {
+      key: 'delete',
+      label: t('tenantAppRoleManagement.actions.delete'),
+      icon: <TrashIcon className="h-4 w-4" />,
+      variant: 'danger',
+      onClick: (role) => handleDeleteRole(role)
+    }
+  ]
 
   const getPermissionsByCategory = () => {
     const categories: { [key: string]: Permission[] } = {}
@@ -199,117 +270,56 @@ export default function AppRoleManagement() {
 
   return (
     <TenantLayout title={t('tenantAppRoleManagement.layoutTitle')}>
-      <div className="space-y-6">
-        {/*  */}
-        <PPageHeader
-          title={t('tenantAppRoleManagement.title')}
-          description={t('tenantAppRoleManagement.description', { name: app?.name || '-' })}
-          icon={<ShieldCheckIcon className="h-8 w-8 text-green-600" />}
-          actions={
-            <div className="flex space-x-3">
-              <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/permissions`)} leftIcon={<KeyIcon className="h-4 w-4" />}>{t('tenantAppRoleManagement.actions.permissionManagement')}</PButton>
-              <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/users`)}>{t('tenantAppRoleManagement.actions.userManagement')}</PButton>
-              <PButton onClick={handleCreateRole} leftIcon={<PlusIcon className="h-4 w-4" />}>{t('tenantAppRoleManagement.actions.createRole')}</PButton>
-            </div>
-          }
-        />
-
-        {/*  */}
-        <div className="rounded-xl bg-white p-6 shadow-sm">
-          <div className="relative">
-            <MagnifyingGlassIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder={t('tenantAppRoleManagement.searchPlaceholder')}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-        </div>
-
-        {/*  */}
-        <div className="overflow-hidden rounded-xl bg-white shadow-sm">
-          <div className="px-4 py-5 sm:p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg leading-6 font-medium text-gray-900">
-                {t('tenantAppRoleManagement.list.title', { count: filteredRoles.length })}
-              </h3>
-            </div>
-
-            {filteredRoles.length === 0 ? (
+      <PManagementPageContainer
+        header={
+          <PPageHeader
+            title={t('tenantAppRoleManagement.title')}
+            description={t('tenantAppRoleManagement.description', { name: app?.name || '-' })}
+            icon={<ShieldCheckIcon className="h-8 w-8 text-green-600" />}
+            actions={
+              <div className="flex flex-wrap gap-2">
+                <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/permissions`)} leftIcon={<KeyIcon className="h-4 w-4" />}>{t('tenantAppRoleManagement.actions.permissionManagement')}</PButton>
+                <PButton variant="secondary" onClick={() => navigate(`/tenant/apps/${appId}/users`)}>{t('tenantAppRoleManagement.actions.userManagement')}</PButton>
+                <PButton onClick={handleCreateRole} leftIcon={<PlusIcon className="h-4 w-4" />}>{t('tenantAppRoleManagement.actions.createRole')}</PButton>
+              </div>
+            }
+          />
+        }
+        filter={
+          <PManagementFilterCard
+            searchValue={searchTerm}
+            onSearchChange={setSearchTerm}
+            searchPlaceholder={t('tenantAppRoleManagement.searchPlaceholder')}
+          />
+        }
+      >
+        <div>
+          {filteredRoles.length === 0 && !loading ? (
+            <div className="overflow-hidden rounded-xl bg-white p-6 shadow-sm">
               <PEmptyState
                 icon={ShieldCheckIcon}
                 title={t('tenantAppRoleManagement.empty.title')}
                 description={searchTerm ? t('tenantAppRoleManagement.empty.searchNoResult') : t('tenantAppRoleManagement.empty.noRole')}
               >
-                {!searchTerm && (
-                  <PButton onClick={handleCreateRole} leftIcon={<PlusIcon className="h-4 w-4" />}>{t('tenantAppRoleManagement.actions.createRole')}</PButton>
-                )}
+                {!searchTerm ? <PButton onClick={handleCreateRole} leftIcon={<PlusIcon className="h-4 w-4" />}>{t('tenantAppRoleManagement.actions.createRole')}</PButton> : null}
               </PEmptyState>
-            ) : (
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {filteredRoles.map((role) => (
-                  <div key={role.id} className="bg-gray-50 rounded-lg p-6 border">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center">
-                        <ShieldCheckIcon className="h-8 w-8 text-green-600 mr-3" />
-                        <div>
-                          <h4 className="text-lg font-medium text-gray-900">{role.name}</h4>
-                          <p className="text-sm text-gray-500">{t('tenantAppRoleManagement.fields.code')}: {role.code}</p>
-                        </div>
-                      </div>
-                      <div className="flex space-x-2">
-                        <PButton
-                          onClick={() => handleEditRole(role)}
-                          variant="ghost"
-                          size="sm"
-                          className="px-2 text-blue-600 hover:text-blue-800"
-                        >
-                          <PencilIcon className="h-4 w-4" />
-                        </PButton>
-                        <PButton
-                          onClick={() => handleDeleteRole(role)}
-                          variant="ghost"
-                          size="sm"
-                          className="px-2 text-red-600 hover:text-red-800"
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                        </PButton>
-                      </div>
-                    </div>
-
-                    {role.description && (
-                      <p className="text-sm text-gray-600 mb-4">{role.description}</p>
-                    )}
-
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center text-blue-600">
-                        <KeyIcon className="h-4 w-4 mr-1" />
-                        {t('tenantAppRoleManagement.fields.permissionCount', { count: role.permissions?.length || 0 })}
-                      </div>
-                      <div className="text-gray-500">
-                        {new Date(role.created_at).toLocaleDateString(locale)}
-                      </div>
-                    </div>
-
-                    {role.permissions && role.permissions.length > 0 && (
-                      <div className="mt-3 flex flex-wrap gap-1">
-                        {role.permissions.slice(0, 3).map((permission) => (
-                          <PBadge key={permission.id} variant="info">{permission.name}</PBadge>
-                        ))}
-                        {role.permissions.length > 3 && (
-                          <PBadge variant="default">{t('tenantAppRoleManagement.fields.moreCount', { count: role.permissions.length - 3 })}</PBadge>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+            </div>
+          ) : (
+            <>
+              <PManagedTableSection<Role>
+                data={paginatedRoles}
+                columns={columns}
+                actions={actions}
+                rowKey={(row) => String(row.id)}
+                loading={loading}
+                emptyText={t('tenantAppRoleManagement.empty.noRole')}
+                defaultSort={{ key: 'created_at', order: 'desc' }}
+                pagination={paginationBar}
+              />
+            </>
+          )}
         </div>
-      </div>
+      </PManagementPageContainer>
 
       {/*  */}
       {showCreateModal && (

@@ -24,6 +24,7 @@ func unifiedResponse(c *fiber.Ctx, status int, data interface{}, errObj interfac
 func userSummary(u model.User) fiber.Map {
 	return fiber.Map{
 		"id":             u.ID,
+		"user_uuid":      u.UserUUID,
 		"email":          u.Email,
 		"nickname":       u.Nickname,
 		"avatar_url":     u.AvatarURL,
@@ -332,9 +333,8 @@ func LookupUsersHandler(c *fiber.Ctx) error {
 	}
 
 	db := common.DB().Model(&model.User{}).
-		Joins("JOIN system_auth_user_roles ur ON ur.user_id = system_auth_users.id").
-		Joins("JOIN system_auth_roles r ON r.id = ur.role_id").
-		Where("r.tenant_id = ?", tenantID)
+		Joins("JOIN tenant_users tu ON tu.user_id = system_auth_users.id").
+		Where("tu.tenant_id = ?", tenantID)
 
 	page, _ := strconv.Atoi(c.Query("page", "1"))
 	pageSize, _ := strconv.Atoi(c.Query("page_size", "20"))

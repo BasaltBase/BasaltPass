@@ -3,6 +3,7 @@ import PublicRoute from '@routes/PublicRoute'
 import Login from '@pages/auth/Login'
 import TenantLogin from '@features/auth/TenantLogin'
 import TenantRegister from '@features/auth/TenantRegister'
+import TenantJoin from '@features/auth/TenantJoin'
 import Register from '@pages/auth/Register'
 import OauthSuccess from '@pages/auth/OauthSuccess'
 import OAuthConsent from '@pages/auth/OAuthConsent'
@@ -25,6 +26,7 @@ export function AuthRoutes() {
       />
       <Route path="/auth/tenant/:tenantCode/login" element={<TenantLogin />} />
       <Route path="/auth/tenant/:tenantCode/register" element={<TenantRegister />} />
+      <Route path="/auth/tenant/:tenantCode/join" element={<TenantJoin />} />
       <Route
         path="/register"
         element={

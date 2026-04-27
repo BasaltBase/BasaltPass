@@ -48,7 +48,7 @@ func TestGetProfileUsesUserTenantIDForRegularUser(t *testing.T) {
 	}
 
 	svc := Service{}
-	profile, err := svc.GetProfile(u.ID)
+	profile, err := svc.GetProfile(u.ID, 0)
 	if err != nil {
 		t.Fatalf("GetProfile failed: %v", err)
 	}
@@ -94,7 +94,7 @@ func TestGetProfileDoesNotDeriveTenantContextFromTenantUsersForPlatformAdmin(t *
 	}
 
 	svc := Service{}
-	profile, err := svc.GetProfile(u.ID)
+	profile, err := svc.GetProfile(u.ID, 0)
 	if err != nil {
 		t.Fatalf("GetProfile failed: %v", err)
 	}

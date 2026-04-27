@@ -129,24 +129,24 @@ export default function AdminTeamsPage() {
           </div>
         </div>
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
-          {teams.map(t=> (
-            <PCard key={t.id} className='flex flex-col justify-between'>
+          {teams.map(team=> (
+            <PCard key={team.id} className='flex flex-col justify-between'>
               <div className='space-y-2'>
                 <div className='flex items-center justify-between'>
-                  <h3 className='text-lg font-semibold'>{t.name}</h3>
-                  <PButton size='sm' variant={t.is_active? 'secondary':'primary'} onClick={()=>toggleActive(t)}>
-                    {t.is_active? t('adminTeams.actions.deactivate') : t('adminTeams.actions.activate')}
+                  <h3 className='text-lg font-semibold'>{team.name}</h3>
+                  <PButton size='sm' variant={team.is_active? 'secondary':'primary'} onClick={()=>toggleActive(team)}>
+                    {team.is_active? t('adminTeams.actions.deactivate') : t('adminTeams.actions.activate')}
                   </PButton>
                 </div>
-                <p className='text-sm text-gray-500 line-clamp-2'>{t.description}</p>
+                <p className='text-sm text-gray-500 line-clamp-2'>{team.description}</p>
                 <div className='text-xs text-gray-400'>
-                  {t('adminTeams.card.meta', { count: t.member_count, date: new Date(t.created_at).toLocaleDateString(locale) })}
+                  {t('adminTeams.card.meta', { count: team.member_count, date: new Date(team.created_at).toLocaleDateString(locale) })}
                 </div>
               </div>
               <div className='mt-4 flex space-x-2'>
-                <PButton size='sm' variant='secondary' leftIcon={<UsersIcon className='h-4 w-4'/>} onClick={()=>openMembers(t)}>{t('adminTeams.actions.members')}</PButton>
-                <PButton size='sm' variant='ghost' leftIcon={<PencilIcon className='h-4 w-4'/>} onClick={()=>openEdit(t)}>{t('adminTeams.actions.edit')}</PButton>
-                <PButton size='sm' variant='danger' leftIcon={<TrashIcon className='h-4 w-4'/>} onClick={()=>removeTeam(t)}>{t('adminTeams.actions.delete')}</PButton>
+                <PButton size='sm' variant='secondary' leftIcon={<UsersIcon className='h-4 w-4'/>} onClick={()=>openMembers(team)}>{t('adminTeams.actions.members')}</PButton>
+                <PButton size='sm' variant='ghost' leftIcon={<PencilIcon className='h-4 w-4'/>} onClick={()=>openEdit(team)}>{t('adminTeams.actions.edit')}</PButton>
+                <PButton size='sm' variant='danger' leftIcon={<TrashIcon className='h-4 w-4'/>} onClick={()=>removeTeam(team)}>{t('adminTeams.actions.delete')}</PButton>
               </div>
             </PCard>
           ))}
