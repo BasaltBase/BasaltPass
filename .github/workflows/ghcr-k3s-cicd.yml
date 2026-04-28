@@ -103,8 +103,8 @@ jobs:
             VITE_API_BASE=${{ vars.BASALTPASS_PUBLIC_URL }}
             VITE_APP_VERSION=${{ github.ref_name }}
             VITE_CONSOLE_USER_URL=${{ vars.BASALTPASS_PUBLIC_URL }}
-            VITE_CONSOLE_TENANT_URL=${{ vars.BASALTPASS_PUBLIC_URL }}/tenant
-            VITE_CONSOLE_ADMIN_URL=${{ vars.BASALTPASS_PUBLIC_URL }}/admin
+            VITE_CONSOLE_TENANT_URL=${{ vars.BASALTPASS_PUBLIC_URL }}
+            VITE_CONSOLE_ADMIN_URL=${{ vars.BASALTPASS_PUBLIC_URL }}
           tags: ${{ steps.meta.outputs.frontend_tags }}
 
   deploy_beancs_system:
