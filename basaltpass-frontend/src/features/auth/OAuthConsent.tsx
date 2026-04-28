@@ -80,7 +80,7 @@ export default function OAuthConsent() {
     return sessionOptions.find((session) => session.key === selectedSessionKey) || null
   }, [sessionOptions, selectedSessionKey])
 
-  const apiBase = client.defaults.baseURL || (import.meta as any).env?.VITE_API_BASE || 'http://localhost:8101'
+  const apiBase = client.defaults.baseURL || (import.meta as any).env?.VITE_API_BASE || window.location.origin
   const consentEndpoint = String(apiBase).replace(/\/$/, '') + '/api/v1/oauth/consent'
 
   const submitConsentForm = (action: 'allow' | 'deny', opts?: { selectedToken?: string; joinTenant?: boolean }) => {

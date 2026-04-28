@@ -1,6 +1,6 @@
 import client from '../../client';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE || 'http://localhost:8101';
+const API_BASE_URL = import.meta.env.VITE_API_BASE || window.location.origin;
 
 export interface PaymentIntent {
   ID: number;
