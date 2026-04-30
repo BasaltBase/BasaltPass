@@ -216,6 +216,9 @@ func Load(path string) (*Config, error) {
 	if err := v.Unmarshal(&cfg); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
+	if uiBaseURL := strings.TrimSpace(os.Getenv("BASALTPASS_UI_BASE_URL")); uiBaseURL != "" {
+		cfg.UI.BaseURL = uiBaseURL
+	}
 
 	loaded = true
 	return &cfg, nil

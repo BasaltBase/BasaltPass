@@ -357,6 +357,13 @@ jobs:
               - host: ${{ vars.BASALTPASS_PUBLIC_HOST }}
                 http:
                   paths:
+                    - path: /api
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: basaltpass-backend
+                          port:
+                            number: 8101
                     - path: /
                       pathType: Prefix
                       backend:
