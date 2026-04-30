@@ -343,6 +343,7 @@ jobs:
               managed-by: beancs
             annotations:
               cert-manager.io/cluster-issuer: letsencrypt-prod
+              kubernetes.io/ingress.class: traefik
           spec:
             ingressClassName: traefik
             tls:
