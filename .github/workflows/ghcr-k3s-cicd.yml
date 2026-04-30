@@ -337,7 +337,7 @@ jobs:
           apiVersion: networking.k8s.io/v1
           kind: Ingress
           metadata:
-            name: basaltpass-public
+            name: basaltpass-public-api
             namespace: ${NAMESPACE}
             labels:
               app: basaltpass
@@ -347,6 +347,7 @@ jobs:
               kubernetes.io/ingress.class: traefik
               traefik.ingress.kubernetes.io/router.entrypoints: websecure
               traefik.ingress.kubernetes.io/router.tls: "true"
+              traefik.ingress.kubernetes.io/router.priority: "100"
           spec:
             ingressClassName: traefik
             tls:
@@ -364,6 +365,31 @@ jobs:
                           name: basaltpass-backend
                           port:
                             number: 8101
+          ---
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: basaltpass-public
+            namespace: ${NAMESPACE}
+            labels:
+              app: basaltpass
+              managed-by: beancs
+            annotations:
+              cert-manager.io/cluster-issuer: letsencrypt-prod
+              kubernetes.io/ingress.class: traefik
+              traefik.ingress.kubernetes.io/router.entrypoints: websecure
+              traefik.ingress.kubernetes.io/router.tls: "true"
+              traefik.ingress.kubernetes.io/router.priority: "10"
+          spec:
+            ingressClassName: traefik
+            tls:
+              - hosts:
+                  - ${{ vars.BASALTPASS_PUBLIC_HOST }}
+                secretName: basaltpass-public-tls
+            rules:
+              - host: ${{ vars.BASALTPASS_PUBLIC_HOST }}
+                http:
+                  paths:
                     - path: /
                       pathType: Prefix
                       backend:
