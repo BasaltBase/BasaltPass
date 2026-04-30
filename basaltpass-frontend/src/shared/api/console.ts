@@ -15,6 +15,13 @@ export function joinConsoleUrl(base: string, path: string) {
   if (!normalizedBase) {
     return `/${normalizedPath}`
   }
+
+  const baseLastSegment = normalizedBase.split('/').filter(Boolean).pop()
+  const pathFirstSegment = normalizedPath.split('/').filter(Boolean)[0]
+  if (baseLastSegment && pathFirstSegment && baseLastSegment === pathFirstSegment) {
+    return `${normalizedBase}/${normalizedPath.split('/').slice(1).join('/')}`
+  }
+
   return `${normalizedBase}/${normalizedPath}`
 }
 

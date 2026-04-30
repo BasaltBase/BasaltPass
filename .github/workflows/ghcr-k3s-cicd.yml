@@ -70,6 +70,9 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -85,6 +88,7 @@ jobs:
         with:
           context: .
           file: ./backend.Dockerfile
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.backend_tags }}
 
@@ -93,13 +97,14 @@ jobs:
         with:
           context: .
           file: ./frontend.Dockerfile
+          platforms: linux/amd64,linux/arm64
           push: true
           build-args: |
             VITE_API_BASE=${{ vars.BASALTPASS_PUBLIC_URL }}
             VITE_APP_VERSION=${{ github.ref_name }}
             VITE_CONSOLE_USER_URL=${{ vars.BASALTPASS_PUBLIC_URL }}
-            VITE_CONSOLE_TENANT_URL=${{ vars.BASALTPASS_PUBLIC_URL }}/tenant
-            VITE_CONSOLE_ADMIN_URL=${{ vars.BASALTPASS_PUBLIC_URL }}/admin
+            VITE_CONSOLE_TENANT_URL=${{ vars.BASALTPASS_PUBLIC_URL }}
+            VITE_CONSOLE_ADMIN_URL=${{ vars.BASALTPASS_PUBLIC_URL }}
           tags: ${{ steps.meta.outputs.frontend_tags }}
 
   deploy_beancs_system:
@@ -201,16 +206,25 @@ jobs:
                           name: basaltpass-env
                     readinessProbe:
                       httpGet:
-                        path: /health
+                        path: /api/v1/health
                         port: http
-                      initialDelaySeconds: 10
                       periodSeconds: 10
+                      timeoutSeconds: 3
+                      failureThreshold: 6
                     livenessProbe:
                       httpGet:
                         path: /health
                         port: http
-                      initialDelaySeconds: 30
                       periodSeconds: 20
+                      timeoutSeconds: 3
+                      failureThreshold: 3
+                    startupProbe:
+                      httpGet:
+                        path: /health
+                        port: http
+                      periodSeconds: 10
+                      timeoutSeconds: 3
+                      failureThreshold: 18
           ---
           apiVersion: v1
           kind: Service
@@ -276,14 +290,23 @@ jobs:
                       httpGet:
                         path: /health
                         port: http
-                      initialDelaySeconds: 10
                       periodSeconds: 10
+                      timeoutSeconds: 3
+                      failureThreshold: 3
                     livenessProbe:
                       httpGet:
                         path: /health
                         port: http
-                      initialDelaySeconds: 30
                       periodSeconds: 20
+                      timeoutSeconds: 3
+                      failureThreshold: 3
+                    startupProbe:
+                      httpGet:
+                        path: /health
+                        port: http
+                      periodSeconds: 5
+                      timeoutSeconds: 3
+                      failureThreshold: 12
           ---
           apiVersion: v1
           kind: Service
@@ -320,6 +343,9 @@ jobs:
               managed-by: beancs
             annotations:
               cert-manager.io/cluster-issuer: letsencrypt-prod
+              kubernetes.io/ingress.class: traefik
+              traefik.ingress.kubernetes.io/router.entrypoints: websecure
+              traefik.ingress.kubernetes.io/router.tls: "true"
           spec:
             ingressClassName: traefik
             tls:

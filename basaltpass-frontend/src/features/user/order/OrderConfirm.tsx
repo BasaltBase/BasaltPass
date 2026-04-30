@@ -95,7 +95,7 @@ export default function OrderConfirmPage() {
       
       
       // （）
-  const checkoutUrl = `http://localhost:8101/api/v1/payment/checkout/${sessionResponse.session.StripeSessionID}`
+        const checkoutUrl = `${window.location.origin}/api/v1/payment/checkout/${sessionResponse.session.StripeSessionID}`
       
       window.location.href = checkoutUrl 
 

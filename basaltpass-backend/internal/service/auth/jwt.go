@@ -2,6 +2,7 @@ package auth
 
 import (
 	"errors"
+	"log"
 	"os"
 	"time"
 
@@ -80,9 +81,11 @@ func GenerateTokenPairWithTenantAndScope(userID uint, tenantID uint, scope strin
 	if scope != ConsoleScopeAdmin && tenantID > 0 {
 		allowed, err := tenantservice.IsTenantLoginAllowed(tenantID)
 		if err != nil {
+			log.Printf("[auth][error] IsTenantLoginAllowed failed for tenantID=%d, userID=%d, scope=%s: %v", tenantID, userID, scope, err)
 			return TokenPair{}, err
 		}
 		if !allowed {
+			log.Printf("[auth][warn] Tenant login disabled for tenantID=%d", tenantID)
 			return TokenPair{}, ErrTenantLoginDisabled
 		}
 	}
@@ -96,6 +99,7 @@ func GenerateTokenPairWithTenantAndScope(userID uint, tenantID uint, scope strin
 	}
 	accessToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims).SignedString(common.MustJWTSecret())
 	if err != nil {
+		log.Printf("[auth][error] Failed to sign access token for userID=%d, tenantID=%d, scope=%s: %v", userID, tenantID, scope, err)
 		return TokenPair{}, err
 	}
 
@@ -108,9 +112,11 @@ func GenerateTokenPairWithTenantAndScope(userID uint, tenantID uint, scope strin
 	}
 	refreshToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString(common.MustJWTSecret())
 	if err != nil {
+		log.Printf("[auth][error] Failed to sign refresh token for userID=%d, tenantID=%d, scope=%s: %v", userID, tenantID, scope, err)
 		return TokenPair{}, err
 	}
 
+	log.Printf("[auth][debug] Tokens generated successfully for userID=%d, tenantID=%d, scope=%s", userID, tenantID, scope)
 	return TokenPair{AccessToken: accessToken, RefreshToken: refreshToken}, nil
 }
 

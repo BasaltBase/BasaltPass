@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
+	"log"
 	"strings"
 	"sync"
 	"time"
@@ -327,6 +328,7 @@ func ConsoleExchangeHandler(c *fiber.Ctx) error {
 
 	tokens, err := authsvc.GenerateTokenPairWithTenantAndScope(uid, tenantID, scope)
 	if err != nil {
+		log.Printf("[console][error] Failed to generate tokens in exchange handler: userID=%d, tenantID=%d, scope=%s, error=%v", uid, tenantID, scope, err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to generate tokens"})
 	}
 

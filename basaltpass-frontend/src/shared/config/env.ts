@@ -4,9 +4,9 @@ function getEnvString(value: unknown, fallback = '') {
 
 export function inferDefaultApiBase() {
   if (typeof window !== 'undefined' && window.location?.hostname) {
-    return `${window.location.protocol}//${window.location.hostname}:8101`
+    return window.location.origin
   }
-  return 'http://127.0.0.1:8101'
+  return ''
 }
 
 export function normalizeApiBase(rawBase?: string) {
