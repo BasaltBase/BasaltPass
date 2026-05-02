@@ -192,6 +192,8 @@ jobs:
                 labels:
                   app: basaltpass-backend
                   managed-by: beancs
+                annotations:
+                  beancs.io/deploy-run: "${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
               spec:
                 imagePullSecrets:
                   - name: ghcr-creds
@@ -277,6 +279,8 @@ jobs:
                 labels:
                   app: basaltpass-frontend
                   managed-by: beancs
+                annotations:
+                  beancs.io/deploy-run: "${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
               spec:
                 imagePullSecrets:
                   - name: ghcr-creds
