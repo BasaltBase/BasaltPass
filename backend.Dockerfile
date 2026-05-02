@@ -3,9 +3,11 @@ FROM golang:1.26.2 AS builder
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends gcc libc6-dev && rm -rf /var/lib/apt/lists/*
 COPY basaltpass-backend/go.mod basaltpass-backend/go.sum ./
-RUN go mod download
+RUN --mount=type=cache,target=/go/pkg/mod go mod download
 COPY basaltpass-backend/ ./
-RUN CGO_ENABLED=1 GOOS=linux go build -o server ./cmd/basaltpass
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    CGO_ENABLED=1 GOOS=linux go build -o server ./cmd/basaltpass
 
 FROM debian:bookworm-slim
 WORKDIR /app
